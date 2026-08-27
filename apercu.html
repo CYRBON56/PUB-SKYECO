@@ -123,6 +123,7 @@ const METIER_TEMPLATES = {
       const s = [{ key:"type_projet", question:"Quel est le type de projet ?", type:"choice",
         options:[["pieton","Terrasse, tour de piscine ou allée piétonne"],["carrossable","Parking ou allée pour véhicule (carrossable)"]] }];
       s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
+      s.push({ key:"details_projet", question:"Décrivez votre projet en quelques mots", type:"textarea", placeholder:"Ex : nature des travaux, contraintes particulières, délais souhaités…", optional:true });
       s.push({ key:"surface", question:"Quelle surface représente le projet, en m² environ ?", type:"number", placeholder:"Ex : 25" });
       s.push({ key:"delai", question:"Sous quel délai souhaitez-vous réaliser ce projet ?", type:"choice",
         options:[["urgent","Le plus vite possible"],["1_3_mois","Dans 1 à 3 mois"],["plus_tard","Plus tard"]] });
@@ -140,6 +141,7 @@ const METIER_TEMPLATES = {
       const s = [{ key:"type_projet", question:"Que souhaitez-vous faire poser ?", type:"choice",
         options:[["cloture","Une clôture"],["portail","Un portail"],["les_deux","Les deux"]] }];
       s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
+      s.push({ key:"details_projet", question:"Décrivez votre projet en quelques mots", type:"textarea", placeholder:"Ex : nature des travaux, contraintes particulières, délais souhaités…", optional:true });
       s.push({ key:"longueur", question:"Longueur approximative, en mètres linéaires ?", type:"number", placeholder:"Ex : 20" });
       s.push({ key:"materiau", question:"Quel matériau préférez-vous ?", type:"choice",
         options:[["bois","Bois"],["alu","Aluminium"],["pvc","PVC"],["pas_decide","Pas encore décidé"]] });
@@ -159,6 +161,7 @@ const METIER_TEMPLATES = {
       const s = [{ key:"type_projet", question:"Quel type de terrassement ?", type:"choice",
         options:[["preparation","Préparation de terrain"],["evacuation","Évacuation de terre"],["nivellement","Nivellement"]] }];
       s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
+      s.push({ key:"details_projet", question:"Décrivez votre projet en quelques mots", type:"textarea", placeholder:"Ex : nature des travaux, contraintes particulières, délais souhaités…", optional:true });
       s.push({ key:"surface", question:"Quelle surface représente le projet, en m² environ ?", type:"number", placeholder:"Ex : 100" });
       s.push({ key:"acces", question:"Comment est l'accès au chantier ?", type:"choice",
         options:[["facile","Facile pour un engin"],["difficile","Difficile / accès restreint"]] });
@@ -178,6 +181,7 @@ const METIER_TEMPLATES = {
       const s = [{ key:"type_projet", question:"Quel type d'installation ?", type:"choice",
         options:[["fosse","Fosse toutes eaux"],["microstation","Microstation"],["rehabilitation","Réhabilitation d'installation existante"]] }];
       s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
+      s.push({ key:"details_projet", question:"Décrivez votre projet en quelques mots", type:"textarea", placeholder:"Ex : nature des travaux, contraintes particulières, délais souhaités…", optional:true });
       s.push({ key:"pieces", question:"Combien de pièces principales compte le logement ?", type:"number", placeholder:"Ex : 4" });
       s.push({ key:"delai", question:"Sous quel délai souhaitez-vous réaliser ce projet ?", type:"choice",
         options:[["urgent","Le plus vite possible"],["1_3_mois","Dans 1 à 3 mois"],["plus_tard","Plus tard"]] });
@@ -195,6 +199,7 @@ const METIER_TEMPLATES = {
       const s = [{ key:"type_projet", question:"Quel est le type de projet ?", type:"choice",
         options:[["creation","Création d'espace vert"],["entretien","Entretien régulier"],["amenagement","Aménagement complet"]] }];
       s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
+      s.push({ key:"details_projet", question:"Décrivez votre projet en quelques mots", type:"textarea", placeholder:"Ex : nature des travaux, contraintes particulières, délais souhaités…", optional:true });
       s.push({ key:"surface", question:"Quelle surface représente le projet, en m² environ ?", type:"number", placeholder:"Ex : 50" });
       s.push({ key:"delai", question:"Sous quel délai souhaitez-vous réaliser ce projet ?", type:"choice",
         options:[["urgent","Le plus vite possible"],["1_3_mois","Dans 1 à 3 mois"],["plus_tard","Plus tard"]] });
@@ -211,6 +216,7 @@ const METIER_TEMPLATES = {
     getSteps(state){
       const s = [{ key:"surface", question:"Quelle surface ou ampleur représente le projet ?", type:"number", placeholder:"Ex : 30" }];
       s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
+      s.push({ key:"details_projet", question:"Décrivez votre projet en quelques mots", type:"textarea", placeholder:"Ex : nature des travaux, contraintes particulières, délais souhaités…", optional:true });
       s.push({ key:"delai", question:"Sous quel délai souhaitez-vous réaliser ce projet ?", type:"choice",
         options:[["urgent","Le plus vite possible"],["1_3_mois","Dans 1 à 3 mois"],["plus_tard","Plus tard"]] });
       s.push({ key:"localisation", question:"Où se situe le projet ?", type:"location" });
@@ -383,6 +389,9 @@ function runWizard(template, brandColor){
         '<label class="field-label">Prénom</label><input type="text" id="inputPrenom" value="'+(state.prenom||'')+'" />'+
         '<label class="field-label">Téléphone</label><input type="tel" id="inputTel" value="'+(state.telephone||'')+'" placeholder="06 XX XX XX XX" />'+
         '<label class="field-label">Email</label><input type="email" id="inputEmail" value="'+(state.email||'')+'" />';
+    } else if(s.type==='textarea'){
+      html+='<textarea id="inputTextarea" placeholder="'+(s.placeholder||'')+'" style="width:100%; min-height:110px; border:1.5px solid #d8e3de; border-radius:10px; padding:12px 14px; font-size:15px; font-family:inherit; resize:vertical;">'+(state[s.key]||'')+'</textarea>'+
+        (s.optional ? '<div style="font-size:12px; color:#8a9490; margin-top:6px;">Facultatif — passez si vous préférez.</div>' : '');
     }
     html += '<div class="nav-row"><button class="btn btn-ghost" id="btnBack"'+(state.step===0?" style='visibility:hidden'":'')+'>← Retour</button>'+
       '<button class="btn btn-primary" id="btnNext" disabled>Continuer</button></div>';
@@ -406,6 +415,10 @@ function runWizard(template, brandColor){
       const nom=document.getElementById('inputNom'), prenom=document.getElementById('inputPrenom'), tel=document.getElementById('inputTel'), email=document.getElementById('inputEmail');
       [nom,prenom,tel,email].forEach(el=>{ el.addEventListener('input',()=>{ state.nom=nom.value; state.prenom=prenom.value; state.telephone=tel.value; state.email=email.value; document.getElementById('btnNext').disabled=!canProceed(s); }); });
       nom.focus();
+    } else if(s.type==='textarea'){
+      const ta=document.getElementById('inputTextarea');
+      ta.addEventListener('input',()=>{ state[s.key]=ta.value; });
+      ta.focus();
     }
     document.getElementById('btnBack').addEventListener('click',()=>{ if(state.step>0){ state.step-=1; renderProgress(); renderStep(); } });
     document.getElementById('btnNext').addEventListener('click',()=>{

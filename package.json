@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "stripe": "^17.4.0",
-    "@supabase/supabase-js": "^2.45.4"
+    "@supabase/supabase-js": "^2.45.4",
+    "twilio": "^5.3.6"
   }
 }

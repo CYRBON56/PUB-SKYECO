@@ -152,10 +152,11 @@
       <label for="zone">Zone d'intervention</label>
       <input type="text" id="zone" placeholder="Ex : Morbihan, Bretagne">
       <label for="telephone">Téléphone</label>
-      <input type="tel" id="telephone" placeholder="Ex : 06 12 34 56 78">
+      <input type="tel" id="telephone" inputmode="numeric" placeholder="Ex : 06 12 34 56 78">
+      <div class="siret-status mono" id="telStatus" style="font-size:12px; color:var(--concrete); margin:-10px 0 4px;">Numéro français, 10 chiffres.</div>
       <label for="email">Email</label>
       <input type="email" id="email" placeholder="Ex : contact@monentreprise.fr">
-      <div class="error mono" id="err-entreprise">Merci de renseigner un SIRET valide (14 chiffres) et un email valide.</div>
+      <div class="error mono" id="err-entreprise">Merci de renseigner un SIRET valide, un téléphone à 10 chiffres et un email valide.</div>
     </div>
 
     <!-- STEP 3 : savoir-faire -->
@@ -306,8 +307,36 @@
 
   function canProceedStep1(){
     const emailOk = /\S+@\S+\.\S+/.test(document.getElementById('email').value.trim());
-    return state.siret.length === 14 && document.getElementById('entreprise').value.trim() && emailOk;
+    const telOk = isTelephoneValid(document.getElementById('telephone').value);
+    return state.siret.length === 14 && document.getElementById('entreprise').value.trim() && emailOk && telOk;
   }
+
+  // Validation + formatage en direct du téléphone (format français : 10 chiffres commençant par 0)
+  function isTelephoneValid(raw){
+    const digits = raw.replace(/\D/g,'');
+    return /^0\d{9}$/.test(digits);
+  }
+
+  const telEl = document.getElementById('telephone');
+  const telStatusEl = document.getElementById('telStatus');
+  telEl.addEventListener('input', ()=>{
+    let digits = telEl.value.replace(/\D/g,'').slice(0,10);
+    const formatted = digits.replace(/(\d{2})(?=\d)/g,'$1 ').trim();
+    telEl.value = formatted;
+    state.telephone = formatted;
+
+    if(digits.length === 0){
+      telStatusEl.textContent = 'Numéro français, 10 chiffres.';
+      telStatusEl.style.color = 'var(--concrete)';
+    } else if(isTelephoneValid(digits)){
+      telStatusEl.textContent = '✓ Numéro valide';
+      telStatusEl.style.color = 'var(--ok)';
+    } else {
+      telStatusEl.textContent = digits.length < 10 ? 'Numéro incomplet.' : 'Doit commencer par 0 (ex : 06...).';
+      telStatusEl.style.color = 'var(--orange-dark)';
+    }
+    document.getElementById('btnNext').disabled = !canProceedStep1();
+  });
 
   // Step 3: char count
   const descEl = document.getElementById('description');
@@ -369,7 +398,8 @@
       state.email = document.getElementById('email').value.trim();
       const emailOk = /\S+@\S+\.\S+/.test(state.email);
       const siretOk = /^\d{14}$/.test(state.siret);
-      if(!siretOk || !state.entreprise || !emailOk){ document.getElementById('err-entreprise').classList.add('show'); return false; }
+      const telOk = isTelephoneValid(state.telephone);
+      if(!siretOk || !state.entreprise || !emailOk || !telOk){ document.getElementById('err-entreprise').classList.add('show'); return false; }
       document.getElementById('err-entreprise').classList.remove('show');
     }
     return true;

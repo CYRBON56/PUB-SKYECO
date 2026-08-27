@@ -270,6 +270,11 @@
     steps[i].classList.add('active');
     document.getElementById('btnBack').style.visibility = i===0 ? 'hidden' : 'visible';
     document.getElementById('btnNext').textContent = i===steps.length-1 ? 'Générer mon aperçu gratuit' : 'Continuer →';
+    if(i===1){
+      document.getElementById('btnNext').disabled = !canProceedStep1();
+    } else {
+      document.getElementById('btnNext').disabled = false;
+    }
     renderStepper();
   }
 
@@ -337,6 +342,15 @@
     const telOk = isTelephoneValid(document.getElementById('telephone').value);
     return state.siret.length === 14 && document.getElementById('entreprise').value.trim() && emailOk && telOk;
   }
+
+  // Ces deux champs n'avaient pas de vérification en direct — corrige le bouton "Continuer"
+  // qui pouvait rester bloqué si l'utilisateur les remplissait en dernier.
+  document.getElementById('entreprise').addEventListener('input', ()=>{
+    document.getElementById('btnNext').disabled = !canProceedStep1();
+  });
+  document.getElementById('email').addEventListener('input', ()=>{
+    document.getElementById('btnNext').disabled = !canProceedStep1();
+  });
 
   // Validation + formatage en direct du téléphone (format français : 10 chiffres commençant par 0)
   function isTelephoneValid(raw){

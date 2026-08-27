@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/l", "destination": "/api/lien" },
+    { "source": "/o", "destination": "/api/ouverture" },
+    { "source": "/d", "destination": "/api/desabonnement" }
+  ]
+}

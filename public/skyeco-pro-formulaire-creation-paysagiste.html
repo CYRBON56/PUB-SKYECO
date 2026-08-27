@@ -110,6 +110,13 @@
   .upload-slot img{ width:100%; height:100%; object-fit:cover; position:absolute; inset:0;}
   .upload-slot input{ display:none; }
 
+  .lib-thumb{ aspect-ratio:1; position:relative; cursor:pointer; overflow:hidden; border:2px solid transparent; }
+  .lib-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .lib-thumb .lib-label{ position:absolute; bottom:0; left:0; right:0; background:rgba(20,48,74,0.75); color:#fff; font-family:'IBM Plex Mono',monospace; font-size:8.5px; padding:3px 4px; text-align:center; }
+  .lib-thumb.selected{ border-color:var(--orange); }
+  .lib-thumb.selected::after{ content:'✓'; position:absolute; top:4px; right:4px; width:18px; height:18px; background:var(--orange); color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; }
+  @media(max-width:600px){ #libraryGrid{ grid-template-columns:repeat(3,1fr) !important; } }
+
   .palette-row{ display:flex; gap:10px; margin-top:6px; }
   .swatch{ width:42px; height:42px; border:2px solid transparent; cursor:pointer; position:relative; }
   .swatch.selected{ border-color:var(--navy); }
@@ -290,6 +297,14 @@
             <label class="upload-slot"><span>+ Photo 6</span><input type="file" accept="image/*" data-slot="5"></label>
           </div>
           <div id="uploadStatus" class="mono" style="font-size:11.5px; color:var(--concrete); margin-top:8px;"></div>
+
+          <div style="margin-top:20px; padding-top:18px; border-top:1px solid var(--paper-line);">
+            <button type="button" class="btn-sms" id="btnToggleLibrary">Pas encore de photos ? Choisir dans notre bibliothèque paysagisme</button>
+            <div id="libraryPanel" style="display:none; margin-top:16px;">
+              <p class="hint" style="margin-bottom:10px;">Cliquez sur jusqu'à 6 photos — remplaçables par les vôtres à tout moment. Cochées d'après vos spécialités.</p>
+              <div class="upload-row" id="libraryGrid" style="grid-template-columns:repeat(4,1fr);"></div>
+            </div>
+          </div>
 
           <div style="margin-top:24px; padding-top:20px; border-top:1px solid var(--paper-line);">
             <label style="margin-top:0;">Vous préférez une vidéo ?</label>
@@ -637,6 +652,75 @@
 
   // Step 4: photo uploads
   const uploadStatusEl = document.getElementById('uploadStatus');
+
+  // Bibliothèque de photos paysagisme (à utiliser si l'artisan n'a pas encore ses propres photos)
+  const PHOTO_LIBRARY = [
+    { cat:'conception', label:'Conception de jardin', url:'https://images.unsplash.com/photo-1416339306562-c3e64c3a3fb2?w=600' },
+    { cat:'conception', label:'Conception de jardin', url:'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=600' },
+    { cat:'taille', label:'Taille & entretien', url:'https://images.unsplash.com/photo-1592417817098-8fd3d9eb14a5?w=600' },
+    { cat:'taille', label:'Taille & entretien', url:'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600' },
+    { cat:'terrasse', label:'Terrasse extérieure', url:'https://images.unsplash.com/photo-1600607687644-c7171b42498f?w=600' },
+    { cat:'terrasse', label:'Terrasse extérieure', url:'https://images.unsplash.com/photo-1517080606947-ce22ffa2c47e?w=600' },
+    { cat:'piscine', label:'Abords de piscine', url:'https://images.unsplash.com/photo-1572331165267-854da2b10ccf?w=600' },
+    { cat:'piscine', label:'Abords de piscine', url:'https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=600' },
+    { cat:'murets', label:'Murets & maçonnerie', url:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600' },
+    { cat:'murets', label:'Murets & maçonnerie', url:'https://images.unsplash.com/photo-1449844908441-8829872d2607?w=600' },
+    { cat:'arrosage', label:'Arrosage automatique', url:'https://images.unsplash.com/photo-1620200423727-8127f75d7f53?w=600' },
+    { cat:'arrosage', label:'Arrosage automatique', url:'https://images.unsplash.com/photo-1592150621744-aca64f48394a?w=600' },
+    { cat:'clotures_haies', label:'Clôtures & haies', url:'https://images.unsplash.com/photo-1597047084897-51e81819a499?w=600' },
+    { cat:'clotures_haies', label:'Clôtures & haies', url:'https://images.unsplash.com/photo-1444858291040-58f756a3bdd6?w=600' },
+    { cat:'eclairage', label:'Éclairage extérieur', url:'https://images.unsplash.com/photo-1558882224-dda166733046?w=600' },
+    { cat:'eclairage', label:'Éclairage extérieur', url:'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?w=600' },
+    { cat:'allees', label:'Allées & cheminements', url:'https://images.unsplash.com/photo-1416339134316-0e91dc9ded92?w=600' },
+    { cat:'allees', label:'Allées & cheminements', url:'https://images.unsplash.com/photo-1598902108854-10e335adac99?w=600' },
+    { cat:'potager', label:'Potager & verger', url:'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?w=600' },
+    { cat:'potager', label:'Potager & verger', url:'https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=600' }
+  ];
+  let librarySelection = [];
+
+  function renderLibrary(){
+    const grid = document.getElementById('libraryGrid');
+    const preferred = state.specialites.length ? state.specialites : [];
+    const sorted = [...PHOTO_LIBRARY].sort((a,b)=>{
+      const aMatch = preferred.includes(a.cat) ? 0 : 1;
+      const bMatch = preferred.includes(b.cat) ? 0 : 1;
+      return aMatch - bMatch;
+    });
+    grid.innerHTML = sorted.map(p => {
+      const sel = librarySelection.includes(p.url) ? ' selected' : '';
+      return '<div class="lib-thumb' + sel + '" data-url="' + p.url + '"><img src="' + p.url + '" loading="lazy"><span class="lib-label">' + p.label + '</span></div>';
+    }).join('');
+  }
+
+  document.getElementById('btnToggleLibrary').addEventListener('click', ()=>{
+    const panel = document.getElementById('libraryPanel');
+    const nowVisible = panel.style.display === 'none';
+    panel.style.display = nowVisible ? 'block' : 'none';
+    if (nowVisible) renderLibrary();
+  });
+
+  document.getElementById('libraryGrid').addEventListener('click', e=>{
+    const thumb = e.target.closest('.lib-thumb');
+    if(!thumb) return;
+    const url = thumb.dataset.url;
+    if (librarySelection.includes(url)) {
+      librarySelection = librarySelection.filter(u => u !== url);
+    } else {
+      if (librarySelection.length >= 6) {
+        alert('Maximum 6 photos. Désélectionnez-en une pour en choisir une autre.');
+        return;
+      }
+      librarySelection.push(url);
+    }
+    // Les photos de bibliothèque occupent les emplacements après les photos uploadées manuellement.
+    const manualPhotos = state.photos.filter(p => p && !PHOTO_LIBRARY.some(lib => lib.url === p));
+    const combined = [...manualPhotos, ...librarySelection].slice(0, 6);
+    state.photos = [...combined, ...Array(6 - combined.length).fill(null)];
+    uploadStatusEl.textContent = librarySelection.length ? librarySelection.length + ' photo(s) de la bibliothèque sélectionnée(s).' : '';
+    uploadStatusEl.style.color = 'var(--concrete)';
+    renderLibrary();
+  });
+
   document.querySelectorAll('#uploadRow input[type=file]').forEach(inp=>{
     inp.addEventListener('change', e=>{
       const file = e.target.files[0];

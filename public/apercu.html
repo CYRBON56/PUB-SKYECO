@@ -197,7 +197,7 @@ const METIER_TEMPLATES = {
     intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation par mail.",
     getSteps(state){
       const s = [{ key:"type_projet", question:"Quel est le type de projet ?", type:"choice",
-        options:[["creation","Création d'espace vert"],["entretien","Entretien régulier"],["amenagement","Aménagement complet"]] }];
+        options:[["tonte","Tonte, entretien &amp; taille"],["murets","Murets &amp; maçonnerie paysagère"],["terrasses","Terrasse ou allée extérieure"],["piscines","Abords de piscine"],["autre","Autre projet"]] }];
       s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
       s.push({ key:"details_projet", question:"Décrivez votre projet en quelques mots", type:"textarea", placeholder:"Ex : nature des travaux, contraintes particulières, délais souhaités…", optional:true });
       s.push({ key:"surface", question:"Quelle surface représente le projet, en m² environ ?", type:"number", placeholder:"Ex : 50" });

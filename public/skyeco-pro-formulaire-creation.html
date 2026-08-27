@@ -385,6 +385,15 @@
   const steps = Array.from(document.querySelectorAll('.panel'));
   const stepLabels = ['Éligibilité','Coordonnées','Métier','Savoir-faire','Photos','Tarification','Couleur','Récapitulatif'];
   let current = 0;
+  // Correspondance code région INSEE → nom (renvoyé par l'API SIRET dans siege.region)
+  const REGIONS_INSEE = {
+    '01':'Guadeloupe', '02':'Martinique', '03':'Guyane', '04':'La Réunion', '06':'Mayotte',
+    '11':'Île-de-France', '24':'Centre-Val de Loire', '27':'Bourgogne-Franche-Comté',
+    '28':'Normandie', '32':'Hauts-de-France', '44':'Grand Est', '52':'Pays de la Loire',
+    '53':'Bretagne', '75':'Nouvelle-Aquitaine', '76':'Occitanie', '84':'Auvergne-Rhône-Alpes',
+    '93':'Provence-Alpes-Côte d\'Azur', '94':'Corse'
+  };
+
   const state = {
     metier:null, siret:'', siretVerifie:false, entreprise:'', zone:'',
     telephone:'', telephoneVerifie:false, email:'', description:'',
@@ -480,6 +489,25 @@
           siretStatusEl.textContent = '✓ ' + result.nom_complet;
           siretStatusEl.style.color = 'var(--ok)';
           state.entreprise = result.nom_complet;
+          const entrepriseField = document.getElementById('entreprise');
+          if(entrepriseField && !entrepriseField.value.trim()){
+            entrepriseField.value = result.nom_complet;
+          }
+          // Pré-remplit la zone d'intervention avec la ville du siège + sa région
+          if(result.siege && result.siege.libelle_commune){
+            const nomRegion = REGIONS_INSEE[result.siege.region] || '';
+            const zoneDeduite = nomRegion ? (result.siege.libelle_commune + ', ' + nomRegion) : result.siege.libelle_commune;
+            state.zone = zoneDeduite;
+            const zoneField = document.getElementById('zone');
+            if(zoneField && !zoneField.value.trim()){
+              zoneField.value = zoneDeduite;
+            }
+          }
+          // Département du siège — transmis tel quel à l'estimation de clics,
+          // plus fiable qu'un texte libre pour déterminer la région exacte.
+          if(result.siege && result.siege.departement){
+            state.departement = result.siege.departement;
+          }
         } else {
           state.siretVerifie = false;
           siretStatusEl.textContent = "SIRET introuvable — vérifiez le numéro.";
@@ -498,10 +526,6 @@
   const entrepriseEl = document.getElementById('entreprise');
   entrepriseEl.addEventListener('input', ()=>{ document.getElementById('btnNext').disabled = !canProceed(1); });
   document.getElementById('email').addEventListener('input', ()=>{ document.getElementById('btnNext').disabled = !canProceed(1); });
-
-  document.addEventListener('DOMContentLoaded', ()=>{
-    if(!entrepriseEl.value && state.entreprise) entrepriseEl.value = state.entreprise;
-  });
 
   const telEl = document.getElementById('telephone');
   const telStatusEl = document.getElementById('telStatus');
@@ -705,7 +729,7 @@
       const res = await fetch('/api/estimate-reach', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ metier: state.metier, zone: state.zone, budget: budgetVal })
+        body: JSON.stringify({ metier: state.metier, zone: state.zone, departement: state.departement, budget: budgetVal })
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error || 'Erreur inconnue.');

@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mes prospects — Skyeco Pro</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #14312a;
+    background: #f5f8f6;
+  }
+  header {
+    background: #14312a; color: white; padding: 18px 28px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  header .brand { font-weight: 800; font-size: 1.1rem; }
+  header .brand span { opacity: .65; font-weight: 500; font-size: .85rem; margin-left: 8px; }
+  .wrap { max-width: 980px; margin: 40px auto; padding: 0 20px 80px; }
+  .card { background: white; border-radius: 14px; padding: 26px 28px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
+  .card h2 { margin: 0 0 6px; font-size: 1.1rem; }
+  .card .hint { color: #5b6b64; font-size: 0.88rem; margin: 4px 0 16px; }
+
+  /* login */
+  #login-screen { min-height: 70vh; display:flex; align-items:center; justify-content:center; }
+  .login-box { background:white; border-radius:14px; padding:38px 34px; max-width:340px; width:100%; text-align:center; box-shadow:0 2px 12px rgba(0,0,0,0.06); }
+  .login-box input { width:100%; padding:12px 14px; border:1.5px solid #d8e3de; border-radius:10px; font-size:1rem; margin:16px 0 10px; }
+  .login-err { color:#991b1b; font-size:0.85rem; min-height:1.2em; }
+
+  .btn { background:#1e6f4c; color:white; border:none; border-radius:10px; padding:11px 20px; font-size:0.9rem; font-weight:700; cursor:pointer; }
+  .btn:hover { background:#175c3e; }
+  .btn:disabled { opacity:.5; cursor:not-allowed; }
+  .btn.outline { background:none; border:1.5px solid #1e6f4c; color:#1e6f4c; }
+
+  input[type=file] { font-size: 0.88rem; }
+
+  .manual-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:6px; }
+  .manual-grid label { display:block; font-size:0.78rem; color:#5b6b64; margin-bottom:5px; font-weight:600; }
+  .manual-grid input { width:100%; padding:10px 12px; border:1.5px solid #d8e3de; border-radius:8px; font-size:0.9rem; font-family:inherit; }
+  @media (max-width:600px){ .manual-grid{ grid-template-columns:1fr; } }
+
+  table { width:100%; border-collapse:collapse; font-size:0.88rem; margin-top:14px; }
+  th, td { text-align:left; padding:9px 10px; border-bottom:1px solid #eef1ee; }
+  th { color:#5b6b64; font-size:0.76rem; text-transform:uppercase; letter-spacing:0.03em; }
+  tr:hover td { background:#fafbfa; }
+  .statut { display:inline-block; padding:3px 9px; border-radius:20px; font-size:0.75rem; font-weight:700; }
+  .statut-envoye { background:#eaf4ef; color:#1e6f4c; }
+  .statut-attente { background:#f0e9da; color:#8a6b1f; }
+  .statut-optout { background:#fdeaea; color:#991b1b; }
+  .statut-clique { background:#e8f0fe; color:#1a56db; margin-left:4px; }
+  .statut-ouvert { background:#f3e8fd; color:#7c3aed; margin-left:4px; }
+
+  .stats-bar { display:flex; gap:14px; flex-wrap:wrap; margin-top:8px; }
+  .stat-box { flex:1; min-width:120px; background:#fbfcfa; border:1px solid #eef1ee; border-radius:10px; padding:12px 14px; text-align:center; }
+  .stat-box .num { font-size:1.5rem; font-weight:800; color:#14312a; line-height:1.1; }
+  .stat-box .lbl { font-size:0.74rem; color:#5b6b64; text-transform:uppercase; letter-spacing:0.03em; margin-top:2px; }
+  .stat-box.optout .num { color:#991b1b; }
+  .edit-field { width:100%; padding:6px 8px; border:1.5px solid #1e6f4c; border-radius:6px; font-size:0.85rem; font-family:inherit; }
+
+  .toolbar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-top:16px; }
+  .toolbar .left { font-size:0.85rem; color:#5b6b64; }
+  .send-status { font-size:0.85rem; margin-top:10px; }
+  .send-status.ok { color:#1e6f4c; }
+  .send-status.err { color:#991b1b; }
+  .empty { color:#8a9490; font-size:0.88rem; padding:20px 0; text-align:center; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand"><a href="/dashboard.html" style="color:inherit;text-decoration:none;">← Tableau de bord</a> <span>· Mes prospects</span></div>
+</header>
+
+<div class="wrap">
+
+  <div id="access-error" style="display:none; max-width:420px; margin:60px auto; text-align:center;">
+    <h2 style="margin:0 0 10px;">Accès refusé</h2>
+    <p style="color:#5b6b64;font-size:0.9rem;" id="access-error-msg">Merci de vous reconnecter.</p>
+    <a href="/connexion.html" class="btn" style="display:inline-block;margin-top:14px;text-decoration:none;">Se reconnecter</a>
+  </div>
+
+  <div id="dashboard" style="display:none;">
+
+    <div class="card">
+      <h2>Importer une liste</h2>
+      <p class="hint">Fichier .xlsx avec les colonnes : Nom entreprise, Ville, Département, Téléphone, Adresse, Email. Chaque ligne doit avoir au moins un mobile OU un email. Les numéros/emails déjà importés sont automatiquement mis à jour, pas dupliqués.</p>
+      <input type="file" id="file-input" accept=".xlsx,.xls">
+      <button class="btn outline" id="import-btn" style="margin-left:10px;">Importer</button>
+      <p class="send-status" id="import-status"></p>
+    </div>
+
+    <div class="card">
+      <h2>Ajouter un contact</h2>
+      <p class="hint">Pour ajouter un prospect à la main, sans passer par un fichier.</p>
+      <div class="manual-grid">
+        <div><label>Nom entreprise</label><input type="text" id="m-nom" placeholder="Ex : Jardin Martin"></div>
+        <div><label>Ville</label><input type="text" id="m-ville" placeholder="Ex : Vannes"></div>
+        <div><label>Département</label><input type="text" id="m-dept" placeholder="Ex : 56"></div>
+        <div><label>Téléphone</label><input type="text" id="m-tel" placeholder="Ex : 06 12 34 56 78"></div>
+        <div><label>Email</label><input type="email" id="m-email" placeholder="Ex : contact@entreprise.fr"></div>
+        <div style="grid-column:1/-1;"><label>Adresse</label><input type="text" id="m-adresse" placeholder="Ex : 12 rue de la Paix, 56000 Vannes"></div>
+      </div>
+      <button class="btn" id="manual-add-btn" style="margin-top:14px;">Ajouter le contact</button>
+      <p class="send-status" id="manual-status"></p>
+    </div>
+
+    <div class="card">
+      <h2>Prospects</h2>
+      <p class="hint">Sélectionnez les prospects à contacter, puis envoyez l'email.</p>
+
+      <div class="stats-bar" id="stats-bar"></div>
+
+      <div class="filtre-tabs" style="display:flex;gap:8px;margin:14px 0 10px 0;flex-wrap:wrap;">
+        <button type="button" class="btn outline filtre-tab" data-filtre="attente" style="padding:8px 16px;font-size:0.85rem;">En attente d'envoi</button>
+        <button type="button" class="btn outline filtre-tab" data-filtre="envoyes" style="padding:8px 16px;font-size:0.85rem;">Déjà envoyés (email)</button>
+        <button type="button" class="btn outline filtre-tab" data-filtre="sansReaction" style="padding:8px 16px;font-size:0.85rem;">Envoyé, sans réaction</button>
+        <button type="button" class="btn outline filtre-tab" data-filtre="cliqueActif" style="padding:8px 16px;font-size:0.85rem;">Cliqué, resté actif</button>
+        <button type="button" class="btn outline filtre-tab" data-filtre="cliqueStop" style="padding:8px 16px;font-size:0.85rem;">Cliqué puis Stop</button>
+        <button type="button" class="btn outline filtre-tab" data-filtre="tous" style="padding:8px 16px;font-size:0.85rem;">Tous</button>
+      </div>
+
+      <div class="toolbar" style="position:sticky;top:0;z-index:10;background:#fff;padding:10px 0;">
+        <span class="left" id="selection-count">0 sélectionné(s)</span>
+        <div>
+          <input type="number" id="select-n-input" min="1" step="1" placeholder="Ex: 1000" style="width:90px;padding:9px 10px;border:1px solid var(--line, #ccc);border-radius:4px;font-family:inherit;margin-right:4px;">
+          <button class="btn outline" id="select-n-btn">Sélectionner les N premiers</button>
+          <button class="btn outline" id="select-all-btn">Tout sélectionner</button>
+          <button class="btn outline" id="deselect-all-btn">Tout désélectionner</button>
+          <button class="btn" id="send-email-btn" style="margin-left:8px;background:#1a56db;">Envoyer par email</button>
+          <button class="btn" id="delete-selected-btn" style="margin-left:8px;background:#991b1b;">Supprimer la sélection</button>
+        </div>
+      </div>
+      <p class="send-status" id="send-status"></p>
+
+      <div id="table-container"><p class="empty">Chargement…</p></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  var ACCESS_TOKEN = sessionStorage.getItem('skyeco_access_token');
+  var prospects = [];
+  var filtreVue = 'attente'; // 'attente' | 'envoyes' | 'tous' — protège contre la re-sélection accidentelle
+
+  if (!ACCESS_TOKEN) {
+    window.location.href = '/connexion.html';
+  } else {
+    document.getElementById('dashboard').style.display = 'block';
+    chargerProspects();
+  }
+
+  function authHeaders(extra){
+    var h = { Authorization: 'Bearer ' + ACCESS_TOKEN };
+    if (extra) Object.assign(h, extra);
+    return h;
+  }
+
+  function badLogin(){
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('access-error-msg').textContent = 'Votre session a expiré ou votre abonnement n\'est plus actif.';
+    document.getElementById('access-error').style.display = 'block';
+  }
+
+  var editingId = null;
+
+  function renderStats(){
+    var bar = document.getElementById('stats-bar');
+    var total = prospects.length;
+    var optout = prospects.filter(function(p){ return p.opt_out; }).length;
+    var envoyes = prospects.filter(function(p){ return p.sms_envoye && !p.opt_out; }).length;
+    var attente = total - envoyes - optout;
+    var cliques = prospects.filter(function(p){ return p.lien_clique; }).length;
+    var cliquesActifs = prospects.filter(function(p){ return p.lien_clique && !p.opt_out; }).length;
+    var cliquesStop = prospects.filter(function(p){ return p.lien_clique && p.opt_out; }).length;
+    var emailsEnvoyes = prospects.filter(function(p){ return p.email_envoye; }).length;
+    var avecEmail = prospects.filter(function(p){ return p.email; }).length;
+    var emailsOuverts = prospects.filter(function(p){ return p.email_ouvert; }).length;
+    bar.innerHTML =
+      '<div class="stat-box"><div class="num">' + total + '</div><div class="lbl">Total prospects</div></div>' +
+      '<div class="stat-box"><div class="num">' + envoyes + '</div><div class="lbl">SMS envoyés</div></div>' +
+      '<div class="stat-box"><div class="num">' + emailsEnvoyes + '</div><div class="lbl">Emails envoyés</div></div>' +
+      '<div class="stat-box"><div class="num">' + emailsOuverts + '</div><div class="lbl">Emails ouverts</div></div>' +
+      '<div class="stat-box"><div class="num">' + avecEmail + '</div><div class="lbl">Avec email connu</div></div>' +
+      '<div class="stat-box"><div class="num">' + attente + '</div><div class="lbl">En attente</div></div>' +
+      '<div class="stat-box"><div class="num">' + cliques + '</div><div class="lbl">Liens cliqués</div>' +
+        '<div style="font-size:0.68rem;color:#5a6b82;margin-top:4px;">' + cliquesActifs + ' actifs · ' + cliquesStop + ' désabonnés ensuite</div>' +
+      '</div>' +
+      '<div class="stat-box optout"><div class="num">' + optout + '</div><div class="lbl">Désabonnés (STOP)</div></div>';
+  }
+
+  var EMAIL_TEST = 'infos@ecosky.fr';
+  function estContactTest(p){
+    return (p.email || '').toLowerCase() === EMAIL_TEST;
+  }
+
+  function renderFiltreTabs(){
+    var labels = {
+      attente: 'En attente d\'envoi',
+      envoyes: 'Déjà envoyés (email)',
+      sansReaction: 'Envoyé, sans réaction',
+      cliqueActif: 'Cliqué, resté actif',
+      cliqueStop: 'Cliqué puis Stop',
+      tous: 'Tous'
+    };
+    var enAttenteN = prospects.filter(function(p){ return !p.email_envoye; }).length;
+    var envoyesN = prospects.filter(function(p){ return !!p.email_envoye; }).length;
+    var sansReactionN = prospects.filter(function(p){ return !!p.email_envoye && !p.lien_clique && !p.opt_out; }).length;
+    var cliqueActifN = prospects.filter(function(p){ return p.lien_clique && !p.opt_out; }).length;
+    var cliqueStopN = prospects.filter(function(p){ return p.lien_clique && p.opt_out; }).length;
+    var compteurs = { attente: enAttenteN, envoyes: envoyesN, sansReaction: sansReactionN, cliqueActif: cliqueActifN, cliqueStop: cliqueStopN, tous: prospects.length };
+    document.querySelectorAll('.filtre-tab').forEach(function(btn){
+      var f = btn.dataset.filtre;
+      btn.textContent = labels[f] + ' (' + compteurs[f] + ')';
+      if (f === filtreVue) {
+        btn.classList.remove('outline');
+        btn.style.background = (f === 'cliqueStop') ? '#991b1b' : '#1a56db';
+        btn.style.color = '#fff';
+      } else {
+        btn.classList.add('outline');
+        btn.style.background = '';
+        btn.style.color = '';
+      }
+    });
+  }
+
+  document.querySelectorAll('.filtre-tab').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      filtreVue = this.dataset.filtre;
+      renderTable();
+      updateSelectionCount();
+    });
+  });
+
+  function renderTable(){
+    renderStats();
+    renderFiltreTabs();
+    var container = document.getElementById('table-container');
+
+    var prospectsVue = prospects.filter(function(p){
+      if (estContactTest(p)) return true; // le contact test reste visible dans tous les onglets
+      if (filtreVue === 'attente') return !p.email_envoye;
+      if (filtreVue === 'envoyes') return !!p.email_envoye;
+      if (filtreVue === 'sansReaction') return !!p.email_envoye && !p.lien_clique && !p.opt_out;
+      if (filtreVue === 'cliqueActif') return !!p.lien_clique && !p.opt_out;
+      if (filtreVue === 'cliqueStop') return !!p.lien_clique && !!p.opt_out;
+      return true; // 'tous'
+    });
+
+    if (prospectsVue.length === 0) {
+      container.innerHTML = '<p class="empty">' +
+        (filtreVue === 'envoyes' ? 'Aucun email envoyé pour le moment.' :
+         filtreVue === 'sansReaction' ? 'Aucun prospect sans réaction pour le moment.' :
+         filtreVue === 'cliqueActif' ? 'Aucun prospect ayant cliqué sans se désabonner pour le moment.' :
+         filtreVue === 'cliqueStop' ? 'Aucun prospect ayant cliqué puis stoppé pour le moment.' :
+         'Aucun prospect dans cette vue.') +
+        '</p>';
+      return;
+    }
+    var prospectsTries = prospectsVue.slice().sort(function(a, b){
+      var aTest = estContactTest(a) ? 0 : 1;
+      var bTest = estContactTest(b) ? 0 : 1;
+      return aTest - bTest;
+    });
+    var rows = prospectsTries.map(function(p){
+      var estTest = estContactTest(p);
+      if (p.id === editingId) {
+        return '<tr' + (estTest ? ' style="background:#fff7e6;"' : '') + '>' +
+          '<td></td>' +
+          '<td><input type="text" class="edit-field" data-f="nom" value="' + escapeAttr(p.nom) + '"></td>' +
+          '<td><input type="text" class="edit-field" data-f="ville" value="' + escapeAttr(p.ville) + '"></td>' +
+          '<td><input type="text" class="edit-field" data-f="telephone" value="' + escapeAttr(p.telephone || p.telephone_e164) + '"></td>' +
+          '<td><input type="email" class="edit-field" data-f="email" value="' + escapeAttr(p.email || '') + '"></td>' +
+          '<td></td>' +
+          '<td>' +
+            '<button class="btn row-save" data-id="' + p.id + '" style="padding:5px 12px;font-size:0.78rem;">Enregistrer</button> ' +
+            '<button class="btn outline row-cancel" style="padding:5px 12px;font-size:0.78rem;">Annuler</button>' +
+          '</td>' +
+          '</tr>';
+      }
+      var statutHtml = p.opt_out
+        ? '<span class="statut statut-optout">Désabonné (STOP)' + (p.opt_out_date ? ' — ' + new Date(p.opt_out_date).toLocaleDateString('fr-FR') : '') + '</span>'
+        : p.sms_envoye
+        ? '<span class="statut statut-envoye">SMS envoyé' + (p.date_envoi ? ' — ' + new Date(p.date_envoi).toLocaleDateString('fr-FR') : '') + '</span>'
+        : '<span class="statut statut-attente">En attente</span>';
+      if (p.email_envoye) {
+        statutHtml += '<span class="statut statut-envoye">Email envoyé' + (p.date_envoi_email ? ' — ' + new Date(p.date_envoi_email).toLocaleDateString('fr-FR') : '') + '</span>';
+      }
+      if (p.email_ouvert) {
+        statutHtml += '<span class="statut statut-ouvert">📧 Ouvert' + (p.date_ouverture ? ' — ' + new Date(p.date_ouverture).toLocaleDateString('fr-FR') : '') + '</span>';
+      }
+      if (p.lien_clique) {
+        statutHtml += '<span class="statut statut-clique">🔗 Cliqué' + (p.clic_date ? ' — ' + new Date(p.clic_date).toLocaleDateString('fr-FR') : '') + '</span>';
+      }
+      var nomAffiche = escapeHtml(p.nom || '');
+      if (estTest) {
+        nomAffiche = '<span style="display:inline-block;background:#DE5A2C;color:#fff;font-size:0.68rem;font-weight:700;padding:2px 7px;border-radius:3px;margin-right:8px;vertical-align:middle;">🧪 TEST</span>' + nomAffiche;
+      }
+      var dejaEnvoye = !!p.email_envoye;
+      var caseDesactivee = (dejaEnvoye && filtreVue !== 'attente' && filtreVue !== 'sansReaction') || !!p.opt_out;
+      return '<tr' + (estTest ? ' style="background:#fff7e6;"' : (p.opt_out ? ' style="opacity:0.5;"' : (caseDesactivee ? ' style="opacity:0.65;"' : ''))) + '>' +
+        '<td><input type="checkbox" class="row-check" data-id="' + p.id + '"' +
+          (estTest ? ' data-test="1"' : '') +
+          (caseDesactivee ? ' disabled title="' + (p.opt_out ? 'Prospect désabonné (STOP) — jamais recontacté.' : 'Email déjà envoyé — repassez sur l\'onglet En attente pour resélectionner volontairement.') + '"' : '') +
+          '></td>' +
+        '<td>' + nomAffiche + '</td>' +
+        '<td>' + escapeHtml(p.ville || '') + '</td>' +
+        '<td>' + escapeHtml(p.telephone_e164 || '') + '</td>' +
+        '<td>' + escapeHtml(p.email || '—') + '</td>' +
+        '<td>' + statutHtml + '</td>' +
+        '<td>' +
+          '<button class="btn outline row-edit" data-id="' + p.id + '" style="padding:5px 12px;font-size:0.78rem;">Modifier</button> ' +
+          '<button class="btn outline row-delete" data-id="' + p.id + '" style="padding:5px 12px;font-size:0.78rem;">Supprimer</button>' +
+        '</td>' +
+        '</tr>';
+    }).join('');
+    container.innerHTML = '<table><thead><tr><th></th><th>Nom</th><th>Ville</th><th>Téléphone</th><th>Email</th><th>Statut</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>';
+    container.querySelectorAll('.row-check').forEach(function(cb){
+      cb.addEventListener('change', updateSelectionCount);
+    });
+    container.querySelectorAll('.row-delete').forEach(function(btn){
+      btn.addEventListener('click', function(){ supprimerProspects([this.dataset.id]); });
+    });
+    container.querySelectorAll('.row-edit').forEach(function(btn){
+      btn.addEventListener('click', function(){ editingId = this.dataset.id; renderTable(); });
+    });
+    container.querySelectorAll('.row-cancel').forEach(function(btn){
+      btn.addEventListener('click', function(){ editingId = null; renderTable(); });
+    });
+    container.querySelectorAll('.row-save').forEach(function(btn){
+      btn.addEventListener('click', function(){ enregistrerModification(this.dataset.id); });
+    });
+    updateSelectionCount();
+  }
+
+  function enregistrerModification(id){
+    var tr = document.querySelector('.row-save[data-id="' + id + '"]').closest('tr');
+    var nom = tr.querySelector('[data-f="nom"]').value.trim();
+    var ville = tr.querySelector('[data-f="ville"]').value.trim();
+    var telephone = tr.querySelector('[data-f="telephone"]').value.trim();
+    var email = tr.querySelector('[data-f="email"]').value.trim();
+    var status = document.getElementById('send-status');
+
+    fetch('/api/client-prospects-update', {
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ id: id, nom: nom, ville: ville, telephone: telephone, email: email })
+    }).then(function(r){ if (r.status === 401) { badLogin(); throw new Error('unauthorized'); } return r.json(); })
+      .then(function(data){
+        if (data.success) {
+          editingId = null;
+          status.textContent = 'Contact modifié.';
+          status.className = 'send-status ok';
+          chargerProspects();
+        } else {
+          status.textContent = data.error || 'Modification impossible.';
+          status.className = 'send-status err';
+        }
+      }).catch(function(){
+        status.textContent = 'Erreur réseau.';
+        status.className = 'send-status err';
+      });
+  }
+
+  function escapeAttr(str){
+    return String(str || '').replace(/"/g, '&quot;');
+  }
+
+  function escapeHtml(str){
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function updateSelectionCount(){
+    var n = document.querySelectorAll('.row-check:checked').length;
+    document.getElementById('selection-count').textContent = n + ' sélectionné(s)';
+  }
+
+  function chargerProspects(){
+    var container = document.getElementById('table-container');
+    fetch('/api/client-prospects-list', { headers: authHeaders() })
+      .then(function(r){
+        if (r.status === 401) { badLogin(); throw new Error('unauthorized'); }
+        return r.json().then(function(data){ return { ok: r.ok, data: data }; });
+      })
+      .then(function(res){
+        if (res.data && res.data.success) {
+          prospects = res.data.prospects;
+          renderTable();
+        } else {
+          var msg = (res.data && res.data.error) || 'Erreur inconnue du serveur.';
+          container.innerHTML = '<p class="empty" style="color:#991b1b;">Échec du chargement : ' + escapeHtml(msg) +
+            '<br><button type="button" class="btn outline" id="retry-charger" style="margin-top:10px;">Réessayer</button></p>';
+          var retryBtn = document.getElementById('retry-charger');
+          if (retryBtn) retryBtn.addEventListener('click', chargerProspects);
+        }
+      })
+      .catch(function(err){
+        if (err && err.message === 'unauthorized') return;
+        container.innerHTML = '<p class="empty" style="color:#991b1b;">Échec du chargement (réseau ou serveur indisponible).' +
+          '<br><button type="button" class="btn outline" id="retry-charger" style="margin-top:10px;">Réessayer</button></p>';
+        var retryBtn = document.getElementById('retry-charger');
+        if (retryBtn) retryBtn.addEventListener('click', chargerProspects);
+      });
+  }
+
+  document.getElementById('select-n-btn').addEventListener('click', function(){
+    var n = parseInt(document.getElementById('select-n-input').value, 10);
+    if (!n || n < 1) {
+      document.getElementById('send-status').textContent = 'Indique un nombre valide.';
+      document.getElementById('send-status').className = 'send-status err';
+      return;
+    }
+    var cases = Array.from(document.querySelectorAll('.row-check')).filter(function(cb){ return cb.dataset.test !== '1' && !cb.disabled; });
+    cases.forEach(function(cb){ cb.checked = false; });
+    cases.slice(0, n).forEach(function(cb){ cb.checked = true; });
+    updateSelectionCount();
+  });
+
+  document.getElementById('select-all-btn').addEventListener('click', function(){
+    document.querySelectorAll('.row-check').forEach(function(cb){
+      if (cb.dataset.test !== '1' && !cb.disabled) cb.checked = true;
+    });
+    updateSelectionCount();
+  });
+
+  document.getElementById('deselect-all-btn').addEventListener('click', function(){
+    document.querySelectorAll('.row-check').forEach(function(cb){ cb.checked = false; });
+    updateSelectionCount();
+  });
+
+  function supprimerProspects(ids){
+    if (ids.length === 0) return;
+    if (!confirm('Supprimer ' + ids.length + ' prospect(s) ? Cette action est définitive.')) return;
+    var status = document.getElementById('send-status');
+    fetch('/api/client-prospects-delete', {
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ ids: ids })
+    }).then(function(r){ if (r.status === 401) { badLogin(); throw new Error('unauthorized'); } return r.json(); })
+      .then(function(data){
+        if (data.success) {
+          status.textContent = data.deleted + ' prospect(s) supprimé(s).';
+          status.className = 'send-status ok';
+          chargerProspects();
+        } else {
+          status.textContent = data.error || 'Suppression impossible.';
+          status.className = 'send-status err';
+        }
+      }).catch(function(){
+        status.textContent = 'Erreur réseau.';
+        status.className = 'send-status err';
+      });
+  }
+
+  document.getElementById('delete-selected-btn').addEventListener('click', function(){
+    var ids = Array.from(document.querySelectorAll('.row-check:checked')).map(function(cb){ return cb.dataset.id; });
+    if (ids.length === 0) { alert('Sélectionnez au moins un prospect à supprimer.'); return; }
+    supprimerProspects(ids);
+  });
+
+  document.getElementById('manual-add-btn').addEventListener('click', function(){
+    var status = document.getElementById('manual-status');
+    var nom = document.getElementById('m-nom').value.trim();
+    var tel = document.getElementById('m-tel').value.trim();
+    var digits = tel.replace(/[\s.-]/g, '');
+    var e164 = null;
+    if (/^0[1-9]\d{8}$/.test(digits)) e164 = '+33' + digits.slice(1);
+    else if (/^\+33[1-9]\d{8}$/.test(digits)) e164 = digits;
+
+    if (!nom) { status.textContent = 'Le nom est requis.'; status.className = 'send-status err'; return; }
+    if (!e164) { status.textContent = 'Numéro de mobile invalide (format 06/07 attendu).'; status.className = 'send-status err'; return; }
+
+    var contact = {
+      nom: nom,
+      ville: document.getElementById('m-ville').value.trim(),
+      departement: document.getElementById('m-dept').value.trim(),
+      telephone: tel,
+      telephone_e164: e164,
+      adresse: document.getElementById('m-adresse').value.trim(),
+      email: document.getElementById('m-email').value.trim(),
+    };
+
+    status.textContent = 'Ajout en cours…';
+    status.className = 'send-status';
+
+    fetch('/api/client-prospects-import', {
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ prospects: [contact] })
+    }).then(function(r){ if (r.status === 401) { badLogin(); throw new Error('unauthorized'); } return r.json(); })
+      .then(function(data){
+        if (data.success) {
+          status.textContent = 'Contact ajouté.';
+          status.className = 'send-status ok';
+          ['m-nom','m-ville','m-dept','m-tel','m-adresse'].forEach(function(id){ document.getElementById(id).value = ''; });
+          chargerProspects();
+        } else {
+          status.textContent = data.error || 'Ajout impossible.';
+          status.className = 'send-status err';
+        }
+      }).catch(function(){
+        status.textContent = 'Erreur réseau.';
+        status.className = 'send-status err';
+      });
+  });
+
+  document.getElementById('import-btn').addEventListener('click', function(){
+    var fileInput = document.getElementById('file-input');
+    var status = document.getElementById('import-status');
+    if (!fileInput.files.length) { status.textContent = 'Choisissez un fichier .xlsx.'; status.className = 'send-status err'; return; }
+
+    var reader = new FileReader();
+    reader.onload = function(e){
+      try {
+        var wb = XLSX.read(e.target.result, { type: 'array' });
+        var sheet = wb.Sheets[wb.SheetNames[0]];
+        var rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+        var toImport = rows.map(function(r){
+          var tel = String(r['Téléphone'] || r['Telephone'] || '').trim();
+          var digits = tel.replace(/[\s.-]/g, '');
+          var e164 = null;
+          if (/^0[1-9]\d{8}$/.test(digits)) e164 = '+33' + digits.slice(1);
+          else if (/^\+33[1-9]\d{8}$/.test(digits)) e164 = digits;
+          return {
+            nom: r['Nom entreprise'] || r['Nom'] || '',
+            ville: r['Ville'] || '',
+            departement: String(r['Département'] || r['Departement'] || ''),
+            telephone: tel,
+            telephone_e164: e164,
+            adresse: r['Adresse'] || '',
+            email: String(r['Email'] || r['E-mail'] || '').trim(),
+          };
+        }).filter(function(p){ return p.telephone_e164 || p.email; });
+
+        if (toImport.length === 0) {
+          status.textContent = 'Aucun mobile ni email valide trouvé dans le fichier.';
+          status.className = 'send-status err';
+          return;
+        }
+
+        status.textContent = 'Import en cours…';
+        status.className = 'send-status';
+
+        fetch('/api/client-prospects-import', {
+          method: 'POST',
+          headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ prospects: toImport })
+        }).then(function(r){ if (r.status === 401) { badLogin(); throw new Error('unauthorized'); } return r.json(); })
+          .then(function(data){
+            if (data.success) {
+              status.textContent = data.imported + ' prospect(s) importé(s).';
+              status.className = 'send-status ok';
+              fileInput.value = '';
+              chargerProspects();
+            } else {
+              status.textContent = data.error || 'Import impossible.';
+              status.className = 'send-status err';
+            }
+          }).catch(function(){
+            status.textContent = 'Erreur réseau.';
+            status.className = 'send-status err';
+          });
+      } catch (err) {
+        status.textContent = 'Fichier illisible : ' + err.message;
+        status.className = 'send-status err';
+      }
+    };
+    reader.readAsArrayBuffer(fileInput.files[0]);
+  });
+
+
+  document.getElementById('send-email-btn').addEventListener('click', function(){
+    var ids = Array.from(document.querySelectorAll('.row-check:checked')).map(function(cb){ return cb.dataset.id; });
+    var status = document.getElementById('send-status');
+    if (ids.length === 0) { status.textContent = 'Sélectionnez au moins un prospect.'; status.className = 'send-status err'; return; }
+    if (!confirm('Envoyer un email à ' + ids.length + ' prospect(s) sélectionné(s) (ceux sans adresse email seront ignorés) ?')) return;
+
+    this.disabled = true;
+    status.textContent = 'Envoi en cours…';
+    status.className = 'send-status';
+    var self = this;
+
+    fetch('/api/client-prospects-send-email', {
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ ids: ids })
+    }).then(function(r){ if (r.status === 401) { badLogin(); throw new Error('unauthorized'); } return r.json(); })
+      .then(function(data){
+        self.disabled = false;
+        if (data.success) {
+          status.textContent = data.envoyes + ' email(s) envoyé(s)' +
+            (data.echoues ? ', ' + data.echoues + ' échoué(s)' : '') +
+            (data.ignoresSansEmail ? ', ' + data.ignoresSansEmail + ' ignoré(s) (pas d\'email connu)' : '') +
+            (data.ignoresOptOut ? ', ' + data.ignoresOptOut + ' ignoré(s) car désabonné(s)' : '') + '.';
+          status.className = 'send-status ok';
+
+          if (data.quotaAtteint) {
+            var quotaEl = document.getElementById('send-quota-alerte');
+            if (!quotaEl) {
+              quotaEl = document.createElement('div');
+              quotaEl.id = 'send-quota-alerte';
+              quotaEl.style.cssText = 'font-size:0.85rem;font-weight:700;color:#991b1b;background:#fde8e8;border:1px solid #f5b5b5;border-radius:4px;padding:8px 12px;margin-top:8px;';
+              status.parentNode.insertBefore(quotaEl, status.nextSibling);
+            }
+            quotaEl.textContent = '⚠️ Quota journalier Resend atteint — l\'envoi s\'est arrêté automatiquement. Vérifie ton plan sur resend.com/settings/billing avant de relancer.';
+          } else {
+            var ancienQuota = document.getElementById('send-quota-alerte');
+            if (ancienQuota) ancienQuota.remove();
+          }
+
+          // Détail des raisons d'échec, regroupées par message d'erreur
+          if (data.echoues && Array.isArray(data.details)) {
+            var compteurs = {};
+            data.details.filter(function(d){ return !d.success; }).forEach(function(d){
+              var msg = (d.error || 'Erreur inconnue').slice(0, 200);
+              compteurs[msg] = (compteurs[msg] || 0) + 1;
+            });
+            var lignes = Object.keys(compteurs)
+              .sort(function(a, b){ return compteurs[b] - compteurs[a]; })
+              .map(function(msg){ return (compteurs[msg] + '× — ' + msg); });
+            var detailEl = document.getElementById('send-echecs-detail');
+            if (!detailEl) {
+              detailEl = document.createElement('div');
+              detailEl.id = 'send-echecs-detail';
+              detailEl.style.cssText = 'font-size:0.8rem;color:#991b1b;margin-top:6px;white-space:pre-wrap;';
+              status.parentNode.insertBefore(detailEl, status.nextSibling);
+            }
+            detailEl.textContent = 'Raisons des échecs :\n' + lignes.join('\n');
+          } else {
+            var ancienDetail = document.getElementById('send-echecs-detail');
+            if (ancienDetail) ancienDetail.textContent = '';
+          }
+
+          chargerProspects();
+        } else {
+          status.textContent = data.error || 'Envoi impossible.';
+          status.className = 'send-status err';
+        }
+      }).catch(function(){
+        self.disabled = false;
+        status.textContent = 'Erreur réseau.';
+        status.className = 'send-status err';
+      });
+  });
+</script>
+
+</body>
+</html>

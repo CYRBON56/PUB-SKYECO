@@ -334,11 +334,18 @@
 
   const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
-  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   async function submitForm(){
     document.getElementById('btnNext').disabled = true;
     document.getElementById('btnNext').textContent = 'Génération en cours…';
+
+    if (!window.supabase) {
+      document.getElementById('btnNext').disabled = false;
+      document.getElementById('btnNext').textContent = 'Générer mon aperçu gratuit';
+      alert("Le service de sauvegarde n'a pas pu se charger. Vérifiez votre connexion et réessayez.");
+      return;
+    }
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const { data, error } = await supabaseClient
       .from('skyeco_pro_vitrine_drafts')

@@ -25,7 +25,7 @@
 
   .split-layout{ display:flex; min-height:100vh; }
   .video-panel{
-    flex:1 1 42%; background:var(--navy); position:relative; display:flex; flex-direction:column;
+    flex:1 1 58%; background:var(--navy); position:relative; display:flex; flex-direction:column;
     align-items:center; justify-content:center; padding:32px; overflow:hidden;
   }
   .carousel-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 1s ease-in-out; }
@@ -38,28 +38,18 @@
                        repeating-linear-gradient(90deg, rgba(110,151,184,0.06) 0px, transparent 1px, transparent 32px);
     pointer-events:none;
   }
-  .video-label{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--blue-light); letter-spacing:.1em; margin-bottom:24px; z-index:1; }
-  .explain-steps{ width:100%; max-width:360px; z-index:1; }
-  .explain-step{ display:flex; gap:16px; align-items:flex-start; margin-bottom:28px; }
-  .explain-step:last-child{ margin-bottom:0; }
-  .explain-num{
-    font-family:'Big Shoulders Display',sans-serif; font-weight:900; font-size:28px; color:var(--orange);
-    width:40px; flex-shrink:0; line-height:1;
-  }
-  .explain-text h3{ font-family:'IBM Plex Sans',sans-serif; font-weight:700; font-size:15px; color:var(--white); margin-bottom:4px;}
-  .explain-text p{ font-family:'IBM Plex Sans',sans-serif; font-size:13.5px; color:#C9D6DF; line-height:1.5;}
 
-  .form-panel{ flex:1 1 58%; position:relative; display:flex; align-items:center; justify-content:center; padding:24px; overflow:hidden; }
-  .form-bg-video{ position:absolute; top:50%; left:50%; min-width:100%; min-height:100%; width:auto; height:auto; transform:translate(-50%,-50%); object-fit:cover; z-index:-2; }
+  .form-panel{ flex:1 1 42%; position:relative; display:flex; align-items:center; justify-content:center; padding:24px; overflow:hidden; }
   .form-bg-overlay{ position:absolute; inset:0; z-index:-1; background:rgba(244,247,249,0.55); }
-  .card{ width:100%; max-width:560px; position:relative; z-index:1; }
+  .card{ width:100%; max-width:480px; position:relative; z-index:1; }
 
   header.top{ background:var(--navy); color:var(--white); padding:22px 28px; margin:-24px -24px 0; }
   @media(min-width:769px){ header.top{ margin:0; } }
   .logo{ font-family:'Big Shoulders Display',sans-serif; font-weight:900; font-size:18px; display:flex; align-items:center; gap:8px; margin-bottom:14px;}
   .logo .dot{ width:8px; height:8px; background:var(--orange); display:inline-block;}
   .eyebrow{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--blue-light); letter-spacing:.08em; margin-bottom:6px;}
-  h1.title{ font-family:'Big Shoulders Display',sans-serif; font-weight:800; font-size:26px; line-height:1.05;}
+  h1.title{ font-family:'Big Shoulders Display',sans-serif; font-weight:800; font-size:24px; line-height:1.1;}
+  .subeyebrow{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--orange); letter-spacing:.08em; margin-top:8px;}
 
   .stepper{ display:flex; gap:4px; padding:16px 28px 0; background:var(--navy); }
   .step-bar{ flex:1; height:4px; background:rgba(255,255,255,0.18); position:relative; overflow:hidden;}
@@ -92,8 +82,8 @@
     font-size:14.5px; color:var(--navy); background:var(--paper);
   }
   input:focus, textarea:focus, select:focus{ background:var(--white); border-color:var(--blue); }
-  textarea{ resize:vertical; min-height:90px; }
-  .status-line{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--concrete); margin:-10px 0 4px;}
+  textarea{ resize:vertical; min-height:80px; }
+  .status-line{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--concrete); margin:6px 0 4px;}
   .char-count{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--concrete); text-align:right; margin-top:4px;}
 
   .sms-block{ margin:14px 0 6px; padding:14px; background:var(--paper); border:1px solid var(--paper-line); }
@@ -101,11 +91,14 @@
   .btn-sms{ background:#EEF4F0; color:var(--blue); border:1.5px solid var(--blue); padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; }
   .btn-sms:hover:not(:disabled){ background:var(--blue); color:var(--white); }
   .btn-sms:disabled{ opacity:.5; cursor:not-allowed; }
+  .btn-sms.selected{ background:var(--blue); color:var(--white); }
   .sms-code-row{ display:flex; gap:8px; margin-top:10px; }
   .sms-code-row input{ flex:1; letter-spacing:.3em; text-align:center; margin:0; }
   .sms-status{ margin-top:8px; font-size:12.5px; }
   .sms-status.ok{ color:var(--ok); font-weight:600; }
   .sms-status.error{ color:var(--orange-dark); }
+
+  .unite-row{ display:flex; gap:8px; margin-top:6px; flex-wrap:wrap; }
 
   .upload-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:6px;}
   .upload-slot{
@@ -149,7 +142,6 @@
   @media(max-width:768px){
     .split-layout{ flex-direction:column; }
     .video-panel{ padding:24px; }
-    .video-wrap{ max-width:100%; }
     header.top{ margin:0; }
   }
 </style>
@@ -181,29 +173,20 @@
 
       <form id="wizardForm" novalidate>
 
-        <!-- STEP 1 : métier -->
+        <!-- STEP 0 : éligibilité (SIRET) -->
         <div class="panel active" data-step="0">
-          <h2 class="q">Quel est votre métier ?</h2>
-          <p class="hint">Le mini-site sera adapté à votre activité.</p>
-          <div class="metier-grid" id="metierGrid">
-            <button type="button" class="metier-card" data-value="resine">Revêtements résine<span class="tag">sols, allées, terrasses</span></button>
-            <button type="button" class="metier-card" data-value="cloture">Clôtures &amp; portails<span class="tag">pose, motorisation</span></button>
-            <button type="button" class="metier-card" data-value="terrassement">Terrassement<span class="tag">VRD, préparation de sol</span></button>
-            <button type="button" class="metier-card" data-value="assainissement">Assainissement<span class="tag">non collectif</span></button>
-            <button type="button" class="metier-card" data-value="paysagisme">Paysagisme<span class="tag">extérieurs, aménagement</span></button>
-            <button type="button" class="metier-card" data-value="autre">Autre métier BTP<span class="tag">à préciser</span></button>
-          </div>
-          <div class="error mono" id="err-metier">Sélectionnez un métier pour continuer.</div>
-        </div>
-
-        <!-- STEP 2 : infos entreprise -->
-        <div class="panel" data-step="1">
-          <h2 class="q">Parlez-moi de votre entreprise.</h2>
-          <p class="hint">Ces informations apparaîtront sur votre page.</p>
-
+          <h2 class="q">Vérifiez votre éligibilité.</h2>
+          <p class="hint">Un numéro de SIRET valide suffit pour commencer — c'est gratuit et sans engagement.</p>
           <label for="siret">Numéro de SIRET</label>
           <input type="text" id="siret" inputmode="numeric" maxlength="14" placeholder="Ex : 93999787000018">
           <div class="status-line mono" id="siretStatus">14 chiffres, sans espace.</div>
+          <div class="error mono" id="err-siret">Merci de renseigner un SIRET valide (14 chiffres).</div>
+        </div>
+
+        <!-- STEP 1 : coordonnées -->
+        <div class="panel" data-step="1">
+          <h2 class="q">Parlez-moi de votre entreprise.</h2>
+          <p class="hint">Ces informations apparaîtront sur votre page.</p>
 
           <label for="entreprise">Nom de l'entreprise</label>
           <input type="text" id="entreprise" placeholder="Ex : EcoSky by RMS">
@@ -227,11 +210,26 @@
 
           <label for="email">Email</label>
           <input type="email" id="email" placeholder="Ex : contact@monentreprise.fr">
-          <div class="error mono" id="err-entreprise">Merci de renseigner un SIRET valide, un téléphone vérifié et un email valide.</div>
+          <div class="error mono" id="err-entreprise">Merci de renseigner un nom d'entreprise, un téléphone vérifié et un email valide.</div>
+        </div>
+
+        <!-- STEP 2 : métier / cœur de cible -->
+        <div class="panel" data-step="2">
+          <h2 class="q">Quel est votre cœur de cible ?</h2>
+          <p class="hint">Le mini-site et les questions posées à vos clients seront adaptés à votre activité.</p>
+          <div class="metier-grid" id="metierGrid">
+            <button type="button" class="metier-card" data-value="resine">Revêtements résine<span class="tag">sols, allées, terrasses</span></button>
+            <button type="button" class="metier-card" data-value="cloture">Clôtures &amp; portails<span class="tag">pose, motorisation</span></button>
+            <button type="button" class="metier-card" data-value="terrassement">Terrassement<span class="tag">VRD, préparation de sol</span></button>
+            <button type="button" class="metier-card" data-value="assainissement">Assainissement<span class="tag">non collectif</span></button>
+            <button type="button" class="metier-card" data-value="paysagisme">Paysagisme<span class="tag">extérieurs, aménagement</span></button>
+            <button type="button" class="metier-card" data-value="autre">Autre métier BTP<span class="tag">à préciser</span></button>
+          </div>
+          <div class="error mono" id="err-metier">Sélectionnez un métier pour continuer.</div>
         </div>
 
         <!-- STEP 3 : savoir-faire -->
-        <div class="panel" data-step="2">
+        <div class="panel" data-step="3">
           <h2 class="q">Décrivez votre savoir-faire.</h2>
           <p class="hint">Deux ou trois phrases suffisent — on ajustera le ton ensemble si besoin.</p>
           <label for="description">Ce qui vous différencie</label>
@@ -240,9 +238,9 @@
         </div>
 
         <!-- STEP 4 : photos -->
-        <div class="panel" data-step="3">
+        <div class="panel" data-step="4">
           <h2 class="q">Montrez vos réalisations.</h2>
-          <p class="hint">Idéalement 6 photos — vos vrais chantiers convainquent bien mieux que des images génériques. N'hésitez pas à montrer un avant/après si vous en avez.</p>
+          <p class="hint">Idéalement 6 photos — vos vrais chantiers convainquent bien mieux que des images génériques.</p>
           <div class="upload-row" id="uploadRow">
             <label class="upload-slot"><span>+ Photo 1</span><input type="file" accept="image/*" data-slot="0"></label>
             <label class="upload-slot"><span>+ Photo 2</span><input type="file" accept="image/*" data-slot="1"></label>
@@ -263,8 +261,34 @@
           </div>
         </div>
 
-        <!-- STEP 5 : couleur -->
-        <div class="panel" data-step="4">
+        <!-- STEP 5 : tarification -->
+        <div class="panel" data-step="5">
+          <h2 class="q">Vos prospects doivent-ils avoir une idée de prix ?</h2>
+          <p class="hint">Facultatif — ça qualifie mieux vos demandes. Ce n'est jamais un vrai devis, juste un ordre de grandeur.</p>
+          <div class="metier-grid" id="tarifChoice" style="grid-template-columns:1fr;">
+            <button type="button" class="metier-card" data-value="non">Formulaire basique<span class="tag">le prospect laisse ses coordonnées, sans prix affiché</span></button>
+            <button type="button" class="metier-card" data-value="oui">Formulaire avec estimation de prix<span class="tag">le prospect voit un ordre de grandeur immédiatement</span></button>
+          </div>
+
+          <div id="tarifDetails" style="display:none; margin-top:22px; padding-top:20px; border-top:1px solid var(--paper-line);">
+            <label style="margin-top:0;">Vous facturez plutôt...</label>
+            <div class="unite-row" id="tarifUniteRow">
+              <button type="button" class="btn-sms selected" data-value="m2">Au m²</button>
+              <button type="button" class="btn-sms" data-value="ml">Au mètre linéaire</button>
+              <button type="button" class="btn-sms" data-value="m3">Au m³</button>
+            </div>
+
+            <label for="tarifPrix">Prix indicatif (€)</label>
+            <input type="text" id="tarifPrix" inputmode="decimal" placeholder="Ex : 115">
+            <div class="status-line mono">Donnez une moyenne réaliste — le prospect verra "à partir de" ce prix.</div>
+
+            <label for="tarifContraintes">Contraintes particulières (optionnel)</label>
+            <textarea id="tarifContraintes" maxlength="200" placeholder="Ex : déplacement facturé au-delà de 20 km, épaisseur minimum 8 cm..."></textarea>
+          </div>
+        </div>
+
+        <!-- STEP 6 : couleur -->
+        <div class="panel" data-step="6">
           <h2 class="q">Choisissez une couleur d'accent.</h2>
           <p class="hint">Elle habillera les boutons et titres de votre page.</p>
           <div class="palette-row" id="paletteRow">
@@ -276,8 +300,8 @@
           </div>
         </div>
 
-        <!-- STEP 6 : récap -->
-        <div class="panel" data-step="5">
+        <!-- STEP 7 : récap -->
+        <div class="panel" data-step="7">
           <h2 class="q">Tout est prêt.</h2>
           <p class="hint">Vérifiez vos informations avant de générer votre aperçu.</p>
           <dl class="recap" id="recap"></dl>
@@ -301,7 +325,7 @@
 
 <script>
 (function(){
-  // Carrousel photo (panneau gauche) — même principe que le vrai site EcoSky
+  // Carrousel photo (panneau droit, fond du formulaire)
   (function initCarousel(){
     const imgs = Array.from(document.querySelectorAll('#photoCarousel .carousel-img'));
     if(imgs.length <= 1) return;
@@ -314,9 +338,14 @@
   })();
 
   const steps = Array.from(document.querySelectorAll('.panel'));
-  const stepLabels = ['Métier','Entreprise','Savoir-faire','Photos','Couleur','Récapitulatif'];
+  const stepLabels = ['Éligibilité','Coordonnées','Métier','Savoir-faire','Photos','Tarification','Couleur','Récapitulatif'];
   let current = 0;
-  const state = { metier:null, siret:'', siretVerifie:false, entreprise:'', zone:'', telephone:'', telephoneVerifie:false, email:'', description:'', photos:[null,null,null,null,null,null], videoUrl:'', couleur:'#E8622C' };
+  const state = {
+    metier:null, siret:'', siretVerifie:false, entreprise:'', zone:'',
+    telephone:'', telephoneVerifie:false, email:'', description:'',
+    photos:[null,null,null,null,null,null], videoUrl:'', couleur:'#E8622C',
+    tarifActif:false, tarifUnite:'m2', tarifPrix:'', tarifContraintes:''
+  };
 
   const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
@@ -350,30 +379,35 @@
     document.getElementById('stepLabel').textContent = 'ÉTAPE ' + (current+1) + ' / ' + steps.length + ' — ' + stepLabels[current].toUpperCase();
   }
 
+  function isTelephoneValid(raw){
+    const digits = raw.replace(/\D/g,'');
+    return /^0\d{9}$/.test(digits);
+  }
+
+  function canProceed(i){
+    if(i===0){ return state.siret.length === 14; }
+    if(i===1){
+      const emailOk = /\S+@\S+\.\S+/.test(document.getElementById('email').value.trim());
+      const telOk = isTelephoneValid(document.getElementById('telephone').value);
+      return document.getElementById('entreprise').value.trim() && emailOk && telOk && state.telephoneVerifie;
+    }
+    if(i===2){ return !!state.metier; }
+    if(i===5){ return !state.tarifActif || (state.tarifPrix && parseFloat(state.tarifPrix) > 0); }
+    return true;
+  }
+
   function showStep(i){
     steps.forEach(p=>p.classList.remove('active'));
     steps[i].classList.add('active');
     document.getElementById('btnBack').style.visibility = i===0 ? 'hidden' : 'visible';
     document.getElementById('btnNext').textContent = i===steps.length-1 ? 'Générer mon aperçu gratuit' : 'Continuer →';
-    if(i===1){ document.getElementById('btnNext').disabled = !canProceedStep1(); }
-    else { document.getElementById('btnNext').disabled = false; }
+    document.getElementById('btnNext').disabled = !canProceed(i);
     renderStepper();
   }
 
-  // Step 1: métier selection
-  document.getElementById('metierGrid').addEventListener('click', e=>{
-    const card = e.target.closest('.metier-card');
-    if(!card) return;
-    document.querySelectorAll('.metier-card').forEach(c=>c.classList.remove('selected'));
-    card.classList.add('selected');
-    state.metier = card.dataset.value;
-    document.getElementById('err-metier').classList.remove('show');
-  });
-
-  // Step 2: SIRET
+  // Step 0: SIRET
   const siretEl = document.getElementById('siret');
   const siretStatusEl = document.getElementById('siretStatus');
-  const entrepriseEl = document.getElementById('entreprise');
   let siretTimer = null;
 
   siretEl.addEventListener('input', ()=>{
@@ -381,10 +415,12 @@
     siretEl.value = digits;
     state.siret = digits;
     state.siretVerifie = false;
+    document.getElementById('err-siret').classList.remove('show');
     clearTimeout(siretTimer);
     if(digits.length < 14){
       siretStatusEl.textContent = '14 chiffres, sans espace.';
       siretStatusEl.style.color = 'var(--concrete)';
+      document.getElementById('btnNext').disabled = !canProceed(0);
       return;
     }
     siretStatusEl.textContent = 'Vérification en cours…';
@@ -398,10 +434,7 @@
           state.siretVerifie = true;
           siretStatusEl.textContent = '✓ ' + result.nom_complet;
           siretStatusEl.style.color = 'var(--ok)';
-          if(!entrepriseEl.value.trim()){
-            entrepriseEl.value = result.nom_complet;
-            state.entreprise = result.nom_complet;
-          }
+          state.entreprise = result.nom_complet;
         } else {
           state.siretVerifie = false;
           siretStatusEl.textContent = "SIRET introuvable — vérifiez le numéro.";
@@ -412,21 +445,18 @@
         siretStatusEl.textContent = 'Vérification indisponible — vous pouvez continuer.';
         siretStatusEl.style.color = 'var(--concrete)';
       }
-      document.getElementById('btnNext').disabled = !canProceedStep1();
+      document.getElementById('btnNext').disabled = !canProceed(0);
     }, 500);
   });
 
-  document.getElementById('entreprise').addEventListener('input', ()=>{
-    document.getElementById('btnNext').disabled = !canProceedStep1();
-  });
-  document.getElementById('email').addEventListener('input', ()=>{
-    document.getElementById('btnNext').disabled = !canProceedStep1();
-  });
+  // Step 1: coordonnées
+  const entrepriseEl = document.getElementById('entreprise');
+  entrepriseEl.addEventListener('input', ()=>{ document.getElementById('btnNext').disabled = !canProceed(1); });
+  document.getElementById('email').addEventListener('input', ()=>{ document.getElementById('btnNext').disabled = !canProceed(1); });
 
-  function isTelephoneValid(raw){
-    const digits = raw.replace(/\D/g,'');
-    return /^0\d{9}$/.test(digits);
-  }
+  document.addEventListener('DOMContentLoaded', ()=>{
+    if(!entrepriseEl.value && state.entreprise) entrepriseEl.value = state.entreprise;
+  });
 
   const telEl = document.getElementById('telephone');
   const telStatusEl = document.getElementById('telStatus');
@@ -466,7 +496,7 @@
       telStatusEl.style.color = 'var(--orange-dark)';
       btnEnvoyerCode.disabled = true;
     }
-    document.getElementById('btnNext').disabled = !canProceedStep1();
+    document.getElementById('btnNext').disabled = !canProceed(1);
   });
 
   btnEnvoyerCode.addEventListener('click', async ()=>{
@@ -513,15 +543,20 @@
       smsStatusEl.className = 'sms-status error';
     } finally {
       btnVerifierCode.disabled = false;
-      document.getElementById('btnNext').disabled = !canProceedStep1();
+      document.getElementById('btnNext').disabled = !canProceed(1);
     }
   });
 
-  function canProceedStep1(){
-    const emailOk = /\S+@\S+\.\S+/.test(document.getElementById('email').value.trim());
-    const telOk = isTelephoneValid(document.getElementById('telephone').value);
-    return state.siret.length === 14 && document.getElementById('entreprise').value.trim() && emailOk && telOk && state.telephoneVerifie;
-  }
+  // Step 2: métier
+  document.getElementById('metierGrid').addEventListener('click', e=>{
+    const card = e.target.closest('.metier-card');
+    if(!card) return;
+    document.querySelectorAll('#metierGrid .metier-card').forEach(c=>c.classList.remove('selected'));
+    card.classList.add('selected');
+    state.metier = card.dataset.value;
+    document.getElementById('err-metier').classList.remove('show');
+    document.getElementById('btnNext').disabled = !canProceed(2);
+  });
 
   // Step 3: char count
   const descEl = document.getElementById('description');
@@ -575,7 +610,36 @@
     });
   });
 
-  // Step 5: palette
+  // Step 5: tarification
+  const tarifDetails = document.getElementById('tarifDetails');
+  document.getElementById('tarifChoice').addEventListener('click', e=>{
+    const card = e.target.closest('.metier-card');
+    if(!card) return;
+    document.querySelectorAll('#tarifChoice .metier-card').forEach(c=>c.classList.remove('selected'));
+    card.classList.add('selected');
+    state.tarifActif = card.dataset.value === 'oui';
+    tarifDetails.style.display = state.tarifActif ? 'block' : 'none';
+    document.getElementById('btnNext').disabled = !canProceed(5);
+  });
+
+  document.getElementById('tarifUniteRow').addEventListener('click', e=>{
+    const btn = e.target.closest('button');
+    if(!btn) return;
+    document.querySelectorAll('#tarifUniteRow button').forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected');
+    state.tarifUnite = btn.dataset.value;
+  });
+
+  document.getElementById('tarifPrix').addEventListener('input', e=>{
+    state.tarifPrix = e.target.value.replace(',', '.');
+    document.getElementById('btnNext').disabled = !canProceed(5);
+  });
+
+  document.getElementById('tarifContraintes').addEventListener('input', e=>{
+    state.tarifContraintes = e.target.value;
+  });
+
+  // Step 6: palette
   document.getElementById('paletteRow').addEventListener('click', e=>{
     const sw = e.target.closest('.swatch');
     if(!sw) return;
@@ -586,34 +650,41 @@
 
   function buildRecap(){
     const metierLabels = {resine:'Revêtements résine', cloture:'Clôtures & portails', terrassement:'Terrassement', assainissement:'Assainissement', paysagisme:'Paysagisme', autre:'Autre métier BTP'};
+    const uniteLabels = {m2:'€/m²', ml:'€/mètre linéaire', m3:'€/m³'};
     const recap = document.getElementById('recap');
-    recap.innerHTML =
-      '<dt>Métier</dt><dd>' + (metierLabels[state.metier]||'—') + '</dd>' +
+    let html =
       '<dt>SIRET</dt><dd>' + (state.siret||'—') + '</dd>' +
       '<dt>Entreprise</dt><dd>' + (state.entreprise||'—') + '</dd>' +
       "<dt>Zone d'intervention</dt><dd>" + (state.zone||'—') + '</dd>' +
       '<dt>Contact</dt><dd>' + (state.telephone||'—') + ' (vérifié) · ' + (state.email||'—') + '</dd>' +
+      '<dt>Métier</dt><dd>' + (metierLabels[state.metier]||'—') + '</dd>' +
+      '<dt>Tarification</dt><dd>' + (state.tarifActif ? ('Estimation activée — ' + (state.tarifPrix||'—') + ' ' + uniteLabels[state.tarifUnite]) : 'Formulaire basique, sans prix') + '</dd>' +
       '<dt>Couleur</dt><dd><span style="display:inline-block;width:12px;height:12px;background:'+state.couleur+';vertical-align:middle;margin-right:6px;"></span>' + state.couleur + '</dd>';
+    recap.innerHTML = html;
   }
 
   function validateStep(i){
     if(i===0){
-      if(!state.metier){ document.getElementById('err-metier').classList.add('show'); return false; }
+      state.siret = siretEl.value.trim();
+      if(!/^\d{14}$/.test(state.siret)){
+        document.getElementById('err-siret').classList.add('show');
+        return false;
+      }
+      document.getElementById('err-siret').classList.remove('show');
     }
     if(i===1){
-      state.siret = document.getElementById('siret').value.trim();
       state.entreprise = document.getElementById('entreprise').value.trim();
       state.zone = document.getElementById('zone').value.trim();
       state.telephone = document.getElementById('telephone').value.trim();
       state.email = document.getElementById('email').value.trim();
-      const emailOk = /\S+@\S+\.\S+/.test(state.email);
-      const siretOk = /^\d{14}$/.test(state.siret);
-      const telOk = isTelephoneValid(state.telephone);
-      if(!siretOk || !state.entreprise || !emailOk || !telOk || !state.telephoneVerifie){
+      if(!canProceed(1)){
         document.getElementById('err-entreprise').classList.add('show');
         return false;
       }
       document.getElementById('err-entreprise').classList.remove('show');
+    }
+    if(i===2){
+      if(!state.metier){ document.getElementById('err-metier').classList.add('show'); return false; }
     }
     return true;
   }
@@ -659,6 +730,10 @@
         photos: state.photos.filter(Boolean),
         video_url: state.videoUrl || null,
         couleur: state.couleur,
+        tarif_actif: state.tarifActif,
+        tarif_unite: state.tarifActif ? state.tarifUnite : null,
+        tarif_prix: state.tarifActif ? parseFloat(state.tarifPrix) : null,
+        tarif_contraintes: state.tarifContraintes || null,
         status: 'preview'
       }])
       .select()

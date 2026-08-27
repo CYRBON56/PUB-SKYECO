@@ -17,33 +17,46 @@
   *{box-sizing:border-box;margin:0;padding:0;}
   body{
     font-family:'IBM Plex Sans',sans-serif; background:var(--paper); color:var(--navy);
-    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
     -webkit-font-smoothing:antialiased;
   }
   .mono{font-family:'IBM Plex Mono',monospace;}
-  .display{font-family:'Big Shoulders Display',sans-serif; text-transform:uppercase;}
   :focus-visible{outline:3px solid var(--orange); outline-offset:2px;}
   @media (prefers-reduced-motion: reduce){ *{transition-duration:.001ms !important; animation-duration:.001ms !important;} }
 
-  .card{
-    width:100%; max-width:640px; background:var(--white);
-    border:1px solid var(--paper-line); overflow:hidden;
+  .split-layout{ display:flex; min-height:100vh; }
+  .video-panel{
+    flex:1 1 42%; background:var(--navy); position:relative; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; padding:32px; overflow:hidden;
   }
-  header.top{ background:var(--navy); color:var(--white); padding:22px 28px; }
+  .video-panel::before{
+    content:''; position:absolute; inset:0;
+    background-image: repeating-linear-gradient(0deg, rgba(110,151,184,0.06) 0px, transparent 1px, transparent 32px),
+                       repeating-linear-gradient(90deg, rgba(110,151,184,0.06) 0px, transparent 1px, transparent 32px);
+    pointer-events:none;
+  }
+  .video-label{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--blue-light); letter-spacing:.1em; margin-bottom:14px; z-index:1; }
+  .video-wrap{ width:100%; max-width:420px; border:1px solid rgba(110,151,184,0.4); background:#0F2740; z-index:1; }
+  .video-wrap video{ width:100%; display:block; }
+  .video-caption{ font-family:'IBM Plex Sans',sans-serif; font-size:14px; color:#C9D6DF; text-align:center; max-width:380px; margin-top:18px; z-index:1; line-height:1.5;}
+
+  .form-panel{ flex:1 1 58%; display:flex; align-items:center; justify-content:center; padding:24px; }
+  .card{ width:100%; max-width:560px; }
+
+  header.top{ background:var(--navy); color:var(--white); padding:22px 28px; margin:-24px -24px 0; }
+  @media(min-width:769px){ header.top{ margin:0; } }
   .logo{ font-family:'Big Shoulders Display',sans-serif; font-weight:900; font-size:18px; display:flex; align-items:center; gap:8px; margin-bottom:14px;}
   .logo .dot{ width:8px; height:8px; background:var(--orange); display:inline-block;}
   .eyebrow{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--blue-light); letter-spacing:.08em; margin-bottom:6px;}
   h1.title{ font-family:'Big Shoulders Display',sans-serif; font-weight:800; font-size:26px; line-height:1.05;}
 
-  /* Stepper */
-  .stepper{ display:flex; gap:4px; padding:16px 28px 0; }
+  .stepper{ display:flex; gap:4px; padding:16px 28px 0; background:var(--navy); }
   .step-bar{ flex:1; height:4px; background:rgba(255,255,255,0.18); position:relative; overflow:hidden;}
   .step-bar span{ position:absolute; inset:0; background:var(--orange); transform:scaleX(0); transform-origin:left; transition:transform .25s ease;}
   .step-bar.done span{ transform:scaleX(1); }
   .step-bar.active span{ transform:scaleX(1); }
-  .step-label{ padding:10px 28px 0; font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--blue-light);}
+  .step-label{ padding:10px 28px 14px; font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--blue-light); background:var(--navy);}
 
-  form{ padding:28px; }
+  form{ padding:28px; background:var(--white); border:1px solid var(--paper-line); border-top:none;}
   .panel{ display:none; }
   .panel.active{ display:block; animation: fade .2s ease; }
   @keyframes fade{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
@@ -68,7 +81,19 @@
   }
   input:focus, textarea:focus, select:focus{ background:var(--white); border-color:var(--blue); }
   textarea{ resize:vertical; min-height:90px; }
+  .status-line{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--concrete); margin:-10px 0 4px;}
   .char-count{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--concrete); text-align:right; margin-top:4px;}
+
+  .sms-block{ margin:14px 0 6px; padding:14px; background:var(--paper); border:1px solid var(--paper-line); }
+  .sms-block p{ font-size:12.5px; color:var(--concrete); margin-bottom:10px; line-height:1.4; }
+  .btn-sms{ background:#EEF4F0; color:var(--blue); border:1.5px solid var(--blue); padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; }
+  .btn-sms:hover:not(:disabled){ background:var(--blue); color:var(--white); }
+  .btn-sms:disabled{ opacity:.5; cursor:not-allowed; }
+  .sms-code-row{ display:flex; gap:8px; margin-top:10px; }
+  .sms-code-row input{ flex:1; letter-spacing:.3em; text-align:center; margin:0; }
+  .sms-status{ margin-top:8px; font-size:12.5px; }
+  .sms-status.ok{ color:var(--ok); font-weight:600; }
+  .sms-status.error{ color:var(--orange-dark); }
 
   .upload-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:6px;}
   .upload-slot{
@@ -101,128 +126,162 @@
   .error{ color:var(--orange-dark); font-size:12.5px; margin-top:6px; display:none; font-family:'IBM Plex Mono',monospace; }
   .error.show{ display:block; }
 
-  /* Success state */
-  .success{ display:none; text-align:center; padding:48px 28px; }
+  .success{ display:none; text-align:center; padding:48px 28px; background:var(--white); border:1px solid var(--paper-line); border-top:none; }
   .success.active{ display:block; }
   .success .icon{ width:52px; height:52px; border:2px solid var(--ok); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 18px; color:var(--ok); font-size:24px; }
   .success h2{ font-family:'Big Shoulders Display',sans-serif; font-weight:800; font-size:24px; margin-bottom:10px;}
   .success p{ color:var(--concrete); font-size:14.5px; max-width:400px; margin:0 auto 22px; }
   .success .loader{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--blue); }
 
-  @media(max-width:520px){ .metier-grid{grid-template-columns:1fr;} }
+  @media(max-width:900px){ .metier-grid{grid-template-columns:1fr;} }
+  @media(max-width:768px){
+    .split-layout{ flex-direction:column; }
+    .video-panel{ padding:24px; }
+    .video-wrap{ max-width:100%; }
+    header.top{ margin:0; }
+  }
 </style>
 </head>
 <body>
 
-<div class="card">
-  <header class="top">
-    <div class="logo"><span class="dot"></span>SKYECO&nbsp;PRO</div>
-    <div class="eyebrow mono">CRÉATION GRATUITE — SANS ENGAGEMENT</div>
-    <h1 class="title">Créez votre formulaire vitrine en 6 minutes.</h1>
-    <div class="stepper" id="stepper"></div>
-  </header>
-  <div class="step-label mono" id="stepLabel" style="background:var(--navy); color:var(--blue-light); margin:0; padding-bottom:14px;"></div>
+<div class="split-layout">
+  <div class="video-panel">
+    <div class="video-label mono">COMMENT ÇA MARCHE</div>
+    <div class="video-wrap">
+      <video controls autoplay muted loop playsinline>
+        <source src="https://files2.heygen.ai/aries/output/9cab6a23-78ba-4732-b73e-4c62bafa0985/video.mp4?Expires=1788436297&Signature=iuoKrj5-B-2GCtw1gtzLM9VsHTNc65eSXKMZcLL-o6gxuoKfgEgdXKoC93MZ1voRkJgv~8qsA4UASyTE0u4unPLgX0FVAaoPHJ0DbrxAQ7rvhH7anWCWUqRgQkruJkjeaoWUAL43ugMk5iJC4vAYcV-BxrWkcOupTSeFY51aOZTaHNAxPuyy38nAYTuOktdywFgci2GHCBGKAakIHH05y98XbxSSkoX7lkSbG1cCem1S~i7esyCpJm82Aekqr36KGqdqUOXje5Wevd-HnzxwQDOqOkTpjaCD~FIKcx5sf7jz4~qqJWUIZ0PcFz74sIX15lKJ8iam57h4GrrYlkAj4w__&Key-Pair-Id=K38HBHX5LX3X2H" type="video/mp4">
+      </video>
+    </div>
+    <p class="video-caption">Regardez cette courte vidéo pendant que vous remplissez vos informations à droite — elle explique tout ce que vous allez pouvoir faire.</p>
+  </div>
 
-  <form id="wizardForm" novalidate>
+  <div class="form-panel">
+    <div class="card">
+      <header class="top">
+        <div class="logo"><span class="dot"></span>SKYECO&nbsp;PRO</div>
+        <div class="eyebrow mono">CRÉATION GRATUITE — SANS ENGAGEMENT</div>
+        <h1 class="title">Créez votre formulaire vitrine en 6 minutes.</h1>
+      </header>
+      <div class="stepper" id="stepper"></div>
+      <div class="step-label mono" id="stepLabel"></div>
 
-    <!-- STEP 1 : métier -->
-    <div class="panel active" data-step="0">
-      <h2 class="q">Quel est votre métier ?</h2>
-      <p class="hint">Le mini-site sera adapté à votre activité.</p>
-      <div class="metier-grid" id="metierGrid">
-        <button type="button" class="metier-card" data-value="resine">Revêtements résine<span class="tag">sols, allées, terrasses</span></button>
-        <button type="button" class="metier-card" data-value="cloture">Clôtures &amp; portails<span class="tag">pose, motorisation</span></button>
-        <button type="button" class="metier-card" data-value="terrassement">Terrassement<span class="tag">VRD, préparation de sol</span></button>
-        <button type="button" class="metier-card" data-value="assainissement">Assainissement<span class="tag">non collectif</span></button>
-        <button type="button" class="metier-card" data-value="paysagisme">Paysagisme<span class="tag">extérieurs, aménagement</span></button>
-        <button type="button" class="metier-card" data-value="autre">Autre métier BTP<span class="tag">à préciser</span></button>
+      <form id="wizardForm" novalidate>
+
+        <!-- STEP 1 : métier -->
+        <div class="panel active" data-step="0">
+          <h2 class="q">Quel est votre métier ?</h2>
+          <p class="hint">Le mini-site sera adapté à votre activité.</p>
+          <div class="metier-grid" id="metierGrid">
+            <button type="button" class="metier-card" data-value="resine">Revêtements résine<span class="tag">sols, allées, terrasses</span></button>
+            <button type="button" class="metier-card" data-value="cloture">Clôtures &amp; portails<span class="tag">pose, motorisation</span></button>
+            <button type="button" class="metier-card" data-value="terrassement">Terrassement<span class="tag">VRD, préparation de sol</span></button>
+            <button type="button" class="metier-card" data-value="assainissement">Assainissement<span class="tag">non collectif</span></button>
+            <button type="button" class="metier-card" data-value="paysagisme">Paysagisme<span class="tag">extérieurs, aménagement</span></button>
+            <button type="button" class="metier-card" data-value="autre">Autre métier BTP<span class="tag">à préciser</span></button>
+          </div>
+          <div class="error mono" id="err-metier">Sélectionnez un métier pour continuer.</div>
+        </div>
+
+        <!-- STEP 2 : infos entreprise -->
+        <div class="panel" data-step="1">
+          <h2 class="q">Parlez-moi de votre entreprise.</h2>
+          <p class="hint">Ces informations apparaîtront sur votre page.</p>
+
+          <label for="siret">Numéro de SIRET</label>
+          <input type="text" id="siret" inputmode="numeric" maxlength="14" placeholder="Ex : 93999787000018">
+          <div class="status-line mono" id="siretStatus">14 chiffres, sans espace.</div>
+
+          <label for="entreprise">Nom de l'entreprise</label>
+          <input type="text" id="entreprise" placeholder="Ex : EcoSky by RMS">
+
+          <label for="zone">Zone d'intervention</label>
+          <input type="text" id="zone" placeholder="Ex : Morbihan, Bretagne">
+
+          <label for="telephone">Téléphone</label>
+          <input type="tel" id="telephone" inputmode="numeric" placeholder="Ex : 06 12 34 56 78">
+          <div class="status-line mono" id="telStatus">Numéro français, 10 chiffres.</div>
+
+          <div class="sms-block" id="smsBlock">
+            <p>Vérifiez votre numéro pour confirmer que votre demande est bien réelle.</p>
+            <button type="button" class="btn-sms" id="btnEnvoyerCode" disabled>Vérifier mon numéro par SMS</button>
+            <div class="sms-code-row" id="smsCodeRow" style="display:none;">
+              <input type="text" id="smsCode" inputmode="numeric" maxlength="6" placeholder="Code reçu">
+              <button type="button" class="btn-sms" id="btnVerifierCode">Valider</button>
+            </div>
+            <div class="sms-status" id="smsStatus"></div>
+          </div>
+
+          <label for="email">Email</label>
+          <input type="email" id="email" placeholder="Ex : contact@monentreprise.fr">
+          <div class="error mono" id="err-entreprise">Merci de renseigner un SIRET valide, un téléphone vérifié et un email valide.</div>
+        </div>
+
+        <!-- STEP 3 : savoir-faire -->
+        <div class="panel" data-step="2">
+          <h2 class="q">Décrivez votre savoir-faire.</h2>
+          <p class="hint">Deux ou trois phrases suffisent — on ajustera le ton ensemble si besoin.</p>
+          <label for="description">Ce qui vous différencie</label>
+          <textarea id="description" maxlength="280" placeholder="Ex : Nous posons des revêtements résine extérieurs résistants aux hivers bretons, garantis 10 ans."></textarea>
+          <div class="char-count mono"><span id="charCount">0</span>/280</div>
+        </div>
+
+        <!-- STEP 4 : photos -->
+        <div class="panel" data-step="3">
+          <h2 class="q">Montrez vos réalisations.</h2>
+          <p class="hint">Idéalement 6 photos — vos vrais chantiers convainquent bien mieux que des images génériques. N'hésitez pas à montrer un avant/après si vous en avez.</p>
+          <div class="upload-row" id="uploadRow">
+            <label class="upload-slot"><span>+ Photo 1</span><input type="file" accept="image/*" data-slot="0"></label>
+            <label class="upload-slot"><span>+ Photo 2</span><input type="file" accept="image/*" data-slot="1"></label>
+            <label class="upload-slot"><span>+ Photo 3</span><input type="file" accept="image/*" data-slot="2"></label>
+            <label class="upload-slot"><span>+ Photo 4</span><input type="file" accept="image/*" data-slot="3"></label>
+            <label class="upload-slot"><span>+ Photo 5</span><input type="file" accept="image/*" data-slot="4"></label>
+            <label class="upload-slot"><span>+ Photo 6</span><input type="file" accept="image/*" data-slot="5"></label>
+          </div>
+          <div id="uploadStatus" class="mono" style="font-size:11.5px; color:var(--concrete); margin-top:8px;"></div>
+
+          <div style="margin-top:24px; padding-top:20px; border-top:1px solid var(--paper-line);">
+            <label style="margin-top:0;">Vous préférez une vidéo ?</label>
+            <p class="hint" style="margin-bottom:10px;">Une courte vidéo d'une réalisation peut remplacer les photos en fond de votre page. Facultatif.</p>
+            <label class="upload-slot" style="aspect-ratio:auto; height:64px;" id="videoSlot">
+              <span id="videoSlotLabel">+ Ajouter une vidéo</span>
+              <input type="file" accept="video/*" id="videoInput">
+            </label>
+          </div>
+        </div>
+
+        <!-- STEP 5 : couleur -->
+        <div class="panel" data-step="4">
+          <h2 class="q">Choisissez une couleur d'accent.</h2>
+          <p class="hint">Elle habillera les boutons et titres de votre page.</p>
+          <div class="palette-row" id="paletteRow">
+            <div class="swatch selected" style="background:#E8622C" data-value="#E8622C"></div>
+            <div class="swatch" style="background:#2C5F8A" data-value="#2C5F8A"></div>
+            <div class="swatch" style="background:#3E8E5A" data-value="#3E8E5A"></div>
+            <div class="swatch" style="background:#B8863B" data-value="#B8863B"></div>
+            <div class="swatch" style="background:#6B5CA5" data-value="#6B5CA5"></div>
+          </div>
+        </div>
+
+        <!-- STEP 6 : récap -->
+        <div class="panel" data-step="5">
+          <h2 class="q">Tout est prêt.</h2>
+          <p class="hint">Vérifiez vos informations avant de générer votre aperçu.</p>
+          <dl class="recap" id="recap"></dl>
+        </div>
+
+        <div class="nav-row">
+          <button type="button" class="btn btn-ghost" id="btnBack">← Retour</button>
+          <button type="button" class="btn btn-primary" id="btnNext">Continuer →</button>
+        </div>
+      </form>
+
+      <div class="success" id="successPanel">
+        <div class="icon">✓</div>
+        <h2>Génération en cours.</h2>
+        <p>Votre aperçu gratuit sera prêt dans quelques instants. Vous pourrez le consulter, le modifier, et décider de le mettre en ligne quand vous le souhaitez — sans engagement.</p>
+        <div class="loader mono">PRÉPARATION DE VOTRE APERÇU…</div>
       </div>
-      <div class="error mono" id="err-metier">Sélectionnez un métier pour continuer.</div>
     </div>
-
-    <!-- STEP 2 : infos entreprise -->
-    <div class="panel" data-step="1">
-      <h2 class="q">Parlez-moi de votre entreprise.</h2>
-      <p class="hint">Ces informations apparaîtront sur votre page.</p>
-      <label for="siret">Numéro de SIRET</label>
-      <input type="text" id="siret" inputmode="numeric" maxlength="14" placeholder="Ex : 93999787000018">
-      <div class="siret-status mono" id="siretStatus" style="font-size:12px; color:var(--concrete); margin:-10px 0 4px;">14 chiffres, sans espace.</div>
-      <label for="entreprise">Nom de l'entreprise</label>
-      <input type="text" id="entreprise" placeholder="Ex : EcoSky by RMS">
-      <label for="zone">Zone d'intervention</label>
-      <input type="text" id="zone" placeholder="Ex : Morbihan, Bretagne">
-      <label for="telephone">Téléphone</label>
-      <input type="tel" id="telephone" inputmode="numeric" placeholder="Ex : 06 12 34 56 78">
-      <div class="siret-status mono" id="telStatus" style="font-size:12px; color:var(--concrete); margin:-10px 0 4px;">Numéro français, 10 chiffres.</div>
-      <label for="email">Email</label>
-      <input type="email" id="email" placeholder="Ex : contact@monentreprise.fr">
-      <div class="error mono" id="err-entreprise">Merci de renseigner un SIRET valide, un téléphone à 10 chiffres et un email valide.</div>
-    </div>
-
-    <!-- STEP 3 : savoir-faire -->
-    <div class="panel" data-step="2">
-      <h2 class="q">Décrivez votre savoir-faire.</h2>
-      <p class="hint">Deux ou trois phrases suffisent — on ajustera le ton ensemble si besoin.</p>
-      <label for="description">Ce qui vous différencie</label>
-      <textarea id="description" maxlength="280" placeholder="Ex : Nous posons des revêtements résine extérieurs résistants aux hivers bretons, garantis 10 ans."></textarea>
-      <div class="char-count mono"><span id="charCount">0</span>/280</div>
-    </div>
-
-    <!-- STEP 4 : photos -->
-    <div class="panel" data-step="3">
-      <h2 class="q">Montrez vos réalisations.</h2>
-      <p class="hint">Idéalement 6 photos — vos vrais chantiers convainquent bien mieux que des images génériques. N'hésitez pas à montrer un avant/après si vous en avez.</p>
-      <div class="upload-row" id="uploadRow" style="grid-template-columns:repeat(3,1fr);">
-        <label class="upload-slot"><span>+ Photo 1</span><input type="file" accept="image/*" data-slot="0"></label>
-        <label class="upload-slot"><span>+ Photo 2</span><input type="file" accept="image/*" data-slot="1"></label>
-        <label class="upload-slot"><span>+ Photo 3</span><input type="file" accept="image/*" data-slot="2"></label>
-        <label class="upload-slot"><span>+ Photo 4</span><input type="file" accept="image/*" data-slot="3"></label>
-        <label class="upload-slot"><span>+ Photo 5</span><input type="file" accept="image/*" data-slot="4"></label>
-        <label class="upload-slot"><span>+ Photo 6</span><input type="file" accept="image/*" data-slot="5"></label>
-      </div>
-      <div id="uploadStatus" class="mono" style="font-size:11.5px; color:var(--concrete); margin-top:8px;"></div>
-
-      <div style="margin-top:24px; padding-top:20px; border-top:1px solid var(--paper-line);">
-        <label style="margin-top:0;">Vous préférez une vidéo ?</label>
-        <p class="hint" style="margin-bottom:10px;">Une courte vidéo d'une réalisation ou d'un chantier en cours peut remplacer les photos en fond de votre page. Facultatif — si vous n'en ajoutez pas, on utilisera vos photos (ou des exemples si vous n'en avez pas encore).</p>
-        <label class="upload-slot" style="aspect-ratio:auto; height:64px;" id="videoSlot">
-          <span id="videoSlotLabel">+ Ajouter une vidéo</span>
-          <input type="file" accept="video/*" id="videoInput">
-        </label>
-      </div>
-    </div>
-
-    <!-- STEP 5 : couleur -->
-    <div class="panel" data-step="4">
-      <h2 class="q">Choisissez une couleur d'accent.</h2>
-      <p class="hint">Elle habillera les boutons et titres de votre page.</p>
-      <div class="palette-row" id="paletteRow">
-        <div class="swatch selected" style="background:#E8622C" data-value="#E8622C"></div>
-        <div class="swatch" style="background:#2C5F8A" data-value="#2C5F8A"></div>
-        <div class="swatch" style="background:#3E8E5A" data-value="#3E8E5A"></div>
-        <div class="swatch" style="background:#B8863B" data-value="#B8863B"></div>
-        <div class="swatch" style="background:#6B5CA5" data-value="#6B5CA5"></div>
-      </div>
-    </div>
-
-    <!-- STEP 6 : récap -->
-    <div class="panel" data-step="5">
-      <h2 class="q">Tout est prêt.</h2>
-      <p class="hint">Vérifiez vos informations avant de générer votre aperçu.</p>
-      <dl class="recap" id="recap"></dl>
-    </div>
-
-    <div class="nav-row">
-      <button type="button" class="btn btn-ghost" id="btnBack">← Retour</button>
-      <button type="button" class="btn btn-primary" id="btnNext">Continuer →</button>
-    </div>
-  </form>
-
-  <div class="success" id="successPanel">
-    <div class="icon">✓</div>
-    <h2>Génération en cours.</h2>
-    <p>Votre aperçu gratuit sera prêt dans quelques instants. Vous pourrez le consulter, le modifier, et décider de le mettre en ligne quand vous le souhaitez — sans engagement.</p>
-    <div class="loader mono">PRÉPARATION DE VOTRE APERÇU…</div>
   </div>
 </div>
 
@@ -231,7 +290,7 @@
   const steps = Array.from(document.querySelectorAll('.panel'));
   const stepLabels = ['Métier','Entreprise','Savoir-faire','Photos','Couleur','Récapitulatif'];
   let current = 0;
-  const state = { metier:null, siret:'', siretVerifie:false, entreprise:'', zone:'', telephone:'', email:'', description:'', photos:[null,null,null,null,null,null], videoUrl:'', couleur:'#E8622C' };
+  const state = { metier:null, siret:'', siretVerifie:false, entreprise:'', zone:'', telephone:'', telephoneVerifie:false, email:'', description:'', photos:[null,null,null,null,null,null], videoUrl:'', couleur:'#E8622C' };
 
   const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
@@ -270,11 +329,8 @@
     steps[i].classList.add('active');
     document.getElementById('btnBack').style.visibility = i===0 ? 'hidden' : 'visible';
     document.getElementById('btnNext').textContent = i===steps.length-1 ? 'Générer mon aperçu gratuit' : 'Continuer →';
-    if(i===1){
-      document.getElementById('btnNext').disabled = !canProceedStep1();
-    } else {
-      document.getElementById('btnNext').disabled = false;
-    }
+    if(i===1){ document.getElementById('btnNext').disabled = !canProceedStep1(); }
+    else { document.getElementById('btnNext').disabled = false; }
     renderStepper();
   }
 
@@ -288,7 +344,7 @@
     document.getElementById('err-metier').classList.remove('show');
   });
 
-  // Step 2: vérification du SIRET via l'API publique gratuite recherche-entreprises.api.gouv.fr
+  // Step 2: SIRET
   const siretEl = document.getElementById('siret');
   const siretStatusEl = document.getElementById('siretStatus');
   const entrepriseEl = document.getElementById('entreprise');
@@ -300,7 +356,6 @@
     state.siret = digits;
     state.siretVerifie = false;
     clearTimeout(siretTimer);
-
     if(digits.length < 14){
       siretStatusEl.textContent = '14 chiffres, sans espace.';
       siretStatusEl.style.color = 'var(--concrete)';
@@ -308,7 +363,6 @@
     }
     siretStatusEl.textContent = 'Vérification en cours…';
     siretStatusEl.style.color = 'var(--concrete)';
-
     siretTimer = setTimeout(async ()=>{
       try{
         const res = await fetch('https://recherche-entreprises.api.gouv.fr/search?q=' + digits);
@@ -328,7 +382,6 @@
           siretStatusEl.style.color = 'var(--orange-dark)';
         }
       } catch(e){
-        // API indisponible : on ne bloque pas l'utilisateur, la vérification n'est qu'un bonus
         state.siretVerifie = true;
         siretStatusEl.textContent = 'Vérification indisponible — vous pouvez continuer.';
         siretStatusEl.style.color = 'var(--concrete)';
@@ -337,14 +390,6 @@
     }, 500);
   });
 
-  function canProceedStep1(){
-    const emailOk = /\S+@\S+\.\S+/.test(document.getElementById('email').value.trim());
-    const telOk = isTelephoneValid(document.getElementById('telephone').value);
-    return state.siret.length === 14 && document.getElementById('entreprise').value.trim() && emailOk && telOk;
-  }
-
-  // Ces deux champs n'avaient pas de vérification en direct — corrige le bouton "Continuer"
-  // qui pouvait rester bloqué si l'utilisateur les remplissait en dernier.
   document.getElementById('entreprise').addEventListener('input', ()=>{
     document.getElementById('btnNext').disabled = !canProceedStep1();
   });
@@ -352,7 +397,6 @@
     document.getElementById('btnNext').disabled = !canProceedStep1();
   });
 
-  // Validation + formatage en direct du téléphone (format français : 10 chiffres commençant par 0)
   function isTelephoneValid(raw){
     const digits = raw.replace(/\D/g,'');
     return /^0\d{9}$/.test(digits);
@@ -360,24 +404,98 @@
 
   const telEl = document.getElementById('telephone');
   const telStatusEl = document.getElementById('telStatus');
+  const btnEnvoyerCode = document.getElementById('btnEnvoyerCode');
+  const smsCodeRow = document.getElementById('smsCodeRow');
+  const smsCodeInput = document.getElementById('smsCode');
+  const btnVerifierCode = document.getElementById('btnVerifierCode');
+  const smsStatusEl = document.getElementById('smsStatus');
+
+  function resetSmsVerification(){
+    state.telephoneVerifie = false;
+    smsCodeRow.style.display = 'none';
+    smsCodeInput.value = '';
+    smsStatusEl.textContent = '';
+    smsStatusEl.className = 'sms-status';
+    btnEnvoyerCode.style.display = 'inline-block';
+    btnEnvoyerCode.textContent = 'Vérifier mon numéro par SMS';
+  }
+
   telEl.addEventListener('input', ()=>{
     let digits = telEl.value.replace(/\D/g,'').slice(0,10);
     const formatted = digits.replace(/(\d{2})(?=\d)/g,'$1 ').trim();
     telEl.value = formatted;
     state.telephone = formatted;
+    resetSmsVerification();
 
     if(digits.length === 0){
       telStatusEl.textContent = 'Numéro français, 10 chiffres.';
       telStatusEl.style.color = 'var(--concrete)';
+      btnEnvoyerCode.disabled = true;
     } else if(isTelephoneValid(digits)){
-      telStatusEl.textContent = '✓ Numéro valide';
+      telStatusEl.textContent = '✓ Format valide';
       telStatusEl.style.color = 'var(--ok)';
+      btnEnvoyerCode.disabled = false;
     } else {
       telStatusEl.textContent = digits.length < 10 ? 'Numéro incomplet.' : 'Doit commencer par 0 (ex : 06...).';
       telStatusEl.style.color = 'var(--orange-dark)';
+      btnEnvoyerCode.disabled = true;
     }
     document.getElementById('btnNext').disabled = !canProceedStep1();
   });
+
+  btnEnvoyerCode.addEventListener('click', async ()=>{
+    btnEnvoyerCode.disabled = true;
+    smsStatusEl.textContent = 'Envoi du code…';
+    smsStatusEl.className = 'sms-status';
+    try{
+      const res = await fetch('/api/verify-send-code', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ telephone: state.telephone })
+      });
+      const data = await res.json();
+      if(!data.success) throw new Error(data.error || "Erreur lors de l'envoi.");
+      smsCodeRow.style.display = 'flex';
+      smsStatusEl.textContent = 'Code envoyé par SMS.';
+      smsStatusEl.className = 'sms-status ok';
+    } catch(err){
+      smsStatusEl.textContent = err.message;
+      smsStatusEl.className = 'sms-status error';
+    } finally {
+      btnEnvoyerCode.disabled = false;
+    }
+  });
+
+  btnVerifierCode.addEventListener('click', async ()=>{
+    btnVerifierCode.disabled = true;
+    smsStatusEl.textContent = 'Vérification…';
+    smsStatusEl.className = 'sms-status';
+    try{
+      const res = await fetch('/api/verify-check-code', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ telephone: state.telephone, code: smsCodeInput.value.trim() })
+      });
+      const data = await res.json();
+      if(!data.success || !data.verified) throw new Error(data.error || 'Code invalide.');
+      state.telephoneVerifie = true;
+      btnEnvoyerCode.style.display = 'none';
+      smsCodeRow.style.display = 'none';
+      smsStatusEl.textContent = '✓ Numéro vérifié.';
+      smsStatusEl.className = 'sms-status ok';
+    } catch(err){
+      state.telephoneVerifie = false;
+      smsStatusEl.textContent = err.message;
+      smsStatusEl.className = 'sms-status error';
+    } finally {
+      btnVerifierCode.disabled = false;
+      document.getElementById('btnNext').disabled = !canProceedStep1();
+    }
+  });
+
+  function canProceedStep1(){
+    const emailOk = /\S+@\S+\.\S+/.test(document.getElementById('email').value.trim());
+    const telOk = isTelephoneValid(document.getElementById('telephone').value);
+    return state.siret.length === 14 && document.getElementById('entreprise').value.trim() && emailOk && telOk && state.telephoneVerifie;
+  }
 
   // Step 3: char count
   const descEl = document.getElementById('description');
@@ -386,7 +504,7 @@
     state.description = descEl.value;
   });
 
-  // Step 4: photo uploads — aperçu immédiat (local) puis upload réel en arrière-plan
+  // Step 4: photo uploads
   const uploadStatusEl = document.getElementById('uploadStatus');
   document.querySelectorAll('#uploadRow input[type=file]').forEach(inp=>{
     inp.addEventListener('change', e=>{
@@ -394,7 +512,6 @@
       if(!file) return;
       const slot = +inp.dataset.slot;
       const label = inp.closest('.upload-slot');
-
       const reader = new FileReader();
       reader.onload = ev=>{
         label.innerHTML = '';
@@ -405,21 +522,19 @@
         label.appendChild(inp);
       };
       reader.readAsDataURL(file);
-
       uploadStatusEl.textContent = 'Envoi de la photo ' + (slot+1) + '…';
       uploadToStorage(file, 'photos').then(url=>{
         state.photos[slot] = url;
         const img = label.querySelector('img');
         if(img) img.style.opacity = '1';
         uploadStatusEl.textContent = '';
-      }).catch(err=>{
+      }).catch(()=>{
         uploadStatusEl.textContent = "Échec de l'envoi de la photo " + (slot+1) + '. Réessayez.';
         uploadStatusEl.style.color = 'var(--orange-dark)';
       });
     });
   });
 
-  // Vidéo optionnelle
   const videoInput = document.getElementById('videoInput');
   const videoSlotLabel = document.getElementById('videoSlotLabel');
   videoInput.addEventListener('change', e=>{
@@ -429,7 +544,7 @@
     uploadToStorage(file, 'videos').then(url=>{
       state.videoUrl = url;
       videoSlotLabel.textContent = '✓ Vidéo ajoutée : ' + file.name;
-    }).catch(err=>{
+    }).catch(()=>{
       videoSlotLabel.textContent = "Échec de l'envoi — réessayez.";
     });
   });
@@ -451,7 +566,7 @@
       '<dt>SIRET</dt><dd>' + (state.siret||'—') + '</dd>' +
       '<dt>Entreprise</dt><dd>' + (state.entreprise||'—') + '</dd>' +
       "<dt>Zone d'intervention</dt><dd>" + (state.zone||'—') + '</dd>' +
-      '<dt>Contact</dt><dd>' + (state.telephone||'—') + ' · ' + (state.email||'—') + '</dd>' +
+      '<dt>Contact</dt><dd>' + (state.telephone||'—') + ' (vérifié) · ' + (state.email||'—') + '</dd>' +
       '<dt>Couleur</dt><dd><span style="display:inline-block;width:12px;height:12px;background:'+state.couleur+';vertical-align:middle;margin-right:6px;"></span>' + state.couleur + '</dd>';
   }
 
@@ -468,7 +583,10 @@
       const emailOk = /\S+@\S+\.\S+/.test(state.email);
       const siretOk = /^\d{14}$/.test(state.siret);
       const telOk = isTelephoneValid(state.telephone);
-      if(!siretOk || !state.entreprise || !emailOk || !telOk){ document.getElementById('err-entreprise').classList.add('show'); return false; }
+      if(!siretOk || !state.entreprise || !emailOk || !telOk || !state.telephoneVerifie){
+        document.getElementById('err-entreprise').classList.add('show');
+        return false;
+      }
       document.getElementById('err-entreprise').classList.remove('show');
     }
     return true;
@@ -528,8 +646,6 @@
     }
 
     document.getElementById('wizardForm').style.display = 'none';
-    document.querySelector('.stepper').style.display = 'none';
-    document.getElementById('stepLabel').style.display = 'none';
     document.getElementById('successPanel').classList.add('active');
 
     setTimeout(()=>{

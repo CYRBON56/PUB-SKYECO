@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root{
     --navy: #14304A;
@@ -38,7 +39,6 @@
 
   .wrap{ max-width:1180px; margin:0 auto; padding:24px 20px 60px; }
 
-  /* Écran d'accès — protège l'accès via l'identifiant du site, comme apercu.html */
   #accessScreen{ max-width:420px; margin:80px auto; background:#fff; border:1px solid var(--paper-line); border-radius:14px; padding:32px 28px; text-align:center; }
   #accessScreen h1{ font-size:20px; margin-bottom:10px; }
   #accessScreen p{ font-size:14px; color:var(--concrete); margin-bottom:18px; }
@@ -72,6 +72,29 @@
   .detail-row{ font-size:12.5px; color:var(--concrete); margin-top:4px; }
   .btn-tel{ display:inline-block; margin-top:6px; font-size:12px; font-weight:700; color:var(--green); text-decoration:none; }
 
+  .view-switch{ display:flex; gap:8px; margin-bottom:20px; }
+  .view-switch button{ background:#fff; border:1px solid var(--paper-line); border-radius:10px; padding:10px 18px; font-size:13.5px; font-weight:700; cursor:pointer; color:var(--navy); font-family:inherit; }
+  .view-switch button.active{ background:var(--navy); border-color:var(--navy); color:#fff; }
+
+  .card-p{ background:#fff; border:1px solid var(--paper-line); border-radius:14px; padding:22px; margin-bottom:18px; }
+  .card-p h2{ font-size:16px; margin-bottom:6px; }
+  .card-p .hint{ font-size:12.5px; color:var(--concrete); margin-bottom:14px; }
+  .card-p input[type=file], .card-p input[type=text], .card-p input[type=email], .card-p input[type=number]{
+    font-family:inherit; padding:9px 10px; border:1px solid var(--paper-line); border-radius:8px; font-size:13px;
+  }
+  .manual-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
+  .manual-grid label{ font-size:11.5px; color:var(--concrete); display:block; margin-bottom:3px; }
+  .manual-grid input{ width:100%; }
+  .p-btn{ background:#fff; border:1px solid var(--paper-line); color:var(--navy); padding:9px 16px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .p-btn.primary{ background:var(--green); border-color:var(--green); color:#fff; }
+  .p-btn.blue{ background:var(--blue); border-color:var(--blue); color:#fff; }
+  .p-btn.danger{ background:#fdeaea; border-color:#f3c6c6; color:#991b1b; }
+  .p-toolbar{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:14px 0 8px; }
+  .p-status{ font-size:12.5px; margin:8px 0; min-height:1.2em; }
+  .p-status.ok{ color:var(--green); }
+  .p-status.err{ color:#c0392b; }
+  .p-row-test{ background:#fff8e8; }
+
   @media (max-width:720px){
     table, thead, tbody, th, td, tr{ display:block; }
     thead{ display:none; }
@@ -98,12 +121,57 @@
   </header>
 
   <div class="wrap">
-    <div class="stats-bar" id="statsBar"></div>
+    <div class="view-switch">
+      <button type="button" id="btnViewDemandes" class="active">Demandes reçues</button>
+      <button type="button" id="btnViewProspection">Prospection (envoyer)</button>
+    </div>
 
-    <div class="filtre-tabs" id="filtreTabs"></div>
+    <div id="viewDemandes">
+      <div class="stats-bar" id="statsBar"></div>
+      <div class="filtre-tabs" id="filtreTabs"></div>
+      <div class="table-wrap">
+        <div id="tableContainer"><p class="empty">Chargement…</p></div>
+      </div>
+    </div>
 
-    <div class="table-wrap">
-      <div id="tableContainer"><p class="empty">Chargement…</p></div>
+    <div id="viewProspection" style="display:none;">
+      <div class="card-p">
+        <h2>Importer une liste</h2>
+        <p class="hint">Fichier .xlsx avec les colonnes : Nom entreprise, Ville, Département, Téléphone, Adresse, Email.</p>
+        <input type="file" id="pFileInput" accept=".xlsx,.xls">
+        <button type="button" class="p-btn primary" id="pImportBtn" style="margin-left:8px;">Importer</button>
+        <p class="p-status" id="pImportStatus"></p>
+      </div>
+
+      <div class="card-p">
+        <h2>Ajouter un contact</h2>
+        <div class="manual-grid">
+          <div><label>Nom</label><input type="text" id="m-nom"></div>
+          <div><label>Ville</label><input type="text" id="m-ville"></div>
+          <div><label>Téléphone</label><input type="text" id="m-tel" placeholder="06 12 34 56 78"></div>
+          <div><label>Email</label><input type="email" id="m-email"></div>
+        </div>
+        <button type="button" class="p-btn primary" id="pManualAddBtn">Ajouter le contact</button>
+        <p class="p-status" id="pManualStatus"></p>
+      </div>
+
+      <div class="card-p">
+        <h2>Vos prospects</h2>
+        <div class="stats-bar" id="pStatsBar"></div>
+        <div class="filtre-tabs" id="pFiltreTabs"></div>
+        <div class="p-toolbar">
+          <span id="pSelCount" style="font-size:12.5px;color:var(--concrete);">0 sélectionné(s)</span>
+          <input type="number" id="pSelNInput" placeholder="Ex: 100" style="width:80px;">
+          <button type="button" class="p-btn" id="pSelNBtn">Sélectionner les N premiers</button>
+          <button type="button" class="p-btn" id="pSelAllBtn">Tout sélectionner</button>
+          <button type="button" class="p-btn" id="pDeselAllBtn">Tout désélectionner</button>
+          <button type="button" class="p-btn blue" id="pSendEmailBtn">Envoyer par email</button>
+          <button type="button" class="p-btn blue" id="pSendSmsBtn">Envoyer par SMS</button>
+          <button type="button" class="p-btn danger" id="pDeleteBtn">Supprimer la sélection</button>
+        </div>
+        <p class="p-status" id="pSendStatus"></p>
+        <div class="table-wrap" id="pTableContainer"><p class="empty">Chargement…</p></div>
+      </div>
     </div>
   </div>
 </div>
@@ -165,6 +233,23 @@
     document.getElementById('entrepriseLabel').textContent = draft.entreprise + ' — Demandes reçues via votre mini-site';
 
     await chargerLeads();
+    initViewSwitch();
+    initProspection();
+  }
+
+  function initViewSwitch(){
+    document.getElementById('btnViewDemandes').addEventListener('click', function(){
+      this.classList.add('active');
+      document.getElementById('btnViewProspection').classList.remove('active');
+      document.getElementById('viewDemandes').style.display = 'block';
+      document.getElementById('viewProspection').style.display = 'none';
+    });
+    document.getElementById('btnViewProspection').addEventListener('click', function(){
+      this.classList.add('active');
+      document.getElementById('btnViewDemandes').classList.remove('active');
+      document.getElementById('viewDemandes').style.display = 'none';
+      document.getElementById('viewProspection').style.display = 'block';
+    });
   }
 
   async function chargerLeads(){
@@ -290,6 +375,235 @@
         renderTable();
       });
     });
+  }
+
+  // ================= PROSPECTION (envoi email/SMS) =================
+  function initProspection(){
+    var pProspects = [];
+    var pFiltre = 'attente';
+    var EMAIL_TEST = 'infos@ecosky.fr';
+
+    function estTest(p){ return (p.email||'').toLowerCase() === EMAIL_TEST; }
+
+    function pCharger(){
+      var container = document.getElementById('pTableContainer');
+      fetch('/api/prospects-list?draft_id=' + encodeURIComponent(draftId))
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+          if (data.success) { pProspects = data.prospects; pRenderAll(); }
+          else { container.innerHTML = '<p class="empty" style="color:#c0392b;">Échec : ' + escapeHtml(data.error||'erreur') + '</p>'; }
+        })
+        .catch(function(){ container.innerHTML = '<p class="empty" style="color:#c0392b;">Erreur réseau. <button type="button" onclick="location.reload()">Réessayer</button></p>'; });
+    }
+
+    function pRenderAll(){ pRenderStats(); pRenderTabs(); pRenderTable(); }
+
+    function pRenderStats(){
+      var total = pProspects.length;
+      var envoyes = pProspects.filter(function(p){ return p.email_envoye; }).length;
+      var smsEnvoyes = pProspects.filter(function(p){ return p.sms_envoye; }).length;
+      var ouverts = pProspects.filter(function(p){ return p.email_ouvert; }).length;
+      var cliques = pProspects.filter(function(p){ return p.lien_clique; }).length;
+      var stop = pProspects.filter(function(p){ return p.opt_out; }).length;
+      document.getElementById('pStatsBar').innerHTML =
+        '<div class="stat-box"><div class="num">' + total + '</div><div class="lbl">Total</div></div>' +
+        '<div class="stat-box"><div class="num">' + envoyes + '</div><div class="lbl">Emails envoyés</div></div>' +
+        '<div class="stat-box"><div class="num">' + smsEnvoyes + '</div><div class="lbl">SMS envoyés</div></div>' +
+        '<div class="stat-box"><div class="num">' + ouverts + '</div><div class="lbl">Ouverts</div></div>' +
+        '<div class="stat-box accent"><div class="num">' + cliques + '</div><div class="lbl">Cliqués</div></div>' +
+        '<div class="stat-box"><div class="num">' + stop + '</div><div class="lbl">Désabonnés</div></div>';
+    }
+
+    function pRenderTabs(){
+      var labels = { attente:'En attente', envoyes:'Envoyés', sansReaction:'Sans réaction', clique:'Cliqué actif', stop:'Cliqué puis Stop', tous:'Tous' };
+      var c = {
+        attente: pProspects.filter(function(p){ return !p.email_envoye && !p.sms_envoye; }).length,
+        envoyes: pProspects.filter(function(p){ return p.email_envoye || p.sms_envoye; }).length,
+        sansReaction: pProspects.filter(function(p){ return (p.email_envoye||p.sms_envoye) && !p.lien_clique && !p.opt_out; }).length,
+        clique: pProspects.filter(function(p){ return p.lien_clique && !p.opt_out; }).length,
+        stop: pProspects.filter(function(p){ return p.lien_clique && p.opt_out; }).length,
+        tous: pProspects.length
+      };
+      var el = document.getElementById('pFiltreTabs');
+      el.innerHTML = Object.keys(labels).map(function(k){
+        return '<button type="button" class="tab' + (pFiltre===k?' active':'') + '" data-f="' + k + '">' + labels[k] + ' (' + c[k] + ')</button>';
+      }).join('');
+      el.querySelectorAll('.tab').forEach(function(btn){
+        btn.addEventListener('click', function(){ pFiltre = this.dataset.f; pRenderTabs(); pRenderTable(); });
+      });
+    }
+
+    function pBadges(p){
+      var out = [];
+      if (p.opt_out) out.push('<span class="badge perdu">Stop</span>');
+      else if (p.email_envoye || p.sms_envoye) out.push('<span class="badge contacte">Envoyé</span>');
+      else out.push('<span class="badge nouveau">En attente</span>');
+      if (p.email_ouvert) out.push('<span class="badge traite">Ouvert</span>');
+      if (p.lien_clique) out.push('<span class="badge traite">Cliqué</span>');
+      return out.join(' ');
+    }
+
+    function pRenderTable(){
+      var container = document.getElementById('pTableContainer');
+      var vue = pProspects.filter(function(p){
+        if (estTest(p)) return true;
+        if (pFiltre==='attente') return !p.email_envoye && !p.sms_envoye;
+        if (pFiltre==='envoyes') return p.email_envoye || p.sms_envoye;
+        if (pFiltre==='sansReaction') return (p.email_envoye||p.sms_envoye) && !p.lien_clique && !p.opt_out;
+        if (pFiltre==='clique') return p.lien_clique && !p.opt_out;
+        if (pFiltre==='stop') return p.lien_clique && p.opt_out;
+        return true;
+      });
+      if (vue.length===0) { container.innerHTML = '<p class="empty">Aucun prospect dans cette vue.</p>'; return; }
+
+      var rows = vue.map(function(p){
+        var dejaContacte = !!(p.email_envoye || p.sms_envoye);
+        var caseDesactivee = (dejaContacte && pFiltre!=='attente' && pFiltre!=='sansReaction') || !!p.opt_out;
+        return '<tr' + (estTest(p)?' class="p-row-test"':'') + '>' +
+          '<td><input type="checkbox" class="p-check" data-id="' + p.id + '"' + (estTest(p)?' data-test="1"':'') + (caseDesactivee?' disabled':'') + '></td>' +
+          '<td class="nom-cell">' + escapeHtml(p.nom||'') + (estTest(p)?' <span class="badge nouveau">TEST</span>':'') + '</td>' +
+          '<td>' + escapeHtml(p.ville||'') + '</td>' +
+          '<td>' + escapeHtml(p.telephone||'') + '<br><span class="sub-cell">' + escapeHtml(p.email||'') + '</span></td>' +
+          '<td>' + pBadges(p) + '</td>' +
+        '</tr>';
+      }).join('');
+      container.innerHTML = '<table><thead><tr><th></th><th>Nom</th><th>Ville</th><th>Contact</th><th>Statut</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    }
+
+    function pUpdateSelCount(){
+      document.getElementById('pSelCount').textContent = document.querySelectorAll('.p-check:checked').length + ' sélectionné(s)';
+    }
+    document.getElementById('pTableContainer').addEventListener('change', function(e){
+      if (e.target.classList.contains('p-check')) pUpdateSelCount();
+    });
+    document.getElementById('pSelNBtn').addEventListener('click', function(){
+      var n = parseInt(document.getElementById('pSelNInput').value, 10);
+      if (!n || n<1) return;
+      var cases = Array.from(document.querySelectorAll('.p-check')).filter(function(cb){ return cb.dataset.test!=='1' && !cb.disabled; });
+      cases.forEach(function(cb){ cb.checked=false; });
+      cases.slice(0,n).forEach(function(cb){ cb.checked=true; });
+      pUpdateSelCount();
+    });
+    document.getElementById('pSelAllBtn').addEventListener('click', function(){
+      document.querySelectorAll('.p-check').forEach(function(cb){ if (cb.dataset.test!=='1' && !cb.disabled) cb.checked=true; });
+      pUpdateSelCount();
+    });
+    document.getElementById('pDeselAllBtn').addEventListener('click', function(){
+      document.querySelectorAll('.p-check').forEach(function(cb){ cb.checked=false; });
+      pUpdateSelCount();
+    });
+
+    function pSelectedIds(){ return Array.from(document.querySelectorAll('.p-check:checked')).map(function(cb){ return cb.dataset.id; }); }
+
+    document.getElementById('pSendEmailBtn').addEventListener('click', function(){
+      var ids = pSelectedIds();
+      var status = document.getElementById('pSendStatus');
+      if (ids.length===0) { status.textContent='Sélectionnez au moins un prospect.'; status.className='p-status err'; return; }
+      var self = this; self.disabled = true;
+      status.textContent = 'Envoi en cours…'; status.className = 'p-status';
+      fetch('/api/prospects-send-email', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ draft_id: draftId, ids: ids }) })
+        .then(function(r){ return r.json(); }).then(function(data){
+          self.disabled = false;
+          if (data.success) {
+            status.textContent = data.envoyes + ' envoyé(s)' + (data.echoues?', '+data.echoues+' échoué(s)':'') + (data.quotaAtteint?' — quota atteint.':'') + '.';
+            status.className = 'p-status ok';
+            pCharger();
+          } else { status.textContent = data.error||'Envoi impossible.'; status.className='p-status err'; }
+        }).catch(function(){ self.disabled=false; status.textContent='Erreur réseau.'; status.className='p-status err'; });
+    });
+
+    document.getElementById('pSendSmsBtn').addEventListener('click', function(){
+      var ids = pSelectedIds();
+      var status = document.getElementById('pSendStatus');
+      if (ids.length===0) { status.textContent='Sélectionnez au moins un prospect.'; status.className='p-status err'; return; }
+      if (!confirm('Envoyer le SMS à ' + ids.length + ' prospect(s) ?')) return;
+      var self = this; self.disabled = true;
+      status.textContent = 'Envoi en cours…'; status.className = 'p-status';
+      fetch('/api/prospects-send-sms', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ draft_id: draftId, ids: ids }) })
+        .then(function(r){ return r.json(); }).then(function(data){
+          self.disabled = false;
+          if (data.success) {
+            status.textContent = data.envoyes + ' SMS envoyé(s)' + (data.echoues?', '+data.echoues+' échoué(s)':'') + '.';
+            status.className = 'p-status ok';
+            pCharger();
+          } else { status.textContent = data.error||'Envoi impossible.'; status.className='p-status err'; }
+        }).catch(function(){ self.disabled=false; status.textContent='Erreur réseau.'; status.className='p-status err'; });
+    });
+
+    document.getElementById('pDeleteBtn').addEventListener('click', function(){
+      var ids = pSelectedIds().filter(function(id){
+        var cb = document.querySelector('.p-check[data-id="'+id+'"]');
+        return cb && cb.dataset.test !== '1';
+      });
+      var status = document.getElementById('pSendStatus');
+      if (ids.length===0) { status.textContent='Sélectionnez au moins un prospect (le contact test ne peut pas être supprimé).'; status.className='p-status err'; return; }
+      if (!confirm('Supprimer ' + ids.length + ' prospect(s) ?')) return;
+      fetch('/api/prospects-delete', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ draft_id: draftId, ids: ids }) })
+        .then(function(r){ return r.json(); }).then(function(data){
+          if (data.success) { status.textContent = ids.length + ' supprimé(s).'; status.className='p-status ok'; pCharger(); }
+          else { status.textContent = data.error||'Suppression impossible.'; status.className='p-status err'; }
+        }).catch(function(){ status.textContent='Erreur réseau.'; status.className='p-status err'; });
+    });
+
+    document.getElementById('pImportBtn').addEventListener('click', function(){
+      var fileInput = document.getElementById('pFileInput');
+      var status = document.getElementById('pImportStatus');
+      if (!fileInput.files.length) { status.textContent='Choisissez un fichier .xlsx.'; status.className='p-status err'; return; }
+      var reader = new FileReader();
+      reader.onload = function(e){
+        try {
+          var wb = XLSX.read(e.target.result, { type:'array' });
+          var sheet = wb.Sheets[wb.SheetNames[0]];
+          var rows = XLSX.utils.sheet_to_json(sheet, { defval:'' });
+          var toImport = rows.map(function(r){
+            var tel = String(r['Téléphone']||r['Telephone']||'').trim();
+            var digits = tel.replace(/[\s.-]/g,'');
+            var e164 = null;
+            if (/^0[1-9]\d{8}$/.test(digits)) e164 = '+33'+digits.slice(1);
+            else if (/^\+33[1-9]\d{8}$/.test(digits)) e164 = digits;
+            return {
+              nom: r['Nom entreprise']||r['Nom']||'', ville: r['Ville']||'',
+              departement: String(r['Département']||r['Departement']||''),
+              telephone: tel, telephone_e164: e164, adresse: r['Adresse']||'',
+              email: String(r['Email']||r['E-mail']||'').trim(),
+            };
+          }).filter(function(p){ return p.telephone_e164 || p.email; });
+          if (toImport.length===0) { status.textContent='Aucun mobile ni email valide trouvé.'; status.className='p-status err'; return; }
+          status.textContent = 'Import en cours…'; status.className = 'p-status';
+          fetch('/api/prospects-import', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ draft_id: draftId, prospects: toImport }) })
+            .then(function(r){ return r.json(); }).then(function(data){
+              if (data.success) { status.textContent = data.imported + ' importé(s).'; status.className='p-status ok'; fileInput.value=''; pCharger(); }
+              else { status.textContent = data.error||'Import impossible.'; status.className='p-status err'; }
+            }).catch(function(){ status.textContent='Erreur réseau.'; status.className='p-status err'; });
+        } catch (err) { status.textContent = 'Fichier illisible : ' + err.message; status.className='p-status err'; }
+      };
+      reader.readAsArrayBuffer(fileInput.files[0]);
+    });
+
+    document.getElementById('pManualAddBtn').addEventListener('click', function(){
+      var status = document.getElementById('pManualStatus');
+      var nom = document.getElementById('m-nom').value.trim();
+      var tel = document.getElementById('m-tel').value.trim();
+      var digits = tel.replace(/[\s.-]/g,'');
+      var e164 = null;
+      if (/^0[1-9]\d{8}$/.test(digits)) e164 = '+33'+digits.slice(1);
+      else if (/^\+33[1-9]\d{8}$/.test(digits)) e164 = digits;
+      var email = document.getElementById('m-email').value.trim();
+      if (!nom) { status.textContent='Le nom est requis.'; status.className='p-status err'; return; }
+      if (!e164 && !email) { status.textContent='Un numéro (06/07) ou un email est requis.'; status.className='p-status err'; return; }
+      var contact = { nom: nom, ville: document.getElementById('m-ville').value.trim(), telephone: tel, telephone_e164: e164, email: email };
+      status.textContent = 'Ajout en cours…'; status.className='p-status';
+      fetch('/api/prospects-import', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ draft_id: draftId, prospects: [contact] }) })
+        .then(function(r){ return r.json(); }).then(function(data){
+          if (data.success) {
+            status.textContent = 'Contact ajouté.'; status.className='p-status ok';
+            ['m-nom','m-ville','m-tel','m-email'].forEach(function(id){ document.getElementById(id).value=''; });
+            pCharger();
+          } else { status.textContent = data.error||'Ajout impossible.'; status.className='p-status err'; }
+        }).catch(function(){ status.textContent='Erreur réseau.'; status.className='p-status err'; });
+    });
+
+    pCharger();
   }
 
   window.chargerLeads = chargerLeads;

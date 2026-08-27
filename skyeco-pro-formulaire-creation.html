@@ -28,19 +28,49 @@
     flex:1 1 42%; background:var(--navy); position:relative; display:flex; flex-direction:column;
     align-items:center; justify-content:center; padding:32px; overflow:hidden;
   }
+  .carousel-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 1s ease-in-out; }
+  .carousel-img.active{ opacity:1; }
+
+  .how-it-works-btn{
+    position:absolute; bottom:24px; left:24px; right:24px; z-index:2;
+    background:rgba(20,48,74,0.85); border:1.5px solid var(--orange); color:var(--white);
+    font-family:'IBM Plex Sans',sans-serif; font-weight:600; font-size:14px; padding:13px 18px;
+    cursor:pointer; backdrop-filter:blur(2px);
+  }
+  .how-it-works-btn:hover{ background:var(--orange); }
+
+  .video-modal{
+    display:none; position:fixed; inset:0; background:rgba(20,48,74,0.9); z-index:100;
+    align-items:center; justify-content:center; padding:24px;
+  }
+  .video-modal.active{ display:flex; }
+  .video-modal-inner{ position:relative; width:100%; max-width:640px; }
+  .video-modal-inner video{ width:100%; display:block; border:1px solid rgba(110,151,184,0.4); }
+  .video-modal-close{
+    position:absolute; top:-40px; right:0; background:none; border:none; color:var(--white);
+    font-size:22px; cursor:pointer; padding:6px 10px;
+  }
   .video-panel::before{
     content:''; position:absolute; inset:0;
     background-image: repeating-linear-gradient(0deg, rgba(110,151,184,0.06) 0px, transparent 1px, transparent 32px),
                        repeating-linear-gradient(90deg, rgba(110,151,184,0.06) 0px, transparent 1px, transparent 32px);
     pointer-events:none;
   }
-  .video-label{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--blue-light); letter-spacing:.1em; margin-bottom:14px; z-index:1; }
-  .video-wrap{ width:100%; max-width:420px; border:1px solid rgba(110,151,184,0.4); background:#0F2740; z-index:1; }
-  .video-wrap video{ width:100%; display:block; }
-  .video-caption{ font-family:'IBM Plex Sans',sans-serif; font-size:14px; color:#C9D6DF; text-align:center; max-width:380px; margin-top:18px; z-index:1; line-height:1.5;}
+  .video-label{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--blue-light); letter-spacing:.1em; margin-bottom:24px; z-index:1; }
+  .explain-steps{ width:100%; max-width:360px; z-index:1; }
+  .explain-step{ display:flex; gap:16px; align-items:flex-start; margin-bottom:28px; }
+  .explain-step:last-child{ margin-bottom:0; }
+  .explain-num{
+    font-family:'Big Shoulders Display',sans-serif; font-weight:900; font-size:28px; color:var(--orange);
+    width:40px; flex-shrink:0; line-height:1;
+  }
+  .explain-text h3{ font-family:'IBM Plex Sans',sans-serif; font-weight:700; font-size:15px; color:var(--white); margin-bottom:4px;}
+  .explain-text p{ font-family:'IBM Plex Sans',sans-serif; font-size:13.5px; color:#C9D6DF; line-height:1.5;}
 
-  .form-panel{ flex:1 1 58%; display:flex; align-items:center; justify-content:center; padding:24px; }
-  .card{ width:100%; max-width:560px; }
+  .form-panel{ flex:1 1 58%; position:relative; display:flex; align-items:center; justify-content:center; padding:24px; overflow:hidden; }
+  .form-bg-video{ position:absolute; top:50%; left:50%; min-width:100%; min-height:100%; width:auto; height:auto; transform:translate(-50%,-50%); object-fit:cover; z-index:-2; }
+  .form-bg-overlay{ position:absolute; inset:0; z-index:-1; background:rgba(244,247,249,0.55); }
+  .card{ width:100%; max-width:560px; position:relative; z-index:1; }
 
   header.top{ background:var(--navy); color:var(--white); padding:22px 28px; margin:-24px -24px 0; }
   @media(min-width:769px){ header.top{ margin:0; } }
@@ -145,17 +175,29 @@
 <body>
 
 <div class="split-layout">
-  <div class="video-panel">
-    <div class="video-label mono">COMMENT ÇA MARCHE</div>
-    <div class="video-wrap">
-      <video controls autoplay muted loop playsinline>
-        <source src="https://files2.heygen.ai/aries/output/9cab6a23-78ba-4732-b73e-4c62bafa0985/video.mp4?Expires=1788436297&Signature=iuoKrj5-B-2GCtw1gtzLM9VsHTNc65eSXKMZcLL-o6gxuoKfgEgdXKoC93MZ1voRkJgv~8qsA4UASyTE0u4unPLgX0FVAaoPHJ0DbrxAQ7rvhH7anWCWUqRgQkruJkjeaoWUAL43ugMk5iJC4vAYcV-BxrWkcOupTSeFY51aOZTaHNAxPuyy38nAYTuOktdywFgci2GHCBGKAakIHH05y98XbxSSkoX7lkSbG1cCem1S~i7esyCpJm82Aekqr36KGqdqUOXje5Wevd-HnzxwQDOqOkTpjaCD~FIKcx5sf7jz4~qqJWUIZ0PcFz74sIX15lKJ8iam57h4GrrYlkAj4w__&Key-Pair-Id=K38HBHX5LX3X2H" type="video/mp4">
+  <div class="video-panel" id="photoCarousel">
+    <img class="carousel-img active" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/media/1.jpg" alt="">
+    <img class="carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/media/2.jpg" alt="">
+    <img class="carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/media/3.jpg" alt="">
+    <img class="carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/media/4.jpg" alt="">
+    <img class="carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/media/5.jpg" alt="">
+    <button type="button" id="btnHowItWorks" class="how-it-works-btn">▶ Voir comment ça marche (30s)</button>
+  </div>
+
+  <div class="video-modal" id="videoModal">
+    <div class="video-modal-inner">
+      <button type="button" id="btnCloseModal" class="video-modal-close">✕</button>
+      <video id="explainerVideo" controls playsinline>
+        <source src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/skyeco-explainer%20(5).mp4" type="video/mp4">
       </video>
     </div>
-    <p class="video-caption">Regardez cette courte vidéo pendant que vous remplissez vos informations à droite — elle explique tout ce que vous allez pouvoir faire.</p>
   </div>
 
   <div class="form-panel">
+    <video class="form-bg-video" autoplay muted loop playsinline>
+      <source src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/media/VIDEO-2026-07-13-22-59-06.mp4" type="video/mp4">
+    </video>
+    <div class="form-bg-overlay"></div>
     <div class="card">
       <header class="top">
         <div class="logo"><span class="dot"></span>SKYECO&nbsp;PRO</div>
@@ -287,6 +329,33 @@
 
 <script>
 (function(){
+  // Carrousel photo (panneau gauche) — même principe que le vrai site EcoSky
+  (function initCarousel(){
+    const imgs = Array.from(document.querySelectorAll('#photoCarousel .carousel-img'));
+    if(imgs.length <= 1) return;
+    let idx = 0;
+    setInterval(()=>{
+      imgs[idx].classList.remove('active');
+      idx = (idx + 1) % imgs.length;
+      imgs[idx].classList.add('active');
+    }, 2500);
+  })();
+
+  // Modale "Voir comment ça marche"
+  const videoModal = document.getElementById('videoModal');
+  const explainerVideo = document.getElementById('explainerVideo');
+  document.getElementById('btnHowItWorks').addEventListener('click', ()=>{
+    videoModal.classList.add('active');
+    explainerVideo.play();
+  });
+  document.getElementById('btnCloseModal').addEventListener('click', ()=>{
+    videoModal.classList.remove('active');
+    explainerVideo.pause();
+  });
+  videoModal.addEventListener('click', (e)=>{
+    if(e.target === videoModal){ videoModal.classList.remove('active'); explainerVideo.pause(); }
+  });
+
   const steps = Array.from(document.querySelectorAll('.panel'));
   const stepLabels = ['Métier','Entreprise','Savoir-faire','Photos','Couleur','Récapitulatif'];
   let current = 0;

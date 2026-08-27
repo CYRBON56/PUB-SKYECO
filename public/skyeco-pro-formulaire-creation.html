@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Créez votre formulaire vitrine gratuitement en 6 minutes — Skyeco Pro</title>
+<link rel="icon" href="/skyeco-icon-devis.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -24,6 +25,23 @@
   @media (prefers-reduced-motion: reduce){ *{transition-duration:.001ms !important; animation-duration:.001ms !important;} }
 
   .split-layout{ display:flex; min-height:100vh; }
+
+  .page-logo{
+    position:fixed; top:20px; left:20px; z-index:200;
+    display:flex; align-items:center; gap:8px;
+    background:var(--paper,#F4F7F9); border-radius:12px; padding:6px 14px 6px 6px;
+    box-shadow:0 3px 14px rgba(0,0,0,0.28);
+  }
+  .page-logo img{ height:30px; width:30px; display:block; border-radius:7px; }
+  .page-logo-text{ font-family:'Big Shoulders Display',Arial,sans-serif; font-weight:800; font-size:16px; color:var(--navy,#14304A); letter-spacing:0.3px; }
+  .page-logo-text .orange-accent{ color:var(--orange,#E8622C); }
+  .page-logo-text .page-logo-pro{ font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:10.5px; letter-spacing:1px; color:var(--concrete,#5B6268); vertical-align:1px; }
+
+  @media(max-width:768px){
+    .page-logo{ top:12px; left:12px; padding:5px 10px 5px 5px; }
+    .page-logo img{ height:24px; width:24px; }
+    .page-logo-text{ font-size:13px; }
+  }
   .video-panel{
     flex:1 1 70%; background:var(--navy); position:relative; display:flex; flex-direction:column;
     align-items:center; justify-content:center; padding:32px; overflow:hidden;
@@ -41,6 +59,13 @@
 
   .form-panel{ flex:1 1 30%; position:relative; display:flex; align-items:center; justify-content:center; padding:24px; overflow:hidden; }
   .form-bg-overlay{ position:absolute; inset:0; z-index:-1; background:rgba(244,247,249,0.55); }
+  .carousel-caption{
+    position:absolute; left:20px; bottom:20px; z-index:1; max-width:260px;
+    background:rgba(20,48,74,0.78); color:var(--paper,#F4F7F9);
+    font-family:'IBM Plex Sans',sans-serif; font-weight:600; font-size:13px; line-height:1.4;
+    padding:9px 14px; border-radius:10px;
+  }
+  @media(max-width:768px){ .carousel-caption{ font-size:12px; padding:7px 12px; left:14px; bottom:14px; } }
   .card{ width:100%; max-width:480px; position:relative; z-index:1; }
 
   header.top{ background:var(--navy); color:var(--white); padding:22px 28px; margin:-24px -24px 0; }
@@ -148,6 +173,11 @@
 </head>
 <body>
 
+<div class="page-logo">
+  <img src="/skyeco-icon-devis.svg" alt="">
+  <span class="page-logo-text">SKY<span class="orange-accent">ECO</span> <span class="page-logo-pro">PRO</span></span>
+</div>
+
 <div class="split-layout">
   <div class="video-panel">
     <video class="explainer-bg-video" autoplay muted loop playsinline controls>
@@ -162,9 +192,10 @@
     <img class="carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/media/4.jpg" alt="">
     <img class="carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/media/5.jpg" alt="">
     <div class="form-bg-overlay"></div>
+    <div class="carousel-caption">Le sol qui tient tête aux hivers bretons.</div>
     <div class="card">
       <header class="top">
-        <div class="logo"><span class="dot"></span>SKYECO&nbsp;PRO</div>
+        <div class="logo"><img src="/skyeco-logo-devis.svg" alt="Skyeco Pro" style="height:28px; display:block;"></div>
         <div class="eyebrow mono">CRÉATION GRATUITE — SANS ENGAGEMENT</div>
         <h1 class="title">Créez votre formulaire vitrine gratuitement en 6 minutes.</h1>
       </header>

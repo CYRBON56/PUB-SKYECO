@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prospection paysagistes — Skyeco Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --navy:#14304A; --blue:#2C5F8A; --blue-light:#6E97B8;
+    --paper:#F4F7F9; --paper-line:#DCE4E9; --orange:#E8622C; --orange-dark:#C74F20;
+    --concrete:#5B6268; --white:#FFFFFF; --ok:#3E8E5A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{ font-family:'IBM Plex Sans',sans-serif; background:var(--paper); color:var(--navy); -webkit-font-smoothing:antialiased; }
+  .mono{ font-family:'IBM Plex Mono',monospace; }
+
+  #gate{ position:fixed; inset:0; background:var(--navy); display:flex; align-items:center; justify-content:center; z-index:100; }
+  #gate .box{ background:var(--white); padding:32px; width:100%; max-width:340px; }
+  #gate h1{ font-family:'Big Shoulders Display',sans-serif; font-weight:900; font-size:20px; margin-bottom:14px; }
+  #gate input{ width:100%; border:1.5px solid var(--paper-line); padding:12px 14px; font-size:14.5px; margin-bottom:10px; }
+  #gate button{ width:100%; background:var(--orange); color:#fff; border:none; padding:12px; font-weight:700; cursor:pointer; }
+  #gate .err{ color:#c0392b; font-size:12.5px; margin-top:8px; display:none; }
+
+  header{ background:var(--navy); color:var(--white); padding:20px 28px; }
+  .logo{ font-family:'Big Shoulders Display',sans-serif; font-weight:900; font-size:18px; display:flex; align-items:center; gap:8px; }
+  .logo .dot{ width:8px; height:8px; background:var(--orange); display:inline-block; }
+  header .sub{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--blue-light); margin-top:4px; }
+
+  .wrap{ max-width:1200px; margin:0 auto; padding:24px 20px 60px; }
+  .panel{ background:var(--white); border:1px solid var(--paper-line); padding:20px; margin-bottom:20px; }
+  .panel h2{ font-family:'Big Shoulders Display',sans-serif; font-weight:800; font-size:17px; margin-bottom:6px; }
+  .panel .hint{ font-size:13px; color:var(--concrete); margin-bottom:14px; }
+
+  .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  input[type=text], input[type=tel], input[type=email], input[type=file], input[type=number], textarea{
+    border:1.5px solid var(--paper-line); padding:10px 12px; font-size:13.5px; font-family:inherit; color:var(--navy); background:var(--paper);
+  }
+  textarea{ width:100%; min-height:90px; resize:vertical; }
+  .field{ display:flex; flex-direction:column; gap:4px; flex:1; min-width:140px; }
+  .field label{ font-size:11px; font-weight:700; color:var(--concrete); }
+
+  .btn{ font-weight:700; font-size:13.5px; padding:10px 16px; border:1.5px solid transparent; cursor:pointer; white-space:nowrap; }
+  .btn-primary{ background:var(--orange); color:#fff; }
+  .btn-primary:hover{ background:var(--orange-dark); }
+  .btn-primary:disabled{ background:var(--paper-line); color:var(--concrete); cursor:not-allowed; }
+  .btn-ghost{ background:#fff; border-color:var(--paper-line); color:var(--navy); }
+  .btn-ghost:hover{ border-color:var(--blue); }
+  .btn-danger{ background:#fff; border-color:#c0392b; color:#c0392b; }
+  .btn-danger:hover{ background:#fdecec; }
+
+  .filters{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+  .filter-btn{ background:#fff; border:1.5px solid var(--paper-line); padding:7px 13px; font-size:12.5px; font-weight:600; cursor:pointer; }
+  .filter-btn.active{ border-color:var(--orange); background:#FDF3EF; color:var(--orange-dark); }
+
+  .sel-row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:12px; font-size:13px; color:var(--concrete); }
+
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  th{ text-align:left; font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--concrete); padding:8px 10px; border-bottom:2px solid var(--paper-line); white-space:nowrap; }
+  td{ padding:9px 10px; border-bottom:1px solid var(--paper-line); vertical-align:middle; }
+  tr:hover td{ background:var(--paper); }
+  .tag{ display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:10px; padding:2px 7px; border:1px solid var(--paper-line); }
+  .tag.en_attente{ border-color:var(--orange); color:var(--orange-dark); }
+  .tag.envoye_email, .tag.envoye_sms{ border-color:var(--blue); color:var(--blue); }
+  .tag.clique_actif{ border-color:var(--ok); color:var(--ok); }
+  .tag.clique_stop{ border-color:#c0392b; color:#c0392b; }
+
+  .table-wrap{ overflow-x:auto; max-height:600px; overflow-y:auto; }
+  .loading, .empty{ text-align:center; padding:40px; color:var(--concrete); font-size:13.5px; }
+  .status-msg{ font-size:12.5px; margin-top:8px; }
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="box">
+    <h1>Accès réservé</h1>
+    <input type="password" id="gatePassword" placeholder="Mot de passe">
+    <button id="gateBtn">Entrer</button>
+    <div class="err" id="gateErr">Mot de passe incorrect.</div>
+  </div>
+</div>
+
+<header>
+  <div class="logo"><span class="dot"></span>SKYECO&nbsp;PRO</div>
+  <div class="sub">PROSPECTION PAYSAGISTES</div>
+</header>
+
+<div class="wrap">
+
+  <div class="panel">
+    <h2>Importer une liste</h2>
+    <p class="hint">Fichier .xlsx avec les colonnes : Nom entreprise, Ville, Département, Téléphone, Email, Adresse. Les numéros déjà importés sont mis à jour, pas dupliqués.</p>
+    <div class="row">
+      <input type="file" id="fileImport" accept=".xlsx,.xls">
+      <button class="btn btn-primary" id="btnImport">Importer</button>
+    </div>
+    <div class="status-msg" id="importStatus"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Ajouter un contact</h2>
+    <p class="hint">Pour ajouter un prospect à la main, sans passer par un fichier.</p>
+    <div class="row">
+      <div class="field"><label>Nom entreprise</label><input type="text" id="addNom"></div>
+      <div class="field"><label>Ville</label><input type="text" id="addVille"></div>
+      <div class="field"><label>Département</label><input type="text" id="addDept"></div>
+      <div class="field"><label>Téléphone</label><input type="tel" id="addTel"></div>
+      <div class="field"><label>Email</label><input type="email" id="addEmail"></div>
+      <div class="field"><label>Adresse</label><input type="text" id="addAdresse"></div>
+    </div>
+    <div style="margin-top:12px;"><button class="btn btn-primary" id="btnAdd">Ajouter le contact</button></div>
+    <div class="status-msg" id="addStatus"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Message de la campagne</h2>
+    <p class="hint">Utilisé pour l'envoi groupé ci-dessous. {{nom_entreprise}} et {{ville}} sont remplacés automatiquement (email uniquement).</p>
+    <div class="row" style="margin-bottom:10px;">
+      <div class="field"><label>Sujet de l'email</label><input type="text" id="emailSubject" value="Ne perdez plus une demande de chantier paysager"></div>
+    </div>
+    <label style="font-size:11px; font-weight:700; color:var(--concrete);">Message SMS</label>
+    <textarea id="smsMessage" style="margin-top:4px; margin-bottom:10px;">Bonjour, je propose un outil gratuit pour ne plus perdre de demandes de chantier. Découvrez Skyeco Pro : https://skyeco.fr/skyeco-pro-landing-paysagiste.html — Répondez STOP pour ne plus recevoir de message.</textarea>
+    <label style="font-size:11px; font-weight:700; color:var(--concrete);">Contenu de l'email (HTML simple)</label>
+    <textarea id="emailHtml" style="margin-top:4px;">Bonjour,&lt;br&gt;&lt;br&gt;Je dirige EcoSky by RMS, une entreprise de revêtements de sol résine en Bretagne. J'ai développé un outil pour ne plus perdre une seule demande de chantier — Skyeco Pro.&lt;br&gt;&lt;br&gt;Ça peut être utile pour {{nom_entreprise}} à {{ville}} aussi.&lt;br&gt;&lt;br&gt;Découvrez-le ici : &lt;a href="https://skyeco.fr/skyeco-pro-landing-paysagiste.html"&gt;https://skyeco.fr/skyeco-pro-landing-paysagiste.html&lt;/a&gt;&lt;br&gt;&lt;br&gt;Cyrille Bon</textarea>
+  </div>
+
+  <div class="panel">
+    <h2>Prospects</h2>
+    <p class="hint">Sélectionnez les prospects à contacter, puis envoyez le SMS ou l'email avec le lien vers Skyeco Pro.</p>
+
+    <div class="filters" id="filters"></div>
+
+    <div class="sel-row">
+      <span id="selCount">0 sélectionné(s)</span>
+      <input type="number" id="selectNInput" placeholder="N" style="width:70px;">
+      <button class="btn btn-ghost" id="btnSelectN">Sélectionner les N premiers</button>
+      <button class="btn btn-ghost" id="btnSelectAll">Tout sélectionner</button>
+      <button class="btn btn-ghost" id="btnSelectNone">Tout désélectionner</button>
+    </div>
+    <div class="sel-row">
+      <button class="btn btn-primary" id="btnSendSms">Envoyer le SMS</button>
+      <button class="btn btn-primary" id="btnSendEmail">Envoyer par email</button>
+      <button class="btn btn-danger" id="btnDeleteSelection">Supprimer la sélection</button>
+    </div>
+    <div class="status-msg" id="bulkStatus"></div>
+
+    <div class="table-wrap">
+      <div id="tableContainer"><div class="loading">CHARGEMENT…</div></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const STATUTS = [
+    ['en_attente', 'En attente'],
+    ['envoye_email', 'Envoyé (email)'],
+    ['envoye_sms', 'Envoyé (SMS)'],
+    ['clique_actif', 'Cliqué, actif'],
+    ['clique_stop', 'Cliqué puis Stop']
+  ];
+
+  // ---------- Portail mot de passe ----------
+  const gate = document.getElementById('gate');
+  if (sessionStorage.getItem('skyeco_prospection_ok') === '1') {
+    gate.style.display = 'none';
+  }
+  document.getElementById('gateBtn').addEventListener('click', submitGate);
+  document.getElementById('gatePassword').addEventListener('keydown', e => { if (e.key === 'Enter') submitGate(); });
+  async function submitGate(){
+    const pwd = document.getElementById('gatePassword').value;
+    const errEl = document.getElementById('gateErr');
+    try{
+      const res = await fetch('/api/verify-internal-password', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ password: pwd })
+      });
+      const data = await res.json();
+      if(data.success){
+        sessionStorage.setItem('skyeco_prospection_ok', '1');
+        gate.style.display = 'none';
+        loadProspects();
+      } else {
+        errEl.textContent = data.error || 'Mot de passe incorrect.';
+        errEl.style.display = 'block';
+      }
+    } catch(err){
+      errEl.textContent = 'Erreur de connexion.';
+      errEl.style.display = 'block';
+    }
+  }
+
+  // ---------- État ----------
+  let allProspects = [];
+  let currentFilter = 'tous';
+  let selectedIds = new Set();
+
+  function normPhone(raw){
+    if(!raw) return null;
+    const digits = String(raw).replace(/\D/g,'');
+    if(digits.startsWith('33') && digits.length===11) return '0'+digits.slice(2);
+    if(digits.startsWith('0') && digits.length===10) return digits;
+    return digits.length>=9 ? digits : null;
+  }
+
+  // ---------- Import XLSX ----------
+  document.getElementById('btnImport').addEventListener('click', async ()=>{
+    const fileInput = document.getElementById('fileImport');
+    const statusEl = document.getElementById('importStatus');
+    if(!fileInput.files.length){ statusEl.textContent = 'Choisissez un fichier .xlsx.'; statusEl.style.color = '#c0392b'; return; }
+
+    statusEl.textContent = 'Lecture du fichier…';
+    statusEl.style.color = 'var(--concrete)';
+
+    const file = fileInput.files[0];
+    const buffer = await file.arrayBuffer();
+    const wb = XLSX.read(buffer, { type:'array' });
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, { defval:'' });
+
+    const findCol = (row, ...names) => {
+      for(const key of Object.keys(row)){
+        const norm = key.toLowerCase().trim();
+        if(names.some(n => norm.includes(n))) return row[key];
+      }
+      return '';
+    };
+
+    const parsed = rows.map(r => ({
+      nom_entreprise: String(findCol(r,'nom entreprise','entreprise','nom')).trim(),
+      ville: String(findCol(r,'ville')).trim(),
+      departement: String(findCol(r,'département','departement')).trim(),
+      telephone: normPhone(findCol(r,'téléphone','telephone','tel','mobile')),
+      email: String(findCol(r,'email','mail')).trim().toLowerCase() || null,
+      adresse: String(findCol(r,'adresse')).trim()
+    })).filter(r => r.telephone || r.email);
+
+    if(!parsed.length){ statusEl.textContent = 'Aucune ligne exploitable trouvée (il faut au moins un téléphone ou un email).'; statusEl.style.color = '#c0392b'; return; }
+
+    statusEl.textContent = 'Import de ' + parsed.length + ' contacts…';
+
+    const withPhone = parsed.filter(r => r.telephone);
+    const withoutPhone = parsed.filter(r => !r.telephone);
+
+    try{
+      if(withPhone.length){
+        const { error } = await supabaseClient.from('prospects_paysagiste').upsert(withPhone, { onConflict:'telephone' });
+        if(error) throw error;
+      }
+      if(withoutPhone.length){
+        const { error } = await supabaseClient.from('prospects_paysagiste').insert(withoutPhone);
+        if(error) throw error;
+      }
+      statusEl.textContent = '✓ ' + parsed.length + ' contacts importés/mis à jour.';
+      statusEl.style.color = 'var(--ok)';
+      fileInput.value = '';
+      loadProspects();
+    } catch(err){
+      statusEl.textContent = 'Erreur : ' + err.message;
+      statusEl.style.color = '#c0392b';
+    }
+  });
+
+  // ---------- Ajout manuel ----------
+  document.getElementById('btnAdd').addEventListener('click', async ()=>{
+    const statusEl = document.getElementById('addStatus');
+    const nom = document.getElementById('addNom').value.trim();
+    const ville = document.getElementById('addVille').value.trim();
+    const departement = document.getElementById('addDept').value.trim();
+    const telephone = normPhone(document.getElementById('addTel').value);
+    const email = document.getElementById('addEmail').value.trim().toLowerCase() || null;
+    const adresse = document.getElementById('addAdresse').value.trim();
+
+    if(!telephone && !email){ statusEl.textContent = 'Renseignez au moins un téléphone ou un email.'; statusEl.style.color = '#c0392b'; return; }
+
+    const { error } = await supabaseClient.from('prospects_paysagiste')
+      .upsert([{ nom_entreprise:nom, ville, departement, telephone, email, adresse }], telephone ? { onConflict:'telephone' } : {});
+
+    if(error){ statusEl.textContent = 'Erreur : ' + error.message; statusEl.style.color = '#c0392b'; return; }
+    statusEl.textContent = '✓ Contact ajouté.';
+    statusEl.style.color = 'var(--ok)';
+    ['addNom','addVille','addDept','addTel','addEmail','addAdresse'].forEach(id => document.getElementById(id).value = '');
+    loadProspects();
+  });
+
+  // ---------- Chargement + rendu ----------
+  async function loadProspects(){
+    document.getElementById('tableContainer').innerHTML = '<div class="loading">CHARGEMENT…</div>';
+    const { data, error } = await supabaseClient.from('prospects_paysagiste').select('*').order('created_at', { ascending:false });
+    if(error){ document.getElementById('tableContainer').innerHTML = '<div class="empty">Erreur de chargement.</div>'; return; }
+    allProspects = data || [];
+    renderFilters();
+    renderTable();
+  }
+
+  function renderFilters(){
+    const counts = { tous: allProspects.length };
+    STATUTS.forEach(([val]) => { counts[val] = allProspects.filter(p => p.statut === val).length; });
+    const options = [...STATUTS, ['tous','Tous']];
+    document.getElementById('filters').innerHTML = options.map(([val,label]) =>
+      `<button type="button" class="filter-btn${val===currentFilter?' active':''}" data-filter="${val}">${label} (${counts[val]||0})</button>`
+    ).join('');
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => { currentFilter = btn.dataset.filter; renderFilters(); renderTable(); });
+    });
+  }
+
+  function getFiltered(){
+    return currentFilter === 'tous' ? allProspects : allProspects.filter(p => p.statut === currentFilter);
+  }
+
+  function renderTable(){
+    const filtered = getFiltered();
+    updateSelCount();
+    if(!filtered.length){ document.getElementById('tableContainer').innerHTML = '<div class="empty">Aucun prospect pour ce filtre.</div>'; return; }
+
+    let html = '<table><thead><tr>' +
+      '<th><input type="checkbox" id="checkAllVisible"></th>' +
+      '<th>Entreprise</th><th>Ville</th><th>Dép.</th><th>Téléphone</th><th>Email</th><th>Statut</th>' +
+      '</tr></thead><tbody>';
+
+    filtered.forEach(p => {
+      const checked = selectedIds.has(p.id) ? 'checked' : '';
+      const statutLabel = (STATUTS.find(s=>s[0]===p.statut)||[p.statut,p.statut])[1];
+      html += `<tr>
+        <td><input type="checkbox" class="rowCheck" data-id="${p.id}" ${checked}></td>
+        <td>${p.nom_entreprise || '—'}</td>
+        <td>${p.ville || '—'}</td>
+        <td>${p.departement || '—'}</td>
+        <td>${p.telephone || '—'}</td>
+        <td>${p.email || '—'}</td>
+        <td><span class="tag ${p.statut}">${statutLabel}</span></td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    document.getElementById('tableContainer').innerHTML = html;
+
+    document.querySelectorAll('.rowCheck').forEach(cb => {
+      cb.addEventListener('change', () => {
+        if(cb.checked) selectedIds.add(cb.dataset.id); else selectedIds.delete(cb.dataset.id);
+        updateSelCount();
+      });
+    });
+    document.getElementById('checkAllVisible').addEventListener('change', (e) => {
+      filtered.forEach(p => { if(e.target.checked) selectedIds.add(p.id); else selectedIds.delete(p.id); });
+      renderTable();
+    });
+  }
+
+  function updateSelCount(){
+    document.getElementById('selCount').textContent = selectedIds.size + ' sélectionné(s)';
+  }
+
+  document.getElementById('btnSelectAll').addEventListener('click', () => { getFiltered().forEach(p => selectedIds.add(p.id)); renderTable(); });
+  document.getElementById('btnSelectNone').addEventListener('click', () => { selectedIds.clear(); renderTable(); });
+  document.getElementById('btnSelectN').addEventListener('click', () => {
+    const n = parseInt(document.getElementById('selectNInput').value, 10);
+    if(!n || n<1) return;
+    selectedIds.clear();
+    getFiltered().slice(0, n).forEach(p => selectedIds.add(p.id));
+    renderTable();
+  });
+
+  // ---------- Suppression ----------
+  document.getElementById('btnDeleteSelection').addEventListener('click', async () => {
+    if(!selectedIds.size) return;
+    if(!confirm('Supprimer définitivement ' + selectedIds.size + ' prospect(s) ?')) return;
+    const ids = Array.from(selectedIds);
+    const { error } = await supabaseClient.from('prospects_paysagiste').delete().in('id', ids);
+    if(error){ alert('Erreur : ' + error.message); return; }
+    selectedIds.clear();
+    loadProspects();
+  });
+
+  // ---------- Envoi SMS groupé ----------
+  document.getElementById('btnSendSms').addEventListener('click', async () => {
+    const statusEl = document.getElementById('bulkStatus');
+    if(!selectedIds.size){ statusEl.textContent = 'Sélectionnez au moins un prospect.'; statusEl.style.color = '#c0392b'; return; }
+    const message = document.getElementById('smsMessage').value.trim();
+    if(!message){ statusEl.textContent = 'Message SMS vide.'; statusEl.style.color = '#c0392b'; return; }
+
+    const prospects = allProspects.filter(p => selectedIds.has(p.id) && p.telephone);
+    if(!prospects.length){ statusEl.textContent = 'Aucun des prospects sélectionnés n\'a de téléphone.'; statusEl.style.color = '#c0392b'; return; }
+
+    statusEl.textContent = 'Envoi en cours à ' + prospects.length + ' prospect(s)…';
+    statusEl.style.color = 'var(--concrete)';
+
+    try{
+      const res = await fetch('/api/send-campaign-sms', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ prospects: prospects.map(p=>({id:p.id, telephone:p.telephone})), message })
+      });
+      const data = await res.json();
+      if(!data.success) throw new Error(data.error || 'Erreur inconnue.');
+
+      if(data.sent.length){
+        await supabaseClient.from('prospects_paysagiste')
+          .update({ statut:'envoye_sms', last_contact_at: new Date().toISOString() })
+          .in('id', data.sent);
+      }
+      statusEl.textContent = '✓ ' + data.sent.length + ' SMS envoyé(s)' + (data.failed.length ? ', ' + data.failed.length + ' échec(s)' : '') + '.';
+      statusEl.style.color = 'var(--ok)';
+      selectedIds.clear();
+      loadProspects();
+    } catch(err){
+      statusEl.textContent = 'Erreur : ' + err.message;
+      statusEl.style.color = '#c0392b';
+    }
+  });
+
+  // ---------- Envoi email groupé ----------
+  document.getElementById('btnSendEmail').addEventListener('click', async () => {
+    const statusEl = document.getElementById('bulkStatus');
+    if(!selectedIds.size){ statusEl.textContent = 'Sélectionnez au moins un prospect.'; statusEl.style.color = '#c0392b'; return; }
+    const subject = document.getElementById('emailSubject').value.trim();
+    const html = document.getElementById('emailHtml').value.trim();
+    if(!subject || !html){ statusEl.textContent = 'Sujet ou contenu email vide.'; statusEl.style.color = '#c0392b'; return; }
+
+    const prospects = allProspects.filter(p => selectedIds.has(p.id) && p.email);
+    if(!prospects.length){ statusEl.textContent = 'Aucun des prospects sélectionnés n\'a d\'email.'; statusEl.style.color = '#c0392b'; return; }
+
+    statusEl.textContent = 'Envoi en cours à ' + prospects.length + ' prospect(s)…';
+    statusEl.style.color = 'var(--concrete)';
+
+    try{
+      const res = await fetch('/api/send-campaign-email', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ prospects: prospects.map(p=>({id:p.id, email:p.email, nom_entreprise:p.nom_entreprise, ville:p.ville})), subject, html })
+      });
+      const data = await res.json();
+      if(!data.success) throw new Error(data.error || 'Erreur inconnue.');
+
+      if(data.sent.length){
+        await supabaseClient.from('prospects_paysagiste')
+          .update({ statut:'envoye_email', last_contact_at: new Date().toISOString() })
+          .in('id', data.sent);
+      }
+      statusEl.textContent = '✓ ' + data.sent.length + ' email(s) envoyé(s)' + (data.failed.length ? ', ' + data.failed.length + ' échec(s)' : '') + '.';
+      statusEl.style.color = 'var(--ok)';
+      selectedIds.clear();
+      loadProspects();
+    } catch(err){
+      statusEl.textContent = 'Erreur : ' + err.message;
+      statusEl.style.color = '#c0392b';
+    }
+  });
+
+  if (sessionStorage.getItem('skyeco_prospection_ok') === '1') loadProspects();
+})();
+</script>
+
+</body>
+</html>

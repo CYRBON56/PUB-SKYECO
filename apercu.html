@@ -279,12 +279,60 @@ async function init(){
     document.getElementById('previewBanner').style.display = 'flex';
   }
 
-  document.getElementById('btnPublier').addEventListener('click', ()=>{
-    alert("Étape suivante : paiement pour mettre en ligne — à brancher (Stripe / Qonto).");
+  document.getElementById('btnPublier').addEventListener('click', async ()=>{
+    const btn = document.getElementById('btnPublier');
+    btn.disabled = true;
+    btn.textContent = 'Redirection vers le paiement…';
+    try {
+      const res = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId: draft.id, entreprise: draft.entreprise })
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.error || 'Impossible de créer la session de paiement.');
+      }
+    } catch (err) {
+      alert("Une erreur est survenue : " + err.message);
+      btn.disabled = false;
+      btn.textContent = 'Mettre en ligne';
+    }
   });
   document.getElementById('btnFooterCallback').addEventListener('click', ()=>{
     alert("Rappel demandé — à connecter au système de notification SMS/email.");
   });
+
+  // Retour depuis Stripe après paiement : on vérifie et on publie côté serveur.
+  const returningSessionId = params.get('session_id');
+  if (returningSessionId) {
+    document.getElementById('previewBanner').innerHTML =
+      '<span>⏳ Vérification du paiement en cours…</span>';
+    try {
+      const res = await fetch('/api/confirm-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: returningSessionId, draftId: draft.id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('previewBanner').style.background = '#1e6f4c';
+        document.getElementById('previewBanner').innerHTML =
+          '<span>✅ Votre mini-site est maintenant en ligne.</span>';
+      } else {
+        document.getElementById('previewBanner').innerHTML =
+          "<span>⚠️ " + (data.error || "Le paiement n'a pas pu être confirmé.") + "</span>";
+      }
+    } catch (err) {
+      document.getElementById('previewBanner').innerHTML =
+        '<span>⚠️ Impossible de vérifier le paiement pour le moment.</span>';
+    }
+  } else if (params.get('paiement') === 'annule') {
+    document.getElementById('previewBanner').innerHTML =
+      '<span>Paiement annulé — vous pouvez réessayer quand vous voulez.</span>';
+  }
 
   runWizard(template, brandColor);
 }
@@ -357,7 +405,7 @@ function runWizard(template, brandColor){
       else {
         cardEl.innerHTML = '<div class="success-icon">✅</div><div class="question" style="text-align:center;">Merci '+(state.prenom||'')+' !</div>'+
           '<div class="result-box"><div class="result-note">Votre demande a bien été enregistrée. Un conseiller revient vers vous sous 24h.</div></div>'+
-          '<p class="disclaimer">Cette estimation reste indicative et devra être confirmée lors d\\'un appel téléphonique.</p>';
+          "<p class=\"disclaimer\">Cette estimation reste indicative et devra être confirmée lors d'un appel téléphonique.</p>";
       }
     });
   }

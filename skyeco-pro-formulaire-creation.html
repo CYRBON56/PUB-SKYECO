@@ -144,6 +144,9 @@
     <div class="panel" data-step="1">
       <h2 class="q">Parlez-moi de votre entreprise.</h2>
       <p class="hint">Ces informations apparaîtront sur votre page.</p>
+      <label for="siret">Numéro de SIRET</label>
+      <input type="text" id="siret" inputmode="numeric" maxlength="14" placeholder="Ex : 93999787000018">
+      <div class="siret-status mono" id="siretStatus" style="font-size:12px; color:var(--concrete); margin:-10px 0 4px;">14 chiffres, sans espace.</div>
       <label for="entreprise">Nom de l'entreprise</label>
       <input type="text" id="entreprise" placeholder="Ex : EcoSky by RMS">
       <label for="zone">Zone d'intervention</label>
@@ -152,7 +155,7 @@
       <input type="tel" id="telephone" placeholder="Ex : 06 12 34 56 78">
       <label for="email">Email</label>
       <input type="email" id="email" placeholder="Ex : contact@monentreprise.fr">
-      <div class="error mono" id="err-entreprise">Merci de renseigner le nom de votre entreprise et un email valide.</div>
+      <div class="error mono" id="err-entreprise">Merci de renseigner un SIRET valide (14 chiffres) et un email valide.</div>
     </div>
 
     <!-- STEP 3 : savoir-faire -->
@@ -214,7 +217,7 @@
   const steps = Array.from(document.querySelectorAll('.panel'));
   const stepLabels = ['Métier','Entreprise','Savoir-faire','Photos','Couleur','Récapitulatif'];
   let current = 0;
-  const state = { metier:null, entreprise:'', zone:'', telephone:'', email:'', description:'', photos:[null,null,null], couleur:'#E8622C' };
+  const state = { metier:null, siret:'', siretVerifie:false, entreprise:'', zone:'', telephone:'', email:'', description:'', photos:[null,null,null], couleur:'#E8622C' };
 
   // build stepper bars
   const stepperEl = document.getElementById('stepper');
@@ -251,6 +254,60 @@
     state.metier = card.dataset.value;
     document.getElementById('err-metier').classList.remove('show');
   });
+
+  // Step 2: vérification du SIRET via l'API publique gratuite recherche-entreprises.api.gouv.fr
+  const siretEl = document.getElementById('siret');
+  const siretStatusEl = document.getElementById('siretStatus');
+  const entrepriseEl = document.getElementById('entreprise');
+  let siretTimer = null;
+
+  siretEl.addEventListener('input', ()=>{
+    const digits = siretEl.value.replace(/\D/g,'').slice(0,14);
+    siretEl.value = digits;
+    state.siret = digits;
+    state.siretVerifie = false;
+    clearTimeout(siretTimer);
+
+    if(digits.length < 14){
+      siretStatusEl.textContent = '14 chiffres, sans espace.';
+      siretStatusEl.style.color = 'var(--concrete)';
+      return;
+    }
+    siretStatusEl.textContent = 'Vérification en cours…';
+    siretStatusEl.style.color = 'var(--concrete)';
+
+    siretTimer = setTimeout(async ()=>{
+      try{
+        const res = await fetch('https://recherche-entreprises.api.gouv.fr/search?q=' + digits);
+        const data = await res.json();
+        const result = data.results && data.results[0];
+        if(result){
+          state.siretVerifie = true;
+          siretStatusEl.textContent = '✓ ' + result.nom_complet;
+          siretStatusEl.style.color = 'var(--ok)';
+          if(!entrepriseEl.value.trim()){
+            entrepriseEl.value = result.nom_complet;
+            state.entreprise = result.nom_complet;
+          }
+        } else {
+          state.siretVerifie = false;
+          siretStatusEl.textContent = "SIRET introuvable — vérifiez le numéro.";
+          siretStatusEl.style.color = 'var(--orange-dark)';
+        }
+      } catch(e){
+        // API indisponible : on ne bloque pas l'utilisateur, la vérification n'est qu'un bonus
+        state.siretVerifie = true;
+        siretStatusEl.textContent = 'Vérification indisponible — vous pouvez continuer.';
+        siretStatusEl.style.color = 'var(--concrete)';
+      }
+      document.getElementById('btnNext').disabled = !canProceedStep1();
+    }, 500);
+  });
+
+  function canProceedStep1(){
+    const emailOk = /\S+@\S+\.\S+/.test(document.getElementById('email').value.trim());
+    return state.siret.length === 14 && document.getElementById('entreprise').value.trim() && emailOk;
+  }
 
   // Step 3: char count
   const descEl = document.getElementById('description');
@@ -293,6 +350,7 @@
     const recap = document.getElementById('recap');
     recap.innerHTML =
       '<dt>Métier</dt><dd>' + (metierLabels[state.metier]||'—') + '</dd>' +
+      '<dt>SIRET</dt><dd>' + (state.siret||'—') + '</dd>' +
       '<dt>Entreprise</dt><dd>' + (state.entreprise||'—') + '</dd>' +
       "<dt>Zone d'intervention</dt><dd>" + (state.zone||'—') + '</dd>' +
       '<dt>Contact</dt><dd>' + (state.telephone||'—') + ' · ' + (state.email||'—') + '</dd>' +
@@ -304,12 +362,14 @@
       if(!state.metier){ document.getElementById('err-metier').classList.add('show'); return false; }
     }
     if(i===1){
+      state.siret = document.getElementById('siret').value.trim();
       state.entreprise = document.getElementById('entreprise').value.trim();
       state.zone = document.getElementById('zone').value.trim();
       state.telephone = document.getElementById('telephone').value.trim();
       state.email = document.getElementById('email').value.trim();
       const emailOk = /\S+@\S+\.\S+/.test(state.email);
-      if(!state.entreprise || !emailOk){ document.getElementById('err-entreprise').classList.add('show'); return false; }
+      const siretOk = /^\d{14}$/.test(state.siret);
+      if(!siretOk || !state.entreprise || !emailOk){ document.getElementById('err-entreprise').classList.add('show'); return false; }
       document.getElementById('err-entreprise').classList.remove('show');
     }
     return true;
@@ -351,6 +411,7 @@
       .from('skyeco_pro_vitrine_drafts')
       .insert([{
         metier: state.metier,
+        siret: state.siret,
         entreprise: state.entreprise,
         zone: state.zone,
         telephone: state.telephone,

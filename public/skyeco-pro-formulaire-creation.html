@@ -31,25 +31,7 @@
   .carousel-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 1s ease-in-out; }
   .carousel-img.active{ opacity:1; }
 
-  .how-it-works-btn{
-    position:absolute; bottom:24px; left:24px; right:24px; z-index:2;
-    background:rgba(20,48,74,0.85); border:1.5px solid var(--orange); color:var(--white);
-    font-family:'IBM Plex Sans',sans-serif; font-weight:600; font-size:14px; padding:13px 18px;
-    cursor:pointer; backdrop-filter:blur(2px);
-  }
-  .how-it-works-btn:hover{ background:var(--orange); }
-
-  .video-modal{
-    display:none; position:fixed; inset:0; background:rgba(20,48,74,0.9); z-index:100;
-    align-items:center; justify-content:center; padding:24px;
-  }
-  .video-modal.active{ display:flex; }
-  .video-modal-inner{ position:relative; width:100%; max-width:640px; }
-  .video-modal-inner video{ width:100%; display:block; border:1px solid rgba(110,151,184,0.4); }
-  .video-modal-close{
-    position:absolute; top:-40px; right:0; background:none; border:none; color:var(--white);
-    font-size:22px; cursor:pointer; padding:6px 10px;
-  }
+  .explainer-bg-video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
   .video-panel::before{
     content:''; position:absolute; inset:0;
     background-image: repeating-linear-gradient(0deg, rgba(110,151,184,0.06) 0px, transparent 1px, transparent 32px),
@@ -175,28 +157,18 @@
 <body>
 
 <div class="split-layout">
-  <div class="video-panel" id="photoCarousel">
+  <div class="video-panel">
+    <video class="explainer-bg-video" autoplay muted loop playsinline controls>
+      <source src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/skyeco-explainer%20(5).mp4" type="video/mp4">
+    </video>
+  </div>
+
+  <div class="form-panel" id="photoCarousel">
     <img class="carousel-img active" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/media/1.jpg" alt="">
     <img class="carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/media/2.jpg" alt="">
     <img class="carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/media/3.jpg" alt="">
     <img class="carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/media/4.jpg" alt="">
     <img class="carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/media/5.jpg" alt="">
-    <button type="button" id="btnHowItWorks" class="how-it-works-btn">▶ Voir comment ça marche (30s)</button>
-  </div>
-
-  <div class="video-modal" id="videoModal">
-    <div class="video-modal-inner">
-      <button type="button" id="btnCloseModal" class="video-modal-close">✕</button>
-      <video id="explainerVideo" controls playsinline>
-        <source src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/skyeco-explainer%20(5).mp4" type="video/mp4">
-      </video>
-    </div>
-  </div>
-
-  <div class="form-panel">
-    <video class="form-bg-video" autoplay muted loop playsinline>
-      <source src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/media/VIDEO-2026-07-13-22-59-06.mp4" type="video/mp4">
-    </video>
     <div class="form-bg-overlay"></div>
     <div class="card">
       <header class="top">
@@ -340,21 +312,6 @@
       imgs[idx].classList.add('active');
     }, 2500);
   })();
-
-  // Modale "Voir comment ça marche"
-  const videoModal = document.getElementById('videoModal');
-  const explainerVideo = document.getElementById('explainerVideo');
-  document.getElementById('btnHowItWorks').addEventListener('click', ()=>{
-    videoModal.classList.add('active');
-    explainerVideo.play();
-  });
-  document.getElementById('btnCloseModal').addEventListener('click', ()=>{
-    videoModal.classList.remove('active');
-    explainerVideo.pause();
-  });
-  videoModal.addEventListener('click', (e)=>{
-    if(e.target === videoModal){ videoModal.classList.remove('active'); explainerVideo.pause(); }
-  });
 
   const steps = Array.from(document.querySelectorAll('.panel'));
   const stepLabels = ['Métier','Entreprise','Savoir-faire','Photos','Couleur','Récapitulatif'];

@@ -367,7 +367,7 @@ function runWizard(template, brandColor){
     if(s.type==='choice') return !!state[s.key];
     if(s.type==='number') return state[s.key] && parseFloat(state[s.key])>0;
     if(s.type==='location') return state.code_postal && state.code_postal.length===5;
-    if(s.type==='identity') return state.nom && state.telephone && state.telephone.length>=8 && state.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email);
+    if(s.type==='identity') return state.nom && state.telephone && state.telephone.length>=8 && state.telephoneVerifie && state.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email);
     return true;
   }
   function renderStep(){
@@ -388,6 +388,14 @@ function runWizard(template, brandColor){
       html+='<label class="field-label">Nom</label><input type="text" id="inputNom" value="'+(state.nom||'')+'" />'+
         '<label class="field-label">Prénom</label><input type="text" id="inputPrenom" value="'+(state.prenom||'')+'" />'+
         '<label class="field-label">Téléphone</label><input type="tel" id="inputTel" value="'+(state.telephone||'')+'" placeholder="06 XX XX XX XX" />'+
+        '<div id="smsStatusApercu" style="font-size:13px; margin:6px 0 4px;"></div>'+
+        (state.telephoneVerifie
+          ? '<div style="font-size:13px; color:#1e6f4c; font-weight:600; margin-bottom:10px;">✓ Numéro vérifié</div>'
+          : '<button type="button" id="btnEnvoyerCodeApercu" style="background:#eaf4ef;color:#1e6f4c;border:1.5px solid #1e6f4c;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:10px;" disabled>Vérifier mon numéro par SMS</button>'+
+            '<div id="smsCodeRowApercu" style="display:none; gap:8px; margin-bottom:10px;">'+
+              '<input type="text" id="smsCodeApercu" inputmode="numeric" maxlength="6" placeholder="Code reçu" style="flex:1; letter-spacing:.3em; text-align:center; border:1.5px solid #d8e3de; border-radius:8px; padding:10px;" />'+
+              '<button type="button" id="btnVerifierCodeApercu" style="background:#eaf4ef;color:#1e6f4c;border:1.5px solid #1e6f4c;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">Valider</button>'+
+            '</div>')+
         '<label class="field-label">Email</label><input type="email" id="inputEmail" value="'+(state.email||'')+'" />';
     } else if(s.type==='textarea'){
       html+='<textarea id="inputTextarea" placeholder="'+(s.placeholder||'')+'" style="width:100%; min-height:110px; border:1.5px solid #d8e3de; border-radius:10px; padding:12px 14px; font-size:15px; font-family:inherit; resize:vertical;">'+(state[s.key]||'')+'</textarea>'+
@@ -413,7 +421,68 @@ function runWizard(template, brandColor){
       ville.focus();
     } else if(s.type==='identity'){
       const nom=document.getElementById('inputNom'), prenom=document.getElementById('inputPrenom'), tel=document.getElementById('inputTel'), email=document.getElementById('inputEmail');
-      [nom,prenom,tel,email].forEach(el=>{ el.addEventListener('input',()=>{ state.nom=nom.value; state.prenom=prenom.value; state.telephone=tel.value; state.email=email.value; document.getElementById('btnNext').disabled=!canProceed(s); }); });
+      [nom,prenom,email].forEach(el=>{ el.addEventListener('input',()=>{ state.nom=nom.value; state.prenom=prenom.value; state.email=email.value; document.getElementById('btnNext').disabled=!canProceed(s); }); });
+      tel.addEventListener('input',()=>{
+        state.telephone = tel.value;
+        state.telephoneVerifie = false;
+        const btn = document.getElementById('btnEnvoyerCodeApercu');
+        if(!btn){ renderStep(); return; }
+        const digits = tel.value.replace(/\D/g,'');
+        btn.disabled = digits.length !== 10;
+        document.getElementById('btnNext').disabled = !canProceed(s);
+      });
+      const btnEnvoyer = document.getElementById('btnEnvoyerCodeApercu');
+      if(btnEnvoyer){
+        btnEnvoyer.disabled = !(state.telephone && state.telephone.replace(/\D/g,'').length===10);
+        btnEnvoyer.addEventListener('click', async ()=>{
+          const statusEl = document.getElementById('smsStatusApercu');
+          btnEnvoyer.disabled = true;
+          statusEl.textContent = 'Envoi du code…';
+          statusEl.style.color = '#8a9490';
+          try{
+            const res = await fetch('/api/verify-send-code', {
+              method:'POST', headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({ telephone: state.telephone })
+            });
+            const data = await res.json();
+            if(!data.success) throw new Error(data.error || "Erreur lors de l'envoi.");
+            document.getElementById('smsCodeRowApercu').style.display = 'flex';
+            statusEl.textContent = 'Code envoyé par SMS.';
+            statusEl.style.color = '#1e6f4c';
+          } catch(err){
+            statusEl.textContent = err.message;
+            statusEl.style.color = '#c0392b';
+          } finally {
+            btnEnvoyer.disabled = false;
+          }
+        });
+      }
+      const btnVerifier = document.getElementById('btnVerifierCodeApercu');
+      if(btnVerifier){
+        btnVerifier.addEventListener('click', async ()=>{
+          const statusEl = document.getElementById('smsStatusApercu');
+          const codeInput = document.getElementById('smsCodeApercu');
+          btnVerifier.disabled = true;
+          statusEl.textContent = 'Vérification…';
+          statusEl.style.color = '#8a9490';
+          try{
+            const res = await fetch('/api/verify-check-code', {
+              method:'POST', headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({ telephone: state.telephone, code: codeInput.value.trim() })
+            });
+            const data = await res.json();
+            if(!data.success || !data.verified) throw new Error(data.error || 'Code invalide.');
+            state.telephoneVerifie = true;
+            renderStep();
+          } catch(err){
+            statusEl.textContent = err.message;
+            statusEl.style.color = '#c0392b';
+          } finally {
+            btnVerifier.disabled = false;
+            document.getElementById('btnNext').disabled = !canProceed(s);
+          }
+        });
+      }
       nom.focus();
     } else if(s.type==='textarea'){
       const ta=document.getElementById('inputTextarea');

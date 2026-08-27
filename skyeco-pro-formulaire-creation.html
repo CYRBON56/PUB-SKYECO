@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Créez votre formulaire vitrine gratuitement — Skyeco Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  :root{
+    --navy:#14304A; --blue:#2C5F8A; --blue-light:#6E97B8;
+    --paper:#F4F7F9; --paper-line:#DCE4E9; --orange:#E8622C; --orange-dark:#C74F20;
+    --concrete:#5B6268; --white:#FFFFFF; --ok:#3E8E5A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'IBM Plex Sans',sans-serif; background:var(--paper); color:var(--navy);
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  .display{font-family:'Big Shoulders Display',sans-serif; text-transform:uppercase;}
+  :focus-visible{outline:3px solid var(--orange); outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){ *{transition-duration:.001ms !important; animation-duration:.001ms !important;} }
+
+  .card{
+    width:100%; max-width:640px; background:var(--white);
+    border:1px solid var(--paper-line); overflow:hidden;
+  }
+  header.top{ background:var(--navy); color:var(--white); padding:22px 28px; }
+  .logo{ font-family:'Big Shoulders Display',sans-serif; font-weight:900; font-size:18px; display:flex; align-items:center; gap:8px; margin-bottom:14px;}
+  .logo .dot{ width:8px; height:8px; background:var(--orange); display:inline-block;}
+  .eyebrow{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--blue-light); letter-spacing:.08em; margin-bottom:6px;}
+  h1.title{ font-family:'Big Shoulders Display',sans-serif; font-weight:800; font-size:26px; line-height:1.05;}
+
+  /* Stepper */
+  .stepper{ display:flex; gap:4px; padding:16px 28px 0; }
+  .step-bar{ flex:1; height:4px; background:rgba(255,255,255,0.18); position:relative; overflow:hidden;}
+  .step-bar span{ position:absolute; inset:0; background:var(--orange); transform:scaleX(0); transform-origin:left; transition:transform .25s ease;}
+  .step-bar.done span{ transform:scaleX(1); }
+  .step-bar.active span{ transform:scaleX(1); }
+  .step-label{ padding:10px 28px 0; font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--blue-light);}
+
+  form{ padding:28px; }
+  .panel{ display:none; }
+  .panel.active{ display:block; animation: fade .2s ease; }
+  @keyframes fade{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
+
+  h2.q{ font-family:'Big Shoulders Display',sans-serif; font-weight:800; font-size:22px; margin-bottom:6px; color:var(--navy);}
+  p.hint{ color:var(--concrete); font-size:14px; margin-bottom:20px; }
+
+  .metier-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:6px;}
+  .metier-card{
+    border:1px solid var(--paper-line); padding:16px 14px; cursor:pointer; background:var(--white);
+    font-size:14.5px; font-weight:600; color:var(--navy); text-align:left;
+  }
+  .metier-card:hover{ border-color:var(--blue-light); }
+  .metier-card.selected{ border-color:var(--orange); background:#FDF3EF; box-shadow:0 0 0 1px var(--orange); }
+  .metier-card .tag{ display:block; font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--concrete); font-weight:400; margin-top:3px;}
+
+  label{ display:block; font-size:13px; font-weight:600; color:var(--navy); margin-bottom:6px; margin-top:16px;}
+  label:first-of-type{ margin-top:0; }
+  input[type=text], input[type=email], input[type=tel], textarea, select{
+    width:100%; border:1px solid var(--paper-line); padding:12px 14px; font-family:'IBM Plex Sans',sans-serif;
+    font-size:14.5px; color:var(--navy); background:var(--paper);
+  }
+  input:focus, textarea:focus, select:focus{ background:var(--white); border-color:var(--blue); }
+  textarea{ resize:vertical; min-height:90px; }
+  .char-count{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--concrete); text-align:right; margin-top:4px;}
+
+  .upload-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:6px;}
+  .upload-slot{
+    aspect-ratio:1; border:1.5px dashed var(--paper-line); display:flex; align-items:center; justify-content:center;
+    cursor:pointer; position:relative; overflow:hidden; background:var(--paper);
+  }
+  .upload-slot:hover{ border-color:var(--blue-light); }
+  .upload-slot span{ font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--concrete); text-align:center; padding:8px;}
+  .upload-slot img{ width:100%; height:100%; object-fit:cover; position:absolute; inset:0;}
+  .upload-slot input{ display:none; }
+
+  .palette-row{ display:flex; gap:10px; margin-top:6px; }
+  .swatch{ width:42px; height:42px; border:2px solid transparent; cursor:pointer; position:relative; }
+  .swatch.selected{ border-color:var(--navy); }
+  .swatch.selected::after{ content:'✓'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--white); font-size:16px; }
+
+  .recap{ border:1px solid var(--paper-line); padding:16px; font-size:14px; }
+  .recap dt{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--concrete); margin-top:12px;}
+  .recap dt:first-child{ margin-top:0; }
+  .recap dd{ color:var(--navy); font-weight:600; }
+
+  .nav-row{ display:flex; justify-content:space-between; align-items:center; margin-top:26px; }
+  .btn{ font-family:'IBM Plex Sans',sans-serif; font-weight:600; font-size:14.5px; padding:13px 24px; border:2px solid transparent; cursor:pointer; }
+  .btn-primary{ background:var(--orange); color:var(--white); }
+  .btn-primary:hover{ background:var(--orange-dark); }
+  .btn-primary:disabled{ background:var(--paper-line); color:var(--concrete); cursor:not-allowed; }
+  .btn-ghost{ background:transparent; border-color:var(--paper-line); color:var(--navy); }
+  .btn-ghost:hover{ border-color:var(--blue); }
+
+  .error{ color:var(--orange-dark); font-size:12.5px; margin-top:6px; display:none; font-family:'IBM Plex Mono',monospace; }
+  .error.show{ display:block; }
+
+  /* Success state */
+  .success{ display:none; text-align:center; padding:48px 28px; }
+  .success.active{ display:block; }
+  .success .icon{ width:52px; height:52px; border:2px solid var(--ok); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 18px; color:var(--ok); font-size:24px; }
+  .success h2{ font-family:'Big Shoulders Display',sans-serif; font-weight:800; font-size:24px; margin-bottom:10px;}
+  .success p{ color:var(--concrete); font-size:14.5px; max-width:400px; margin:0 auto 22px; }
+  .success .loader{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--blue); }
+
+  @media(max-width:520px){ .metier-grid{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <header class="top">
+    <div class="logo"><span class="dot"></span>SKYECO&nbsp;PRO</div>
+    <div class="eyebrow mono">CRÉATION GRATUITE — SANS ENGAGEMENT</div>
+    <h1 class="title">Créez votre formulaire vitrine en 6 minutes.</h1>
+    <div class="stepper" id="stepper"></div>
+  </header>
+  <div class="step-label mono" id="stepLabel" style="background:var(--navy); color:var(--blue-light); margin:0; padding-bottom:14px;"></div>
+
+  <form id="wizardForm" novalidate>
+
+    <!-- STEP 1 : métier -->
+    <div class="panel active" data-step="0">
+      <h2 class="q">Quel est votre métier ?</h2>
+      <p class="hint">Le mini-site sera adapté à votre activité.</p>
+      <div class="metier-grid" id="metierGrid">
+        <button type="button" class="metier-card" data-value="resine">Revêtements résine<span class="tag">sols, allées, terrasses</span></button>
+        <button type="button" class="metier-card" data-value="cloture">Clôtures &amp; portails<span class="tag">pose, motorisation</span></button>
+        <button type="button" class="metier-card" data-value="terrassement">Terrassement<span class="tag">VRD, préparation de sol</span></button>
+        <button type="button" class="metier-card" data-value="assainissement">Assainissement<span class="tag">non collectif</span></button>
+        <button type="button" class="metier-card" data-value="paysagisme">Paysagisme<span class="tag">extérieurs, aménagement</span></button>
+        <button type="button" class="metier-card" data-value="autre">Autre métier BTP<span class="tag">à préciser</span></button>
+      </div>
+      <div class="error mono" id="err-metier">Sélectionnez un métier pour continuer.</div>
+    </div>
+
+    <!-- STEP 2 : infos entreprise -->
+    <div class="panel" data-step="1">
+      <h2 class="q">Parlez-moi de votre entreprise.</h2>
+      <p class="hint">Ces informations apparaîtront sur votre page.</p>
+      <label for="entreprise">Nom de l'entreprise</label>
+      <input type="text" id="entreprise" placeholder="Ex : EcoSky by RMS">
+      <label for="zone">Zone d'intervention</label>
+      <input type="text" id="zone" placeholder="Ex : Morbihan, Bretagne">
+      <label for="telephone">Téléphone</label>
+      <input type="tel" id="telephone" placeholder="Ex : 06 12 34 56 78">
+      <label for="email">Email</label>
+      <input type="email" id="email" placeholder="Ex : contact@monentreprise.fr">
+      <div class="error mono" id="err-entreprise">Merci de renseigner le nom de votre entreprise et un email valide.</div>
+    </div>
+
+    <!-- STEP 3 : savoir-faire -->
+    <div class="panel" data-step="2">
+      <h2 class="q">Décrivez votre savoir-faire.</h2>
+      <p class="hint">Deux ou trois phrases suffisent — on ajustera le ton ensemble si besoin.</p>
+      <label for="description">Ce qui vous différencie</label>
+      <textarea id="description" maxlength="280" placeholder="Ex : Nous posons des revêtements résine extérieurs résistants aux hivers bretons, garantis 10 ans."></textarea>
+      <div class="char-count mono"><span id="charCount">0</span>/280</div>
+    </div>
+
+    <!-- STEP 4 : photos -->
+    <div class="panel" data-step="3">
+      <h2 class="q">Ajoutez 1 à 3 photos de vos chantiers.</h2>
+      <p class="hint">Facultatif à ce stade — vous pourrez les ajouter plus tard.</p>
+      <div class="upload-row" id="uploadRow">
+        <label class="upload-slot"><span>+ Photo 1</span><input type="file" accept="image/*" data-slot="0"></label>
+        <label class="upload-slot"><span>+ Photo 2</span><input type="file" accept="image/*" data-slot="1"></label>
+        <label class="upload-slot"><span>+ Photo 3</span><input type="file" accept="image/*" data-slot="2"></label>
+      </div>
+    </div>
+
+    <!-- STEP 5 : couleur -->
+    <div class="panel" data-step="4">
+      <h2 class="q">Choisissez une couleur d'accent.</h2>
+      <p class="hint">Elle habillera les boutons et titres de votre page.</p>
+      <div class="palette-row" id="paletteRow">
+        <div class="swatch selected" style="background:#E8622C" data-value="#E8622C"></div>
+        <div class="swatch" style="background:#2C5F8A" data-value="#2C5F8A"></div>
+        <div class="swatch" style="background:#3E8E5A" data-value="#3E8E5A"></div>
+        <div class="swatch" style="background:#B8863B" data-value="#B8863B"></div>
+        <div class="swatch" style="background:#6B5CA5" data-value="#6B5CA5"></div>
+      </div>
+    </div>
+
+    <!-- STEP 6 : récap -->
+    <div class="panel" data-step="5">
+      <h2 class="q">Tout est prêt.</h2>
+      <p class="hint">Vérifiez vos informations avant de générer votre aperçu.</p>
+      <dl class="recap" id="recap"></dl>
+    </div>
+
+    <div class="nav-row">
+      <button type="button" class="btn btn-ghost" id="btnBack">← Retour</button>
+      <button type="button" class="btn btn-primary" id="btnNext">Continuer →</button>
+    </div>
+  </form>
+
+  <div class="success" id="successPanel">
+    <div class="icon">✓</div>
+    <h2>Génération en cours.</h2>
+    <p>Votre aperçu gratuit sera prêt dans quelques instants. Vous pourrez le consulter, le modifier, et décider de le mettre en ligne quand vous le souhaitez — sans engagement.</p>
+    <div class="loader mono">PRÉPARATION DE VOTRE APERÇU…</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const steps = Array.from(document.querySelectorAll('.panel'));
+  const stepLabels = ['Métier','Entreprise','Savoir-faire','Photos','Couleur','Récapitulatif'];
+  let current = 0;
+  const state = { metier:null, entreprise:'', zone:'', telephone:'', email:'', description:'', photos:[null,null,null], couleur:'#E8622C' };
+
+  // build stepper bars
+  const stepperEl = document.getElementById('stepper');
+  steps.forEach((_,i)=>{
+    const bar = document.createElement('div');
+    bar.className = 'step-bar';
+    bar.innerHTML = '<span></span>';
+    stepperEl.appendChild(bar);
+  });
+  const bars = Array.from(stepperEl.children);
+
+  function renderStepper(){
+    bars.forEach((b,i)=>{
+      b.classList.toggle('active', i===current);
+      b.classList.toggle('done', i<current);
+    });
+    document.getElementById('stepLabel').textContent = 'ÉTAPE ' + (current+1) + ' / ' + steps.length + ' — ' + stepLabels[current].toUpperCase();
+  }
+
+  function showStep(i){
+    steps.forEach(p=>p.classList.remove('active'));
+    steps[i].classList.add('active');
+    document.getElementById('btnBack').style.visibility = i===0 ? 'hidden' : 'visible';
+    document.getElementById('btnNext').textContent = i===steps.length-1 ? 'Générer mon aperçu gratuit' : 'Continuer →';
+    renderStepper();
+  }
+
+  // Step 1: métier selection
+  document.getElementById('metierGrid').addEventListener('click', e=>{
+    const card = e.target.closest('.metier-card');
+    if(!card) return;
+    document.querySelectorAll('.metier-card').forEach(c=>c.classList.remove('selected'));
+    card.classList.add('selected');
+    state.metier = card.dataset.value;
+    document.getElementById('err-metier').classList.remove('show');
+  });
+
+  // Step 3: char count
+  const descEl = document.getElementById('description');
+  descEl.addEventListener('input', ()=>{
+    document.getElementById('charCount').textContent = descEl.value.length;
+    state.description = descEl.value;
+  });
+
+  // Step 4: photo uploads
+  document.querySelectorAll('#uploadRow input[type=file]').forEach(inp=>{
+    inp.addEventListener('change', e=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      const slot = +inp.dataset.slot;
+      const reader = new FileReader();
+      reader.onload = ev=>{
+        state.photos[slot] = ev.target.result;
+        const label = inp.closest('.upload-slot');
+        label.innerHTML = '';
+        const img = document.createElement('img');
+        img.src = ev.target.result;
+        label.appendChild(img);
+        label.appendChild(inp);
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+
+  // Step 5: palette
+  document.getElementById('paletteRow').addEventListener('click', e=>{
+    const sw = e.target.closest('.swatch');
+    if(!sw) return;
+    document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('selected'));
+    sw.classList.add('selected');
+    state.couleur = sw.dataset.value;
+  });
+
+  function buildRecap(){
+    const metierLabels = {resine:'Revêtements résine', cloture:'Clôtures & portails', terrassement:'Terrassement', assainissement:'Assainissement', paysagisme:'Paysagisme', autre:'Autre métier BTP'};
+    const recap = document.getElementById('recap');
+    recap.innerHTML =
+      '<dt>Métier</dt><dd>' + (metierLabels[state.metier]||'—') + '</dd>' +
+      '<dt>Entreprise</dt><dd>' + (state.entreprise||'—') + '</dd>' +
+      '<dt>Zone d\\'intervention</dt><dd>' + (state.zone||'—') + '</dd>' +
+      '<dt>Contact</dt><dd>' + (state.telephone||'—') + ' · ' + (state.email||'—') + '</dd>' +
+      '<dt>Couleur</dt><dd><span style="display:inline-block;width:12px;height:12px;background:'+state.couleur+';vertical-align:middle;margin-right:6px;"></span>' + state.couleur + '</dd>';
+  }
+
+  function validateStep(i){
+    if(i===0){
+      if(!state.metier){ document.getElementById('err-metier').classList.add('show'); return false; }
+    }
+    if(i===1){
+      state.entreprise = document.getElementById('entreprise').value.trim();
+      state.zone = document.getElementById('zone').value.trim();
+      state.telephone = document.getElementById('telephone').value.trim();
+      state.email = document.getElementById('email').value.trim();
+      const emailOk = /\S+@\S+\.\S+/.test(state.email);
+      if(!state.entreprise || !emailOk){ document.getElementById('err-entreprise').classList.add('show'); return false; }
+      document.getElementById('err-entreprise').classList.remove('show');
+    }
+    return true;
+  }
+
+  document.getElementById('btnNext').addEventListener('click', ()=>{
+    if(!validateStep(current)) return;
+    if(current === steps.length-1){
+      submitForm();
+      return;
+    }
+    current++;
+    if(current === steps.length-1) buildRecap();
+    showStep(current);
+  });
+
+  document.getElementById('btnBack').addEventListener('click', ()=>{
+    if(current===0) return;
+    current--;
+    showStep(current);
+  });
+
+  const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  async function submitForm(){
+    document.getElementById('btnNext').disabled = true;
+    document.getElementById('btnNext').textContent = 'Génération en cours…';
+
+    const { data, error } = await supabaseClient
+      .from('skyeco_pro_vitrine_drafts')
+      .insert([{
+        metier: state.metier,
+        entreprise: state.entreprise,
+        zone: state.zone,
+        telephone: state.telephone,
+        email: state.email,
+        description: state.description,
+        photos: state.photos.filter(Boolean),
+        couleur: state.couleur,
+        status: 'preview'
+      }])
+      .select()
+      .single();
+
+    if(error){
+      document.getElementById('btnNext').disabled = false;
+      document.getElementById('btnNext').textContent = 'Générer mon aperçu gratuit';
+      alert("Une erreur est survenue lors de l'enregistrement. Merci de réessayer. (" + error.message + ")");
+      return;
+    }
+
+    document.getElementById('wizardForm').style.display = 'none';
+    document.querySelector('.stepper').style.display = 'none';
+    document.getElementById('stepLabel').style.display = 'none';
+    document.getElementById('successPanel').classList.add('active');
+
+    setTimeout(()=>{
+      window.location.href = 'apercu.html?id=' + data.id;
+    }, 1400);
+  }
+
+  showStep(0);
+})();
+</script>
+
+</body>
+</html>

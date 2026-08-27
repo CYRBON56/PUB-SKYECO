@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Aperçu de votre formulaire vitrine — Skyeco Pro</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color:#14312a; }
+  .split-layout { display:flex; height:100vh; overflow:hidden; }
+  .image-panel { flex:1 1 45%; position:relative; overflow:hidden; background:var(--brand-dark,#14312a); display:flex; align-items:center; justify-content:center; }
+  .image-panel img { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity .8s ease-in-out; }
+  .image-panel img.active { opacity:1; }
+  .image-panel::before { content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(20,49,42,0.55) 0%, rgba(20,49,42,0.15) 35%, rgba(20,49,42,0.55) 100%); z-index:1; pointer-events:none; }
+  .image-panel-title { position:absolute; top:50%; left:32px; right:32px; transform:translateY(-50%); z-index:2; color:#fff; font-size:clamp(1.6rem,3vw,2.4rem); font-weight:700; line-height:1.25; text-align:center; text-shadow:0 2px 12px rgba(0,0,0,0.35); }
+  @media (max-width:800px){ .image-panel-title{ font-size:1.3rem; left:20px; right:20px; } }
+  .form-panel { flex:1 1 55%; position:relative; display:flex; align-items:stretch; justify-content:center; padding:20px 24px; overflow:hidden; }
+  .form-bg-overlay { position:absolute; inset:0; z-index:-1; background:rgba(246,244,239,0.55); }
+  @media (max-width:800px){ .split-layout{ flex-direction:column; height:100vh; overflow:hidden; } .image-panel{ flex:0 0 110px; } .form-panel{ padding:12px 16px; } }
+  @media (max-width:480px){ .image-panel{ flex:0 0 64px; } .form-panel{ padding:10px 14px; } .header-block{ padding:10px 14px; margin-bottom:10px; } h1{ font-size:19px; margin:4px 0 6px; } .eyebrow{ font-size:11px; } .sub{ font-size:14px; margin-bottom:0; line-height:1.45; } .card{ padding:16px; } .question{ font-size:17px; margin-bottom:14px; line-height:1.35; } .option{ padding:14px 16px; font-size:15.5px; } .progress{ margin-bottom:12px; } input[type="text"],input[type="tel"],input[type="email"],input[type="number"]{ font-size:16px; padding:13px 14px; margin-bottom:10px; } label.field-label{ font-size:14px; } .nav-row{ flex-wrap:wrap; margin-top:16px; } button.btn{ font-size:15px; padding:13px 16px; } .btn-primary{ flex:1 1 100%; order:1; } .btn-ghost{ order:2; padding:8px 0; font-size:14px; } .trust-footer{ margin-top:10px; padding-top:10px; } .trust-badges-row{ display:none !important; } }
+  .wrap { max-width:480px; width:100%; height:100%; margin:0; padding:0; display:flex; flex-direction:column; }
+  .middle-scroll { flex:1 1 auto; overflow-y:auto; min-height:0; padding-right:2px; }
+  .header-block { margin-bottom:12px; background:rgba(255,255,255,0.7); border-radius:14px; padding:12px 16px; flex-shrink:0; }
+  .eyebrow { font-size:12px; font-weight:700; letter-spacing:1px; color:var(--brand,#1e6f4c); text-transform:uppercase; }
+  h1 { font-size:22px; margin:6px 0 8px; }
+  .sub { font-size:14px; color:#5b6b64; margin:0 0 24px; line-height:1.5; }
+  .progress { display:flex; gap:4px; margin-bottom:26px; }
+  .progress-seg { flex:1; height:4px; border-radius:2px; background:#e0ddd2; }
+  .progress-seg.done { background:var(--brand,#1e6f4c); }
+  .card { background:white; border:1px solid #e2e0d5; border-radius:14px; padding:22px; box-shadow:0 4px 18px rgba(20,49,42,0.06); }
+  .step-label { font-size:12px; color:#8a9490; margin-bottom:6px; }
+  .question { font-size:16px; font-weight:600; margin:0 0 16px; line-height:1.4; }
+  .options { display:flex; flex-direction:column; gap:10px; }
+  .option { border:1.5px solid #d8e3de; border-radius:10px; padding:13px 16px; font-size:14.5px; cursor:pointer; background:white; transition:border-color .15s, background .15s; }
+  .option:hover { border-color:var(--brand,#1e6f4c); }
+  .option.selected { border-color:var(--brand,#1e6f4c); background:var(--brand-tint,#eaf4ef); font-weight:600; }
+  input[type="text"],input[type="tel"],input[type="email"],input[type="number"] { width:100%; border:1.5px solid #d8e3de; border-radius:10px; padding:12px 14px; font-size:15px; margin-bottom:12px; font-family:inherit; }
+  input:focus { outline:none; border-color:var(--brand,#1e6f4c); }
+  label.field-label { display:block; font-size:12.5px; color:#5b6b64; margin-bottom:4px; font-weight:600; }
+  .nav-row { display:flex; justify-content:space-between; margin-top:22px; gap:10px; }
+  button.btn { border:none; border-radius:10px; padding:12px 20px; font-size:14.5px; font-weight:700; cursor:pointer; }
+  .btn-primary { background:var(--brand,#1e6f4c); color:white; flex:1; }
+  .btn-primary:disabled { opacity:.45; cursor:default; }
+  .btn-ghost { background:transparent; color:#5b6b64; }
+  .result-box { background:var(--brand-tint,#eaf4ef); border:1.5px solid var(--brand,#1e6f4c); border-radius:12px; padding:20px; margin-top:10px; }
+  .result-note { font-size:13px; color:#4a5a54; line-height:1.5; }
+  .disclaimer { font-size:12px; color:#8a9490; margin-top:14px; line-height:1.5; }
+  .success-icon { font-size:40px; text-align:center; margin-bottom:8px; }
+  .trust-footer { margin-top:12px; padding-top:12px; border-top:1px solid #e2e0d5; font-size:11px; color:#8a9490; line-height:1.5; text-align:center; flex-shrink:0; }
+  .trust-footer .trust-badges { display:flex; justify-content:center; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-size:12px; color:#4a5a54; font-weight:600; }
+  .trust-footer .legal-line { color:#14312a; }
+  .btn-footer-callback { background:white; border:1.5px solid var(--brand,#1e6f4c); color:#14312a; padding:8px 16px; font-size:12.5px; font-weight:700; border-radius:10px; cursor:pointer; }
+
+  /* Bandeau "aperçu" — visible uniquement tant que le mini-site n'est pas publié */
+  .preview-banner {
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    background:#14312a; color:#fff; font-size:13px; font-weight:600;
+    padding:10px 16px; display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap;
+  }
+  .preview-banner button {
+    background:#E8622C; color:#fff; border:none; border-radius:6px; padding:6px 14px; font-size:12.5px; font-weight:700; cursor:pointer;
+  }
+  .loading-state { display:flex; align-items:center; justify-content:center; height:100vh; font-family:inherit; color:#5b6b64; font-size:14px; }
+</style>
+</head>
+<body>
+
+<div id="loadingState" class="loading-state">Chargement de votre aperçu…</div>
+
+<div id="previewBanner" class="preview-banner" style="display:none;">
+  <span>👁️ Ceci est un aperçu gratuit, pas encore en ligne publiquement.</span>
+  <button id="btnPublier">Mettre en ligne</button>
+</div>
+
+<div id="appRoot" style="display:none;">
+  <div class="split-layout">
+    <div class="image-panel" id="heroImagePanel">
+      <div class="image-panel-title" id="heroTitle"></div>
+    </div>
+    <div class="form-panel">
+      <div class="form-bg-overlay"></div>
+      <div class="wrap">
+        <div class="header-block">
+          <div class="eyebrow" id="eyebrow"></div>
+          <h1 id="mainTitle"></h1>
+          <div style="font-size:20px; font-weight:800; color:var(--brand,#1e6f4c); margin:2px 0 10px; line-height:1.2;" id="delaiBadge"></div>
+          <p class="sub" style="margin-bottom:0;" id="introText"></p>
+        </div>
+        <div style="display:flex; gap:14px; flex-wrap:wrap; margin-bottom:14px; font-size:12.5px; color:#4a5a54;" id="miniBadges"></div>
+        <div class="middle-scroll">
+          <div class="progress" id="progress"></div>
+          <div class="card" id="card"></div>
+        </div>
+        <div class="trust-footer">
+          <div class="legal-line" id="legalLine"></div>
+          <div style="margin-top:10px;">
+            <button class="btn btn-footer-callback" id="btnFooterCallback">📞 Être rappelé</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* -----------------------------------------------------------------
+   Gabarits de questions par défaut, par métier. Réutilisent le même
+   moteur générique que skyeco-pro-moteur-generique.html.
+   ----------------------------------------------------------------- */
+const METIER_TEMPLATES = {
+  resine: {
+    heroTitre: "Un sol qui dure,<br>pensé pour votre extérieur.",
+    eyebrow: "Estimation détaillée",
+    titre: "Votre estimation personnalisée",
+    delaiBadge: "⏱️ Estimation en 3 minutes",
+    intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation par mail.",
+    getSteps(state){
+      const s = [{ key:"type_projet", question:"Quel est le type de projet ?", type:"choice",
+        options:[["pieton","Terrasse, tour de piscine ou allée piétonne"],["carrossable","Parking ou allée pour véhicule (carrossable)"]] }];
+      s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
+      s.push({ key:"surface", question:"Quelle surface représente le projet, en m² environ ?", type:"number", placeholder:"Ex : 25" });
+      s.push({ key:"delai", question:"Sous quel délai souhaitez-vous réaliser ce projet ?", type:"choice",
+        options:[["urgent","Le plus vite possible"],["1_3_mois","Dans 1 à 3 mois"],["plus_tard","Plus tard"]] });
+      s.push({ key:"localisation", question:"Où se situe le projet ?", type:"location" });
+      return s;
+    }
+  },
+  cloture: {
+    heroTitre: "Une clôture qui protège<br>votre propriété.",
+    eyebrow: "Estimation détaillée",
+    titre: "Votre estimation personnalisée",
+    delaiBadge: "⏱️ Estimation en 3 minutes",
+    intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation par mail.",
+    getSteps(state){
+      const s = [{ key:"type_projet", question:"Que souhaitez-vous faire poser ?", type:"choice",
+        options:[["cloture","Une clôture"],["portail","Un portail"],["les_deux","Les deux"]] }];
+      s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
+      s.push({ key:"longueur", question:"Longueur approximative, en mètres linéaires ?", type:"number", placeholder:"Ex : 20" });
+      s.push({ key:"materiau", question:"Quel matériau préférez-vous ?", type:"choice",
+        options:[["bois","Bois"],["alu","Aluminium"],["pvc","PVC"],["pas_decide","Pas encore décidé"]] });
+      s.push({ key:"delai", question:"Sous quel délai souhaitez-vous réaliser ce projet ?", type:"choice",
+        options:[["urgent","Le plus vite possible"],["1_3_mois","Dans 1 à 3 mois"],["plus_tard","Plus tard"]] });
+      s.push({ key:"localisation", question:"Où se situe le projet ?", type:"location" });
+      return s;
+    }
+  },
+  terrassement: {
+    heroTitre: "Un terrain prêt<br>pour votre projet.",
+    eyebrow: "Estimation détaillée",
+    titre: "Votre estimation personnalisée",
+    delaiBadge: "⏱️ Estimation en 3 minutes",
+    intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation par mail.",
+    getSteps(state){
+      const s = [{ key:"type_projet", question:"Quel type de terrassement ?", type:"choice",
+        options:[["preparation","Préparation de terrain"],["evacuation","Évacuation de terre"],["nivellement","Nivellement"]] }];
+      s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
+      s.push({ key:"surface", question:"Quelle surface représente le projet, en m² environ ?", type:"number", placeholder:"Ex : 100" });
+      s.push({ key:"acces", question:"Comment est l'accès au chantier ?", type:"choice",
+        options:[["facile","Facile pour un engin"],["difficile","Difficile / accès restreint"]] });
+      s.push({ key:"delai", question:"Sous quel délai souhaitez-vous réaliser ce projet ?", type:"choice",
+        options:[["urgent","Le plus vite possible"],["1_3_mois","Dans 1 à 3 mois"],["plus_tard","Plus tard"]] });
+      s.push({ key:"localisation", question:"Où se situe le projet ?", type:"location" });
+      return s;
+    }
+  },
+  assainissement: {
+    heroTitre: "Une installation conforme,<br>sans mauvaise surprise.",
+    eyebrow: "Estimation détaillée",
+    titre: "Votre estimation personnalisée",
+    delaiBadge: "⏱️ Estimation en 3 minutes",
+    intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation par mail.",
+    getSteps(state){
+      const s = [{ key:"type_projet", question:"Quel type d'installation ?", type:"choice",
+        options:[["fosse","Fosse toutes eaux"],["microstation","Microstation"],["rehabilitation","Réhabilitation d'installation existante"]] }];
+      s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
+      s.push({ key:"pieces", question:"Combien de pièces principales compte le logement ?", type:"number", placeholder:"Ex : 4" });
+      s.push({ key:"delai", question:"Sous quel délai souhaitez-vous réaliser ce projet ?", type:"choice",
+        options:[["urgent","Le plus vite possible"],["1_3_mois","Dans 1 à 3 mois"],["plus_tard","Plus tard"]] });
+      s.push({ key:"localisation", question:"Où se situe le projet ?", type:"location" });
+      return s;
+    }
+  },
+  paysagisme: {
+    heroTitre: "Un extérieur<br>qui vous ressemble.",
+    eyebrow: "Estimation détaillée",
+    titre: "Votre estimation personnalisée",
+    delaiBadge: "⏱️ Estimation en 3 minutes",
+    intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation par mail.",
+    getSteps(state){
+      const s = [{ key:"type_projet", question:"Quel est le type de projet ?", type:"choice",
+        options:[["creation","Création d'espace vert"],["entretien","Entretien régulier"],["amenagement","Aménagement complet"]] }];
+      s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
+      s.push({ key:"surface", question:"Quelle surface représente le projet, en m² environ ?", type:"number", placeholder:"Ex : 50" });
+      s.push({ key:"delai", question:"Sous quel délai souhaitez-vous réaliser ce projet ?", type:"choice",
+        options:[["urgent","Le plus vite possible"],["1_3_mois","Dans 1 à 3 mois"],["plus_tard","Plus tard"]] });
+      s.push({ key:"localisation", question:"Où se situe le projet ?", type:"location" });
+      return s;
+    }
+  },
+  autre: {
+    heroTitre: "Un projet sur-mesure,<br>pensé pour vous.",
+    eyebrow: "Estimation détaillée",
+    titre: "Votre estimation personnalisée",
+    delaiBadge: "⏱️ Estimation en 3 minutes",
+    intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation par mail.",
+    getSteps(state){
+      const s = [{ key:"surface", question:"Quelle surface ou ampleur représente le projet ?", type:"number", placeholder:"Ex : 30" }];
+      s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
+      s.push({ key:"delai", question:"Sous quel délai souhaitez-vous réaliser ce projet ?", type:"choice",
+        options:[["urgent","Le plus vite possible"],["1_3_mois","Dans 1 à 3 mois"],["plus_tard","Plus tard"]] });
+      s.push({ key:"localisation", question:"Où se situe le projet ?", type:"location" });
+      return s;
+    }
+  }
+};
+
+const FALLBACK_IMAGES = {
+  resine: ["https://images.unsplash.com/photo-1600607687644-c7171b42498f?w=1200"],
+  cloture: ["https://images.unsplash.com/photo-1597047084897-51e81819a499?w=1200"],
+  terrassement: ["https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1200"],
+  assainissement: ["https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=1200"],
+  paysagisme: ["https://images.unsplash.com/photo-1558904541-efa843a96f01?w=1200"],
+  autre: ["https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=1200"]
+};
+
+async function init(){
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
+  if(!id){
+    document.getElementById('loadingState').textContent = "Aucun aperçu à afficher — identifiant manquant dans l'adresse.";
+    return;
+  }
+
+  const { data: draft, error } = await supabaseClient
+    .from('skyeco_pro_vitrine_drafts')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if(error || !draft){
+    document.getElementById('loadingState').textContent = "Cet aperçu est introuvable ou a expiré.";
+    return;
+  }
+
+  const template = METIER_TEMPLATES[draft.metier] || METIER_TEMPLATES.autre;
+  const brandColor = draft.couleur || '#E8622C';
+
+  document.documentElement.style.setProperty('--brand', brandColor);
+  document.documentElement.style.setProperty('--brand-tint', brandColor + '1A');
+  document.documentElement.style.setProperty('--brand-dark', '#14312a');
+
+  document.getElementById('heroTitle').innerHTML = template.heroTitre +
+    '<span style="display:block; margin-top:14px; font-size:0.45em; font-weight:600; opacity:0.9;">' + draft.entreprise + '</span>';
+  document.getElementById('eyebrow').textContent = draft.entreprise + ' — ' + template.eyebrow;
+  document.getElementById('mainTitle').textContent = template.titre;
+  document.getElementById('delaiBadge').textContent = template.delaiBadge;
+  document.getElementById('introText').textContent = draft.description || template.intro;
+  document.getElementById('miniBadges').innerHTML = ['✅ Sans engagement','⏱️ Réponse sous 24h','🔒 Données confidentielles'].map(b=>'<span>'+b+'</span>').join('');
+  document.getElementById('legalLine').innerHTML = draft.entreprise +
+    (draft.zone ? ' — Intervient sur : ' + draft.zone : '') +
+    (draft.telephone ? '<br/>' + draft.telephone : '') + ' — ' + draft.email;
+
+  const images = (draft.photos && draft.photos.length) ? draft.photos : (FALLBACK_IMAGES[draft.metier] || FALLBACK_IMAGES.autre);
+  const container = document.getElementById('heroImagePanel');
+  const imgs = images.map((src,i)=>{ const img=document.createElement('img'); img.src=src; if(i===0) img.className='active'; container.appendChild(img); return img; });
+  if(imgs.length>1){
+    let idx=0;
+    setInterval(()=>{ imgs[idx].classList.remove('active'); idx=(idx+1)%imgs.length; imgs[idx].classList.add('active'); }, 2500);
+  }
+
+  document.getElementById('loadingState').style.display = 'none';
+  document.getElementById('appRoot').style.display = 'block';
+  if(draft.status === 'preview'){
+    document.getElementById('previewBanner').style.display = 'flex';
+  }
+
+  document.getElementById('btnPublier').addEventListener('click', ()=>{
+    alert("Étape suivante : paiement pour mettre en ligne — à brancher (Stripe / Qonto).");
+  });
+  document.getElementById('btnFooterCallback').addEventListener('click', ()=>{
+    alert("Rappel demandé — à connecter au système de notification SMS/email.");
+  });
+
+  runWizard(template, brandColor);
+}
+
+function runWizard(template, brandColor){
+  const state = { step:0 };
+  const cardEl = document.getElementById('card');
+  const progressEl = document.getElementById('progress');
+  function getSteps(){ return template.getSteps(state); }
+  function renderProgress(){
+    const steps = getSteps(); progressEl.innerHTML='';
+    const total = steps.length+1;
+    for(let i=0;i<total;i++){ const seg=document.createElement('div'); seg.className='progress-seg'+(i<=state.step?' done':''); progressEl.appendChild(seg); }
+  }
+  function canProceed(s){
+    if(!s) return true;
+    if(s.type==='choice') return !!state[s.key];
+    if(s.type==='number') return state[s.key] && parseFloat(state[s.key])>0;
+    if(s.type==='location') return state.code_postal && state.code_postal.length===5;
+    if(s.type==='identity') return state.nom && state.telephone && state.telephone.length>=8 && state.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email);
+    return true;
+  }
+  function renderStep(){
+    const steps=getSteps(); if(state.step>=steps.length) state.step=steps.length-1;
+    const s=steps[state.step];
+    let html = '<div class="step-label">Étape '+(state.step+1)+' sur '+steps.length+'</div>';
+    html += '<div class="question">'+s.question+'</div>';
+    if(s.type==='choice'){
+      html+='<div class="options">';
+      s.options.forEach(([val,label])=>{ const sel=state[s.key]===val?' selected':''; html+='<div class="option'+sel+'" data-val="'+val+'">'+label+'</div>'; });
+      html+='</div>';
+    } else if(s.type==='number'){
+      html+='<input type="number" id="inputNum" placeholder="'+s.placeholder+'" value="'+(state[s.key]||'')+'" min="1" />';
+    } else if(s.type==='location'){
+      html+='<label class="field-label">Ville</label><input type="text" id="inputVille" placeholder="Ex : Brech" value="'+(state.ville||'')+'" />'+
+        '<label class="field-label">Code postal</label><input type="text" id="inputCP" placeholder="Ex : 56400" value="'+(state.code_postal||'')+'" maxlength="5" />';
+    } else if(s.type==='identity'){
+      html+='<label class="field-label">Nom</label><input type="text" id="inputNom" value="'+(state.nom||'')+'" />'+
+        '<label class="field-label">Prénom</label><input type="text" id="inputPrenom" value="'+(state.prenom||'')+'" />'+
+        '<label class="field-label">Téléphone</label><input type="tel" id="inputTel" value="'+(state.telephone||'')+'" placeholder="06 XX XX XX XX" />'+
+        '<label class="field-label">Email</label><input type="email" id="inputEmail" value="'+(state.email||'')+'" />';
+    }
+    html += '<div class="nav-row"><button class="btn btn-ghost" id="btnBack"'+(state.step===0?" style='visibility:hidden'":'')+'>← Retour</button>'+
+      '<button class="btn btn-primary" id="btnNext" disabled>Continuer</button></div>';
+    cardEl.innerHTML = html;
+    wireStepEvents(s, steps);
+    document.getElementById('btnNext').disabled = !canProceed(s);
+  }
+  function wireStepEvents(s, steps){
+    if(s.type==='choice'){
+      cardEl.querySelectorAll('.option').forEach(el=>{ el.addEventListener('click',()=>{ state[s.key]=el.dataset.val; renderProgress(); renderStep(); }); });
+    } else if(s.type==='number'){
+      const input=document.getElementById('inputNum');
+      input.addEventListener('input',()=>{ state[s.key]=input.value; document.getElementById('btnNext').disabled=!canProceed(s); });
+      input.focus();
+    } else if(s.type==='location'){
+      const ville=document.getElementById('inputVille'), cp=document.getElementById('inputCP');
+      ville.addEventListener('input',()=>{ state.ville=ville.value; });
+      cp.addEventListener('input',()=>{ state.code_postal=cp.value; document.getElementById('btnNext').disabled=!canProceed(s); });
+      ville.focus();
+    } else if(s.type==='identity'){
+      const nom=document.getElementById('inputNom'), prenom=document.getElementById('inputPrenom'), tel=document.getElementById('inputTel'), email=document.getElementById('inputEmail');
+      [nom,prenom,tel,email].forEach(el=>{ el.addEventListener('input',()=>{ state.nom=nom.value; state.prenom=prenom.value; state.telephone=tel.value; state.email=email.value; document.getElementById('btnNext').disabled=!canProceed(s); }); });
+      nom.focus();
+    }
+    document.getElementById('btnBack').addEventListener('click',()=>{ if(state.step>0){ state.step-=1; renderProgress(); renderStep(); } });
+    document.getElementById('btnNext').addEventListener('click',()=>{
+      if(!canProceed(s)) return;
+      if(state.step<steps.length-1){ state.step+=1; renderProgress(); renderStep(); }
+      else {
+        cardEl.innerHTML = '<div class="success-icon">✅</div><div class="question" style="text-align:center;">Merci '+(state.prenom||'')+' !</div>'+
+          '<div class="result-box"><div class="result-note">Votre demande a bien été enregistrée. Un conseiller revient vers vous sous 24h.</div></div>'+
+          '<p class="disclaimer">Cette estimation reste indicative et devra être confirmée lors d\\'un appel téléphonique.</p>';
+      }
+    });
+  }
+  renderProgress();
+  renderStep();
+}
+
+init();
+</script>
+</body>
+</html>

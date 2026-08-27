@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skyeco Pro — Ne perdez plus jamais un chantier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy: #14304A;
+    --blue: #2C5F8A;
+    --blue-light: #6E97B8;
+    --paper: #F4F7F9;
+    --paper-line: #DCE4E9;
+    --orange: #E8622C;
+    --orange-dark: #C74F20;
+    --concrete: #5B6268;
+    --white: #FFFFFF;
+  }
+
+  *{ box-sizing: border-box; margin:0; padding:0; }
+  html{ scroll-behavior: smooth; }
+  body{
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--paper);
+    color: var(--navy);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  img,svg{ display:block; max-width:100%; }
+  a{ color: inherit; }
+
+  .mono{ font-family:'IBM Plex Mono', monospace; letter-spacing: 0.04em; }
+  .display{ font-family:'Big Shoulders Display', sans-serif; text-transform: uppercase; }
+
+  :focus-visible{ outline: 3px solid var(--orange); outline-offset: 3px; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  /* Ruler / tick-mark motif — recurring device, echoes measurement on a devis */
+  .ruler{
+    height: 14px;
+    width: 100%;
+    background-image: repeating-linear-gradient(
+      90deg,
+      var(--blue-light) 0px, var(--blue-light) 1px,
+      transparent 1px, transparent 12px
+    );
+    background-position: 0 100%;
+    background-repeat: repeat-x;
+    background-size: 12px 8px;
+    opacity: 0.55;
+  }
+  .ruler.dark{ background-image: repeating-linear-gradient(90deg, rgba(255,255,255,0.35) 0px, rgba(255,255,255,0.35) 1px, transparent 1px, transparent 12px); }
+
+  .wrap{ max-width: 1120px; margin: 0 auto; padding: 0 28px; }
+
+  /* ---------- HEADER ---------- */
+  header{
+    background: var(--navy);
+    color: var(--white);
+    padding: 18px 0 0;
+  }
+  .nav{
+    display:flex; align-items:center; justify-content:space-between;
+    padding-bottom: 18px;
+  }
+  .logo{
+    font-family:'Big Shoulders Display', sans-serif;
+    font-weight:900; font-size: 22px; letter-spacing: 0.02em;
+    display:flex; align-items:center; gap:10px;
+  }
+  .logo .dot{ width:9px; height:9px; background: var(--orange); display:inline-block; }
+  .nav-cta{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13px;
+    border: 1px solid rgba(255,255,255,0.4);
+    padding: 9px 16px;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .nav-cta:hover{ border-color: var(--orange); color: var(--orange); }
+
+  /* ---------- HERO ---------- */
+  .hero{
+    background: var(--navy);
+    color: var(--white);
+    padding: 56px 0 0;
+    position: relative;
+  }
+  .hero-grid{
+    display:grid; grid-template-columns: 1.05fr 0.95fr; gap: 48px;
+    align-items: center;
+    padding-bottom: 60px;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--blue-light);
+    letter-spacing: 0.12em;
+    margin-bottom: 18px;
+    display:flex; align-items:center; gap: 10px;
+  }
+  .eyebrow::before{ content:''; width: 22px; height:1px; background: var(--blue-light); }
+  h1{
+    font-family:'Big Shoulders Display', sans-serif;
+    font-weight: 900;
+    font-size: clamp(38px, 5vw, 58px);
+    line-height: 0.98;
+    letter-spacing: 0.005em;
+    margin-bottom: 22px;
+  }
+  h1 em{ color: var(--orange); font-style: normal; }
+  .hero p.lead{
+    font-size: 18px;
+    color: #C9D6DF;
+    max-width: 480px;
+    margin-bottom: 30px;
+  }
+  .cta-row{ display:flex; gap: 14px; flex-wrap: wrap; align-items:center; }
+  .btn{
+    display:inline-block;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    padding: 15px 26px;
+    text-decoration: none;
+    border: 2px solid transparent;
+  }
+  .btn-primary{ background: var(--orange); color: var(--white); }
+  .btn-primary:hover{ background: var(--orange-dark); }
+  .btn-ghost{ border-color: rgba(255,255,255,0.35); color: var(--white); }
+  .btn-ghost:hover{ border-color: var(--white); }
+
+  /* Blueprint diagram — signature element */
+  .plan-card{
+    background: #0F2740;
+    border: 1px solid rgba(110,151,184,0.4);
+    padding: 22px 20px 16px;
+    position: relative;
+  }
+  .cartouche{
+    border-top: 1px solid rgba(110,151,184,0.4);
+    margin-top: 16px;
+    padding-top: 10px;
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--blue-light);
+    letter-spacing: 0.05em;
+  }
+  .cartouche div span{ display:block; color: #7F97A9; font-size: 9px; margin-bottom: 3px; }
+  .diagram-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    fill: var(--blue-light);
+  }
+  .diagram-label.hot{ fill: var(--orange); }
+
+  /* ---------- SECTIONS ---------- */
+  section{ padding: 78px 0; }
+  .section-head{ max-width: 620px; margin-bottom: 46px; }
+  .kicker{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px; color: var(--blue);
+    letter-spacing: 0.1em; margin-bottom: 12px;
+  }
+  h2{
+    font-family:'Big Shoulders Display', sans-serif;
+    font-weight: 800;
+    font-size: clamp(28px, 3.4vw, 40px);
+    line-height: 1.02;
+    color: var(--navy);
+  }
+  .section-head p{ color: var(--concrete); font-size: 16.5px; margin-top: 14px; }
+
+  /* Problem section */
+  .problem-list{
+    display:grid; grid-template-columns: repeat(2,1fr); gap: 2px;
+    background: var(--paper-line);
+    border: 1px solid var(--paper-line);
+  }
+  .problem-item{
+    background: var(--white);
+    padding: 26px 24px;
+    display:flex; gap: 16px;
+  }
+  .problem-item .num{
+    font-family:'IBM Plex Mono', monospace;
+    color: var(--orange); font-size: 13px; flex-shrink:0; padding-top: 3px;
+  }
+  .problem-item p{ color: var(--concrete); font-size: 15px; }
+  .problem-item strong{ color: var(--navy); display:block; margin-bottom: 4px; font-size: 16px; }
+
+  /* How it works — real sequence, numbers earned */
+  .steps{ display:grid; grid-template-columns: repeat(3,1fr); gap: 0; position:relative; }
+  .step{ padding: 0 24px 0 0; position:relative; }
+  .step:not(:last-child)::after{
+    content:'';
+    position:absolute; top: 26px; right: -1px; width: 40px; height:1px;
+    background: repeating-linear-gradient(90deg, var(--blue-light) 0 6px, transparent 6px 10px);
+  }
+  .step-num{
+    font-family:'Big Shoulders Display', sans-serif;
+    font-size: 46px; font-weight: 900; color: var(--paper-line);
+    -webkit-text-stroke: 1.5px var(--blue-light);
+    margin-bottom: 6px;
+  }
+  .step h3{
+    font-family:'IBM Plex Sans', sans-serif; font-weight:700; font-size: 18px;
+    margin-bottom: 8px; color: var(--navy);
+  }
+  .step p{ color: var(--concrete); font-size: 14.5px; }
+
+  /* Pricing */
+  .pricing-grid{ display:grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+  .plan{
+    border: 1px solid var(--paper-line);
+    background: var(--white);
+    padding: 28px 24px;
+    display:flex; flex-direction:column;
+  }
+  .plan.featured{
+    border-color: var(--orange);
+    box-shadow: 0 0 0 1px var(--orange);
+  }
+  .plan-tag{
+    font-family:'IBM Plex Mono', monospace; font-size: 10.5px;
+    color: var(--orange); letter-spacing: 0.08em; margin-bottom: 14px;
+  }
+  .plan h3{
+    font-family:'Big Shoulders Display', sans-serif; font-weight:800;
+    font-size: 24px; color: var(--navy); margin-bottom: 4px;
+  }
+  .plan .setup{ font-family:'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--concrete); margin-bottom: 18px; }
+  .plan .price{ font-size: 34px; font-weight:700; color: var(--navy); margin-bottom: 2px; }
+  .plan .price span{ font-size: 14px; font-weight:500; color: var(--concrete); }
+  .plan ul{ list-style:none; margin: 20px 0 26px; flex-grow:1; }
+  .plan li{
+    font-size: 14.5px; color: var(--concrete); padding: 8px 0 8px 20px;
+    border-top: 1px solid var(--paper-line); position:relative;
+  }
+  .plan li::before{ content:'—'; position:absolute; left:0; color: var(--blue); }
+  .plan .btn{ text-align:center; }
+
+  /* Proof / about */
+  .proof{ background: var(--navy); color: var(--white); }
+  .proof-grid{ display:grid; grid-template-columns: 1fr 1fr; gap: 50px; align-items:center; }
+  .proof p{ color: #C9D6DF; font-size: 16.5px; margin-bottom: 16px; }
+  .signature-block{
+    font-family:'IBM Plex Mono', monospace; font-size: 13px; color: var(--blue-light);
+    margin-top: 22px; padding-top: 16px; border-top: 1px solid rgba(110,151,184,0.35);
+  }
+  .stat-card{
+    border: 1px solid rgba(110,151,184,0.4);
+    padding: 22px;
+  }
+  .stat{ display:flex; justify-content:space-between; padding: 14px 0; border-top: 1px solid rgba(110,151,184,0.25); }
+  .stat:first-child{ border-top:none; }
+  .stat .label{ font-family:'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--blue-light); }
+  .stat .val{ font-family:'Big Shoulders Display', sans-serif; font-weight:800; font-size: 20px; }
+
+  /* Final CTA */
+  .final{ text-align:center; }
+  .final h2{ margin-bottom: 16px; }
+  .final p{ color: var(--concrete); max-width: 480px; margin: 0 auto 32px; font-size: 16.5px; }
+
+  footer{
+    background: var(--navy); color: #7F97A9;
+    padding: 28px 0; font-family:'IBM Plex Mono', monospace; font-size: 12px;
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;
+  }
+
+  @media (max-width: 860px){
+    .hero-grid{ grid-template-columns: 1fr; }
+    .problem-list{ grid-template-columns: 1fr; }
+    .steps{ grid-template-columns: 1fr; gap: 28px; }
+    .step:not(:last-child)::after{ display:none; }
+    .pricing-grid{ grid-template-columns: 1fr; }
+    .proof-grid{ grid-template-columns: 1fr; }
+    .cartouche{ grid-template-columns: repeat(2,1fr); row-gap: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <div class="logo"><span class="dot"></span>SKYECO&nbsp;PRO</div>
+    <a class="nav-cta" href="#contact">Demander une démo →</a>
+  </div>
+  <div class="ruler dark"></div>
+</header>
+
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow mono">POUR LES ENTREPRISES DU BTP &amp; VRD</div>
+      <h1>Vos devis ne se perdent plus <em>entre deux messages.</em></h1>
+      <p class="lead">Skyeco Pro capte chaque demande de chantier depuis votre site, vous alerte dans la minute, et garde tout organisé dans un tableau de bord — comme un plan d'exécution pour vos leads.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#contact">Voir une démo de 5 minutes</a>
+        <a class="btn btn-ghost" href="#tarifs">Voir les tarifs</a>
+      </div>
+    </div>
+
+    <div class="plan-card">
+      <svg viewBox="0 0 400 260" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <!-- dimension line top -->
+        <line x1="10" y1="18" x2="390" y2="18" stroke="#3A5D7C" stroke-width="1"/>
+        <line x1="10" y1="12" x2="10" y2="24" stroke="#3A5D7C" stroke-width="1"/>
+        <line x1="390" y1="12" x2="390" y2="24" stroke="#3A5D7C" stroke-width="1"/>
+        <text x="175" y="12" class="diagram-label">TRAJET D'UNE DEMANDE — ÉCH. 1:1</text>
+
+        <!-- node 1: form -->
+        <rect x="20" y="50" width="90" height="64" fill="none" stroke="#6E97B8" stroke-width="1.2"/>
+        <line x1="34" y1="66" x2="86" y2="66" stroke="#6E97B8" stroke-width="1"/>
+        <line x1="34" y1="78" x2="96" y2="78" stroke="#6E97B8" stroke-width="1"/>
+        <line x1="34" y1="90" x2="76" y2="90" stroke="#6E97B8" stroke-width="1"/>
+        <text x="65" y="132" text-anchor="middle" class="diagram-label">DEMANDE CLIENT</text>
+
+        <!-- arrow 1 -->
+        <line x1="112" y1="82" x2="150" y2="82" stroke="#6E97B8" stroke-width="1" stroke-dasharray="3 4"/>
+        <polygon points="150,78 158,82 150,86" fill="#6E97B8"/>
+
+        <!-- node 2: alert (hot / orange) -->
+        <rect x="160" y="50" width="90" height="64" fill="none" stroke="#E8622C" stroke-width="1.4"/>
+        <circle cx="205" cy="72" r="9" fill="none" stroke="#E8622C" stroke-width="1.4"/>
+        <path d="M205 68 v5 l3 3" stroke="#E8622C" stroke-width="1.2" fill="none"/>
+        <text x="205" y="98" text-anchor="middle" class="diagram-label hot" font-size="9">ALERTE SMS</text>
+        <text x="205" y="132" text-anchor="middle" class="diagram-label hot">&lt; 60 SECONDES</text>
+
+        <!-- arrow 2 -->
+        <line x1="252" y1="82" x2="290" y2="82" stroke="#6E97B8" stroke-width="1" stroke-dasharray="3 4"/>
+        <polygon points="290,78 298,82 290,86" fill="#6E97B8"/>
+
+        <!-- node 3: dashboard -->
+        <rect x="300" y="50" width="90" height="64" fill="none" stroke="#6E97B8" stroke-width="1.2"/>
+        <rect x="312" y="60" width="24" height="18" fill="none" stroke="#6E97B8" stroke-width="1"/>
+        <rect x="342" y="60" width="36" height="8" fill="none" stroke="#6E97B8" stroke-width="1"/>
+        <rect x="342" y="72" width="36" height="8" fill="none" stroke="#6E97B8" stroke-width="1"/>
+        <rect x="312" y="84" width="66" height="18" fill="none" stroke="#6E97B8" stroke-width="1"/>
+        <text x="345" y="132" text-anchor="middle" class="diagram-label">TABLEAU DE BORD</text>
+
+        <!-- side dimension -->
+        <line x1="8" y1="50" x2="8" y2="114" stroke="#3A5D7C" stroke-width="1"/>
+        <text x="-82" y="6" transform="rotate(-90)" class="diagram-label" font-size="9">DÉLAI</text>
+
+        <!-- bottom note -->
+        <line x1="20" y1="165" x2="390" y2="165" stroke="#2A4762" stroke-width="1"/>
+        <text x="20" y="185" class="diagram-label" font-size="10">Statuts : nouveau → contacté → devis envoyé → gagné</text>
+        <text x="20" y="203" class="diagram-label" font-size="10">Rien n'est perdu, tout reste visible.</text>
+      </svg>
+
+      <div class="cartouche">
+        <div><span>PROJET</span>SKYECO PRO</div>
+        <div><span>OBJET</span>CAPTATION LEADS</div>
+        <div><span>IND.</span>A</div>
+        <div><span>ÉCHELLE</span>1:1</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="kicker">LE CONSTAT</div>
+      <h2>Le problème n'est pas le manque de demandes. C'est ce qu'il en reste après.</h2>
+      <p>Résine, clôture, terrassement, assainissement — même métier, même angle mort : les demandes arrivent de partout, et personne ne les suit vraiment.</p>
+    </div>
+    <div class="problem-list">
+      <div class="problem-item">
+        <div class="num mono">01</div>
+        <p><strong>Les demandes se dispersent</strong>Téléphone, Messenger, mail, formulaire de contact générique — rien n'est centralisé, rien n'est priorisé.</p>
+      </div>
+      <div class="problem-item">
+        <div class="num mono">02</div>
+        <p><strong>La réponse arrive trop tard</strong>Le temps de recroiser ses messages le soir, le client a déjà rappelé un concurrent plus réactif.</p>
+      </div>
+      <div class="problem-item">
+        <div class="num mono">03</div>
+        <p><strong>Le suivi n'existe pas</strong>Impossible de savoir combien de devis sont partis, en attente, ou oubliés depuis trois semaines.</p>
+      </div>
+      <div class="problem-item">
+        <div class="num mono">04</div>
+        <p><strong>L'information est incomplète</strong>Un message vocal ne donne ni la surface, ni le budget, ni les photos du chantier — il faut tout redemander.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section style="background:var(--white); border-top:1px solid var(--paper-line); border-bottom:1px solid var(--paper-line);">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="kicker">LE FONCTIONNEMENT</div>
+      <h2>Trois étapes, aucune perte.</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <h3>Le client remplit le formulaire</h3>
+        <p>Intégré à votre site ou sur une page dédiée : type de chantier, surface, budget, photos. Une demande claire, pas un message vague.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <h3>Vous êtes alerté immédiatement</h3>
+        <p>SMS ou email dès que la demande arrive. Vous répondez pendant que le client y pense encore.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <h3>Vous suivez tout dans le dashboard</h3>
+        <p>Chaque demande a un statut : nouveau, contacté, devis envoyé, gagné ou perdu. Plus rien ne se perd dans une boîte mail.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="tarifs">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="kicker">LES FORMULES</div>
+      <h2>Un tarif de mise en place, un abonnement clair. Rien de caché.</h2>
+      <p>Chaque formule inclut la configuration complète de votre formulaire et de votre dashboard — vous n'avez rien à installer.</p>
+    </div>
+    <div class="pricing-grid">
+      <div class="plan">
+        <div class="plan-tag mono">ESSENTIEL</div>
+        <h3>Démarrer proprement</h3>
+        <div class="setup mono">390 € — mise en place</div>
+        <div class="price">39 €<span>/mois</span></div>
+        <ul>
+          <li>Formulaire de demande personnalisé</li>
+          <li>Tableau de bord de suivi</li>
+          <li>Notification par email</li>
+          <li>1 utilisateur</li>
+        </ul>
+        <a class="btn btn-ghost" style="border-color:var(--paper-line); color:var(--navy);" href="#contact">Choisir Essentiel</a>
+      </div>
+      <div class="plan featured">
+        <div class="plan-tag mono">PRO — LE PLUS CHOISI</div>
+        <h3>Réagir en premier</h3>
+        <div class="setup mono">590 € — mise en place</div>
+        <div class="price">79 €<span>/mois</span></div>
+        <ul>
+          <li>Tout Essentiel, plus :</li>
+          <li>Alerte SMS automatique</li>
+          <li>Statuts de suivi personnalisables</li>
+          <li>Export des demandes</li>
+          <li>3 utilisateurs</li>
+        </ul>
+        <a class="btn btn-primary" href="#contact">Choisir Pro</a>
+      </div>
+      <div class="plan">
+        <div class="plan-tag mono">SUR-MESURE</div>
+        <h3>Aller jusqu'au devis</h3>
+        <div class="setup mono">à partir de 990 € — mise en place</div>
+        <div class="price">129 €<span>/mois</span></div>
+        <ul>
+          <li>Tout Pro, plus :</li>
+          <li>Génération de devis</li>
+          <li>Signature électronique</li>
+          <li>Suivi des paiements</li>
+        </ul>
+        <a class="btn btn-ghost" style="border-color:var(--paper-line); color:var(--navy);" href="#contact">En discuter</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROOF -->
+<section class="proof">
+  <div class="wrap proof-grid">
+    <div>
+      <div class="kicker" style="color:var(--blue-light);">POURQUOI NOUS CROIRE</div>
+      <h2 style="color:var(--white);">Construit par un artisan, pour des artisans.</h2>
+      <p>Je dirige EcoSky by RMS, une entreprise de revêtements de sol résine en Bretagne. J'avais exactement ce problème : des demandes de chantier qui se perdaient entre les mails et les appels manqués.</p>
+      <p>J'ai développé mon propre système pour ne plus perdre un seul lead — et je l'utilise tous les jours sur mes propres chantiers. Skyeco Pro, c'est cet outil, ouvert à d'autres entreprises du BTP.</p>
+      <div class="signature-block">CYRILLE BON — DIRIGEANT, ECOSKY BY RMS · BRECH (56)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat"><span class="label mono">ALERTE ENVOYÉE EN</span><span class="val display">&lt; 60 SEC</span></div>
+      <div class="stat"><span class="label mono">MISE EN PLACE</span><span class="val display">SOUS 1 SEMAINE</span></div>
+      <div class="stat"><span class="label mono">DEMANDES PERDUES</span><span class="val display">ZÉRO</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final" id="contact">
+  <div class="wrap">
+    <div class="kicker" style="justify-content:center; display:flex;">PARLONS-EN</div>
+    <h2>Montrez-moi comment vous gérez vos devis aujourd'hui.</h2>
+    <p>Cinq minutes suffisent pour voir si Skyeco Pro peut vous faire gagner des chantiers que vous perdez aujourd'hui.</p>
+    <a class="btn btn-primary" href="mailto:infos@ecosky.fr?subject=Demande%20de%20d%C3%A9mo%20Skyeco%20Pro">Demander une démo par email</a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap" style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; width:100%;">
+    <span>SKYECO PRO — UN OUTIL ECOSKY BY RMS</span>
+    <span>BRECH (56) — BRETAGNE</span>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -191,8 +191,31 @@
           <label for="entreprise">Nom de l'entreprise</label>
           <input type="text" id="entreprise" placeholder="Ex : EcoSky by RMS">
 
-          <label for="zone">Zone d'intervention</label>
-          <input type="text" id="zone" placeholder="Ex : Morbihan, Bretagne">
+          <label for="zoneRegion">Région d'intervention</label>
+          <select id="zoneRegion">
+            <option value="">Sélectionnez une région</option>
+            <option value="Auvergne-Rhône-Alpes">Auvergne-Rhône-Alpes</option>
+            <option value="Bourgogne-Franche-Comté">Bourgogne-Franche-Comté</option>
+            <option value="Bretagne">Bretagne</option>
+            <option value="Centre-Val de Loire">Centre-Val de Loire</option>
+            <option value="Corse">Corse</option>
+            <option value="Grand Est">Grand Est</option>
+            <option value="Hauts-de-France">Hauts-de-France</option>
+            <option value="Île-de-France">Île-de-France</option>
+            <option value="Normandie">Normandie</option>
+            <option value="Nouvelle-Aquitaine">Nouvelle-Aquitaine</option>
+            <option value="Occitanie">Occitanie</option>
+            <option value="Pays de la Loire">Pays de la Loire</option>
+            <option value="Provence-Alpes-Côte d'Azur">Provence-Alpes-Côte d'Azur</option>
+            <option value="Guadeloupe">Guadeloupe</option>
+            <option value="Martinique">Martinique</option>
+            <option value="Guyane">Guyane</option>
+            <option value="La Réunion">La Réunion</option>
+            <option value="Mayotte">Mayotte</option>
+          </select>
+
+          <label for="zone">Précisez votre secteur <span style="font-weight:400; color:var(--concrete);">(optionnel)</span></label>
+          <input type="text" id="zone" placeholder="Ex : Morbihan, agglomération de Vannes...">
 
           <label for="telephone">Téléphone</label>
           <input type="tel" id="telephone" inputmode="numeric" placeholder="Ex : 06 12 34 56 78">
@@ -226,6 +249,23 @@
             <button type="button" class="metier-card" data-value="autre">Autre métier BTP<span class="tag">à préciser</span></button>
           </div>
           <div class="error mono" id="err-metier">Sélectionnez un métier pour continuer.</div>
+
+          <div id="specialitesBlock" style="margin-top:22px; padding-top:20px; border-top:1px solid var(--paper-line);">
+            <label style="margin-top:0;">Vos spécialités <span style="font-weight:400; color:var(--concrete);">(plusieurs choix possibles)</span></label>
+            <div class="metier-grid" id="specialitesGrid">
+              <button type="button" class="metier-card specialite-card" data-value="conception">Conception de jardin<span class="tag">création d'espaces verts</span></button>
+              <button type="button" class="metier-card specialite-card" data-value="taille">Taille &amp; entretien<span class="tag">tonte, élagage, haies</span></button>
+              <button type="button" class="metier-card specialite-card" data-value="terrasse">Terrasse extérieure<span class="tag">bois, dallage, pose</span></button>
+              <button type="button" class="metier-card specialite-card" data-value="piscine">Abords de piscine<span class="tag">plage, margelles</span></button>
+              <button type="button" class="metier-card specialite-card" data-value="murets">Murets &amp; maçonnerie paysagère<span class="tag">pierre, parpaing, gabions</span></button>
+              <button type="button" class="metier-card specialite-card" data-value="arrosage">Arrosage automatique<span class="tag">irrigation, programmation</span></button>
+              <button type="button" class="metier-card specialite-card" data-value="clotures_haies">Clôtures &amp; haies végétales<span class="tag">plantation, brise-vue</span></button>
+              <button type="button" class="metier-card specialite-card" data-value="eclairage">Éclairage extérieur<span class="tag">allées, mise en valeur</span></button>
+              <button type="button" class="metier-card specialite-card" data-value="allees">Allées &amp; cheminements<span class="tag">gravier, pas japonais</span></button>
+              <button type="button" class="metier-card specialite-card" data-value="potager">Potager &amp; verger<span class="tag">carrés, arbres fruitiers</span></button>
+              <button type="button" class="metier-card specialite-card" data-value="autre_specialite">Autre<span class="tag">à préciser sur votre page</span></button>
+            </div>
+          </div>
         </div>
 
         <!-- STEP 3 : savoir-faire -->
@@ -355,7 +395,7 @@
   const stepLabels = ['Éligibilité','Coordonnées','Métier','Savoir-faire','Photos','Tarification','Couleur','Récapitulatif'];
   let current = 0;
   const state = {
-    metier:'paysagisme', siret:'', siretVerifie:false, entreprise:'', zone:'',
+    metier:'paysagisme', specialites:[], siret:'', siretVerifie:false, entreprise:'', zone:'', zoneRegion:'',
     telephone:'', telephoneVerifie:false, email:'', description:'',
     photos:[null,null,null,null,null,null], videoUrl:'', couleur:'#E8622C',
     tarifActif:false, tarifUnite:'m2', tarifPrix:'', tarifContraintes:''
@@ -569,7 +609,20 @@
     card.classList.add('selected');
     state.metier = card.dataset.value;
     document.getElementById('err-metier').classList.remove('show');
+    document.getElementById('specialitesBlock').style.display = (state.metier === 'paysagisme') ? 'block' : 'none';
     document.getElementById('btnNext').disabled = !canProceed(2);
+  });
+
+  document.getElementById('specialitesGrid').addEventListener('click', e=>{
+    const card = e.target.closest('.specialite-card');
+    if(!card) return;
+    card.classList.toggle('selected');
+    const val = card.dataset.value;
+    if(card.classList.contains('selected')){
+      if(!state.specialites.includes(val)) state.specialites.push(val);
+    } else {
+      state.specialites = state.specialites.filter(s => s !== val);
+    }
   });
 
   // Step 3: char count
@@ -674,7 +727,7 @@
       const res = await fetch('/api/estimate-reach', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ metier: state.metier, zone: state.zone, budget: budgetVal })
+        body: JSON.stringify({ metier: state.metier, zone: state.zoneRegion || state.zone, budget: budgetVal })
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error || 'Erreur inconnue.');
@@ -708,6 +761,7 @@
 
   function buildRecap(){
     const metierLabels = {resine:'Revêtements résine', cloture:'Clôtures & portails', terrassement:'Terrassement', assainissement:'Assainissement', paysagisme:'Paysagisme', autre:'Autre métier BTP'};
+    const specialiteLabels = {conception:'Conception de jardin', taille:'Taille & entretien', terrasse:'Terrasse extérieure', piscine:'Abords de piscine', murets:'Murets & maçonnerie paysagère', arrosage:'Arrosage automatique', clotures_haies:'Clôtures & haies végétales', eclairage:'Éclairage extérieur', allees:'Allées & cheminements', potager:'Potager & verger', autre_specialite:'Autre'};
     const uniteLabels = {m2:'€/m²', ml:'€/mètre linéaire', m3:'€/m³'};
     const recap = document.getElementById('recap');
     let html =
@@ -715,7 +769,11 @@
       '<dt>Entreprise</dt><dd>' + (state.entreprise||'—') + '</dd>' +
       "<dt>Zone d'intervention</dt><dd>" + (state.zone||'—') + '</dd>' +
       '<dt>Contact</dt><dd>' + (state.telephone||'—') + ' (vérifié) · ' + (state.email||'—') + '</dd>' +
-      '<dt>Métier</dt><dd>' + (metierLabels[state.metier]||'—') + '</dd>' +
+      '<dt>Métier</dt><dd>' + (metierLabels[state.metier]||'—') + '</dd>';
+    if(state.specialites.length){
+      html += '<dt>Spécialités</dt><dd>' + state.specialites.map(s => specialiteLabels[s]||s).join(', ') + '</dd>';
+    }
+    html +=
       '<dt>Tarification</dt><dd>' + (state.tarifActif ? ('Estimation activée — ' + (state.tarifPrix||'—') + ' ' + uniteLabels[state.tarifUnite]) : 'Formulaire basique, sans prix') + '</dd>' +
       '<dt>Couleur</dt><dd><span style="display:inline-block;width:12px;height:12px;background:'+state.couleur+';vertical-align:middle;margin-right:6px;"></span>' + state.couleur + '</dd>';
     recap.innerHTML = html;
@@ -732,7 +790,9 @@
     }
     if(i===1){
       state.entreprise = document.getElementById('entreprise').value.trim();
-      state.zone = document.getElementById('zone').value.trim();
+      state.zoneRegion = document.getElementById('zoneRegion').value;
+      const zonePrecise = document.getElementById('zone').value.trim();
+      state.zone = [state.zoneRegion, zonePrecise].filter(Boolean).join(' — ');
       state.telephone = document.getElementById('telephone').value.trim();
       state.email = document.getElementById('email').value.trim();
       if(!canProceed(1)){
@@ -782,6 +842,7 @@
         siret: state.siret,
         entreprise: state.entreprise,
         zone: state.zone,
+        zone_region: state.zoneRegion || null,
         telephone: state.telephone,
         email: state.email,
         description: state.description,
@@ -792,6 +853,7 @@
         tarif_unite: state.tarifActif ? state.tarifUnite : null,
         tarif_prix: state.tarifActif ? parseFloat(state.tarifPrix) : null,
         tarif_contraintes: state.tarifContraintes || null,
+        specialites: state.specialites,
         status: 'preview'
       }])
       .select()

@@ -170,12 +170,25 @@
 
     <!-- STEP 4 : photos -->
     <div class="panel" data-step="3">
-      <h2 class="q">Ajoutez 1 à 3 photos de vos chantiers.</h2>
-      <p class="hint">Facultatif à ce stade — vous pourrez les ajouter plus tard.</p>
-      <div class="upload-row" id="uploadRow">
+      <h2 class="q">Montrez vos réalisations.</h2>
+      <p class="hint">Idéalement 6 photos — vos vrais chantiers convainquent bien mieux que des images génériques. N'hésitez pas à montrer un avant/après si vous en avez.</p>
+      <div class="upload-row" id="uploadRow" style="grid-template-columns:repeat(3,1fr);">
         <label class="upload-slot"><span>+ Photo 1</span><input type="file" accept="image/*" data-slot="0"></label>
         <label class="upload-slot"><span>+ Photo 2</span><input type="file" accept="image/*" data-slot="1"></label>
         <label class="upload-slot"><span>+ Photo 3</span><input type="file" accept="image/*" data-slot="2"></label>
+        <label class="upload-slot"><span>+ Photo 4</span><input type="file" accept="image/*" data-slot="3"></label>
+        <label class="upload-slot"><span>+ Photo 5</span><input type="file" accept="image/*" data-slot="4"></label>
+        <label class="upload-slot"><span>+ Photo 6</span><input type="file" accept="image/*" data-slot="5"></label>
+      </div>
+      <div id="uploadStatus" class="mono" style="font-size:11.5px; color:var(--concrete); margin-top:8px;"></div>
+
+      <div style="margin-top:24px; padding-top:20px; border-top:1px solid var(--paper-line);">
+        <label style="margin-top:0;">Vous préférez une vidéo ?</label>
+        <p class="hint" style="margin-bottom:10px;">Une courte vidéo d'une réalisation ou d'un chantier en cours peut remplacer les photos en fond de votre page. Facultatif — si vous n'en ajoutez pas, on utilisera vos photos (ou des exemples si vous n'en avez pas encore).</p>
+        <label class="upload-slot" style="aspect-ratio:auto; height:64px;" id="videoSlot">
+          <span id="videoSlotLabel">+ Ajouter une vidéo</span>
+          <input type="file" accept="video/*" id="videoInput">
+        </label>
       </div>
     </div>
 
@@ -218,7 +231,21 @@
   const steps = Array.from(document.querySelectorAll('.panel'));
   const stepLabels = ['Métier','Entreprise','Savoir-faire','Photos','Couleur','Récapitulatif'];
   let current = 0;
-  const state = { metier:null, siret:'', siretVerifie:false, entreprise:'', zone:'', telephone:'', email:'', description:'', photos:[null,null,null], couleur:'#E8622C' };
+  const state = { metier:null, siret:'', siretVerifie:false, entreprise:'', zone:'', telephone:'', email:'', description:'', photos:[null,null,null,null,null,null], videoUrl:'', couleur:'#E8622C' };
+
+  const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+  const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+  async function uploadToStorage(file, prefix){
+    if(!supabaseClient) throw new Error('Service de stockage indisponible.');
+    const ext = file.name.split('.').pop();
+    const path = prefix + '/' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.' + ext;
+    const { error } = await supabaseClient.storage.from('skyeco-pro-media').upload(path, file);
+    if(error) throw error;
+    const { data } = supabaseClient.storage.from('skyeco-pro-media').getPublicUrl(path);
+    return data.publicUrl;
+  }
 
   // build stepper bars
   const stepperEl = document.getElementById('stepper');
@@ -345,23 +372,51 @@
     state.description = descEl.value;
   });
 
-  // Step 4: photo uploads
+  // Step 4: photo uploads — aperçu immédiat (local) puis upload réel en arrière-plan
+  const uploadStatusEl = document.getElementById('uploadStatus');
   document.querySelectorAll('#uploadRow input[type=file]').forEach(inp=>{
     inp.addEventListener('change', e=>{
       const file = e.target.files[0];
       if(!file) return;
       const slot = +inp.dataset.slot;
+      const label = inp.closest('.upload-slot');
+
       const reader = new FileReader();
       reader.onload = ev=>{
-        state.photos[slot] = ev.target.result;
-        const label = inp.closest('.upload-slot');
         label.innerHTML = '';
         const img = document.createElement('img');
         img.src = ev.target.result;
+        img.style.opacity = '0.5';
         label.appendChild(img);
         label.appendChild(inp);
       };
       reader.readAsDataURL(file);
+
+      uploadStatusEl.textContent = 'Envoi de la photo ' + (slot+1) + '…';
+      uploadToStorage(file, 'photos').then(url=>{
+        state.photos[slot] = url;
+        const img = label.querySelector('img');
+        if(img) img.style.opacity = '1';
+        uploadStatusEl.textContent = '';
+      }).catch(err=>{
+        uploadStatusEl.textContent = "Échec de l'envoi de la photo " + (slot+1) + '. Réessayez.';
+        uploadStatusEl.style.color = 'var(--orange-dark)';
+      });
+    });
+  });
+
+  // Vidéo optionnelle
+  const videoInput = document.getElementById('videoInput');
+  const videoSlotLabel = document.getElementById('videoSlotLabel');
+  videoInput.addEventListener('change', e=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    videoSlotLabel.textContent = 'Envoi de la vidéo…';
+    uploadToStorage(file, 'videos').then(url=>{
+      state.videoUrl = url;
+      videoSlotLabel.textContent = '✓ Vidéo ajoutée : ' + file.name;
+    }).catch(err=>{
+      videoSlotLabel.textContent = "Échec de l'envoi — réessayez.";
     });
   });
 
@@ -422,20 +477,16 @@
     showStep(current);
   });
 
-  const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
-
   async function submitForm(){
     document.getElementById('btnNext').disabled = true;
     document.getElementById('btnNext').textContent = 'Génération en cours…';
 
-    if (!window.supabase) {
+    if (!supabaseClient) {
       document.getElementById('btnNext').disabled = false;
       document.getElementById('btnNext').textContent = 'Générer mon aperçu gratuit';
       alert("Le service de sauvegarde n'a pas pu se charger. Vérifiez votre connexion et réessayez.");
       return;
     }
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const { data, error } = await supabaseClient
       .from('skyeco_pro_vitrine_drafts')
@@ -448,6 +499,7 @@
         email: state.email,
         description: state.description,
         photos: state.photos.filter(Boolean),
+        video_url: state.videoUrl || null,
         couleur: state.couleur,
         status: 'preview'
       }])

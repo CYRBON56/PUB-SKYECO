@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vos demandes de devis — Skyeco Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  :root{
+    --navy: #14304A;
+    --blue: #2C5F8A;
+    --blue-light: #6E97B8;
+    --paper: #F4F7F9;
+    --paper-line: #DCE4E9;
+    --orange: #E8622C;
+    --orange-dark: #C74F20;
+    --concrete: #5B6268;
+    --white: #FFFFFF;
+    --green: #1E6F4C;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{
+    font-family:'IBM Plex Sans', sans-serif;
+    background: var(--paper);
+    color: var(--navy);
+    line-height:1.5;
+  }
+  .mono{ font-family:'IBM Plex Mono', monospace; letter-spacing:0.03em; }
+  .display{ font-family:'Big Shoulders Display', sans-serif; text-transform:uppercase; }
+
+  header{ background:var(--navy); color:#fff; padding:20px 28px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+  header .brand{ font-size:18px; font-weight:800; letter-spacing:0.5px; }
+  header .brand span{ color:var(--orange); }
+  header .sub{ font-size:12.5px; color:var(--blue-light); margin-top:2px; }
+
+  .wrap{ max-width:1180px; margin:0 auto; padding:24px 20px 60px; }
+
+  /* Écran d'accès — protège l'accès via l'identifiant du site, comme apercu.html */
+  #accessScreen{ max-width:420px; margin:80px auto; background:#fff; border:1px solid var(--paper-line); border-radius:14px; padding:32px 28px; text-align:center; }
+  #accessScreen h1{ font-size:20px; margin-bottom:10px; }
+  #accessScreen p{ font-size:14px; color:var(--concrete); margin-bottom:18px; }
+  #accessScreen .err{ color:#c0392b; font-size:13px; margin-top:10px; display:none; }
+
+  .stats-bar{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:22px; }
+  .stat-box{ background:#fff; border:1px solid var(--paper-line); border-radius:12px; padding:16px 18px; }
+  .stat-box .num{ font-family:'Big Shoulders Display',sans-serif; font-size:32px; font-weight:800; line-height:1; color:var(--navy); }
+  .stat-box .lbl{ font-size:11.5px; color:var(--concrete); text-transform:uppercase; letter-spacing:0.5px; margin-top:4px; }
+  .stat-box.accent .num{ color:var(--orange); }
+
+  .filtre-tabs{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; }
+  .tab{ background:#fff; border:1px solid var(--paper-line); border-radius:20px; padding:8px 16px; font-size:13px; font-weight:600; cursor:pointer; color:var(--navy); }
+  .tab.active{ background:var(--navy); border-color:var(--navy); color:#fff; }
+
+  .table-wrap{ background:#fff; border:1px solid var(--paper-line); border-radius:14px; overflow:hidden; }
+  table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  thead th{ text-align:left; padding:12px 16px; background:var(--paper); border-bottom:1px solid var(--paper-line); font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--concrete); }
+  tbody td{ padding:14px 16px; border-bottom:1px solid var(--paper-line); vertical-align:top; }
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody tr:hover{ background:#fafbfc; }
+  .nom-cell{ font-weight:700; }
+  .sub-cell{ font-size:12px; color:var(--concrete); margin-top:2px; }
+  .badge{ display:inline-block; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; }
+  .badge.nouveau{ background:#FDECE3; color:var(--orange-dark); }
+  .badge.contacte{ background:#E4EEF8; color:var(--blue); }
+  .badge.traite{ background:#E5F3EC; color:var(--green); }
+  .badge.perdu{ background:#F1F1F1; color:var(--concrete); }
+  select.statut-select{ font-family:inherit; font-size:12.5px; padding:6px 8px; border-radius:6px; border:1px solid var(--paper-line); background:#fff; color:var(--navy); }
+  .empty{ padding:40px; text-align:center; color:var(--concrete); font-size:14px; }
+  .detail-row{ font-size:12.5px; color:var(--concrete); margin-top:4px; }
+  .btn-tel{ display:inline-block; margin-top:6px; font-size:12px; font-weight:700; color:var(--green); text-decoration:none; }
+
+  @media (max-width:720px){
+    table, thead, tbody, th, td, tr{ display:block; }
+    thead{ display:none; }
+    tbody tr{ border-bottom:1px solid var(--paper-line); padding:14px 16px; }
+    tbody td{ border:none; padding:4px 0; }
+  }
+</style>
+</head>
+<body>
+
+<div id="accessScreen">
+  <h1>Vos demandes de devis</h1>
+  <p>Cette page est privée à votre mini-site. Le lien complet (avec l'identifiant) vous a été fourni à la mise en ligne de votre site — utilisez-le pour accéder directement à votre tableau de bord.</p>
+  <p class="err" id="accessErr">Identifiant manquant ou introuvable dans l'adresse.</p>
+</div>
+
+<div id="dashboardRoot" style="display:none;">
+  <header>
+    <div>
+      <div class="brand">SKY<span>ECO</span> PRO</div>
+      <div class="sub" id="entrepriseLabel">—</div>
+    </div>
+    <div class="sub mono" id="lastUpdate"></div>
+  </header>
+
+  <div class="wrap">
+    <div class="stats-bar" id="statsBar"></div>
+
+    <div class="filtre-tabs" id="filtreTabs"></div>
+
+    <div class="table-wrap">
+      <div id="tableContainer"><p class="empty">Chargement…</p></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const params = new URLSearchParams(window.location.search);
+  const draftId = params.get('id');
+
+  let leads = [];
+  let filtreActif = 'tous';
+  let draft = null;
+
+  function escapeHtml(str){
+    if(str === null || str === undefined) return '';
+    return String(str).replace(/[&<>"']/g, function(c){
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
+
+  function formatDate(iso){
+    if(!iso) return '';
+    const d = new Date(iso);
+    return d.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' }) +
+      ' à ' + d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+  }
+
+  const STATUTS = {
+    nouveau:  { label:'Nouveau',   badge:'nouveau' },
+    contacte: { label:'Contacté',  badge:'contacte' },
+    traite:   { label:'Traité',    badge:'traite' },
+    perdu:    { label:'Sans suite',badge:'perdu' }
+  };
+
+  async function init(){
+    if(!draftId){
+      document.getElementById('accessErr').style.display = 'block';
+      return;
+    }
+
+    const { data: draftData, error: draftError } = await supabaseClient
+      .from('skyeco_pro_vitrine_drafts')
+      .select('entreprise, metier')
+      .eq('id', draftId)
+      .single();
+
+    if(draftError || !draftData){
+      document.getElementById('accessErr').textContent = 'Ce lien de tableau de bord est introuvable ou a expiré.';
+      document.getElementById('accessErr').style.display = 'block';
+      return;
+    }
+    draft = draftData;
+
+    document.getElementById('accessScreen').style.display = 'none';
+    document.getElementById('dashboardRoot').style.display = 'block';
+    document.getElementById('entrepriseLabel').textContent = draft.entreprise + ' — Demandes reçues via votre mini-site';
+
+    await chargerLeads();
+  }
+
+  async function chargerLeads(){
+    const container = document.getElementById('tableContainer');
+    const { data, error } = await supabaseClient
+      .from('skyeco_pro_leads')
+      .select('*')
+      .eq('draft_id', draftId)
+      .order('created_at', { ascending:false });
+
+    if(error){
+      container.innerHTML = '<p class="empty" style="color:#c0392b;">Échec du chargement : ' + escapeHtml(error.message) +
+        '<br><button type="button" onclick="chargerLeads()" style="margin-top:10px;">Réessayer</button></p>';
+      return;
+    }
+
+    leads = data || [];
+    document.getElementById('lastUpdate').textContent = 'Actualisé à ' + new Date().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+    renderStats();
+    renderTabs();
+    renderTable();
+  }
+
+  function renderStats(){
+    const total = leads.length;
+    const nouveaux = leads.filter(l => l.statut === 'nouveau').length;
+    const contactes = leads.filter(l => l.statut === 'contacte').length;
+    const traites = leads.filter(l => l.statut === 'traite').length;
+    const semaine = leads.filter(l => (Date.now() - new Date(l.created_at).getTime()) < 7*24*3600*1000).length;
+
+    document.getElementById('statsBar').innerHTML =
+      '<div class="stat-box"><div class="num">' + total + '</div><div class="lbl">Total demandes</div></div>' +
+      '<div class="stat-box accent"><div class="num">' + nouveaux + '</div><div class="lbl">Nouvelles</div></div>' +
+      '<div class="stat-box"><div class="num">' + contactes + '</div><div class="lbl">Contactées</div></div>' +
+      '<div class="stat-box"><div class="num">' + traites + '</div><div class="lbl">Traitées</div></div>' +
+      '<div class="stat-box"><div class="num">' + semaine + '</div><div class="lbl">Cette semaine</div></div>';
+  }
+
+  function renderTabs(){
+    const compteurs = { tous: leads.length };
+    Object.keys(STATUTS).forEach(k => { compteurs[k] = leads.filter(l => l.statut === k).length; });
+
+    const tabs = [['tous','Toutes']].concat(Object.entries(STATUTS).map(([k,v]) => [k, v.label]));
+    document.getElementById('filtreTabs').innerHTML = tabs.map(([key,label]) =>
+      '<button type="button" class="tab' + (filtreActif===key?' active':'') + '" data-filtre="' + key + '">' +
+        escapeHtml(label) + ' (' + (compteurs[key]||0) + ')' +
+      '</button>'
+    ).join('');
+
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.addEventListener('click', function(){
+        filtreActif = this.dataset.filtre;
+        renderTabs();
+        renderTable();
+      });
+    });
+  }
+
+  function renderTable(){
+    const container = document.getElementById('tableContainer');
+    const vue = filtreActif === 'tous' ? leads : leads.filter(l => l.statut === filtreActif);
+
+    if(vue.length === 0){
+      container.innerHTML = '<p class="empty">Aucune demande dans cette vue pour le moment.</p>';
+      return;
+    }
+
+    const rows = vue.map(l => {
+      const r = l.reponses || {};
+      const statutInfo = STATUTS[l.statut] || STATUTS.nouveau;
+      const detailBits = [];
+      if(r.type_projet) detailBits.push(escapeHtml(String(r.type_projet)));
+      if(r.surface) detailBits.push(r.surface + ' m²');
+      if(r.delai) detailBits.push('Délai : ' + escapeHtml(String(r.delai)));
+      if(r.ville || r.code_postal) detailBits.push(escapeHtml([r.ville, r.code_postal].filter(Boolean).join(' ')));
+
+      return '<tr>' +
+        '<td>' +
+          '<div class="nom-cell">' + escapeHtml((l.prenom||'') + ' ' + (l.nom||'') || 'Sans nom') + '</div>' +
+          '<div class="sub-cell">' + formatDate(l.created_at) + '</div>' +
+        '</td>' +
+        '<td>' +
+          (l.telephone ? '<a class="btn-tel" href="tel:' + escapeHtml(l.telephone) + '">' + escapeHtml(l.telephone) + '</a>' + (l.telephone_verifie ? ' ✓' : '') + '<br>' : '') +
+          (l.email ? '<span class="sub-cell">' + escapeHtml(l.email) + '</span>' : '') +
+        '</td>' +
+        '<td>' +
+          (detailBits.length ? detailBits.join(' · ') : '<span class="sub-cell">—</span>') +
+          (r.details_projet ? '<div class="detail-row">' + escapeHtml(r.details_projet) + '</div>' : '') +
+        '</td>' +
+        '<td><span class="badge ' + statutInfo.badge + '">' + statutInfo.label + '</span></td>' +
+        '<td>' +
+          '<select class="statut-select" data-id="' + l.id + '">' +
+            Object.entries(STATUTS).map(([k,v]) => '<option value="' + k + '"' + (l.statut===k?' selected':'') + '>' + v.label + '</option>').join('') +
+          '</select>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+
+    container.innerHTML =
+      '<table>' +
+        '<thead><tr><th>Contact</th><th>Coordonnées</th><th>Projet</th><th>Statut</th><th>Changer le statut</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+      '</table>';
+
+    document.querySelectorAll('.statut-select').forEach(sel => {
+      sel.addEventListener('change', async function(){
+        const id = this.dataset.id;
+        const nouveauStatut = this.value;
+        this.disabled = true;
+        const { error } = await supabaseClient
+          .from('skyeco_pro_leads')
+          .update({ statut: nouveauStatut, updated_at: new Date().toISOString() })
+          .eq('id', id);
+        this.disabled = false;
+        if(error){
+          alert("Impossible de mettre à jour le statut : " + error.message);
+          return;
+        }
+        const lead = leads.find(l => l.id === id);
+        if(lead) lead.statut = nouveauStatut;
+        renderStats();
+        renderTabs();
+        renderTable();
+      });
+    });
+  }
+
+  window.chargerLeads = chargerLeads;
+  init();
+</script>
+</body>
+</html>

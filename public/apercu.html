@@ -349,10 +349,10 @@ async function init(){
       '<span>Paiement annulé — vous pouvez réessayer quand vous voulez.</span>';
   }
 
-  runWizard(template, brandColor);
+  runWizard(template, brandColor, draft.id);
 }
 
-function runWizard(template, brandColor){
+function runWizard(template, brandColor, draftId){
   const state = { step:0 };
   const cardEl = document.getElementById('card');
   const progressEl = document.getElementById('progress');
@@ -494,11 +494,43 @@ function runWizard(template, brandColor){
       if(!canProceed(s)) return;
       if(state.step<steps.length-1){ state.step+=1; renderProgress(); renderStep(); }
       else {
-        cardEl.innerHTML = '<div class="success-icon">✅</div><div class="question" style="text-align:center;">Merci '+(state.prenom||'')+' !</div>'+
-          '<div class="result-box"><div class="result-note">Votre demande a bien été enregistrée. Un conseiller revient vers vous sous 24h.</div></div>'+
-          "<p class=\"disclaimer\">Cette estimation reste indicative et devra être confirmée lors d'un appel téléphonique.</p>";
+        enregistrerDemande();
       }
     });
+  }
+  async function enregistrerDemande(){
+    cardEl.innerHTML = '<div class="question" style="text-align:center;">Enregistrement de votre demande…</div>';
+    document.getElementById('progress').style.display = 'none';
+
+    // Sépare les champs identité (colonnes dédiées) du reste (stocké en jsonb "reponses").
+    const { nom, prenom, telephone, telephoneVerifie, email, ...reste } = state;
+
+    const { error } = await supabaseClient
+      .from('skyeco_pro_leads')
+      .insert([{
+        draft_id: draftId,
+        nom: nom || null,
+        prenom: prenom || null,
+        telephone: telephone || null,
+        telephone_verifie: !!telephoneVerifie,
+        email: email || null,
+        reponses: reste,
+        statut: 'nouveau'
+      }]);
+
+    if(error){
+      cardEl.innerHTML = '<div class="question" style="text-align:center;">Une erreur est survenue.</div>'+
+        '<div class="result-box" style="border-color:#c0392b; background:#fdecea;"><div class="result-note" style="color:#c0392b;">'+
+        "Votre demande n'a pas pu être enregistrée. Merci de réessayer ou de nous contacter directement par téléphone."+
+        '</div></div>'+
+        '<div class="nav-row"><button class="btn btn-primary" id="btnRetryEnregistrement" style="flex:1;">Réessayer</button></div>';
+      document.getElementById('btnRetryEnregistrement').addEventListener('click', enregistrerDemande);
+      return;
+    }
+
+    cardEl.innerHTML = '<div class="success-icon">✅</div><div class="question" style="text-align:center;">Merci '+(state.prenom||'')+' !</div>'+
+      '<div class="result-box"><div class="result-note">Votre demande a bien été enregistrée. Un conseiller revient vers vous sous 24h.</div></div>'+
+      "<p class=\"disclaimer\">Cette estimation reste indicative et devra être confirmée lors d'un appel téléphonique.</p>";
   }
   renderProgress();
   renderStep();

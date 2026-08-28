@@ -29,6 +29,19 @@
   .solde-detail { font-size:0.76rem; color:#8a9891; line-height:1.6; }
 
   .liste-panel { background:#fff; border-radius:14px; padding:22px; }
+
+  .estim-box { background:#fff; border:2px solid #e8622c; border-radius:14px; padding:22px; margin-bottom:28px; }
+  .estim-box h3 { font-size:0.95rem; margin-bottom:14px; }
+  .estim-row { display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+  .estim-row label { font-size:0.85rem; font-weight:700; }
+  .estim-row input {
+    width:110px; font-size:1.15rem; font-weight:800; padding:8px 12px; border:2px solid #d7dedb;
+    border-radius:10px; color:#14312a;
+  }
+  .estim-resultat { display:flex; gap:28px; }
+  .estim-resultat .chiffre { font-size:1.5rem; font-weight:800; color:#e8622c; }
+  .estim-resultat .label { font-size:0.76rem; color:#5b6b64; }
+  .estim-note { font-size:0.74rem; color:#8a9891; margin-top:10px; }
   .liste-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
   .liste-header h3 { font-size:0.95rem; }
   .btn-pdf { background:#eef1f0; border:none; border-radius:8px; padding:9px 16px; font-size:0.82rem; font-weight:700; color:#14312a; cursor:pointer; }
@@ -59,6 +72,20 @@
     <div class="loading">Chargement du solde…</div>
   </div>
 
+  <div class="estim-box">
+    <h3>Combien de clics pour ce budget ?</h3>
+    <div class="estim-row">
+      <label for="estimBudgetInput">Montant à investir</label>
+      <input type="number" id="estimBudgetInput" min="100" step="10" value="300">
+      <span style="font-weight:800; font-size:1.1rem;">€</span>
+    </div>
+    <div class="estim-resultat">
+      <div><div class="chiffre" id="estimClicsValue">—</div><div class="label">clics estimés</div></div>
+      <div><div class="chiffre" id="estimCpcValue">—</div><div class="label">CPC moyen estimé</div></div>
+    </div>
+    <div class="estim-note">Ce n'est pas garanti sur un mois fixe — consommé au rythme réel des clics reçus.</div>
+  </div>
+
   <div class="liste-panel">
     <div class="liste-header">
       <h3>Demandes d'estimation</h3>
@@ -82,6 +109,7 @@
     chargerStats();
     chargerSolde();
     chargerDemandes();
+    initEstimateurClics();
   }
 
   async function chargerStats() {
@@ -228,6 +256,54 @@
 
     doc.save(`demandes-${nomEntreprise.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.pdf`);
   });
+
+  async function initEstimateurClics() {
+    const budgetInput = document.getElementById('estimBudgetInput');
+    let draftInfo = null;
+    let debounceTimer = null;
+
+    try {
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=metier,departement`, {
+        headers: { apikey: SUPABASE_ANON_KEY }
+      });
+      const rows = await resp.json();
+      draftInfo = rows[0] || {};
+    } catch (e) {
+      draftInfo = {};
+    }
+
+    async function calculer() {
+      const budget = parseFloat(budgetInput.value);
+      if (!budget || budget < 100) {
+        document.getElementById('estimClicsValue').textContent = '—';
+        document.getElementById('estimCpcValue').textContent = '—';
+        return;
+      }
+      document.getElementById('estimClicsValue').textContent = '…';
+      try {
+        const res = await fetch('/api/estimate-reach', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ metier: draftInfo.metier, departement: draftInfo.departement, budget })
+        });
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('estimClicsValue').textContent = data.estimatedClicks !== null ? '≈ ' + data.estimatedClicks : '—';
+          document.getElementById('estimCpcValue').textContent = data.avgCpcEur ? data.avgCpcEur + ' €' : '—';
+        } else {
+          document.getElementById('estimClicsValue').textContent = '—';
+        }
+      } catch (e) {
+        document.getElementById('estimClicsValue').textContent = '—';
+      }
+    }
+
+    budgetInput.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(calculer, 400);
+    });
+    calculer();
+  }
 </script>
 </body>
 </html>

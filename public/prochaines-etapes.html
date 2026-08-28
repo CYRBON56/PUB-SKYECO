@@ -8,7 +8,8 @@
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f5f8f6; color:#14312a; position:relative; }
 
-  .bg-preview { position:fixed; inset:0; width:100%; height:100%; border:none; pointer-events:none; z-index:0; }
+  .bg-preview { position:fixed; inset:0; width:100%; height:100%; border:none; pointer-events:none; z-index:0; opacity:0; transition:opacity 1.2s ease-in-out; }
+  .bg-preview.active { opacity:1; }
   .bg-overlay { position:fixed; inset:0; background:rgba(245,248,246,0.55); z-index:1; transition:opacity 0.5s ease; }
   .bg-overlay.cachee { opacity:0; }
 
@@ -58,10 +59,42 @@
   .btn-rdv:hover { filter:brightness(1.05); }
 
   .footer-note { text-align:center; font-size:0.8rem; color:#8a9891; margin-top:28px; }
+
+  .formules-section { margin:44px 0; }
+  .formules-section h2 { font-size:1.15rem; margin-bottom:6px; }
+  .formules-section .sub { font-size:0.85rem; color:#5b6b64; margin-bottom:18px; }
+  .formules-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .formule-card { border:1.5px solid #e2e8e5; border-radius:12px; padding:16px; position:relative; }
+  .formule-card.recommandee { border-color:#1e6f4c; }
+  .formule-badge {
+    position:absolute; top:-9px; left:14px; background:#1e6f4c; color:#fff;
+    font-size:0.66rem; font-weight:700; padding:3px 10px; border-radius:999px;
+  }
+  .formule-nom { font-size:0.88rem; font-weight:800; margin-top:4px; }
+  .formule-prix { font-size:1.3rem; font-weight:800; margin:4px 0; }
+  .formule-prix span { font-size:0.75rem; font-weight:500; color:#8a9891; }
+  .formule-features { list-style:none; margin-top:10px; }
+  .formule-features li { font-size:0.76rem; color:#5b6b64; padding:3px 0 3px 16px; position:relative; }
+  .formule-features li::before { content:'✓'; position:absolute; left:0; color:#1e6f4c; font-weight:800; }
+  .formules-note { font-size:0.78rem; color:#8a9891; margin-top:14px; text-align:center; }
+
+  .inverse-box { background:#fff; border:2px solid #e8622c; border-radius:14px; padding:22px; margin-bottom:32px; }
+  .inverse-box h3 { font-size:0.95rem; margin-bottom:6px; }
+  .inverse-box .sub { font-size:0.82rem; color:#5b6b64; margin-bottom:16px; }
+  .inverse-row { display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+  .inverse-row span.txt { font-size:0.95rem; }
+  .inverse-row input {
+    width:70px; font-size:1.2rem; font-weight:800; padding:8px 10px; border:2px solid #d7dedb;
+    border-radius:10px; color:#14312a; text-align:center;
+  }
+  .inverse-resultat { background:#fdf1ea; border-radius:10px; padding:14px 16px; }
+  .inverse-resultat .chiffre { font-size:1.6rem; font-weight:800; color:#e8622c; }
+  .inverse-resultat .label { font-size:0.78rem; color:#5b6b64; }
 </style>
 </head>
 <body>
-<iframe class="bg-preview" id="bgPreview" src=""></iframe>
+<iframe class="bg-preview active" id="bgPreviewVitrine" src=""></iframe>
+<iframe class="bg-preview" id="bgPreviewDashboard" src="/dashboard-mockup.html"></iframe>
 <div class="bg-overlay"></div>
 <div class="wrap">
   <div class="eyebrow">Étape suivante</div>
@@ -108,6 +141,64 @@
     </li>
   </ul>
 
+  <div class="inverse-box">
+    <h3>Combien de clients voulez-vous ?</h3>
+    <div class="sub">Dites-nous votre objectif, on vous dit le budget nécessaire.</div>
+    <div class="inverse-row">
+      <span class="txt">Je veux environ</span>
+      <input type="number" id="clicsVoulus" min="1" value="6">
+      <span class="txt">clics par mois</span>
+    </div>
+    <div class="inverse-resultat">
+      <div class="chiffre" id="budgetNecessaireValue">—</div>
+      <div class="label">budget mensuel nécessaire, estimé</div>
+    </div>
+  </div>
+
+  <div class="formules-section">
+    <h2>Nos formules</h2>
+    <p class="sub">Pour vous donner une idée dès maintenant — vous choisirez une fois votre vraie vitrine validée.</p>
+    <div class="formules-grid">
+      <div class="formule-card">
+        <div class="formule-nom">Vitrine simple</div>
+        <div class="formule-prix">39,90 € <span>HT/mois</span></div>
+        <ul class="formule-features">
+          <li>Formulaire vitrine en ligne</li>
+          <li>SMS + email automatiques</li>
+        </ul>
+      </div>
+      <div class="formule-card recommandee">
+        <div class="formule-badge">Recommandée</div>
+        <div class="formule-nom" style="margin-top:6px;">Vitrine + Dashboard</div>
+        <div class="formule-prix">59,90 € <span>HT/mois</span></div>
+        <ul class="formule-features">
+          <li>Tout le Forfait 1</li>
+          <li>Suivi clics et coûts</li>
+          <li>Gestion mots-clés, photos, vidéo</li>
+        </ul>
+      </div>
+      <div class="formule-card">
+        <div class="formule-nom">Relance & devis signés</div>
+        <div class="formule-prix">79,90 € <span>HT/mois</span></div>
+        <ul class="formule-features">
+          <li>Tout le Forfait 2</li>
+          <li>Relance SMS automatique</li>
+          <li>Devis signature électronique</li>
+        </ul>
+      </div>
+      <div class="formule-card">
+        <div class="formule-nom">Vitrine référencée</div>
+        <div class="formule-prix">99,90 € <span>HT/mois</span></div>
+        <ul class="formule-features">
+          <li>Tout le Forfait 3</li>
+          <li>URL personnalisée</li>
+          <li>Fondations référencement Google</li>
+        </ul>
+      </div>
+    </div>
+    <p class="formules-note">Sans engagement — annulable à tout moment.</p>
+  </div>
+
   <div class="cta-box">
     <h2>Réservez votre appel maintenant</h2>
     <p>Choisissez le créneau qui vous arrange, ça prend 30 secondes.</p>
@@ -121,17 +212,82 @@
   const params = new URLSearchParams(window.location.search);
   const draftId = params.get('id');
   if (draftId) {
-    document.getElementById('bgPreview').src = '/apercu.html?id=' + draftId;
+    document.getElementById('bgPreviewVitrine').src = '/apercu.html?id=' + draftId;
   }
+  initCalculateurInverse();
+
+  async function initCalculateurInverse() {
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+    const TAUX_COMMISSION = 0.50; // doit rester synchronisé avec estimate-reach.js
+    const clicsInput = document.getElementById('clicsVoulus');
+    let avgCpcEur = null;
+    let debounceTimer = null;
+
+    if (draftId) {
+      try {
+        const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=metier,departement`, {
+          headers: { apikey: SUPABASE_ANON_KEY }
+        });
+        const rows = await resp.json();
+        const draft = rows[0] || {};
+        const res = await fetch('/api/estimate-reach', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ metier: draft.metier, departement: draft.departement, budget: 100 })
+        });
+        const data = await res.json();
+        if (data.success) avgCpcEur = data.avgCpcEur;
+      } catch (e) { /* silencieux, on retombe sur l'estimation générique ci-dessous */ }
+    }
+
+    function calculerBudget() {
+      const clics = parseInt(clicsInput.value, 10);
+      const cpc = avgCpcEur || 1.5; // repli générique si l'API n'a pas répondu
+      if (!clics || clics < 1) {
+        document.getElementById('budgetNecessaireValue').textContent = '—';
+        return;
+      }
+      const budgetCalcule = Math.round((clics * cpc) / (1 - TAUX_COMMISSION));
+      const budgetNecessaire = Math.max(100, budgetCalcule);
+      const auMinimum = budgetCalcule < 100;
+      document.getElementById('budgetNecessaireValue').textContent =
+        (auMinimum ? '100 € (minimum)' : '≈ ' + budgetNecessaire + ' €') + ' / mois';
+    }
+
+    clicsInput.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(calculerBudget, 300);
+    });
+    calculerBudget();
+  }
+
+  const bgFrames = [document.getElementById('bgPreviewVitrine'), document.getElementById('bgPreviewDashboard')];
+  let bgIndex = 0;
+  let alternanceTimer = setInterval(() => {
+    bgFrames[bgIndex].classList.remove('active');
+    bgIndex = (bgIndex + 1) % bgFrames.length;
+    bgFrames[bgIndex].classList.add('active');
+  }, 6000);
 
   document.getElementById('btnVoirSite').addEventListener('click', () => {
     const overlay = document.querySelector('.bg-overlay');
     const wrap = document.querySelector('.wrap');
+
+    clearInterval(alternanceTimer);
+    bgFrames.forEach(f => f.classList.remove('active'));
+    document.getElementById('bgPreviewVitrine').classList.add('active');
+    bgIndex = 0;
+
     overlay.classList.add('cachee');
     wrap.classList.add('cachee');
     setTimeout(() => {
       overlay.classList.remove('cachee');
       wrap.classList.remove('cachee');
+      alternanceTimer = setInterval(() => {
+        bgFrames[bgIndex].classList.remove('active');
+        bgIndex = (bgIndex + 1) % bgFrames.length;
+        bgFrames[bgIndex].classList.add('active');
+      }, 6000);
     }, 5000);
   });
 </script>

@@ -53,7 +53,7 @@
   .carousel-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 1s ease-in-out; }
   .carousel-img.active{ opacity:1; }
 
-  .explainer-bg-video{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; background:var(--navy); }
+  .explainer-bg-video{ position:relative; max-width:100%; max-height:100%; width:auto; height:auto; display:block; border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.35); }
   .video-panel::before{
     content:''; position:absolute; inset:0;
     background-image: repeating-linear-gradient(0deg, rgba(110,151,184,0.06) 0px, transparent 1px, transparent 32px),

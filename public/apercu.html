@@ -95,7 +95,7 @@
         </div>
         <div class="trust-footer">
           <div class="legal-line" id="legalLine"></div>
-          <div style="margin-top:10px;">
+          <div id="footerCallbackZone" style="margin-top:10px;">
             <button class="btn btn-footer-callback" id="btnFooterCallback">📞 Être rappelé</button>
           </div>
         </div>
@@ -114,97 +114,117 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
    moteur générique que skyeco-pro-moteur-generique.html.
    ----------------------------------------------------------------- */
 const METIER_TEMPLATES = {
-  resine: {
-    heroTitre: "Un sol qui dure,<br>pensé pour votre extérieur.",
-    eyebrow: "Estimation détaillée",
-    titre: "Votre estimation personnalisée",
-    delaiBadge: "⏱️ Estimation en 3 minutes",
-    intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation par mail.",
-    getSteps(state){
-      const s = [{ key:"type_projet", question:"Quel est le type de projet ?", type:"choice",
-        options:[["pieton","Terrasse, tour de piscine ou allée piétonne"],["carrossable","Parking ou allée pour véhicule (carrossable)"]] }];
-      s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
-      s.push({ key:"details_projet", question:"Décrivez votre projet en quelques mots", type:"textarea", placeholder:"Ex : nature des travaux, contraintes particulières, délais souhaités…", optional:true });
-      s.push({ key:"surface", question:"Quelle surface représente le projet, en m² environ ?", type:"number", placeholder:"Ex : 25" });
-      s.push({ key:"delai", question:"Sous quel délai souhaitez-vous réaliser ce projet ?", type:"choice",
-        options:[["urgent","Le plus vite possible"],["1_3_mois","Dans 1 à 3 mois"],["plus_tard","Plus tard"]] });
-      s.push({ key:"localisation", question:"Où se situe le projet ?", type:"location" });
-      return s;
-    }
-  },
-  cloture: {
-    heroTitre: "Une clôture qui protège<br>votre propriété.",
-    eyebrow: "Estimation détaillée",
-    titre: "Votre estimation personnalisée",
-    delaiBadge: "⏱️ Estimation en 3 minutes",
-    intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation par mail.",
-    getSteps(state){
-      const s = [{ key:"type_projet", question:"Que souhaitez-vous faire poser ?", type:"choice",
-        options:[["cloture","Une clôture"],["portail","Un portail"],["les_deux","Les deux"]] }];
-      s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
-      s.push({ key:"details_projet", question:"Décrivez votre projet en quelques mots", type:"textarea", placeholder:"Ex : nature des travaux, contraintes particulières, délais souhaités…", optional:true });
-      s.push({ key:"longueur", question:"Longueur approximative, en mètres linéaires ?", type:"number", placeholder:"Ex : 20" });
-      s.push({ key:"materiau", question:"Quel matériau préférez-vous ?", type:"choice",
-        options:[["bois","Bois"],["alu","Aluminium"],["pvc","PVC"],["pas_decide","Pas encore décidé"]] });
-      s.push({ key:"delai", question:"Sous quel délai souhaitez-vous réaliser ce projet ?", type:"choice",
-        options:[["urgent","Le plus vite possible"],["1_3_mois","Dans 1 à 3 mois"],["plus_tard","Plus tard"]] });
-      s.push({ key:"localisation", question:"Où se situe le projet ?", type:"location" });
-      return s;
-    }
-  },
-  terrassement: {
-    heroTitre: "Un terrain prêt<br>pour votre projet.",
-    eyebrow: "Estimation détaillée",
-    titre: "Votre estimation personnalisée",
-    delaiBadge: "⏱️ Estimation en 3 minutes",
-    intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation par mail.",
-    getSteps(state){
-      const s = [{ key:"type_projet", question:"Quel type de terrassement ?", type:"choice",
-        options:[["preparation","Préparation de terrain"],["evacuation","Évacuation de terre"],["nivellement","Nivellement"]] }];
-      s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
-      s.push({ key:"details_projet", question:"Décrivez votre projet en quelques mots", type:"textarea", placeholder:"Ex : nature des travaux, contraintes particulières, délais souhaités…", optional:true });
-      s.push({ key:"surface", question:"Quelle surface représente le projet, en m² environ ?", type:"number", placeholder:"Ex : 100" });
-      s.push({ key:"acces", question:"Comment est l'accès au chantier ?", type:"choice",
-        options:[["facile","Facile pour un engin"],["difficile","Difficile / accès restreint"]] });
-      s.push({ key:"delai", question:"Sous quel délai souhaitez-vous réaliser ce projet ?", type:"choice",
-        options:[["urgent","Le plus vite possible"],["1_3_mois","Dans 1 à 3 mois"],["plus_tard","Plus tard"]] });
-      s.push({ key:"localisation", question:"Où se situe le projet ?", type:"location" });
-      return s;
-    }
-  },
-  assainissement: {
-    heroTitre: "Une installation conforme,<br>sans mauvaise surprise.",
-    eyebrow: "Estimation détaillée",
-    titre: "Votre estimation personnalisée",
-    delaiBadge: "⏱️ Estimation en 3 minutes",
-    intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation par mail.",
-    getSteps(state){
-      const s = [{ key:"type_projet", question:"Quel type d'installation ?", type:"choice",
-        options:[["fosse","Fosse toutes eaux"],["microstation","Microstation"],["rehabilitation","Réhabilitation d'installation existante"]] }];
-      s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
-      s.push({ key:"details_projet", question:"Décrivez votre projet en quelques mots", type:"textarea", placeholder:"Ex : nature des travaux, contraintes particulières, délais souhaités…", optional:true });
-      s.push({ key:"pieces", question:"Combien de pièces principales compte le logement ?", type:"number", placeholder:"Ex : 4" });
-      s.push({ key:"delai", question:"Sous quel délai souhaitez-vous réaliser ce projet ?", type:"choice",
-        options:[["urgent","Le plus vite possible"],["1_3_mois","Dans 1 à 3 mois"],["plus_tard","Plus tard"]] });
-      s.push({ key:"localisation", question:"Où se situe le projet ?", type:"location" });
-      return s;
-    }
-  },
-  paysagisme: {
+  paysagiste: {
     heroTitre: "Un extérieur<br>qui vous ressemble.",
     eyebrow: "Estimation détaillée",
     titre: "Votre estimation personnalisée",
     delaiBadge: "⏱️ Estimation en 3 minutes",
-    intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation par mail.",
-    getSteps(state){
+    intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation.",
+    metierKey: "paysagiste",
+    getSteps(state, tarif){
       const s = [{ key:"type_projet", question:"Quel est le type de projet ?", type:"choice",
-        options:[["tonte","Tonte, entretien &amp; taille"],["murets","Murets &amp; maçonnerie paysagère"],["terrasses","Terrasse ou allée extérieure"],["piscines","Abords de piscine"],["autre","Autre projet"]] }];
+        options:[["creation","Création complète d'un aménagement"],["renovation","Rénovation d'un extérieur existant"],["ponctuel","Intervention ponctuelle"]] }];
       s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
-      s.push({ key:"details_projet", question:"Décrivez votre projet en quelques mots", type:"textarea", placeholder:"Ex : nature des travaux, contraintes particulières, délais souhaités…", optional:true });
-      s.push({ key:"surface", question:"Quelle surface représente le projet, en m² environ ?", type:"number", placeholder:"Ex : 50" });
-      s.push({ key:"delai", question:"Sous quel délai souhaitez-vous réaliser ce projet ?", type:"choice",
-        options:[["urgent","Le plus vite possible"],["1_3_mois","Dans 1 à 3 mois"],["plus_tard","Plus tard"]] });
-      s.push({ key:"localisation", question:"Où se situe le projet ?", type:"location" });
+      pushQuantiteEtSuite(s, tarif, "surface du projet");
+      return s;
+    }
+  },
+  piscine: {
+    heroTitre: "Une piscine<br>prête pour l'été.",
+    eyebrow: "Estimation détaillée",
+    titre: "Votre estimation personnalisée",
+    delaiBadge: "⏱️ Estimation en 3 minutes",
+    intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation.",
+    metierKey: "piscine",
+    getSteps(state, tarif){
+      const s = [{ key:"type_piscine", question:"Quel type de piscine ?", type:"choice",
+        options:[["enterree","Piscine enterrée"],["hors_sol","Piscine hors-sol"],["plage_seule","Uniquement la plage / les abords"]] }];
+      s.push({ key:"etat_terrain", question:"Dans quel état est le terrain actuellement ?", type:"choice",
+        options:[["nu","Terrain nu, rien n'est fait"],["prepare","Déjà terrassé / préparé"]] });
+      s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
+      pushQuantiteEtSuite(s, tarif, "surface totale (bassin + plage)");
+      return s;
+    }
+  },
+  tonte: {
+    heroTitre: "Un jardin<br>toujours impeccable.",
+    eyebrow: "Estimation détaillée",
+    titre: "Votre estimation personnalisée",
+    delaiBadge: "⏱️ Estimation en 3 minutes",
+    intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation.",
+    metierKey: "tonte",
+    getSteps(state, tarif){
+      const s = [{ key:"frequence", question:"Souhaitez-vous une intervention ponctuelle ou régulière ?", type:"choice",
+        options:[["ponctuelle","Ponctuelle, une seule fois"],["hebdo","Régulière — chaque semaine"],["bimensuel","Régulière — toutes les deux semaines"],["mensuel","Régulière — chaque mois"]] }];
+      s.push({ key:"etat_actuel", question:"Dans quel état est le terrain actuellement ?", type:"choice",
+        options:[["entretenu","Bien entretenu"],["a_reprendre","À reprendre, un peu haut"]] });
+      s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
+      pushQuantiteEtSuite(s, tarif, "surface à tondre");
+      return s;
+    }
+  },
+  terrasse: {
+    heroTitre: "Une terrasse<br>pour en profiter longtemps.",
+    eyebrow: "Estimation détaillée",
+    titre: "Votre estimation personnalisée",
+    delaiBadge: "⏱️ Estimation en 3 minutes",
+    intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation.",
+    metierKey: "terrasse",
+    getSteps(state, tarif){
+      const s = [{ key:"materiau", question:"Quel matériau préférez-vous ?", type:"choice",
+        options:[["bois","Bois"],["composite","Composite"],["dallage","Dallage / carrelage extérieur"],["pas_decide","Pas encore décidé"]] }];
+      s.push({ key:"support_actuel", question:"Quel est le support actuel ?", type:"choice",
+        options:[["dalle_existante","Dalle béton existante"],["terre_nue","Terre nue, rien n'existe"]] });
+      s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
+      pushQuantiteEtSuite(s, tarif, "surface de la terrasse");
+      return s;
+    }
+  },
+  paysagiste_concepteur: {
+    heroTitre: "Un plan pensé<br>pour durer.",
+    eyebrow: "Estimation détaillée",
+    titre: "Votre estimation personnalisée",
+    delaiBadge: "⏱️ Estimation en 3 minutes",
+    intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation.",
+    metierKey: "paysagiste_concepteur",
+    getSteps(state, tarif){
+      const s = [{ key:"prestation", question:"Quel type de prestation recherchez-vous ?", type:"choice",
+        options:[["plan_seul","Un plan d'aménagement seul"],["plan_suivi","Un plan avec suivi de chantier"]] }];
+      s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
+      pushQuantiteEtSuite(s, tarif, "surface du terrain concerné");
+      return s;
+    }
+  },
+  arboriste: {
+    heroTitre: "Des arbres bien tenus,<br>en toute sécurité.",
+    eyebrow: "Estimation détaillée",
+    titre: "Votre estimation personnalisée",
+    delaiBadge: "⏱️ Estimation en 3 minutes",
+    intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation.",
+    metierKey: "arboriste",
+    getSteps(state, tarif){
+      const s = [{ key:"intervention", question:"Quel type d'intervention ?", type:"choice",
+        options:[["taille","Taille / élagage"],["abattage","Abattage"],["dessouchage","Dessouchage"]] }];
+      s.push({ key:"nb_arbres", question:"Combien d'arbres sont concernés ?", type:"number", placeholder:"Ex : 2" });
+      s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
+      pushQuantiteEtSuite(s, tarif, "volume / ampleur du chantier");
+      return s;
+    }
+  },
+  espaces_verts: {
+    heroTitre: "Des espaces verts<br>toujours soignés.",
+    eyebrow: "Estimation détaillée",
+    titre: "Votre estimation personnalisée",
+    delaiBadge: "⏱️ Estimation en 3 minutes",
+    intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation.",
+    metierKey: "espaces_verts",
+    getSteps(state, tarif){
+      const s = [{ key:"type_site", question:"De quel type de site s'agit-il ?", type:"choice",
+        options:[["copropriete","Copropriété"],["particulier","Particulier"],["entreprise","Entreprise / site professionnel"]] }];
+      s.push({ key:"frequence", question:"Quelle fréquence d'entretien souhaitez-vous ?", type:"choice",
+        options:[["hebdo","Hebdomadaire"],["mensuel","Mensuelle"],["ponctuel","Ponctuelle"]] });
+      s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
+      pushQuantiteEtSuite(s, tarif, "surface totale à entretenir");
       return s;
     }
   },
@@ -213,18 +233,34 @@ const METIER_TEMPLATES = {
     eyebrow: "Estimation détaillée",
     titre: "Votre estimation personnalisée",
     delaiBadge: "⏱️ Estimation en 3 minutes",
-    intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation par mail.",
-    getSteps(state){
-      const s = [{ key:"surface", question:"Quelle surface ou ampleur représente le projet ?", type:"number", placeholder:"Ex : 30" }];
-      s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
-      s.push({ key:"details_projet", question:"Décrivez votre projet en quelques mots", type:"textarea", placeholder:"Ex : nature des travaux, contraintes particulières, délais souhaités…", optional:true });
-      s.push({ key:"delai", question:"Sous quel délai souhaitez-vous réaliser ce projet ?", type:"choice",
-        options:[["urgent","Le plus vite possible"],["1_3_mois","Dans 1 à 3 mois"],["plus_tard","Plus tard"]] });
-      s.push({ key:"localisation", question:"Où se situe le projet ?", type:"location" });
+    intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation.",
+    metierKey: "autre",
+    getSteps(state, tarif){
+      const s = [{ key:"identite", question:"Vos coordonnées", type:"identity" }];
+      pushQuantiteEtSuite(s, tarif, "ampleur du projet");
       return s;
     }
   }
 };
+
+// Ajoute la question de "quantité" (dont l'unité — m², ml, m³ ou forfait —
+// vient directement de ce que l'artisan a lui-même configuré dans son
+// chiffrage détaillé), puis les questions communes (détails, délai, localisation).
+function pushQuantiteEtSuite(s, tarif, libelleSurface){
+  s.push({ key:"details_projet", question:"Décrivez votre projet en quelques mots", type:"textarea",
+    placeholder:"Ex : nature des travaux, contraintes particulières, délais souhaités…", optional:true });
+
+  if(tarif && tarif.unite && tarif.unite !== 'forfait' && tarif.prix){
+    const unites = { m2:'m²', ml:'mètres linéaires', m3:'m³' };
+    const libelleUnite = unites[tarif.unite] || tarif.unite;
+    s.push({ key:"quantite", question:`Quelle ${libelleSurface}, en ${libelleUnite} environ ?`, type:"number",
+      placeholder:"Ex : 30" });
+  }
+
+  s.push({ key:"delai", question:"Sous quel délai souhaitez-vous réaliser ce projet ?", type:"choice",
+    options:[["urgent","Le plus vite possible"],["1_3_mois","Dans 1 à 3 mois"],["plus_tard","Plus tard"]] });
+  s.push({ key:"localisation", question:"Où se situe le projet ?", type:"location" });
+}
 
 const FALLBACK_IMAGES = {
   paysagiste: [
@@ -283,7 +319,11 @@ async function init(){
     return;
   }
 
-  const template = METIER_TEMPLATES[draft.metier] || METIER_TEMPLATES.autre;
+  const metiersListe = Array.isArray(draft.metier) ? draft.metier : (draft.metier ? [draft.metier] : []);
+  const metierChoisi = metiersListe[0] || 'autre';
+  const template = METIER_TEMPLATES[metierChoisi] || METIER_TEMPLATES.autre;
+  const tarifMetier = (draft.tarification_detail && draft.tarification_detail[metierChoisi]) || null;
+  const tvaTaux = draft.tva_taux || 20;
   const brandColor = draft.couleur || '#E8622C';
 
   document.documentElement.style.setProperty('--brand', brandColor);
@@ -363,7 +403,29 @@ async function init(){
     window.location.href = 'choisir-forfait.html?id=' + draft.id;
   });
   document.getElementById('btnFooterCallback').addEventListener('click', ()=>{
-    alert("Rappel demandé — à connecter au système de notification SMS/email.");
+    const zone = document.getElementById('footerCallbackZone');
+    zone.innerHTML =
+      '<div style="max-width:320px; margin:0 auto; text-align:left;">'+
+        '<input type="text" id="footerNom" placeholder="Votre nom" style="width:100%; border:1.5px solid #d8e3de; border-radius:10px; padding:10px 12px; font-size:14px; margin-bottom:8px;" />'+
+        '<input type="tel" id="footerTel" placeholder="Votre téléphone" style="width:100%; border:1.5px solid #d8e3de; border-radius:10px; padding:10px 12px; font-size:14px; margin-bottom:10px;" />'+
+        '<button class="btn btn-primary" id="btnFooterCallbackConfirm" style="width:100%; padding:10px;">Confirmer</button>'+
+      '</div>';
+    document.getElementById('btnFooterCallbackConfirm').addEventListener('click', async ()=>{
+      const nomVal = document.getElementById('footerNom').value.trim();
+      const telVal = document.getElementById('footerTel').value.trim();
+      if(!nomVal || telVal.length < 8){ return; }
+      zone.innerHTML = '<div style="font-size:13px; color:#5b6b64;">Envoi en cours…</div>';
+      try {
+        await fetch('/api/notify-nouvelle-demande', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId: draft.id, nom: nomVal, telephone: telVal, reponses: { type_demande: 'rappel_rapide_footer' } })
+        });
+        zone.innerHTML = '<div style="font-size:13px; color:#1e6f4c; font-weight:600;">✅ Demande envoyée, on vous rappelle très vite !</div>';
+      } catch (e) {
+        zone.innerHTML = '<div style="font-size:13px; color:#c0392b;">Impossible d\'envoyer la demande. Réessayez.</div>';
+      }
+    });
   });
 
   // Retour depuis Stripe après paiement : on vérifie et on publie côté serveur.
@@ -395,14 +457,14 @@ async function init(){
       '<span>Paiement annulé — vous pouvez réessayer quand vous voulez.</span>';
   }
 
-  runWizard(template, brandColor, draft.id);
+  runWizard(template, brandColor, draft.id, tarifMetier, tvaTaux, draft);
 }
 
-function runWizard(template, brandColor, draftId){
+function runWizard(template, brandColor, draftId, tarifMetier, tvaTaux, draftInfo){
   const state = { step:0 };
   const cardEl = document.getElementById('card');
   const progressEl = document.getElementById('progress');
-  function getSteps(){ return template.getSteps(state); }
+  function getSteps(){ return template.getSteps(state, tarifMetier); }
   function renderProgress(){
     const steps = getSteps(); progressEl.innerHTML='';
     const total = steps.length+1;
@@ -554,25 +616,49 @@ function runWizard(template, brandColor, draftId){
       }
     });
   }
+  // Calcule un prix indicatif si l'artisan a configuré un chiffrage précis
+  // pour ce métier (unité + prix unitaire, saisis dans mes-elements.html).
+  function calculerEstimation(){
+    if(!tarifMetier || !tarifMetier.prix) return { chiffrable:false };
+    let montantHT;
+    if(tarifMetier.unite === 'forfait'){
+      montantHT = tarifMetier.prix;
+    } else {
+      const quantite = parseFloat(state.quantite);
+      if(!quantite || quantite <= 0) return { chiffrable:false };
+      montantHT = quantite * tarifMetier.prix;
+      if(tarifMetier.minimum) montantHT = Math.max(montantHT, tarifMetier.minimum);
+    }
+    const montantTTC = +(montantHT * (1 + tvaTaux/100)).toFixed(2);
+    const remisePourcent = 10; // remise indicative, à confirmer par l'artisan selon le volume réel
+    const montantApresRemise = +(montantTTC * (1 - remisePourcent/100)).toFixed(2);
+    return { chiffrable:true, montantHT:+montantHT.toFixed(2), montantTTC, remisePourcent, montantApresRemise };
+  }
+
   async function enregistrerDemande(){
     cardEl.innerHTML = '<div class="question" style="text-align:center;">Enregistrement de votre demande…</div>';
     document.getElementById('progress').style.display = 'none';
 
     // Sépare les champs identité (colonnes dédiées) du reste (stocké en jsonb "reponses").
     const { nom, prenom, telephone, telephoneVerifie, email, ...reste } = state;
+    const estimation = calculerEstimation();
 
     let error = null;
+    let leadId = null;
     try {
       const resp = await fetch('/api/notify-nouvelle-demande', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          draftId, nom, prenom, telephone, telephoneVerifie, email, reponses: reste
+          draftId, nom, prenom, telephone, telephoneVerifie, email,
+          reponses: { ...reste, estimation_indicative: estimation.chiffrable ? estimation.montantTTC : null }
         })
       });
+      const data = await resp.json().catch(() => ({}));
       if (!resp.ok) {
-        const data = await resp.json().catch(() => ({}));
         error = data.error || 'Erreur serveur';
+      } else {
+        leadId = data.leadId || null;
       }
     } catch (e) {
       error = e.message;
@@ -588,10 +674,97 @@ function runWizard(template, brandColor, draftId){
       return;
     }
 
-    cardEl.innerHTML = '<div class="success-icon">✅</div><div class="question" style="text-align:center;">Merci '+(state.prenom||'')+' !</div>'+
-      '<div class="result-box"><div class="result-note">Votre demande a bien été enregistrée. Un conseiller revient vers vous sous 24h.</div></div>'+
-      "<p class=\"disclaimer\">Cette estimation reste indicative et devra être confirmée lors d'un appel téléphonique.</p>";
+    renderResultat(estimation, leadId);
   }
+
+  function renderResultat(estimation, leadId){
+    let priceBlock;
+    if(estimation.chiffrable){
+      priceBlock =
+        '<div class="result-box">'+
+          '<div class="result-note">Estimation indicative</div>'+
+          '<div class="result-price">'+estimation.montantTTC+' € TTC</div>'+
+          '<div class="result-note">TVA à '+tvaTaux+'% incluse.</div>'+
+        '</div>'+
+        '<div style="background:var(--brand-tint,#eaf4ef); border:1.5px solid var(--brand,#1e6f4c); border-radius:10px; padding:12px 14px; margin-top:10px; font-size:13px; color:#14312a; text-align:center;">'+
+          '🎁 <strong>Remise de '+estimation.remisePourcent+'% possible selon le projet</strong><br/>'+
+          'Soit <strong>'+estimation.montantApresRemise+' €</strong> au lieu de '+estimation.montantTTC+' € — à confirmer avec l\'artisan.'+
+        '</div>';
+    } else {
+      priceBlock = '<div class="result-box"><div class="result-note">Votre projet nécessite une évaluation personnalisée par l\'artisan.</div></div>';
+    }
+
+    cardEl.innerHTML =
+      '<div class="success-icon">✅</div>'+
+      '<div class="question" style="text-align:center;">Merci '+(state.prenom||'')+' !</div>'+
+      priceBlock+
+      '<p class="disclaimer">Cette estimation reste indicative et devra être confirmée par l\'artisan lors d\'un appel téléphonique. Vous recevrez ce récapitulatif par email.</p>'+
+      '<div id="rdvSection">'+
+        '<button class="btn btn-primary" id="btnVoirCreneaux" style="width:100%; margin-top:10px;">📅 Choisir un créneau pour être rappelé·e</button>'+
+      '</div>';
+
+    document.getElementById('btnVoirCreneaux').addEventListener('click', () => afficherCreneaux(leadId));
+  }
+
+  // Génère les 5 prochains jours ouvrés, avec 2 créneaux chacun — solution
+  // simple sans dépendre d'un vrai système de calendrier par artisan.
+  function genererCreneaux(){
+    const creneaux = [];
+    let date = new Date();
+    let joursAjoutes = 0;
+    while(creneaux.length < 10){
+      date = new Date(date.getTime() + 24*60*60*1000);
+      const jourSemaine = date.getDay();
+      if(jourSemaine === 0 || jourSemaine === 6) continue; // week-end exclu
+      [10, 15].forEach(heure => {
+        const creneau = new Date(date);
+        creneau.setHours(heure, 0, 0, 0);
+        creneaux.push(creneau);
+      });
+    }
+    return creneaux.slice(0, 8);
+  }
+
+  function afficherCreneaux(leadId){
+    const section = document.getElementById('rdvSection');
+    const creneaux = genererCreneaux();
+    const optionsHtml = creneaux.map(d => {
+      const label = new Intl.DateTimeFormat('fr-FR', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit', timeZone:'Europe/Paris' }).format(d);
+      return '<div class="option" data-iso="'+d.toISOString()+'">'+label+'</div>';
+    }).join('');
+    section.innerHTML =
+      '<div class="step-label" style="margin-top:12px;">Choisissez un créneau d\'appel</div>'+
+      '<div class="options" id="creneauxOptions">'+optionsHtml+'</div>';
+    section.querySelectorAll('.option').forEach(el => {
+      el.addEventListener('click', () => confirmerCreneau(el.dataset.iso, leadId));
+    });
+  }
+
+  async function confirmerCreneau(iso, leadId){
+    const section = document.getElementById('rdvSection');
+    section.innerHTML = '<div style="text-align:center; padding:14px 0; color:#5b6b64; font-size:13.5px;">Confirmation en cours…</div>';
+    const label = new Intl.DateTimeFormat('fr-FR', { weekday:'long', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit', timeZone:'Europe/Paris' }).format(new Date(iso));
+    try {
+      await fetch('/api/notify-nouvelle-demande', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          draftId, nom: state.nom, prenom: state.prenom, telephone: state.telephone,
+          telephoneVerifie: state.telephoneVerifie, email: state.email,
+          reponses: { rdv_choisi: iso, rdv_choisi_libelle: label }
+        })
+      });
+      section.innerHTML =
+        '<div class="result-box" style="margin-top:12px;">'+
+          '<div class="result-note">✅ Rendez-vous demandé</div>'+
+          '<div class="result-price" style="font-size:18px;">'+label+'</div>'+
+          '<div class="result-note">L\'artisan vous appellera à ce créneau, sous réserve de confirmation.</div>'+
+        '</div>';
+    } catch (e) {
+      section.innerHTML = '<div style="text-align:center; padding:10px 0; color:#c0392b; font-size:13.5px;">Impossible de confirmer pour le moment. Réessayez.</div>';
+    }
+  }
+
   renderProgress();
   renderStep();
 }

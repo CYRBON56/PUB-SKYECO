@@ -151,8 +151,11 @@
     </div>
     <div class="inverse-resultat">
       <div class="chiffre" id="budgetNecessaireValue">—</div>
-      <div class="label">budget mensuel nécessaire, estimé</div>
+      <div class="label">budget nécessaire, estimé</div>
     </div>
+    <p style="font-size:0.76rem; color:#8a9891; margin-top:10px; line-height:1.5;">
+      Ce n'est pas un abonnement "par mois" fixe — ce budget est consommé au fur et à mesure des clics reçus. Selon la concurrence et la demande du moment, il peut être utilisé en quelques jours comme sur plusieurs semaines : c'est variable, pas garanti sur une durée précise.
+    </p>
   </div>
 
   <div class="formules-section">
@@ -196,7 +199,7 @@
         </ul>
       </div>
     </div>
-    <p class="formules-note">Sans engagement — annulable à tout moment.</p>
+    <p class="formules-note" style="font-size:1.15rem; font-weight:800; color:#c0392b;">Sans engagement — annulable à tout moment.</p>
   </div>
 
   <div class="cta-box">
@@ -251,7 +254,7 @@
       const budgetNecessaire = Math.max(100, budgetCalcule);
       const auMinimum = budgetCalcule < 100;
       document.getElementById('budgetNecessaireValue').textContent =
-        (auMinimum ? '100 € (minimum)' : '≈ ' + budgetNecessaire + ' €') + ' / mois';
+        (auMinimum ? '100 € (minimum)' : '≈ ' + budgetNecessaire + ' €');
     }
 
     clicsInput.addEventListener('input', () => {

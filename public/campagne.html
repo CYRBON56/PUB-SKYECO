@@ -109,13 +109,17 @@
 
       <div class="estimation-box" id="estimationBox">
         <div class="clics" id="clicsValue">—</div>
-        <div class="clics-label">clics estimés / mois</div>
+        <div class="clics-label">clics estimés</div>
         <div class="detail" id="estimationDetail"></div>
       </div>
+      <p style="font-size:0.76rem; color:#8a9891; margin-top:2px;">
+        Ce budget n'est pas garanti sur un mois fixe — il est consommé au rythme réel des clics, plus ou moins vite selon la période.
+      </p>
 
       <div class="breakdown" id="breakdown"></div>
 
       <button class="btn-payer" id="btnPayer" disabled>Payer et lancer ma campagne</button>
+      <button class="resilier-link" id="btnPause" type="button">Mettre en pause 1 mois (sans prélèvement)</button>
       <button class="resilier-link" id="btnResilier" type="button">Résilier mon abonnement</button>
     `;
 
@@ -177,6 +181,35 @@
     budgetInput.addEventListener('input', mettreAJourEstimation);
     chargerEstimation();
     chargerConsommation();
+
+    document.getElementById('btnPause').addEventListener('click', async () => {
+      if (!confirm("Mettre votre abonnement en pause pendant 1 mois ? Aucun prélèvement ne sera fait, et il reprendra automatiquement ensuite.")) {
+        return;
+      }
+      const btn = document.getElementById('btnPause');
+      btn.disabled = true;
+      btn.textContent = 'Mise en pause…';
+      try {
+        const res = await fetch('/api/pause-subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          alert(data.message);
+          btn.textContent = 'Abonnement en pause';
+        } else {
+          alert(data.error || 'Une erreur est survenue.');
+          btn.disabled = false;
+          btn.textContent = 'Mettre en pause 1 mois (sans prélèvement)';
+        }
+      } catch (e) {
+        alert('Impossible de contacter le serveur.');
+        btn.disabled = false;
+        btn.textContent = 'Mettre en pause 1 mois (sans prélèvement)';
+      }
+    });
 
     document.getElementById('btnResilier').addEventListener('click', async () => {
       if (!confirm("Confirmer la résiliation ? Votre vitrine restera active jusqu'à la fin de la période déjà payée, puis se désactivera automatiquement.")) {

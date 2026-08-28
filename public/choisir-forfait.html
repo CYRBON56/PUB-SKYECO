@@ -95,14 +95,17 @@
     <div class="estimateur-box">
       <h3>Combien de clics pouvez-vous obtenir ?</h3>
       <div class="estimateur-row">
-        <label for="budgetEstim">Budget mensuel</label>
-        <input type="number" id="budgetEstim" min="50" step="10" value="300">
+        <label for="budgetEstim">Budget à investir</label>
+        <input type="number" id="budgetEstim" min="100" step="10" value="300">
         <span style="font-weight:800; font-size:1.2rem;">€</span>
       </div>
       <div class="estimateur-resultat">
-        <div><div class="chiffre" id="clicsEstimValue">—</div><div class="label">clics estimés / mois</div></div>
+        <div><div class="chiffre" id="clicsEstimValue">—</div><div class="label">clics estimés</div></div>
         <div><div class="chiffre" id="cpcEstimValue">—</div><div class="label">CPC moyen estimé</div></div>
       </div>
+      <p style="font-size:0.76rem; color:#8a9891; margin-top:10px;">
+        Ce budget n'est pas garanti sur un mois — il est consommé au fur et à mesure des clics reçus, plus ou moins vite selon la concurrence du moment.
+      </p>
     </div>
 
     <div class="explication-box" style="background:#fff; border:1.5px dashed #d7dedb;">
@@ -115,6 +118,11 @@
     </div>
 
     <p style="font-size:0.85rem; color:#5b6b64; margin-bottom:14px;">Choisissez la formule qui correspond à vos besoins. Sans engagement — changez ou annulez à tout moment.</p>
+
+    <label style="display:flex; align-items:flex-start; gap:8px; margin-bottom:18px; font-size:0.82rem; color:#5b6b64; line-height:1.5; cursor:pointer;">
+      <input type="checkbox" id="checkCgv" style="margin-top:2px; flex-shrink:0;">
+      <span>J'ai lu et j'accepte les <a href="/cgv.html" target="_blank" style="color:#1e6f4c;">Conditions Générales de Vente</a>. *</span>
+    </label>
     <div class="plans-grid" id="plansGrid">
       <div class="loading">Chargement…</div>
     </div>
@@ -269,6 +277,10 @@
   }
 
   async function choisirForfait(plan, btn) {
+    if (!document.getElementById('checkCgv').checked) {
+      alert('Merci d\'accepter les Conditions Générales de Vente avant de continuer.');
+      return;
+    }
     btn.disabled = true;
     btn.textContent = 'Redirection…';
     try {

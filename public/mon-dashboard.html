@@ -130,9 +130,12 @@
       <input type="number" id="estimBudgetInput" min="100" step="10" value="300">
       <span style="font-weight:800; font-size:1.1rem;">€</span>
     </div>
-    <div class="estim-resultat">
-      <div><div class="chiffre" id="estimClicsValue">—</div><div class="label">clics estimés</div></div>
-      <div><div class="chiffre" id="estimCpcValue">—</div><div class="label">CPC moyen estimé</div></div>
+    <div class="estim-resultat" style="align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
+      <div style="display:flex; gap:28px;">
+        <div><div class="chiffre" id="estimClicsValue">—</div><div class="label">clics estimés</div></div>
+        <div><div class="chiffre" id="estimCpcValue">—</div><div class="label">CPC moyen estimé</div></div>
+      </div>
+      <a class="btn-fonds" id="btnFondsEstim" href="#" style="white-space:nowrap;">💳 Mettre des fonds pour l'Ads</a>
     </div>
     <div class="estim-note">Ce n'est pas garanti sur un mois fixe — consommé au rythme réel des clics reçus.</div>
   </div>
@@ -157,6 +160,7 @@
     document.body.innerHTML = '<div class="loading">Lien invalide — identifiant du site manquant.</div>';
   } else {
     document.getElementById('btnFonds').href = '/campagne.html?id=' + draftId;
+    document.getElementById('btnFondsEstim').href = '/campagne.html?id=' + draftId;
     chargerStats();
     chargerSolde();
     chargerDemandes();

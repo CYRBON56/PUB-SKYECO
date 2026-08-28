@@ -10,7 +10,7 @@
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const BUDGET_MIN = 50;
+const BUDGET_MIN = 100;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {

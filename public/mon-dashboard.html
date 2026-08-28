@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mon tableau de bord — Skyeco Pro</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f5f8f6; color:#14312a; padding:32px 24px 60px; }
+  .wrap { max-width:980px; margin:0 auto; }
+  .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+  h1 { font-size:1.5rem; }
+  .btn-fonds { background:#e8622c; color:#fff; text-decoration:none; padding:12px 22px; border-radius:10px; font-weight:700; font-size:0.92rem; }
+  .btn-fonds:hover { filter:brightness(1.05); }
+
+  .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:28px; }
+  .stat-card { background:#fff; border-radius:14px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
+  .stat-value { font-size:1.9rem; font-weight:800; }
+  .stat-label { font-size:0.78rem; color:#8a9891; margin-top:2px; }
+
+  .solde-box { background:#fff; border:2px solid #1e6f4c; border-radius:14px; padding:22px; margin-bottom:28px; }
+  .solde-box h3 { font-size:0.95rem; margin-bottom:14px; }
+  .solde-bar-track { background:#eef1f0; border-radius:8px; height:12px; overflow:hidden; margin-bottom:10px; }
+  .solde-bar-fill { background:#e8622c; height:100%; transition:width 0.4s ease; }
+  .solde-bar-fill.alerte { background:#c0392b; }
+  .solde-stats { display:flex; justify-content:space-between; font-size:0.85rem; color:#5b6b64; margin-bottom:14px; }
+  .solde-stats strong { color:#14312a; font-size:1.05rem; }
+  .solde-detail { font-size:0.76rem; color:#8a9891; line-height:1.6; }
+
+  .liste-panel { background:#fff; border-radius:14px; padding:22px; }
+  .liste-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+  .liste-header h3 { font-size:0.95rem; }
+  .btn-pdf { background:#eef1f0; border:none; border-radius:8px; padding:9px 16px; font-size:0.82rem; font-weight:700; color:#14312a; cursor:pointer; }
+  .btn-pdf:hover { background:#e2e8e5; }
+
+  table { width:100%; border-collapse:collapse; font-size:0.85rem; }
+  th { text-align:left; padding:10px 8px; color:#8a9891; font-weight:700; font-size:0.72rem; text-transform:uppercase; border-bottom:1.5px solid #eef1f0; }
+  td { padding:10px 8px; border-bottom:1px solid #eef1f0; }
+  tr:last-child td { border-bottom:none; }
+  .statut-badge { font-size:0.7rem; font-weight:700; padding:3px 9px; border-radius:999px; background:#eaf4ef; color:#1e6f4c; }
+
+  .loading, .empty-msg { text-align:center; padding:40px; color:#8a9891; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <h1>Mon tableau de bord</h1>
+    <a class="btn-fonds" id="btnFonds" href="#">💳 Mettre des fonds pour l'Ads</a>
+  </div>
+
+  <div class="stats-row" id="statsRow">
+    <div class="stat-card"><div class="stat-value" id="statProspects">—</div><div class="stat-label">demandes reçues</div></div>
+    <div class="stat-card"><div class="stat-value" id="statClics">—</div><div class="stat-label">clics ce mois-ci</div></div>
+  </div>
+
+  <div class="solde-box" id="soldeBox">
+    <div class="loading">Chargement du solde…</div>
+  </div>
+
+  <div class="liste-panel">
+    <div class="liste-header">
+      <h3>Demandes d'estimation</h3>
+      <button class="btn-pdf" id="btnExportPdf">📄 Exporter en PDF</button>
+    </div>
+    <div id="listeContent"><div class="loading">Chargement des demandes…</div></div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+  const params = new URLSearchParams(window.location.search);
+  const draftId = params.get('id');
+  let leadsData = [];
+  let nomEntreprise = '';
+
+  if (!draftId) {
+    document.body.innerHTML = '<div class="loading">Lien invalide — identifiant du site manquant.</div>';
+  } else {
+    document.getElementById('btnFonds').href = '/campagne.html?id=' + draftId;
+    chargerStats();
+    chargerSolde();
+    chargerDemandes();
+  }
+
+  async function chargerStats() {
+    try {
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_leads?draft_id=eq.${draftId}&select=id`, {
+        headers: { apikey: SUPABASE_ANON_KEY, Prefer: 'count=exact' }
+      });
+      const count = resp.headers.get('content-range')?.split('/')[1] || (await resp.json()).length;
+      document.getElementById('statProspects').textContent = count;
+    } catch (e) {
+      document.getElementById('statProspects').textContent = '—';
+    }
+  }
+
+  async function chargerSolde() {
+    const box = document.getElementById('soldeBox');
+    try {
+      const res = await fetch('/api/get-campaign-spend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draft_id: draftId })
+      });
+      const data = await res.json();
+
+      if (!data.success || !data.campagneExiste) {
+        box.innerHTML = `
+          <h3>Solde publicitaire</h3>
+          <div class="empty-msg" style="padding:12px 0;">Aucune campagne active pour l'instant.</div>
+        `;
+        document.getElementById('statClics').textContent = '0';
+        return;
+      }
+
+      document.getElementById('statClics').textContent = data.clics ?? '—';
+
+      const alerte = data.pourcentageConsomme >= 90 ? 'alerte' : '';
+      box.innerHTML = `
+        <h3>Solde publicitaire</h3>
+        <div class="solde-bar-track"><div class="solde-bar-fill ${alerte}" style="width:${data.pourcentageConsomme}%"></div></div>
+        <div class="solde-stats">
+          <span>Consommé : <strong>${data.consommationAjustee} €</strong></span>
+          <span>Restant : <strong>${data.budgetRestant} €</strong> / ${data.budgetPaye} €</span>
+        </div>
+        <div class="solde-detail">
+          ${data.clics} clics réels (dépense Google : ${data.coutReelGoogleEuros} €, comptée double dans votre solde — commission de service incluse).
+        </div>
+      `;
+    } catch (e) {
+      box.innerHTML = '<h3>Solde publicitaire</h3><div class="empty-msg">Impossible de charger le solde pour le moment.</div>';
+    }
+  }
+
+  async function chargerDemandes() {
+    const content = document.getElementById('listeContent');
+    try {
+      const draftResp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise`, {
+        headers: { apikey: SUPABASE_ANON_KEY }
+      });
+      const draftRows = await draftResp.json();
+      nomEntreprise = draftRows[0]?.entreprise || 'Mon entreprise';
+
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_leads?draft_id=eq.${draftId}&select=*&order=created_at.desc`, {
+        headers: { apikey: SUPABASE_ANON_KEY }
+      });
+      leadsData = await resp.json();
+
+      if (!leadsData.length) {
+        content.innerHTML = '<div class="empty-msg">Aucune demande reçue pour l\'instant.</div>';
+        return;
+      }
+
+      content.innerHTML = `
+        <table>
+          <thead>
+            <tr><th>Date</th><th>Nom</th><th>Adresse</th><th>Téléphone</th><th>Email</th><th>Statut</th></tr>
+          </thead>
+          <tbody>
+            ${leadsData.map(l => `
+              <tr>
+                <td>${new Date(l.created_at).toLocaleDateString('fr-FR')}</td>
+                <td>${(l.prenom || '') + ' ' + (l.nom || '')}</td>
+                <td>${extraireAdresse(l.reponses)}</td>
+                <td>${l.telephone || '—'}</td>
+                <td>${l.email || '—'}</td>
+                <td><span class="statut-badge">${l.statut || 'nouveau'}</span></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    } catch (e) {
+      content.innerHTML = '<div class="empty-msg">Impossible de charger les demandes pour le moment.</div>';
+    }
+  }
+
+  function extraireAdresse(reponses) {
+    if (!reponses || typeof reponses !== 'object') return '—';
+    // Cherche une clé qui ressemble à une adresse, quel que soit le métier/formulaire d'origine.
+    const cleAdresse = Object.keys(reponses).find(k => /adresse|address|localisation|ville/i.test(k));
+    return cleAdresse ? reponses[cleAdresse] : '—';
+  }
+
+  document.getElementById('btnExportPdf').addEventListener('click', () => {
+    if (!leadsData.length) {
+      alert('Aucune demande à exporter pour le moment.');
+      return;
+    }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.setFontSize(16);
+    doc.text(`Demandes d'estimation — ${nomEntreprise}`, 14, 18);
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text(`Exporté le ${new Date().toLocaleDateString('fr-FR')} — ${leadsData.length} demande(s)`, 14, 25);
+
+    let y = 38;
+    doc.setFontSize(8);
+    doc.setTextColor(140);
+    doc.text('DATE', 14, y);
+    doc.text('NOM', 38, y);
+    doc.text('ADRESSE', 78, y);
+    doc.text('TÉLÉPHONE', 130, y);
+    doc.text('EMAIL', 165, y);
+    y += 4;
+    doc.setDrawColor(220);
+    doc.line(14, y, 196, y);
+    y += 6;
+
+    doc.setFontSize(8.5);
+    doc.setTextColor(30);
+    leadsData.forEach(l => {
+      if (y > 280) { doc.addPage(); y = 20; }
+      const date = new Date(l.created_at).toLocaleDateString('fr-FR');
+      const nomComplet = ((l.prenom || '') + ' ' + (l.nom || '')).trim() || '—';
+      const adresse = extraireAdresse(l.reponses);
+      doc.text(date, 14, y);
+      doc.text(nomComplet.substring(0, 22), 38, y);
+      doc.text(String(adresse).substring(0, 30), 78, y);
+      doc.text(l.telephone || '—', 130, y);
+      doc.text((l.email || '—').substring(0, 26), 165, y);
+      y += 7;
+    });
+
+    doc.save(`demandes-${nomEntreprise.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.pdf`);
+  });
+</script>
+</body>
+</html>

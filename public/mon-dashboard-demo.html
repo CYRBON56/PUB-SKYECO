@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aperçu du dashboard — Skyeco Pro</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f5f8f6; color:#14312a; padding:28px 24px; }
+  .wrap { max-width:980px; margin:0 auto; }
+  .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+  h1 { font-size:1.3rem; }
+  .demo-badge { background:#eaf4ef; color:#1e6f4c; font-size:0.72rem; font-weight:700; padding:5px 12px; border-radius:999px; }
+
+  .stats-row { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin-bottom:24px; }
+  .stat-card { background:#fff; border-radius:14px; padding:18px; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
+  .stat-value { font-size:1.7rem; font-weight:800; }
+  .stat-label { font-size:0.75rem; color:#8a9891; margin-top:2px; }
+
+  .solde-box { background:#fff; border:2px solid #1e6f4c; border-radius:14px; padding:20px; margin-bottom:24px; }
+  .solde-box h3 { font-size:0.9rem; margin-bottom:12px; }
+  .solde-bar-track { background:#eef1f0; border-radius:8px; height:11px; overflow:hidden; margin-bottom:10px; }
+  .solde-bar-fill { background:#e8622c; height:100%; width:58%; }
+  .solde-stats { display:flex; justify-content:space-between; font-size:0.82rem; color:#5b6b64; }
+  .solde-stats strong { color:#14312a; font-size:1rem; }
+
+  .liste-panel { background:#fff; border-radius:14px; padding:20px; }
+  .liste-panel h3 { font-size:0.9rem; margin-bottom:14px; }
+  table { width:100%; border-collapse:collapse; font-size:0.8rem; }
+  th { text-align:left; padding:8px 6px; color:#8a9891; font-weight:700; font-size:0.68rem; text-transform:uppercase; border-bottom:1.5px solid #eef1f0; }
+  td { padding:9px 6px; border-bottom:1px solid #eef1f0; }
+  .statut-badge { font-size:0.66rem; font-weight:700; padding:3px 8px; border-radius:999px; background:#eaf4ef; color:#1e6f4c; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <h1>Mon tableau de bord</h1>
+    <span class="demo-badge">Exemple illustratif</span>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-value">18</div><div class="stat-label">demandes reçues</div></div>
+    <div class="stat-card"><div class="stat-value">42</div><div class="stat-label">clics ce mois-ci</div></div>
+  </div>
+
+  <div class="solde-box">
+    <h3>Solde publicitaire</h3>
+    <div class="solde-bar-track"><div class="solde-bar-fill"></div></div>
+    <div class="solde-stats">
+      <span>Consommé : <strong>174 €</strong></span>
+      <span>Restant : <strong>126 €</strong> / 300 €</span>
+    </div>
+  </div>
+
+  <div class="liste-panel">
+    <h3>Demandes d'estimation</h3>
+    <table>
+      <thead><tr><th>Date</th><th>Nom</th><th>Adresse</th><th>Statut</th></tr></thead>
+      <tbody>
+        <tr><td>26/08</td><td>M. Le Roux</td><td>Vannes</td><td><span class="statut-badge">nouveau</span></td></tr>
+        <tr><td>24/08</td><td>Mme Guillou</td><td>Auray</td><td><span class="statut-badge">contacté</span></td></tr>
+        <tr><td>21/08</td><td>M. Even</td><td>Brech</td><td><span class="statut-badge">traité</span></td></tr>
+        <tr><td>19/08</td><td>Mme Le Bris</td><td>Vannes</td><td><span class="statut-badge">nouveau</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</body>
+</html>

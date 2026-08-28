@@ -82,6 +82,7 @@
       <div class="form-bg-overlay"></div>
       <div class="wrap">
         <div class="header-block">
+          <img id="logoArtisan" src="" alt="" style="display:none; height:38px; margin-bottom:12px; object-fit:contain;">
           <div class="eyebrow" id="eyebrow"></div>
           <h1 id="mainTitle"></h1>
           <div style="font-size:20px; font-weight:800; color:var(--brand,#1e6f4c); margin:2px 0 10px; line-height:1.2;" id="delaiBadge"></div>
@@ -291,14 +292,37 @@ async function init(){
 
   document.getElementById('heroTitle').innerHTML = template.heroTitre +
     '<span style="display:block; margin-top:14px; font-size:0.45em; font-weight:600; opacity:0.9;">' + draft.entreprise + '</span>';
+  if (draft.logo_url) {
+    const logoEl = document.getElementById('logoArtisan');
+    logoEl.src = draft.logo_url;
+    logoEl.style.display = 'block';
+  }
+
   document.getElementById('eyebrow').textContent = draft.entreprise + ' — ' + template.eyebrow;
   document.getElementById('mainTitle').textContent = template.titre;
   document.getElementById('delaiBadge').textContent = template.delaiBadge;
   document.getElementById('introText').textContent = draft.description || template.intro;
   document.getElementById('miniBadges').innerHTML = ['✅ Sans engagement','⏱️ Réponse sous 24h','🔒 Données confidentielles'].map(b=>'<span>'+b+'</span>').join('');
-  document.getElementById('legalLine').innerHTML = draft.entreprise +
-    (draft.zone ? ' — Intervient sur : ' + draft.zone : '') +
-    (draft.telephone ? '<br/>' + draft.telephone : '') + ' — ' + draft.email;
+
+  // Mentions légales complètes — n'affiche que ce qui a réellement été renseigné,
+  // pour ne jamais montrer de champ vide même si l'artisan n'a pas tout complété.
+  const adresseComplete = [draft.adresse_rue, draft.adresse_cp, draft.adresse_ville].filter(Boolean).join(' ');
+  const formeEtCapital = [draft.forme_juridique, draft.capital_social ? `au capital de ${draft.capital_social}` : null].filter(Boolean).join(' ');
+  const assurance = draft.assurance_decennale_assureur
+    ? `Assurance décennale : ${draft.assurance_decennale_assureur}` + (draft.assurance_decennale_numero ? ` (n° ${draft.assurance_decennale_numero})` : '')
+    : null;
+
+  const lignesLegales = [
+    draft.entreprise + (formeEtCapital ? ' — ' + formeEtCapital : ''),
+    draft.siret ? `SIRET ${draft.siret}` : null,
+    draft.rcs_ville ? `RCS ${draft.rcs_ville}` : null,
+    adresseComplete || null,
+    assurance,
+    draft.zone ? 'Intervient sur : ' + draft.zone : null,
+    [draft.telephone, draft.email].filter(Boolean).join(' — ') || null,
+  ].filter(Boolean);
+
+  document.getElementById('legalLine').innerHTML = lignesLegales.join('<br/>');
 
   const container = document.getElementById('heroImagePanel');
   if(draft.video_url){

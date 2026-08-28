@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vos éléments — Skyeco Pro</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f5f8f6; color:#14312a; padding:32px 20px 80px; }
+  .wrap { max-width:720px; margin:0 auto; }
+  .eyebrow { font-size:0.8rem; font-weight:700; color:#1e6f4c; letter-spacing:0.03em; text-transform:uppercase; margin-bottom:8px; }
+  h1 { font-size:1.6rem; margin-bottom:10px; }
+  .intro { font-size:0.95rem; color:#5b6b64; line-height:1.6; margin-bottom:32px; }
+
+  .section { background:#fff; border-radius:16px; padding:26px; margin-bottom:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
+  .section h2 { font-size:1.1rem; margin-bottom:6px; }
+  .section .sub { font-size:0.82rem; color:#8a9891; margin-bottom:20px; }
+
+  label { display:block; font-size:0.85rem; font-weight:700; margin-bottom:6px; margin-top:16px; }
+  label:first-of-type { margin-top:0; }
+  input[type=text], input[type=email], input[type=tel], input[type=url], input[type=number], select, textarea {
+    width:100%; padding:11px 13px; border:1.5px solid #d7dedb; border-radius:10px; font-size:0.95rem; font-family:inherit; color:#14312a;
+  }
+  textarea { resize:vertical; min-height:70px; }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .row3 { display:grid; grid-template-columns:2fr 1fr 1fr; gap:14px; }
+  .hint { font-size:0.76rem; color:#8a9891; margin-top:5px; }
+
+  .upload-box {
+    border:2px dashed #d7dedb; border-radius:12px; padding:20px; text-align:center; cursor:pointer; transition:border-color 0.15s;
+  }
+  .upload-box:hover { border-color:#1e6f4c; }
+  .upload-box.has-file { border-style:solid; border-color:#1e6f4c; background:#eaf4ef; }
+  .upload-box input[type=file] { display:none; }
+  .upload-label { font-size:0.88rem; font-weight:700; color:#1e6f4c; }
+  .upload-status { font-size:0.78rem; color:#5b6b64; margin-top:6px; }
+
+  .photos-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(90px,1fr)); gap:10px; margin-top:14px; }
+  .photo-thumb { position:relative; aspect-ratio:1; border-radius:8px; overflow:hidden; background:#eef1f0; }
+  .photo-thumb img { width:100%; height:100%; object-fit:cover; }
+  .photo-thumb .del { position:absolute; top:3px; right:3px; background:rgba(0,0,0,0.6); color:#fff; border:none; border-radius:50%; width:20px; height:20px; font-size:12px; cursor:pointer; line-height:1; }
+
+  .toggle-row { display:flex; align-items:center; gap:10px; margin-bottom:4px; }
+  .toggle-row input { width:auto; }
+  .toggle-row label { margin:0; }
+
+  .metier-tarif-row { border:1px solid #eef1f0; border-radius:10px; padding:14px; margin-top:12px; }
+  .metier-tarif-row .metier-nom { font-weight:800; font-size:0.9rem; margin-bottom:10px; }
+
+  .extraction-box { background:#fdf1ea; border-radius:10px; padding:14px; margin-top:14px; font-size:0.82rem; color:#5b6b64; }
+  .btn-extraire { background:#e8622c; color:#fff; border:none; border-radius:8px; padding:9px 16px; font-size:0.82rem; font-weight:700; cursor:pointer; margin-top:8px; }
+
+  .btn-submit {
+    width:100%; background:#1e6f4c; color:#fff; border:none; border-radius:12px; padding:16px; font-size:1rem; font-weight:800; cursor:pointer; margin-top:8px;
+  }
+  .btn-submit:disabled { opacity:0.6; cursor:not-allowed; }
+  .save-msg { text-align:center; font-size:0.85rem; margin-top:12px; padding:10px; border-radius:8px; }
+  .save-msg.ok { background:#eaf4ef; color:#1e6f4c; }
+  .save-msg.err { background:#fdeceb; color:#c0392b; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Construction de votre vitrine</div>
+  <h1>Vos éléments</h1>
+  <p class="intro">
+    Suite à notre appel, dépose ici tout ce qui nous permettra de construire ta vraie vitrine — logo, photos, coordonnées, informations légales, et si tu le souhaites, un chiffrage précis pour générer de vrais devis.
+  </p>
+
+  <div class="section">
+    <h2>🎨 Identité visuelle</h2>
+    <p class="sub">Logo, photos de réalisations, vidéo de présentation.</p>
+
+    <label>Logo de l'entreprise</label>
+    <div class="upload-box" id="boxLogo">
+      <input type="file" id="inputLogo" accept="image/*">
+      <div class="upload-label">📁 Choisir un fichier</div>
+      <div class="upload-status" id="statusLogo">Aucun fichier — PNG ou JPG, fond transparent de préférence</div>
+    </div>
+
+    <label>Photos pour le carrousel (jusqu'à 10)</label>
+    <div class="upload-box" id="boxPhotos">
+      <input type="file" id="inputPhotos" accept="image/*" multiple>
+      <div class="upload-label">📁 Ajouter des photos</div>
+      <div class="upload-status" id="statusPhotos">Aucune photo ajoutée</div>
+    </div>
+    <div class="photos-grid" id="photosGrid"></div>
+
+    <label>Vidéo de présentation (optionnel)</label>
+    <div class="upload-box" id="boxVideo">
+      <input type="file" id="inputVideo" accept="video/*">
+      <div class="upload-label">📁 Choisir une vidéo</div>
+      <div class="upload-status" id="statusVideo">Ou colle un lien YouTube/Vimeo ci-dessous</div>
+    </div>
+    <input type="url" id="videoLien" placeholder="https://youtube.com/..." style="margin-top:10px;">
+  </div>
+
+  <div class="section">
+    <h2>📍 Coordonnées</h2>
+    <label>Téléphone</label>
+    <input type="tel" id="telephone" placeholder="06 12 34 56 78">
+
+    <label>Email</label>
+    <input type="email" id="email" placeholder="contact@monentreprise.fr">
+
+    <label>Adresse</label>
+    <input type="text" id="adresseRue" placeholder="Numéro et rue">
+    <div class="row2" style="margin-top:10px;">
+      <input type="text" id="adresseCp" placeholder="Code postal">
+      <input type="text" id="adresseVille" placeholder="Ville">
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>⚖️ Informations légales</h2>
+    <p class="sub">Nécessaires pour les mentions légales de ton site et pour générer de vrais devis.</p>
+
+    <label>SIRET</label>
+    <input type="text" id="siret" placeholder="14 chiffres">
+
+    <label>Forme juridique</label>
+    <select id="formeJuridique">
+      <option value="">— Sélectionner —</option>
+      <option>Entreprise individuelle (EI)</option>
+      <option>Micro-entreprise</option>
+      <option>EURL</option>
+      <option>SARL</option>
+      <option>SASU</option>
+      <option>SAS</option>
+      <option>Autre</option>
+    </select>
+
+    <div class="row2">
+      <div>
+        <label>Capital social (si société)</label>
+        <input type="text" id="capitalSocial" placeholder="Ex : 10 000 €">
+      </div>
+      <div>
+        <label>Ville d'immatriculation RCS</label>
+        <input type="text" id="rcsVille" placeholder="Ex : Lorient">
+      </div>
+    </div>
+
+    <label>Assurance décennale — assureur</label>
+    <input type="text" id="assuranceAssureur" placeholder="Ex : ERGO France">
+
+    <label>Assurance décennale — numéro de police</label>
+    <input type="text" id="assuranceNumero" placeholder="Numéro de contrat">
+  </div>
+
+  <div class="section">
+    <h2>🔗 Site web existant (optionnel)</h2>
+    <p class="sub">Si tu as déjà un site, on peut essayer d'y retrouver certaines informations légales automatiquement.</p>
+    <input type="url" id="siteExistant" placeholder="https://monsite.fr">
+    <button type="button" class="btn-extraire" id="btnExtraire">🔍 Essayer de récupérer les infos légales</button>
+    <div class="extraction-box" id="extractionResult" style="display:none;"></div>
+  </div>
+
+  <div class="section">
+    <h2>💰 Chiffrage détaillé pour devis</h2>
+    <div class="toggle-row">
+      <input type="checkbox" id="toggleChiffrage">
+      <label for="toggleChiffrage" style="font-weight:600;">Je veux proposer un chiffrage précis (m², ml, m³) sur mon formulaire</label>
+    </div>
+    <p class="sub" style="margin-top:6px;">Facultatif — sans ça, le formulaire reste un simple recueil de coordonnées, sans estimation de prix.</p>
+
+    <div id="chiffrageDetail" style="display:none;">
+      <label>Taux de TVA applicable</label>
+      <select id="tvaTaux">
+        <option value="20">20% — taux normal</option>
+        <option value="10">10% — travaux de rénovation (bâti de plus de 2 ans)</option>
+        <option value="5.5">5.5% — travaux d'amélioration énergétique</option>
+      </select>
+      <div id="metiersTarifs"></div>
+    </div>
+  </div>
+
+  <button class="btn-submit" id="btnSubmit">Enregistrer mes éléments</button>
+  <div class="save-msg" id="saveMsg" style="display:none;"></div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+  const BUCKET = 'skyeco-pro-media';
+
+  const params = new URLSearchParams(window.location.search);
+  const draftId = params.get('id');
+
+  let logoUrl = null;
+  let photosUrls = [];
+  let videoUrl = null;
+  let metiersActuels = [];
+
+  if (!draftId) {
+    document.body.innerHTML = '<div style="text-align:center; margin-top:100px;">Lien invalide — identifiant du site manquant.</div>';
+  } else {
+    chargerDraftExistant();
+  }
+
+  async function chargerDraftExistant() {
+    try {
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=*`, {
+        headers: { apikey: SUPABASE_ANON_KEY }
+      });
+      const rows = await resp.json();
+      const draft = rows[0];
+      if (!draft) return;
+
+      document.getElementById('telephone').value = draft.telephone || '';
+      document.getElementById('email').value = draft.email || '';
+      document.getElementById('adresseRue').value = draft.adresse_rue || '';
+      document.getElementById('adresseCp').value = draft.adresse_cp || '';
+      document.getElementById('adresseVille').value = draft.adresse_ville || '';
+      document.getElementById('siret').value = draft.siret || '';
+      document.getElementById('formeJuridique').value = draft.forme_juridique || '';
+      document.getElementById('capitalSocial').value = draft.capital_social || '';
+      document.getElementById('rcsVille').value = draft.rcs_ville || '';
+      document.getElementById('assuranceAssureur').value = draft.assurance_decennale_assureur || '';
+      document.getElementById('assuranceNumero').value = draft.assurance_decennale_numero || '';
+      document.getElementById('siteExistant').value = draft.site_web_existant || '';
+
+      metiersActuels = Array.isArray(draft.metier) ? draft.metier : (draft.metier ? [draft.metier] : []);
+      construireLignesTarifs(metiersActuels, draft.tarification_detail || {});
+
+      if (draft.photos && draft.photos.length) {
+        photosUrls = draft.photos;
+        rafraichirGridPhotos();
+      }
+      if (draft.logo_url) { logoUrl = draft.logo_url; document.getElementById('statusLogo').textContent = 'Logo déjà enregistré ✓'; document.getElementById('boxLogo').classList.add('has-file'); }
+      if (draft.video_url) { videoUrl = draft.video_url; document.getElementById('videoLien').value = draft.video_url.startsWith('http') ? draft.video_url : ''; }
+    } catch (e) { /* silencieux, on part d'un formulaire vide */ }
+  }
+
+  const METIER_LABELS = {
+    paysagiste: 'Paysagiste', piscine: 'Pose piscine', tonte: 'Tonte et coupe', terrasse: 'Terrasse',
+    paysagiste_concepteur: 'Paysagiste concepteur', arboriste: 'Arboriste élagueur', espaces_verts: "Entretien d'espaces verts", autre: 'Autre'
+  };
+  const UNITES = { m2: 'm² (surface)', ml: 'ml (mètre linéaire)', m3: 'm³ (volume)', forfait: 'Forfait' };
+
+  function construireLignesTarifs(metiers, tarifsExistants) {
+    const container = document.getElementById('metiersTarifs');
+    container.innerHTML = metiers.map(m => {
+      const t = tarifsExistants[m] || {};
+      return `
+        <div class="metier-tarif-row" data-metier="${m}">
+          <div class="metier-nom">${METIER_LABELS[m] || m}</div>
+          <div class="row3">
+            <div>
+              <label style="margin-top:0;">Unité de facturation</label>
+              <select class="tarif-unite">
+                ${Object.entries(UNITES).map(([k,v]) => `<option value="${k}" ${t.unite===k?'selected':''}>${v}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label style="margin-top:0;">Prix unitaire HT (€)</label>
+              <input type="number" class="tarif-prix" step="0.01" value="${t.prix || ''}">
+            </div>
+            <div>
+              <label style="margin-top:0;">Minimum facturé (€)</label>
+              <input type="number" class="tarif-minimum" step="1" value="${t.minimum || ''}">
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('') || '<p class="hint">Aucun métier renseigné sur ce profil.</p>';
+  }
+
+  document.getElementById('toggleChiffrage').addEventListener('change', e => {
+    document.getElementById('chiffrageDetail').style.display = e.target.checked ? 'block' : 'none';
+  });
+
+  // --- Upload générique vers Supabase Storage ---
+  async function uploaderFichier(file, sousDossier) {
+    const ext = file.name.split('.').pop();
+    const nomFichier = `elements-artisan/${draftId}/${sousDossier}-${Date.now()}.${ext}`;
+    const resp = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${nomFichier}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        apikey: SUPABASE_ANON_KEY,
+        'Content-Type': file.type,
+      },
+      body: file,
+    });
+    if (!resp.ok) throw new Error("Échec de l'envoi du fichier.");
+    return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${nomFichier}`;
+  }
+
+  document.getElementById('boxLogo').addEventListener('click', () => document.getElementById('inputLogo').click());
+  document.getElementById('inputLogo').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    document.getElementById('statusLogo').textContent = 'Envoi en cours…';
+    try {
+      logoUrl = await uploaderFichier(file, 'logo');
+      document.getElementById('statusLogo').textContent = 'Logo envoyé ✓';
+      document.getElementById('boxLogo').classList.add('has-file');
+    } catch (err) {
+      document.getElementById('statusLogo').textContent = 'Erreur — réessaie.';
+    }
+  });
+
+  document.getElementById('boxPhotos').addEventListener('click', () => document.getElementById('inputPhotos').click());
+  document.getElementById('inputPhotos').addEventListener('change', async e => {
+    const files = Array.from(e.target.files).slice(0, 10 - photosUrls.length);
+    document.getElementById('statusPhotos').textContent = `Envoi de ${files.length} photo(s)…`;
+    for (const file of files) {
+      try {
+        const url = await uploaderFichier(file, 'photo');
+        photosUrls.push(url);
+      } catch (err) { /* on continue les autres */ }
+    }
+    document.getElementById('statusPhotos').textContent = `${photosUrls.length} photo(s) ajoutée(s)`;
+    document.getElementById('boxPhotos').classList.add('has-file');
+    rafraichirGridPhotos();
+  });
+
+  function rafraichirGridPhotos() {
+    const grid = document.getElementById('photosGrid');
+    grid.innerHTML = photosUrls.map((url, i) => `
+      <div class="photo-thumb">
+        <img src="${url}" alt="">
+        <button type="button" class="del" data-index="${i}">×</button>
+      </div>
+    `).join('');
+    grid.querySelectorAll('.del').forEach(btn => {
+      btn.addEventListener('click', () => {
+        photosUrls.splice(parseInt(btn.dataset.index), 1);
+        rafraichirGridPhotos();
+        document.getElementById('statusPhotos').textContent = `${photosUrls.length} photo(s) ajoutée(s)`;
+      });
+    });
+  }
+
+  document.getElementById('boxVideo').addEventListener('click', () => document.getElementById('inputVideo').click());
+  document.getElementById('inputVideo').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    document.getElementById('statusVideo').textContent = 'Envoi en cours…';
+    try {
+      videoUrl = await uploaderFichier(file, 'video');
+      document.getElementById('statusVideo').textContent = 'Vidéo envoyée ✓';
+      document.getElementById('boxVideo').classList.add('has-file');
+    } catch (err) {
+      document.getElementById('statusVideo').textContent = 'Erreur — réessaie.';
+    }
+  });
+
+  // --- Extraction best-effort des mentions légales depuis un site existant ---
+  document.getElementById('btnExtraire').addEventListener('click', async () => {
+    const url = document.getElementById('siteExistant').value.trim();
+    const box = document.getElementById('extractionResult');
+    if (!url) { alert('Renseigne d\'abord une URL.'); return; }
+    box.style.display = 'block';
+    box.textContent = 'Recherche en cours…';
+    try {
+      const res = await fetch('/api/extraire-donnees-site', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+      const data = await res.json();
+      if (!data.success) { box.textContent = data.error || "Rien n'a pu être extrait automatiquement — remplis les champs manuellement."; return; }
+
+      let trouve = [];
+      if (data.siret) { document.getElementById('siret').value = document.getElementById('siret').value || data.siret; trouve.push('SIRET'); }
+      if (data.rcsVille) { document.getElementById('rcsVille').value = document.getElementById('rcsVille').value || data.rcsVille; trouve.push('RCS'); }
+      if (data.capitalSocial) { document.getElementById('capitalSocial').value = document.getElementById('capitalSocial').value || data.capitalSocial; trouve.push('capital social'); }
+
+      box.textContent = trouve.length
+        ? `Trouvé automatiquement : ${trouve.join(', ')}. Vérifie que c'est correct avant d'enregistrer — cette extraction n'est pas garantie fiable.`
+        : "Rien n'a pu être extrait automatiquement sur cette page — remplis les champs manuellement.";
+    } catch (e) {
+      box.textContent = "Impossible de vérifier ce site pour le moment — remplis les champs manuellement.";
+    }
+  });
+
+  // --- Enregistrement final ---
+  document.getElementById('btnSubmit').addEventListener('click', async () => {
+    const btn = document.getElementById('btnSubmit');
+    const msg = document.getElementById('saveMsg');
+    btn.disabled = true;
+    btn.textContent = 'Enregistrement…';
+
+    const tarificationDetail = {};
+    document.querySelectorAll('.metier-tarif-row').forEach(row => {
+      const metier = row.dataset.metier;
+      tarificationDetail[metier] = {
+        unite: row.querySelector('.tarif-unite').value,
+        prix: parseFloat(row.querySelector('.tarif-prix').value) || null,
+        minimum: parseFloat(row.querySelector('.tarif-minimum').value) || null,
+      };
+    });
+
+    const videoFinal = videoUrl || document.getElementById('videoLien').value.trim() || null;
+
+    const payload = {
+      telephone: document.getElementById('telephone').value.trim(),
+      email: document.getElementById('email').value.trim(),
+      adresse_rue: document.getElementById('adresseRue').value.trim(),
+      adresse_cp: document.getElementById('adresseCp').value.trim(),
+      adresse_ville: document.getElementById('adresseVille').value.trim(),
+      siret: document.getElementById('siret').value.trim(),
+      forme_juridique: document.getElementById('formeJuridique').value,
+      capital_social: document.getElementById('capitalSocial').value.trim(),
+      rcs_ville: document.getElementById('rcsVille').value.trim(),
+      assurance_decennale_assureur: document.getElementById('assuranceAssureur').value.trim(),
+      assurance_decennale_numero: document.getElementById('assuranceNumero').value.trim(),
+      site_web_existant: document.getElementById('siteExistant').value.trim(),
+      logo_url: logoUrl,
+      photos: photosUrls,
+      video_url: videoFinal,
+      tva_taux: document.getElementById('toggleChiffrage').checked ? parseFloat(document.getElementById('tvaTaux').value) : null,
+      tarification_detail: document.getElementById('toggleChiffrage').checked ? tarificationDetail : null,
+      tarif_actif: document.getElementById('toggleChiffrage').checked,
+      elements_deposes_le: new Date().toISOString(),
+    };
+
+    try {
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
+        method: 'PATCH',
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify(payload),
+      });
+      if (!resp.ok) throw new Error();
+      msg.className = 'save-msg ok';
+      msg.textContent = '✓ Tes éléments ont bien été enregistrés. On revient vers toi pour construire ta vraie vitrine.';
+      msg.style.display = 'block';
+      btn.textContent = 'Enregistré ✓';
+    } catch (e) {
+      msg.className = 'save-msg err';
+      msg.textContent = "Une erreur est survenue — réessaie ou contacte-nous directement.";
+      msg.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Enregistrer mes éléments';
+    }
+  });
+</script>
+</body>
+</html>

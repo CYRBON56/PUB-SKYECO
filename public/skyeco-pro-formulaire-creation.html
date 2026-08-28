@@ -40,6 +40,16 @@
   .page-logo-text .orange-accent{ color:var(--orange,#E8622C); }
   .page-logo-text .page-logo-pro{ font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:10.5px; letter-spacing:1px; color:var(--concrete,#5B6268); vertical-align:1px; }
 
+  .btn-etre-rappele-fixe {
+    position:fixed; top:20px; right:20px; z-index:200;
+    display:flex; align-items:center; gap:6px;
+    background:var(--orange,#E8622C); color:#fff; text-decoration:none;
+    border-radius:999px; padding:10px 18px; font-size:13px; font-weight:700;
+    box-shadow:0 3px 14px rgba(0,0,0,0.28);
+  }
+  .btn-etre-rappele-fixe:hover{ filter:brightness(1.05); }
+  @media (max-width:600px){ .btn-etre-rappele-fixe{ padding:9px 14px; font-size:12px; } }
+
   @media(max-width:768px){
     .page-logo{ top:12px; left:12px; padding:5px 10px 5px 5px; }
     .page-logo img{ height:24px; width:24px; }
@@ -191,6 +201,8 @@
   <img src="/skyeco-icon-devis.svg" alt="">
   <span class="page-logo-text">SKY<span class="orange-accent">ECO</span> <span class="page-logo-pro">PRO</span></span>
 </div>
+
+<a class="btn-etre-rappele-fixe" href="https://calendly.com/c-bon-ecosky/devis-skyeco-pro-appel-telephonique" target="_blank" rel="noopener">📞 Être rappelé</a>
 
 <div class="split-layout">
   <img class="shared-carousel-img active" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/1-terrasse-mobilier-noir.jpg" alt="">

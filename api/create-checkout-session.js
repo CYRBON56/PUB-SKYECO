@@ -8,12 +8,14 @@ import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// Les 4 forfaits Skyeco Pro — voir forfaits-skyeco-pro.md pour le détail des fonctionnalités.
+// Les 4 forfaits Skyeco Pro — prix HT. La TVA française (20%) est ajoutée
+// au moment du paiement, sur le montant réellement facturé via Stripe.
+const TAUX_TVA = 0.20;
 const FORFAITS = {
-  1: { nom: 'Forfait 1 — Vitrine simple', centimes: 3990 },
-  2: { nom: 'Forfait 2 — Vitrine + Dashboard', centimes: 5990 },
-  3: { nom: 'Forfait 3 — + Relance & devis signés', centimes: 7990 },
-  4: { nom: 'Forfait 4 — Vitrine référencée (URL propre)', centimes: 9990 },
+  1: { nom: 'Forfait 1 — Vitrine simple', centimesHT: 3990 },
+  2: { nom: 'Forfait 2 — Vitrine + Dashboard', centimesHT: 5990 },
+  3: { nom: 'Forfait 3 — + Relance & devis signés', centimesHT: 7990 },
+  4: { nom: 'Forfait 4 — Vitrine référencée (URL propre)', centimesHT: 9990 },
 };
 
 export default async function handler(req, res) {
@@ -31,6 +33,8 @@ export default async function handler(req, res) {
   const origin = req.headers.origin || `https://${req.headers.host}`;
 
   try {
+    const centimesTTC = Math.round(forfait.centimesHT * (1 + TAUX_TVA));
+
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
@@ -38,11 +42,11 @@ export default async function handler(req, res) {
         {
           price_data: {
             currency: 'eur',
-            unit_amount: forfait.centimes,
+            unit_amount: centimesTTC,
             recurring: { interval: 'month' },
             product_data: {
               name: forfait.nom + (entreprise ? ' — ' + entreprise : ''),
-              description: 'Votre formulaire vitrine en ligne, mis à jour et actif chaque mois.',
+              description: `Prix HT : ${(forfait.centimesHT / 100).toFixed(2)} € — TVA 20% incluse. Votre formulaire vitrine en ligne, mis à jour et actif chaque mois.`,
             },
           },
           quantity: 1,

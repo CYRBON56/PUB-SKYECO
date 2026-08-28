@@ -54,6 +54,16 @@
   .carousel-img.active{ opacity:1; }
 
   .explainer-bg-video{ position:relative; max-width:100%; max-height:100%; width:auto; height:auto; display:block; border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.35); }
+  .unmute-btn{
+    position:absolute; bottom:16px; left:50%; transform:translateX(-50%);
+    background:var(--orange); color:#fff; border:none; border-radius:999px;
+    padding:10px 20px; font-size:14px; font-weight:700; cursor:pointer;
+    box-shadow:0 6px 20px rgba(0,0,0,0.3); z-index:3;
+    animation: pulseBtn 2s ease-in-out infinite;
+  }
+  .unmute-btn:hover{ filter:brightness(1.08); }
+  .unmute-btn.hidden{ display:none; }
+  @keyframes pulseBtn{ 0%,100%{ transform:translateX(-50%) scale(1); } 50%{ transform:translateX(-50%) scale(1.05); } }
   .video-panel::before{
     content:''; position:absolute; inset:0;
     background-image: repeating-linear-gradient(0deg, rgba(110,151,184,0.06) 0px, transparent 1px, transparent 32px),
@@ -194,9 +204,10 @@
   <div class="shared-carousel-overlay"></div>
 
   <div class="video-panel">
-    <video class="explainer-bg-video" autoplay muted loop playsinline controls>
+    <video class="explainer-bg-video" id="explainerVideo" autoplay muted loop playsinline controls>
       <source src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/puv%20skyeco/video.mp4" type="video/mp4">
     </video>
+    <button id="unmuteBtn" class="unmute-btn" type="button">🔊 Activer le son</button>
   </div>
 
   <div class="form-panel" id="photoCarousel">
@@ -377,6 +388,18 @@
 </div>
 
 <script>
+  // Activer le son de la vidéo au clic (l'autoplay avec son est bloqué par les navigateurs)
+  (function(){
+    const video = document.getElementById('explainerVideo');
+    const btn = document.getElementById('unmuteBtn');
+    if (video && btn) {
+      btn.addEventListener('click', function(){
+        video.muted = false;
+        video.play();
+        btn.classList.add('hidden');
+      });
+    }
+  })();
 (function(){
   // Carrousel photo (panneau droit, fond du formulaire)
   (function initCarousel(){

@@ -105,7 +105,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ success: false, error: 'Méthode non autorisée' });
   }
 
-  const { metier, departement, budget } = req.body || {};
+  const { metier, zone, budget } = req.body || {};
   // "metier" peut être un tableau (nouvelle sélection multiple) ou une chaîne
   // unique (anciens sites créés avant ce changement) — on gère les deux.
   const metiersListe = Array.isArray(metier) ? metier : (metier ? [metier] : []);
@@ -121,13 +121,14 @@ export default async function handler(req, res) {
   const commissionPub = budgetNum ? +(budgetNum * TAUX_COMMISSION).toFixed(2) : 0;
   const budgetNetPub = Math.max(0, budgetNum - commissionPub);
 
-  const geoTargetId = (departement && GEO_TARGET_BY_DEPARTEMENT[departement]) || null;
-  const geoResourceName = geoTargetId
-    ? `geoTargetConstants/${geoTargetId}`
-    : `geoTargetConstants/${GEO_TARGET_FRANCE}`;
-  const geoApprox = !geoTargetId; // true si on interroge la France entière puis on pondère
-  const regionDeduite = departement ? DEPARTEMENT_TO_REGION[String(departement).toUpperCase()] : null;
-  const populationShare = geoApprox && regionDeduite ? REGION_POPULATION_SHARE[regionDeduite] : null;
+  // "zone" est du texte libre du type "BRECH, Bretagne" (ville + région),
+  // pas un code département — on interroge donc toujours au niveau France,
+  // puis on pondère par la région extraite directement de ce texte.
+  const geoTargetId = null;
+  const geoResourceName = `geoTargetConstants/${GEO_TARGET_FRANCE}`;
+  const geoApprox = true;
+  const regionDeduite = zone && zone.includes(',') ? zone.split(',').pop().trim() : null;
+  const populationShare = regionDeduite ? REGION_POPULATION_SHARE[regionDeduite] : null;
 
   try {
     const accessToken = await obtenirAccessToken();
@@ -217,7 +218,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       source: 'google_ads_keyword_planner',
-      departement: departement || null,
+      zone: zone || null,
       region: regionDeduite,
       geoApproximatif: geoApprox, // true = volume France pondéré par population, pas un ciblage département natif
       populationShare,

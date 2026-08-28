@@ -226,12 +226,34 @@ const METIER_TEMPLATES = {
 };
 
 const FALLBACK_IMAGES = {
-  resine: ["https://images.unsplash.com/photo-1600607687644-c7171b42498f?w=1200"],
-  cloture: ["https://images.unsplash.com/photo-1597047084897-51e81819a499?w=1200"],
-  terrassement: ["https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1200"],
-  assainissement: ["https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=1200"],
-  paysagisme: ["https://images.unsplash.com/photo-1558904541-efa843a96f01?w=1200"],
-  autre: ["https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=1200"]
+  resine: [
+    "https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/1-terrasse-mobilier-noir.jpg",
+    "https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/5-piscine-beige.jpg",
+    "https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/6-piscine-pool-house.jpg",
+    "https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/8-escalier-terrasse.jpg"
+  ],
+  cloture: [
+    "https://images.unsplash.com/photo-1597047084897-51e81819a499?w=1200",
+    "https://images.unsplash.com/photo-1600607687644-c7171b42498f?w=1200"
+  ],
+  terrassement: [
+    "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1200",
+    "https://images.unsplash.com/photo-1416339306562-c3e64c3a3fb2?w=1200"
+  ],
+  assainissement: [
+    "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=1200",
+    "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=1200"
+  ],
+  paysagisme: [
+    "https://images.unsplash.com/photo-1558904541-efa843a96f01?w=1200",
+    "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=1200",
+    "https://images.unsplash.com/photo-1493957988430-a5f2e15f39a3?w=1200",
+    "https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/7-piscine-jardin.jpg"
+  ],
+  autre: [
+    "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=1200",
+    "https://images.unsplash.com/photo-1493957988430-a5f2e15f39a3?w=1200"
+  ]
 };
 
 async function init(){
@@ -292,6 +314,14 @@ async function init(){
   document.getElementById('appRoot').style.display = 'block';
   if(draft.status === 'preview'){
     document.getElementById('previewBanner').style.display = 'flex';
+  }
+  if(draft.status === 'desactive'){
+    document.getElementById('appRoot').innerHTML =
+      '<div style="max-width:480px; margin:80px auto; text-align:center; padding:0 20px;">' +
+      '<h2 style="margin-bottom:12px;">Cette page n\'est plus disponible</h2>' +
+      '<p style="color:#5b6b64;">L\'abonnement de ce site est arrivé à son terme.</p>' +
+      '</div>';
+    return;
   }
 
   document.getElementById('btnPublier').addEventListener('click', async ()=>{
@@ -505,18 +535,22 @@ function runWizard(template, brandColor, draftId){
     // Sépare les champs identité (colonnes dédiées) du reste (stocké en jsonb "reponses").
     const { nom, prenom, telephone, telephoneVerifie, email, ...reste } = state;
 
-    const { error } = await supabaseClient
-      .from('skyeco_pro_leads')
-      .insert([{
-        draft_id: draftId,
-        nom: nom || null,
-        prenom: prenom || null,
-        telephone: telephone || null,
-        telephone_verifie: !!telephoneVerifie,
-        email: email || null,
-        reponses: reste,
-        statut: 'nouveau'
-      }]);
+    let error = null;
+    try {
+      const resp = await fetch('/api/notify-nouvelle-demande', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          draftId, nom, prenom, telephone, telephoneVerifie, email, reponses: reste
+        })
+      });
+      if (!resp.ok) {
+        const data = await resp.json().catch(() => ({}));
+        error = data.error || 'Erreur serveur';
+      }
+    } catch (e) {
+      error = e.message;
+    }
 
     if(error){
       cardEl.innerHTML = '<div class="question" style="text-align:center;">Une erreur est survenue.</div>'+

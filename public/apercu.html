@@ -324,27 +324,8 @@ async function init(){
     return;
   }
 
-  document.getElementById('btnPublier').addEventListener('click', async ()=>{
-    const btn = document.getElementById('btnPublier');
-    btn.disabled = true;
-    btn.textContent = 'Redirection vers le paiement…';
-    try {
-      const res = await fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId: draft.id, entreprise: draft.entreprise })
-      });
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error(data.error || 'Impossible de créer la session de paiement.');
-      }
-    } catch (err) {
-      alert("Une erreur est survenue : " + err.message);
-      btn.disabled = false;
-      btn.textContent = 'Mettre en ligne';
-    }
+  document.getElementById('btnPublier').addEventListener('click', ()=>{
+    window.location.href = 'choisir-forfait.html?id=' + draft.id;
   });
   document.getElementById('btnFooterCallback').addEventListener('click', ()=>{
     alert("Rappel demandé — à connecter au système de notification SMS/email.");

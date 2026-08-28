@@ -51,7 +51,7 @@ export default async function handler(req, res) {
 
   try {
     const draftResp = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}&select=entreprise,metier,departement,tarif_prix`,
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}&select=entreprise,metier,zone,tarif_prix`,
       { headers: supaHeaders }
     );
     const draftRows = await draftResp.json();

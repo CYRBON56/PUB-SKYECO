@@ -7,15 +7,17 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f5f8f6; color:#14312a; padding:32px 24px 60px; }
-  .wrap { max-width:980px; margin:0 auto; }
+  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f5f8f6; color:#14312a; padding:32px 24px 60px; position:relative; overflow-x:hidden; }
+  .leaf-bg { position:fixed; z-index:0; pointer-events:none; }
+  .leaf-bg svg { display:block; filter:blur(0.5px); }
+  .wrap { position:relative; z-index:1; max-width:980px; margin:0 auto; }
   .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
   h1 { font-size:1.5rem; }
   .btn-fonds { background:#e8622c; color:#fff; text-decoration:none; padding:12px 22px; border-radius:10px; font-weight:700; font-size:0.92rem; }
   .btn-fonds:hover { filter:brightness(1.05); }
 
   .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:28px; }
-  .stat-card { background:#fff; border-radius:14px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
+  .stat-card { background:#fff; border-radius:14px; padding:20px; box-shadow:0 4px 20px rgba(20,49,42,0.08); }
   .stat-value { font-size:1.9rem; font-weight:800; }
   .stat-label { font-size:0.78rem; color:#8a9891; margin-top:2px; }
 
@@ -57,6 +59,55 @@
 </style>
 </head>
 <body>
+
+<!-- Feuilles décoratives en arrière-plan, effet 3D via dégradés et ombres -->
+<div class="leaf-bg" style="top:-60px; right:-80px; opacity:0.55;">
+  <svg width="360" height="360" viewBox="0 0 360 360">
+    <defs>
+      <radialGradient id="leafGrad1" cx="35%" cy="30%" r="75%">
+        <stop offset="0%" stop-color="#4a9d6e"/>
+        <stop offset="55%" stop-color="#1e6f4c"/>
+        <stop offset="100%" stop-color="#0f4a30"/>
+      </radialGradient>
+      <filter id="leafShadow1" x="-50%" y="-50%" width="200%" height="200%">
+        <feDropShadow dx="8" dy="14" stdDeviation="16" flood-color="#0a3320" flood-opacity="0.35"/>
+      </filter>
+    </defs>
+    <path filter="url(#leafShadow1)" fill="url(#leafGrad1)" d="M180,30 C260,50 320,120 300,210 C280,300 190,330 130,290 C70,250 50,160 90,100 C115,63 145,40 180,30 Z"/>
+    <path d="M180,50 C180,140 200,220 260,270" stroke="#0a3320" stroke-width="4" fill="none" opacity="0.4" stroke-linecap="round"/>
+  </svg>
+</div>
+
+<div class="leaf-bg" style="bottom:-100px; left:-100px; opacity:0.4;">
+  <svg width="420" height="420" viewBox="0 0 420 420">
+    <defs>
+      <radialGradient id="leafGrad2" cx="40%" cy="35%" r="70%">
+        <stop offset="0%" stop-color="#f3a878"/>
+        <stop offset="55%" stop-color="#e8622c"/>
+        <stop offset="100%" stop-color="#b8481c"/>
+      </radialGradient>
+      <filter id="leafShadow2" x="-50%" y="-50%" width="200%" height="200%">
+        <feDropShadow dx="-6" dy="12" stdDeviation="18" flood-color="#7a2e10" flood-opacity="0.3"/>
+      </filter>
+    </defs>
+    <path filter="url(#leafShadow2)" fill="url(#leafGrad2)" d="M210,40 C300,70 370,150 350,240 C330,330 230,370 150,330 C70,290 40,190 80,120 C110,70 160,45 210,40 Z"/>
+    <path d="M210,60 C205,160 220,260 300,320" stroke="#7a2e10" stroke-width="5" fill="none" opacity="0.35" stroke-linecap="round"/>
+  </svg>
+</div>
+
+<div class="leaf-bg" style="top:35%; right:-140px; opacity:0.3;">
+  <svg width="280" height="280" viewBox="0 0 280 280">
+    <defs>
+      <radialGradient id="leafGrad3" cx="35%" cy="30%" r="75%">
+        <stop offset="0%" stop-color="#6fbf95"/>
+        <stop offset="55%" stop-color="#1e6f4c"/>
+        <stop offset="100%" stop-color="#0f4a30"/>
+      </radialGradient>
+    </defs>
+    <path fill="url(#leafGrad3)" d="M140,20 C210,40 250,100 230,170 C210,240 140,260 90,230 C40,200 25,130 60,80 C85,45 110,25 140,20 Z"/>
+  </svg>
+</div>
+
 <div class="wrap">
   <div class="header">
     <h1>Mon tableau de bord</h1>

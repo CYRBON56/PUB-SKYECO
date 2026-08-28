@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Choisissez votre forfait — Skyeco Pro</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f5f8f6; color:#14312a; }
+
+  .split { display:flex; min-height:100vh; }
+  .preview-panel { flex:1 1 42%; background:#0f1a2b; position:relative; display:flex; flex-direction:column; }
+  .preview-header { padding:16px 20px; color:#fff; font-size:0.85rem; opacity:0.7; border-bottom:1px solid rgba(255,255,255,0.1); }
+  .preview-frame-wrap { flex:1; padding:20px; display:flex; }
+  .preview-frame-wrap iframe { flex:1; width:100%; border:none; border-radius:12px; background:#fff; box-shadow:0 20px 50px rgba(0,0,0,0.4); }
+
+  .plans-panel { flex:1 1 58%; padding:48px 40px; overflow-y:auto; }
+  .plans-header { margin-bottom:32px; }
+  .plans-header h1 { font-size:1.6rem; margin-bottom:8px; }
+  .plans-header p { color:#5b6b64; font-size:0.95rem; }
+
+  .plans-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:900px){ .plans-grid{ grid-template-columns:1fr; } .split{ flex-direction:column; } .preview-panel{ min-height:340px; } }
+
+  .plan-card {
+    background:#fff; border:2px solid #e2e8e5; border-radius:16px; padding:24px;
+    display:flex; flex-direction:column; position:relative; transition:border-color 0.2s ease;
+  }
+  .plan-card.recommande { border-color:#1e6f4c; }
+  .plan-badge {
+    position:absolute; top:-11px; left:20px; background:#1e6f4c; color:#fff;
+    font-size:0.7rem; font-weight:700; padding:4px 12px; border-radius:999px; letter-spacing:0.02em;
+  }
+  .plan-name { font-size:1.05rem; font-weight:800; margin-bottom:4px; }
+  .plan-price { font-size:1.9rem; font-weight:800; color:#14312a; margin-bottom:2px; }
+  .plan-price span { font-size:0.9rem; font-weight:500; color:#8a9891; }
+  .plan-sub { font-size:0.78rem; color:#8a9891; margin-bottom:18px; }
+
+  .plan-features { list-style:none; margin-bottom:22px; flex:1; }
+  .plan-features li { font-size:0.86rem; color:#3a4a44; padding:6px 0; padding-left:22px; position:relative; line-height:1.4; }
+  .plan-features li::before { content:'✓'; position:absolute; left:0; color:#1e6f4c; font-weight:800; }
+  .plan-features li.a-venir { color:#a8b3ae; }
+  .plan-features li.a-venir::before { content:'—'; color:#c8d0cc; }
+
+  .btn-choisir {
+    width:100%; background:#e8622c; color:#fff; border:none; border-radius:10px;
+    padding:13px; font-size:0.92rem; font-weight:700; cursor:pointer;
+  }
+  .btn-choisir:hover { filter:brightness(1.05); }
+  .btn-choisir:disabled { opacity:0.5; cursor:wait; }
+  .plan-card.recommande .btn-choisir { background:#1e6f4c; }
+
+  .loading { text-align:center; padding:80px 20px; color:#5b6b64; }
+</style>
+</head>
+<body>
+<div class="split">
+  <div class="preview-panel">
+    <div class="preview-header">Aperçu de votre vitrine en direct</div>
+    <div class="preview-frame-wrap">
+      <iframe id="vitrineFrame" src=""></iframe>
+    </div>
+  </div>
+
+  <div class="plans-panel">
+    <div class="plans-header">
+      <h1>Votre vitrine est prête !</h1>
+      <p>Choisissez la formule qui correspond à vos besoins. Sans engagement — changez ou annulez à tout moment.</p>
+    </div>
+
+    <div class="plans-grid" id="plansGrid">
+      <div class="loading">Chargement…</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const draftId = params.get('id');
+
+  if (!draftId) {
+    document.body.innerHTML = '<div class="loading">Lien invalide — identifiant du site manquant.</div>';
+  } else {
+    document.getElementById('vitrineFrame').src = '/apercu.html?id=' + draftId;
+    renderPlans();
+  }
+
+  const FORFAITS = [
+    {
+      id: 1, nom: 'Vitrine simple', prix: '39,90', recommande: false,
+      features: [
+        'Formulaire vitrine en ligne',
+        'Réception SMS + email (vous et vos prospects)',
+        'Mise à jour illimitée du contenu'
+      ],
+      aVenir: []
+    },
+    {
+      id: 2, nom: 'Vitrine + Dashboard', prix: '59,90', recommande: true,
+      features: [
+        'Tout le Forfait 1',
+        'Tableau de bord complet',
+        'Suivi des clics et du coût publicitaire',
+        'Gestion des mots-clés',
+        'Changer vos photos et votre vidéo à tout moment'
+      ],
+      aVenir: []
+    },
+    {
+      id: 3, nom: 'Relance & devis signés', prix: '79,90', recommande: false,
+      features: [
+        'Tout le Forfait 2',
+        'Relance SMS automatique des prospects',
+        'Envoi de devis avec signature électronique'
+      ],
+      aVenir: []
+    },
+    {
+      id: 4, nom: 'Vitrine référencée', prix: '99,90', recommande: false,
+      features: [
+        'Tout le Forfait 3',
+        'Adresse URL personnalisée (pas de lien technique)',
+        'Fondations techniques de référencement Google'
+      ],
+      aVenir: ['Classement Google non garanti — dépend aussi du contenu et de la concurrence locale']
+    }
+  ];
+
+  function renderPlans() {
+    const grid = document.getElementById('plansGrid');
+    grid.innerHTML = FORFAITS.map(f => `
+      <div class="plan-card ${f.recommande ? 'recommande' : ''}">
+        ${f.recommande ? '<div class="plan-badge">Recommandé</div>' : ''}
+        <div class="plan-name">${f.nom}</div>
+        <div class="plan-price">${f.prix} € <span>HT/mois</span></div>
+        <div class="plan-sub">Sans engagement</div>
+        <ul class="plan-features">
+          ${f.features.map(t => `<li>${t}</li>`).join('')}
+          ${f.aVenir.map(t => `<li class="a-venir">${t}</li>`).join('')}
+        </ul>
+        <button class="btn-choisir" data-plan="${f.id}">Choisir ce forfait</button>
+      </div>
+    `).join('');
+
+    grid.querySelectorAll('.btn-choisir').forEach(btn => {
+      btn.addEventListener('click', () => choisirForfait(parseInt(btn.dataset.plan, 10), btn));
+    });
+  }
+
+  async function choisirForfait(plan, btn) {
+    btn.disabled = true;
+    btn.textContent = 'Redirection…';
+    try {
+      const res = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, plan })
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.error || 'Erreur inconnue');
+      }
+    } catch (e) {
+      alert("Impossible de démarrer le paiement : " + e.message);
+      btn.disabled = false;
+      btn.textContent = 'Choisir ce forfait';
+    }
+  }
+</script>
+</body>
+</html>

@@ -103,7 +103,7 @@
 
       <label for="budgetInput">Montant à investir</label>
       <div class="budget-input-row">
-        <input type="number" id="budgetInput" min="50" step="10" value="300" inputmode="numeric">
+        <input type="number" id="budgetInput" min="100" step="10" value="300" inputmode="numeric">
         <span class="unit">€</span>
       </div>
 
@@ -130,9 +130,9 @@
 
     async function chargerEstimation() {
       const budget = parseFloat(budgetInput.value);
-      if (!budget || budget < 50) {
+      if (!budget || budget < 100) {
         document.getElementById('clicsValue').textContent = '—';
-        document.getElementById('estimationDetail').textContent = 'Montant minimum : 50 €';
+        document.getElementById('estimationDetail').textContent = 'Montant minimum : 100 €';
         document.getElementById('breakdown').innerHTML = '';
         btnPayer.disabled = true;
         return;

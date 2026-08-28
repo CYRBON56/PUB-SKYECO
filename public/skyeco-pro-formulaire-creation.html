@@ -347,20 +347,6 @@
             <label for="tarifContraintes">Contraintes particulières (optionnel)</label>
             <textarea id="tarifContraintes" maxlength="200" placeholder="Ex : déplacement facturé au-delà de 20 km, épaisseur minimum 8 cm..."></textarea>
           </div>
-
-          <div style="margin-top:22px; padding-top:20px; border-top:1px solid var(--paper-line);">
-            <label style="margin-top:0;">Estimation de diffusion (optionnel)</label>
-            <p class="hint" style="margin-bottom:10px;">Basé sur de vraies données de recherche pour votre métier et votre zone.</p>
-            <input type="text" id="reachBudget" inputmode="decimal" placeholder="Budget mensuel envisagé (€) — Ex : 300">
-            <button type="button" class="btn-sms" id="btnEstimateReach" style="margin-top:10px;">Estimer mon potentiel de clics</button>
-            <div id="reachResult" style="margin-top:14px; display:none; padding:14px; background:var(--paper); border:1px solid var(--paper-line);">
-              <div style="display:flex; justify-content:space-between; align-items:baseline;">
-                <span class="mono" style="font-size:11px; color:var(--concrete);">ESTIMATION</span>
-                <span id="reachClicks" style="font-family:'Big Shoulders Display',sans-serif; font-weight:800; font-size:22px; color:var(--orange);"></span>
-              </div>
-              <div id="reachDetail" class="status-line mono" style="margin-top:6px;"></div>
-            </div>
-          </div>
         </div>
 
         <!-- STEP 6 : couleur -->
@@ -749,50 +735,6 @@
 
   document.getElementById('tarifContraintes').addEventListener('input', e=>{
     state.tarifContraintes = e.target.value;
-  });
-
-  // Estimation de diffusion (OpenRush)
-  document.getElementById('btnEstimateReach').addEventListener('click', async ()=>{
-    const btn = document.getElementById('btnEstimateReach');
-    const resultBox = document.getElementById('reachResult');
-    const clicksEl = document.getElementById('reachClicks');
-    const detailEl = document.getElementById('reachDetail');
-    const budgetVal = document.getElementById('reachBudget').value.replace(',', '.');
-
-    if (!state.metier) {
-      alert('Merci de renseigner votre métier avant de faire cette estimation.');
-      return;
-    }
-
-    btn.disabled = true;
-    btn.textContent = 'Calcul en cours…';
-    resultBox.style.display = 'none';
-
-    try {
-      const res = await fetch('/api/estimate-reach', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ metier: state.metier, zone: state.zone, departement: state.departement, budget: budgetVal })
-      });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error || 'Erreur inconnue.');
-
-      resultBox.style.display = 'block';
-      if (data.estimatedClicks !== null) {
-        clicksEl.textContent = '≈ ' + data.estimatedClicks + ' clics/mois';
-        detailEl.textContent = 'Volume de recherche mensuel cumulé : ' + data.totalMonthlyVolume + ' · CPC moyen estimé : ' + data.avgCpcEur + ' €';
-      } else {
-        clicksEl.textContent = data.totalMonthlyVolume + ' recherches/mois';
-        detailEl.textContent = 'Indiquez un budget pour estimer un nombre de clics.';
-      }
-    } catch (err) {
-      resultBox.style.display = 'block';
-      clicksEl.textContent = '—';
-      detailEl.textContent = err.message;
-    } finally {
-      btn.disabled = false;
-      btn.textContent = 'Estimer mon potentiel de clics';
-    }
   });
 
   // Step 6: palette

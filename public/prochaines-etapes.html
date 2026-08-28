@@ -17,6 +17,17 @@
     background:rgba(255,255,255,0.88); border-radius:20px; transition:opacity 0.5s ease;
   }
   .wrap.cachee { opacity:0; pointer-events:none; }
+
+  #btnVoirSite {
+    float:right; background:#e8622c; border:none; border-radius:999px;
+    padding:14px 26px; font-size:1rem; font-weight:700; color:#fff; cursor:pointer;
+    animation: pulseBtn 1.6s ease-in-out infinite;
+  }
+  #btnVoirSite:hover { filter:brightness(1.05); }
+  @keyframes pulseBtn {
+    0%,100% { transform:scale(1); box-shadow:0 0 0 0 rgba(232,98,44,0.5); }
+    50% { transform:scale(1.05); box-shadow:0 0 0 10px rgba(232,98,44,0); }
+  }
   .eyebrow { font-size:0.8rem; font-weight:700; color:#1e6f4c; letter-spacing:0.03em; text-transform:uppercase; margin-bottom:10px; }
   h1 { font-size:1.9rem; margin-bottom:14px; line-height:1.25; }
   .intro { font-size:1.02rem; color:#3a4a44; line-height:1.6; margin-bottom:36px; }
@@ -54,7 +65,7 @@
 <div class="bg-overlay"></div>
 <div class="wrap">
   <div class="eyebrow">Étape suivante</div>
-  <button id="btnVoirSite" style="float:right; background:#eef1f0; border:none; border-radius:999px; padding:8px 16px; font-size:0.82rem; font-weight:700; color:#14312a; cursor:pointer;">👁️ Voir le site</button>
+  <button id="btnVoirSite">👁️ Voir le site</button>
   <h1>Votre aperçu est prêt — construisons maintenant votre vraie vitrine</h1>
   <p class="intro">
     Ce que vous venez de voir est un <strong>modèle générique</strong>, pour vous donner une idée du principe.

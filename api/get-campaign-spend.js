@@ -1,14 +1,36 @@
 // /api/get-campaign-spend.js
 // Interroge la vraie dépense/clics Google Ads via l'API Windsor.ai, et calcule
 // la consommation ajustée du solde artisan (chaque € Google = 2€ du solde,
-// puisque la commission de service est de 50%).
+// puisque la commission de service est de 50%). Envoie un SMS d'alerte à
+// l'artisan la première fois que son solde restant passe à 50€ ou moins.
 //
 // Variables d'environnement requises :
 //   WINDSOR_API_KEY
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+//   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER
 
 const TAUX_COMMISSION = 0.50; // doit rester synchronisé avec les autres fichiers
 const FACTEUR_CONSOMMATION = 1 / (1 - TAUX_COMMISSION);
+const SEUIL_ALERTE_SOLDE = 50; // €
+
+async function envoyerSMS(to, body, fromOverride) {
+  if (!to) return;
+  try {
+    const sid = process.env.TWILIO_ACCOUNT_SID;
+    const token = process.env.TWILIO_AUTH_TOKEN;
+    const from = fromOverride || process.env.TWILIO_FROM_NUMBER;
+    await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Basic ' + Buffer.from(`${sid}:${token}`).toString('base64'),
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({ To: to, From: from, Body: body }),
+    });
+  } catch (e) {
+    console.error('Erreur envoi SMS alerte solde :', e);
+  }
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -27,7 +49,7 @@ export default async function handler(req, res) {
 
   try {
     const draftResp = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}&select=entreprise,google_ads_campaign_resource,tarif_prix,derniere_recharge_le`,
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}&select=entreprise,telephone,twilio_phone_number,google_ads_campaign_resource,tarif_prix,derniere_recharge_le,alerte_solde_bas_envoyee`,
       { headers: supaHeaders }
     );
     const draftRows = await draftResp.json();
@@ -59,6 +81,19 @@ export default async function handler(req, res) {
     const budgetPaye = draft.tarif_prix || 0;
     const budgetRestant = +Math.max(0, budgetPaye - consommationAjustee).toFixed(2);
     const pourcentageConsomme = budgetPaye > 0 ? Math.min(100, Math.round((consommationAjustee / budgetPaye) * 100)) : 0;
+
+    // Alerte solde bas — envoyée une seule fois par cycle de recharge, dès
+    // que le seuil est franchi. Remise à zéro par confirm-ad-payment.js à
+    // chaque nouvelle recharge.
+    if (budgetRestant <= SEUIL_ALERTE_SOLDE && budgetPaye > 0 && !draft.alerte_solde_bas_envoyee) {
+      const texteAlerte = `Bonjour, il vous reste environ ${budgetRestant} € de budget publicitaire Skyeco Ads. Pensez à recharger pour continuer à recevoir des demandes.`;
+      await envoyerSMS(draft.telephone, texteAlerte, draft.twilio_phone_number);
+      await fetch(`${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}`, {
+        method: 'PATCH',
+        headers: { ...supaHeaders, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify({ alerte_solde_bas_envoyee: true }),
+      });
+    }
 
     return res.status(200).json({
       success: true,

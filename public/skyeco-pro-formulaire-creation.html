@@ -280,12 +280,13 @@
           <h2 class="q">Quel est votre cœur de cible ?</h2>
           <p class="hint">Le mini-site et les questions posées à vos clients seront adaptés à votre activité.</p>
           <div class="metier-grid" id="metierGrid">
-            <button type="button" class="metier-card" data-value="resine">Revêtements résine<span class="tag">sols, allées, terrasses</span></button>
-            <button type="button" class="metier-card" data-value="cloture">Clôtures &amp; portails<span class="tag">pose, motorisation</span></button>
-            <button type="button" class="metier-card" data-value="terrassement">Terrassement<span class="tag">VRD, préparation de sol</span></button>
-            <button type="button" class="metier-card" data-value="assainissement">Assainissement<span class="tag">non collectif</span></button>
-            <button type="button" class="metier-card" data-value="paysagisme">Paysagisme<span class="tag">extérieurs, aménagement</span></button>
-            <button type="button" class="metier-card" data-value="autre">Autre métier BTP<span class="tag">à préciser</span></button>
+            <button type="button" class="metier-card" data-value="paysagiste">Paysagiste<span class="tag">aménagement extérieur</span></button>
+            <button type="button" class="metier-card" data-value="piscine">Pose piscine<span class="tag">installation, plage</span></button>
+            <button type="button" class="metier-card" data-value="tonte">Tonte et coupe<span class="tag">entretien régulier</span></button>
+            <button type="button" class="metier-card" data-value="terrasse">Terrasse<span class="tag">bois, composite, dallage</span></button>
+            <button type="button" class="metier-card" data-value="paysagiste_concepteur">Paysagiste concepteur<span class="tag">conception, plans</span></button>
+            <button type="button" class="metier-card" data-value="arboriste">Arboriste élagueur<span class="tag">taille, abattage</span></button>
+            <button type="button" class="metier-card" data-value="espaces_verts">Entretien d'espaces verts<span class="tag">jardins, copropriétés</span></button>
           </div>
           <div class="error mono" id="err-metier">Sélectionnez un métier pour continuer.</div>
         </div>
@@ -474,7 +475,7 @@
       const telOk = isTelephoneValid(document.getElementById('telephone').value);
       return document.getElementById('entreprise').value.trim() && emailOk && telOk && state.telephoneVerifie;
     }
-    if(i===2){ return !!state.metier; }
+    if(i===2){ return Array.isArray(state.metier) && state.metier.length > 0; }
     if(i===5){ return !state.tarifActif || (state.tarifPrix && parseFloat(state.tarifPrix) > 0); }
     return true;
   }
@@ -645,13 +646,20 @@
     }
   });
 
-  // Step 2: métier
+  // Step 2: métier (sélection multiple)
   document.getElementById('metierGrid').addEventListener('click', e=>{
     const card = e.target.closest('.metier-card');
     if(!card) return;
-    document.querySelectorAll('#metierGrid .metier-card').forEach(c=>c.classList.remove('selected'));
-    card.classList.add('selected');
-    state.metier = card.dataset.value;
+    if(!Array.isArray(state.metier)) state.metier = [];
+    const valeur = card.dataset.value;
+    const index = state.metier.indexOf(valeur);
+    if(index === -1){
+      state.metier.push(valeur);
+      card.classList.add('selected');
+    } else {
+      state.metier.splice(index, 1);
+      card.classList.remove('selected');
+    }
     document.getElementById('err-metier').classList.remove('show');
     document.getElementById('btnNext').disabled = !canProceed(2);
   });
@@ -747,7 +755,7 @@
   });
 
   function buildRecap(){
-    const metierLabels = {resine:'Revêtements résine', cloture:'Clôtures & portails', terrassement:'Terrassement', assainissement:'Assainissement', paysagisme:'Paysagisme', autre:'Autre métier BTP'};
+    const metierLabels = {paysagiste:'Paysagiste', piscine:'Pose piscine', tonte:'Tonte et coupe', terrasse:'Terrasse', paysagiste_concepteur:'Paysagiste concepteur', arboriste:'Arboriste élagueur', espaces_verts:"Entretien d'espaces verts"};
     const uniteLabels = {m2:'€/m²', ml:'€/mètre linéaire', m3:'€/m³'};
     const recap = document.getElementById('recap');
     let html =
@@ -755,7 +763,7 @@
       '<dt>Entreprise</dt><dd>' + (state.entreprise||'—') + '</dd>' +
       "<dt>Zone d'intervention</dt><dd>" + (state.zone||'—') + '</dd>' +
       '<dt>Contact</dt><dd>' + (state.telephone||'—') + ' (vérifié) · ' + (state.email||'—') + '</dd>' +
-      '<dt>Métier</dt><dd>' + (metierLabels[state.metier]||'—') + '</dd>' +
+      '<dt>Métier</dt><dd>' + ((Array.isArray(state.metier) ? state.metier.map(m=>metierLabels[m]).join(', ') : metierLabels[state.metier])||'—') + '</dd>' +
       '<dt>Tarification</dt><dd>' + (state.tarifActif ? ('Estimation activée — ' + (state.tarifPrix||'—') + ' ' + uniteLabels[state.tarifUnite]) : 'Formulaire basique, sans prix') + '</dd>' +
       '<dt>Couleur</dt><dd><span style="display:inline-block;width:12px;height:12px;background:'+state.couleur+';vertical-align:middle;margin-right:6px;"></span>' + state.couleur + '</dd>';
     recap.innerHTML = html;
@@ -782,7 +790,7 @@
       document.getElementById('err-entreprise').classList.remove('show');
     }
     if(i===2){
-      if(!state.metier){ document.getElementById('err-metier').classList.add('show'); return false; }
+      if(!Array.isArray(state.metier) || state.metier.length === 0){ document.getElementById('err-metier').classList.add('show'); return false; }
     }
     return true;
   }

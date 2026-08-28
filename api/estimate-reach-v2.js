@@ -13,12 +13,14 @@ const GOOGLE_ADS_API_VERSION = 'v18';
 const GOOGLE_ADS_BASE_URL = `https://googleads.googleapis.com/${GOOGLE_ADS_API_VERSION}`;
 
 const KEYWORDS_BY_METIER = {
-  resine: ['terrasse résine prix', 'revêtement résine extérieur prix', 'sol résine terrasse'],
-  cloture: ['clôture jardin prix', 'pose clôture prix', 'portail motorisé prix'],
-  terrassement: ['terrassement prix m2', 'entreprise terrassement devis', 'nivellement terrain prix'],
-  assainissement: ['assainissement non collectif prix', 'installation fosse septique prix', 'micro station épuration prix'],
-  paysagisme: ['paysagiste prix', 'entretien jardin prix', 'aménagement extérieur paysagiste'],
-  autre: ['devis travaux extérieur', 'artisan btp devis']
+  paysagiste: ['paysagiste prix', 'aménagement extérieur paysagiste', 'devis paysagiste'],
+  piscine: ['pose piscine prix', 'installation piscine devis', 'plage piscine prix'],
+  tonte: ['tonte pelouse prix', 'entretien jardin prix', 'tonte gazon devis'],
+  terrasse: ['terrasse bois prix', 'terrasse composite prix', 'pose terrasse devis'],
+  paysagiste_concepteur: ['paysagiste concepteur prix', 'conception jardin paysagiste', 'plan aménagement extérieur'],
+  arboriste: ['élagage prix', 'abattage arbre prix', 'arboriste élagueur devis'],
+  espaces_verts: ['entretien espaces verts prix', 'entretien jardin copropriété', 'entreprise espaces verts devis'],
+  autre: ['devis travaux extérieur', 'artisan paysagiste devis'] // repli de sécurité, non sélectionnable dans le formulaire
 };
 
 // Mêmes codes de ciblage géographique que create-google-ads-campaign.js —
@@ -104,7 +106,12 @@ export default async function handler(req, res) {
   }
 
   const { metier, departement, budget } = req.body || {};
-  const keywords = KEYWORDS_BY_METIER[metier] || KEYWORDS_BY_METIER.autre;
+  // "metier" peut être un tableau (nouvelle sélection multiple) ou une chaîne
+  // unique (anciens sites créés avant ce changement) — on gère les deux.
+  const metiersListe = Array.isArray(metier) ? metier : (metier ? [metier] : []);
+  const keywords = metiersListe.length
+    ? [...new Set(metiersListe.flatMap(m => KEYWORDS_BY_METIER[m] || []))]
+    : KEYWORDS_BY_METIER.autre;
   const budgetNum = parseFloat(budget);
 
   // Formule "abonnement" : 39,90€/mois (facturé séparément, hors de ce calcul)

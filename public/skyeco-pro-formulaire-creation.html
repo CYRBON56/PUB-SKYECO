@@ -24,7 +24,10 @@
   :focus-visible{outline:3px solid var(--orange); outline-offset:2px;}
   @media (prefers-reduced-motion: reduce){ *{transition-duration:.001ms !important; animation-duration:.001ms !important;} }
 
-  .split-layout{ display:flex; min-height:100vh; }
+  .split-layout{ display:flex; min-height:100vh; position:relative; }
+  .shared-carousel-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 1.2s ease-in-out; z-index:0; }
+  .shared-carousel-img.active{ opacity:1; }
+  .shared-carousel-overlay{ position:absolute; inset:0; background:linear-gradient(rgba(20,48,74,0.72), rgba(20,48,74,0.8)); z-index:1; }
 
   .page-logo{
     position:fixed; top:20px; left:20px; z-index:200;
@@ -43,8 +46,9 @@
     .page-logo-text{ font-size:13px; }
   }
   .video-panel{
-    flex:1 1 50%; background:var(--navy); position:relative; display:flex; flex-direction:column;
+    flex:1 1 50%; position:relative; display:flex; flex-direction:column;
     align-items:center; justify-content:center; padding:32px; overflow:hidden;
+    z-index:2;
   }
   .carousel-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 1s ease-in-out; }
   .carousel-img.active{ opacity:1; }
@@ -57,7 +61,7 @@
     pointer-events:none;
   }
 
-  .form-panel{ flex:1 1 50%; position:relative; display:flex; align-items:center; justify-content:center; padding:24px; overflow:hidden; }
+  .form-panel{ flex:1 1 50%; position:relative; display:flex; align-items:center; justify-content:center; padding:24px; overflow:hidden; z-index:2; }
   .form-bg-overlay{ position:absolute; inset:0; z-index:-1; background:rgba(244,247,249,0.55); }
   .carousel-caption{
     position:absolute; left:20px; bottom:20px; z-index:1; max-width:260px;
@@ -179,6 +183,16 @@
 </div>
 
 <div class="split-layout">
+  <img class="shared-carousel-img active" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/1-terrasse-mobilier-noir.jpg" alt="">
+  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/2-terrasse-mobilier-violet.jpg" alt="">
+  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/3-piscine-motif-tortue.jpg" alt="">
+  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/4-motif-geometrique.jpg" alt="">
+  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/5-piscine-beige.jpg" alt="">
+  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/6-piscine-pool-house.jpg" alt="">
+  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/7-piscine-jardin.jpg" alt="">
+  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/8-escalier-terrasse.jpg" alt="">
+  <div class="shared-carousel-overlay"></div>
+
   <div class="video-panel">
     <video class="explainer-bg-video" autoplay muted loop playsinline controls>
       <source src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/puv%20skyeco/video.mp4" type="video/mp4">
@@ -186,15 +200,6 @@
   </div>
 
   <div class="form-panel" id="photoCarousel">
-    <img class="carousel-img active" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/1-terrasse-mobilier-noir.jpg" alt="">
-    <img class="carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/2-terrasse-mobilier-violet.jpg" alt="">
-    <img class="carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/3-piscine-motif-tortue.jpg" alt="">
-    <img class="carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/4-motif-geometrique.jpg" alt="">
-    <img class="carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/5-piscine-beige.jpg" alt="">
-    <img class="carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/6-piscine-pool-house.jpg" alt="">
-    <img class="carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/7-piscine-jardin.jpg" alt="">
-    <img class="carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/8-escalier-terrasse.jpg" alt="">
-    <div class="form-bg-overlay"></div>
     <div class="carousel-caption">Des extérieurs pensés pour durer.</div>
     <div class="card">
       <header class="top">
@@ -375,7 +380,7 @@
 (function(){
   // Carrousel photo (panneau droit, fond du formulaire)
   (function initCarousel(){
-    const imgs = Array.from(document.querySelectorAll('#photoCarousel .carousel-img'));
+    const imgs = Array.from(document.querySelectorAll('.shared-carousel-img'));
     if(imgs.length <= 1) return;
     let idx = 0;
     setInterval(()=>{

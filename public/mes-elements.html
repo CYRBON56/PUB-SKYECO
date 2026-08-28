@@ -6,176 +6,315 @@
 <title>Vos éléments — Skyeco Pro</title>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f5f8f6; color:#14312a; padding:32px 20px 80px; }
-  .wrap { max-width:720px; margin:0 auto; }
-  .eyebrow { font-size:0.8rem; font-weight:700; color:#1e6f4c; letter-spacing:0.03em; text-transform:uppercase; margin-bottom:8px; }
-  h1 { font-size:1.6rem; margin-bottom:10px; }
-  .intro { font-size:0.95rem; color:#5b6b64; line-height:1.6; margin-bottom:32px; }
+  body {
+    font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background:#f7f5f0; color:#2a3d35; padding:40px 20px 100px;
+    position:relative; overflow-x:hidden; line-height:1.6;
+  }
 
-  .section { background:#fff; border-radius:16px; padding:26px; margin-bottom:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
-  .section h2 { font-size:1.1rem; margin-bottom:6px; }
-  .section .sub { font-size:0.82rem; color:#8a9891; margin-bottom:20px; }
+  /* Fond végétal, très discret — juste une présence apaisante, jamais distrayant */
+  .leaf-bg { position:fixed; z-index:0; pointer-events:none; }
+  .leaf-bg svg { display:block; }
 
-  label { display:block; font-size:0.85rem; font-weight:700; margin-bottom:6px; margin-top:16px; }
+  .wrap { position:relative; z-index:1; max-width:640px; margin:0 auto; }
+
+  .eyebrow { font-size:0.78rem; font-weight:600; color:#4a8a68; letter-spacing:0.04em; text-transform:uppercase; margin-bottom:10px; }
+  h1 { font-size:1.7rem; font-weight:700; margin-bottom:14px; letter-spacing:-0.01em; }
+  .intro { font-size:0.98rem; color:#5f6f66; line-height:1.75; margin-bottom:8px; max-width:52ch; }
+  .reassurance { font-size:0.84rem; color:#7a8880; margin-bottom:36px; display:flex; align-items:center; gap:8px; }
+
+  /* Barre de progression douce */
+  .progress-wrap { margin-bottom:32px; }
+  .progress-track { background:#e9e5db; border-radius:999px; height:6px; overflow:hidden; }
+  .progress-fill { background:#4a8a68; height:100%; border-radius:999px; transition:width 0.5s ease; width:0%; }
+  .progress-label { font-size:0.76rem; color:#8a9891; margin-top:8px; }
+
+  .section {
+    background:#fffdfa; border-radius:20px; margin-bottom:16px;
+    box-shadow:0 1px 3px rgba(42,61,53,0.04), 0 8px 24px rgba(42,61,53,0.05);
+    overflow:hidden; border:1px solid rgba(42,61,53,0.04);
+  }
+  .section-header {
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:22px 26px; cursor:pointer; user-select:none;
+  }
+  .section-header:hover { background:rgba(74,138,104,0.03); }
+  .section-title { display:flex; align-items:center; gap:12px; }
+  .section-icon { font-size:1.3rem; }
+  .section h2 { font-size:1.05rem; font-weight:700; }
+  .section .sub { font-size:0.82rem; color:#8a9891; margin-top:3px; }
+  .section-check { font-size:0.78rem; color:#4a8a68; font-weight:600; opacity:0; transition:opacity 0.2s; }
+  .section-check.visible { opacity:1; }
+  .chevron { color:#c2c9c3; font-size:0.9rem; transition:transform 0.25s ease; flex-shrink:0; }
+  .section.open .chevron { transform:rotate(180deg); }
+
+  .section-body { max-height:0; overflow:hidden; transition:max-height 0.35s ease; }
+  .section.open .section-body { max-height:none; }
+  .section-body-inner { padding:4px 26px 26px; }
+
+  label { display:block; font-size:0.84rem; font-weight:600; color:#3d5248; margin-bottom:7px; margin-top:18px; }
   label:first-of-type { margin-top:0; }
   input[type=text], input[type=email], input[type=tel], input[type=url], input[type=number], select, textarea {
-    width:100%; padding:11px 13px; border:1.5px solid #d7dedb; border-radius:10px; font-size:0.95rem; font-family:inherit; color:#14312a;
+    width:100%; padding:12px 14px; border:1.5px solid #e3ded2; border-radius:12px; font-size:0.95rem;
+    font-family:inherit; color:#2a3d35; background:#fdfcf9; transition:border-color 0.15s;
   }
+  input:focus, select:focus, textarea:focus { outline:none; border-color:#4a8a68; }
   textarea { resize:vertical; min-height:70px; }
   .row2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
   .row3 { display:grid; grid-template-columns:2fr 1fr 1fr; gap:14px; }
-  .hint { font-size:0.76rem; color:#8a9891; margin-top:5px; }
+  .hint { font-size:0.76rem; color:#a3ab9e; margin-top:6px; line-height:1.5; }
 
   .upload-box {
-    border:2px dashed #d7dedb; border-radius:12px; padding:20px; text-align:center; cursor:pointer; transition:border-color 0.15s;
+    border:1.5px dashed #d8d2c2; border-radius:14px; padding:24px; text-align:center; cursor:pointer; transition:all 0.2s; background:#fdfcf9;
   }
-  .upload-box:hover { border-color:#1e6f4c; }
-  .upload-box.has-file { border-style:solid; border-color:#1e6f4c; background:#eaf4ef; }
+  .upload-box:hover { border-color:#4a8a68; background:#f4f8f5; }
+  .upload-box.has-file { border-style:solid; border-color:#4a8a68; background:#f0f7f2; }
   .upload-box input[type=file] { display:none; }
-  .upload-label { font-size:0.88rem; font-weight:700; color:#1e6f4c; }
-  .upload-status { font-size:0.78rem; color:#5b6b64; margin-top:6px; }
+  .upload-label { font-size:0.88rem; font-weight:600; color:#4a8a68; }
+  .upload-status { font-size:0.78rem; color:#8a9891; margin-top:6px; }
 
-  .photos-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(90px,1fr)); gap:10px; margin-top:14px; }
-  .photo-thumb { position:relative; aspect-ratio:1; border-radius:8px; overflow:hidden; background:#eef1f0; }
+  .photos-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(88px,1fr)); gap:10px; margin-top:14px; }
+  .photo-thumb { position:relative; aspect-ratio:1; border-radius:10px; overflow:hidden; background:#f0eee6; }
   .photo-thumb img { width:100%; height:100%; object-fit:cover; }
-  .photo-thumb .del { position:absolute; top:3px; right:3px; background:rgba(0,0,0,0.6); color:#fff; border:none; border-radius:50%; width:20px; height:20px; font-size:12px; cursor:pointer; line-height:1; }
+  .photo-thumb .del { position:absolute; top:4px; right:4px; background:rgba(42,61,53,0.55); color:#fff; border:none; border-radius:50%; width:22px; height:22px; font-size:13px; cursor:pointer; line-height:1; }
 
   .toggle-row { display:flex; align-items:center; gap:10px; margin-bottom:4px; }
-  .toggle-row input { width:auto; }
-  .toggle-row label { margin:0; }
+  .toggle-row input { width:auto; accent-color:#4a8a68; }
+  .toggle-row label { margin:0; font-weight:600; }
 
-  .metier-tarif-row { border:1px solid #eef1f0; border-radius:10px; padding:14px; margin-top:12px; }
-  .metier-tarif-row .metier-nom { font-weight:800; font-size:0.9rem; margin-bottom:10px; }
+  .metier-tarif-row { border:1px solid #efece2; border-radius:12px; padding:16px; margin-top:12px; background:#fdfcf9; }
+  .metier-tarif-row .metier-nom { font-weight:700; font-size:0.9rem; margin-bottom:10px; color:#3d5248; }
 
-  .extraction-box { background:#fdf1ea; border-radius:10px; padding:14px; margin-top:14px; font-size:0.82rem; color:#5b6b64; }
-  .btn-extraire { background:#e8622c; color:#fff; border:none; border-radius:8px; padding:9px 16px; font-size:0.82rem; font-weight:700; cursor:pointer; margin-top:8px; }
+  .extraction-box { background:#f4ece2; border-radius:12px; padding:14px 16px; margin-top:14px; font-size:0.82rem; color:#6b5e4c; line-height:1.6; }
+  .btn-extraire { background:#e8622c; color:#fff; border:none; border-radius:10px; padding:10px 18px; font-size:0.82rem; font-weight:600; cursor:pointer; margin-top:10px; transition:filter 0.15s; }
+  .btn-extraire:hover { filter:brightness(1.06); }
 
   .btn-submit {
-    width:100%; background:#1e6f4c; color:#fff; border:none; border-radius:12px; padding:16px; font-size:1rem; font-weight:800; cursor:pointer; margin-top:8px;
+    width:100%; background:#3d7a5a; color:#fff; border:none; border-radius:14px; padding:18px; font-size:1rem; font-weight:700; cursor:pointer; margin-top:12px; transition:filter 0.15s;
   }
-  .btn-submit:disabled { opacity:0.6; cursor:not-allowed; }
-  .save-msg { text-align:center; font-size:0.85rem; margin-top:12px; padding:10px; border-radius:8px; }
-  .save-msg.ok { background:#eaf4ef; color:#1e6f4c; }
-  .save-msg.err { background:#fdeceb; color:#c0392b; }
+  .btn-submit:hover { filter:brightness(1.05); }
+  .btn-submit:disabled { opacity:0.55; cursor:not-allowed; }
+  .save-note { text-align:center; font-size:0.78rem; color:#a3ab9e; margin-top:12px; }
+  .save-msg { text-align:center; font-size:0.88rem; margin-top:14px; padding:14px; border-radius:12px; line-height:1.5; }
+  .save-msg.ok { background:#eef5ef; color:#3d7a5a; }
+  .save-msg.err { background:#fbeeec; color:#b5482a; }
 </style>
 </head>
 <body>
+
+<!-- Fond végétal très discret, purement d'ambiance -->
+<div class="leaf-bg" style="top:-40px; right:-100px; opacity:0.12;">
+  <svg width="320" height="320" viewBox="0 0 320 320">
+    <defs>
+      <radialGradient id="lf1" cx="35%" cy="30%" r="75%">
+        <stop offset="0%" stop-color="#7bc79e"/>
+        <stop offset="100%" stop-color="#3d7a5a"/>
+      </radialGradient>
+    </defs>
+    <path fill="url(#lf1)" d="M160,25 C230,45 280,105 265,180 C250,255 175,280 120,245 C65,210 50,135 85,80 C110,48 135,32 160,25 Z"/>
+  </svg>
+</div>
+<div class="leaf-bg" style="bottom:-80px; left:-90px; opacity:0.10;">
+  <svg width="380" height="380" viewBox="0 0 380 380">
+    <defs>
+      <radialGradient id="lf2" cx="40%" cy="35%" r="70%">
+        <stop offset="0%" stop-color="#f0a878"/>
+        <stop offset="100%" stop-color="#e8622c"/>
+      </radialGradient>
+    </defs>
+    <path fill="url(#lf2)" d="M190,35 C270,60 330,130 315,210 C300,290 210,325 140,290 C70,255 45,165 80,105 C105,62 150,42 190,35 Z"/>
+  </svg>
+</div>
+
 <div class="wrap">
   <div class="eyebrow">Construction de votre vitrine</div>
-  <h1>Vos éléments</h1>
+  <h1>Prenons le temps de bien faire les choses</h1>
   <p class="intro">
-    Suite à notre appel, dépose ici tout ce qui nous permettra de construire ta vraie vitrine — logo, photos, coordonnées, informations légales, et si tu le souhaites, un chiffrage précis pour générer de vrais devis.
+    Suite à notre échange, dépose ici ce qui nous permettra de construire ta vraie vitrine — à ton rythme, section par section.
   </p>
+  <p class="reassurance">🌿 Rien n'est chronométré, et chaque section s'enregistre à part.</p>
 
-  <div class="section">
-    <h2>🎨 Identité visuelle</h2>
-    <p class="sub">Logo, photos de réalisations, vidéo de présentation.</p>
-
-    <label>Logo de l'entreprise</label>
-    <div class="upload-box" id="boxLogo">
-      <input type="file" id="inputLogo" accept="image/*">
-      <div class="upload-label">📁 Choisir un fichier</div>
-      <div class="upload-status" id="statusLogo">Aucun fichier — PNG ou JPG, fond transparent de préférence</div>
-    </div>
-
-    <label>Photos pour le carrousel (jusqu'à 10)</label>
-    <div class="upload-box" id="boxPhotos">
-      <input type="file" id="inputPhotos" accept="image/*" multiple>
-      <div class="upload-label">📁 Ajouter des photos</div>
-      <div class="upload-status" id="statusPhotos">Aucune photo ajoutée</div>
-    </div>
-    <div class="photos-grid" id="photosGrid"></div>
-
-    <label>Vidéo de présentation (optionnel)</label>
-    <div class="upload-box" id="boxVideo">
-      <input type="file" id="inputVideo" accept="video/*">
-      <div class="upload-label">📁 Choisir une vidéo</div>
-      <div class="upload-status" id="statusVideo">Ou colle un lien YouTube/Vimeo ci-dessous</div>
-    </div>
-    <input type="url" id="videoLien" placeholder="https://youtube.com/..." style="margin-top:10px;">
+  <div class="progress-wrap">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label" id="progressLabel">0% complété</div>
   </div>
 
-  <div class="section">
-    <h2>📍 Coordonnées</h2>
-    <label>Téléphone</label>
-    <input type="tel" id="telephone" placeholder="06 12 34 56 78">
-
-    <label>Email</label>
-    <input type="email" id="email" placeholder="contact@monentreprise.fr">
-
-    <label>Adresse</label>
-    <input type="text" id="adresseRue" placeholder="Numéro et rue">
-    <div class="row2" style="margin-top:10px;">
-      <input type="text" id="adresseCp" placeholder="Code postal">
-      <input type="text" id="adresseVille" placeholder="Ville">
-    </div>
-  </div>
-
-  <div class="section">
-    <h2>⚖️ Informations légales</h2>
-    <p class="sub">Nécessaires pour les mentions légales de ton site et pour générer de vrais devis.</p>
-
-    <label>SIRET</label>
-    <input type="text" id="siret" placeholder="14 chiffres">
-
-    <label>Forme juridique</label>
-    <select id="formeJuridique">
-      <option value="">— Sélectionner —</option>
-      <option>Entreprise individuelle (EI)</option>
-      <option>Micro-entreprise</option>
-      <option>EURL</option>
-      <option>SARL</option>
-      <option>SASU</option>
-      <option>SAS</option>
-      <option>Autre</option>
-    </select>
-
-    <div class="row2">
-      <div>
-        <label>Capital social (si société)</label>
-        <input type="text" id="capitalSocial" placeholder="Ex : 10 000 €">
+  <div class="section open" data-section="visuel">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">🎨</span>
+        <div>
+          <h2>Identité visuelle</h2>
+          <p class="sub">Logo, photos, vidéo — ce que tu as sous la main suffit.</p>
+        </div>
       </div>
-      <div>
-        <label>Ville d'immatriculation RCS</label>
-        <input type="text" id="rcsVille" placeholder="Ex : Lorient">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="section-check" data-check="visuel">✓ complété</span>
+        <span class="chevron">▾</span>
       </div>
     </div>
+    <div class="section-body">
+      <div class="section-body-inner">
+        <label>Logo de l'entreprise</label>
+        <div class="upload-box" id="boxLogo">
+          <input type="file" id="inputLogo" accept="image/*">
+          <div class="upload-label">📁 Choisir un fichier</div>
+          <div class="upload-status" id="statusLogo">Aucun fichier — PNG ou JPG, fond transparent de préférence</div>
+        </div>
 
-    <label>Assurance décennale — assureur</label>
-    <input type="text" id="assuranceAssureur" placeholder="Ex : ERGO France">
+        <label>Photos pour le carrousel (jusqu'à 10)</label>
+        <div class="upload-box" id="boxPhotos">
+          <input type="file" id="inputPhotos" accept="image/*" multiple>
+          <div class="upload-label">📁 Ajouter des photos</div>
+          <div class="upload-status" id="statusPhotos">Aucune photo ajoutée</div>
+        </div>
+        <div class="photos-grid" id="photosGrid"></div>
 
-    <label>Assurance décennale — numéro de police</label>
-    <input type="text" id="assuranceNumero" placeholder="Numéro de contrat">
-  </div>
-
-  <div class="section">
-    <h2>🔗 Site web existant (optionnel)</h2>
-    <p class="sub">Si tu as déjà un site, on peut essayer d'y retrouver certaines informations légales automatiquement.</p>
-    <input type="url" id="siteExistant" placeholder="https://monsite.fr">
-    <button type="button" class="btn-extraire" id="btnExtraire">🔍 Essayer de récupérer les infos légales</button>
-    <div class="extraction-box" id="extractionResult" style="display:none;"></div>
-  </div>
-
-  <div class="section">
-    <h2>💰 Chiffrage détaillé pour devis</h2>
-    <div class="toggle-row">
-      <input type="checkbox" id="toggleChiffrage">
-      <label for="toggleChiffrage" style="font-weight:600;">Je veux proposer un chiffrage précis (m², ml, m³) sur mon formulaire</label>
+        <label>Vidéo de présentation (optionnel)</label>
+        <div class="upload-box" id="boxVideo">
+          <input type="file" id="inputVideo" accept="video/*">
+          <div class="upload-label">📁 Choisir une vidéo</div>
+          <div class="upload-status" id="statusVideo">Ou colle un lien YouTube/Vimeo ci-dessous</div>
+        </div>
+        <input type="url" id="videoLien" placeholder="https://youtube.com/..." style="margin-top:10px;">
+      </div>
     </div>
-    <p class="sub" style="margin-top:6px;">Facultatif — sans ça, le formulaire reste un simple recueil de coordonnées, sans estimation de prix.</p>
+  </div>
 
-    <div id="chiffrageDetail" style="display:none;">
-      <label>Taux de TVA applicable</label>
-      <select id="tvaTaux">
-        <option value="20">20% — taux normal</option>
-        <option value="10">10% — travaux de rénovation (bâti de plus de 2 ans)</option>
-        <option value="5.5">5.5% — travaux d'amélioration énergétique</option>
-      </select>
-      <div id="metiersTarifs"></div>
+  <div class="section" data-section="coordonnees">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">📍</span>
+        <div><h2>Coordonnées</h2></div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="section-check" data-check="coordonnees">✓ complété</span>
+        <span class="chevron">▾</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="section-body-inner">
+        <label>Téléphone</label>
+        <input type="tel" id="telephone" placeholder="06 12 34 56 78">
+
+        <label>Email</label>
+        <input type="email" id="email" placeholder="contact@monentreprise.fr">
+
+        <label>Adresse</label>
+        <input type="text" id="adresseRue" placeholder="Numéro et rue">
+        <div class="row2" style="margin-top:10px;">
+          <input type="text" id="adresseCp" placeholder="Code postal">
+          <input type="text" id="adresseVille" placeholder="Ville">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" data-section="legal">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">⚖️</span>
+        <div>
+          <h2>Informations légales</h2>
+          <p class="sub">Pour tes mentions légales et tes futurs devis.</p>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="section-check" data-check="legal">✓ complété</span>
+        <span class="chevron">▾</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="section-body-inner">
+        <label>SIRET</label>
+        <input type="text" id="siret" placeholder="14 chiffres">
+
+        <label>Forme juridique</label>
+        <select id="formeJuridique">
+          <option value="">— Sélectionner —</option>
+          <option>Entreprise individuelle (EI)</option>
+          <option>Micro-entreprise</option>
+          <option>EURL</option>
+          <option>SARL</option>
+          <option>SASU</option>
+          <option>SAS</option>
+          <option>Autre</option>
+        </select>
+
+        <div class="row2">
+          <div>
+            <label>Capital social (si société)</label>
+            <input type="text" id="capitalSocial" placeholder="Ex : 10 000 €">
+          </div>
+          <div>
+            <label>Ville d'immatriculation RCS</label>
+            <input type="text" id="rcsVille" placeholder="Ex : Lorient">
+          </div>
+        </div>
+
+        <label>Assurance décennale — assureur</label>
+        <input type="text" id="assuranceAssureur" placeholder="Ex : ERGO France">
+
+        <label>Assurance décennale — numéro de police</label>
+        <input type="text" id="assuranceNumero" placeholder="Numéro de contrat">
+      </div>
+    </div>
+  </div>
+
+  <div class="section" data-section="siteweb">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">🔗</span>
+        <div>
+          <h2>Site web existant</h2>
+          <p class="sub">Facultatif — utile si tu en as déjà un.</p>
+        </div>
+      </div>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="section-body">
+      <div class="section-body-inner">
+        <input type="url" id="siteExistant" placeholder="https://monsite.fr">
+        <button type="button" class="btn-extraire" id="btnExtraire">🔍 Essayer de récupérer les infos légales</button>
+        <div class="extraction-box" id="extractionResult" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" data-section="chiffrage">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">💰</span>
+        <div>
+          <h2>Chiffrage détaillé</h2>
+          <p class="sub">Facultatif — pour générer de vrais devis directement.</p>
+        </div>
+      </div>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="section-body">
+      <div class="section-body-inner">
+        <div class="toggle-row">
+          <input type="checkbox" id="toggleChiffrage">
+          <label for="toggleChiffrage">Je veux proposer un chiffrage précis (m², ml, m³)</label>
+        </div>
+        <p class="hint">Sans ça, le formulaire reste un simple recueil de coordonnées, sans estimation de prix — et c'est très bien aussi.</p>
+
+        <div id="chiffrageDetail" style="display:none;">
+          <label>Taux de TVA applicable</label>
+          <select id="tvaTaux">
+            <option value="20">20% — taux normal</option>
+            <option value="10">10% — travaux de rénovation (bâti de plus de 2 ans)</option>
+            <option value="5.5">5.5% — travaux d'amélioration énergétique</option>
+          </select>
+          <div id="metiersTarifs"></div>
+        </div>
+      </div>
     </div>
   </div>
 
   <button class="btn-submit" id="btnSubmit">Enregistrer mes éléments</button>
+  <p class="save-note">Tu peux revenir compléter ce formulaire plus tard, rien n'est perdu.</p>
   <div class="save-msg" id="saveMsg" style="display:none;"></div>
 </div>
 
@@ -191,6 +330,41 @@
   let photosUrls = [];
   let videoUrl = null;
   let metiersActuels = [];
+
+  // --- Accordéon ---
+  document.querySelectorAll('.section-header').forEach(header => {
+    header.addEventListener('click', () => {
+      const section = header.closest('.section');
+      const estOuverte = section.classList.contains('open');
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('open'));
+      if (!estOuverte) section.classList.add('open');
+    });
+  });
+
+  // --- Barre de progression douce, recalculée à chaque saisie ---
+  function calculerProgression() {
+    const groupes = {
+      visuel: () => !!(logoUrl || photosUrls.length),
+      coordonnees: () => !!(document.getElementById('telephone').value.trim() && document.getElementById('email').value.trim()),
+      legal: () => !!document.getElementById('siret').value.trim(),
+      siteweb: () => !!document.getElementById('siteExistant').value.trim(),
+      chiffrage: () => document.getElementById('toggleChiffrage').checked,
+    };
+    let completes = 0;
+    Object.entries(groupes).forEach(([nom, verif]) => {
+      const rempli = verif();
+      const badge = document.querySelector(`[data-check="${nom}"]`);
+      if (badge) badge.classList.toggle('visible', rempli);
+      if (rempli) completes++;
+    });
+    const pourcentage = Math.round((completes / Object.keys(groupes).length) * 100);
+    document.getElementById('progressFill').style.width = pourcentage + '%';
+    document.getElementById('progressLabel').textContent = pourcentage === 100
+      ? 'Tout est renseigné ✓'
+      : `${pourcentage}% complété`;
+  }
+  document.body.addEventListener('input', calculerProgression);
+  document.body.addEventListener('change', calculerProgression);
 
   if (!draftId) {
     document.body.innerHTML = '<div style="text-align:center; margin-top:100px;">Lien invalide — identifiant du site manquant.</div>';
@@ -230,6 +404,7 @@
       if (draft.logo_url) { logoUrl = draft.logo_url; document.getElementById('statusLogo').textContent = 'Logo déjà enregistré ✓'; document.getElementById('boxLogo').classList.add('has-file'); }
       if (draft.video_url) { videoUrl = draft.video_url; document.getElementById('videoLien').value = draft.video_url.startsWith('http') ? draft.video_url : ''; }
     } catch (e) { /* silencieux, on part d'un formulaire vide */ }
+    calculerProgression();
   }
 
   const METIER_LABELS = {

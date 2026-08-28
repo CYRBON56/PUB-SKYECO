@@ -226,29 +226,36 @@ const METIER_TEMPLATES = {
 };
 
 const FALLBACK_IMAGES = {
-  resine: [
-    "https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/1-terrasse-mobilier-noir.jpg",
-    "https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/5-piscine-beige.jpg",
-    "https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/6-piscine-pool-house.jpg",
-    "https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/8-escalier-terrasse.jpg"
-  ],
-  cloture: [
-    "https://images.unsplash.com/photo-1597047084897-51e81819a499?w=1200",
-    "https://images.unsplash.com/photo-1600607687644-c7171b42498f?w=1200"
-  ],
-  terrassement: [
-    "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1200",
-    "https://images.unsplash.com/photo-1416339306562-c3e64c3a3fb2?w=1200"
-  ],
-  assainissement: [
-    "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=1200",
-    "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=1200"
-  ],
-  paysagisme: [
+  paysagiste: [
     "https://images.unsplash.com/photo-1558904541-efa843a96f01?w=1200",
     "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=1200",
-    "https://images.unsplash.com/photo-1493957988430-a5f2e15f39a3?w=1200",
+    "https://images.unsplash.com/photo-1493957988430-a5f2e15f39a3?w=1200"
+  ],
+  piscine: [
+    "https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/5-piscine-beige.jpg",
+    "https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/6-piscine-pool-house.jpg",
     "https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/7-piscine-jardin.jpg"
+  ],
+  tonte: [
+    "https://images.unsplash.com/photo-1592417817098-8fd3d9eb14a5?w=1200",
+    "https://images.unsplash.com/photo-1558904541-efa843a96f01?w=1200"
+  ],
+  terrasse: [
+    "https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/1-terrasse-mobilier-noir.jpg",
+    "https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/8-escalier-terrasse.jpg",
+    "https://images.unsplash.com/photo-1416339306562-c3e64c3a3fb2?w=1200"
+  ],
+  paysagiste_concepteur: [
+    "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=1200",
+    "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=1200"
+  ],
+  arboriste: [
+    "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1200",
+    "https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=1200"
+  ],
+  espaces_verts: [
+    "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1200",
+    "https://images.unsplash.com/photo-1493957988430-a5f2e15f39a3?w=1200"
   ],
   autre: [
     "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=1200",
@@ -302,7 +309,11 @@ async function init(){
     video.style.cssText = 'position:absolute; inset:0; width:100%; height:100%; object-fit:cover;';
     container.insertBefore(video, container.firstChild);
   } else {
-    const images = (draft.photos && draft.photos.length) ? draft.photos : (FALLBACK_IMAGES[draft.metier] || FALLBACK_IMAGES.autre);
+    const metiersListeApercu = Array.isArray(draft.metier) ? draft.metier : (draft.metier ? [draft.metier] : []);
+    const imagesFallback = metiersListeApercu.length
+      ? [...new Set(metiersListeApercu.flatMap(m => FALLBACK_IMAGES[m] || []))]
+      : FALLBACK_IMAGES.autre;
+    const images = (draft.photos && draft.photos.length) ? draft.photos : (imagesFallback.length ? imagesFallback : FALLBACK_IMAGES.autre);
     const imgs = images.map((src,i)=>{ const img=document.createElement('img'); img.src=src; if(i===0) img.className='active'; container.appendChild(img); return img; });
     if(imgs.length>1){
       let idx=0;

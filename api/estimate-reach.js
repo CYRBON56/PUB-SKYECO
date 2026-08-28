@@ -1,21 +1,42 @@
 // /api/estimate-reach.js
-// Calcule une estimation de clics/mois réaliste à partir de vraies données de recherche (OpenRush).
-// Le volume n'est disponible qu'à l'échelle nationale (limite de la base OpenRush/DataForSEO pour la France) —
-// on le pondère par la part de population de la région, à titre d'approximation, pas une vraie donnée régionale.
-// Variable d'environnement requise : OPENRUSH_API_KEY
+// Calcule une estimation de clics/mois RÉELLE via le Keyword Planner de
+// l'API Google Ads (GenerateKeywordIdeas) — volume de recherche et CPC
+// directement issus de Google, avec un vrai ciblage géographique par
+// département (contrairement à l'ancienne version basée sur OpenRush, qui
+// ne connaissait que le niveau pays et approximait via la population).
+//
+// Variables d'environnement requises :
+//   GOOGLE_ADS_DEVELOPER_TOKEN, GOOGLE_ADS_CLIENT_ID, GOOGLE_ADS_CLIENT_SECRET,
+//   GOOGLE_ADS_REFRESH_TOKEN, GOOGLE_ADS_LOGIN_CUSTOMER_ID, GOOGLE_ADS_CUSTOMER_ID
+
+const GOOGLE_ADS_API_VERSION = 'v18';
+const GOOGLE_ADS_BASE_URL = `https://googleads.googleapis.com/${GOOGLE_ADS_API_VERSION}`;
 
 const KEYWORDS_BY_METIER = {
-  resine: ['terrasse résine prix', 'revêtement résine extérieur prix', 'sol résine terrasse'],
-  cloture: ['clôture jardin prix', 'pose clôture prix', 'portail motorisé prix'],
-  terrassement: ['terrassement prix m2', 'entreprise terrassement devis', 'nivellement terrain prix'],
-  assainissement: ['assainissement non collectif prix', 'installation fosse septique prix', 'micro station épuration prix'],
-  paysagisme: ['paysagiste prix', 'entretien jardin prix', 'aménagement extérieur paysagiste'],
-  autre: ['devis travaux extérieur', 'artisan btp devis']
+  paysagiste: ['paysagiste prix', 'aménagement extérieur paysagiste', 'devis paysagiste'],
+  piscine: ['pose piscine prix', 'installation piscine devis', 'plage piscine prix'],
+  tonte: ['tonte pelouse prix', 'entretien jardin prix', 'tonte gazon devis'],
+  terrasse: ['terrasse bois prix', 'terrasse composite prix', 'pose terrasse devis'],
+  paysagiste_concepteur: ['paysagiste concepteur prix', 'conception jardin paysagiste', 'plan aménagement extérieur'],
+  arboriste: ['élagage prix', 'abattage arbre prix', 'arboriste élagueur devis'],
+  espaces_verts: ['entretien espaces verts prix', 'entretien jardin copropriété', 'entreprise espaces verts devis'],
+  autre: ['devis travaux extérieur', 'artisan paysagiste devis'] // repli de sécurité, non sélectionnable dans le formulaire
 };
 
-// Correspondance officielle département → région (découpage administratif fixe
-// depuis 2016, aucune approximation ici — contrairement à la pondération par
-// population qui reste une estimation).
+// Mêmes codes de ciblage géographique que create-google-ads-campaign.js —
+// à tenir synchronisé, ou factoriser dans un fichier partagé si la liste grandit.
+const GEO_TARGET_BY_DEPARTEMENT = {
+  '56': '1006094', // Morbihan
+  '35': '1006083', // Ille-et-Vilaine
+  '29': '1006082', // Finistère
+  '22': '1006081', // Côtes-d'Armor
+  '44': '1006095', // Loire-Atlantique
+  // TODO: compléter avec les autres départements au besoin
+};
+
+// Correspondance officielle département → région (découpage administratif
+// fixe depuis 2016, fiable à 100% — contrairement à la pondération par
+// population ci-dessous, qui reste une approximation).
 const DEPARTEMENT_TO_REGION = {
   '01':'Auvergne-Rhône-Alpes','02':'Hauts-de-France','03':'Auvergne-Rhône-Alpes',
   '04':"Provence-Alpes-Côte d'Azur",'05':"Provence-Alpes-Côte d'Azur",'06':"Provence-Alpes-Côte d'Azur",
@@ -44,101 +65,174 @@ const DEPARTEMENT_TO_REGION = {
 };
 
 // Part approximative de la population française par région (INSEE, arrondie).
-// Cette partie RESTE une estimation — seule la correspondance département→région ci-dessus est exacte.
+// Utilisée uniquement en repli, quand le département n'a pas de ciblage
+// géographique précis disponible dans GEO_TARGET_BY_DEPARTEMENT.
 const REGION_POPULATION_SHARE = {
-  'Île-de-France': 0.182,
-  'Auvergne-Rhône-Alpes': 0.121,
-  'Hauts-de-France': 0.089,
-  'Nouvelle-Aquitaine': 0.092,
-  'Occitanie': 0.088,
-  'Grand Est': 0.083,
-  "Provence-Alpes-Côte d'Azur": 0.077,
-  'Pays de la Loire': 0.059,
-  'Normandie': 0.050,
-  'Bretagne': 0.051,
-  'Bourgogne-Franche-Comté': 0.042,
-  'Centre-Val de Loire': 0.039,
-  'Corse': 0.005,
-  'Guadeloupe': 0.006,
-  'Martinique': 0.005,
-  'Guyane': 0.004,
-  'La Réunion': 0.013,
-  'Mayotte': 0.004
+  'Île-de-France': 0.182, 'Auvergne-Rhône-Alpes': 0.121, 'Hauts-de-France': 0.089,
+  'Nouvelle-Aquitaine': 0.092, 'Occitanie': 0.088, 'Grand Est': 0.083,
+  "Provence-Alpes-Côte d'Azur": 0.077, 'Pays de la Loire': 0.059, 'Normandie': 0.050,
+  'Bretagne': 0.051, 'Bourgogne-Franche-Comté': 0.042, 'Centre-Val de Loire': 0.039,
+  'Corse': 0.005, 'Guadeloupe': 0.006, 'Martinique': 0.005, 'Guyane': 0.004,
+  'La Réunion': 0.013, 'Mayotte': 0.004
 };
 
-const USD_TO_EUR = 0.92; // conversion approximative
+// France entière (niveau pays), utilisé comme cible de requête quand aucun
+// département précis n'est configuré — le volume est ensuite réduit
+// proportionnellement à la population de la région déduite du département.
+const GEO_TARGET_FRANCE = '2250';
+
+async function obtenirAccessToken() {
+  const resp = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: process.env.GOOGLE_ADS_CLIENT_ID,
+      client_secret: process.env.GOOGLE_ADS_CLIENT_SECRET,
+      refresh_token: process.env.GOOGLE_ADS_REFRESH_TOKEN,
+      grant_type: 'refresh_token',
+    }),
+  });
+  if (!resp.ok) {
+    const detail = await resp.text();
+    throw new Error('Échec obtention access token Google : ' + detail);
+  }
+  const data = await resp.json();
+  return data.access_token;
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Méthode non autorisée' });
   }
 
-  const { metier, zone, departement, budget } = req.body || {};
-  const keywords = KEYWORDS_BY_METIER[metier] || KEYWORDS_BY_METIER.autre;
-  const location = 'France'; // OpenRush n'accepte que des pays comme zone géographique, pas des régions
+  const { metier, departement, budget } = req.body || {};
+  // "metier" peut être un tableau (nouvelle sélection multiple) ou une chaîne
+  // unique (anciens sites créés avant ce changement) — on gère les deux.
+  const metiersListe = Array.isArray(metier) ? metier : (metier ? [metier] : []);
+  const keywords = metiersListe.length
+    ? [...new Set(metiersListe.flatMap(m => KEYWORDS_BY_METIER[m] || []))]
+    : KEYWORDS_BY_METIER.autre;
   const budgetNum = parseFloat(budget);
 
-  // Le département (fiable, issu du SIRET) est prioritaire sur le texte libre
-  // "zone" (qui peut contenir "Ville, Région" et ne matcherait plus la table).
-  const regionDeduite = (departement && DEPARTEMENT_TO_REGION[String(departement).toUpperCase()])
-    || zone // repli : correspond seulement si zone est un nom de région exact
-    || null;
-  const populationShare = REGION_POPULATION_SHARE[regionDeduite] || null;
+  // Formule "abonnement" : 39,90€/mois (facturé séparément, hors de ce calcul)
+  // + commission de 20% prélevée sur le budget publicitaire alloué par le
+  // client. Le reste (80%) part réellement en dépense pub sur Google Ads.
+  const TAUX_COMMISSION = 0.50; // 50% pour l'instant
+  const commissionPub = budgetNum ? +(budgetNum * TAUX_COMMISSION).toFixed(2) : 0;
+  const budgetNetPub = Math.max(0, budgetNum - commissionPub);
 
-  if (!process.env.OPENRUSH_API_KEY) {
-    return res.status(500).json({ success: false, error: "Clé OpenRush non configurée." });
-  }
+  const geoTargetId = (departement && GEO_TARGET_BY_DEPARTEMENT[departement]) || null;
+  const geoResourceName = geoTargetId
+    ? `geoTargetConstants/${geoTargetId}`
+    : `geoTargetConstants/${GEO_TARGET_FRANCE}`;
+  const geoApprox = !geoTargetId; // true si on interroge la France entière puis on pondère
+  const regionDeduite = departement ? DEPARTEMENT_TO_REGION[String(departement).toUpperCase()] : null;
+  const populationShare = geoApprox && regionDeduite ? REGION_POPULATION_SHARE[regionDeduite] : null;
 
   try {
-    const results = await Promise.all(
-      keywords.map(async (keyword) => {
-        const resp = await fetch('https://api.openrush.com/v1/tools/inspect_keyword', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${process.env.OPENRUSH_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ keyword, location, language: 'French' })
-        });
-        if (!resp.ok) throw new Error(`OpenRush a répondu ${resp.status} pour "${keyword}"`);
-        const json = await resp.json();
-        return json.data;
-      })
+    const accessToken = await obtenirAccessToken();
+    const customerId = process.env.GOOGLE_ADS_CUSTOMER_ID;
+
+    const resp = await fetch(
+      `${GOOGLE_ADS_BASE_URL}/customers/${customerId}:generateKeywordIdeas`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'developer-token': process.env.GOOGLE_ADS_DEVELOPER_TOKEN,
+          'login-customer-id': process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          geoTargetConstants: [geoResourceName],
+          language: 'languageConstants/1002', // Français
+          keywordSeed: { keywords },
+          keywordPlanNetwork: 'GOOGLE_SEARCH',
+        }),
+      }
     );
 
-    const totalVolumeNational = results.reduce((sum, r) => sum + (r.monthly_volume || 0), 0);
-    const cpcs = results.map(r => r.cpc_usd).filter(v => typeof v === 'number' && v > 0);
-    const avgCpcUsd = cpcs.length ? cpcs.reduce((a, b) => a + b, 0) / cpcs.length : null;
-    const avgCpcEur = avgCpcUsd ? +(avgCpcUsd * USD_TO_EUR).toFixed(2) : null;
+    const data = await resp.json();
+    if (!resp.ok) {
+      console.error('Google Ads Keyword Planner erreur :', JSON.stringify(data));
+      throw new Error(data.error?.message || 'Échec Keyword Planner');
+    }
 
-    // Volume régional approximatif = volume national × part de population de la région.
-    const estimatedRegionalVolume = populationShare
-      ? Math.max(1, Math.round(totalVolumeNational * populationShare))
+    const idees = data.results || [];
+
+    // On ne garde que les idées qui correspondent réellement à nos mots-clés
+    // de départ (l'API renvoie aussi des suggestions élargies qu'on ignore ici).
+    const motsCles = idees
+      .filter((idee) => keywords.some((k) => idee.text?.toLowerCase().includes(k.split(' ')[0].toLowerCase())))
+      .map((idee) => {
+        const m = idee.keywordIdeaMetrics || {};
+        const lowMicros = parseInt(m.lowTopOfPageBidMicros || '0', 10);
+        const highMicros = parseInt(m.highTopOfPageBidMicros || '0', 10);
+        const cpcMoyenMicros = lowMicros && highMicros ? (lowMicros + highMicros) / 2 : (lowMicros || highMicros || 0);
+        return {
+          keyword: idee.text,
+          monthly_volume: parseInt(m.avgMonthlySearches || '0', 10),
+          cpc_eur: +(cpcMoyenMicros / 1_000_000).toFixed(2),
+          competition: m.competition || 'UNKNOWN',
+        };
+      });
+
+    // Si le filtre n'a rien gardé (l'API a renvoyé des variantes trop éloignées),
+    // on retombe sur toutes les idées reçues plutôt que de renvoyer un tableau vide.
+    const motsClesFinal = motsCles.length > 0 ? motsCles : idees.slice(0, keywords.length).map((idee) => {
+      const m = idee.keywordIdeaMetrics || {};
+      const lowMicros = parseInt(m.lowTopOfPageBidMicros || '0', 10);
+      const highMicros = parseInt(m.highTopOfPageBidMicros || '0', 10);
+      const cpcMoyenMicros = lowMicros && highMicros ? (lowMicros + highMicros) / 2 : (lowMicros || highMicros || 0);
+      return {
+        keyword: idee.text,
+        monthly_volume: parseInt(m.avgMonthlySearches || '0', 10),
+        cpc_eur: +(cpcMoyenMicros / 1_000_000).toFixed(2),
+        competition: m.competition || 'UNKNOWN',
+      };
+    });
+
+    const totalMonthlyVolumeBrut = motsClesFinal.reduce((sum, k) => sum + k.monthly_volume, 0);
+
+    // Si on n'a pas de ciblage département précis, on réduit le volume
+    // (mesuré au niveau France) proportionnellement à la population de la
+    // région déduite — mieux qu'afficher tel quel un volume national.
+    const totalMonthlyVolume = populationShare
+      ? Math.max(1, Math.round(totalMonthlyVolumeBrut * populationShare))
+      : totalMonthlyVolumeBrut;
+
+    const cpcValides = motsClesFinal.map((k) => k.cpc_eur).filter((v) => v > 0);
+    const avgCpcEur = cpcValides.length
+      ? +(cpcValides.reduce((a, b) => a + b, 0) / cpcValides.length).toFixed(2)
       : null;
 
     let estimatedClicks = null;
-    if (avgCpcEur && budgetNum > 0) {
-      const clicksFromBudget = Math.round(budgetNum / avgCpcEur);
-      // Le budget ne peut pas capter plus de clics que ce que le marché régional permet.
-      estimatedClicks = estimatedRegionalVolume
-        ? Math.min(clicksFromBudget, estimatedRegionalVolume)
+    if (avgCpcEur && budgetNetPub > 0) {
+      const clicksFromBudget = Math.round(budgetNetPub / avgCpcEur);
+      estimatedClicks = totalMonthlyVolume
+        ? Math.min(clicksFromBudget, totalMonthlyVolume)
         : clicksFromBudget;
     }
 
     return res.status(200).json({
       success: true,
-      location,
+      source: 'google_ads_keyword_planner',
       departement: departement || null,
       region: regionDeduite,
+      geoApproximatif: geoApprox, // true = volume France pondéré par population, pas un ciblage département natif
       populationShare,
-      keywords: results.map(r => ({ keyword: r.keyword, monthly_volume: r.monthly_volume, cpc_usd: r.cpc_usd })),
-      totalMonthlyVolumeNational: totalVolumeNational,
-      estimatedRegionalVolume,
+      keywords: motsClesFinal,
+      totalMonthlyVolumeNational: geoApprox ? totalMonthlyVolumeBrut : null,
+      totalMonthlyVolume,
       avgCpcEur,
-      estimatedClicks
+      budgetPaye: budgetNum || null,
+      tauxCommission: TAUX_COMMISSION,
+      commissionPub: budgetNum ? commissionPub : null,
+      budgetNetPub: budgetNum ? budgetNetPub : null,
+      estimatedClicks,
     });
   } catch (err) {
-    console.error('Erreur estimation OpenRush :', err);
-    return res.status(500).json({ success: false, error: "Impossible de calculer l'estimation pour le moment." });
+    console.error('Erreur estimation Keyword Planner :', err);
+    return res.status(500).json({ success: false, error: "Impossible de calculer l'estimation pour le moment : " + err.message });
   }
 }

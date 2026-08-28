@@ -28,12 +28,14 @@ const GOOGLE_ADS_BASE_URL = `https://googleads.googleapis.com/${GOOGLE_ADS_API_V
 // Mêmes mots-clés que l'estimation de clics (api/estimate-reach.js), pour
 // rester cohérent entre l'estimation annoncée et la campagne réellement créée.
 const KEYWORDS_BY_METIER = {
-  resine: ['terrasse résine prix', 'revêtement résine extérieur prix', 'sol résine terrasse'],
-  cloture: ['clôture jardin prix', 'pose clôture prix', 'portail motorisé prix'],
-  terrassement: ['terrassement prix m2', 'entreprise terrassement devis', 'nivellement terrain prix'],
-  assainissement: ['assainissement non collectif prix', 'installation fosse septique prix', 'micro station épuration prix'],
-  paysagisme: ['paysagiste prix', 'entretien jardin prix', 'aménagement extérieur paysagiste'],
-  autre: ['devis travaux extérieur', 'artisan btp devis']
+  paysagiste: ['paysagiste prix', 'aménagement extérieur paysagiste', 'devis paysagiste'],
+  piscine: ['pose piscine prix', 'installation piscine devis', 'plage piscine prix'],
+  tonte: ['tonte pelouse prix', 'entretien jardin prix', 'tonte gazon devis'],
+  terrasse: ['terrasse bois prix', 'terrasse composite prix', 'pose terrasse devis'],
+  paysagiste_concepteur: ['paysagiste concepteur prix', 'conception jardin paysagiste', 'plan aménagement extérieur'],
+  arboriste: ['élagage prix', 'abattage arbre prix', 'arboriste élagueur devis'],
+  espaces_verts: ['entretien espaces verts prix', 'entretien jardin copropriété', 'entreprise espaces verts devis'],
+  autre: ['devis travaux extérieur', 'artisan paysagiste devis']
 };
 
 // Codes de ciblage géographique Google Ads par département français
@@ -134,7 +136,10 @@ export default async function handler(req, res) {
     const budgetPayeEuros = parseFloat(draft.tarif_prix);
     const budgetMensuelEuros = +(budgetPayeEuros * (1 - TAUX_COMMISSION)).toFixed(2);
     const budgetJournalierMicros = Math.round((budgetMensuelEuros / 30.4) * 1_000_000);
-    const keywords = KEYWORDS_BY_METIER[draft.metier] || KEYWORDS_BY_METIER.autre;
+    const metiersListe = Array.isArray(draft.metier) ? draft.metier : (draft.metier ? [draft.metier] : []);
+    const keywords = metiersListe.length
+      ? [...new Set(metiersListe.flatMap(m => KEYWORDS_BY_METIER[m] || []))]
+      : KEYWORDS_BY_METIER.autre;
     const geoTargetId = GEO_TARGET_BY_DEPARTEMENT[draft.departement];
 
     const accessToken = await obtenirAccessToken();

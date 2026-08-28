@@ -129,9 +129,39 @@
   if (!draftId) {
     document.body.innerHTML = '<div class="loading">Lien invalide — identifiant du site manquant.</div>';
   } else {
-    document.getElementById('vitrineFrame').src = '/apercu.html?id=' + draftId;
-    renderPlans();
-    initEstimateur();
+    verifierEtCharger();
+  }
+
+  async function verifierEtCharger() {
+    try {
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=site_valide`, {
+        headers: { apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc' }
+      });
+      const rows = await resp.json();
+      const draft = rows[0];
+
+      if (!draft) {
+        document.body.innerHTML = '<div class="loading">Site introuvable.</div>';
+        return;
+      }
+
+      if (!draft.site_valide) {
+        document.body.innerHTML = `
+          <div style="max-width:520px; margin:100px auto; text-align:center; padding:0 24px;">
+            <h2 style="margin-bottom:14px;">Votre vraie vitrine est en préparation</h2>
+            <p style="color:#5b6b64; line-height:1.6;">
+              Une fois votre appel effectué et votre vitrine personnalisée construite, vous pourrez revenir sur ce lien pour la découvrir et choisir votre formule.
+            </p>
+          </div>`;
+        return;
+      }
+
+      document.getElementById('vitrineFrame').src = '/apercu.html?id=' + draftId;
+      renderPlans();
+      initEstimateur();
+    } catch (e) {
+      document.body.innerHTML = '<div class="loading">Impossible de charger la page pour le moment.</div>';
+    }
   }
 
   async function initEstimateur() {

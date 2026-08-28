@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lancer ma campagne — Skyeco Pro</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f5f8f6; color:#14312a; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
+  .card { background:#fff; border-radius:16px; padding:36px; max-width:460px; width:100%; box-shadow:0 10px 30px rgba(0,0,0,0.08); }
+  h1 { font-size:1.4rem; margin-bottom:8px; }
+  .sub { color:#5b6b64; font-size:0.92rem; margin-bottom:28px; }
+  label { display:block; font-size:0.85rem; font-weight:700; margin-bottom:8px; color:#14312a; }
+  .budget-input-row { display:flex; align-items:center; gap:10px; margin-bottom:24px; }
+  .budget-input-row input {
+    flex:1; font-size:1.6rem; font-weight:800; padding:14px 16px; border:2px solid #d7dedb;
+    border-radius:12px; color:#14312a; text-align:right;
+  }
+  .budget-input-row input:focus { outline:none; border-color:#1e6f4c; }
+  .budget-input-row .unit { font-size:1.4rem; font-weight:800; color:#5b6b64; }
+
+  .estimation-box { background:#eef1f0; border-radius:12px; padding:18px 20px; margin-bottom:12px; }
+  .estimation-box .clics { font-size:1.8rem; font-weight:800; color:#1e6f4c; }
+  .estimation-box .clics-label { font-size:0.85rem; color:#5b6b64; }
+  .estimation-box .detail { font-size:0.8rem; color:#5b6b64; margin-top:8px; }
+
+  .breakdown { font-size:0.8rem; color:#5b6b64; margin-bottom:24px; line-height:1.7; }
+  .breakdown strong { color:#14312a; }
+
+  .consommation-box { background:#fff; border:1.5px solid #d7dedb; border-radius:12px; padding:20px; margin-bottom:24px; }
+  .consommation-box h3 { font-size:0.95rem; margin-bottom:14px; }
+  .conso-bar-track { background:#eef1f0; border-radius:8px; height:10px; overflow:hidden; margin-bottom:10px; }
+  .conso-bar-fill { background:#e8622c; height:100%; transition:width 0.4s ease; }
+  .conso-bar-fill.alerte { background:#c0392b; }
+  .conso-stats { display:flex; justify-content:space-between; font-size:0.82rem; color:#5b6b64; }
+  .conso-stats strong { color:#14312a; }
+  .conso-detail { font-size:0.76rem; color:#8a9891; margin-top:10px; line-height:1.6; }
+
+  .btn-payer {
+    width:100%; background:#e8622c; color:#fff; border:none; border-radius:12px;
+    padding:16px; font-size:1.02rem; font-weight:700; cursor:pointer;
+  }
+  .btn-payer:disabled { opacity:0.5; cursor:not-allowed; }
+  .btn-payer:hover:not(:disabled) { filter:brightness(1.05); }
+
+  .resilier-link { display:block; text-align:center; margin-top:18px; font-size:0.82rem; color:#8a9891; text-decoration:underline; cursor:pointer; background:none; border:none; }
+  .resilier-link:hover { color:#c0392b; }
+
+  .loading, .error-msg { text-align:center; padding:40px 0; color:#5b6b64; }
+  .error-msg { color:#c0392b; }
+</style>
+</head>
+<body>
+<div class="card" id="app">
+  <div class="loading">Chargement…</div>
+</div>
+
+<script>
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+  const params = new URLSearchParams(window.location.search);
+  const draftId = params.get('id');
+  const app = document.getElementById('app');
+
+  if (!draftId) {
+    app.innerHTML = '<div class="error-msg">Lien invalide — identifiant du site manquant.</div>';
+  } else if (params.get('lance') === '1' && params.get('session_id')) {
+    confirmerEtLancer(params.get('session_id'));
+  } else {
+    render();
+  }
+
+  async function confirmerEtLancer(sessionId) {
+    app.innerHTML = '<div class="loading">Confirmation du paiement et lancement de la campagne…</div>';
+    try {
+      const res = await fetch('/api/confirm-ad-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, draftId })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        app.innerHTML = `<div class="error-msg">${data.error || 'Une erreur est survenue lors de la confirmation.'}</div>`;
+        return;
+      }
+      app.innerHTML = `
+        <h1>✅ Campagne lancée</h1>
+        <p class="sub">Votre budget de ${data.budgetActif} € est actif.</p>
+        <div class="estimation-box">
+          <div class="detail" style="font-size:0.92rem; color:#14312a;">${data.campagneMessage}</div>
+        </div>
+      `;
+    } catch (e) {
+      app.innerHTML = '<div class="error-msg">Impossible de confirmer le paiement pour le moment.</div>';
+    }
+  }
+
+  function render() {
+    app.innerHTML = `
+      <h1>Lancer votre campagne</h1>
+      <p class="sub">Choisissez le montant que vous souhaitez investir ce mois-ci. Le calcul se met à jour automatiquement.</p>
+
+      <div id="consommationSection"></div>
+
+      <label for="budgetInput">Montant à investir</label>
+      <div class="budget-input-row">
+        <input type="number" id="budgetInput" min="50" step="10" value="300" inputmode="numeric">
+        <span class="unit">€</span>
+      </div>
+
+      <div class="estimation-box" id="estimationBox">
+        <div class="clics" id="clicsValue">—</div>
+        <div class="clics-label">clics estimés / mois</div>
+        <div class="detail" id="estimationDetail"></div>
+      </div>
+
+      <div class="breakdown" id="breakdown"></div>
+
+      <button class="btn-payer" id="btnPayer" disabled>Payer et lancer ma campagne</button>
+      <button class="resilier-link" id="btnResilier" type="button">Résilier mon abonnement</button>
+    `;
+
+    const budgetInput = document.getElementById('budgetInput');
+    const btnPayer = document.getElementById('btnPayer');
+    let debounceTimer = null;
+
+    function mettreAJourEstimation() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(chargerEstimation, 400);
+    }
+
+    async function chargerEstimation() {
+      const budget = parseFloat(budgetInput.value);
+      if (!budget || budget < 50) {
+        document.getElementById('clicsValue').textContent = '—';
+        document.getElementById('estimationDetail').textContent = 'Montant minimum : 50 €';
+        document.getElementById('breakdown').innerHTML = '';
+        btnPayer.disabled = true;
+        return;
+      }
+
+      document.getElementById('clicsValue').textContent = '…';
+
+      try {
+        const draftResp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=metier,departement`, {
+          headers: { apikey: SUPABASE_ANON_KEY }
+        });
+        const draftRows = await draftResp.json().catch(() => []);
+        const draft = draftRows[0] || {};
+
+        const res = await fetch('/api/estimate-reach', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ metier: draft.metier, departement: draft.departement, budget })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          document.getElementById('clicsValue').textContent = data.estimatedClicks !== null ? '≈ ' + data.estimatedClicks : '—';
+          document.getElementById('estimationDetail').textContent =
+            data.avgCpcEur ? `CPC moyen estimé : ${data.avgCpcEur} €` : '';
+          document.getElementById('breakdown').innerHTML =
+            `Sur vos <strong>${budget} €</strong> : <strong>${data.commissionPub ?? '—'} €</strong> de frais de service (${Math.round((data.tauxCommission||0)*100)}%), <strong>${data.budgetNetPub ?? '—'} €</strong> réellement investis en publicité.`;
+          btnPayer.disabled = false;
+          btnPayer.textContent = `Payer ${budget} € et lancer ma campagne`;
+        } else {
+          document.getElementById('clicsValue').textContent = '—';
+          document.getElementById('estimationDetail').textContent = "Estimation indisponible pour le moment.";
+          btnPayer.disabled = true;
+        }
+      } catch (e) {
+        document.getElementById('clicsValue').textContent = '—';
+        document.getElementById('estimationDetail').textContent = "Erreur de connexion.";
+        btnPayer.disabled = true;
+      }
+    }
+
+    budgetInput.addEventListener('input', mettreAJourEstimation);
+    chargerEstimation();
+    chargerConsommation();
+
+    document.getElementById('btnResilier').addEventListener('click', async () => {
+      if (!confirm("Confirmer la résiliation ? Votre vitrine restera active jusqu'à la fin de la période déjà payée, puis se désactivera automatiquement.")) {
+        return;
+      }
+      const btn = document.getElementById('btnResilier');
+      btn.disabled = true;
+      btn.textContent = 'Résiliation en cours…';
+      try {
+        const res = await fetch('/api/cancel-subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          alert(data.message);
+          btn.textContent = 'Abonnement annulé';
+        } else {
+          alert(data.error || 'Une erreur est survenue.');
+          btn.disabled = false;
+          btn.textContent = 'Résilier mon abonnement';
+        }
+      } catch (e) {
+        alert('Impossible de contacter le serveur.');
+        btn.disabled = false;
+        btn.textContent = 'Résilier mon abonnement';
+      }
+    });
+
+    async function chargerConsommation() {
+      const section = document.getElementById('consommationSection');
+      try {
+        const res = await fetch('/api/get-campaign-spend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draft_id: draftId })
+        });
+        const data = await res.json();
+
+        if (!data.success || !data.campagneExiste) {
+          section.innerHTML = ''; // pas encore de campagne, rien à afficher
+          return;
+        }
+
+        const alerte = data.pourcentageConsomme >= 90 ? 'alerte' : '';
+        section.innerHTML = `
+          <div class="consommation-box">
+            <h3>Consommation de votre budget</h3>
+            <div class="conso-bar-track">
+              <div class="conso-bar-fill ${alerte}" style="width:${data.pourcentageConsomme}%"></div>
+            </div>
+            <div class="conso-stats">
+              <span><strong>${data.consommationAjustee} €</strong> consommés</span>
+              <span><strong>${data.budgetRestant} €</strong> restants sur ${data.budgetPaye} €</span>
+            </div>
+            <div class="conso-detail">
+              ${data.clics} clics · ${data.impressions} impressions ce mois-ci<br>
+              Dépense réelle Google Ads : ${data.coutReelGoogleEuros} € (comptée double dans votre suivi, commission de service incluse)
+            </div>
+          </div>
+        `;
+      } catch (e) {
+        section.innerHTML = '';
+      }
+    }
+
+    btnPayer.addEventListener('click', async () => {
+      const budget = parseFloat(budgetInput.value);
+      btnPayer.disabled = true;
+      btnPayer.textContent = 'Redirection vers le paiement…';
+      try {
+        const res = await fetch('/api/create-ad-budget-checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId, budget })
+        });
+        const data = await res.json();
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          throw new Error(data.error || 'Erreur inconnue');
+        }
+      } catch (e) {
+        alert("Impossible de démarrer le paiement : " + e.message);
+        btnPayer.disabled = false;
+        btnPayer.textContent = `Payer ${budget} € et lancer ma campagne`;
+      }
+    });
+  }
+</script>
+</body>
+</html>

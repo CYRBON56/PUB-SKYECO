@@ -232,7 +232,7 @@
 
     if (draftId) {
       try {
-        const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=metier,departement`, {
+        const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=metier,zone`, {
           headers: { apikey: SUPABASE_ANON_KEY }
         });
         const rows = await resp.json();
@@ -240,7 +240,7 @@
         const res = await fetch('/api/estimate-reach', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ metier: draft.metier, departement: draft.departement, budget: 100 })
+          body: JSON.stringify({ metier: draft.metier, zone: draft.zone, budget: 100 })
         });
         const data = await res.json();
         if (data.success) avgCpcEur = data.avgCpcEur;

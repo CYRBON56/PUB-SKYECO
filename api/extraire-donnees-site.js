@@ -9,10 +9,13 @@ export default async function handler(req, res) {
     return res.status(405).json({ success: false, error: 'Méthode non autorisée' });
   }
 
-  const { url } = req.body || {};
-  if (!url) {
+  const { url: urlBrute } = req.body || {};
+  if (!urlBrute) {
     return res.status(400).json({ success: false, error: 'URL manquante' });
   }
+  // Ajoute le protocole si l'utilisateur l'a omis (ex: "www.ecosky.fr" au lieu
+  // de "https://www.ecosky.fr") — fetch() échoue silencieusement sans ça.
+  const url = /^https?:\/\//i.test(urlBrute) ? urlBrute : `https://${urlBrute}`;
 
   try {
     const resp = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (SkyecoProBot)' } });

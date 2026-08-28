@@ -262,6 +262,7 @@
         ${f.recommande ? '<div class="plan-badge">Recommandé</div>' : ''}
         <div class="plan-name">${f.nom}</div>
         <div class="plan-price">${f.prix} € <span>HT/mois</span></div>
+        <div class="plan-sub" style="margin-bottom:2px;">soit ${(parseFloat(f.prix.replace(',', '.')) * 1.2).toFixed(2).replace('.', ',')} € TTC/mois</div>
         <div class="plan-sub">Sans engagement</div>
         <ul class="plan-features">
           ${f.features.map(t => `<li>${t}</li>`).join('')}

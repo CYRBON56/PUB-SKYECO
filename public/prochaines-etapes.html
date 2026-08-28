@@ -9,10 +9,12 @@
   body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f5f8f6; color:#14312a; position:relative; }
 
   .bg-preview { position:fixed; inset:0; width:100%; height:100%; border:none; pointer-events:none; z-index:0; }
-  .bg-overlay { position:fixed; inset:0; background:rgba(245,248,246,0.80); z-index:1; }
-  .wrap { position:relative; z-index:2; }
+  .bg-overlay { position:fixed; inset:0; background:rgba(245,248,246,0.55); z-index:1; }
 
-  .wrap { max-width:760px; margin:0 auto; padding:56px 24px; }
+  .wrap {
+    position:relative; z-index:2; max-width:760px; margin:32px auto; padding:40px 40px 56px;
+    background:rgba(255,255,255,0.88); border-radius:20px;
+  }
   .eyebrow { font-size:0.8rem; font-weight:700; color:#1e6f4c; letter-spacing:0.03em; text-transform:uppercase; margin-bottom:10px; }
   h1 { font-size:1.9rem; margin-bottom:14px; line-height:1.25; }
   .intro { font-size:1.02rem; color:#3a4a44; line-height:1.6; margin-bottom:36px; }

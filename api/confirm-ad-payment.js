@@ -50,6 +50,7 @@ export default async function handler(req, res) {
           tarif_actif: true,
           tarif_prix: budget,
           derniere_recharge_le: new Date().toISOString(),
+          alerte_solde_bas_envoyee: false, // nouveau cycle de budget, l'alerte pourra repartir
         }),
       }
     );

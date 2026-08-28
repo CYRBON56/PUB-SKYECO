@@ -378,7 +378,7 @@ function runWizard(template, brandColor, draftId){
     if(s.type==='choice') return !!state[s.key];
     if(s.type==='number') return state[s.key] && parseFloat(state[s.key])>0;
     if(s.type==='location') return state.code_postal && state.code_postal.length===5;
-    if(s.type==='identity') return state.nom && state.telephone && state.telephone.length>=8 && state.telephoneVerifie && state.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email);
+    if(s.type==='identity') return state.nom && state.telephone && state.telephone.length>=8 && state.telephoneVerifie && state.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email) && state.rgpdAccepte;
     return true;
   }
   function renderStep(){
@@ -407,7 +407,15 @@ function runWizard(template, brandColor, draftId){
               '<input type="text" id="smsCodeApercu" inputmode="numeric" maxlength="6" placeholder="Code reçu" style="flex:1; letter-spacing:.3em; text-align:center; border:1.5px solid #d8e3de; border-radius:8px; padding:10px;" />'+
               '<button type="button" id="btnVerifierCodeApercu" style="background:#eaf4ef;color:#1e6f4c;border:1.5px solid #1e6f4c;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">Valider</button>'+
             '</div>')+
-        '<label class="field-label">Email</label><input type="email" id="inputEmail" value="'+(state.email||'')+'" />';
+        '<label class="field-label">Email</label><input type="email" id="inputEmail" value="'+(state.email||'')+'" />'+
+        '<label style="display:flex; align-items:flex-start; gap:8px; margin-top:14px; font-size:12.5px; color:#5b6b64; line-height:1.5; cursor:pointer;">'+
+          '<input type="checkbox" id="checkRgpd" style="margin-top:2px; flex-shrink:0;" '+(state.rgpdAccepte?'checked':'')+' />'+
+          '<span>J\'accepte que mes données soient transmises à l\'artisan pour traiter ma demande, conformément à la <a href="/politique-confidentialite.html" target="_blank">politique de confidentialité</a>. *</span>'+
+        '</label>'+
+        '<label style="display:flex; align-items:flex-start; gap:8px; margin-top:8px; font-size:12.5px; color:#5b6b64; line-height:1.5; cursor:pointer;">'+
+          '<input type="checkbox" id="checkMarketing" style="margin-top:2px; flex-shrink:0;" '+(state.marketingAccepte?'checked':'')+' />'+
+          '<span>J\'accepte de recevoir par SMS et email le suivi de ma demande et d\'éventuelles relances (désabonnement possible à tout moment).</span>'+
+        '</label>';
     } else if(s.type==='textarea'){
       html+='<textarea id="inputTextarea" placeholder="'+(s.placeholder||'')+'" style="width:100%; min-height:110px; border:1.5px solid #d8e3de; border-radius:10px; padding:12px 14px; font-size:15px; font-family:inherit; resize:vertical;">'+(state[s.key]||'')+'</textarea>'+
         (s.optional ? '<div style="font-size:12px; color:#8a9490; margin-top:6px;">Facultatif — passez si vous préférez.</div>' : '');
@@ -433,6 +441,8 @@ function runWizard(template, brandColor, draftId){
     } else if(s.type==='identity'){
       const nom=document.getElementById('inputNom'), prenom=document.getElementById('inputPrenom'), tel=document.getElementById('inputTel'), email=document.getElementById('inputEmail');
       [nom,prenom,email].forEach(el=>{ el.addEventListener('input',()=>{ state.nom=nom.value; state.prenom=prenom.value; state.email=email.value; document.getElementById('btnNext').disabled=!canProceed(s); }); });
+      document.getElementById('checkRgpd').addEventListener('change', (e)=>{ state.rgpdAccepte = e.target.checked; document.getElementById('btnNext').disabled=!canProceed(s); });
+      document.getElementById('checkMarketing').addEventListener('change', (e)=>{ state.marketingAccepte = e.target.checked; });
       tel.addEventListener('input',()=>{
         state.telephone = tel.value;
         state.telephoneVerifie = false;

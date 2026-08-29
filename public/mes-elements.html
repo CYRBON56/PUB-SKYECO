@@ -613,9 +613,12 @@
       });
       if (!resp.ok) throw new Error();
       msg.className = 'save-msg ok';
-      msg.textContent = '✓ Tes éléments ont bien été enregistrés. On revient vers toi pour construire ta vraie vitrine.';
+      msg.textContent = '✓ Tes éléments ont bien été enregistrés. On t\'emmène vers le choix de ta formule…';
       msg.style.display = 'block';
       btn.textContent = 'Enregistré ✓';
+      setTimeout(() => {
+        window.location.href = '/choisir-forfait.html?id=' + draftId;
+      }, 1500);
     } catch (e) {
       msg.className = 'save-msg err';
       msg.textContent = "Une erreur est survenue — réessaie ou contacte-nous directement.";

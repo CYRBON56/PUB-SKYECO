@@ -91,7 +91,7 @@
       nom: 'Premium',
       prixHT: 99.90,
       inclus: [
-        'Tout le contenu du forfait Essentiel',
+        'Tout le contenu du forfait Business',
         'Nom de domaine personnalisé pour votre vitrine (à votre nom, pas un sous-domaine générique)',
         'Fondations de référencement naturel (SEO) pour être mieux positionné sur Google au fil du temps',
       ]
@@ -122,16 +122,27 @@
         ${forfait.inclus.map(item => `<div class="inclus-item"><span class="check">✓</span><span>${item}</span></div>`).join('')}
       </div>
 
+      <div class="section-titre">En validant ce contrat, vous autorisez Skyeco Pro à</div>
+      <div class="inclus-box">
+        <div class="inclus-item"><span class="check">✓</span><span>Créer votre formulaire vitrine, sur la base des éléments que vous nous transmettrez juste après (logo, photos, coordonnées)</span></div>
+        <div class="inclus-item"><span class="check">✓</span><span>Créer votre campagne publicitaire Google Ads et en assurer la diffusion, ciblée sur votre métier et votre zone</span></div>
+        <div class="inclus-item"><span class="check">✓</span><span>Mettre en place le paiement récurrent du forfait <strong>${forfait.nom}</strong> à ${forfait.prixHT.toFixed(2)} € HT/mois — arrêtable à tout moment</span></div>
+      </div>
+
+      <div class="engagement-box">
+        <strong>Aucun paiement n'est demandé maintenant.</strong> Une fois ce contrat validé, vous recevez par SMS et par email le lien pour nous transmettre vos éléments (logo, photos, coordonnées) — toujours sans paiement à ce stade. Ce n'est qu'une fois ce formulaire complété que le paiement du forfait est demandé. Nous vérifions ensuite tout et mettons votre vitrine en ligne sous 48h.
+      </div>
+
       <div class="engagement-box">
         <strong>Sans engagement.</strong> Vous pouvez mettre en pause ou résilier à tout moment — l'abonnement continue jusqu'à la fin de la période déjà payée, sans surprise. Changer de forfait : une augmentation s'applique immédiatement avec paiement de la différence ; une diminution prend effet à la fin de votre période en cours. Le budget publicitaire (Google Ads) est séparé de cet abonnement et n'est jamais garanti sur un mois fixe — il est consommé au rythme réel des clics reçus.
       </div>
 
       <div class="checkbox-row">
         <input type="checkbox" id="accepteConditions">
-        <label for="accepteConditions">J'ai lu et j'accepte le contenu de ce forfait, ainsi que les <a href="/cgv.html" target="_blank" style="color:#1e6f4c;">CGV</a> et la <a href="/politique-confidentialite.html" target="_blank" style="color:#1e6f4c;">politique de confidentialité</a>.</label>
+        <label for="accepteConditions">En cochant cette case, je valide et signe ce contrat pour le forfait ${forfait.nom}, et j'accepte les <a href="/cgv.html" target="_blank" style="color:#1e6f4c;">CGV</a> et la <a href="/politique-confidentialite.html" target="_blank" style="color:#1e6f4c;">politique de confidentialité</a>.</label>
       </div>
 
-      <button class="btn-valider" id="btnValider" disabled>Valider ce forfait et continuer</button>
+      <button class="btn-valider" id="btnValider" disabled>Signer et recevoir mon lien</button>
       <a class="btn-retour" href="/prochaines-etapes.html?id=${draftId}">← Revenir en arrière</a>
     `;
 
@@ -155,7 +166,28 @@
         });
       } catch (e) { /* on continue même si l'enregistrement échoue, ce n'est pas bloquant */ }
 
-      window.location.href = '/choisir-forfait.html?id=' + draftId + '&forfait=' + forfaitChoisi;
+      btn.textContent = 'Envoi de votre lien…';
+      let envoiReussi = false;
+      try {
+        const res = await fetch('/api/envoyer-lien-elements', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId })
+        });
+        const data = await res.json();
+        envoiReussi = !!data.success;
+      } catch (e) { /* géré ci-dessous */ }
+
+      document.getElementById('contenu').innerHTML = envoiReussi
+        ? `<div class="prix-box" style="margin-top:60px;">
+            <div style="font-size:2rem; margin-bottom:10px;">✅</div>
+            <h1 style="margin-bottom:12px;">Contrat signé !</h1>
+            <p style="color:#5b6b64; line-height:1.6;">Vous allez recevoir par SMS et par email le lien pour nous transmettre vos éléments (logo, photos, coordonnées) — toujours sans paiement à ce stade. Une fois ce formulaire complété, le paiement du forfait ${forfait.nom} vous sera demandé. Nous vérifions ensuite tout et mettons votre vitrine en ligne sous 48h.</p>
+          </div>`
+        : `<div class="prix-box" style="margin-top:60px;">
+            <h1 style="margin-bottom:12px;">Contrat bien enregistré</h1>
+            <p style="color:#5b6b64; line-height:1.6;">L'envoi automatique du lien n'a pas pu se faire — mais votre contrat est bien signé. Nous revenons vers vous très rapidement par un autre moyen.</p>
+          </div>`;
     });
   }
 </script>

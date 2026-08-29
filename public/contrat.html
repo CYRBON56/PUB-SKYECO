@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Votre contrat — Skyeco Pro</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f5f8f6; color:#14312a; padding:32px 20px 60px; }
+  .wrap { max-width:680px; margin:0 auto; }
+
+  .eyebrow { font-size:0.8rem; font-weight:700; color:#1e6f4c; letter-spacing:0.03em; text-transform:uppercase; margin-bottom:8px; }
+  h1 { font-size:1.5rem; margin-bottom:6px; }
+  .sous-titre { font-size:0.95rem; color:#5b6b64; margin-bottom:28px; }
+
+  .prix-box { background:#fff; border-radius:16px; padding:24px; margin-bottom:20px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
+  .prix-nom { font-size:0.85rem; font-weight:700; color:#8a9891; text-transform:uppercase; letter-spacing:0.03em; }
+  .prix-montant { font-size:2.2rem; font-weight:800; margin:6px 0 2px; }
+  .prix-montant span { font-size:1rem; font-weight:600; color:#8a9891; }
+  .prix-ttc { font-size:0.82rem; color:#8a9891; }
+
+  .section-titre { font-size:0.78rem; text-transform:uppercase; letter-spacing:0.04em; color:#8a9891; font-weight:700; margin:24px 0 10px; }
+
+  .inclus-box { background:#fff; border-radius:14px; padding:20px 22px; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
+  .inclus-item { display:flex; gap:10px; padding:9px 0; border-bottom:1px solid #f0f1ec; font-size:0.9rem; line-height:1.5; }
+  .inclus-item:last-child { border-bottom:none; }
+  .inclus-item .check { color:#1e6f4c; font-weight:800; flex-shrink:0; }
+
+  .engagement-box { background:#fdf1ea; border-radius:14px; padding:18px 20px; margin-top:20px; font-size:0.85rem; color:#6b5e4c; line-height:1.6; }
+  .engagement-box strong { color:#14312a; }
+
+  .checkbox-row { display:flex; align-items:flex-start; gap:10px; margin-top:24px; font-size:0.85rem; color:#5b6b64; line-height:1.5; }
+  .checkbox-row input { margin-top:3px; width:auto; flex-shrink:0; }
+
+  .btn-valider {
+    width:100%; background:#1e6f4c; color:#fff; border:none; border-radius:12px; padding:16px;
+    font-size:1rem; font-weight:800; cursor:pointer; margin-top:18px;
+  }
+  .btn-valider:disabled { opacity:0.5; cursor:not-allowed; }
+  .btn-retour { display:block; text-align:center; margin-top:14px; font-size:0.85rem; color:#8a9891; text-decoration:none; }
+
+  .loading { text-align:center; padding:60px; color:#8a9891; }
+</style>
+</head>
+<body>
+<div class="wrap" id="contenu">
+  <div class="loading">Chargement…</div>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const draftId = params.get('id');
+  const forfaitChoisi = parseInt(params.get('forfait'), 10);
+
+  const FORFAITS = {
+    1: {
+      nom: 'Essentiel',
+      prixHT: 39.90,
+      inclus: [
+        'Mise en service complète de votre formulaire vitrine en ligne',
+        'Connexion et paramétrage de votre campagne Google Ads',
+        'Recherche et sélection des mots-clés pertinents pour votre métier, avec exclusion des mots-clés non pertinents',
+        'Ciblage de votre zone d\'intervention',
+        'Envoi automatique de SMS et d\'email à chaque nouvelle demande reçue',
+        'Tableau de bord : demandes reçues, clics, solde publicitaire, export PDF',
+        'Vérification par SMS des demandes reçues, pour limiter les faux contacts',
+      ]
+    },
+    2: {
+      nom: 'Pro',
+      prixHT: 59.90,
+      inclus: [
+        'Tout le contenu du forfait Essentiel',
+        'Visualisation détaillée de chaque demande directement dans le tableau de bord (nom, adresse, statut)',
+        'Envoi de SMS pour proposer un rendez-vous précis à vos prospects',
+        'Gestion de vos photos, vidéo et mots-clés directement depuis votre espace',
+      ]
+    },
+    3: {
+      nom: 'Business',
+      prixHT: 79.90,
+      inclus: [
+        'Tout le contenu du forfait Pro',
+        'Génération et envoi de devis au format PDF',
+        'Signature électronique du devis par SMS, avec horodatage et numéro vérifié comme preuve',
+        'Relances automatiques des devis envoyés sans réponse',
+        'Envoi de promotions ou d\'offres ciblées à vos prospects',
+      ]
+    },
+    4: {
+      nom: 'Premium',
+      prixHT: 99.90,
+      inclus: [
+        'Tout le contenu du forfait Essentiel',
+        'Nom de domaine personnalisé pour votre vitrine (à votre nom, pas un sous-domaine générique)',
+        'Fondations de référencement naturel (SEO) pour être mieux positionné sur Google au fil du temps',
+      ]
+    }
+  };
+
+  if(!draftId || !FORFAITS[forfaitChoisi]){
+    document.getElementById('contenu').innerHTML = '<div class="loading">Lien invalide — forfait ou identifiant manquant.</div>';
+  } else {
+    afficherContrat(FORFAITS[forfaitChoisi]);
+  }
+
+  function afficherContrat(forfait){
+    const prixTTC = (forfait.prixHT * 1.2).toFixed(2);
+    document.getElementById('contenu').innerHTML = `
+      <div class="eyebrow">Votre contrat</div>
+      <h1>Récapitulatif du forfait ${forfait.nom}</h1>
+      <p class="sous-titre">Voici exactement ce qui est inclus — sans surprise, sans engagement.</p>
+
+      <div class="prix-box">
+        <div class="prix-nom">Forfait ${forfait.nom}</div>
+        <div class="prix-montant">${forfait.prixHT.toFixed(2)} € <span>HT / mois</span></div>
+        <div class="prix-ttc">soit ${prixTTC} € TTC / mois</div>
+      </div>
+
+      <div class="section-titre">Ce qui est inclus</div>
+      <div class="inclus-box">
+        ${forfait.inclus.map(item => `<div class="inclus-item"><span class="check">✓</span><span>${item}</span></div>`).join('')}
+      </div>
+
+      <div class="engagement-box">
+        <strong>Sans engagement.</strong> Vous pouvez mettre en pause ou résilier à tout moment — l'abonnement continue jusqu'à la fin de la période déjà payée, sans surprise. Changer de forfait : une augmentation s'applique immédiatement avec paiement de la différence ; une diminution prend effet à la fin de votre période en cours. Le budget publicitaire (Google Ads) est séparé de cet abonnement et n'est jamais garanti sur un mois fixe — il est consommé au rythme réel des clics reçus.
+      </div>
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="accepteConditions">
+        <label for="accepteConditions">J'ai lu et j'accepte le contenu de ce forfait, ainsi que les <a href="/cgv.html" target="_blank" style="color:#1e6f4c;">CGV</a> et la <a href="/politique-confidentialite.html" target="_blank" style="color:#1e6f4c;">politique de confidentialité</a>.</label>
+      </div>
+
+      <button class="btn-valider" id="btnValider" disabled>Valider ce forfait et continuer</button>
+      <a class="btn-retour" href="/prochaines-etapes.html?id=${draftId}">← Revenir en arrière</a>
+    `;
+
+    document.getElementById('accepteConditions').addEventListener('change', (e) => {
+      document.getElementById('btnValider').disabled = !e.target.checked;
+    });
+
+    document.getElementById('btnValider').addEventListener('click', async () => {
+      const btn = document.getElementById('btnValider');
+      btn.disabled = true;
+      btn.textContent = 'Enregistrement…';
+
+      const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+
+      try {
+        await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
+          method: 'PATCH',
+          headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+          body: JSON.stringify({ forfait_preselectionne: forfaitChoisi, forfait_preselectionne_le: new Date().toISOString() })
+        });
+      } catch (e) { /* on continue même si l'enregistrement échoue, ce n'est pas bloquant */ }
+
+      window.location.href = '/choisir-forfait.html?id=' + draftId + '&forfait=' + forfaitChoisi;
+    });
+  }
+</script>
+</body>
+</html>

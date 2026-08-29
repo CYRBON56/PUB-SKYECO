@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Accès à votre tableau de bord — Skyeco Pro</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background:#f5f8f6; color:#14312a; min-height:100vh;
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .card { background:#fff; border-radius:18px; padding:36px 32px; max-width:420px; width:100%; box-shadow:0 8px 30px rgba(20,49,42,0.08); }
+  h1 { font-size:1.3rem; margin-bottom:6px; }
+  .sub { color:#5b6b64; font-size:0.88rem; margin-bottom:24px; line-height:1.5; }
+  label { display:block; font-size:0.82rem; font-weight:700; margin-bottom:6px; margin-top:14px; }
+  input {
+    width:100%; padding:11px 14px; border:1.5px solid #d7dedb; border-radius:10px; font-size:0.95rem;
+    font-family:inherit; color:#14312a;
+  }
+  input:focus { outline:none; border-color:#1e6f4c; }
+  input[readonly] { background:#f2f4f1; color:#5b6b64; }
+  .btn-principal {
+    width:100%; background:#1e6f4c; color:#fff; border:none; border-radius:10px; padding:13px;
+    font-size:0.92rem; font-weight:700; cursor:pointer; margin-top:22px;
+  }
+  .btn-principal:hover { filter:brightness(1.05); }
+  .btn-principal:disabled { opacity:0.5; cursor:wait; }
+  .liens-secondaires { margin-top:18px; text-align:center; font-size:0.82rem; }
+  .liens-secondaires a { color:#1e6f4c; text-decoration:none; cursor:pointer; }
+  .liens-secondaires a:hover { text-decoration:underline; }
+  .msg { font-size:0.85rem; padding:10px 14px; border-radius:10px; margin-top:16px; line-height:1.5; }
+  .msg.err { background:#fdeaea; color:#991b1b; }
+  .msg.ok { background:#eaf4ef; color:#1e6f4c; }
+  .loading { text-align:center; padding:60px 20px; color:#5b6b64; }
+  .panneau { display:none; }
+  .panneau.actif { display:block; }
+  .retour { display:inline-block; margin-bottom:16px; font-size:0.82rem; color:#5b6b64; text-decoration:none; cursor:pointer; }
+</style>
+</head>
+<body>
+<div class="card" id="carte">
+  <div class="loading" id="chargement">Chargement…</div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+  const params = new URLSearchParams(window.location.search);
+  const draftId = params.get('id');
+  const carte = document.getElementById('carte');
+
+  if (!draftId) {
+    carte.innerHTML = '<div class="loading">Lien invalide — identifiant du site manquant.</div>';
+  } else {
+    demarrer();
+  }
+
+  function connecterEtRediriger(token) {
+    sessionStorage.setItem('skyeco_dashboard_token_' + draftId, token);
+    window.location.href = '/mon-dashboard.html?id=' + draftId;
+  }
+
+  async function demarrer() {
+    try {
+      // Lecture directe (clé publique anon, même modèle que le reste du site) :
+      // on ne s'en sert que pour savoir si un mot de passe existe déjà, jamais
+      // pour authentifier — l'authentification passe toujours par les API
+      // serveur (dashboard-login / dashboard-set-password) avec le hash exact.
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=email,dashboard_password_hash`, {
+        headers: { apikey: SUPABASE_ANON_KEY }
+      });
+      const rows = await resp.json();
+      const draft = rows[0];
+      if (!draft) {
+        carte.innerHTML = '<div class="loading">Site introuvable.</div>';
+        return;
+      }
+      if (draft.dashboard_password_hash) {
+        afficherConnexion(draft.email);
+      } else {
+        afficherCreation(draft.email);
+      }
+    } catch (e) {
+      carte.innerHTML = '<div class="loading">Impossible de charger la page pour le moment.</div>';
+    }
+  }
+
+  function afficherCreation(email) {
+    carte.innerHTML = `
+      <h1>Créez votre accès</h1>
+      <p class="sub">Votre tableau de bord Skyeco Pro est prêt. Choisissez un mot de passe pour pouvoir y revenir à tout moment.</p>
+      <form id="formCreation">
+        <label>Identifiant (votre email)</label>
+        <input type="email" value="${email}" readonly>
+        <label>Mot de passe</label>
+        <input type="password" id="mdp1" minlength="8" required placeholder="8 caractères minimum">
+        <label>Confirmez le mot de passe</label>
+        <input type="password" id="mdp2" minlength="8" required>
+        <button class="btn-principal" type="submit">Créer mon accès</button>
+      </form>
+      <div id="zoneMsg"></div>
+    `;
+    document.getElementById('formCreation').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const mdp1 = document.getElementById('mdp1').value;
+      const mdp2 = document.getElementById('mdp2').value;
+      const zoneMsg = document.getElementById('zoneMsg');
+      const btn = e.target.querySelector('button');
+      if (mdp1 !== mdp2) {
+        zoneMsg.innerHTML = '<div class="msg err">Les deux mots de passe ne correspondent pas.</div>';
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'Création…';
+      try {
+        const res = await fetch('/api/dashboard-set-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId, motDePasse: mdp1 })
+        });
+        const data = await res.json();
+        if (data.success) {
+          zoneMsg.innerHTML = '<div class="msg ok">✓ Accès créé, redirection…</div>';
+          setTimeout(() => connecterEtRediriger(data.token), 900);
+        } else {
+          zoneMsg.innerHTML = `<div class="msg err">${data.error || 'Une erreur est survenue.'}</div>`;
+          btn.disabled = false;
+          btn.textContent = 'Créer mon accès';
+        }
+      } catch (e) {
+        zoneMsg.innerHTML = '<div class="msg err">Impossible de contacter le serveur.</div>';
+        btn.disabled = false;
+        btn.textContent = 'Créer mon accès';
+      }
+    });
+  }
+
+  function afficherConnexion(email) {
+    carte.innerHTML = `
+      <div class="panneau actif" id="panneauConnexion">
+        <h1>Votre tableau de bord</h1>
+        <p class="sub">Connectez-vous avec votre email et votre mot de passe.</p>
+        <form id="formConnexion">
+          <label>Email</label>
+          <input type="email" id="loginEmail" value="${email}" required>
+          <label>Mot de passe</label>
+          <input type="password" id="loginMdp" required>
+          <button class="btn-principal" type="submit">Se connecter</button>
+        </form>
+        <div id="zoneMsgConnexion"></div>
+        <div class="liens-secondaires">
+          <a id="lienMdpOublie">Mot de passe oublié ?</a> · <a id="lienIdOublie">Identifiant oublié ?</a>
+        </div>
+      </div>
+
+      <div class="panneau" id="panneauMdpOublie">
+        <a class="retour" id="retour1">← Retour</a>
+        <h1>Mot de passe oublié</h1>
+        <p class="sub">Indiquez votre email, vous recevrez un lien par SMS et par email pour en choisir un nouveau.</p>
+        <form id="formMdpOublie">
+          <label>Email</label>
+          <input type="email" id="mdpOublieEmail" value="${email}" required>
+          <button class="btn-principal" type="submit">Recevoir le lien</button>
+        </form>
+        <div id="zoneMsgMdpOublie"></div>
+      </div>
+
+      <div class="panneau" id="panneauIdOublie">
+        <a class="retour" id="retour2">← Retour</a>
+        <h1>Identifiant oublié</h1>
+        <p class="sub">Votre identifiant est l'email renseigné à l'inscription. Indiquez votre numéro de téléphone pour vous le faire rappeler par SMS.</p>
+        <form id="formIdOublie">
+          <label>Téléphone</label>
+          <input type="tel" id="idOublieTel" required placeholder="06 12 34 56 78">
+          <button class="btn-principal" type="submit">Recevoir un rappel</button>
+        </form>
+        <div id="zoneMsgIdOublie"></div>
+      </div>
+    `;
+
+    function basculer(idPanneau) {
+      document.querySelectorAll('.panneau').forEach(p => p.classList.remove('actif'));
+      document.getElementById(idPanneau).classList.add('actif');
+    }
+    document.getElementById('lienMdpOublie').addEventListener('click', () => basculer('panneauMdpOublie'));
+    document.getElementById('lienIdOublie').addEventListener('click', () => basculer('panneauIdOublie'));
+    document.getElementById('retour1').addEventListener('click', () => basculer('panneauConnexion'));
+    document.getElementById('retour2').addEventListener('click', () => basculer('panneauConnexion'));
+
+    document.getElementById('formConnexion').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector('button');
+      const zoneMsg = document.getElementById('zoneMsgConnexion');
+      btn.disabled = true;
+      btn.textContent = 'Connexion…';
+      try {
+        const res = await fetch('/api/dashboard-login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: document.getElementById('loginEmail').value.trim(),
+            motDePasse: document.getElementById('loginMdp').value
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          connecterEtRediriger(data.token);
+        } else {
+          zoneMsg.innerHTML = `<div class="msg err">${data.error || 'Connexion impossible.'}</div>`;
+          btn.disabled = false;
+          btn.textContent = 'Se connecter';
+        }
+      } catch (e) {
+        zoneMsg.innerHTML = '<div class="msg err">Impossible de contacter le serveur.</div>';
+        btn.disabled = false;
+        btn.textContent = 'Se connecter';
+      }
+    });
+
+    document.getElementById('formMdpOublie').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector('button');
+      const zoneMsg = document.getElementById('zoneMsgMdpOublie');
+      btn.disabled = true;
+      btn.textContent = 'Envoi…';
+      try {
+        const res = await fetch('/api/dashboard-forgot-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: document.getElementById('mdpOublieEmail').value.trim() })
+        });
+        const data = await res.json();
+        zoneMsg.innerHTML = `<div class="msg ok">${data.message}</div>`;
+      } catch (e) {
+        zoneMsg.innerHTML = '<div class="msg err">Impossible de contacter le serveur.</div>';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Recevoir le lien';
+      }
+    });
+
+    document.getElementById('formIdOublie').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector('button');
+      const zoneMsg = document.getElementById('zoneMsgIdOublie');
+      btn.disabled = true;
+      btn.textContent = 'Envoi…';
+      try {
+        const res = await fetch('/api/dashboard-rappel-identifiant', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ telephone: document.getElementById('idOublieTel').value.trim() })
+        });
+        const data = await res.json();
+        zoneMsg.innerHTML = `<div class="msg ok">${data.message}</div>`;
+      } catch (e) {
+        zoneMsg.innerHTML = '<div class="msg err">Impossible de contacter le serveur.</div>';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Recevoir un rappel';
+      }
+    });
+  }
+</script>
+</body>
+</html>

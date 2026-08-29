@@ -22,6 +22,13 @@
   .stat-label { font-size:0.78rem; color:#8a9891; margin-top:2px; }
 
   .solde-box { background:#fff; border:2px solid #1e6f4c; border-radius:14px; padding:22px; margin-bottom:28px; }
+  .btn-pause-diffusion {
+    background:#f2f4f1; color:#14312a; border:1.5px solid #d7dedb; border-radius:10px;
+    padding:9px 16px; font-size:0.82rem; font-weight:700; cursor:pointer; margin-top:14px;
+  }
+  .btn-pause-diffusion.actif-pause { background:#fdf1ea; border-color:#e8622c; color:#e8622c; }
+  .btn-pause-diffusion:disabled { opacity:0.5; cursor:not-allowed; }
+  .pause-note { font-size:0.76rem; color:#8a9891; margin-top:6px; }
   .solde-box h3 { font-size:0.95rem; margin-bottom:14px; }
   .solde-bar-track { background:#eef1f0; border-radius:8px; height:12px; overflow:hidden; margin-bottom:10px; }
   .solde-bar-fill { background:#e8622c; height:100%; transition:width 0.4s ease; }
@@ -122,6 +129,8 @@
   <div class="solde-box" id="soldeBox">
     <div class="loading">Chargement du solde…</div>
   </div>
+  <button class="btn-pause-diffusion" id="btnPauseDiffusion" style="display:none;"></button>
+  <p class="pause-note">Mettre en pause n'arrête que la diffusion des annonces — votre solde publicitaire reste intact, relancez quand vous voulez.</p>
 
   <div class="estim-box">
     <h3>Combien de clics pour ce budget ?</h3>
@@ -212,10 +221,48 @@
           ${data.clics} clics réels (dépense Google : ${data.coutReelGoogleEuros} €, comptée double dans votre solde — commission de service incluse).
         </div>
       `;
+
+      const btnPause = document.getElementById('btnPauseDiffusion');
+      btnPause.style.display = 'inline-block';
+      diffusionPauseeActuelle = data.diffusionPausee;
+      mettreAJourBoutonPause();
     } catch (e) {
       box.innerHTML = '<h3>Solde publicitaire</h3><div class="empty-msg">Impossible de charger le solde pour le moment.</div>';
     }
   }
+
+  let diffusionPauseeActuelle = false;
+
+  function mettreAJourBoutonPause() {
+    const btn = document.getElementById('btnPauseDiffusion');
+    btn.classList.toggle('actif-pause', diffusionPauseeActuelle);
+    btn.textContent = diffusionPauseeActuelle ? '▶️ Relancer la diffusion' : '⏸️ Mettre en pause la diffusion';
+  }
+
+  document.getElementById('btnPauseDiffusion').addEventListener('click', async () => {
+    const btn = document.getElementById('btnPauseDiffusion');
+    const actionDemandee = diffusionPauseeActuelle ? 'reprendre' : 'pause';
+    btn.disabled = true;
+    btn.textContent = 'Un instant…';
+    try {
+      const res = await fetch('/api/pause-campagne-ads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, action: actionDemandee })
+      });
+      const data = await res.json();
+      if (data.success) {
+        diffusionPauseeActuelle = actionDemandee === 'pause';
+      } else {
+        alert(data.error || 'Une erreur est survenue.');
+      }
+    } catch (e) {
+      alert('Impossible de contacter le serveur.');
+    } finally {
+      btn.disabled = false;
+      mettreAJourBoutonPause();
+    }
+  });
 
   async function chargerDemandes() {
     const content = document.getElementById('listeContent');

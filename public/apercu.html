@@ -17,6 +17,9 @@
   @media (max-width:800px){ .image-panel-title{ font-size:1.3rem; left:20px; right:20px; } }
   .form-panel { flex:1 1 55%; position:relative; display:flex; align-items:stretch; justify-content:center; padding:20px 24px; overflow:hidden; order:1; }
   .form-bg-overlay { position:absolute; inset:0; z-index:-1; background:rgba(246,244,239,0.55); }
+  .form-bg-carousel { position:absolute; inset:0; z-index:-2; overflow:hidden; }
+  .form-bg-carousel img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 1.2s ease-in-out; }
+  .form-bg-carousel img.active { opacity:1; }
   @media (max-width:800px){ .split-layout{ flex-direction:column; height:100vh; overflow:hidden; } .image-panel{ flex:0 0 110px; } .form-panel{ padding:12px 16px; } }
   @media (max-width:480px){ .image-panel{ flex:0 0 64px; } .form-panel{ padding:10px 14px; } .header-block{ padding:10px 14px; margin-bottom:10px; } h1{ font-size:19px; margin:4px 0 6px; } .eyebrow{ font-size:11px; } .sub{ font-size:14px; margin-bottom:0; line-height:1.45; } .card{ padding:16px; } .question{ font-size:17px; margin-bottom:14px; line-height:1.35; } .option{ padding:14px 16px; font-size:15.5px; } .progress{ margin-bottom:12px; } input[type="text"],input[type="tel"],input[type="email"],input[type="number"]{ font-size:16px; padding:13px 14px; margin-bottom:10px; } label.field-label{ font-size:14px; } .nav-row{ flex-wrap:wrap; margin-top:16px; } button.btn{ font-size:15px; padding:13px 16px; } .btn-primary{ flex:1 1 100%; order:1; } .btn-ghost{ order:2; padding:8px 0; font-size:14px; } .trust-footer{ margin-top:10px; padding-top:10px; } .trust-badges-row{ display:none !important; } }
   .wrap { max-width:480px; width:100%; height:100%; margin:0; padding:0; display:flex; flex-direction:column; }
@@ -79,6 +82,7 @@
       <div class="image-panel-title" id="heroTitle"></div>
     </div>
     <div class="form-panel">
+      <div class="form-bg-carousel" id="formBgCarousel"></div>
       <div class="form-bg-overlay"></div>
       <div class="wrap">
         <div class="header-block">
@@ -364,6 +368,22 @@ async function init(){
 
   document.getElementById('legalLine').innerHTML = lignesLegales.join('<br/>');
 
+  // Carrousel de photos en fond du formulaire — indépendant du panneau
+  // gauche (qui peut afficher la vidéo à la place).
+  (function initFormBgCarousel(){
+    const metiersPourFond = Array.isArray(draft.metier) ? draft.metier : (draft.metier ? [draft.metier] : []);
+    const imagesFallbackFond = metiersPourFond.length
+      ? [...new Set(metiersPourFond.flatMap(m => FALLBACK_IMAGES[m] || []))]
+      : FALLBACK_IMAGES.autre;
+    const imagesFond = (draft.photos && draft.photos.length) ? draft.photos : (imagesFallbackFond.length ? imagesFallbackFond : FALLBACK_IMAGES.autre);
+    const fondContainer = document.getElementById('formBgCarousel');
+    const fondImgs = imagesFond.map((src,i)=>{ const img=document.createElement('img'); img.src=src; if(i===0) img.className='active'; fondContainer.appendChild(img); return img; });
+    if(fondImgs.length>1){
+      let idxFond=0;
+      setInterval(()=>{ fondImgs[idxFond].classList.remove('active'); idxFond=(idxFond+1)%fondImgs.length; fondImgs[idxFond].classList.add('active'); }, 3500);
+    }
+  })();
+
   const container = document.getElementById('heroImagePanel');
   if(draft.video_url){
     const video = document.createElement('video');
@@ -389,6 +409,18 @@ async function init(){
   document.getElementById('appRoot').style.display = 'block';
   if(draft.status === 'preview'){
     document.getElementById('previewBanner').style.display = 'flex';
+  }
+  if(draft.status === 'en_pause'){
+    document.getElementById('appRoot').innerHTML =
+      '<div style="max-width:560px; margin:60px auto; text-align:center; padding:0 20px;">' +
+        '<span style="display:inline-block; background:#fdf1ea; color:#e8622c; font-size:0.78rem; font-weight:700; padding:6px 14px; border-radius:999px; margin-bottom:16px;">⏸️ En pause</span>' +
+        '<h2 style="margin-bottom:10px;">Cette vitrine est temporairement mise en pause</h2>' +
+        '<p style="color:#5b6b64; margin-bottom:24px; line-height:1.6;">' +
+          'L\'artisan a mis son abonnement en pause — ce n\'est pas définitif, elle reprendra automatiquement bientôt. Si vous êtes l\'artisan concerné, vous pouvez reprendre dès maintenant depuis votre tableau de bord.' +
+        '</p>' +
+        '<a href="/mon-dashboard.html?id=' + draft.id + '" style="display:inline-block; background:#1e6f4c; color:#fff; text-decoration:none; padding:14px 28px; border-radius:10px; font-weight:700;">Je suis l\'artisan — reprendre maintenant</a>' +
+      '</div>';
+    return;
   }
   if(draft.status === 'desactive'){
     document.getElementById('appRoot').innerHTML =

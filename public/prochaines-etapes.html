@@ -370,6 +370,10 @@
     bgPreviewBusiness: document.getElementById('bgPreviewBusiness'),
   };
 
+  const overlay = document.querySelector('.bg-overlay');
+  const wrapEl = document.querySelector('.wrap');
+  let mettreEnAvantTimer = null;
+
   document.querySelectorAll('.selecteur-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const cible = btn.dataset.cible;
@@ -377,6 +381,16 @@
       bgFrames[cible].classList.add('active');
       document.querySelectorAll('.selecteur-btn').forEach(b => b.classList.remove('actif'));
       btn.classList.add('actif');
+
+      // Met le fond choisi pleinement en avant pendant 6 secondes — sinon,
+      // caché derrière le voile ET le bloc blanc, on ne voit presque rien.
+      clearTimeout(mettreEnAvantTimer);
+      overlay.classList.add('cachee');
+      wrapEl.classList.add('cachee');
+      mettreEnAvantTimer = setTimeout(() => {
+        overlay.classList.remove('cachee');
+        wrapEl.classList.remove('cachee');
+      }, 6000);
     });
   });
 </script>

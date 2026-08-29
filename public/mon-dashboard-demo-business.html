@@ -3,37 +3,56 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Aperçu du dashboard — Skyeco Pro</title>
+<title>Aperçu du dashboard — Business</title>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f5f8f6; color:#14312a; padding:28px 24px; }
-  .wrap { max-width:980px; margin:0 auto; }
+  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f5f8f6; color:#14312a; padding:24px; position:relative; overflow-x:hidden; }
+  .shape-bg { position:fixed; z-index:0; pointer-events:none; opacity:0.16; }
+  .wrap { max-width:980px; margin:0 auto; position:relative; z-index:1; }
+
+  .nav-paliers { display:flex; gap:6px; margin-bottom:18px; background:#fff; padding:6px; border-radius:999px; box-shadow:0 2px 10px rgba(0,0,0,0.05); width:fit-content; }
+  .nav-palier { text-decoration:none; padding:7px 14px; border-radius:999px; font-size:0.76rem; font-weight:700; color:#8a9891; }
+  .nav-palier.actif { background:#e8622c; color:#fff; }
+
   .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
   h1 { font-size:1.3rem; }
-  .demo-badge { background:#eaf4ef; color:#1e6f4c; font-size:0.72rem; font-weight:700; padding:5px 12px; border-radius:999px; }
+  .demo-badge { background:#fdf1ea; color:#e8622c; font-size:0.72rem; font-weight:700; padding:5px 12px; border-radius:999px; }
 
-  .stats-row { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin-bottom:24px; }
+  .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:24px; }
   .stat-card { background:#fff; border-radius:14px; padding:18px; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
   .stat-value { font-size:1.7rem; font-weight:800; }
   .stat-label { font-size:0.75rem; color:#8a9891; margin-top:2px; }
 
-  .solde-box { background:#fff; border:2px solid #1e6f4c; border-radius:14px; padding:20px; margin-bottom:24px; }
+  .solde-box { background:#fff; border:2px solid #1e6f4c; border-radius:14px; padding:20px; margin-bottom:16px; }
   .solde-box h3 { font-size:0.9rem; margin-bottom:12px; }
   .solde-bar-track { background:#eef1f0; border-radius:8px; height:11px; overflow:hidden; margin-bottom:10px; }
   .solde-bar-fill { background:#e8622c; height:100%; width:58%; }
   .solde-stats { display:flex; justify-content:space-between; font-size:0.82rem; color:#5b6b64; }
   .solde-stats strong { color:#14312a; font-size:1rem; }
+  .btn-pause-demo { background:#f2f4f1; color:#14312a; border:1.5px solid #d7dedb; border-radius:10px; padding:8px 14px; font-size:0.78rem; font-weight:700; margin-top:12px; cursor:default; }
 
-  .liste-panel { background:#fff; border-radius:14px; padding:20px; }
+  .liste-panel { background:#fff; border-radius:14px; padding:20px; margin-bottom:16px; }
   .liste-panel h3 { font-size:0.9rem; margin-bottom:14px; }
   table { width:100%; border-collapse:collapse; font-size:0.8rem; }
   th { text-align:left; padding:8px 6px; color:#8a9891; font-weight:700; font-size:0.68rem; text-transform:uppercase; border-bottom:1.5px solid #eef1f0; }
-  td { padding:9px 6px; border-bottom:1px solid #eef1f0; }
+  td { padding:9px 6px; border-bottom:1px solid #eef1f0; vertical-align:middle; }
   .statut-badge { font-size:0.66rem; font-weight:700; padding:3px 8px; border-radius:999px; background:#eaf4ef; color:#1e6f4c; }
   .statut-badge.devis-envoye { background:#fdf1ea; color:#e8622c; }
   .statut-badge.signe { background:#eaf4ef; color:#14312a; }
+  .btn-pdf-demo { background:#f2f4f1; color:#14312a; font-size:0.68rem; font-weight:700; padding:4px 9px; border-radius:999px; border:none; white-space:nowrap; }
 
-  .relance-panel { background:#fff; border-radius:14px; padding:20px; margin-top:14px; }
+  .devis-panel { background:#fff; border-radius:14px; padding:20px; margin-bottom:16px; }
+  .devis-panel h3 { font-size:0.9rem; margin-bottom:14px; }
+  .devis-card { display:flex; align-items:center; gap:14px; border:1.5px solid #eef1f0; border-radius:12px; padding:14px; margin-bottom:10px; }
+  .devis-card:last-child { margin-bottom:0; }
+  .devis-icone { width:42px; height:52px; background:#fdf1ea; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }
+  .devis-infos { flex:1; }
+  .devis-nom { font-weight:700; font-size:0.86rem; }
+  .devis-montant { font-size:0.78rem; color:#8a9891; margin-top:1px; }
+  .devis-actions { display:flex; gap:6px; }
+  .btn-signature { background:#1e6f4c; color:#fff; font-size:0.7rem; font-weight:700; padding:6px 11px; border-radius:8px; border:none; white-space:nowrap; }
+
+  .relance-panel { background:#fff; border-radius:14px; padding:20px; }
   .relance-panel h3 { font-size:0.9rem; margin-bottom:12px; }
   .relance-row { display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid #eef1f0; font-size:0.8rem; }
   .relance-row:last-child { border-bottom:none; }
@@ -41,7 +60,23 @@
 </style>
 </head>
 <body>
+
+<svg class="shape-bg" style="top:-60px; right:-100px;" width="320" height="320" viewBox="0 0 320 320">
+  <defs><radialGradient id="s1" cx="35%" cy="30%" r="75%"><stop offset="0%" stop-color="#f0a878"/><stop offset="100%" stop-color="#e8622c"/></radialGradient></defs>
+  <path d="M160,20 C240,40 300,110 280,190 C260,270 170,300 100,260 C30,220 15,130 60,70 C90,30 125,15 160,20 Z" fill="url(#s1)"/>
+</svg>
+<svg class="shape-bg" style="bottom:-90px; left:-90px;" width="300" height="300" viewBox="0 0 300 300">
+  <defs><radialGradient id="s2" cx="35%" cy="30%" r="75%"><stop offset="0%" stop-color="#4a6a5a"/><stop offset="100%" stop-color="#14312a"/></radialGradient></defs>
+  <circle cx="150" cy="150" r="130" fill="url(#s2)"/>
+</svg>
+
 <div class="wrap">
+  <div class="nav-paliers">
+    <a class="nav-palier" href="/mon-dashboard-demo-essentiel.html">Essentiel</a>
+    <a class="nav-palier" href="/mon-dashboard-demo-pro.html">Pro</a>
+    <a class="nav-palier actif" href="/mon-dashboard-demo-business.html">Business</a>
+  </div>
+
   <div class="header">
     <h1>Mon tableau de bord</h1>
     <span class="demo-badge">Exemple illustratif — Forfait Business</span>
@@ -50,6 +85,7 @@
   <div class="stats-row">
     <div class="stat-card"><div class="stat-value">18</div><div class="stat-label">demandes reçues</div></div>
     <div class="stat-card"><div class="stat-value">42</div><div class="stat-label">clics ce mois-ci</div></div>
+    <div class="stat-card"><div class="stat-value">3</div><div class="stat-label">devis signés ce mois-ci</div></div>
   </div>
 
   <div class="solde-box">
@@ -59,19 +95,46 @@
       <span>Consommé : <strong>174 €</strong></span>
       <span>Restant : <strong>126 €</strong> / 300 €</span>
     </div>
+    <button class="btn-pause-demo">⏸️ Mettre en pause la diffusion</button>
   </div>
 
   <div class="liste-panel">
     <h3>Demandes d'estimation</h3>
     <table>
-      <thead><tr><th>Date</th><th>Nom</th><th>Adresse</th><th>Statut</th></tr></thead>
+      <thead><tr><th>Date</th><th>Nom</th><th>Adresse</th><th>Statut</th><th></th></tr></thead>
       <tbody>
-        <tr><td>26/08</td><td>M. Le Roux</td><td>Vannes</td><td><span class="statut-badge">nouveau</span></td></tr>
-        <tr><td>24/08</td><td>Mme Guillou</td><td>Auray</td><td><span class="statut-badge devis-envoye">devis envoyé</span></td></tr>
-        <tr><td>21/08</td><td>M. Even</td><td>Brech</td><td><span class="statut-badge signe">✓ signé électroniquement</span></td></tr>
-        <tr><td>19/08</td><td>Mme Le Bris</td><td>Vannes</td><td><span class="statut-badge devis-envoye">devis envoyé</span></td></tr>
+        <tr><td>26/08</td><td>M. Le Roux</td><td>Vannes</td><td><span class="statut-badge">nouveau</span></td><td>—</td></tr>
+        <tr><td>24/08</td><td>Mme Guillou</td><td>Auray</td><td><span class="statut-badge devis-envoye">devis envoyé</span></td><td><button class="btn-pdf-demo">📄 Voir le PDF</button></td></tr>
+        <tr><td>21/08</td><td>M. Even</td><td>Brech</td><td><span class="statut-badge signe">✓ signé électroniquement</span></td><td><button class="btn-pdf-demo">📄 Voir le PDF</button></td></tr>
+        <tr><td>19/08</td><td>Mme Le Bris</td><td>Vannes</td><td><span class="statut-badge devis-envoye">devis envoyé</span></td><td><button class="btn-pdf-demo">📄 Voir le PDF</button></td></tr>
       </tbody>
     </table>
+  </div>
+
+  <div class="devis-panel">
+    <h3>Devis en attente de signature</h3>
+    <div class="devis-card">
+      <div class="devis-icone">📄</div>
+      <div class="devis-infos">
+        <div class="devis-nom">Mme Guillou — Terrasse composite 24m²</div>
+        <div class="devis-montant">Devis : 3 240 € TTC — envoyé le 24/08</div>
+      </div>
+      <div class="devis-actions">
+        <button class="btn-pdf-demo">📄 PDF</button>
+        <button class="btn-signature">✍️ Relancer signature SMS</button>
+      </div>
+    </div>
+    <div class="devis-card">
+      <div class="devis-icone">📄</div>
+      <div class="devis-infos">
+        <div class="devis-nom">Mme Le Bris — Aménagement paysager</div>
+        <div class="devis-montant">Devis : 5 680 € TTC — envoyé le 19/08</div>
+      </div>
+      <div class="devis-actions">
+        <button class="btn-pdf-demo">📄 PDF</button>
+        <button class="btn-signature">✍️ Relancer signature SMS</button>
+      </div>
+    </div>
   </div>
 
   <div class="relance-panel">

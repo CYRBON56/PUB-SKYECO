@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Créez votre formulaire vitrine gratuitement en 2 minutes — Skyeco Pro</title>
+<link rel="icon" href="/skyeco-icon-devis.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  :root{
+    --navy:#14304A; --blue:#2C5F8A; --blue-light:#6E97B8;
+    --paper:#F4F7F9; --paper-line:#DCE4E9; --orange:#E8622C; --orange-dark:#C74F20;
+    --concrete:#5B6268; --white:#FFFFFF; --ok:#3E8E5A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'IBM Plex Sans',sans-serif; background:var(--paper); color:var(--navy);
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  :focus-visible{outline:3px solid var(--orange); outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){ *{transition-duration:.001ms !important; animation-duration:.001ms !important;} }
+
+  .split-layout{ display:flex; min-height:100vh; position:relative; }
+  .shared-carousel-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 1.2s ease-in-out; z-index:0; }
+  .shared-carousel-img.active{ opacity:1; }
+  .shared-carousel-overlay{ position:absolute; inset:0; background:linear-gradient(rgba(20,48,74,0.35), rgba(20,48,74,0.42)); z-index:1; }
+
+  .page-logo{
+    position:fixed; top:20px; left:20px; z-index:200;
+    display:flex; align-items:center; gap:8px;
+    background:var(--paper,#F4F7F9); border-radius:12px; padding:6px 14px 6px 6px;
+    box-shadow:0 3px 14px rgba(0,0,0,0.28);
+  }
+  .page-logo img{ height:30px; width:30px; display:block; border-radius:7px; }
+  .page-logo-text{ font-family:'Big Shoulders Display',Arial,sans-serif; font-weight:800; font-size:16px; color:var(--navy,#14304A); letter-spacing:0.3px; }
+  .page-logo-text .orange-accent{ color:var(--orange,#E8622C); }
+  .page-logo-text .page-logo-pro{ font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:10.5px; letter-spacing:1px; color:var(--concrete,#5B6268); vertical-align:1px; }
+
+  .btn-etre-rappele-fixe {
+    position:fixed; top:20px; right:20px; z-index:200;
+    display:flex; align-items:center; gap:6px;
+    background:var(--orange,#E8622C); color:#fff; text-decoration:none;
+    border-radius:999px; padding:10px 18px; font-size:13px; font-weight:700;
+    box-shadow:0 3px 14px rgba(0,0,0,0.28);
+  }
+  .btn-etre-rappele-fixe:hover{ filter:brightness(1.05); }
+  @media (max-width:600px){ .btn-etre-rappele-fixe{ padding:9px 14px; font-size:12px; } }
+
+  @media(max-width:768px){
+    .page-logo{ top:12px; left:12px; padding:5px 10px 5px 5px; }
+    .page-logo img{ height:24px; width:24px; }
+    .page-logo-text{ font-size:13px; }
+  }
+  .video-panel{
+    flex:1 1 50%; position:relative; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; padding:32px; overflow:hidden;
+    z-index:2;
+  }
+  .carousel-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 1s ease-in-out; }
+  .carousel-img.active{ opacity:1; }
+
+  .explainer-bg-video{ position:relative; max-width:100%; max-height:100%; width:auto; height:auto; display:block; border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.35); }
+  .unmute-btn{
+    position:absolute; bottom:16px; left:50%; transform:translateX(-50%);
+    background:var(--orange); color:#fff; border:none; border-radius:999px;
+    padding:10px 20px; font-size:14px; font-weight:700; cursor:pointer;
+    box-shadow:0 6px 20px rgba(0,0,0,0.3); z-index:3;
+    animation: pulseBtn 2s ease-in-out infinite;
+  }
+  .unmute-btn:hover{ filter:brightness(1.08); }
+  .unmute-btn.hidden{ display:none; }
+  @keyframes pulseBtn{ 0%,100%{ transform:translateX(-50%) scale(1); } 50%{ transform:translateX(-50%) scale(1.05); } }
+  .video-panel::before{
+    content:''; position:absolute; inset:0;
+    background-image: repeating-linear-gradient(0deg, rgba(110,151,184,0.06) 0px, transparent 1px, transparent 32px),
+                       repeating-linear-gradient(90deg, rgba(110,151,184,0.06) 0px, transparent 1px, transparent 32px);
+    pointer-events:none;
+  }
+
+  .form-panel{ flex:1 1 50%; position:relative; display:flex; align-items:center; justify-content:center; padding:24px; overflow:hidden; z-index:2; }
+  .form-bg-overlay{ position:absolute; inset:0; z-index:-1; background:rgba(244,247,249,0.55); }
+  .carousel-caption{
+    position:absolute; left:20px; bottom:20px; z-index:1; max-width:260px;
+    background:rgba(20,48,74,0.78); color:var(--paper,#F4F7F9);
+    font-family:'IBM Plex Sans',sans-serif; font-weight:600; font-size:13px; line-height:1.4;
+    padding:9px 14px; border-radius:10px;
+  }
+  @media(max-width:768px){ .carousel-caption{ font-size:12px; padding:7px 12px; left:14px; bottom:14px; } }
+  .card{ width:100%; max-width:480px; position:relative; z-index:1; }
+
+  header.top{ background:var(--navy); color:var(--white); padding:22px 28px; margin:-24px -24px 0; }
+  @media(min-width:769px){ header.top{ margin:0; } }
+  .logo{ font-family:'Big Shoulders Display',sans-serif; font-weight:900; font-size:18px; display:flex; align-items:center; gap:8px; margin-bottom:14px;}
+  .logo .dot{ width:8px; height:8px; background:var(--orange); display:inline-block;}
+  .eyebrow{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--blue-light); letter-spacing:.08em; margin-bottom:6px;}
+  h1.title{ font-family:'Big Shoulders Display',sans-serif; font-weight:800; font-size:24px; line-height:1.1;}
+  .subeyebrow{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--orange); letter-spacing:.08em; margin-top:8px;}
+
+  .stepper{ display:flex; gap:4px; padding:16px 28px 0; background:var(--navy); }
+  .step-bar{ flex:1; height:4px; background:rgba(255,255,255,0.18); position:relative; overflow:hidden;}
+  .step-bar span{ position:absolute; inset:0; background:var(--orange); transform:scaleX(0); transform-origin:left; transition:transform .25s ease;}
+  .step-bar.done span{ transform:scaleX(1); }
+  .step-bar.active span{ transform:scaleX(1); }
+  .step-label{ padding:10px 28px 14px; font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--blue-light); background:var(--navy);}
+
+  form{ padding:28px; background:var(--white); border:1px solid var(--paper-line); border-top:none;}
+  .panel{ display:none; }
+  .panel.active{ display:block; animation: fade .2s ease; }
+  @keyframes fade{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
+
+  h2.q{ font-family:'Big Shoulders Display',sans-serif; font-weight:800; font-size:22px; margin-bottom:6px; color:var(--navy);}
+  p.hint{ color:var(--concrete); font-size:14px; margin-bottom:20px; }
+
+  .metier-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:6px;}
+  .metier-card{
+    border:1px solid var(--paper-line); padding:16px 14px; cursor:pointer; background:var(--white);
+    font-size:14.5px; font-weight:600; color:var(--navy); text-align:left;
+  }
+  .metier-card:hover{ border-color:var(--blue-light); }
+  .metier-card.selected{ border-color:var(--orange); background:#FDF3EF; box-shadow:0 0 0 1px var(--orange); }
+  .metier-card .tag{ display:block; font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--concrete); font-weight:400; margin-top:3px;}
+
+  label{ display:block; font-size:13px; font-weight:600; color:var(--navy); margin-bottom:6px; margin-top:16px;}
+  label:first-of-type{ margin-top:0; }
+  input[type=text], input[type=email], input[type=tel], textarea, select{
+    width:100%; border:1px solid var(--paper-line); padding:12px 14px; font-family:'IBM Plex Sans',sans-serif;
+    font-size:14.5px; color:var(--navy); background:var(--paper);
+  }
+  input:focus, textarea:focus, select:focus{ background:var(--white); border-color:var(--blue); }
+  textarea{ resize:vertical; min-height:80px; }
+  .status-line{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--concrete); margin:6px 0 4px;}
+  .char-count{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--concrete); text-align:right; margin-top:4px;}
+
+  .sms-block{ margin:14px 0 6px; padding:14px; background:var(--paper); border:1px solid var(--paper-line); }
+  .sms-block p{ font-size:12.5px; color:var(--concrete); margin-bottom:10px; line-height:1.4; }
+  .btn-sms{ background:#EEF4F0; color:var(--blue); border:1.5px solid var(--blue); padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; }
+  .btn-sms:hover:not(:disabled){ background:var(--blue); color:var(--white); }
+  .btn-sms:disabled{ opacity:.5; cursor:not-allowed; }
+  .btn-sms.selected{ background:var(--blue); color:var(--white); }
+  .sms-code-row{ display:flex; gap:8px; margin-top:10px; }
+  .sms-code-row input{ flex:1; letter-spacing:.3em; text-align:center; margin:0; }
+  .sms-status{ margin-top:8px; font-size:12.5px; }
+  .sms-status.ok{ color:var(--ok); font-weight:600; }
+  .sms-status.error{ color:var(--orange-dark); }
+
+  .unite-row{ display:flex; gap:8px; margin-top:6px; flex-wrap:wrap; }
+
+  .upload-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:6px;}
+  .upload-slot{
+    aspect-ratio:1; border:1.5px dashed var(--paper-line); display:flex; align-items:center; justify-content:center;
+    cursor:pointer; position:relative; overflow:hidden; background:var(--paper);
+  }
+  .upload-slot:hover{ border-color:var(--blue-light); }
+  .upload-slot span{ font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--concrete); text-align:center; padding:8px;}
+  .upload-slot img{ width:100%; height:100%; object-fit:cover; position:absolute; inset:0;}
+  .upload-slot input{ display:none; }
+
+  .palette-row{ display:flex; gap:10px; margin-top:6px; }
+  .swatch{ width:42px; height:42px; border:2px solid transparent; cursor:pointer; position:relative; }
+  .swatch.selected{ border-color:var(--navy); }
+  .swatch.selected::after{ content:'✓'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--white); font-size:16px; }
+
+  .recap{ border:1px solid var(--paper-line); padding:16px; font-size:14px; }
+  .recap dt{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--concrete); margin-top:12px;}
+  .recap dt:first-child{ margin-top:0; }
+  .recap dd{ color:var(--navy); font-weight:600; }
+
+  .nav-row{ display:flex; justify-content:space-between; align-items:center; margin-top:26px; }
+  .btn{ font-family:'IBM Plex Sans',sans-serif; font-weight:600; font-size:14.5px; padding:13px 24px; border:2px solid transparent; cursor:pointer; }
+  .btn-primary{ background:var(--orange); color:var(--white); }
+  .btn-primary:hover{ background:var(--orange-dark); }
+  .btn-primary:disabled{ background:var(--paper-line); color:var(--concrete); cursor:not-allowed; }
+  .btn-ghost{ background:transparent; border-color:var(--paper-line); color:var(--navy); }
+  .btn-ghost:hover{ border-color:var(--blue); }
+
+  .error{ color:var(--orange-dark); font-size:12.5px; margin-top:6px; display:none; font-family:'IBM Plex Mono',monospace; }
+  .error.show{ display:block; }
+
+  .success{ display:none; text-align:center; padding:48px 28px; background:var(--white); border:1px solid var(--paper-line); border-top:none; }
+  .success.active{ display:block; }
+  .success .icon{ width:52px; height:52px; border:2px solid var(--ok); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 18px; color:var(--ok); font-size:24px; }
+  .success h2{ font-family:'Big Shoulders Display',sans-serif; font-weight:800; font-size:24px; margin-bottom:10px;}
+  .success p{ color:var(--concrete); font-size:14.5px; max-width:400px; margin:0 auto 22px; }
+  .success .loader{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--blue); }
+
+  @media(max-width:900px){ .metier-grid{grid-template-columns:1fr;} }
+  @media(max-width:768px){
+    .split-layout{ flex-direction:column; }
+    .video-panel{ padding:24px; }
+    header.top{ margin:0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-logo">
+  <img src="/skyeco-icon-devis.svg" alt="">
+  <span class="page-logo-text">SKY<span class="orange-accent">ECO</span> <span class="page-logo-pro">PRO</span></span>
+</div>
+
+<a class="btn-etre-rappele-fixe" href="https://calendly.com/c-bon-ecosky/devis-skyeco-pro-appel-telephonique" target="_blank" rel="noopener">📞 Être rappelé</a>
+
+<div class="split-layout">
+  <img class="shared-carousel-img active" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/1-terrasse-mobilier-noir.jpg" alt="">
+  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/2-terrasse-mobilier-violet.jpg" alt="">
+  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/3-piscine-motif-tortue.jpg" alt="">
+  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/4-motif-geometrique.jpg" alt="">
+  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/5-piscine-beige.jpg" alt="">
+  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/6-piscine-pool-house.jpg" alt="">
+  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/7-piscine-jardin.jpg" alt="">
+  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/8-escalier-terrasse.jpg" alt="">
+  <div class="shared-carousel-overlay"></div>
+
+  <div class="video-panel">
+    <video class="explainer-bg-video" id="explainerVideo" autoplay muted loop playsinline controls>
+      <source src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/puv%20skyeco/video.mp4" type="video/mp4">
+    </video>
+    <button id="unmuteBtn" class="unmute-btn" type="button">🔊 Activer le son</button>
+  </div>
+
+  <div class="form-panel" id="photoCarousel">
+    <div class="carousel-caption">Des extérieurs pensés pour durer.</div>
+    <div class="card">
+      <header class="top">
+        <div class="logo"><img src="/skyeco-logo-devis.svg" alt="Skyeco Pro" style="height:28px; display:block;"></div>
+        <div class="eyebrow mono">CRÉATION GRATUITE — SANS ENGAGEMENT</div>
+        <h1 class="title">Créez votre formulaire vitrine gratuitement en 2 minutes.</h1>
+      </header>
+      <div class="stepper" id="stepper"></div>
+      <div class="step-label mono" id="stepLabel"></div>
+
+      <form id="wizardForm" novalidate>
+
+        <!-- STEP 0 : éligibilité (SIRET) -->
+        <div class="panel active" data-step="0">
+          <h2 class="q">Vérifiez votre éligibilité.</h2>
+          <p class="hint">Un numéro de SIRET valide suffit pour commencer — c'est gratuit et sans engagement.</p>
+          <label for="siret">Numéro de SIRET</label>
+          <input type="text" id="siret" inputmode="numeric" maxlength="14" placeholder="Ex : 93999787000018">
+          <div class="status-line mono" id="siretStatus">14 chiffres, sans espace.</div>
+          <div class="error mono" id="err-siret">Merci de renseigner un SIRET valide (14 chiffres).</div>
+        </div>
+
+        <!-- STEP 1 : coordonnées -->
+        <div class="panel" data-step="1">
+          <h2 class="q">Comment vous joindre ?</h2>
+          <div class="status-line mono" id="entrepriseConfirmee" style="display:none; color:var(--ok); font-weight:600; margin-bottom:14px;"></div>
+          <p class="hint">On vous recontacte pour construire votre vraie vitrine ensemble.</p>
+
+          <label for="telephone">Téléphone</label>
+          <input type="tel" id="telephone" inputmode="numeric" placeholder="Ex : 06 12 34 56 78">
+          <div class="status-line mono" id="telStatus">Numéro français, 10 chiffres.</div>
+
+          <div class="sms-block" id="smsBlock">
+            <p>Vérifiez votre numéro pour confirmer que votre demande est bien réelle.</p>
+            <button type="button" class="btn-sms" id="btnEnvoyerCode" disabled>Vérifier mon numéro par SMS</button>
+            <button type="button" class="btn-sms" id="btnSimulerVerifTel" style="display:none; margin-left:8px; background:#fff3cd; color:#8a6d1f; border-color:#f0d98c;">🧪 Simuler la vérification (test)</button>
+            <div class="sms-code-row" id="smsCodeRow" style="display:none;">
+              <input type="text" id="smsCode" inputmode="numeric" maxlength="6" placeholder="Code reçu">
+              <button type="button" class="btn-sms" id="btnVerifierCode">Valider</button>
+            </div>
+            <div class="sms-status" id="smsStatus"></div>
+          </div>
+
+          <label for="email">Email</label>
+          <input type="email" id="email" placeholder="Ex : contact@monentreprise.fr">
+          <div class="error mono" id="err-entreprise">Merci de renseigner un téléphone vérifié et un email valide.</div>
+        </div>
+
+        <div class="nav-row">
+          <button type="button" class="btn btn-ghost" id="btnBack">← Retour</button>
+          <button type="button" class="btn btn-primary" id="btnNext">Continuer →</button>
+        </div>
+      </form>
+
+      <div class="success" id="successPanel">
+        <div class="icon">✓</div>
+        <h2>Génération en cours.</h2>
+        <p>Votre aperçu gratuit sera prêt dans quelques instants. Vous pourrez le consulter, le modifier, et décider de le mettre en ligne quand vous le souhaitez — sans engagement.</p>
+        <div class="loader mono">PRÉPARATION DE VOTRE APERÇU…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Activer le son de la vidéo au clic (l'autoplay avec son est bloqué par les navigateurs)
+  (function(){
+    const video = document.getElementById('explainerVideo');
+    const btn = document.getElementById('unmuteBtn');
+    if (video && btn) {
+      btn.addEventListener('click', function(){
+        video.muted = false;
+        video.play();
+        btn.classList.add('hidden');
+      });
+    }
+  })();
+(function(){
+  // Carrousel photo (panneau droit, fond du formulaire)
+  (function initCarousel(){
+    const imgs = Array.from(document.querySelectorAll('.shared-carousel-img'));
+    if(imgs.length <= 1) return;
+    let idx = 0;
+    setInterval(()=>{
+      imgs[idx].classList.remove('active');
+      idx = (idx + 1) % imgs.length;
+      imgs[idx].classList.add('active');
+    }, 2500);
+  })();
+
+  const steps = Array.from(document.querySelectorAll('.panel'));
+  const stepLabels = ['Éligibilité','Coordonnées'];
+  let current = 0;
+  // Correspondance code région INSEE → nom (renvoyé par l'API SIRET dans siege.region)
+  const REGIONS_INSEE = {
+    '01':'Guadeloupe', '02':'Martinique', '03':'Guyane', '04':'La Réunion', '06':'Mayotte',
+    '11':'Île-de-France', '24':'Centre-Val de Loire', '27':'Bourgogne-Franche-Comté',
+    '28':'Normandie', '32':'Hauts-de-France', '44':'Grand Est', '52':'Pays de la Loire',
+    '53':'Bretagne', '75':'Nouvelle-Aquitaine', '76':'Occitanie', '84':'Auvergne-Rhône-Alpes',
+    '93':'Provence-Alpes-Côte d\'Azur', '94':'Corse'
+  };
+
+  const state = {
+    siret:'', siretVerifie:false, entreprise:'', zone:'',
+    telephone:'', telephoneVerifie:false, email:'',
+    formeJuridique:'', dateCreation:'', codeNaf:'', libelleActivite:'',
+    adresseRue:'', adresseCp:'', adresseVille:'', departement:''
+  };
+
+  const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+  const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+  // Mode test (usage interne uniquement) : ajouter "&test=1" à l'URL fait
+  // apparaître un bouton pour sauter la vérification SMS (sans jamais envoyer
+  // ni vérifier de vrai code) — protégé par le mot de passe interne, jamais
+  // accessible à un vrai visiteur qui ne le connaît pas. Sert à tester tout
+  // le parcours d'inscription plusieurs fois de suite, avec des numéros
+  // fictifs, sans avoir à recevoir/taper un vrai code à chaque essai.
+  const TEST_MODE = new URLSearchParams(window.location.search).get('test') === '1';
+
+  async function uploadToStorage(file, prefix){
+    if(!supabaseClient) throw new Error('Service de stockage indisponible.');
+    const ext = file.name.split('.').pop();
+    const path = prefix + '/' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.' + ext;
+    const { error } = await supabaseClient.storage.from('skyeco-pro-media').upload(path, file);
+    if(error) throw error;
+    const { data } = supabaseClient.storage.from('skyeco-pro-media').getPublicUrl(path);
+    return data.publicUrl;
+  }
+
+  // build stepper bars
+  const stepperEl = document.getElementById('stepper');
+  steps.forEach((_,i)=>{
+    const bar = document.createElement('div');
+    bar.className = 'step-bar';
+    bar.innerHTML = '<span></span>';
+    stepperEl.appendChild(bar);
+  });
+  const bars = Array.from(stepperEl.children);
+
+  function renderStepper(){
+    bars.forEach((b,i)=>{
+      b.classList.toggle('active', i===current);
+      b.classList.toggle('done', i<current);
+    });
+    document.getElementById('stepLabel').textContent = 'ÉTAPE ' + (current+1) + ' / ' + steps.length + ' — ' + stepLabels[current].toUpperCase();
+  }
+
+  function isTelephoneValid(raw){
+    const digits = raw.replace(/\D/g,'');
+    return /^0\d{9}$/.test(digits);
+  }
+
+  function canProceed(i){
+    if(i===0){ return state.siret.length === 14; }
+    if(i===1){
+      const emailOk = /\S+@\S+\.\S+/.test(document.getElementById('email').value.trim());
+      const telOk = isTelephoneValid(document.getElementById('telephone').value);
+      return emailOk && telOk && state.telephoneVerifie;
+    }
+    return true;
+  }
+
+  function showStep(i){
+    steps.forEach(p=>p.classList.remove('active'));
+    steps[i].classList.add('active');
+    document.getElementById('btnBack').style.visibility = i===0 ? 'hidden' : 'visible';
+    document.getElementById('btnNext').textContent = i===steps.length-1 ? 'Générer mon aperçu gratuit' : 'Continuer →';
+    document.getElementById('btnNext').disabled = !canProceed(i);
+    renderStepper();
+  }
+
+  // Step 0: SIRET
+  const siretEl = document.getElementById('siret');
+  const siretStatusEl = document.getElementById('siretStatus');
+  let siretTimer = null;
+
+  siretEl.addEventListener('input', ()=>{
+    const digits = siretEl.value.replace(/\D/g,'').slice(0,14);
+    siretEl.value = digits;
+    state.siret = digits;
+    state.siretVerifie = false;
+    document.getElementById('err-siret').classList.remove('show');
+    clearTimeout(siretTimer);
+    if(digits.length < 14){
+      siretStatusEl.textContent = '14 chiffres, sans espace.';
+      siretStatusEl.style.color = 'var(--concrete)';
+      document.getElementById('btnNext').disabled = !canProceed(0);
+      return;
+    }
+    siretStatusEl.textContent = 'Vérification en cours…';
+    siretStatusEl.style.color = 'var(--concrete)';
+    siretTimer = setTimeout(async ()=>{
+      try{
+        const res = await fetch('https://recherche-entreprises.api.gouv.fr/search?q=' + digits);
+        const data = await res.json();
+        const result = data.results && data.results[0];
+        if(result){
+          state.siretVerifie = true;
+          siretStatusEl.textContent = '✓ ' + result.nom_complet;
+          siretStatusEl.style.color = 'var(--ok)';
+          state.entreprise = result.nom_complet;
+          const entrepriseConfirmeeEl = document.getElementById('entrepriseConfirmee');
+          entrepriseConfirmeeEl.textContent = '✓ ' + result.nom_complet;
+          entrepriseConfirmeeEl.style.display = 'block';
+
+          // Forme juridique (SAS, SARL, EI, EURL...) — pré-remplit
+          // directement le même champ utilisé plus tard dans mes-elements.html.
+          if(result.nature_juridique){
+            state.formeJuridique = result.nature_juridique;
+          }
+
+          // Date de création — utile pour l'ancienneté affichée sur la vitrine.
+          if(result.date_creation){
+            state.dateCreation = result.date_creation;
+          }
+
+          // Activité principale (code + libellé NAF) — utile pour orienter
+          // le métier plus tard si besoin, sans obliger l'artisan à le ressaisir.
+          if(result.activite_principale){
+            state.codeNaf = result.activite_principale;
+          }
+          if(result.libelle_activite_principale){
+            state.libelleActivite = result.libelle_activite_principale;
+          }
+
+          if(result.siege){
+            const s = result.siege;
+
+            // Adresse complète du siège — pré-remplit les mêmes colonnes
+            // (adresse_rue, adresse_cp, adresse_ville) que mes-elements.html.
+            const numeroEtVoie = [s.numero_voie, s.type_voie, s.libelle_voie].filter(Boolean).join(' ');
+            if(numeroEtVoie){ state.adresseRue = numeroEtVoie; }
+            if(s.code_postal){ state.adresseCp = s.code_postal; }
+            if(s.libelle_commune){ state.adresseVille = s.libelle_commune; }
+
+            // Zone d'intervention déduite : ville + région.
+            if(s.libelle_commune){
+              const nomRegion = REGIONS_INSEE[s.region] || '';
+              state.zone = nomRegion ? (s.libelle_commune + ', ' + nomRegion) : s.libelle_commune;
+            }
+
+            // Département du siège — transmis tel quel à l'estimation de
+            // clics, plus fiable qu'un texte libre pour la région exacte.
+            if(s.departement){ state.departement = s.departement; }
+
+            // Sécurité : avertit si l'établissement semble fermé, sans
+            // bloquer (l'info peut être temporairement inexacte).
+            if(s.etat_administratif === 'F'){
+              siretStatusEl.textContent = '⚠️ ' + result.nom_complet + ' — cet établissement apparaît comme fermé, vérifiez votre numéro.';
+              siretStatusEl.style.color = 'var(--orange-dark)';
+            }
+          }
+        } else {
+          state.siretVerifie = false;
+          siretStatusEl.textContent = "SIRET introuvable — vérifiez le numéro.";
+          siretStatusEl.style.color = 'var(--orange-dark)';
+        }
+      } catch(e){
+        state.siretVerifie = true;
+        siretStatusEl.textContent = 'Vérification indisponible — vous pouvez continuer.';
+        siretStatusEl.style.color = 'var(--concrete)';
+      }
+      document.getElementById('btnNext').disabled = !canProceed(0);
+    }, 500);
+  });
+
+  // Step 1: coordonnées
+  document.getElementById('email').addEventListener('input', ()=>{ document.getElementById('btnNext').disabled = !canProceed(1); });
+
+  const telEl = document.getElementById('telephone');
+  const telStatusEl = document.getElementById('telStatus');
+  const btnEnvoyerCode = document.getElementById('btnEnvoyerCode');
+  const smsCodeRow = document.getElementById('smsCodeRow');
+  const smsCodeInput = document.getElementById('smsCode');
+  const btnVerifierCode = document.getElementById('btnVerifierCode');
+  const smsStatusEl = document.getElementById('smsStatus');
+
+  function resetSmsVerification(){
+    state.telephoneVerifie = false;
+    smsCodeRow.style.display = 'none';
+    smsCodeInput.value = '';
+    smsStatusEl.textContent = '';
+    smsStatusEl.className = 'sms-status';
+    btnEnvoyerCode.style.display = 'inline-block';
+    btnEnvoyerCode.textContent = 'Vérifier mon numéro par SMS';
+    if (TEST_MODE) document.getElementById('btnSimulerVerifTel').style.display = 'inline-block';
+  }
+
+  telEl.addEventListener('input', ()=>{
+    let digits = telEl.value.replace(/\D/g,'').slice(0,10);
+    const formatted = digits.replace(/(\d{2})(?=\d)/g,'$1 ').trim();
+    telEl.value = formatted;
+    state.telephone = formatted;
+    resetSmsVerification();
+
+    if(digits.length === 0){
+      telStatusEl.textContent = 'Numéro français, 10 chiffres.';
+      telStatusEl.style.color = 'var(--concrete)';
+      btnEnvoyerCode.disabled = true;
+    } else if(isTelephoneValid(digits)){
+      telStatusEl.textContent = '✓ Format valide';
+      telStatusEl.style.color = 'var(--ok)';
+      btnEnvoyerCode.disabled = false;
+    } else {
+      telStatusEl.textContent = digits.length < 10 ? 'Numéro incomplet.' : 'Doit commencer par 0 (ex : 06...).';
+      telStatusEl.style.color = 'var(--orange-dark)';
+      btnEnvoyerCode.disabled = true;
+    }
+    document.getElementById('btnNext').disabled = !canProceed(1);
+  });
+
+  btnEnvoyerCode.addEventListener('click', async ()=>{
+    btnEnvoyerCode.disabled = true;
+    smsStatusEl.textContent = 'Envoi du code…';
+    smsStatusEl.className = 'sms-status';
+    try{
+      const res = await fetch('/api/verify-send-code', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ telephone: state.telephone })
+      });
+      const data = await res.json();
+      if(!data.success) throw new Error(data.error || "Erreur lors de l'envoi.");
+      smsCodeRow.style.display = 'flex';
+      smsStatusEl.textContent = 'Code envoyé par SMS.';
+      smsStatusEl.className = 'sms-status ok';
+    } catch(err){
+      smsStatusEl.textContent = err.message;
+      smsStatusEl.className = 'sms-status error';
+    } finally {
+      btnEnvoyerCode.disabled = false;
+    }
+  });
+
+  const btnSimulerVerifTel = document.getElementById('btnSimulerVerifTel');
+  if (TEST_MODE) {
+    btnSimulerVerifTel.style.display = 'inline-block';
+  }
+  btnSimulerVerifTel.addEventListener('click', async ()=>{
+    let motDePasseInterne = sessionStorage.getItem('skyeco_admin_internal_pw');
+    if (!motDePasseInterne) {
+      motDePasseInterne = prompt('Mot de passe interne (mode test) :');
+      if (!motDePasseInterne) return;
+    }
+    btnSimulerVerifTel.disabled = true;
+    smsStatusEl.textContent = 'Vérification du mot de passe interne…';
+    smsStatusEl.className = 'sms-status';
+    try {
+      const res = await fetch('/api/verify-test-bypass', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ motDePasseInterne })
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Mot de passe interne incorrect.');
+      sessionStorage.setItem('skyeco_admin_internal_pw', motDePasseInterne);
+      state.telephoneVerifie = true;
+      btnEnvoyerCode.style.display = 'none';
+      btnSimulerVerifTel.style.display = 'none';
+      smsCodeRow.style.display = 'none';
+      smsStatusEl.textContent = '✓ Numéro vérifié (test — aucun SMS envoyé).';
+      smsStatusEl.className = 'sms-status ok';
+    } catch(err) {
+      sessionStorage.removeItem('skyeco_admin_internal_pw');
+      state.telephoneVerifie = false;
+      smsStatusEl.textContent = err.message;
+      smsStatusEl.className = 'sms-status error';
+    } finally {
+      btnSimulerVerifTel.disabled = false;
+      document.getElementById('btnNext').disabled = !canProceed(1);
+    }
+  });
+
+  btnVerifierCode.addEventListener('click', async ()=>{
+    btnVerifierCode.disabled = true;
+    smsStatusEl.textContent = 'Vérification…';
+    smsStatusEl.className = 'sms-status';
+    try{
+      const res = await fetch('/api/verify-check-code', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ telephone: state.telephone, code: smsCodeInput.value.trim() })
+      });
+      const data = await res.json();
+      if(!data.success || !data.verified) throw new Error(data.error || 'Code invalide.');
+      state.telephoneVerifie = true;
+      btnEnvoyerCode.style.display = 'none';
+      smsCodeRow.style.display = 'none';
+      smsStatusEl.textContent = '✓ Numéro vérifié.';
+      smsStatusEl.className = 'sms-status ok';
+    } catch(err){
+      state.telephoneVerifie = false;
+      smsStatusEl.textContent = err.message;
+      smsStatusEl.className = 'sms-status error';
+    } finally {
+      btnVerifierCode.disabled = false;
+      document.getElementById('btnNext').disabled = !canProceed(1);
+    }
+  });
+  function validateStep(i){
+    if(i===0){
+      state.siret = siretEl.value.trim();
+      if(!/^\d{14}$/.test(state.siret)){
+        document.getElementById('err-siret').classList.add('show');
+        return false;
+      }
+      document.getElementById('err-siret').classList.remove('show');
+    }
+    if(i===1){
+      state.telephone = document.getElementById('telephone').value.trim();
+      state.email = document.getElementById('email').value.trim();
+      if(!canProceed(1)){
+        document.getElementById('err-entreprise').classList.add('show');
+        return false;
+      }
+      document.getElementById('err-entreprise').classList.remove('show');
+    }
+    return true;
+  }
+
+  document.getElementById('btnNext').addEventListener('click', ()=>{
+    if(!validateStep(current)) return;
+    if(current === steps.length-1){
+      submitForm();
+      return;
+    }
+    current++;
+    showStep(current);
+  });
+
+  document.getElementById('btnBack').addEventListener('click', ()=>{
+    if(current===0) return;
+    current--;
+    showStep(current);
+  });
+
+  async function submitForm(){
+    document.getElementById('btnNext').disabled = true;
+    document.getElementById('btnNext').textContent = 'Génération en cours…';
+
+    if (!supabaseClient) {
+      document.getElementById('btnNext').disabled = false;
+      document.getElementById('btnNext').textContent = 'Générer mon aperçu gratuit';
+      alert("Le service de sauvegarde n'a pas pu se charger. Vérifiez votre connexion et réessayez.");
+      return;
+    }
+
+    const { data, error } = await supabaseClient
+      .from('skyeco_pro_vitrine_drafts')
+      .insert([{
+        siret: state.siret,
+        entreprise: state.entreprise,
+        zone: state.zone,
+        telephone: state.telephone,
+        email: state.email,
+        forme_juridique: state.formeJuridique || null,
+        date_creation_entreprise: state.dateCreation || null,
+        code_naf: state.codeNaf || null,
+        libelle_activite: state.libelleActivite || null,
+        adresse_rue: state.adresseRue || null,
+        adresse_cp: state.adresseCp || null,
+        adresse_ville: state.adresseVille || null,
+        status: 'preview'
+      }])
+      .select()
+      .single();
+
+    if(error){
+      document.getElementById('btnNext').disabled = false;
+      document.getElementById('btnNext').textContent = 'Générer mon aperçu gratuit';
+      alert("Une erreur est survenue lors de l'enregistrement. Merci de réessayer. (" + error.message + ")");
+      return;
+    }
+
+    document.getElementById('wizardForm').style.display = 'none';
+    document.getElementById('successPanel').classList.add('active');
+
+    setTimeout(()=>{
+      window.location.href = 'prochaines-etapes.html?id=' + data.id;
+    }, 1400);
+  }
+
+  showStep(0);
+})();
+</script>
+
+<div style="text-align:center; font-size:11px; color:#8a9891; padding:24px 16px 16px; line-height:1.7;">
+  RMS EcoSky (Skyeco Pro) — RÉSINE MARBRE SOL, SASU au capital de 50 000 € — SIRET 939 997 870 00018<br>
+  23 Route de Corn Er Hoet, 56400 Brech — <a href="mailto:infos@ecosky.fr" style="color:#8a9891;">infos@ecosky.fr</a><br>
+  <a href="/mentions-legales.html" style="color:#8a9891;">Mentions légales</a> · <a href="/politique-confidentialite.html" style="color:#8a9891;">Confidentialité</a> · <a href="/cgv.html" style="color:#8a9891;">CGV</a>
+</div>
+</body>
+</html>

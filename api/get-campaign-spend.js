@@ -49,7 +49,7 @@ export default async function handler(req, res) {
 
   try {
     const draftResp = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}&select=entreprise,telephone,twilio_phone_number,google_ads_campaign_resource,tarif_prix,derniere_recharge_le,alerte_solde_bas_envoyee`,
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}&select=entreprise,telephone,twilio_phone_number,google_ads_campaign_resource,tarif_prix,derniere_recharge_le,alerte_solde_bas_envoyee,campagne_diffusion_pausee`,
       { headers: supaHeaders }
     );
     const draftRows = await draftResp.json();
@@ -104,6 +104,7 @@ export default async function handler(req, res) {
       budgetPaye,
       budgetRestant,
       pourcentageConsomme,
+      diffusionPausee: !!draft.campagne_diffusion_pausee,
     });
   } catch (err) {
     console.error('Erreur get-campaign-spend (Windsor.ai) :', err);

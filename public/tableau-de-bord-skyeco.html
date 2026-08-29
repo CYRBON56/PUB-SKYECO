@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tableau de bord Skyeco Pro</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background:#f2f4f1; color:#14312a; padding:36px 28px 60px;
+  }
+  .wrap { max-width:1180px; margin:0 auto; }
+
+  .top-header { display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:28px; flex-wrap:wrap; gap:12px; }
+  h1 { font-size:1.6rem; font-weight:800; letter-spacing:-0.01em; }
+  .sub { font-size:0.9rem; color:#6b7a72; margin-top:4px; }
+  .lien-artisans { font-size:0.85rem; font-weight:700; color:#1e6f4c; text-decoration:none; }
+  .lien-artisans:hover { text-decoration:underline; }
+
+  .section-titre { font-size:0.78rem; text-transform:uppercase; letter-spacing:0.04em; color:#8a9891; font-weight:700; margin:28px 0 12px; }
+  .section-titre:first-of-type { margin-top:0; }
+
+  .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; }
+  .stat-card {
+    background:#fff; border-radius:16px; padding:20px 22px;
+    box-shadow:0 1px 2px rgba(20,49,42,0.04), 0 6px 20px rgba(20,49,42,0.05);
+  }
+  .stat-card .valeur { font-size:1.9rem; font-weight:800; line-height:1; }
+  .stat-card .label { font-size:0.78rem; color:#8a9891; margin-top:7px; font-weight:600; }
+  .stat-card .detail { font-size:0.72rem; color:#a3ab9e; margin-top:3px; }
+  .stat-card.accent-vert .valeur { color:#1e6f4c; }
+  .stat-card.accent-orange .valeur { color:#e8622c; }
+
+  .repartition-box { background:#fff; border-radius:16px; padding:22px; margin-top:8px; box-shadow:0 1px 2px rgba(20,49,42,0.04), 0 6px 20px rgba(20,49,42,0.05); }
+  .repartition-row { display:flex; align-items:center; gap:14px; padding:10px 0; border-bottom:1px solid #f2f4f0; }
+  .repartition-row:last-child { border-bottom:none; }
+  .repartition-label { flex:0 0 180px; font-size:0.85rem; font-weight:600; }
+  .repartition-bar-track { flex:1; background:#f0f1ec; border-radius:999px; height:10px; overflow:hidden; }
+  .repartition-bar-fill { background:#1e6f4c; height:100%; border-radius:999px; }
+  .repartition-count { flex:0 0 40px; text-align:right; font-size:0.85rem; font-weight:700; color:#5b6b64; }
+
+  .loading, .empty { text-align:center; padding:60px; color:#8a9891; font-size:0.92rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top-header">
+    <div>
+      <h1>Tableau de bord Skyeco Pro</h1>
+      <p class="sub">Vue d'ensemble de toute l'activité, tous artisans confondus.</p>
+    </div>
+    <a class="lien-artisans" href="/mes-artisans.html">→ Voir la liste détaillée des artisans</a>
+  </div>
+
+  <div id="contenu"><div class="loading">Chargement des données…</div></div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+
+  const PRIX_FORFAIT = { 1: 39.90, 2: 59.90, 3: 79.90, 4: 99.90 };
+  const NOMS_FORFAIT = { 1: 'Vitrine simple', 2: 'Vitrine + Dashboard', 3: 'Relances SMS + devis', 4: 'Vitrine référencée' };
+
+  chargerDonnees();
+
+  async function chargerDonnees() {
+    try {
+      const [draftsResp, leadsResp] = await Promise.all([
+        fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?select=id,status,subscription_status,forfait,tarif_prix,created_at,metier`, {
+          headers: { apikey: SUPABASE_ANON_KEY }
+        }),
+        fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_leads?select=id,created_at`, {
+          headers: { apikey: SUPABASE_ANON_KEY, Prefer: 'count=exact' }
+        }),
+      ]);
+
+      const drafts = await draftsResp.json();
+      const totalLeads = leadsResp.headers.get('content-range')?.split('/')[1] || (await leadsResp.json()).length;
+
+      afficherTableauDeBord(drafts, parseInt(totalLeads, 10) || 0);
+    } catch (e) {
+      document.getElementById('contenu').innerHTML = '<div class="empty">Impossible de charger les données pour le moment.</div>';
+    }
+  }
+
+  function afficherTableauDeBord(drafts, totalLeads) {
+    const totalArtisans = drafts.length;
+    const abonnesActifs = drafts.filter(d => d.subscription_status === 'active');
+    const enAttente = drafts.filter(d => d.status === 'preview').length;
+    const desactives = drafts.filter(d => d.status === 'desactive').length;
+
+    // MRR — somme des abonnements actifs, à partir du forfait choisi par chacun.
+    const mrrHT = abonnesActifs.reduce((acc, d) => acc + (PRIX_FORFAIT[d.forfait] || 0), 0);
+    const mrrTTC = +(mrrHT * 1.2).toFixed(2);
+
+    // Budget publicitaire total alloué par les artisans avec un forfait pub actif.
+    const budgetPubTotal = drafts.reduce((acc, d) => acc + (d.tarif_prix || 0), 0);
+    const commissionEstimee = +(budgetPubTotal * 0.5).toFixed(2);
+
+    // Nouveaux artisans ce mois-ci.
+    const debutMois = new Date(); debutMois.setDate(1); debutMois.setHours(0,0,0,0);
+    const nouveauxCeMois = drafts.filter(d => new Date(d.created_at) >= debutMois).length;
+
+    // Répartition par forfait, parmi les abonnés actifs.
+    const repartitionForfait = {};
+    abonnesActifs.forEach(d => { repartitionForfait[d.forfait] = (repartitionForfait[d.forfait] || 0) + 1; });
+    const maxForfaitCount = Math.max(1, ...Object.values(repartitionForfait));
+
+    // Répartition par métier (tous artisans confondus).
+    const repartitionMetier = {};
+    drafts.forEach(d => {
+      const metiers = Array.isArray(d.metier) ? d.metier : (d.metier ? [d.metier] : []);
+      metiers.forEach(m => { repartitionMetier[m] = (repartitionMetier[m] || 0) + 1; });
+    });
+    const maxMetierCount = Math.max(1, ...Object.values(repartitionMetier));
+
+    document.getElementById('contenu').innerHTML = `
+      <div class="section-titre">Revenus</div>
+      <div class="stats-row">
+        <div class="stat-card accent-vert">
+          <div class="valeur">${mrrTTC.toFixed(2)} €</div>
+          <div class="label">MRR (revenu mensuel récurrent)</div>
+          <div class="detail">${mrrHT.toFixed(2)} € HT — ${abonnesActifs.length} abonnement(s) actif(s)</div>
+        </div>
+        <div class="stat-card accent-orange">
+          <div class="valeur">${commissionEstimee.toFixed(2)} €</div>
+          <div class="label">Commission pub estimée</div>
+          <div class="detail">Sur ${budgetPubTotal.toFixed(2)} € de budget alloué au total</div>
+        </div>
+      </div>
+
+      <div class="section-titre">Artisans</div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="valeur">${totalArtisans}</div><div class="label">Artisans au total</div></div>
+        <div class="stat-card accent-vert"><div class="valeur">${abonnesActifs.length}</div><div class="label">Abonnements actifs</div></div>
+        <div class="stat-card accent-orange"><div class="valeur">${enAttente}</div><div class="label">En attente de validation</div></div>
+        <div class="stat-card"><div class="valeur">${nouveauxCeMois}</div><div class="label">Nouveaux ce mois-ci</div></div>
+      </div>
+
+      <div class="section-titre">Demandes reçues (tous artisans confondus)</div>
+      <div class="stats-row">
+        <div class="stat-card accent-vert"><div class="valeur">${totalLeads}</div><div class="label">Demandes au total</div></div>
+      </div>
+
+      <div class="section-titre">Répartition par forfait</div>
+      <div class="repartition-box">
+        ${[1,2,3,4].map(f => {
+          const count = repartitionForfait[f] || 0;
+          const pct = Math.round((count / maxForfaitCount) * 100);
+          return `
+            <div class="repartition-row">
+              <div class="repartition-label">${NOMS_FORFAIT[f]}</div>
+              <div class="repartition-bar-track"><div class="repartition-bar-fill" style="width:${pct}%"></div></div>
+              <div class="repartition-count">${count}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+
+      <div class="section-titre">Répartition par métier</div>
+      <div class="repartition-box">
+        ${Object.entries(repartitionMetier).sort((a,b) => b[1]-a[1]).map(([metier, count]) => {
+          const pct = Math.round((count / maxMetierCount) * 100);
+          return `
+            <div class="repartition-row">
+              <div class="repartition-label">${metier}</div>
+              <div class="repartition-bar-track"><div class="repartition-bar-fill" style="width:${pct}%"></div></div>
+              <div class="repartition-count">${count}</div>
+            </div>
+          `;
+        }).join('') || '<p style="color:#8a9891; font-size:0.85rem;">Aucune donnée disponible.</p>'}
+      </div>
+    `;
+  }
+</script>
+</body>
+</html>

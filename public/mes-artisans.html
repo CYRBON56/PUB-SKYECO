@@ -66,6 +66,9 @@
   .btn-envoyer:disabled { opacity:0.4; cursor:not-allowed; }
   .btn-voir { background:#fff; border-color:#d7e3dc; color:#1e6f4c; }
   .btn-voir:hover { border-color:#1e6f4c; }
+  .btn-valide-off { background:#fff; border-color:#e0e5df; color:#8a9891; }
+  .btn-valide-off:hover { border-color:#1e6f4c; color:#1e6f4c; }
+  .btn-valide-on { background:#eaf4ef; border-color:#1e6f4c; color:#1e6f4c; }
 
   .loading, .empty { text-align:center; padding:60px; color:#8a9891; font-size:0.92rem; }
   .feedback { font-size:0.74rem; margin-top:5px; font-weight:600; }
@@ -171,6 +174,7 @@
                     <button class="btn-action btn-copier" data-lien="${lienElements}" onclick="copierLien(this)">📋 Copier le lien</button>
                     <button class="btn-action btn-envoyer" data-id="${f.id}" onclick="envoyerLien(this)" ${!f.telephone ? 'disabled title="Aucun téléphone enregistré"' : ''}>📤 Envoyer par SMS</button>
                     <a class="btn-action btn-voir" href="/apercu.html?id=${f.id}" target="_blank">👁️ Voir</a>
+                    <button class="btn-action ${f.site_valide ? 'btn-valide-on' : 'btn-valide-off'}" data-id="${f.id}" data-valide="${f.site_valide ? '1' : '0'}" onclick="toggleValidation(this)">${f.site_valide ? '✓ Site validé' : '☐ Valider le site'}</button>
                   </div>
                   <div class="feedback" id="feedback-${f.id}"></div>
                 </td>
@@ -217,6 +221,35 @@
     } finally {
       btn.disabled = false;
       btn.textContent = originalText;
+    }
+  };
+
+  // Bascule site_valide — simple suivi interne pour toi (ne bloque plus rien côté
+  // artisan : choisir-forfait.html s'ouvre sans attendre cette validation). Sert à
+  // repérer d'un coup d'œil les vitrines que tu as réellement vérifiées après coup.
+  window.toggleValidation = async function(btn) {
+    const draftId = btn.dataset.id;
+    const nouvelEtat = btn.dataset.valide !== '1';
+    const feedbackEl = document.getElementById('feedback-' + draftId);
+    btn.disabled = true;
+    try {
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
+        method: 'PATCH',
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify({ site_valide: nouvelEtat })
+      });
+      if (!resp.ok) throw new Error();
+      btn.dataset.valide = nouvelEtat ? '1' : '0';
+      btn.textContent = nouvelEtat ? '✓ Site validé' : '☐ Valider le site';
+      btn.className = 'btn-action ' + (nouvelEtat ? 'btn-valide-on' : 'btn-valide-off');
+      const fiche = toutesLesFiches.find(f => String(f.id) === String(draftId));
+      if (fiche) fiche.site_valide = nouvelEtat;
+      afficherStats(toutesLesFiches);
+    } catch (e) {
+      feedbackEl.textContent = 'Échec de la mise à jour';
+      feedbackEl.className = 'feedback err';
+    } finally {
+      btn.disabled = false;
     }
   };
 

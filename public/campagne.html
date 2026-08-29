@@ -183,14 +183,14 @@
     chargerConsommation();
 
     document.getElementById('btnPause').addEventListener('click', async () => {
-      if (!confirm("Mettre votre abonnement en pause ?\n\n• Aucun prélèvement pendant 1 mois.\n• Votre site cessera immédiatement d'être visible par vos prospects (une page de pause s'affichera à la place).\n• Reprise automatique dans 1 mois, ou à tout moment avant ça depuis ce tableau de bord.")) {
+      if (!confirm("Demander la mise en pause de votre abonnement ?\n\n• Rien ne s'arrête tout de suite.\n• 2 jours avant la fin de votre période déjà payée, vous recevrez un SMS avec un lien à cliquer pour confirmer.\n• C'est seulement à ce moment-là, si vous confirmez, que la pause prend effet.")) {
         return;
       }
       const btn = document.getElementById('btnPause');
       btn.disabled = true;
-      btn.textContent = 'Mise en pause…';
+      btn.textContent = 'Enregistrement…';
       try {
-        const res = await fetch('/api/pause-subscription', {
+        const res = await fetch('/api/demander-pause', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ draftId })
@@ -198,7 +198,7 @@
         const data = await res.json();
         if (res.ok) {
           alert(data.message);
-          btn.textContent = 'Abonnement en pause';
+          btn.textContent = 'Pause demandée — SMS à venir';
         } else {
           alert(data.error || 'Une erreur est survenue.');
           btn.disabled = false;

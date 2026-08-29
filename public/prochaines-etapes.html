@@ -270,7 +270,7 @@
   const params = new URLSearchParams(window.location.search);
   const draftId = params.get('id');
   if (draftId) {
-    document.getElementById('bgPreviewVitrine').src = '/vitrine-demo.html';
+    document.getElementById('bgPreviewVitrine').src = '/apercu.html?id=' + draftId;
   }
   initCalculateurInverse();
 

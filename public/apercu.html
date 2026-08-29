@@ -392,9 +392,15 @@ async function init(){
   }
   if(draft.status === 'desactive'){
     document.getElementById('appRoot').innerHTML =
-      '<div style="max-width:480px; margin:80px auto; text-align:center; padding:0 20px;">' +
-      '<h2 style="margin-bottom:12px;">Cette page n\'est plus disponible</h2>' +
-      '<p style="color:#5b6b64;">L\'abonnement de ce site est arrivé à son terme.</p>' +
+      '<div style="max-width:560px; margin:60px auto; text-align:center; padding:0 20px;">' +
+        '<h2 style="margin-bottom:10px;">Ce site n\'est plus en ligne pour le moment</h2>' +
+        '<p style="color:#5b6b64; margin-bottom:24px; line-height:1.6;">' +
+          'Cette vitrine n\'accepte plus de nouvelles demandes. Si vous êtes l\'artisan concerné, regardez la vidéo ci-dessous pour un rappel du fonctionnement, puis reconnectez-vous à votre tableau de bord pour réactiver votre site.' +
+        '</p>' +
+        '<video controls style="width:100%; border-radius:14px; margin-bottom:24px; box-shadow:0 6px 24px rgba(0,0,0,0.15);">' +
+          '<source src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/puv%20skyeco/video.mp4" type="video/mp4">' +
+        '</video>' +
+        '<a href="/mon-dashboard.html?id=' + draft.id + '" style="display:inline-block; background:#e8622c; color:#fff; text-decoration:none; padding:14px 28px; border-radius:10px; font-weight:700;">Je suis l\'artisan — accéder à mon tableau de bord</a>' +
       '</div>';
     return;
   }

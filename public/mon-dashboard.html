@@ -458,6 +458,20 @@
   Widget de chat Skyeco Pro — à coller juste avant </body> sur les pages
   où on veut le chat (prochaines-etapes.html, choisir-forfait.html, etc.)
 -->
+<!--
+  Widget de chat Skyeco Pro — à coller juste avant </body> sur les pages
+  où on veut le chat. Inclut la saisie vocale (micro) et la lecture des
+  réponses à voix haute, via les API natives du navigateur (aucun service
+  externe, gratuit) — fonctionne sur Chrome/Edge, pas sur Safari/Firefox
+  pour la reconnaissance vocale (support partiel/absent côté navigateur).
+-->
+<!--
+  Widget de chat Skyeco Pro — à coller juste avant </body> sur les pages
+  où on veut le chat. Inclut la saisie vocale (micro) et la lecture des
+  réponses à voix haute, via les API natives du navigateur (aucun service
+  externe, gratuit) — fonctionne sur Chrome/Edge, pas sur Safari/Firefox
+  pour la reconnaissance vocale (support partiel/absent côté navigateur).
+-->
 <div id="skyecoChatBubble" style="position:fixed; bottom:22px; right:22px; z-index:999; background:#e8622c; color:#fff; width:58px; height:58px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:26px; cursor:pointer; box-shadow:0 6px 20px rgba(0,0,0,0.25); transition:transform 0.15s;">
   💬
 </div>
@@ -468,11 +482,17 @@
       <div style="font-weight:700; font-size:0.92rem;">Skyeco Pro</div>
       <div style="font-size:0.72rem; opacity:0.75;">Réponse en quelques secondes</div>
     </div>
-    <button id="skyecoChatClose" style="background:none; border:none; color:#fff; font-size:20px; cursor:pointer; line-height:1;">×</button>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <label style="display:flex; align-items:center; gap:4px; font-size:0.68rem; opacity:0.85; cursor:pointer;">
+        <input type="checkbox" id="skyecoChatLireVoix" style="width:auto; margin:0;"> 🔊 Lire les réponses
+      </label>
+      <button id="skyecoChatClose" style="background:none; border:none; color:#fff; font-size:20px; cursor:pointer; line-height:1;">×</button>
+    </div>
   </div>
   <div id="skyecoChatMessages" style="flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:10px; background:#f7f5f0;"></div>
   <div style="padding:10px; border-top:1px solid #eef1ec; display:flex; gap:8px; background:#fff;">
-    <input type="text" id="skyecoChatInput" placeholder="Pose ta question…" style="flex:1; border:1.5px solid #e0e5df; border-radius:10px; padding:9px 12px; font-size:0.86rem;">
+    <input type="text" id="skyecoChatInput" placeholder="Pose ta question ou parle…" style="flex:1; border:1.5px solid #e0e5df; border-radius:10px; padding:9px 12px; font-size:0.86rem;">
+    <button id="skyecoChatMic" title="Parler au lieu d'écrire" style="background:#f2f4f1; color:#14312a; border:none; border-radius:10px; padding:9px 12px; font-weight:700; cursor:pointer; font-size:0.9rem;">🎤</button>
     <button id="skyecoChatSend" style="background:#1e6f4c; color:#fff; border:none; border-radius:10px; padding:9px 14px; font-weight:700; cursor:pointer; font-size:0.86rem;">→</button>
   </div>
 </div>
@@ -485,6 +505,8 @@
   const messagesEl = document.getElementById('skyecoChatMessages');
   const input = document.getElementById('skyecoChatInput');
   const sendBtn = document.getElementById('skyecoChatSend');
+  const micBtn = document.getElementById('skyecoChatMic');
+  const lireVoixCheckbox = document.getElementById('skyecoChatLireVoix');
 
   let historique = [];
   let dejaOuvert = false;
@@ -499,15 +521,69 @@
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
 
-  bubble.addEventListener('click', () => {
-    const estOuvert = chatWindow.style.display === 'flex';
-    chatWindow.style.display = estOuvert ? 'none' : 'flex';
-    if (!dejaOuvert && !estOuvert) {
+  function ouvrirChat() {
+    chatWindow.style.display = 'flex';
+    if (!dejaOuvert) {
       dejaOuvert = true;
       ajouterMessage('assistant', "Bonjour ! Je suis là pour répondre à tes questions sur Skyeco Pro — les formules, comment ça marche, la publicité... Qu'est-ce que tu veux savoir ?");
     }
+  }
+
+  bubble.addEventListener('click', () => {
+    const estOuvert = chatWindow.style.display === 'flex';
+    if (estOuvert) { chatWindow.style.display = 'none'; } else { ouvrirChat(); }
   });
   closeBtn.addEventListener('click', () => { chatWindow.style.display = 'none'; });
+
+  // Ouverture automatique à l'arrivée sur la page — reste dans son coin
+  // (position fixe, ne modifie pas la mise en page du reste de la page),
+  // léger délai pour ne pas apparaître brutalement dès le premier instant.
+  setTimeout(ouvrirChat, 1200);
+
+  // --- Saisie vocale (reconnaissance de la parole) ---
+  const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognitionAPI) {
+    micBtn.style.display = 'none'; // navigateur non compatible (Safari/Firefox) — on masque simplement le micro
+  } else {
+    const recognition = new SpeechRecognitionAPI();
+    recognition.lang = 'fr-FR';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    let enEcoute = false;
+
+    recognition.addEventListener('result', (e) => {
+      const texte = e.results[0][0].transcript;
+      input.value = texte;
+      envoyerMessage();
+    });
+    recognition.addEventListener('end', () => {
+      enEcoute = false;
+      micBtn.textContent = '🎤';
+      micBtn.style.background = '#f2f4f1';
+    });
+    recognition.addEventListener('error', () => {
+      enEcoute = false;
+      micBtn.textContent = '🎤';
+      micBtn.style.background = '#f2f4f1';
+    });
+
+    micBtn.addEventListener('click', () => {
+      if (enEcoute) { recognition.stop(); return; }
+      enEcoute = true;
+      micBtn.textContent = '🔴';
+      micBtn.style.background = '#fdeceb';
+      recognition.start();
+    });
+  }
+
+  // --- Lecture à voix haute des réponses (synthèse vocale) ---
+  function lireAVoixHaute(texte) {
+    if (!lireVoixCheckbox.checked || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel(); // interrompt une lecture précédente si besoin
+    const utterance = new SpeechSynthesisUtterance(texte);
+    utterance.lang = 'fr-FR';
+    window.speechSynthesis.speak(utterance);
+  }
 
   async function envoyerMessage() {
     const texte = input.value.trim();
@@ -535,6 +611,7 @@
       const reponse = data.success ? data.reponse : "Désolé, je n'ai pas pu répondre — réessaie dans un instant.";
       ajouterMessage('assistant', reponse);
       historique.push({ role: 'assistant', content: reponse });
+      lireAVoixHaute(reponse);
     } catch (e) {
       document.getElementById('skyecoChatWaiting')?.remove();
       ajouterMessage('assistant', 'Connexion impossible pour le moment — réessaie.');

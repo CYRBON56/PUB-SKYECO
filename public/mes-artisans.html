@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mes artisans — Skyeco Pro Admin</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f5f8f6; color:#14312a; padding:32px 20px 60px; }
+  .wrap { max-width:1100px; margin:0 auto; }
+  h1 { font-size:1.5rem; margin-bottom:6px; }
+  .sub { font-size:0.9rem; color:#5b6b64; margin-bottom:24px; }
+
+  .filtre-row { display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; }
+  .filtre-row input { padding:9px 14px; border:1.5px solid #d7dedb; border-radius:10px; font-size:0.88rem; flex:1; min-width:200px; }
+
+  table { width:100%; border-collapse:collapse; background:#fff; border-radius:14px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
+  th { text-align:left; padding:12px 14px; background:#f0f1ec; font-size:0.72rem; text-transform:uppercase; color:#8a9891; font-weight:700; }
+  td { padding:12px 14px; border-top:1px solid #eef1f0; font-size:0.86rem; vertical-align:middle; }
+  tr:hover td { background:#fafbf9; }
+
+  .badge { font-size:0.7rem; font-weight:700; padding:3px 10px; border-radius:999px; }
+  .badge-preview { background:#eef1f0; color:#5b6b64; }
+  .badge-published { background:#eaf4ef; color:#1e6f4c; }
+  .badge-desactive { background:#fdeceb; color:#c0392b; }
+
+  .actions { display:flex; gap:8px; flex-wrap:wrap; }
+  .btn-action {
+    font-size:0.76rem; font-weight:700; padding:7px 12px; border-radius:8px; border:1.5px solid transparent;
+    cursor:pointer; text-decoration:none; display:inline-block; white-space:nowrap;
+  }
+  .btn-copier { background:#eef1f0; color:#14312a; }
+  .btn-copier:hover { background:#e2e8e5; }
+  .btn-envoyer { background:#e8622c; color:#fff; }
+  .btn-envoyer:hover { filter:brightness(1.05); }
+  .btn-envoyer:disabled { opacity:0.5; cursor:not-allowed; }
+  .btn-voir { background:#fff; border-color:#1e6f4c; color:#1e6f4c; }
+
+  .loading, .empty { text-align:center; padding:50px; color:#8a9891; }
+  .feedback { font-size:0.74rem; margin-top:4px; }
+  .feedback.ok { color:#1e6f4c; }
+  .feedback.err { color:#c0392b; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Mes artisans</h1>
+  <p class="sub">Chaque artisan a sa propre fiche — envoie-lui son lien personnel pour qu'il dépose ses éléments.</p>
+
+  <div class="filtre-row">
+    <input type="text" id="recherche" placeholder="Rechercher par nom d'entreprise ou téléphone…">
+  </div>
+
+  <div id="contenu"><div class="loading">Chargement…</div></div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+  const SITE_BASE = 'https://pub-skyeco-23ue.vercel.app';
+
+  let toutesLesFiches = [];
+
+  chargerFiches();
+
+  async function chargerFiches() {
+    try {
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?select=id,entreprise,metier,telephone,status,site_valide,created_at&order=created_at.desc`, {
+        headers: { apikey: SUPABASE_ANON_KEY }
+      });
+      toutesLesFiches = await resp.json();
+      afficherTableau(toutesLesFiches);
+    } catch (e) {
+      document.getElementById('contenu').innerHTML = '<div class="empty">Impossible de charger la liste pour le moment.</div>';
+    }
+  }
+
+  function afficherTableau(fiches) {
+    const contenu = document.getElementById('contenu');
+    if (!fiches.length) {
+      contenu.innerHTML = '<div class="empty">Aucun artisan pour l\'instant.</div>';
+      return;
+    }
+
+    const STATUT_LABELS = {
+      preview: '<span class="badge badge-preview">Aperçu</span>',
+      published: '<span class="badge badge-published">Publié</span>',
+      desactive: '<span class="badge badge-desactive">Désactivé</span>',
+    };
+
+    contenu.innerHTML = `
+      <table>
+        <thead>
+          <tr><th>Entreprise</th><th>Métier(s)</th><th>Statut</th><th>Date</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          ${fiches.map(f => {
+            const metiers = Array.isArray(f.metier) ? f.metier.join(', ') : (f.metier || '—');
+            const date = new Date(f.created_at).toLocaleDateString('fr-FR');
+            const lienElements = `${SITE_BASE}/mes-elements.html?id=${f.id}`;
+            return `
+              <tr>
+                <td><strong>${f.entreprise || '—'}</strong></td>
+                <td>${metiers}</td>
+                <td>${STATUT_LABELS[f.status] || f.status || '—'}</td>
+                <td>${date}</td>
+                <td>
+                  <div class="actions">
+                    <button class="btn-action btn-copier" data-lien="${lienElements}" onclick="copierLien(this)">📋 Copier le lien</button>
+                    <button class="btn-action btn-envoyer" data-id="${f.id}" onclick="envoyerLien(this)" ${!f.telephone ? 'disabled title="Aucun téléphone enregistré"' : ''}>📤 Envoyer par SMS</button>
+                    <a class="btn-action btn-voir" href="/apercu.html?id=${f.id}" target="_blank">👁️ Voir</a>
+                  </div>
+                  <div class="feedback" id="feedback-${f.id}"></div>
+                </td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  window.copierLien = function(btn) {
+    const lien = btn.dataset.lien;
+    navigator.clipboard.writeText(lien).then(() => {
+      const original = btn.textContent;
+      btn.textContent = '✓ Copié !';
+      setTimeout(() => { btn.textContent = original; }, 1800);
+    });
+  };
+
+  window.envoyerLien = async function(btn) {
+    const draftId = btn.dataset.id;
+    const feedbackEl = document.getElementById('feedback-' + draftId);
+    btn.disabled = true;
+    const originalText = btn.textContent;
+    btn.textContent = 'Envoi…';
+    try {
+      const res = await fetch('/api/envoyer-lien-elements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        feedbackEl.textContent = '✓ SMS envoyé';
+        feedbackEl.className = 'feedback ok';
+      } else {
+        feedbackEl.textContent = data.error || 'Échec de l\'envoi';
+        feedbackEl.className = 'feedback err';
+      }
+    } catch (e) {
+      feedbackEl.textContent = 'Erreur de connexion';
+      feedbackEl.className = 'feedback err';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  };
+
+  document.getElementById('recherche').addEventListener('input', (e) => {
+    const q = e.target.value.toLowerCase();
+    const filtrees = toutesLesFiches.filter(f =>
+      (f.entreprise || '').toLowerCase().includes(q) || (f.telephone || '').includes(q)
+    );
+    afficherTableau(filtrees);
+  });
+</script>
+</body>
+</html>

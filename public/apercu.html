@@ -481,7 +481,18 @@ async function init(){
       if (data.success) {
         document.getElementById('previewBanner').style.background = '#1e6f4c';
         document.getElementById('previewBanner').innerHTML =
-          '<span>✅ Votre mini-site est maintenant en ligne.</span>';
+          '<span>✅ Votre mini-site est en ligne — création de votre accès au tableau de bord…</span>';
+        // Envoi SMS/email du lien d'accès en secours (au cas où l'artisan
+        // fermerait la page avant la fin de la redirection ci-dessous), puis
+        // direction immédiate vers la création du mot de passe du dashboard.
+        fetch('/api/envoyer-acces-dashboard', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId: draft.id })
+        }).catch(() => {});
+        setTimeout(() => {
+          window.location.href = '/acces-dashboard.html?id=' + draft.id;
+        }, 1800);
       } else {
         document.getElementById('previewBanner').innerHTML =
           "<span>⚠️ " + (data.error || "Le paiement n'a pas pu être confirmé.") + "</span>";

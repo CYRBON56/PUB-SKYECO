@@ -200,7 +200,7 @@
     <h2>Nos formules</h2>
     <p class="sub">Pour vous donner une idée dès maintenant — vous choisirez une fois votre vraie vitrine validée.</p>
     <div class="formules-grid">
-      <div class="formule-card">
+      <div class="formule-card" data-forfait="1" style="cursor:pointer;">
         <div class="formule-badge" style="position:static; display:inline-block; margin-bottom:6px; background:#8a9891;">Essentiel</div>
         <div class="formule-nom">Vitrine simple</div>
         <div class="formule-prix">39,90 € <span>HT/mois</span></div>
@@ -210,7 +210,7 @@
           <li>SMS + email automatiques</li>
         </ul>
       </div>
-      <div class="formule-card recommandee">
+      <div class="formule-card recommandee" data-forfait="2" style="cursor:pointer;">
         <div class="formule-badge">Pro — Recommandée</div>
         <div class="formule-nom" style="margin-top:6px;">Vitrine + Dashboard</div>
         <div class="formule-prix">59,90 € <span>HT/mois</span></div>
@@ -221,7 +221,7 @@
           <li>Gestion mots-clés, photos, vidéo</li>
         </ul>
       </div>
-      <div class="formule-card">
+      <div class="formule-card" data-forfait="3" style="cursor:pointer;">
         <div class="formule-badge" style="position:static; display:inline-block; margin-bottom:6px; background:#e8622c;">Business</div>
         <div class="formule-nom">Relances SMS et devis avec signature électronique</div>
         <div class="formule-prix">79,90 € <span>HT/mois</span></div>
@@ -232,7 +232,7 @@
           <li>Devis signature électronique</li>
         </ul>
       </div>
-      <div class="formule-card">
+      <div class="formule-card" data-forfait="4" style="cursor:pointer;">
         <div class="formule-badge" style="position:static; display:inline-block; margin-bottom:6px; background:#14312a;">Premium</div>
         <div class="formule-nom">Vitrine référencée</div>
         <div class="formule-prix">99,90 € <span>HT/mois</span></div>
@@ -273,6 +273,13 @@
     document.getElementById('bgPreviewVitrine').src = '/apercu.html?id=' + draftId;
   }
   initCalculateurInverse();
+
+  document.querySelectorAll('.formule-card[data-forfait]').forEach(card => {
+    card.addEventListener('click', () => {
+      const forfait = card.dataset.forfait;
+      window.location.href = '/contrat.html?id=' + draftId + '&forfait=' + forfait;
+    });
+  });
 
   document.getElementById('btnRappelImmediat').addEventListener('click', () => {
     const form = document.getElementById('rappelForm');

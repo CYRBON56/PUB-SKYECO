@@ -127,6 +127,12 @@
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
   const params = new URLSearchParams(window.location.search);
   const draftId = params.get('id');
+  // Mode test (usage interne uniquement) : ajouter "&test=1" à l'URL affiche
+  // un bouton de simulation de paiement à la place du vrai paiement Stripe —
+  // protégé par le mot de passe interne, jamais accessible à un artisan qui
+  // ne le connaît pas. Sert à essayer les 4 forfaits, avec autant d'artisans
+  // de test que voulu, sans payer réellement.
+  const TEST_MODE = params.get('test') === '1';
 
   if (!draftId) {
     document.body.innerHTML = '<div class="loading">Lien invalide — identifiant du site manquant.</div>';
@@ -153,6 +159,12 @@
       // ("nous vérifions ensuite tout et mettons votre vitrine en ligne sous 48h").
       // La validation (site_valide) reste un simple suivi interne, géré depuis
       // mes-artisans.html, et n'a plus d'effet bloquant ici.
+      if (TEST_MODE) {
+        document.querySelector('.plans-header').insertAdjacentHTML('beforeend',
+          '<div style="background:#fff3cd; color:#8a6d1f; border:1px solid #f0d98c; border-radius:10px; padding:10px 14px; font-size:0.82rem; font-weight:700; margin-top:14px;">🧪 Mode test activé — aucun paiement réel ne sera effectué.</div>'
+        );
+      }
+
       document.getElementById('vitrineFrame').src = '/apercu.html?id=' + draftId;
       renderPlans();
       initEstimateur();
@@ -272,6 +284,46 @@
       return;
     }
     btn.disabled = true;
+
+    if (TEST_MODE) {
+      let motDePasseInterne = sessionStorage.getItem('skyeco_admin_internal_pw');
+      if (!motDePasseInterne) {
+        motDePasseInterne = prompt('Mot de passe interne (mode test) :');
+        if (!motDePasseInterne) { btn.disabled = false; return; }
+      }
+      btn.textContent = 'Simulation…';
+      try {
+        const res = await fetch('/api/simuler-paiement-test', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId, plan, motDePasseInterne })
+        });
+        const data = await res.json();
+        if (data.success) {
+          sessionStorage.setItem('skyeco_admin_internal_pw', motDePasseInterne);
+          // Même geste qu'après un vrai paiement : lien de secours envoyé, puis
+          // direction la création du compte dashboard, pour tester tout le
+          // reste du parcours à l'identique.
+          fetch('/api/envoyer-acces-dashboard', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ draftId })
+          }).catch(() => {});
+          window.location.href = '/acces-dashboard.html?id=' + draftId;
+        } else {
+          sessionStorage.removeItem('skyeco_admin_internal_pw');
+          alert(data.error || 'Mot de passe interne incorrect.');
+          btn.disabled = false;
+          btn.textContent = 'Choisir ce forfait';
+        }
+      } catch (e) {
+        alert('Impossible de contacter le serveur.');
+        btn.disabled = false;
+        btn.textContent = 'Choisir ce forfait';
+      }
+      return;
+    }
+
     btn.textContent = 'Redirection…';
     try {
       const res = await fetch('/api/create-checkout-session', {

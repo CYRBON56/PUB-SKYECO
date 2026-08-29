@@ -6,8 +6,14 @@
 <title>Aperçu du dashboard — Essentiel</title>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f5f8f6; color:#14312a; padding:28px 24px; }
-  .wrap { max-width:980px; margin:0 auto; }
+  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f5f8f6; color:#14312a; padding:24px; position:relative; overflow-x:hidden; }
+  .shape-bg { position:fixed; z-index:0; pointer-events:none; opacity:0.16; }
+  .wrap { max-width:980px; margin:0 auto; position:relative; z-index:1; }
+
+  .nav-paliers { display:flex; gap:6px; margin-bottom:18px; background:#fff; padding:6px; border-radius:999px; box-shadow:0 2px 10px rgba(0,0,0,0.05); width:fit-content; }
+  .nav-palier { text-decoration:none; padding:7px 14px; border-radius:999px; font-size:0.76rem; font-weight:700; color:#8a9891; }
+  .nav-palier.actif { background:#8a9891; color:#fff; }
+
   .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
   h1 { font-size:1.3rem; }
   .demo-badge { background:#f0f1ec; color:#6b7a72; font-size:0.72rem; font-weight:700; padding:5px 12px; border-radius:999px; }
@@ -17,7 +23,7 @@
   .stat-value { font-size:1.7rem; font-weight:800; }
   .stat-label { font-size:0.75rem; color:#8a9891; margin-top:2px; }
 
-  .solde-box { background:#fff; border:2px solid #1e6f4c; border-radius:14px; padding:20px; margin-bottom:24px; }
+  .solde-box { background:#fff; border:2px solid #1e6f4c; border-radius:14px; padding:20px; margin-bottom:16px; }
   .solde-box h3 { font-size:0.9rem; margin-bottom:12px; }
   .solde-bar-track { background:#eef1f0; border-radius:8px; height:11px; overflow:hidden; margin-bottom:10px; }
   .solde-bar-fill { background:#e8622c; height:100%; width:58%; }
@@ -30,7 +36,23 @@
 </style>
 </head>
 <body>
+
+<svg class="shape-bg" style="top:-60px; right:-100px;" width="320" height="320" viewBox="0 0 320 320">
+  <defs><radialGradient id="s1" cx="35%" cy="30%" r="75%"><stop offset="0%" stop-color="#c2c9c3"/><stop offset="100%" stop-color="#8a9891"/></radialGradient></defs>
+  <circle cx="160" cy="160" r="140" fill="url(#s1)"/>
+</svg>
+<svg class="shape-bg" style="bottom:-90px; left:-90px;" width="300" height="300" viewBox="0 0 300 300">
+  <defs><radialGradient id="s2" cx="35%" cy="30%" r="75%"><stop offset="0%" stop-color="#7bc79e"/><stop offset="100%" stop-color="#1e6f4c"/></radialGradient></defs>
+  <rect x="20" y="20" width="260" height="260" rx="60" fill="url(#s2)"/>
+</svg>
+
 <div class="wrap">
+  <div class="nav-paliers">
+    <a class="nav-palier actif" href="/mon-dashboard-demo-essentiel.html">Essentiel</a>
+    <a class="nav-palier" href="/mon-dashboard-demo-pro.html">Pro</a>
+    <a class="nav-palier" href="/mon-dashboard-demo-business.html">Business</a>
+  </div>
+
   <div class="header">
     <h1>Mon tableau de bord</h1>
     <span class="demo-badge">Exemple illustratif — Forfait Essentiel</span>

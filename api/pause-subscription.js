@@ -51,12 +51,12 @@ export default async function handler(req, res) {
     await fetch(`${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
       method: 'PATCH',
       headers: { ...supaHeaders, Prefer: 'return=minimal' },
-      body: JSON.stringify({ subscription_status: 'en_pause' }),
+      body: JSON.stringify({ subscription_status: 'en_pause', status: 'en_pause' }),
     });
 
     return res.status(200).json({
       success: true,
-      message: `Abonnement mis en pause. Aucun prélèvement pendant 1 mois — reprise automatique le ${new Date(dansUnMois * 1000).toLocaleDateString('fr-FR')}.`,
+      message: `Abonnement mis en pause dès maintenant — votre site affiche désormais une page de pause à vos visiteurs. Reprise automatique le ${new Date(dansUnMois * 1000).toLocaleDateString('fr-FR')} — ou à tout moment avant ça, depuis votre tableau de bord.`,
       reprisele: dansUnMois,
     });
   } catch (err) {

@@ -310,6 +310,12 @@
         <p class="hint">Sans ça, le formulaire reste un simple recueil de coordonnées, sans estimation de prix — et c'est très bien aussi.</p>
 
         <div id="chiffrageDetail" style="display:none;">
+          <label style="margin-top:0;">Décris comment tu factures, avec tes mots</label>
+          <textarea id="chiffrageLibre" rows="4" placeholder="Ex : Pour la tonte je facture 3€ le m², minimum 40€. Pour la taille de haie c'est 15€ le mètre linéaire, minimum 60€…"></textarea>
+          <p class="hint">Sois aussi précis que tu veux, dans l'ordre que tu veux — l'IA lit ta description et pré-remplit les champs ci-dessous pour chacun de tes métiers. Tu vérifies et corriges ensuite avant d'enregistrer, rien n'est figé.</p>
+          <button type="button" class="btn-extraire" id="btnAnalyserChiffrage">🤖 Analyser et pré-remplir</button>
+          <div class="extraction-box" id="chiffrageAnalyseResult" style="display:none;"></div>
+
           <label>Taux de TVA applicable</label>
           <select id="tvaTaux">
             <option value="20">20% — taux normal</option>
@@ -453,6 +459,65 @@
 
   document.getElementById('toggleChiffrage').addEventListener('change', e => {
     document.getElementById('chiffrageDetail').style.display = e.target.checked ? 'block' : 'none';
+  });
+
+  // --- Chiffrage décrit en langage libre, interprété par l'IA ---
+  document.getElementById('btnAnalyserChiffrage').addEventListener('click', async () => {
+    const texte = document.getElementById('chiffrageLibre').value.trim();
+    const resultBox = document.getElementById('chiffrageAnalyseResult');
+    const btn = document.getElementById('btnAnalyserChiffrage');
+
+    if (!texte) {
+      resultBox.style.display = 'block';
+      resultBox.textContent = "Décris d'abord tes prix dans le champ ci-dessus.";
+      return;
+    }
+    if (!metiersActuels.length) {
+      resultBox.style.display = 'block';
+      resultBox.textContent = "Aucun métier n'est renseigné sur ce profil — impossible de savoir quoi pré-remplir.";
+      return;
+    }
+
+    btn.disabled = true;
+    const texteOriginal = btn.textContent;
+    btn.textContent = 'Analyse en cours…';
+    resultBox.style.display = 'block';
+    resultBox.textContent = 'Lecture de ta description…';
+
+    try {
+      const res = await fetch('/api/interpreter-chiffrage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ texte, metiers: metiersActuels })
+      });
+      const data = await res.json();
+      if (!data.success) {
+        resultBox.textContent = data.error || "L'analyse n'a pas pu aboutir — remplis les champs manuellement.";
+        return;
+      }
+
+      let nbRemplis = 0;
+      const notes = [];
+      metiersActuels.forEach(m => {
+        const tarif = data.tarifs && data.tarifs[m];
+        if (!tarif) return;
+        const row = document.querySelector(`.metier-tarif-row[data-metier="${m}"]`);
+        if (!row) return;
+        if (tarif.unite && UNITES[tarif.unite]) row.querySelector('.tarif-unite').value = tarif.unite;
+        if (tarif.prix !== null && tarif.prix !== undefined) { row.querySelector('.tarif-prix').value = tarif.prix; nbRemplis++; }
+        if (tarif.minimum !== null && tarif.minimum !== undefined) row.querySelector('.tarif-minimum').value = tarif.minimum;
+        if (tarif.note) notes.push(`${METIER_LABELS[m] || m} : ${tarif.note}`);
+      });
+
+      resultBox.innerHTML = nbRemplis
+        ? `✓ ${nbRemplis} métier(s) pré-rempli(s) à partir de ta description — vérifie les valeurs ci-dessous avant d'enregistrer.` + (notes.length ? '<br><br>' + notes.join('<br>') : '')
+        : "Je n'ai pas trouvé assez d'informations exploitables dans ta description pour ces métiers — remplis les champs manuellement.";
+    } catch (e) {
+      resultBox.textContent = "Analyse indisponible pour le moment — remplis les champs manuellement.";
+    } finally {
+      btn.disabled = false;
+      btn.textContent = texteOriginal;
+    }
   });
 
   // --- Upload générique vers Supabase Storage ---

@@ -248,6 +248,7 @@
         <!-- STEP 1 : coordonnées -->
         <div class="panel" data-step="1">
           <h2 class="q">Comment vous joindre ?</h2>
+          <div class="status-line mono" id="entrepriseConfirmee" style="display:none; color:var(--ok); font-weight:600; margin-bottom:14px;"></div>
           <p class="hint">On vous recontacte pour construire votre vraie vitrine ensemble.</p>
 
           <label for="telephone">Téléphone</label>
@@ -416,6 +417,9 @@
           siretStatusEl.textContent = '✓ ' + result.nom_complet;
           siretStatusEl.style.color = 'var(--ok)';
           state.entreprise = result.nom_complet;
+          const entrepriseConfirmeeEl = document.getElementById('entrepriseConfirmee');
+          entrepriseConfirmeeEl.textContent = '✓ ' + result.nom_complet;
+          entrepriseConfirmeeEl.style.display = 'block';
 
           // Forme juridique (SAS, SARL, EI, EURL...) — pré-remplit
           // directement le même champ utilisé plus tard dans mes-elements.html.

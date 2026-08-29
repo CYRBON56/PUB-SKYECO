@@ -183,7 +183,7 @@
     chargerConsommation();
 
     document.getElementById('btnPause').addEventListener('click', async () => {
-      if (!confirm("Mettre votre abonnement en pause pendant 1 mois ? Aucun prélèvement ne sera fait, et il reprendra automatiquement ensuite.")) {
+      if (!confirm("Mettre votre abonnement en pause ?\n\n• Aucun prélèvement pendant 1 mois.\n• Votre site cessera immédiatement d'être visible par vos prospects (une page de pause s'affichera à la place).\n• Reprise automatique dans 1 mois, ou à tout moment avant ça depuis ce tableau de bord.")) {
         return;
       }
       const btn = document.getElementById('btnPause');

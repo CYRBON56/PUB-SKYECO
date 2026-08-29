@@ -23,7 +23,7 @@
     color:#5b6b64; cursor:pointer; white-space:nowrap; transition:all 0.15s;
   }
   .selecteur-btn:hover { background:#f0f1ec; }
-  .selecteur-btn.actif { background:#14312a; color:#fff; }
+  .selecteur-btn.actif { background:#e8622c; color:#fff; }
 
   .wrap {
     position:relative; z-index:2; max-width:760px; margin:70px auto 32px; padding:40px 40px 56px;
@@ -126,17 +126,16 @@
 </style>
 </head>
 <body>
-<iframe class="bg-preview active" id="bgPreviewVitrine" src=""></iframe>
-<iframe class="bg-preview" id="bgPreviewEssentiel" src="/mon-dashboard-demo-essentiel.html"></iframe>
+<iframe class="bg-preview" id="bgPreviewVitrine" src=""></iframe>
+<iframe class="bg-preview active" id="bgPreviewEssentiel" src="/mon-dashboard-demo-essentiel.html"></iframe>
 <iframe class="bg-preview" id="bgPreviewPro" src="/mon-dashboard-demo-pro.html"></iframe>
 <iframe class="bg-preview" id="bgPreviewBusiness" src="/mon-dashboard-demo-business.html"></iframe>
 <div class="bg-overlay"></div>
 
 <div class="selecteur-fond">
-  <button class="selecteur-btn actif" data-cible="bgPreviewVitrine">🌐 Voir la vitrine</button>
-  <button class="selecteur-btn" data-cible="bgPreviewEssentiel">Dashboard Essentiel</button>
-  <button class="selecteur-btn" data-cible="bgPreviewPro">Dashboard Pro</button>
-  <button class="selecteur-btn" data-cible="bgPreviewBusiness">Dashboard Business</button>
+  <button class="selecteur-btn actif" data-cible="bgPreviewEssentiel">Tableau de bord Essentiel</button>
+  <button class="selecteur-btn" data-cible="bgPreviewPro">Tableau de bord Pro</button>
+  <button class="selecteur-btn" data-cible="bgPreviewBusiness">Tableau de bord Business</button>
 </div>
 <div class="wrap">
   <div class="eyebrow">Étape suivante</div>

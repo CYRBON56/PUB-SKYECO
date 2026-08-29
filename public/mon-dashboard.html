@@ -121,6 +121,14 @@
     <a class="btn-fonds" id="btnFonds" href="#">💳 Mettre des fonds pour l'Ads</a>
   </div>
 
+  <div id="banniereePause" style="display:none; background:#fdf1ea; border:1.5px solid #e8622c; border-radius:14px; padding:16px 20px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
+    <div>
+      <strong style="color:#e8622c;">⏸️ Votre abonnement est en pause</strong>
+      <p style="font-size:0.85rem; color:#5b6b64; margin-top:4px;">Votre site n'est pas visible par vos prospects tant que la pause dure.</p>
+    </div>
+    <button id="btnReprendreMaintenant" style="background:#e8622c; color:#fff; border:none; border-radius:10px; padding:10px 18px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap;">Reprendre maintenant</button>
+  </div>
+
   <div class="stats-row" id="statsRow">
     <div class="stat-card"><div class="stat-value" id="statProspects">—</div><div class="stat-label">demandes reçues</div></div>
     <div class="stat-card"><div class="stat-value" id="statClics">—</div><div class="stat-label">clics ce mois-ci</div></div>
@@ -174,7 +182,46 @@
     chargerSolde();
     chargerDemandes();
     initEstimateurClics();
+    verifierStatutPause();
   }
+
+  async function verifierStatutPause() {
+    try {
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=status`, {
+        headers: { apikey: SUPABASE_ANON_KEY }
+      });
+      const rows = await resp.json();
+      if (rows[0]?.status === 'en_pause') {
+        document.getElementById('banniereePause').style.display = 'flex';
+      }
+    } catch (e) { /* silencieux */ }
+  }
+
+  document.getElementById('btnReprendreMaintenant').addEventListener('click', async () => {
+    const btn = document.getElementById('btnReprendreMaintenant');
+    btn.disabled = true;
+    btn.textContent = 'Reprise en cours…';
+    try {
+      const res = await fetch('/api/reprendre-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('banniereePause').style.display = 'none';
+        alert(data.message || 'Votre site est de nouveau en ligne.');
+      } else {
+        alert(data.error || 'Une erreur est survenue.');
+        btn.disabled = false;
+        btn.textContent = 'Reprendre maintenant';
+      }
+    } catch (e) {
+      alert('Impossible de contacter le serveur.');
+      btn.disabled = false;
+      btn.textContent = 'Reprendre maintenant';
+    }
+  });
 
   async function chargerStats() {
     try {
@@ -407,5 +454,99 @@
     calculer();
   }
 </script>
+<!--
+  Widget de chat Skyeco Pro — à coller juste avant </body> sur les pages
+  où on veut le chat (prochaines-etapes.html, choisir-forfait.html, etc.)
+-->
+<div id="skyecoChatBubble" style="position:fixed; bottom:22px; right:22px; z-index:999; background:#e8622c; color:#fff; width:58px; height:58px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:26px; cursor:pointer; box-shadow:0 6px 20px rgba(0,0,0,0.25); transition:transform 0.15s;">
+  💬
+</div>
+
+<div id="skyecoChatWindow" style="display:none; position:fixed; bottom:92px; right:22px; z-index:999; width:340px; max-width:calc(100vw - 32px); height:460px; max-height:70vh; background:#fff; border-radius:16px; box-shadow:0 10px 40px rgba(0,0,0,0.25); flex-direction:column; overflow:hidden; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <div style="background:#14312a; color:#fff; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <div style="font-weight:700; font-size:0.92rem;">Skyeco Pro</div>
+      <div style="font-size:0.72rem; opacity:0.75;">Réponse en quelques secondes</div>
+    </div>
+    <button id="skyecoChatClose" style="background:none; border:none; color:#fff; font-size:20px; cursor:pointer; line-height:1;">×</button>
+  </div>
+  <div id="skyecoChatMessages" style="flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:10px; background:#f7f5f0;"></div>
+  <div style="padding:10px; border-top:1px solid #eef1ec; display:flex; gap:8px; background:#fff;">
+    <input type="text" id="skyecoChatInput" placeholder="Pose ta question…" style="flex:1; border:1.5px solid #e0e5df; border-radius:10px; padding:9px 12px; font-size:0.86rem;">
+    <button id="skyecoChatSend" style="background:#1e6f4c; color:#fff; border:none; border-radius:10px; padding:9px 14px; font-weight:700; cursor:pointer; font-size:0.86rem;">→</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  const bubble = document.getElementById('skyecoChatBubble');
+  const chatWindow = document.getElementById('skyecoChatWindow');
+  const closeBtn = document.getElementById('skyecoChatClose');
+  const messagesEl = document.getElementById('skyecoChatMessages');
+  const input = document.getElementById('skyecoChatInput');
+  const sendBtn = document.getElementById('skyecoChatSend');
+
+  let historique = [];
+  let dejaOuvert = false;
+
+  function ajouterMessage(role, texte) {
+    const bulle = document.createElement('div');
+    bulle.style.cssText = role === 'user'
+      ? 'align-self:flex-end; background:#1e6f4c; color:#fff; padding:9px 13px; border-radius:14px 14px 3px 14px; font-size:0.85rem; max-width:80%; line-height:1.45;'
+      : 'align-self:flex-start; background:#fff; color:#14312a; padding:9px 13px; border-radius:14px 14px 14px 3px; font-size:0.85rem; max-width:85%; line-height:1.45; box-shadow:0 1px 3px rgba(0,0,0,0.08);';
+    bulle.textContent = texte;
+    messagesEl.appendChild(bulle);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  bubble.addEventListener('click', () => {
+    const estOuvert = chatWindow.style.display === 'flex';
+    chatWindow.style.display = estOuvert ? 'none' : 'flex';
+    if (!dejaOuvert && !estOuvert) {
+      dejaOuvert = true;
+      ajouterMessage('assistant', "Bonjour ! Je suis là pour répondre à tes questions sur Skyeco Pro — les formules, comment ça marche, la publicité... Qu'est-ce que tu veux savoir ?");
+    }
+  });
+  closeBtn.addEventListener('click', () => { chatWindow.style.display = 'none'; });
+
+  async function envoyerMessage() {
+    const texte = input.value.trim();
+    if (!texte) return;
+    ajouterMessage('user', texte);
+    historique.push({ role: 'user', content: texte });
+    input.value = '';
+    sendBtn.disabled = true;
+
+    const bulleAttente = document.createElement('div');
+    bulleAttente.id = 'skyecoChatWaiting';
+    bulleAttente.style.cssText = 'align-self:flex-start; color:#8a9891; font-size:0.8rem; padding:4px 8px;';
+    bulleAttente.textContent = '…';
+    messagesEl.appendChild(bulleAttente);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+
+    try {
+      const res = await fetch('/api/chat-skyeco', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: historique })
+      });
+      const data = await res.json();
+      document.getElementById('skyecoChatWaiting')?.remove();
+      const reponse = data.success ? data.reponse : "Désolé, je n'ai pas pu répondre — réessaie dans un instant.";
+      ajouterMessage('assistant', reponse);
+      historique.push({ role: 'assistant', content: reponse });
+    } catch (e) {
+      document.getElementById('skyecoChatWaiting')?.remove();
+      ajouterMessage('assistant', 'Connexion impossible pour le moment — réessaie.');
+    } finally {
+      sendBtn.disabled = false;
+    }
+  }
+
+  sendBtn.addEventListener('click', envoyerMessage);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') envoyerMessage(); });
+})();
+</script>
+
 </body>
 </html>

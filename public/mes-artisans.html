@@ -6,52 +6,91 @@
 <title>Mes artisans — Skyeco Pro Admin</title>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f5f8f6; color:#14312a; padding:32px 20px 60px; }
-  .wrap { max-width:1100px; margin:0 auto; }
-  h1 { font-size:1.5rem; margin-bottom:6px; }
-  .sub { font-size:0.9rem; color:#5b6b64; margin-bottom:24px; }
+  body {
+    font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background:#f2f4f1; color:#14312a; padding:36px 28px 60px;
+  }
+  .wrap { max-width:1180px; margin:0 auto; }
 
-  .filtre-row { display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; }
-  .filtre-row input { padding:9px 14px; border:1.5px solid #d7dedb; border-radius:10px; font-size:0.88rem; flex:1; min-width:200px; }
+  .top-header { display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:28px; flex-wrap:wrap; gap:12px; }
+  h1 { font-size:1.6rem; font-weight:800; letter-spacing:-0.01em; }
+  .sub { font-size:0.9rem; color:#6b7a72; margin-top:4px; }
 
-  table { width:100%; border-collapse:collapse; background:#fff; border-radius:14px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
-  th { text-align:left; padding:12px 14px; background:#f0f1ec; font-size:0.72rem; text-transform:uppercase; color:#8a9891; font-weight:700; }
-  td { padding:12px 14px; border-top:1px solid #eef1f0; font-size:0.86rem; vertical-align:middle; }
-  tr:hover td { background:#fafbf9; }
+  .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-bottom:28px; }
+  .stat-card {
+    background:#fff; border-radius:16px; padding:18px 20px;
+    box-shadow:0 1px 2px rgba(20,49,42,0.04), 0 6px 20px rgba(20,49,42,0.05);
+  }
+  .stat-card .valeur { font-size:1.7rem; font-weight:800; line-height:1; }
+  .stat-card .label { font-size:0.76rem; color:#8a9891; margin-top:6px; font-weight:600; }
+  .stat-card.accent-vert .valeur { color:#1e6f4c; }
+  .stat-card.accent-orange .valeur { color:#e8622c; }
 
-  .badge { font-size:0.7rem; font-weight:700; padding:3px 10px; border-radius:999px; }
-  .badge-preview { background:#eef1f0; color:#5b6b64; }
+  .filtre-row { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+  .filtre-row input {
+    padding:11px 16px; border:1.5px solid #e0e5df; border-radius:12px; font-size:0.88rem; flex:1; min-width:220px;
+    background:#fff; transition:border-color 0.15s;
+  }
+  .filtre-row input:focus { outline:none; border-color:#1e6f4c; }
+
+  .table-card { background:#fff; border-radius:18px; overflow:hidden; box-shadow:0 1px 2px rgba(20,49,42,0.04), 0 6px 24px rgba(20,49,42,0.06); }
+  table { width:100%; border-collapse:collapse; }
+  th { text-align:left; padding:14px 18px; background:#fafaf7; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em; color:#8a9891; font-weight:700; border-bottom:1px solid #eef1ec; }
+  td { padding:14px 18px; border-top:1px solid #f2f4f0; font-size:0.87rem; vertical-align:middle; }
+  tr:hover td { background:#fbfcfa; }
+
+  .entreprise-cell { display:flex; align-items:center; gap:12px; }
+  .avatar-initiale {
+    width:36px; height:36px; border-radius:10px; background:#eaf4ef; color:#1e6f4c;
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.9rem; flex-shrink:0;
+  }
+  .entreprise-nom { font-weight:700; }
+  .entreprise-metier { font-size:0.76rem; color:#8a9891; margin-top:1px; }
+
+  .badge { font-size:0.7rem; font-weight:700; padding:4px 11px; border-radius:999px; display:inline-block; }
+  .badge-preview { background:#f0f1ec; color:#6b7a72; }
   .badge-published { background:#eaf4ef; color:#1e6f4c; }
   .badge-desactive { background:#fdeceb; color:#c0392b; }
 
+  .date-cell { color:#8a9891; font-size:0.82rem; }
+
   .actions { display:flex; gap:8px; flex-wrap:wrap; }
   .btn-action {
-    font-size:0.76rem; font-weight:700; padding:7px 12px; border-radius:8px; border:1.5px solid transparent;
-    cursor:pointer; text-decoration:none; display:inline-block; white-space:nowrap;
+    font-size:0.76rem; font-weight:700; padding:8px 13px; border-radius:9px; border:1.5px solid transparent;
+    cursor:pointer; text-decoration:none; display:inline-block; white-space:nowrap; transition:all 0.15s;
   }
-  .btn-copier { background:#eef1f0; color:#14312a; }
-  .btn-copier:hover { background:#e2e8e5; }
+  .btn-copier { background:#f2f4f1; color:#14312a; }
+  .btn-copier:hover { background:#e5e9e3; }
   .btn-envoyer { background:#e8622c; color:#fff; }
-  .btn-envoyer:hover { filter:brightness(1.05); }
-  .btn-envoyer:disabled { opacity:0.5; cursor:not-allowed; }
-  .btn-voir { background:#fff; border-color:#1e6f4c; color:#1e6f4c; }
+  .btn-envoyer:hover { filter:brightness(1.06); }
+  .btn-envoyer:disabled { opacity:0.4; cursor:not-allowed; }
+  .btn-voir { background:#fff; border-color:#d7e3dc; color:#1e6f4c; }
+  .btn-voir:hover { border-color:#1e6f4c; }
 
-  .loading, .empty { text-align:center; padding:50px; color:#8a9891; }
-  .feedback { font-size:0.74rem; margin-top:4px; }
+  .loading, .empty { text-align:center; padding:60px; color:#8a9891; font-size:0.92rem; }
+  .feedback { font-size:0.74rem; margin-top:5px; font-weight:600; }
   .feedback.ok { color:#1e6f4c; }
   .feedback.err { color:#c0392b; }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>Mes artisans</h1>
-  <p class="sub">Chaque artisan a sa propre fiche — envoie-lui son lien personnel pour qu'il dépose ses éléments.</p>
+  <div class="top-header">
+    <div>
+      <h1>Mes artisans</h1>
+      <p class="sub">Chaque artisan a sa propre fiche — envoie-lui son lien personnel pour qu'il dépose ses éléments.</p>
+    </div>
+  </div>
+
+  <div class="stats-row" id="statsRow"></div>
 
   <div class="filtre-row">
     <input type="text" id="recherche" placeholder="Rechercher par nom d'entreprise ou téléphone…">
   </div>
 
-  <div id="contenu"><div class="loading">Chargement…</div></div>
+  <div class="table-card">
+    <div id="contenu"><div class="loading">Chargement…</div></div>
+  </div>
 </div>
 
 <script>
@@ -69,10 +108,25 @@
         headers: { apikey: SUPABASE_ANON_KEY }
       });
       toutesLesFiches = await resp.json();
+      afficherStats(toutesLesFiches);
       afficherTableau(toutesLesFiches);
     } catch (e) {
       document.getElementById('contenu').innerHTML = '<div class="empty">Impossible de charger la liste pour le moment.</div>';
     }
+  }
+
+  function afficherStats(fiches) {
+    const total = fiches.length;
+    const publies = fiches.filter(f => f.status === 'published').length;
+    const enAttente = fiches.filter(f => f.status === 'preview').length;
+    const valides = fiches.filter(f => f.site_valide).length;
+
+    document.getElementById('statsRow').innerHTML = `
+      <div class="stat-card"><div class="valeur">${total}</div><div class="label">Artisans au total</div></div>
+      <div class="stat-card accent-vert"><div class="valeur">${publies}</div><div class="label">Sites publiés</div></div>
+      <div class="stat-card accent-orange"><div class="valeur">${enAttente}</div><div class="label">En attente</div></div>
+      <div class="stat-card accent-vert"><div class="valeur">${valides}</div><div class="label">Vitrines validées</div></div>
+    `;
   }
 
   function afficherTableau(fiches) {
@@ -91,19 +145,27 @@
     contenu.innerHTML = `
       <table>
         <thead>
-          <tr><th>Entreprise</th><th>Métier(s)</th><th>Statut</th><th>Date</th><th>Actions</th></tr>
+          <tr><th>Entreprise</th><th>Statut</th><th>Date</th><th>Actions</th></tr>
         </thead>
         <tbody>
           ${fiches.map(f => {
             const metiers = Array.isArray(f.metier) ? f.metier.join(', ') : (f.metier || '—');
             const date = new Date(f.created_at).toLocaleDateString('fr-FR');
             const lienElements = `${SITE_BASE}/mes-elements.html?id=${f.id}`;
+            const initiale = (f.entreprise || '?').trim().charAt(0).toUpperCase();
             return `
               <tr>
-                <td><strong>${f.entreprise || '—'}</strong></td>
-                <td>${metiers}</td>
+                <td>
+                  <div class="entreprise-cell">
+                    <div class="avatar-initiale">${initiale}</div>
+                    <div>
+                      <div class="entreprise-nom">${f.entreprise || '—'}</div>
+                      <div class="entreprise-metier">${metiers}</div>
+                    </div>
+                  </div>
+                </td>
                 <td>${STATUT_LABELS[f.status] || f.status || '—'}</td>
-                <td>${date}</td>
+                <td class="date-cell">${date}</td>
                 <td>
                   <div class="actions">
                     <button class="btn-action btn-copier" data-lien="${lienElements}" onclick="copierLien(this)">📋 Copier le lien</button>

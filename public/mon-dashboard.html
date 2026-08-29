@@ -63,9 +63,17 @@
   .statut-badge { font-size:0.7rem; font-weight:700; padding:3px 9px; border-radius:999px; background:#eaf4ef; color:#1e6f4c; }
 
   .loading, .empty-msg { text-align:center; padding:40px; color:#8a9891; }
+
+  .verif-acces-overlay {
+    position:fixed; inset:0; z-index:2000; background:#f5f8f6;
+    display:flex; align-items:center; justify-content:center;
+    color:#5b6b64; font-size:0.95rem;
+  }
 </style>
 </head>
 <body>
+
+<div class="verif-acces-overlay" id="verifAccesOverlay">Vérification de votre accès…</div>
 
 <!-- Feuilles décoratives en arrière-plan, effet 3D via dégradés et ombres -->
 <div class="leaf-bg" style="top:-60px; right:-80px; opacity:0.55;">
@@ -176,6 +184,41 @@
   if (!draftId) {
     document.body.innerHTML = '<div class="loading">Lien invalide — identifiant du site manquant.</div>';
   } else {
+    verifierAccesPuisCharger();
+  }
+
+  // Accès protégé par mot de passe (voir acces-dashboard.html) : soit une
+  // session artisan normale (sessionStorage, posée après connexion), soit un
+  // jeton admin transmis dans l'URL par mes-artisans.html (Cyrille peut
+  // ouvrir n'importe quel dashboard sans connaître le mot de passe de
+  // l'artisan). Dans les deux cas, la validité est revérifiée côté serveur.
+  async function verifierAccesPuisCharger() {
+    const adminToken = params.get('admin_token');
+    const token = adminToken || sessionStorage.getItem('skyeco_dashboard_token_' + draftId);
+
+    if (!token) {
+      window.location.href = '/acces-dashboard.html?id=' + draftId;
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/dashboard-verify-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token })
+      });
+      const data = await res.json();
+      if (!data.valid) {
+        sessionStorage.removeItem('skyeco_dashboard_token_' + draftId);
+        window.location.href = '/acces-dashboard.html?id=' + draftId;
+        return;
+      }
+    } catch (e) {
+      document.getElementById('verifAccesOverlay').textContent = 'Impossible de vérifier votre accès pour le moment.';
+      return;
+    }
+
+    document.getElementById('verifAccesOverlay').remove();
     document.getElementById('btnFonds').href = '/campagne.html?id=' + draftId;
     document.getElementById('btnFondsEstim').href = '/campagne.html?id=' + draftId;
     chargerStats();

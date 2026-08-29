@@ -167,6 +167,10 @@
       } catch (e) { /* on continue même si l'enregistrement échoue, ce n'est pas bloquant */ }
 
       btn.textContent = 'Envoi de votre lien…';
+      // L'envoi SMS/email n'est qu'un moyen de secours pour que l'artisan puisse
+      // revenir plus tard (autre appareil, lien perdu) — il ne doit JAMAIS bloquer
+      // la suite du parcours : on redirige systématiquement vers mes-elements.html,
+      // que l'envoi ait réussi ou non.
       let envoiReussi = false;
       try {
         const res = await fetch('/api/envoyer-lien-elements', {
@@ -176,18 +180,23 @@
         });
         const data = await res.json();
         envoiReussi = !!data.success;
-      } catch (e) { /* géré ci-dessous */ }
+      } catch (e) { /* pas bloquant, voir commentaire ci-dessus */ }
 
       document.getElementById('contenu').innerHTML = envoiReussi
         ? `<div class="prix-box" style="margin-top:60px;">
             <div style="font-size:2rem; margin-bottom:10px;">✅</div>
             <h1 style="margin-bottom:12px;">Contrat signé !</h1>
-            <p style="color:#5b6b64; line-height:1.6;">Vous allez recevoir par SMS et par email le lien pour nous transmettre vos éléments (logo, photos, coordonnées) — toujours sans paiement à ce stade. Une fois ce formulaire complété, le paiement du forfait ${forfait.nom} vous sera demandé. Nous vérifions ensuite tout et mettons votre vitrine en ligne sous 48h.</p>
+            <p style="color:#5b6b64; line-height:1.6;">Vous allez aussi recevoir par SMS et par email le lien pour transmettre vos éléments plus tard si besoin (logo, photos, coordonnées) — toujours sans paiement à ce stade. On vous y emmène tout de suite…</p>
           </div>`
         : `<div class="prix-box" style="margin-top:60px;">
-            <h1 style="margin-bottom:12px;">Contrat bien enregistré</h1>
-            <p style="color:#5b6b64; line-height:1.6;">L'envoi automatique du lien n'a pas pu se faire — mais votre contrat est bien signé. Nous revenons vers vous très rapidement par un autre moyen.</p>
+            <div style="font-size:2rem; margin-bottom:10px;">✅</div>
+            <h1 style="margin-bottom:12px;">Contrat signé !</h1>
+            <p style="color:#5b6b64; line-height:1.6;">L'envoi du lien par SMS/email n'a pas pu se faire, mais ce n'est pas grave : on vous emmène directement à l'étape suivante.</p>
           </div>`;
+
+      setTimeout(() => {
+        window.location.href = '/mes-elements.html?id=' + draftId;
+      }, 1800);
     });
   }
 </script>

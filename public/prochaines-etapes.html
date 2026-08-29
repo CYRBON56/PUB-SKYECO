@@ -352,7 +352,7 @@
     bgFrames[bgIndex].classList.remove('active');
     bgIndex = (bgIndex + 1) % bgFrames.length;
     bgFrames[bgIndex].classList.add('active');
-  }, 6000);
+  }, 10000);
 
   document.getElementById('btnVoirSite').addEventListener('click', () => {
     const overlay = document.querySelector('.bg-overlay');
@@ -372,7 +372,7 @@
         bgFrames[bgIndex].classList.remove('active');
         bgIndex = (bgIndex + 1) % bgFrames.length;
         bgFrames[bgIndex].classList.add('active');
-      }, 6000);
+      }, 10000);
     }, 5000);
   });
 </script>

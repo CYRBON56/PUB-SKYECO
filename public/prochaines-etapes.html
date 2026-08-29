@@ -14,33 +14,28 @@
   .bg-overlay.cachee { opacity:0; }
 
   .selecteur-fond {
-    position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:3;
-    display:flex; gap:8px; background:rgba(255,255,255,0.92); backdrop-filter:blur(6px);
-    padding:8px; border-radius:999px; box-shadow:0 4px 16px rgba(0,0,0,0.12); flex-wrap:wrap; justify-content:center; max-width:92vw;
+    display:flex; gap:8px; padding:0; flex-wrap:wrap; margin:16px 0 28px;
   }
   .selecteur-btn {
-    background:transparent; border:none; padding:8px 14px; border-radius:999px; font-size:0.78rem; font-weight:700;
-    color:#5b6b64; cursor:pointer; white-space:nowrap; transition:all 0.15s;
+    border:2px solid transparent; padding:9px 16px; border-radius:999px; font-size:0.8rem; font-weight:700;
+    cursor:pointer; white-space:nowrap; transition:all 0.15s; background:#fff;
   }
-  .selecteur-btn:hover { background:#f0f1ec; }
-  .selecteur-btn.actif { background:#e8622c; color:#fff; }
+  .selecteur-btn.couleur-vitrine { border-color:#14312a; color:#14312a; }
+  .selecteur-btn.couleur-essentiel { border-color:#8a9891; color:#8a9891; }
+  .selecteur-btn.couleur-pro { border-color:#1e6f4c; color:#1e6f4c; }
+  .selecteur-btn.couleur-business { border-color:#e8622c; color:#e8622c; }
+
+  .selecteur-btn.couleur-vitrine.actif { background:#14312a; color:#fff; }
+  .selecteur-btn.couleur-essentiel.actif { background:#8a9891; color:#fff; }
+  .selecteur-btn.couleur-pro.actif { background:#1e6f4c; color:#fff; }
+  .selecteur-btn.couleur-business.actif { background:#e8622c; color:#fff; }
 
   .wrap {
-    position:relative; z-index:2; max-width:760px; margin:70px auto 32px; padding:40px 40px 56px;
+    position:relative; z-index:2; max-width:760px; margin:32px auto; padding:40px 40px 56px;
     background:rgba(255,255,255,0.88); border-radius:20px; transition:opacity 0.5s ease;
   }
   .wrap.cachee { opacity:0; pointer-events:none; }
 
-  #btnVoirSite {
-    float:right; background:#e8622c; border:none; border-radius:999px;
-    padding:14px 26px; font-size:1rem; font-weight:700; color:#fff; cursor:pointer;
-    animation: pulseBtn 1.6s ease-in-out infinite;
-  }
-  #btnVoirSite:hover { filter:brightness(1.05); }
-  @keyframes pulseBtn {
-    0%,100% { transform:scale(1); box-shadow:0 0 0 0 rgba(232,98,44,0.5); }
-    50% { transform:scale(1.05); box-shadow:0 0 0 10px rgba(232,98,44,0); }
-  }
   .eyebrow { font-size:0.8rem; font-weight:700; color:#1e6f4c; letter-spacing:0.03em; text-transform:uppercase; margin-bottom:10px; }
   h1 { font-size:1.9rem; margin-bottom:14px; line-height:1.25; }
   .intro { font-size:1.02rem; color:#3a4a44; line-height:1.6; margin-bottom:36px; }
@@ -126,21 +121,23 @@
 </style>
 </head>
 <body>
-<iframe class="bg-preview" id="bgPreviewVitrine" src=""></iframe>
-<iframe class="bg-preview active" id="bgPreviewEssentiel" src="/mon-dashboard-demo-essentiel.html"></iframe>
+<iframe class="bg-preview active" id="bgPreviewVitrine" src=""></iframe>
+<iframe class="bg-preview" id="bgPreviewEssentiel" src="/mon-dashboard-demo-essentiel.html"></iframe>
 <iframe class="bg-preview" id="bgPreviewPro" src="/mon-dashboard-demo-pro.html"></iframe>
 <iframe class="bg-preview" id="bgPreviewBusiness" src="/mon-dashboard-demo-business.html"></iframe>
 <div class="bg-overlay"></div>
 
-<div class="selecteur-fond">
-  <button class="selecteur-btn actif" data-cible="bgPreviewEssentiel">Tableau de bord Essentiel</button>
-  <button class="selecteur-btn" data-cible="bgPreviewPro">Tableau de bord Pro</button>
-  <button class="selecteur-btn" data-cible="bgPreviewBusiness">Tableau de bord Business</button>
-</div>
 <div class="wrap">
   <div class="eyebrow">Étape suivante</div>
-  <button id="btnVoirSite">👁️ Voir le site</button>
   <h1>Votre aperçu est prêt — construisons maintenant votre vraie vitrine</h1>
+
+  <div class="selecteur-fond">
+    <button class="selecteur-btn couleur-vitrine actif" data-cible="bgPreviewVitrine">🌐 Voir la vitrine</button>
+    <button class="selecteur-btn couleur-essentiel" data-cible="bgPreviewEssentiel">Tableau de bord Essentiel</button>
+    <button class="selecteur-btn couleur-pro" data-cible="bgPreviewPro">Tableau de bord Pro</button>
+    <button class="selecteur-btn couleur-business" data-cible="bgPreviewBusiness">Tableau de bord Business</button>
+  </div>
+
   <p class="intro">
     Ce que vous venez de voir est un <strong>modèle générique</strong>, pour vous donner une idée du principe.
     Votre vraie vitrine sera personnalisée avec vos propres informations, vos photos, et adaptée précisément à votre activité — on s'en occupe avec vous.
@@ -381,18 +378,6 @@
       document.querySelectorAll('.selecteur-btn').forEach(b => b.classList.remove('actif'));
       btn.classList.add('actif');
     });
-  });
-
-  document.getElementById('btnVoirSite').addEventListener('click', () => {
-    const overlay = document.querySelector('.bg-overlay');
-    const wrap = document.querySelector('.wrap');
-
-    overlay.classList.add('cachee');
-    wrap.classList.add('cachee');
-    setTimeout(() => {
-      overlay.classList.remove('cachee');
-      wrap.classList.remove('cachee');
-    }, 5000);
   });
 </script>
 <div style="text-align:center; font-size:11px; color:#8a9891; padding:24px 16px 16px; line-height:1.7;">

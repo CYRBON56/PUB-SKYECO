@@ -13,8 +13,20 @@
   .bg-overlay { position:fixed; inset:0; background:rgba(245,248,246,0.55); z-index:1; transition:opacity 0.5s ease; }
   .bg-overlay.cachee { opacity:0; }
 
+  .selecteur-fond {
+    position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:3;
+    display:flex; gap:8px; background:rgba(255,255,255,0.92); backdrop-filter:blur(6px);
+    padding:8px; border-radius:999px; box-shadow:0 4px 16px rgba(0,0,0,0.12); flex-wrap:wrap; justify-content:center; max-width:92vw;
+  }
+  .selecteur-btn {
+    background:transparent; border:none; padding:8px 14px; border-radius:999px; font-size:0.78rem; font-weight:700;
+    color:#5b6b64; cursor:pointer; white-space:nowrap; transition:all 0.15s;
+  }
+  .selecteur-btn:hover { background:#f0f1ec; }
+  .selecteur-btn.actif { background:#14312a; color:#fff; }
+
   .wrap {
-    position:relative; z-index:2; max-width:760px; margin:32px auto; padding:40px 40px 56px;
+    position:relative; z-index:2; max-width:760px; margin:70px auto 32px; padding:40px 40px 56px;
     background:rgba(255,255,255,0.88); border-radius:20px; transition:opacity 0.5s ease;
   }
   .wrap.cachee { opacity:0; pointer-events:none; }
@@ -115,8 +127,17 @@
 </head>
 <body>
 <iframe class="bg-preview active" id="bgPreviewVitrine" src=""></iframe>
-<iframe class="bg-preview" id="bgPreviewDashboard" src="/mon-dashboard-demo.html"></iframe>
+<iframe class="bg-preview" id="bgPreviewEssentiel" src="/mon-dashboard-demo-essentiel.html"></iframe>
+<iframe class="bg-preview" id="bgPreviewPro" src="/mon-dashboard-demo-pro.html"></iframe>
+<iframe class="bg-preview" id="bgPreviewBusiness" src="/mon-dashboard-demo-business.html"></iframe>
 <div class="bg-overlay"></div>
+
+<div class="selecteur-fond">
+  <button class="selecteur-btn actif" data-cible="bgPreviewVitrine">🌐 Voir la vitrine</button>
+  <button class="selecteur-btn" data-cible="bgPreviewEssentiel">Dashboard Essentiel</button>
+  <button class="selecteur-btn" data-cible="bgPreviewPro">Dashboard Pro</button>
+  <button class="selecteur-btn" data-cible="bgPreviewBusiness">Dashboard Business</button>
+</div>
 <div class="wrap">
   <div class="eyebrow">Étape suivante</div>
   <button id="btnVoirSite">👁️ Voir le site</button>
@@ -346,33 +367,32 @@
     calculerBudget();
   }
 
-  const bgFrames = [document.getElementById('bgPreviewVitrine'), document.getElementById('bgPreviewDashboard')];
-  let bgIndex = 0;
-  let alternanceTimer = setInterval(() => {
-    bgFrames[bgIndex].classList.remove('active');
-    bgIndex = (bgIndex + 1) % bgFrames.length;
-    bgFrames[bgIndex].classList.add('active');
-  }, 10000);
+  const bgFrames = {
+    bgPreviewVitrine: document.getElementById('bgPreviewVitrine'),
+    bgPreviewEssentiel: document.getElementById('bgPreviewEssentiel'),
+    bgPreviewPro: document.getElementById('bgPreviewPro'),
+    bgPreviewBusiness: document.getElementById('bgPreviewBusiness'),
+  };
+
+  document.querySelectorAll('.selecteur-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cible = btn.dataset.cible;
+      Object.values(bgFrames).forEach(f => f.classList.remove('active'));
+      bgFrames[cible].classList.add('active');
+      document.querySelectorAll('.selecteur-btn').forEach(b => b.classList.remove('actif'));
+      btn.classList.add('actif');
+    });
+  });
 
   document.getElementById('btnVoirSite').addEventListener('click', () => {
     const overlay = document.querySelector('.bg-overlay');
     const wrap = document.querySelector('.wrap');
-
-    clearInterval(alternanceTimer);
-    bgFrames.forEach(f => f.classList.remove('active'));
-    document.getElementById('bgPreviewVitrine').classList.add('active');
-    bgIndex = 0;
 
     overlay.classList.add('cachee');
     wrap.classList.add('cachee');
     setTimeout(() => {
       overlay.classList.remove('cachee');
       wrap.classList.remove('cachee');
-      alternanceTimer = setInterval(() => {
-        bgFrames[bgIndex].classList.remove('active');
-        bgIndex = (bgIndex + 1) % bgFrames.length;
-        bgFrames[bgIndex].classList.add('active');
-      }, 10000);
     }, 5000);
   });
 </script>

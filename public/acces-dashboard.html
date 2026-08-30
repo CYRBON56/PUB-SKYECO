@@ -8,29 +8,61 @@
   * { box-sizing:border-box; margin:0; padding:0; }
   body {
     font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background:#f5f8f6; color:#14312a; min-height:100vh;
+    background:radial-gradient(circle at 50% -10%, #eaf4ef 0%, #f5f8f6 45%, #f5f8f6 100%);
+    color:#14312a; min-height:100vh;
     display:flex; align-items:center; justify-content:center; padding:24px;
   }
-  .card { background:#fff; border-radius:18px; padding:36px 32px; max-width:420px; width:100%; box-shadow:0 8px 30px rgba(20,49,42,0.08); }
-  h1 { font-size:1.3rem; margin-bottom:6px; }
-  .sub { color:#5b6b64; font-size:0.88rem; margin-bottom:24px; line-height:1.5; }
-  label { display:block; font-size:0.82rem; font-weight:700; margin-bottom:6px; margin-top:14px; }
+  .card {
+    background:#fff; border-radius:22px; padding:40px 36px 36px; max-width:440px; width:100%;
+    box-shadow:0 20px 50px rgba(20,49,42,0.10), 0 2px 8px rgba(20,49,42,0.06);
+    border:1px solid #eef2ef;
+  }
+  .icone-cadenas {
+    width:56px; height:56px; border-radius:16px; background:linear-gradient(135deg,#1e6f4c,#2f8a63);
+    display:flex; align-items:center; justify-content:center; margin:0 auto 20px;
+    box-shadow:0 8px 20px rgba(30,111,76,0.28);
+  }
+  .icone-cadenas svg { width:26px; height:26px; }
+  h1 {
+    font-size:1.5rem; line-height:1.25; margin-bottom:10px; text-align:center;
+    font-weight:800; letter-spacing:-0.01em; color:#0f261f;
+  }
+  h1.titre-gros {
+    font-size:1.32rem; text-transform:uppercase; letter-spacing:0.01em;
+  }
+  .sub { color:#5b6b64; font-size:0.92rem; margin-bottom:26px; line-height:1.55; text-align:center; }
+  label { display:block; font-size:0.78rem; font-weight:800; margin-bottom:6px; margin-top:16px; color:#3a4a44; text-transform:uppercase; letter-spacing:0.03em; }
   input {
-    width:100%; padding:11px 14px; border:1.5px solid #d7dedb; border-radius:10px; font-size:0.95rem;
-    font-family:inherit; color:#14312a;
+    width:100%; padding:13px 14px; border:1.5px solid #d7dedb; border-radius:11px; font-size:0.98rem;
+    font-family:inherit; color:#14312a; background:#fff; transition:border-color .15s, box-shadow .15s;
   }
-  input:focus { outline:none; border-color:#1e6f4c; }
+  input:focus { outline:none; border-color:#1e6f4c; box-shadow:0 0 0 4px rgba(30,111,76,0.12); }
   input[readonly] { background:#f2f4f1; color:#5b6b64; }
-  .btn-principal {
-    width:100%; background:#1e6f4c; color:#fff; border:none; border-radius:10px; padding:13px;
-    font-size:0.92rem; font-weight:700; cursor:pointer; margin-top:22px;
+  .champ-mdp { position:relative; }
+  .champ-mdp input { padding-right:44px; }
+  .toggle-oeil {
+    position:absolute; right:6px; top:50%; transform:translateY(-50%);
+    width:32px; height:32px; border:none; background:transparent; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; border-radius:8px; color:#5b6b64;
   }
-  .btn-principal:hover { filter:brightness(1.05); }
-  .btn-principal:disabled { opacity:0.5; cursor:wait; }
-  .liens-secondaires { margin-top:18px; text-align:center; font-size:0.82rem; }
-  .liens-secondaires a { color:#1e6f4c; text-decoration:none; cursor:pointer; }
+  .toggle-oeil:hover { background:#f0f4f2; color:#1e6f4c; }
+  .toggle-oeil svg { width:20px; height:20px; }
+  .toggle-oeil .icone-barree { display:none; }
+  .toggle-oeil.actif .icone-oeil { display:none; }
+  .toggle-oeil.actif .icone-barree { display:block; }
+  .btn-principal {
+    width:100%; background:linear-gradient(135deg,#1e6f4c,#227851); color:#fff; border:none; border-radius:11px; padding:15px;
+    font-size:0.98rem; font-weight:800; cursor:pointer; margin-top:26px;
+    box-shadow:0 10px 24px rgba(30,111,76,0.28); transition:filter .15s, transform .1s;
+    letter-spacing:0.01em;
+  }
+  .btn-principal:hover { filter:brightness(1.08); }
+  .btn-principal:active { transform:translateY(1px); }
+  .btn-principal:disabled { opacity:0.55; cursor:wait; box-shadow:none; }
+  .liens-secondaires { margin-top:20px; text-align:center; font-size:0.84rem; }
+  .liens-secondaires a { color:#1e6f4c; text-decoration:none; cursor:pointer; font-weight:600; }
   .liens-secondaires a:hover { text-decoration:underline; }
-  .msg { font-size:0.85rem; padding:10px 14px; border-radius:10px; margin-top:16px; line-height:1.5; }
+  .msg { font-size:0.87rem; padding:12px 14px; border-radius:11px; margin-top:18px; line-height:1.5; font-weight:600; }
   .msg.err { background:#fdeaea; color:#991b1b; }
   .msg.ok { background:#eaf4ef; color:#1e6f4c; }
   .loading { text-align:center; padding:60px 20px; color:#5b6b64; }
@@ -55,6 +87,32 @@
     carte.innerHTML = '<div class="loading">Lien invalide — identifiant du site manquant.</div>';
   } else {
     demarrer();
+  }
+
+  function boutonOeil(inputId) {
+    return `<button type="button" class="toggle-oeil" data-cible="${inputId}" aria-label="Afficher le mot de passe">
+      <svg class="icone-oeil" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+        <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/>
+      </svg>
+      <svg class="icone-barree" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+        <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/>
+        <path d="M3 3l18 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </button>`;
+  }
+
+  function attacherToggleOeil(inputId) {
+    const btn = document.querySelector(`.toggle-oeil[data-cible="${inputId}"]`);
+    const input = document.getElementById(inputId);
+    if (!btn || !input) return;
+    btn.addEventListener('click', () => {
+      const visible = input.type === 'text';
+      input.type = visible ? 'password' : 'text';
+      btn.classList.toggle('actif', !visible);
+      btn.setAttribute('aria-label', visible ? 'Afficher le mot de passe' : 'Masquer le mot de passe');
+    });
   }
 
   function connecterEtRediriger(token) {
@@ -89,19 +147,34 @@
 
   function afficherCreation(email) {
     carte.innerHTML = `
-      <h1>Créez votre accès</h1>
+      <div class="icone-cadenas">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 10V8a6 6 0 1 1 12 0v2" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+          <rect x="4" y="10" width="16" height="11" rx="3" fill="#fff"/>
+          <circle cx="12" cy="15.5" r="1.6" fill="#1e6f4c"/>
+        </svg>
+      </div>
+      <h1 class="titre-gros">Créer votre mot de passe pour accéder à votre tableau de bord</h1>
       <p class="sub">Votre tableau de bord Skyeco Pro est prêt. Choisissez un mot de passe pour pouvoir y revenir à tout moment.</p>
       <form id="formCreation">
         <label>Identifiant (votre email)</label>
         <input type="email" value="${email}" readonly>
         <label>Mot de passe</label>
-        <input type="password" id="mdp1" minlength="8" required placeholder="8 caractères minimum">
+        <div class="champ-mdp">
+          <input type="password" id="mdp1" minlength="8" required placeholder="8 caractères minimum">
+          ${boutonOeil('mdp1')}
+        </div>
         <label>Confirmez le mot de passe</label>
-        <input type="password" id="mdp2" minlength="8" required>
+        <div class="champ-mdp">
+          <input type="password" id="mdp2" minlength="8" required>
+          ${boutonOeil('mdp2')}
+        </div>
         <button class="btn-principal" type="submit">Créer mon accès</button>
       </form>
       <div id="zoneMsg"></div>
     `;
+    attacherToggleOeil('mdp1');
+    attacherToggleOeil('mdp2');
     document.getElementById('formCreation').addEventListener('submit', async (e) => {
       e.preventDefault();
       const mdp1 = document.getElementById('mdp1').value;
@@ -146,7 +219,10 @@
           <label>Email</label>
           <input type="email" id="loginEmail" value="${email}" required>
           <label>Mot de passe</label>
-          <input type="password" id="loginMdp" required>
+          <div class="champ-mdp">
+            <input type="password" id="loginMdp" required>
+            ${boutonOeil('loginMdp')}
+          </div>
           <button class="btn-principal" type="submit">Se connecter</button>
         </form>
         <div id="zoneMsgConnexion"></div>
@@ -179,6 +255,8 @@
         <div id="zoneMsgIdOublie"></div>
       </div>
     `;
+
+    attacherToggleOeil('loginMdp');
 
     function basculer(idPanneau) {
       document.querySelectorAll('.panneau').forEach(p => p.classList.remove('actif'));

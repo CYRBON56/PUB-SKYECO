@@ -1,11 +1,13 @@
-// /api/dashboard-reset-password.js
-// Étape finale du "mot de passe oublié" : vérifie le jeton reçu par
-// SMS/email (dashboard-forgot-password.js) puis enregistre le nouveau mot
-// de passe. Reconnecte directement l'artisan (jeton de session renvoyé).
+// /api/dashboard-set-password.js
+// Première création (ou réinitialisation directe par un admin) du mot de
+// passe d'accès au tableau de bord (mon-dashboard.html) d'un artisan.
+// Utilisé par acces-dashboard.html quand aucun mot de passe n'existe encore
+// pour ce site. Renvoie directement un jeton de session pour connecter
+// l'artisan sans repasser par l'écran de connexion.
 //
 // Variables d'environnement requises :
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-//   DASHBOARD_SESSION_SECRET
+//   DASHBOARD_SESSION_SECRET (chaîne aléatoire longue, à définir dans Vercel)
 
 import crypto from 'crypto';
 
@@ -26,11 +28,12 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Méthode non autorisée' });
   }
-  const { draftId, token, nouveauMotDePasse } = req.body || {};
-  if (!draftId || !token || !nouveauMotDePasse) {
-    return res.status(400).json({ success: false, error: 'Paramètres manquants.' });
+
+  const { draftId, motDePasse } = req.body || {};
+  if (!draftId) {
+    return res.status(400).json({ success: false, error: 'draftId manquant' });
   }
-  if (nouveauMotDePasse.length < 8) {
+  if (!motDePasse || typeof motDePasse !== 'string' || motDePasse.length < 8) {
     return res.status(400).json({ success: false, error: 'Le mot de passe doit contenir au moins 8 caractères.' });
   }
 
@@ -41,35 +44,31 @@ export default async function handler(req, res) {
   };
 
   try {
-    const resp = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=dashboard_reset_token,dashboard_reset_token_expire`,
+    const draftResp = await fetch(
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=id`,
       { headers: supaHeaders }
     );
-    const rows = await resp.json();
-    const draft = rows[0];
-
-    if (!draft || !draft.dashboard_reset_token || draft.dashboard_reset_token !== token) {
-      return res.status(403).json({ success: false, error: 'Ce lien de réinitialisation est invalide.' });
-    }
-    if (!draft.dashboard_reset_token_expire || new Date(draft.dashboard_reset_token_expire) < new Date()) {
-      return res.status(403).json({ success: false, error: 'Ce lien de réinitialisation a expiré, refaites une demande.' });
+    const rows = await draftResp.json();
+    if (!rows[0]) {
+      return res.status(404).json({ success: false, error: 'Site introuvable.' });
     }
 
     const patchResp = await fetch(`${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
       method: 'PATCH',
       headers: { ...supaHeaders, Prefer: 'return=minimal' },
       body: JSON.stringify({
-        dashboard_password_hash: hasherMotDePasse(nouveauMotDePasse),
+        dashboard_password_hash: hasherMotDePasse(motDePasse),
+        dashboard_compte_cree_le: new Date().toISOString(),
         dashboard_reset_token: null,
         dashboard_reset_token_expire: null,
       }),
     });
-    if (!patchResp.ok) throw new Error("Échec de l'enregistrement du nouveau mot de passe.");
+    if (!patchResp.ok) throw new Error("Échec de l'enregistrement du mot de passe.");
 
-    const sessionToken = signerToken(draftId, 'artisan', 60 * 60 * 24 * 30);
-    return res.status(200).json({ success: true, token: sessionToken });
+    const token = signerToken(draftId, 'artisan', 60 * 60 * 24 * 30); // 30 jours
+    return res.status(200).json({ success: true, token });
   } catch (err) {
-    console.error('Erreur dashboard-reset-password :', err);
-    return res.status(500).json({ success: false, error: 'Impossible de réinitialiser le mot de passe pour le moment.' });
+    console.error('Erreur dashboard-set-password :', err);
+    return res.status(500).json({ success: false, error: "Impossible d'enregistrer votre mot de passe pour le moment." });
   }
 }

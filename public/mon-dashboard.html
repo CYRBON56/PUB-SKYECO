@@ -187,23 +187,6 @@
   <button class="btn-pause-diffusion" id="btnPauseDiffusion" style="display:none;"></button>
   <p class="pause-note">Mettre en pause n'arrête que la diffusion des annonces — votre solde publicitaire reste intact, relancez quand vous voulez.</p>
 
-  <div class="estim-box">
-    <h3>Combien de clics pour ce budget ?</h3>
-    <div class="estim-row">
-      <label for="estimBudgetInput">Montant à investir</label>
-      <input type="number" id="estimBudgetInput" min="100" step="10" value="300">
-      <span style="font-weight:800; font-size:1.1rem;">€</span>
-    </div>
-    <div class="estim-resultat" style="align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
-      <div style="display:flex; gap:28px;">
-        <div><div class="chiffre" id="estimClicsValue">—</div><div class="label">clics estimés</div></div>
-        <div><div class="chiffre" id="estimCpcValue">—</div><div class="label">CPC moyen estimé</div></div>
-      </div>
-      <a class="btn-fonds" id="btnFondsEstim" href="#" style="white-space:nowrap;">💳 Mettre des fonds pour l'Ads</a>
-    </div>
-    <div class="estim-note">Ce n'est pas garanti sur un mois fixe — consommé au rythme réel des clics reçus.</div>
-  </div>
-
   <div class="ads-section" id="adsSection" style="display:none;">
     <h2>🎯 Pilotage Google Ads</h2>
     <div class="ads-sub">Le détail de votre campagne — combien investir, quels mots-clés fonctionnent, et à quel moment vos clics arrivent.</div>
@@ -215,7 +198,7 @@
         <span class="slider-value" id="clicsSliderValue">20 clics</span>
       </div>
       <div class="estim-resultat" style="align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
-        <div><div class="chiffre" id="budgetNecessaireValue">—</div><div class="label">budget nécessaire, estimé</div></div>
+        <div><div class="chiffre" id="budgetNecessaireValue">—</div><div class="label">budget ads estimé</div></div>
         <a class="btn-fonds" id="btnFondsInverse" href="#" style="white-space:nowrap;">💳 Approvisionner ce montant</a>
       </div>
       <div class="estim-note">Ce budget n'est pas garanti sur une durée fixe — il est consommé au fur et à mesure des clics reçus.</div>
@@ -301,11 +284,9 @@
 
     document.getElementById('verifAccesOverlay').remove();
     document.getElementById('btnFonds').href = '/campagne.html?id=' + draftId;
-    document.getElementById('btnFondsEstim').href = '/campagne.html?id=' + draftId;
     chargerStats();
     chargerSolde();
     chargerDemandes();
-    initEstimateurClics();
     initPilotageAds();
     verifierStatutPause();
   }
@@ -530,54 +511,6 @@
 
     doc.save(`demandes-${nomEntreprise.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.pdf`);
   });
-
-  async function initEstimateurClics() {
-    const budgetInput = document.getElementById('estimBudgetInput');
-    let draftInfo = null;
-    let debounceTimer = null;
-
-    try {
-      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=metier,zone`, {
-        headers: { apikey: SUPABASE_ANON_KEY }
-      });
-      const rows = await resp.json();
-      draftInfo = rows[0] || {};
-    } catch (e) {
-      draftInfo = {};
-    }
-
-    async function calculer() {
-      const budget = parseFloat(budgetInput.value);
-      if (!budget || budget < 100) {
-        document.getElementById('estimClicsValue').textContent = '—';
-        document.getElementById('estimCpcValue').textContent = '—';
-        return;
-      }
-      document.getElementById('estimClicsValue').textContent = '…';
-      try {
-        const res = await fetch('/api/estimate-reach', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ metier: draftInfo.metier, zone: draftInfo.zone, budget })
-        });
-        const data = await res.json();
-        if (data.success) {
-          document.getElementById('estimClicsValue').textContent = data.estimatedClicks !== null ? '≈ ' + data.estimatedClicks : '—';
-          document.getElementById('estimCpcValue').textContent = data.avgCpcEur ? data.avgCpcEur + ' €' : '—';
-        } else {
-          document.getElementById('estimClicsValue').textContent = '—';
-        }
-      } catch (e) {
-        document.getElementById('estimClicsValue').textContent = '—';
-      }
-    }
-
-    budgetInput.addEventListener('input', () => {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(calculer, 400);
-    });
-    calculer();
-  }
 
   // --- Pilotage Google Ads avancé : curseur clics -> budget, détail des
   // mots-clés et répartition horaire des clics (données réelles via Windsor.ai).

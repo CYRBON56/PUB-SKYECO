@@ -46,8 +46,12 @@ export default async function handler(req, res) {
   };
 
   try {
+    // Un même email peut correspondre à plusieurs brouillons de test — on ne
+    // veut que celui qui a réellement un compte dashboard créé (le plus
+    // récent s'il y en a plusieurs), jamais un brouillon sans mot de passe
+    // pris au hasard par une requête non triée.
     const resp = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?email=ilike.${encodeURIComponent(email.trim())}&select=id,dashboard_password_hash`,
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?email=ilike.${encodeURIComponent(email.trim())}&dashboard_password_hash=not.is.null&order=dashboard_compte_cree_le.desc&limit=1&select=id,dashboard_password_hash`,
       { headers: supaHeaders }
     );
     const rows = await resp.json();

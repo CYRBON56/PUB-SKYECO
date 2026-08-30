@@ -64,6 +64,11 @@
   .preview-banner button {
     background:#E8622C; color:#fff; border:none; border-radius:6px; padding:6px 14px; font-size:12.5px; font-weight:700; cursor:pointer;
   }
+  .preview-banner a.btn-retour-elements {
+    background:transparent; color:#fff; border:1.5px solid rgba(255,255,255,0.5); border-radius:6px; padding:6px 14px;
+    font-size:12.5px; font-weight:700; text-decoration:none; cursor:pointer;
+  }
+  .preview-banner a.btn-retour-elements:hover { border-color:#fff; }
   .loading-state { display:flex; align-items:center; justify-content:center; height:100vh; font-family:inherit; color:#5b6b64; font-size:14px; }
 </style>
 </head>
@@ -73,6 +78,7 @@
 
 <div id="previewBanner" class="preview-banner" style="display:none;">
   <span>👁️ Ceci est un aperçu gratuit, pas encore en ligne publiquement.</span>
+  <a id="btnRetourElements" class="btn-retour-elements" href="#">← Retour à mes éléments</a>
   <button id="btnPublier">Mettre en ligne</button>
 </div>
 
@@ -334,7 +340,7 @@ async function init(){
   document.documentElement.style.setProperty('--brand-tint', brandColor + '1A');
   document.documentElement.style.setProperty('--brand-dark', '#14312a');
 
-  document.getElementById('heroTitle').innerHTML = template.heroTitre +
+  document.getElementById('heroTitle').innerHTML = (draft.titre_hero_choisi || template.heroTitre) +
     '<span style="display:block; margin-top:14px; font-size:0.45em; font-weight:600; opacity:0.9;">' + draft.entreprise + '</span>';
   if (draft.logo_url) {
     const logoEl = document.getElementById('logoArtisan');
@@ -409,6 +415,7 @@ async function init(){
   document.getElementById('appRoot').style.display = 'block';
   if(draft.status === 'preview'){
     document.getElementById('previewBanner').style.display = 'flex';
+    document.getElementById('btnRetourElements').href = '/mes-elements.html?id=' + draft.id;
   }
   if(draft.status === 'en_pause'){
     document.getElementById('appRoot').innerHTML =

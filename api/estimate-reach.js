@@ -105,13 +105,22 @@ export default async function handler(req, res) {
     return res.status(405).json({ success: false, error: 'Méthode non autorisée' });
   }
 
-  const { metier, zone, budget } = req.body || {};
+  const { metier, zone, motsCles, budget } = req.body || {};
   // "metier" peut être un tableau (nouvelle sélection multiple) ou une chaîne
   // unique (anciens sites créés avant ce changement) — on gère les deux.
   const metiersListe = Array.isArray(metier) ? metier : (metier ? [metier] : []);
-  const keywords = metiersListe.length
-    ? [...new Set(metiersListe.flatMap(m => KEYWORDS_BY_METIER[m] || []))]
-    : KEYWORDS_BY_METIER.autre;
+
+  // Priorité aux mots-clés choisis par l'artisan (checkboxes IA dans
+  // campagne.html, colonne mots_cles_choisis) — même logique de repli que
+  // create-google-ads-campaign.js : sinon on retombe sur la liste fixe par métier.
+  const motsClesChoisis = Array.isArray(motsCles)
+    ? motsCles.filter(m => typeof m === 'string' && m.trim()).map(m => m.trim().substring(0, 80)).slice(0, 25)
+    : [];
+  const keywords = motsClesChoisis.length
+    ? [...new Set(motsClesChoisis)]
+    : (metiersListe.length
+        ? [...new Set(metiersListe.flatMap(m => KEYWORDS_BY_METIER[m] || []))]
+        : KEYWORDS_BY_METIER.autre);
   const budgetNum = parseFloat(budget);
 
   // Formule "abonnement" : 39,90€/mois (facturé séparément, hors de ce calcul)
@@ -218,6 +227,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       source: 'google_ads_keyword_planner',
+      motsClesPersonnalises: motsClesChoisis.length > 0, // true = basé sur les mots-clés choisis par l'artisan, false = liste générique par métier
       zone: zone || null,
       region: regionDeduite,
       geoApproximatif: geoApprox, // true = volume France pondéré par population, pas un ciblage département natif

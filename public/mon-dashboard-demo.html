@@ -3,88 +3,924 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Aperçu du dashboard — Skyeco Pro</title>
+<title>Mon tableau de bord — Skyeco Pro</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f5f8f6; color:#14312a; padding:28px 24px; }
-  .wrap { max-width:980px; margin:0 auto; }
-  .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
-  h1 { font-size:1.3rem; }
-  .demo-badge { background:#eaf4ef; color:#1e6f4c; font-size:0.72rem; font-weight:700; padding:5px 12px; border-radius:999px; }
+  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f5f8f6; color:#14312a; padding:32px 24px 60px; position:relative; overflow-x:hidden; }
+  .leaf-bg { position:fixed; z-index:0; pointer-events:none; }
+  .leaf-bg svg { display:block; filter:blur(0.5px); }
+  .wrap { position:relative; z-index:1; max-width:980px; margin:0 auto; }
+  .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+  h1 { font-size:1.5rem; }
+  .btn-fonds { background:#e8622c; color:#fff; text-decoration:none; padding:12px 22px; border-radius:10px; font-weight:700; font-size:0.92rem; }
+  .btn-fonds:hover { filter:brightness(1.05); }
 
-  .stats-row { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin-bottom:24px; }
-  .stat-card { background:#fff; border-radius:14px; padding:18px; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
-  .stat-value { font-size:1.7rem; font-weight:800; }
-  .stat-label { font-size:0.75rem; color:#8a9891; margin-top:2px; }
+  .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:28px; }
+  .stat-card { background:#fff; border-radius:14px; padding:20px; box-shadow:0 4px 20px rgba(20,49,42,0.08); }
+  .stat-value { font-size:1.9rem; font-weight:800; }
+  .stat-label { font-size:0.78rem; color:#8a9891; margin-top:2px; }
 
-  .solde-box { background:#fff; border:2px solid #1e6f4c; border-radius:14px; padding:20px; margin-bottom:24px; }
-  .solde-box h3 { font-size:0.9rem; margin-bottom:12px; }
-  .solde-bar-track { background:#eef1f0; border-radius:8px; height:11px; overflow:hidden; margin-bottom:10px; }
-  .solde-bar-fill { background:#e8622c; height:100%; width:58%; }
-  .solde-stats { display:flex; justify-content:space-between; font-size:0.82rem; color:#5b6b64; }
-  .solde-stats strong { color:#14312a; font-size:1rem; }
+  .solde-box { background:#fff; border:2px solid #1e6f4c; border-radius:14px; padding:22px; margin-bottom:28px; }
+  .btn-pause-diffusion {
+    background:#f2f4f1; color:#14312a; border:1.5px solid #d7dedb; border-radius:10px;
+    padding:9px 16px; font-size:0.82rem; font-weight:700; cursor:pointer; margin-top:14px;
+  }
+  .btn-pause-diffusion.actif-pause { background:#fdf1ea; border-color:#e8622c; color:#e8622c; }
+  .btn-pause-diffusion:disabled { opacity:0.5; cursor:not-allowed; }
+  .pause-note { font-size:0.76rem; color:#8a9891; margin-top:6px; }
+  .solde-box h3 { font-size:0.95rem; margin-bottom:14px; }
+  .solde-bar-track { background:#eef1f0; border-radius:8px; height:12px; overflow:hidden; margin-bottom:10px; }
+  .solde-bar-fill { background:#e8622c; height:100%; transition:width 0.4s ease; }
+  .solde-bar-fill.alerte { background:#c0392b; }
+  .solde-stats { display:flex; justify-content:space-between; font-size:0.85rem; color:#5b6b64; margin-bottom:14px; }
+  .solde-stats strong { color:#14312a; font-size:1.05rem; }
+  .solde-detail { font-size:0.76rem; color:#8a9891; line-height:1.6; }
 
-  .liste-panel { background:#fff; border-radius:14px; padding:20px; }
-  .liste-panel h3 { font-size:0.9rem; margin-bottom:14px; }
-  table { width:100%; border-collapse:collapse; font-size:0.8rem; }
-  th { text-align:left; padding:8px 6px; color:#8a9891; font-weight:700; font-size:0.68rem; text-transform:uppercase; border-bottom:1.5px solid #eef1f0; }
-  td { padding:9px 6px; border-bottom:1px solid #eef1f0; }
-  .statut-badge { font-size:0.66rem; font-weight:700; padding:3px 8px; border-radius:999px; background:#eaf4ef; color:#1e6f4c; }
-  .statut-badge.devis-envoye { background:#fdf1ea; color:#e8622c; }
-  .statut-badge.signe { background:#eaf4ef; color:#14312a; }
+  .liste-panel { background:#fff; border-radius:14px; padding:22px; }
 
-  .relance-panel { background:#fff; border-radius:14px; padding:20px; margin-top:14px; }
-  .relance-panel h3 { font-size:0.9rem; margin-bottom:12px; }
-  .relance-row { display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid #eef1f0; font-size:0.8rem; }
-  .relance-row:last-child { border-bottom:none; }
-  .btn-relance-demo { background:#e8622c; color:#fff; font-size:0.68rem; font-weight:700; padding:4px 10px; border-radius:999px; border:none; }
+  .estim-box { background:#fff; border:2px solid #e8622c; border-radius:14px; padding:22px; margin-bottom:28px; }
+  .estim-box h3 { font-size:0.95rem; margin-bottom:14px; }
+  .estim-row { display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+  .estim-row label { font-size:0.85rem; font-weight:700; }
+  .estim-row input {
+    width:110px; font-size:1.15rem; font-weight:800; padding:8px 12px; border:2px solid #d7dedb;
+    border-radius:10px; color:#14312a;
+  }
+  .estim-resultat { display:flex; gap:28px; }
+  .estim-resultat .chiffre { font-size:1.5rem; font-weight:800; color:#e8622c; }
+  .estim-resultat .label { font-size:0.76rem; color:#5b6b64; }
+  .estim-note { font-size:0.74rem; color:#8a9891; margin-top:10px; }
+
+  .ads-section { background:#fff; border-radius:14px; padding:22px; margin-bottom:28px; box-shadow:0 4px 20px rgba(20,49,42,0.08); }
+  .ads-section h2 { font-size:1.05rem; margin-bottom:4px; }
+  .ads-section .ads-sub { font-size:0.82rem; color:#5b6b64; margin-bottom:20px; }
+  .ads-souspanel { border-top:1.5px solid #eef1f0; padding-top:20px; margin-top:20px; }
+  .ads-souspanel:first-of-type { border-top:none; padding-top:0; margin-top:0; }
+  .ads-souspanel h3 { font-size:0.9rem; margin-bottom:12px; }
+
+  .slider-row { display:flex; align-items:center; gap:14px; margin-bottom:14px; }
+  .slider-row input[type="range"] { flex:1; accent-color:#1e6f4c; height:6px; }
+  .slider-row .slider-value { font-weight:800; font-size:1.05rem; min-width:78px; text-align:right; color:#14312a; }
+
+  .kw-table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+  .kw-table th { text-align:left; padding:8px 6px; color:#8a9891; font-weight:700; font-size:0.68rem; text-transform:uppercase; border-bottom:1.5px solid #eef1f0; }
+  .kw-table td { padding:9px 6px; border-bottom:1px solid #eef1f0; vertical-align:middle; }
+  .kw-table tr:last-child td { border-bottom:none; }
+  .kw-pertinence { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }
+  .kw-pertinence.haute { background:#1e6f4c; }
+  .kw-pertinence.moyenne { background:#e8b93c; }
+  .kw-pertinence.faible { background:#c0392b; }
+  .btn-exclure-kw { background:#fdf1ea; color:#c0392b; border:none; border-radius:8px; padding:5px 10px; font-size:0.72rem; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .btn-exclure-kw:hover { background:#fbe0d5; }
+  .kw-negatif { color:#c0392b; font-size:0.7rem; font-weight:700; }
+
+  .ajout-kw-row { display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
+  .ajout-kw-row input[type="text"] { flex:1; min-width:160px; padding:9px 12px; border:1.5px solid #d7dedb; border-radius:9px; font-size:0.85rem; }
+  .ajout-kw-row select { padding:9px 10px; border:1.5px solid #d7dedb; border-radius:9px; font-size:0.82rem; background:#fff; }
+  .ajout-kw-row button { background:#1e6f4c; color:#fff; border:none; border-radius:9px; padding:9px 16px; font-weight:700; font-size:0.82rem; cursor:pointer; white-space:nowrap; }
+  .ajout-kw-row button:disabled { opacity:0.5; cursor:not-allowed; }
+
+  .heures-chart { display:flex; align-items:flex-end; gap:3px; height:120px; margin-bottom:6px; }
+  .heure-barre-wrap { flex:1; display:flex; flex-direction:column; justify-content:flex-end; height:100%; }
+  .heure-barre { width:100%; background:#cfe3d7; border-radius:3px 3px 0 0; min-height:2px; transition:background 0.15s; }
+  .heure-barre.pointe { background:#e8622c; }
+  .heures-labels { display:flex; gap:3px; }
+  .heures-labels span { flex:1; text-align:center; font-size:0.62rem; color:#8a9891; }
+  .heures-note { font-size:0.8rem; color:#5b6b64; margin-top:12px; }
+  .heures-note strong { color:#e8622c; }
+
+  .liste-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+  .liste-header h3 { font-size:0.95rem; }
+  .btn-pdf { background:#eef1f0; border:none; border-radius:8px; padding:9px 16px; font-size:0.82rem; font-weight:700; color:#14312a; cursor:pointer; }
+  .btn-pdf:hover { background:#e2e8e5; }
+
+  table { width:100%; border-collapse:collapse; font-size:0.85rem; }
+  th { text-align:left; padding:10px 8px; color:#8a9891; font-weight:700; font-size:0.72rem; text-transform:uppercase; border-bottom:1.5px solid #eef1f0; }
+  td { padding:10px 8px; border-bottom:1px solid #eef1f0; }
+  tr:last-child td { border-bottom:none; }
+  .statut-badge { font-size:0.7rem; font-weight:700; padding:3px 9px; border-radius:999px; background:#eaf4ef; color:#1e6f4c; }
+
+  .loading, .empty-msg { text-align:center; padding:40px; color:#8a9891; }
+
+  .verif-acces-overlay {
+    position:fixed; inset:0; z-index:2000; background:#f5f8f6;
+    display:flex; align-items:center; justify-content:center;
+    color:#5b6b64; font-size:0.95rem;
+  }
 </style>
 </head>
 <body>
+
+<div class="verif-acces-overlay" id="verifAccesOverlay">Vérification de votre accès…</div>
+
+<!-- Feuilles décoratives en arrière-plan, effet 3D via dégradés et ombres -->
+<div class="leaf-bg" style="top:-60px; right:-80px; opacity:0.55;">
+  <svg width="360" height="360" viewBox="0 0 360 360">
+    <defs>
+      <radialGradient id="leafGrad1" cx="35%" cy="30%" r="75%">
+        <stop offset="0%" stop-color="#4a9d6e"/>
+        <stop offset="55%" stop-color="#1e6f4c"/>
+        <stop offset="100%" stop-color="#0f4a30"/>
+      </radialGradient>
+      <filter id="leafShadow1" x="-50%" y="-50%" width="200%" height="200%">
+        <feDropShadow dx="8" dy="14" stdDeviation="16" flood-color="#0a3320" flood-opacity="0.35"/>
+      </filter>
+    </defs>
+    <path filter="url(#leafShadow1)" fill="url(#leafGrad1)" d="M180,30 C260,50 320,120 300,210 C280,300 190,330 130,290 C70,250 50,160 90,100 C115,63 145,40 180,30 Z"/>
+    <path d="M180,50 C180,140 200,220 260,270" stroke="#0a3320" stroke-width="4" fill="none" opacity="0.4" stroke-linecap="round"/>
+  </svg>
+</div>
+
+<div class="leaf-bg" style="bottom:-100px; left:-100px; opacity:0.4;">
+  <svg width="420" height="420" viewBox="0 0 420 420">
+    <defs>
+      <radialGradient id="leafGrad2" cx="40%" cy="35%" r="70%">
+        <stop offset="0%" stop-color="#f3a878"/>
+        <stop offset="55%" stop-color="#e8622c"/>
+        <stop offset="100%" stop-color="#b8481c"/>
+      </radialGradient>
+      <filter id="leafShadow2" x="-50%" y="-50%" width="200%" height="200%">
+        <feDropShadow dx="-6" dy="12" stdDeviation="18" flood-color="#7a2e10" flood-opacity="0.3"/>
+      </filter>
+    </defs>
+    <path filter="url(#leafShadow2)" fill="url(#leafGrad2)" d="M210,40 C300,70 370,150 350,240 C330,330 230,370 150,330 C70,290 40,190 80,120 C110,70 160,45 210,40 Z"/>
+    <path d="M210,60 C205,160 220,260 300,320" stroke="#7a2e10" stroke-width="5" fill="none" opacity="0.35" stroke-linecap="round"/>
+  </svg>
+</div>
+
+<div class="leaf-bg" style="top:35%; right:-140px; opacity:0.3;">
+  <svg width="280" height="280" viewBox="0 0 280 280">
+    <defs>
+      <radialGradient id="leafGrad3" cx="35%" cy="30%" r="75%">
+        <stop offset="0%" stop-color="#6fbf95"/>
+        <stop offset="55%" stop-color="#1e6f4c"/>
+        <stop offset="100%" stop-color="#0f4a30"/>
+      </radialGradient>
+    </defs>
+    <path fill="url(#leafGrad3)" d="M140,20 C210,40 250,100 230,170 C210,240 140,260 90,230 C40,200 25,130 60,80 C85,45 110,25 140,20 Z"/>
+  </svg>
+</div>
+
 <div class="wrap">
   <div class="header">
     <h1>Mon tableau de bord</h1>
-    <span class="demo-badge">Exemple illustratif — Forfait Business</span>
+    <a class="btn-fonds" id="btnFonds" href="#">💳 Mettre des fonds pour l'Ads</a>
   </div>
 
-  <div class="stats-row">
-    <div class="stat-card"><div class="stat-value">18</div><div class="stat-label">demandes reçues</div></div>
-    <div class="stat-card"><div class="stat-value">42</div><div class="stat-label">clics ce mois-ci</div></div>
-  </div>
-
-  <div class="solde-box">
-    <h3>Solde publicitaire</h3>
-    <div class="solde-bar-track"><div class="solde-bar-fill"></div></div>
-    <div class="solde-stats">
-      <span>Consommé : <strong>174 €</strong></span>
-      <span>Restant : <strong>126 €</strong> / 300 €</span>
+  <div id="banniereePause" style="display:none; background:#fdf1ea; border:1.5px solid #e8622c; border-radius:14px; padding:16px 20px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
+    <div>
+      <strong style="color:#e8622c;">⏸️ Votre abonnement est en pause</strong>
+      <p style="font-size:0.85rem; color:#5b6b64; margin-top:4px;">Votre site n'est pas visible par vos prospects tant que la pause dure.</p>
     </div>
+    <button id="btnReprendreMaintenant" style="background:#e8622c; color:#fff; border:none; border-radius:10px; padding:10px 18px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap;">Reprendre maintenant</button>
+  </div>
+
+  <div class="stats-row" id="statsRow">
+    <div class="stat-card"><div class="stat-value" id="statProspects">—</div><div class="stat-label">demandes reçues</div></div>
+    <div class="stat-card"><div class="stat-value" id="statClics">—</div><div class="stat-label">clics ce mois-ci</div></div>
+  </div>
+
+  <div class="solde-box" id="soldeBox">
+    <div class="loading">Chargement du solde…</div>
+  </div>
+  <button class="btn-pause-diffusion" id="btnPauseDiffusion" style="display:none;"></button>
+  <p class="pause-note">Mettre en pause n'arrête que la diffusion des annonces — votre solde publicitaire reste intact, relancez quand vous voulez.</p>
+
+  <div class="estim-box">
+    <h3>Combien de clics pour ce budget ?</h3>
+    <div class="estim-row">
+      <label for="estimBudgetInput">Montant à investir</label>
+      <input type="number" id="estimBudgetInput" min="100" step="10" value="300">
+      <span style="font-weight:800; font-size:1.1rem;">€</span>
+    </div>
+    <div class="estim-resultat" style="align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
+      <div style="display:flex; gap:28px;">
+        <div><div class="chiffre" id="estimClicsValue">—</div><div class="label">clics estimés</div></div>
+        <div><div class="chiffre" id="estimCpcValue">—</div><div class="label">CPC moyen estimé</div></div>
+      </div>
+      <a class="btn-fonds" id="btnFondsEstim" href="#" style="white-space:nowrap;">💳 Mettre des fonds pour l'Ads</a>
+    </div>
+    <div class="estim-note">Ce n'est pas garanti sur un mois fixe — consommé au rythme réel des clics reçus.</div>
+  </div>
+
+  <div class="ads-section" id="adsSection" style="display:none;">
+    <h2>🎯 Pilotage Google Ads</h2>
+    <div class="ads-sub">Le détail de votre campagne — combien investir, quels mots-clés fonctionnent, et à quel moment vos clics arrivent.</div>
+
+    <div class="ads-souspanel">
+      <h3>Combien de clics voulez-vous ?</h3>
+      <div class="slider-row">
+        <input type="range" id="clicsSlider" min="1" max="150" value="20">
+        <span class="slider-value" id="clicsSliderValue">20 clics</span>
+      </div>
+      <div class="estim-resultat" style="align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
+        <div><div class="chiffre" id="budgetNecessaireValue">—</div><div class="label">budget ads estimé</div></div>
+        <a class="btn-fonds" id="btnFondsInverse" href="#" style="white-space:nowrap;">💳 Approvisionner ce montant</a>
+      </div>
+      <div class="estim-note">Ce budget n'est pas garanti sur une durée fixe — il est consommé au fur et à mesure des clics reçus.</div>
+    </div>
+
+    <div class="ads-souspanel" id="motsClesPanel" style="display:none;">
+      <h3>Quels mots-clés génèrent vos clics ?</h3>
+      <div id="motsClesContent"><div class="loading">Chargement…</div></div>
+      <div class="ajout-kw-row">
+        <input type="text" id="nouveauMotCle" placeholder="Ajouter un mot-clé (ex : pose terrasse composite)">
+        <select id="nouveauMotCleType">
+          <option value="PHRASE">Expression</option>
+          <option value="EXACT">Exact</option>
+          <option value="BROAD">Large</option>
+        </select>
+        <button type="button" id="btnAjouterMotCle">+ Ajouter</button>
+      </div>
+      <div class="estim-note" id="ajoutKwFeedback"></div>
+    </div>
+
+    <div class="ads-souspanel" id="heuresPanel" style="display:none;">
+      <h3>À quelle heure vos clics arrivent-ils ?</h3>
+      <div class="heures-chart" id="heuresChart"></div>
+      <div class="heures-labels" id="heuresLabels"></div>
+      <div class="heures-note" id="heuresNote"></div>
+    </div>
+
+    <div class="empty-msg" id="adsSectionVide" style="display:none; padding:12px 0;">Pas encore de campagne active — approvisionnez votre budget pour démarrer.</div>
   </div>
 
   <div class="liste-panel">
-    <h3>Demandes d'estimation</h3>
-    <table>
-      <thead><tr><th>Date</th><th>Nom</th><th>Adresse</th><th>Statut</th></tr></thead>
-      <tbody>
-        <tr><td>26/08</td><td>M. Le Roux</td><td>Vannes</td><td><span class="statut-badge">nouveau</span></td></tr>
-        <tr><td>24/08</td><td>Mme Guillou</td><td>Auray</td><td><span class="statut-badge devis-envoye">devis envoyé</span></td></tr>
-        <tr><td>21/08</td><td>M. Even</td><td>Brech</td><td><span class="statut-badge signe">✓ signé électroniquement</span></td></tr>
-        <tr><td>19/08</td><td>Mme Le Bris</td><td>Vannes</td><td><span class="statut-badge devis-envoye">devis envoyé</span></td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="relance-panel">
-    <h3>Relances automatiques</h3>
-    <div class="relance-row">
-      <span>Mme Guillou — devis envoyé il y a 3 jours, sans réponse</span>
-      <button class="btn-relance-demo">Relancer par SMS</button>
+    <div class="liste-header">
+      <h3>Demandes d'estimation</h3>
+      <button class="btn-pdf" id="btnExportPdf">📄 Exporter en PDF</button>
     </div>
-    <div class="relance-row">
-      <span>Mme Le Bris — devis envoyé il y a 5 jours, sans réponse</span>
-      <button class="btn-relance-demo">Relancer par SMS</button>
-    </div>
+    <div id="listeContent"><div class="loading">Chargement des demandes…</div></div>
   </div>
 </div>
+
+<script>
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+  const params = new URLSearchParams(window.location.search);
+  const draftId = params.get('id');
+  let leadsData = [];
+  let nomEntreprise = '';
+
+  if (!draftId) {
+    document.body.innerHTML = '<div class="loading">Lien invalide — identifiant du site manquant.</div>';
+  } else {
+    verifierAccesPuisCharger();
+  }
+
+  // Accès protégé par mot de passe (voir acces-dashboard.html) : soit une
+  // session artisan normale (sessionStorage, posée après connexion), soit un
+  // jeton admin transmis dans l'URL par mes-artisans.html (Cyrille peut
+  // ouvrir n'importe quel dashboard sans connaître le mot de passe de
+  // l'artisan). Dans les deux cas, la validité est revérifiée côté serveur.
+  async function verifierAccesPuisCharger() {
+    const adminToken = params.get('admin_token');
+    const token = adminToken || sessionStorage.getItem('skyeco_dashboard_token_' + draftId);
+
+    if (!token) {
+      window.location.href = '/acces-dashboard.html?id=' + draftId;
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/dashboard-verify-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token })
+      });
+      const data = await res.json();
+      if (!data.valid) {
+        sessionStorage.removeItem('skyeco_dashboard_token_' + draftId);
+        window.location.href = '/acces-dashboard.html?id=' + draftId;
+        return;
+      }
+    } catch (e) {
+      document.getElementById('verifAccesOverlay').textContent = 'Impossible de vérifier votre accès pour le moment.';
+      return;
+    }
+
+    document.getElementById('verifAccesOverlay').remove();
+    document.getElementById('btnFonds').href = '/campagne.html?id=' + draftId;
+    document.getElementById('btnFondsEstim').href = '/campagne.html?id=' + draftId;
+    chargerStats();
+    chargerSolde();
+    chargerDemandes();
+    initEstimateurClics();
+    initPilotageAds();
+    verifierStatutPause();
+  }
+
+  async function verifierStatutPause() {
+    try {
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=status`, {
+        headers: { apikey: SUPABASE_ANON_KEY }
+      });
+      const rows = await resp.json();
+      if (rows[0]?.status === 'en_pause') {
+        document.getElementById('banniereePause').style.display = 'flex';
+      }
+    } catch (e) { /* silencieux */ }
+  }
+
+  document.getElementById('btnReprendreMaintenant').addEventListener('click', async () => {
+    const btn = document.getElementById('btnReprendreMaintenant');
+    btn.disabled = true;
+    btn.textContent = 'Reprise en cours…';
+    try {
+      const res = await fetch('/api/reprendre-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('banniereePause').style.display = 'none';
+        alert(data.message || 'Votre site est de nouveau en ligne.');
+      } else {
+        alert(data.error || 'Une erreur est survenue.');
+        btn.disabled = false;
+        btn.textContent = 'Reprendre maintenant';
+      }
+    } catch (e) {
+      alert('Impossible de contacter le serveur.');
+      btn.disabled = false;
+      btn.textContent = 'Reprendre maintenant';
+    }
+  });
+
+  async function chargerStats() {
+    try {
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_leads?draft_id=eq.${draftId}&select=id`, {
+        headers: { apikey: SUPABASE_ANON_KEY, Prefer: 'count=exact' }
+      });
+      const count = resp.headers.get('content-range')?.split('/')[1] || (await resp.json()).length;
+      document.getElementById('statProspects').textContent = count;
+    } catch (e) {
+      document.getElementById('statProspects').textContent = '—';
+    }
+  }
+
+  async function chargerSolde() {
+    const box = document.getElementById('soldeBox');
+    try {
+      const res = await fetch('/api/get-campaign-spend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draft_id: draftId })
+      });
+      const data = await res.json();
+
+      if (!data.success || !data.campagneExiste) {
+        box.innerHTML = `
+          <h3>Solde publicitaire</h3>
+          <div class="empty-msg" style="padding:12px 0;">Aucune campagne active pour l'instant.</div>
+        `;
+        document.getElementById('statClics').textContent = '0';
+        return;
+      }
+
+      document.getElementById('statClics').textContent = data.clics ?? '—';
+
+      const alerte = data.pourcentageConsomme >= 90 ? 'alerte' : '';
+      box.innerHTML = `
+        <h3>Solde publicitaire</h3>
+        <div class="solde-bar-track"><div class="solde-bar-fill ${alerte}" style="width:${data.pourcentageConsomme}%"></div></div>
+        <div class="solde-stats">
+          <span>Consommé : <strong>${data.consommationAjustee} €</strong></span>
+          <span>Restant : <strong>${data.budgetRestant} €</strong> / ${data.budgetPaye} €</span>
+        </div>
+        <div class="solde-detail">
+          ${data.clics} clics réels (dépense Google : ${data.coutReelGoogleEuros} €, comptée double dans votre solde — commission de service incluse).
+        </div>
+      `;
+
+      const btnPause = document.getElementById('btnPauseDiffusion');
+      btnPause.style.display = 'inline-block';
+      diffusionPauseeActuelle = data.diffusionPausee;
+      mettreAJourBoutonPause();
+    } catch (e) {
+      box.innerHTML = '<h3>Solde publicitaire</h3><div class="empty-msg">Impossible de charger le solde pour le moment.</div>';
+    }
+  }
+
+  let diffusionPauseeActuelle = false;
+
+  function mettreAJourBoutonPause() {
+    const btn = document.getElementById('btnPauseDiffusion');
+    btn.classList.toggle('actif-pause', diffusionPauseeActuelle);
+    btn.textContent = diffusionPauseeActuelle ? '▶️ Relancer la diffusion' : '⏸️ Mettre en pause la diffusion';
+  }
+
+  document.getElementById('btnPauseDiffusion').addEventListener('click', async () => {
+    const btn = document.getElementById('btnPauseDiffusion');
+    const actionDemandee = diffusionPauseeActuelle ? 'reprendre' : 'pause';
+    btn.disabled = true;
+    btn.textContent = 'Un instant…';
+    try {
+      const res = await fetch('/api/pause-campagne-ads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, action: actionDemandee })
+      });
+      const data = await res.json();
+      if (data.success) {
+        diffusionPauseeActuelle = actionDemandee === 'pause';
+      } else {
+        alert(data.error || 'Une erreur est survenue.');
+      }
+    } catch (e) {
+      alert('Impossible de contacter le serveur.');
+    } finally {
+      btn.disabled = false;
+      mettreAJourBoutonPause();
+    }
+  });
+
+  async function chargerDemandes() {
+    const content = document.getElementById('listeContent');
+    try {
+      const draftResp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise`, {
+        headers: { apikey: SUPABASE_ANON_KEY }
+      });
+      const draftRows = await draftResp.json();
+      nomEntreprise = draftRows[0]?.entreprise || 'Mon entreprise';
+
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_leads?draft_id=eq.${draftId}&select=*&order=created_at.desc`, {
+        headers: { apikey: SUPABASE_ANON_KEY }
+      });
+      leadsData = await resp.json();
+
+      if (!leadsData.length) {
+        content.innerHTML = '<div class="empty-msg">Aucune demande reçue pour l\'instant.</div>';
+        return;
+      }
+
+      content.innerHTML = `
+        <table>
+          <thead>
+            <tr><th>Date</th><th>Nom</th><th>Adresse</th><th>Téléphone</th><th>Email</th><th>Statut</th></tr>
+          </thead>
+          <tbody>
+            ${leadsData.map(l => `
+              <tr>
+                <td>${new Date(l.created_at).toLocaleDateString('fr-FR')}</td>
+                <td>${(l.prenom || '') + ' ' + (l.nom || '')}</td>
+                <td>${extraireAdresse(l.reponses)}</td>
+                <td>${l.telephone || '—'}</td>
+                <td>${l.email || '—'}</td>
+                <td><span class="statut-badge">${l.statut || 'nouveau'}</span></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    } catch (e) {
+      content.innerHTML = '<div class="empty-msg">Impossible de charger les demandes pour le moment.</div>';
+    }
+  }
+
+  function extraireAdresse(reponses) {
+    if (!reponses || typeof reponses !== 'object') return '—';
+    // Cherche une clé qui ressemble à une adresse, quel que soit le métier/formulaire d'origine.
+    const cleAdresse = Object.keys(reponses).find(k => /adresse|address|localisation|ville/i.test(k));
+    return cleAdresse ? reponses[cleAdresse] : '—';
+  }
+
+  document.getElementById('btnExportPdf').addEventListener('click', () => {
+    if (!leadsData.length) {
+      alert('Aucune demande à exporter pour le moment.');
+      return;
+    }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.setFontSize(16);
+    doc.text(`Demandes d'estimation — ${nomEntreprise}`, 14, 18);
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text(`Exporté le ${new Date().toLocaleDateString('fr-FR')} — ${leadsData.length} demande(s)`, 14, 25);
+
+    let y = 38;
+    doc.setFontSize(8);
+    doc.setTextColor(140);
+    doc.text('DATE', 14, y);
+    doc.text('NOM', 38, y);
+    doc.text('ADRESSE', 78, y);
+    doc.text('TÉLÉPHONE', 130, y);
+    doc.text('EMAIL', 165, y);
+    y += 4;
+    doc.setDrawColor(220);
+    doc.line(14, y, 196, y);
+    y += 6;
+
+    doc.setFontSize(8.5);
+    doc.setTextColor(30);
+    leadsData.forEach(l => {
+      if (y > 280) { doc.addPage(); y = 20; }
+      const date = new Date(l.created_at).toLocaleDateString('fr-FR');
+      const nomComplet = ((l.prenom || '') + ' ' + (l.nom || '')).trim() || '—';
+      const adresse = extraireAdresse(l.reponses);
+      doc.text(date, 14, y);
+      doc.text(nomComplet.substring(0, 22), 38, y);
+      doc.text(String(adresse).substring(0, 30), 78, y);
+      doc.text(l.telephone || '—', 130, y);
+      doc.text((l.email || '—').substring(0, 26), 165, y);
+      y += 7;
+    });
+
+    doc.save(`demandes-${nomEntreprise.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.pdf`);
+  });
+
+  async function initEstimateurClics() {
+    const budgetInput = document.getElementById('estimBudgetInput');
+    let draftInfo = null;
+    let debounceTimer = null;
+
+    try {
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=metier,zone`, {
+        headers: { apikey: SUPABASE_ANON_KEY }
+      });
+      const rows = await resp.json();
+      draftInfo = rows[0] || {};
+    } catch (e) {
+      draftInfo = {};
+    }
+
+    async function calculer() {
+      const budget = parseFloat(budgetInput.value);
+      if (!budget || budget < 100) {
+        document.getElementById('estimClicsValue').textContent = '—';
+        document.getElementById('estimCpcValue').textContent = '—';
+        return;
+      }
+      document.getElementById('estimClicsValue').textContent = '…';
+      try {
+        const res = await fetch('/api/estimate-reach', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ metier: draftInfo.metier, zone: draftInfo.zone, budget })
+        });
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('estimClicsValue').textContent = data.estimatedClicks !== null ? '≈ ' + data.estimatedClicks : '—';
+          document.getElementById('estimCpcValue').textContent = data.avgCpcEur ? data.avgCpcEur + ' €' : '—';
+        } else {
+          document.getElementById('estimClicsValue').textContent = '—';
+        }
+      } catch (e) {
+        document.getElementById('estimClicsValue').textContent = '—';
+      }
+    }
+
+    budgetInput.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(calculer, 400);
+    });
+    calculer();
+  }
+
+  // --- Pilotage Google Ads avancé : curseur clics -> budget, détail des
+  // mots-clés et répartition horaire des clics (données réelles via Windsor.ai).
+  async function initPilotageAds() {
+    document.getElementById('adsSection').style.display = 'block';
+
+    let avgCpcEur = 1.5; // repli générique si l'estimation échoue
+    try {
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=metier,zone`, {
+        headers: { apikey: SUPABASE_ANON_KEY }
+      });
+      const rows = await resp.json();
+      const draftInfo = rows[0] || {};
+      const res = await fetch('/api/estimate-reach', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ metier: draftInfo.metier, zone: draftInfo.zone, budget: 100 })
+      });
+      const data = await res.json();
+      if (data.success && data.avgCpcEur) avgCpcEur = data.avgCpcEur;
+    } catch (e) { /* on garde le repli générique */ }
+
+    const TAUX_COMMISSION_INVERSE = 0.50; // doit rester synchronisé avec les autres fichiers
+    const slider = document.getElementById('clicsSlider');
+    const sliderValue = document.getElementById('clicsSliderValue');
+    const budgetValue = document.getElementById('budgetNecessaireValue');
+
+    function calculerBudgetInverse() {
+      const clics = parseInt(slider.value, 10);
+      sliderValue.textContent = clics + (clics > 1 ? ' clics' : ' clic');
+      const budgetCalcule = Math.round((clics * avgCpcEur) / (1 - TAUX_COMMISSION_INVERSE));
+      const budgetNecessaire = Math.max(100, budgetCalcule);
+      budgetValue.textContent = budgetCalcule < 100 ? '100 € (minimum)' : '≈ ' + budgetNecessaire + ' €';
+      document.getElementById('btnFondsInverse').href = '/campagne.html?id=' + draftId + '&budget=' + budgetNecessaire;
+    }
+
+    slider.addEventListener('input', calculerBudgetInverse);
+    calculerBudgetInverse();
+
+    try {
+      const res = await fetch('/api/get-google-ads-details', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draft_id: draftId })
+      });
+      const data = await res.json();
+
+      if (!data.success || !data.campagneExiste) {
+        document.getElementById('adsSectionVide').style.display = 'block';
+        return;
+      }
+
+      document.getElementById('motsClesPanel').style.display = 'block';
+      document.getElementById('heuresPanel').style.display = 'block';
+      afficherMotsCles(data.motsCles || []);
+      afficherHeures(data.clicsParHeure || [], data.heuresDePointe || []);
+    } catch (e) {
+      const vide = document.getElementById('adsSectionVide');
+      vide.textContent = 'Impossible de charger le détail de la campagne pour le moment.';
+      vide.style.display = 'block';
+    }
+  }
+
+  function pertinenceClasse(clics, maxClics) {
+    if (!maxClics) return 'moyenne';
+    const ratio = clics / maxClics;
+    if (ratio >= 0.5) return 'haute';
+    if (ratio >= 0.15) return 'moyenne';
+    return 'faible';
+  }
+
+  function afficherMotsCles(motsCles) {
+    const content = document.getElementById('motsClesContent');
+    if (!motsCles.length) {
+      content.innerHTML = '<div class="empty-msg" style="padding:12px 0;">Pas encore de données de clics par mot-clé.</div>';
+      return;
+    }
+    const maxClics = Math.max(...motsCles.map(m => m.clics));
+    content.innerHTML = `
+      <table class="kw-table">
+        <thead><tr><th>Mot-clé</th><th>Clics</th><th>Coût</th><th>CPC moyen</th><th></th></tr></thead>
+        <tbody>
+          ${motsCles.map(m => `
+            <tr>
+              <td><span class="kw-pertinence ${pertinenceClasse(m.clics, maxClics)}"></span>${m.texte}${m.statut === 'REMOVED' ? ' <span class="kw-negatif">(exclu)</span>' : ''}</td>
+              <td>${m.clics}</td>
+              <td>${m.coutEuros} €</td>
+              <td>${m.cpcMoyenEuros != null ? m.cpcMoyenEuros + ' €' : '—'}</td>
+              <td>${m.statut !== 'REMOVED' ? `<button class="btn-exclure-kw" data-texte="${m.texte.replace(/"/g, '&quot;')}" onclick="exclureMotCle(this)">🚫 Exclure</button>` : '—'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function afficherHeures(clicsParHeure, heuresDePointe) {
+    const max = Math.max(...clicsParHeure, 1);
+    document.getElementById('heuresChart').innerHTML = clicsParHeure.map((v, h) => `
+      <div class="heure-barre-wrap" title="${h}h : ${v} clic${v > 1 ? 's' : ''}">
+        <div class="heure-barre ${heuresDePointe.includes(h) ? 'pointe' : ''}" style="height:${Math.max(4, Math.round((v / max) * 100))}%;"></div>
+      </div>
+    `).join('');
+    document.getElementById('heuresLabels').innerHTML = clicsParHeure.map((v, h) => `<span>${h % 3 === 0 ? h + 'h' : ''}</span>`).join('');
+    const note = document.getElementById('heuresNote');
+    if (heuresDePointe.length) {
+      const heuresTxt = heuresDePointe.map(h => h + 'h').join(', ');
+      note.innerHTML = `Vos clics sont les plus nombreux vers <strong>${heuresTxt}</strong> — c'est le créneau le plus rentable pour votre activité.`;
+    } else {
+      note.textContent = "Pas encore assez de clics pour dégager un créneau horaire dominant.";
+    }
+  }
+
+  window.exclureMotCle = async function(btn) {
+    const texte = btn.dataset.texte;
+    if (!confirm(`Exclure le mot-clé "${texte}" ? Vos annonces ne se déclencheront plus pour les recherches contenant ce terme.`)) return;
+    btn.disabled = true;
+    btn.textContent = '…';
+    try {
+      const res = await fetch('/api/manage-keywords', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, action: 'exclude', texte })
+      });
+      const data = await res.json();
+      if (data.success) {
+        btn.closest('tr').querySelector('td').insertAdjacentHTML('beforeend', ' <span class="kw-negatif">(exclu)</span>');
+        btn.replaceWith(document.createTextNode('—'));
+      } else {
+        alert(data.error || "Erreur lors de l'exclusion.");
+        btn.disabled = false;
+        btn.textContent = '🚫 Exclure';
+      }
+    } catch (e) {
+      alert('Impossible de contacter le serveur.');
+      btn.disabled = false;
+      btn.textContent = '🚫 Exclure';
+    }
+  };
+
+  document.getElementById('btnAjouterMotCle').addEventListener('click', async () => {
+    const input = document.getElementById('nouveauMotCle');
+    const select = document.getElementById('nouveauMotCleType');
+    const feedback = document.getElementById('ajoutKwFeedback');
+    const texte = input.value.trim();
+    if (!texte) return;
+    const btn = document.getElementById('btnAjouterMotCle');
+    btn.disabled = true;
+    btn.textContent = 'Ajout…';
+    try {
+      const res = await fetch('/api/manage-keywords', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, action: 'add', texte, matchType: select.value })
+      });
+      const data = await res.json();
+      if (data.success) {
+        feedback.textContent = `✓ "${texte}" ajouté — les nouvelles statistiques apparaîtront après les premiers clics.`;
+        feedback.style.color = '#1e6f4c';
+        input.value = '';
+      } else {
+        feedback.textContent = data.error || "Erreur lors de l'ajout.";
+        feedback.style.color = '#c0392b';
+      }
+    } catch (e) {
+      feedback.textContent = 'Impossible de contacter le serveur.';
+      feedback.style.color = '#c0392b';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '+ Ajouter';
+    }
+  });
+</script>
+<!--
+  Widget de chat Skyeco Pro — à coller juste avant </body> sur les pages
+  où on veut le chat (prochaines-etapes.html, choisir-forfait.html, etc.)
+-->
+<!--
+  Widget de chat Skyeco Pro — à coller juste avant </body> sur les pages
+  où on veut le chat. Inclut la saisie vocale (micro) et la lecture des
+  réponses à voix haute, via les API natives du navigateur (aucun service
+  externe, gratuit) — fonctionne sur Chrome/Edge, pas sur Safari/Firefox
+  pour la reconnaissance vocale (support partiel/absent côté navigateur).
+-->
+<!--
+  Widget de chat Skyeco Pro — à coller juste avant </body> sur les pages
+  où on veut le chat. Inclut la saisie vocale (micro) et la lecture des
+  réponses à voix haute, via les API natives du navigateur (aucun service
+  externe, gratuit) — fonctionne sur Chrome/Edge, pas sur Safari/Firefox
+  pour la reconnaissance vocale (support partiel/absent côté navigateur).
+-->
+<div id="skyecoChatBubble" style="position:fixed; bottom:22px; right:22px; z-index:999; background:#e8622c; color:#fff; width:58px; height:58px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:26px; cursor:pointer; box-shadow:0 6px 20px rgba(0,0,0,0.25); transition:transform 0.15s;">
+  💬
+</div>
+
+<div id="skyecoChatWindow" style="display:none; position:fixed; bottom:92px; right:22px; z-index:999; width:340px; max-width:calc(100vw - 32px); height:460px; max-height:70vh; background:#fff; border-radius:16px; box-shadow:0 10px 40px rgba(0,0,0,0.25); flex-direction:column; overflow:hidden; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <div style="background:#14312a; color:#fff; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <div style="font-weight:700; font-size:0.92rem;">Skyeco Pro</div>
+      <div style="font-size:0.72rem; opacity:0.75;">Réponse en quelques secondes</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <label style="display:flex; align-items:center; gap:4px; font-size:0.68rem; opacity:0.85; cursor:pointer;">
+        <input type="checkbox" id="skyecoChatLireVoix" style="width:auto; margin:0;"> 🔊 Lire les réponses
+      </label>
+      <button id="skyecoChatClose" style="background:none; border:none; color:#fff; font-size:20px; cursor:pointer; line-height:1;">×</button>
+    </div>
+  </div>
+  <div id="skyecoChatMessages" style="flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:10px; background:#f7f5f0;"></div>
+  <div style="padding:10px; border-top:1px solid #eef1ec; display:flex; gap:8px; background:#fff;">
+    <input type="text" id="skyecoChatInput" placeholder="Pose ta question ou parle…" style="flex:1; border:1.5px solid #e0e5df; border-radius:10px; padding:9px 12px; font-size:0.86rem;">
+    <button id="skyecoChatMic" title="Parler au lieu d'écrire" style="background:#f2f4f1; color:#14312a; border:none; border-radius:10px; padding:9px 12px; font-weight:700; cursor:pointer; font-size:0.9rem;">🎤</button>
+    <button id="skyecoChatSend" style="background:#1e6f4c; color:#fff; border:none; border-radius:10px; padding:9px 14px; font-weight:700; cursor:pointer; font-size:0.86rem;">→</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  const bubble = document.getElementById('skyecoChatBubble');
+  const chatWindow = document.getElementById('skyecoChatWindow');
+  const closeBtn = document.getElementById('skyecoChatClose');
+  const messagesEl = document.getElementById('skyecoChatMessages');
+  const input = document.getElementById('skyecoChatInput');
+  const sendBtn = document.getElementById('skyecoChatSend');
+  const micBtn = document.getElementById('skyecoChatMic');
+  const lireVoixCheckbox = document.getElementById('skyecoChatLireVoix');
+
+  let historique = [];
+  let dejaOuvert = false;
+
+  function ajouterMessage(role, texte) {
+    const bulle = document.createElement('div');
+    bulle.style.cssText = role === 'user'
+      ? 'align-self:flex-end; background:#1e6f4c; color:#fff; padding:9px 13px; border-radius:14px 14px 3px 14px; font-size:0.85rem; max-width:80%; line-height:1.45;'
+      : 'align-self:flex-start; background:#fff; color:#14312a; padding:9px 13px; border-radius:14px 14px 14px 3px; font-size:0.85rem; max-width:85%; line-height:1.45; box-shadow:0 1px 3px rgba(0,0,0,0.08);';
+    bulle.textContent = texte;
+    messagesEl.appendChild(bulle);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function ouvrirChat() {
+    chatWindow.style.display = 'flex';
+    if (!dejaOuvert) {
+      dejaOuvert = true;
+      ajouterMessage('assistant', "Bonjour ! Je suis là pour répondre à tes questions sur Skyeco Pro — les formules, comment ça marche, la publicité... Qu'est-ce que tu veux savoir ?");
+    }
+  }
+
+  bubble.addEventListener('click', () => {
+    const estOuvert = chatWindow.style.display === 'flex';
+    if (estOuvert) { chatWindow.style.display = 'none'; } else { ouvrirChat(); }
+  });
+  closeBtn.addEventListener('click', () => { chatWindow.style.display = 'none'; });
+
+  // Ouverture automatique à l'arrivée sur la page — reste dans son coin
+  // (position fixe, ne modifie pas la mise en page du reste de la page),
+  // léger délai pour ne pas apparaître brutalement dès le premier instant.
+  setTimeout(ouvrirChat, 1200);
+
+  // --- Saisie vocale (reconnaissance de la parole) ---
+  const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognitionAPI) {
+    micBtn.style.display = 'none'; // navigateur non compatible (Safari/Firefox) — on masque simplement le micro
+  } else {
+    const recognition = new SpeechRecognitionAPI();
+    recognition.lang = 'fr-FR';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    let enEcoute = false;
+
+    recognition.addEventListener('result', (e) => {
+      const texte = e.results[0][0].transcript;
+      input.value = texte;
+      envoyerMessage();
+    });
+    recognition.addEventListener('end', () => {
+      enEcoute = false;
+      micBtn.textContent = '🎤';
+      micBtn.style.background = '#f2f4f1';
+    });
+    recognition.addEventListener('error', () => {
+      enEcoute = false;
+      micBtn.textContent = '🎤';
+      micBtn.style.background = '#f2f4f1';
+    });
+
+    micBtn.addEventListener('click', () => {
+      if (enEcoute) { recognition.stop(); return; }
+      enEcoute = true;
+      micBtn.textContent = '🔴';
+      micBtn.style.background = '#fdeceb';
+      recognition.start();
+    });
+  }
+
+  // --- Lecture à voix haute des réponses (synthèse vocale) ---
+  function lireAVoixHaute(texte) {
+    if (!lireVoixCheckbox.checked || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel(); // interrompt une lecture précédente si besoin
+    const utterance = new SpeechSynthesisUtterance(texte);
+    utterance.lang = 'fr-FR';
+    window.speechSynthesis.speak(utterance);
+  }
+
+  async function envoyerMessage() {
+    const texte = input.value.trim();
+    if (!texte) return;
+    ajouterMessage('user', texte);
+    historique.push({ role: 'user', content: texte });
+    input.value = '';
+    sendBtn.disabled = true;
+
+    const bulleAttente = document.createElement('div');
+    bulleAttente.id = 'skyecoChatWaiting';
+    bulleAttente.style.cssText = 'align-self:flex-start; color:#8a9891; font-size:0.8rem; padding:4px 8px;';
+    bulleAttente.textContent = '…';
+    messagesEl.appendChild(bulleAttente);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+
+    try {
+      const res = await fetch('/api/chat-skyeco', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: historique })
+      });
+      const data = await res.json();
+      document.getElementById('skyecoChatWaiting')?.remove();
+      const reponse = data.success ? data.reponse : "Désolé, je n'ai pas pu répondre — réessaie dans un instant.";
+      ajouterMessage('assistant', reponse);
+      historique.push({ role: 'assistant', content: reponse });
+      lireAVoixHaute(reponse);
+    } catch (e) {
+      document.getElementById('skyecoChatWaiting')?.remove();
+      ajouterMessage('assistant', 'Connexion impossible pour le moment — réessaie.');
+    } finally {
+      sendBtn.disabled = false;
+    }
+  }
+
+  sendBtn.addEventListener('click', envoyerMessage);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') envoyerMessage(); });
+})();
+</script>
+
 </body>
 </html>

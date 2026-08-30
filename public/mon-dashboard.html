@@ -95,6 +95,13 @@
   .heures-note { font-size:0.8rem; color:#5b6b64; margin-top:12px; }
   .heures-note strong { color:#e8622c; }
 
+  .coaching-panel { background:#f6faf7; border:1.5px solid #d7e8dd; border-radius:14px; padding:18px 20px; margin-top:20px !important; }
+  .coaching-liste { list-style:none; display:flex; flex-direction:column; gap:10px; }
+  .coaching-liste li { font-size:0.85rem; line-height:1.5; color:#294038; padding-left:24px; position:relative; }
+  .coaching-liste li::before { content:'✓'; position:absolute; left:0; top:0; color:#1e6f4c; font-weight:800; }
+  .coaching-liste li strong { color:#14312a; }
+  .coaching-liste li.alerte::before { content:'⚠'; color:#e8622c; }
+
   .liste-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
   .liste-header h3 { font-size:0.95rem; }
   .btn-pdf { background:#eef1f0; border:none; border-radius:8px; padding:9px 16px; font-size:0.82rem; font-weight:700; color:#14312a; cursor:pointer; }
@@ -232,6 +239,11 @@
       <div class="heures-chart" id="heuresChart"></div>
       <div class="heures-labels" id="heuresLabels"></div>
       <div class="heures-note" id="heuresNote"></div>
+    </div>
+
+    <div class="ads-souspanel coaching-panel" id="coachingPanel" style="display:none;">
+      <h3>💡 Conseils pour améliorer vos conversions</h3>
+      <ul id="coachingListe" class="coaching-liste"></ul>
     </div>
 
     <div class="empty-msg" id="adsSectionVide" style="display:none; padding:12px 0;">Pas encore de campagne active — approvisionnez votre budget pour démarrer.</div>
@@ -591,6 +603,7 @@
       document.getElementById('heuresPanel').style.display = 'block';
       afficherMotsCles(data.motsCles || []);
       afficherHeures(data.clicsParHeure || [], data.heuresDePointe || []);
+      afficherCoaching(data.motsCles || [], data.heuresDePointe || []);
     } catch (e) {
       const vide = document.getElementById('adsSectionVide');
       vide.textContent = 'Impossible de charger le détail de la campagne pour le moment.';
@@ -646,6 +659,43 @@
     } else {
       note.textContent = "Pas encore assez de clics pour dégager un créneau horaire dominant.";
     }
+  }
+
+  function afficherCoaching(motsCles, heuresDePointe) {
+    const panel = document.getElementById('coachingPanel');
+    const liste = document.getElementById('coachingListe');
+    const conseils = [];
+
+    const actifs = motsCles.filter(m => m.statut !== 'REMOVED');
+    const exclus = motsCles.filter(m => m.statut === 'REMOVED');
+
+    if (!motsCles.length) {
+      conseils.push({ texte: "Pas encore assez de données sur vos mots-clés pour des conseils personnalisés — revenez dans quelques jours." });
+    } else {
+      const maxClics = Math.max(...actifs.map(m => m.clics), 1);
+      const meilleur = actifs.slice().sort((a, b) => b.clics - a.clics)[0];
+      if (meilleur && meilleur.clics > 0) {
+        conseils.push({ texte: `<strong>${meilleur.texte}</strong> est votre mot-clé le plus efficace avec ${meilleur.clics} clic${meilleur.clics > 1 ? 's' : ''} — assurez-vous qu'il reste actif.` });
+      }
+
+      const faibles = actifs.filter(m => (m.clics / maxClics) < 0.15 && m.coutEuros > 0).slice(0, 3);
+      if (faibles.length) {
+        const noms = faibles.map(m => `<strong>${m.texte}</strong>`).join(', ');
+        conseils.push({ texte: `Ces mots-clés coûtent du budget mais génèrent peu de clics : ${noms} — pensez à les exclure pour économiser.`, alerte: true });
+      } else if (exclus.length) {
+        conseils.push({ texte: `Vous avez déjà exclu ${exclus.length} mot${exclus.length > 1 ? 's' : ''}-clé${exclus.length > 1 ? 's' : ''} peu pertinent${exclus.length > 1 ? 's' : ''} — bon réflexe pour optimiser votre budget.` });
+      }
+
+      conseils.push({ texte: "Ajoutez de nouveaux mots-clés proches de votre activité (matériaux, prestations, quartiers) pour élargir votre audience sans augmenter votre budget." });
+    }
+
+    if (heuresDePointe.length) {
+      const heuresTxt = heuresDePointe.map(h => h + 'h').join(', ');
+      conseils.push({ texte: `Vos prospects cliquent surtout vers <strong>${heuresTxt}</strong> — c'est le bon moment pour être joignable au téléphone et répondre vite aux demandes.` });
+    }
+
+    liste.innerHTML = conseils.map(c => `<li${c.alerte ? ' class="alerte"' : ''}>${c.texte}</li>`).join('');
+    panel.style.display = 'block';
   }
 
   window.exclureMotCle = async function(btn) {

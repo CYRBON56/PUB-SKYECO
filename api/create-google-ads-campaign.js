@@ -51,7 +51,7 @@ export default async function handler(req, res) {
 
   try {
     const draftResp = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}&select=entreprise,metier,zone,tarif_prix`,
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}&select=entreprise,metier,zone,tarif_prix,mots_cles_choisis`,
       { headers: supaHeaders }
     );
     const draftRows = await draftResp.json();
@@ -64,10 +64,21 @@ export default async function handler(req, res) {
     const budgetNetEuros = draft.tarif_prix * (1 - TAUX_COMMISSION);
     const budgetJournalierMicros = Math.round((budgetNetEuros / 30) * 1_000_000);
 
+    // Priorité aux mots-clés choisis par l'artisan (via l'IA de suggestion
+    // dans campagne.html) — sinon on retombe sur la liste fixe par métier.
+    const motsClesChoisis = Array.isArray(draft.mots_cles_choisis)
+      ? draft.mots_cles_choisis
+          .filter(m => typeof m === 'string' && m.trim())
+          .map(m => m.trim().substring(0, 80))
+          .slice(0, 25)
+      : [];
+
     const metiersListe = Array.isArray(draft.metier) ? draft.metier : (draft.metier ? [draft.metier] : []);
-    const keywords = metiersListe.length
-      ? [...new Set(metiersListe.flatMap(m => KEYWORDS_BY_METIER[m] || []))]
-      : KEYWORDS_BY_METIER.autre;
+    const keywords = motsClesChoisis.length
+      ? [...new Set(motsClesChoisis)]
+      : (metiersListe.length
+          ? [...new Set(metiersListe.flatMap(m => KEYWORDS_BY_METIER[m] || []))]
+          : KEYWORDS_BY_METIER.autre);
 
     const nomCampagne = `Skyeco Pro — ${draft.entreprise || draft_id}`.substring(0, 254);
 
@@ -118,6 +129,7 @@ export default async function handler(req, res) {
       headers: { ...supaHeaders, Prefer: 'return=minimal' },
       body: JSON.stringify({
         google_ads_campaign_resource: String(campaignId),
+        google_ads_ad_group_resource: String(adGroupId),
         google_ads_cree_le: new Date().toISOString(),
       }),
     });

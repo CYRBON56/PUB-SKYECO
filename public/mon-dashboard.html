@@ -20,6 +20,8 @@
   h1 { font-size:1.5rem; }
   .btn-fonds { background:#e8622c; color:#fff; text-decoration:none; padding:12px 22px; border-radius:10px; font-weight:700; font-size:0.92rem; }
   .btn-fonds:hover { filter:brightness(1.05); }
+  .btn-elements { background:#1e6f4c; color:#fff; text-decoration:none; padding:12px 22px; border-radius:10px; font-weight:700; font-size:0.92rem; }
+  .btn-elements:hover { filter:brightness(1.08); }
 
   .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:28px; }
   .stat-card { background:#fff; border-radius:14px; padding:20px; box-shadow:0 4px 20px rgba(20,49,42,0.08); }
@@ -180,7 +182,7 @@
       <img class="logo-entreprise" id="logoEntreprise" alt="Logo">
       <h1>Mon tableau de bord</h1>
     </div>
-    <a class="btn-fonds" id="btnFonds" href="#">💳 Mettre des fonds pour l'Ads</a>
+    <a class="btn-elements" id="btnElements" href="#">✏️ Modifier mes éléments</a>
   </div>
 
   <div id="banniereePause" style="display:none; background:#fdf1ea; border:1.5px solid #e8622c; border-radius:14px; padding:16px 20px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
@@ -303,7 +305,7 @@
     }
 
     document.getElementById('verifAccesOverlay').remove();
-    document.getElementById('btnFonds').href = '/campagne.html?id=' + draftId;
+    document.getElementById('btnElements').href = '/mes-elements.html?id=' + draftId;
     chargerLogo();
     chargerStats();
     chargerSolde();

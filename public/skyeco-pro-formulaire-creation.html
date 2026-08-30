@@ -258,6 +258,7 @@
           <div class="sms-block" id="smsBlock">
             <p>Vérifiez votre numéro pour confirmer que votre demande est bien réelle.</p>
             <button type="button" class="btn-sms" id="btnEnvoyerCode" disabled>Vérifier mon numéro par SMS</button>
+            <button type="button" class="btn-sms" id="btnSimulerVerifTel" style="display:none; margin-left:8px; background:#fff3cd; color:#8a6d1f; border-color:#f0d98c;">🧪 Simuler la vérification (test)</button>
             <div class="sms-code-row" id="smsCodeRow" style="display:none;">
               <input type="text" id="smsCode" inputmode="numeric" maxlength="6" placeholder="Code reçu">
               <button type="button" class="btn-sms" id="btnVerifierCode">Valider</button>
@@ -334,6 +335,14 @@
   const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
   const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+  // Mode test (usage interne uniquement) : ajouter "&test=1" à l'URL fait
+  // apparaître un bouton pour sauter la vérification SMS (sans jamais envoyer
+  // ni vérifier de vrai code) — protégé par le mot de passe interne, jamais
+  // accessible à un vrai visiteur qui ne le connaît pas. Sert à tester tout
+  // le parcours d'inscription plusieurs fois de suite, avec des numéros
+  // fictifs, sans avoir à recevoir/taper un vrai code à chaque essai.
+  const TEST_MODE = new URLSearchParams(window.location.search).get('test') === '1';
 
   async function uploadToStorage(file, prefix){
     if(!supabaseClient) throw new Error('Service de stockage indisponible.');
@@ -501,6 +510,7 @@
     smsStatusEl.className = 'sms-status';
     btnEnvoyerCode.style.display = 'inline-block';
     btnEnvoyerCode.textContent = 'Vérifier mon numéro par SMS';
+    if (TEST_MODE) document.getElementById('btnSimulerVerifTel').style.display = 'inline-block';
   }
 
   telEl.addEventListener('input', ()=>{
@@ -545,6 +555,44 @@
       smsStatusEl.className = 'sms-status error';
     } finally {
       btnEnvoyerCode.disabled = false;
+    }
+  });
+
+  const btnSimulerVerifTel = document.getElementById('btnSimulerVerifTel');
+  if (TEST_MODE) {
+    btnSimulerVerifTel.style.display = 'inline-block';
+  }
+  btnSimulerVerifTel.addEventListener('click', async ()=>{
+    let motDePasseInterne = sessionStorage.getItem('skyeco_admin_internal_pw');
+    if (!motDePasseInterne) {
+      motDePasseInterne = prompt('Mot de passe interne (mode test) :');
+      if (!motDePasseInterne) return;
+    }
+    btnSimulerVerifTel.disabled = true;
+    smsStatusEl.textContent = 'Vérification du mot de passe interne…';
+    smsStatusEl.className = 'sms-status';
+    try {
+      const res = await fetch('/api/verify-test-bypass', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ motDePasseInterne })
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Mot de passe interne incorrect.');
+      sessionStorage.setItem('skyeco_admin_internal_pw', motDePasseInterne);
+      state.telephoneVerifie = true;
+      btnEnvoyerCode.style.display = 'none';
+      btnSimulerVerifTel.style.display = 'none';
+      smsCodeRow.style.display = 'none';
+      smsStatusEl.textContent = '✓ Numéro vérifié (test — aucun SMS envoyé).';
+      smsStatusEl.className = 'sms-status ok';
+    } catch(err) {
+      sessionStorage.removeItem('skyeco_admin_internal_pw');
+      state.telephoneVerifie = false;
+      smsStatusEl.textContent = err.message;
+      smsStatusEl.className = 'sms-status error';
+    } finally {
+      btnSimulerVerifTel.disabled = false;
+      document.getElementById('btnNext').disabled = !canProceed(1);
     }
   });
 

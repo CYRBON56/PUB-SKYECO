@@ -97,6 +97,16 @@
   .heures-note { font-size:0.8rem; color:#5b6b64; margin-top:12px; }
   .heures-note strong { color:#e8622c; }
 
+  .zone-affichage { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; }
+  .zone-affichage span { font-weight:700; font-size:0.98rem; }
+  .btn-modifier-zone { background:#f2f4f1; color:#14312a; border:none; border-radius:8px; padding:8px 14px; font-size:0.82rem; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .btn-modifier-zone:hover { background:#e6ebe8; }
+  .zone-edition { display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
+  .zone-edition input { flex:1; min-width:220px; padding:10px 12px; border:1.5px solid #d7dedb; border-radius:9px; font-size:0.9rem; font-family:inherit; }
+  .zone-edition button { border:none; border-radius:9px; padding:10px 16px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap; }
+  #btnEnregistrerZone { background:#1e6f4c; color:#fff; }
+  .btn-annuler-zone { background:#f2f4f1; color:#14312a; }
+
   .coaching-panel { background:#f6faf7; border:1.5px solid #d7e8dd; border-radius:14px; padding:18px 20px; margin-top:20px !important; }
   .coaching-liste { list-style:none; display:flex; flex-direction:column; gap:10px; }
   .coaching-liste li { font-size:0.85rem; line-height:1.5; color:#294038; padding-left:24px; position:relative; }
@@ -206,7 +216,21 @@
 
   <div class="ads-section" id="adsSection" style="display:none;">
     <h2>🎯 Pilotage Google Ads</h2>
-    <div class="ads-sub">Le détail de votre campagne — combien investir, quels mots-clés fonctionnent, et à quel moment vos clics arrivent.</div>
+    <div class="ads-sub">Le détail de votre campagne — où vous êtes visible, combien investir, quels mots-clés fonctionnent, et à quel moment vos clics arrivent.</div>
+
+    <div class="ads-souspanel">
+      <h3>Où voulez-vous être visible ?</h3>
+      <div id="zoneAffichage" class="zone-affichage">
+        <span id="zoneValeur">—</span>
+        <button type="button" id="btnModifierZone" class="btn-modifier-zone">✏️ Modifier</button>
+      </div>
+      <div id="zoneEdition" class="zone-edition" style="display:none;">
+        <input type="text" id="zoneInput" placeholder="Ex : Brech, Auray, Vannes et 20 km autour">
+        <button type="button" id="btnEnregistrerZone">Enregistrer</button>
+        <button type="button" id="btnAnnulerZone" class="btn-annuler-zone">Annuler</button>
+      </div>
+      <div class="estim-note">Vos annonces ne se déclenchent que pour des recherches faites dans cette zone (ou à proximité).</div>
+    </div>
 
     <div class="ads-souspanel">
       <h3>Combien de clics voulez-vous ?</h3>
@@ -556,12 +580,13 @@
     document.getElementById('adsSection').style.display = 'block';
 
     let avgCpcEur = 1.5; // repli générique si l'estimation échoue
+    let draftInfo = {};
     try {
       const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=metier,zone`, {
         headers: { apikey: SUPABASE_ANON_KEY }
       });
       const rows = await resp.json();
-      const draftInfo = rows[0] || {};
+      draftInfo = rows[0] || {};
       const res = await fetch('/api/estimate-reach', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -570,6 +595,8 @@
       const data = await res.json();
       if (data.success && data.avgCpcEur) avgCpcEur = data.avgCpcEur;
     } catch (e) { /* on garde le repli générique */ }
+
+    initZoneCiblee(draftInfo.zone || '');
 
     const TAUX_COMMISSION_INVERSE = 0.50; // doit rester synchronisé avec les autres fichiers
     const slider = document.getElementById('clicsSlider');
@@ -611,6 +638,58 @@
       vide.textContent = 'Impossible de charger le détail de la campagne pour le moment.';
       vide.style.display = 'block';
     }
+  }
+
+  function initZoneCiblee(zoneActuelle) {
+    let zone = zoneActuelle;
+    const affichage = document.getElementById('zoneAffichage');
+    const edition = document.getElementById('zoneEdition');
+    const valeurEl = document.getElementById('zoneValeur');
+    const input = document.getElementById('zoneInput');
+    const btnModifier = document.getElementById('btnModifierZone');
+    const btnEnregistrer = document.getElementById('btnEnregistrerZone');
+    const btnAnnuler = document.getElementById('btnAnnulerZone');
+
+    function rafraichirAffichage() {
+      valeurEl.textContent = zone || 'Aucune zone renseignée pour le moment';
+    }
+    rafraichirAffichage();
+
+    btnModifier.addEventListener('click', () => {
+      input.value = zone;
+      affichage.style.display = 'none';
+      edition.style.display = 'flex';
+      input.focus();
+    });
+
+    btnAnnuler.addEventListener('click', () => {
+      edition.style.display = 'none';
+      affichage.style.display = 'flex';
+    });
+
+    btnEnregistrer.addEventListener('click', async () => {
+      const nouvelleZone = input.value.trim();
+      if (!nouvelleZone) return;
+      btnEnregistrer.disabled = true;
+      btnEnregistrer.textContent = '…';
+      try {
+        const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
+          method: 'PATCH',
+          headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+          body: JSON.stringify({ zone: nouvelleZone }),
+        });
+        if (!resp.ok) throw new Error();
+        zone = nouvelleZone;
+        rafraichirAffichage();
+        edition.style.display = 'none';
+        affichage.style.display = 'flex';
+      } catch (e) {
+        alert("Impossible d'enregistrer la zone pour le moment.");
+      } finally {
+        btnEnregistrer.disabled = false;
+        btnEnregistrer.textContent = 'Enregistrer';
+      }
+    });
   }
 
   function pertinenceClasse(clics, maxClics) {
@@ -841,10 +920,8 @@
   });
   closeBtn.addEventListener('click', () => { chatWindow.style.display = 'none'; });
 
-  // Ouverture automatique à l'arrivée sur la page — reste dans son coin
-  // (position fixe, ne modifie pas la mise en page du reste de la page),
-  // léger délai pour ne pas apparaître brutalement dès le premier instant.
-  setTimeout(ouvrirChat, 1200);
+  // Le chat reste fermé à l'arrivée sur la page — seule la bulle (avatar)
+  // est visible ; il ne s'ouvre que si l'artisan clique dessus.
 
   // --- Saisie vocale (reconnaissance de la parole) ---
   const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;

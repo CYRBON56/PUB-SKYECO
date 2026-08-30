@@ -373,6 +373,7 @@
   let videoUrl = null;
   let metiersActuels = [];
   let titreChoisi = '';
+  let draftStatutActuel = null; // status du brouillon au chargement — sert à savoir où renvoyer après enregistrement
 
   // Suggestions de titre par métier — doit rester cohérent avec les
   // heroTitre par défaut de METIER_TEMPLATES dans apercu.html (le premier
@@ -440,6 +441,8 @@
       const rows = await resp.json();
       const draft = rows[0];
       if (!draft) return;
+
+      draftStatutActuel = draft.status || null;
 
       document.getElementById('telephone').value = draft.telephone || '';
       document.getElementById('email').value = draft.email || '';
@@ -808,12 +811,22 @@
         body: JSON.stringify(payload),
       });
       if (!resp.ok) throw new Error();
+
+      // Un artisan déjà publié qui vient corriger ses éléments (depuis le lien
+      // "Modifier mes éléments" du dashboard) doit revenir à son dashboard —
+      // seul un tout premier passage (status encore "preview") continue vers
+      // le choix de formule.
+      const versDashboard = draftStatutActuel === 'published' || draftStatutActuel === 'en_pause';
       msg.className = 'save-msg ok';
-      msg.textContent = '✓ Tes éléments ont bien été enregistrés. On t\'emmène vers le choix de ta formule…';
+      msg.textContent = versDashboard
+        ? '✓ Tes éléments ont bien été enregistrés. On te ramène à ton tableau de bord…'
+        : '✓ Tes éléments ont bien été enregistrés. On t\'emmène vers le choix de ta formule…';
       msg.style.display = 'block';
       btn.textContent = 'Enregistré ✓';
       setTimeout(() => {
-        window.location.href = '/choisir-forfait.html?id=' + draftId;
+        window.location.href = versDashboard
+          ? '/mon-dashboard.html?id=' + draftId
+          : '/choisir-forfait.html?id=' + draftId;
       }, 1500);
     } catch (e) {
       msg.className = 'save-msg err';

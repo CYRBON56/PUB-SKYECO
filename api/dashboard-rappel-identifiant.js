@@ -55,8 +55,11 @@ export default async function handler(req, res) {
 
   try {
     const numero = toE164(telephone);
+    // Même précaution que dashboard-login.js : un numéro peut correspondre à
+    // plusieurs brouillons, on ne veut rappeler que l'email du compte
+    // dashboard réellement créé (le plus récent si plusieurs).
     const resp = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?telephone=eq.${encodeURIComponent(telephone.trim())}&select=email,twilio_phone_number`,
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?telephone=eq.${encodeURIComponent(telephone.trim())}&dashboard_password_hash=not.is.null&order=dashboard_compte_cree_le.desc&limit=1&select=email,twilio_phone_number`,
       { headers: supaHeaders }
     );
     const rows = await resp.json();

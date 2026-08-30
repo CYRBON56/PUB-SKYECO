@@ -42,6 +42,28 @@
   .upsell-box { background:#fdfcf9; border:1.5px dashed #d7dedb; border-radius:14px; padding:18px; text-align:center; }
   .upsell-box p { font-size:0.83rem; color:#5b6b64; line-height:1.6; }
   .upsell-box strong { color:#e8622c; }
+
+  .ga-panel { background:#fff; border-radius:14px; padding:20px; margin-bottom:16px; }
+  .ga-panel h3 { font-size:0.9rem; margin-bottom:14px; }
+  .ga-slider-row { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+  .ga-slider-row input[type="range"] { flex:1; accent-color:#1e6f4c; }
+  .ga-slider-row span { font-weight:800; font-size:0.9rem; min-width:60px; text-align:right; }
+  .ga-budget-resultat { font-size:0.83rem; color:#5b6b64; margin-bottom:6px; }
+  .ga-budget-resultat strong { color:#e8622c; font-size:1.05rem; }
+  .ga-souspanel { border-top:1.5px solid #eef1f0; padding-top:16px; margin-top:16px; }
+  .ga-souspanel h4 { font-size:0.8rem; margin-bottom:10px; color:#14312a; }
+  .ga-kw-row { display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px solid #eef1f0; font-size:0.78rem; }
+  .ga-kw-row:last-child { border-bottom:none; }
+  .ga-kw-dot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:7px; }
+  .ga-kw-dot.haute { background:#1e6f4c; }
+  .ga-kw-dot.moyenne { background:#e8b93c; }
+  .ga-kw-dot.faible { background:#c0392b; }
+  .ga-kw-clics { color:#8a9891; font-size:0.74rem; white-space:nowrap; }
+  .ga-heures-chart { display:flex; align-items:flex-end; gap:3px; height:60px; margin-bottom:4px; }
+  .ga-heure-barre { flex:1; background:#cfe3d7; border-radius:2px 2px 0 0; min-height:2px; }
+  .ga-heure-barre.pointe { background:#e8622c; }
+  .ga-heures-note { font-size:0.74rem; color:#8a9891; margin-top:8px; }
+  .ga-heures-note strong { color:#e8622c; }
 </style>
 </head>
 <body>
@@ -80,6 +102,54 @@
       <span>Restant : <strong>126 €</strong> / 300 €</span>
     </div>
     <button class="btn-pause-demo">⏸️ Mettre en pause la diffusion</button>
+  </div>
+
+  <div class="ga-panel">
+    <h3>🎯 Pilotage Google Ads</h3>
+    <div class="ga-slider-row">
+      <input type="range" min="1" max="150" value="35" disabled>
+      <span>35 clics</span>
+    </div>
+    <div class="ga-budget-resultat">Budget nécessaire estimé : <strong>≈ 210 €</strong></div>
+
+    <div class="ga-souspanel">
+      <h4>Quels mots-clés génèrent vos clics ?</h4>
+      <div class="ga-kw-row"><span><span class="ga-kw-dot haute"></span>terrasse composite prix</span><span class="ga-kw-clics">18 clics · 1,20 € CPC</span></div>
+      <div class="ga-kw-row"><span><span class="ga-kw-dot haute"></span>pose terrasse devis</span><span class="ga-kw-clics">14 clics · 1,05 € CPC</span></div>
+      <div class="ga-kw-row"><span><span class="ga-kw-dot moyenne"></span>terrasse bois prix</span><span class="ga-kw-clics">7 clics · 0,95 € CPC</span></div>
+      <div class="ga-kw-row"><span><span class="ga-kw-dot faible"></span>devis travaux extérieur</span><span class="ga-kw-clics">3 clics · 1,60 € CPC</span></div>
+    </div>
+
+    <div class="ga-souspanel">
+      <h4>À quelle heure vos clics arrivent-ils ?</h4>
+      <div class="ga-heures-chart">
+        <div class="ga-heure-barre" style="height:15%;"></div>
+        <div class="ga-heure-barre" style="height:10%;"></div>
+        <div class="ga-heure-barre" style="height:8%;"></div>
+        <div class="ga-heure-barre" style="height:6%;"></div>
+        <div class="ga-heure-barre" style="height:5%;"></div>
+        <div class="ga-heure-barre" style="height:12%;"></div>
+        <div class="ga-heure-barre" style="height:22%;"></div>
+        <div class="ga-heure-barre" style="height:38%;"></div>
+        <div class="ga-heure-barre" style="height:55%;"></div>
+        <div class="ga-heure-barre" style="height:70%;"></div>
+        <div class="ga-heure-barre pointe" style="height:88%;"></div>
+        <div class="ga-heure-barre pointe" style="height:100%;"></div>
+        <div class="ga-heure-barre pointe" style="height:92%;"></div>
+        <div class="ga-heure-barre" style="height:60%;"></div>
+        <div class="ga-heure-barre" style="height:40%;"></div>
+        <div class="ga-heure-barre" style="height:35%;"></div>
+        <div class="ga-heure-barre" style="height:45%;"></div>
+        <div class="ga-heure-barre" style="height:58%;"></div>
+        <div class="ga-heure-barre pointe" style="height:78%;"></div>
+        <div class="ga-heure-barre" style="height:50%;"></div>
+        <div class="ga-heure-barre" style="height:30%;"></div>
+        <div class="ga-heure-barre" style="height:18%;"></div>
+        <div class="ga-heure-barre" style="height:10%;"></div>
+        <div class="ga-heure-barre" style="height:6%;"></div>
+      </div>
+      <div class="ga-heures-note">Vos clics sont les plus nombreux vers <strong>11h-13h</strong> et <strong>19h</strong> — les créneaux les plus rentables pour ce métier.</div>
+    </div>
   </div>
 
   <div class="liste-panel">

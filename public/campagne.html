@@ -103,7 +103,7 @@
 
       <label for="budgetInput">Montant à investir</label>
       <div class="budget-input-row">
-        <input type="number" id="budgetInput" min="100" step="10" value="300" inputmode="numeric">
+        <input type="number" id="budgetInput" min="100" step="10" value="${Math.max(100, parseInt(params.get('budget'), 10) || 300)}" inputmode="numeric">
         <span class="unit">€</span>
       </div>
 

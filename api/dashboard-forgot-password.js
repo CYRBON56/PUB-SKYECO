@@ -76,8 +76,11 @@ export default async function handler(req, res) {
   };
 
   try {
+    // Même précaution que dashboard-login.js : un email peut correspondre à
+    // plusieurs brouillons, on ne veut réinitialiser que celui qui a
+    // effectivement un compte dashboard (le plus récent si plusieurs).
     const resp = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?email=ilike.${encodeURIComponent(email.trim())}&select=id,telephone,twilio_phone_number,entreprise`,
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?email=ilike.${encodeURIComponent(email.trim())}&dashboard_password_hash=not.is.null&order=dashboard_compte_cree_le.desc&limit=1&select=id,telephone,twilio_phone_number,entreprise`,
       { headers: supaHeaders }
     );
     const rows = await resp.json();

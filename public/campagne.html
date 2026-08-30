@@ -167,6 +167,16 @@
     const btnPayer = document.getElementById('btnPayer');
     let debounceTimer = null;
 
+    // Métier/zone/mots-clés du brouillon, récupérés une seule fois (voir
+    // chargerDraftPuisInitialiser ci-dessous) puis partagés entre l'estimation
+    // de clics et le panneau de mots-clés IA, plutôt que deux requêtes
+    // Supabase séparées comme avant (l'une d'elles envoyait en plus un champ
+    // "departement" inexistant à l'API, qui attend "zone" — l'estimation ne
+    // recevait donc jamais la vraie zone géographique).
+    let draftMetier = null;
+    let draftZone = null;
+    let motsClesActuels = [];
+
     function mettreAJourEstimation() {
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(chargerEstimation, 400);
@@ -185,23 +195,18 @@
       document.getElementById('clicsValue').textContent = '…';
 
       try {
-        const draftResp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=metier,departement`, {
-          headers: { apikey: SUPABASE_ANON_KEY }
-        });
-        const draftRows = await draftResp.json().catch(() => []);
-        const draft = draftRows[0] || {};
-
         const res = await fetch('/api/estimate-reach', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ metier: draft.metier, departement: draft.departement, budget })
+          body: JSON.stringify({ metier: draftMetier, zone: draftZone, motsCles: motsClesActuels, budget })
         });
         const data = await res.json();
 
         if (data.success) {
           document.getElementById('clicsValue').textContent = data.estimatedClicks !== null ? '≈ ' + data.estimatedClicks : '—';
+          const potentiel = data.totalMonthlyVolume ? ` · Potentiel estimé sur ce mois : ${data.totalMonthlyVolume} clics possibles avec ces mots-clés et cette zone` : '';
           document.getElementById('estimationDetail').textContent =
-            data.avgCpcEur ? `CPC moyen estimé : ${data.avgCpcEur} €` : '';
+            (data.avgCpcEur ? `CPC moyen estimé : ${data.avgCpcEur} €` : '') + potentiel;
           document.getElementById('breakdown').innerHTML =
             `Sur vos <strong>${budget} €</strong> : <strong>${data.commissionPub ?? '—'} €</strong> de frais de service (${Math.round((data.tauxCommission||0)*100)}%), <strong>${data.budgetNetPub ?? '—'} €</strong> réellement investis en publicité.`;
           btnPayer.disabled = false;
@@ -219,9 +224,23 @@
     }
 
     budgetInput.addEventListener('input', mettreAJourEstimation);
-    chargerEstimation();
     chargerConsommation();
-    initMotsCles();
+    chargerDraftPuisInitialiser();
+
+    async function chargerDraftPuisInitialiser() {
+      try {
+        const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=metier,zone,mots_cles_choisis`, {
+          headers: { apikey: SUPABASE_ANON_KEY }
+        });
+        const rows = await resp.json();
+        const draft = rows[0] || {};
+        draftMetier = draft.metier;
+        draftZone = draft.zone;
+        if (Array.isArray(draft.mots_cles_choisis)) motsClesActuels = draft.mots_cles_choisis;
+      } catch (e) { /* on continue avec metier/zone/mots-clés vides — repli générique côté API */ }
+      initMotsCles();
+      chargerEstimation();
+    }
 
     document.getElementById('btnPause').addEventListener('click', async () => {
       if (!confirm("Demander la mise en pause de votre abonnement ?\n\n• Rien ne s'arrête tout de suite.\n• 2 jours avant la fin de votre période déjà payée, vous recevrez un SMS avec un lien à cliquer pour confirmer.\n• C'est seulement à ce moment-là, si vous confirmez, que la pause prend effet.")) {
@@ -341,30 +360,22 @@
       }
     });
 
-    async function initMotsCles() {
+    function initMotsCles() {
+      // Utilise draftMetier / draftZone / motsClesActuels déjà récupérés par
+      // chargerDraftPuisInitialiser() — plus de requête Supabase séparée ici.
       const zoneEl = document.getElementById('motsClesDescription');
       const btnSuggerer = document.getElementById('btnSuggererMotsCles');
       const listeEl = document.getElementById('motsClesListe');
       const ajoutEl = document.getElementById('motsClesAjout');
       const noteEl = document.getElementById('motsClesNote');
-      let metierDraft = null;
-      let zoneDraft = null;
       let selection = new Map(); // texte -> true/false (coché ou non)
 
-      try {
-        const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=metier,zone,mots_cles_choisis`, {
-          headers: { apikey: SUPABASE_ANON_KEY }
-        });
-        const rows = await resp.json();
-        const draft = rows[0] || {};
-        metierDraft = draft.metier;
-        zoneDraft = draft.zone;
-        if (Array.isArray(draft.mots_cles_choisis) && draft.mots_cles_choisis.length) {
-          draft.mots_cles_choisis.forEach(m => selection.set(m, true));
-          ajoutEl.style.display = 'flex';
-          noteEl.textContent = 'Sélection déjà enregistrée — décochez ou ajoutez-en avant de lancer votre campagne.';
-        }
-      } catch (e) { /* pas grave, on continue sans pré-remplissage */ }
+      if (motsClesActuels.length) {
+        motsClesActuels.forEach(m => selection.set(m, true));
+        ajoutEl.style.display = 'flex';
+        noteEl.textContent = 'Sélection déjà enregistrée — décochez ou ajoutez-en avant de lancer votre campagne.';
+        rendreListe();
+      }
 
       function rendreListe() {
         listeEl.innerHTML = [...selection.entries()].map(([texte, coche], i) => `
@@ -380,17 +391,19 @@
           });
         });
       }
-      if (selection.size) rendreListe();
 
       async function sauvegarderSelection() {
-        const motsClesActifs = [...selection.entries()].filter(([, coche]) => coche).map(([texte]) => texte);
+        motsClesActuels = [...selection.entries()].filter(([, coche]) => coche).map(([texte]) => texte);
         try {
           await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
             method: 'PATCH',
             headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-            body: JSON.stringify({ mots_cles_choisis: motsClesActifs }),
+            body: JSON.stringify({ mots_cles_choisis: motsClesActuels }),
           });
         } catch (e) { /* silencieux — la sélection reste visible côté artisan même si l'enregistrement échoue */ }
+        // Dès que les mots-clés changent, on recalcule le nombre de clics
+        // possible avec le budget actuel (mots-clés + zone → volume réel).
+        chargerEstimation();
       }
 
       btnSuggerer.addEventListener('click', async () => {
@@ -406,7 +419,7 @@
           const res = await fetch('/api/suggerer-mots-cles', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ description, metier: metierDraft, zone: zoneDraft })
+            body: JSON.stringify({ description, metier: draftMetier, zone: draftZone })
           });
           const data = await res.json();
           if (data.success) {

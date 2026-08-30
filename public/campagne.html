@@ -48,33 +48,6 @@
 
   .loading, .error-msg { text-align:center; padding:40px 0; color:#5b6b64; }
   .error-msg { color:#c0392b; }
-
-  .motscles-section { background:#f6faf7; border:1.5px solid #d7e8dd; border-radius:12px; padding:18px 20px; margin-bottom:24px; }
-  .motscles-section h3 { font-size:0.95rem; margin-bottom:6px; }
-  .motscles-hint { font-size:0.8rem; color:#5b6b64; margin-bottom:12px; line-height:1.5; }
-  .motscles-textarea {
-    width:100%; min-height:70px; padding:11px 12px; border:1.5px solid #d7dedb; border-radius:9px;
-    font-size:0.88rem; font-family:inherit; resize:vertical; color:#14312a;
-  }
-  .motscles-textarea:focus { outline:none; border-color:#1e6f4c; }
-  .btn-suggerer {
-    margin-top:10px; background:#1e6f4c; color:#fff; border:none; border-radius:9px;
-    padding:10px 16px; font-size:0.85rem; font-weight:700; cursor:pointer;
-  }
-  .btn-suggerer:hover:not(:disabled) { filter:brightness(1.08); }
-  .btn-suggerer:disabled { opacity:0.6; cursor:wait; }
-  .motscles-liste { margin-top:14px; display:flex; flex-direction:column; gap:8px; }
-  .motscle-item { display:flex; align-items:center; gap:8px; font-size:0.86rem; }
-  .motscle-item input[type="checkbox"] { width:16px; height:16px; accent-color:#1e6f4c; flex-shrink:0; }
-  .motscles-ajout { display:flex; gap:8px; margin-top:12px; }
-  .motscles-ajout input {
-    flex:1; padding:9px 11px; border:1.5px solid #d7dedb; border-radius:8px; font-size:0.85rem; font-family:inherit;
-  }
-  .motscles-ajout button {
-    background:#f2f4f1; color:#14312a; border:none; border-radius:8px; padding:9px 14px;
-    font-size:0.82rem; font-weight:700; cursor:pointer; white-space:nowrap;
-  }
-  .motscles-note { font-size:0.76rem; color:#8a9891; margin-top:10px; }
 </style>
 </head>
 <body>
@@ -128,19 +101,6 @@
 
       <div id="consommationSection"></div>
 
-      <div class="motscles-section">
-        <h3>✨ Quels mots-clés pour votre annonce ?</h3>
-        <div class="motscles-hint">Décrivez votre métier et ce que vous voulez mettre en avant (prestations, produits, ce qui attire vos clients) — l'IA vous propose des mots-clés à cocher.</div>
-        <textarea class="motscles-textarea" id="motsClesDescription" placeholder="Ex : je pose des terrasses en bois et composite, je fais aussi des clôtures. Je veux surtout attirer des clients pour la pose de terrasse."></textarea>
-        <button type="button" class="btn-suggerer" id="btnSuggererMotsCles">✨ Suggérer des mots-clés</button>
-        <div class="motscles-liste" id="motsClesListe"></div>
-        <div class="motscles-ajout" id="motsClesAjout" style="display:none;">
-          <input type="text" id="motCleManuel" placeholder="Ajouter un mot-clé de votre choix">
-          <button type="button" id="btnAjouterMotCleManuel">+ Ajouter</button>
-        </div>
-        <div class="motscles-note" id="motsClesNote"></div>
-      </div>
-
       <label for="budgetInput">Montant à investir</label>
       <div class="budget-input-row">
         <input type="number" id="budgetInput" min="100" step="10" value="${Math.max(100, parseInt(params.get('budget'), 10) || 300)}" inputmode="numeric">
@@ -168,11 +128,11 @@
     let debounceTimer = null;
 
     // Métier/zone/mots-clés du brouillon, récupérés une seule fois (voir
-    // chargerDraftPuisInitialiser ci-dessous) puis partagés entre l'estimation
-    // de clics et le panneau de mots-clés IA, plutôt que deux requêtes
-    // Supabase séparées comme avant (l'une d'elles envoyait en plus un champ
-    // "departement" inexistant à l'API, qui attend "zone" — l'estimation ne
-    // recevait donc jamais la vraie zone géographique).
+    // chargerDraftPuisInitialiser ci-dessous) pour l'estimation de clics —
+    // le choix des mots-clés se fait maintenant depuis le tableau de bord
+    // (panneau Pilotage Ads dans mon-dashboard.html), pas ici. Avant ce fix,
+    // cette page envoyait en plus un champ "departement" inexistant à l'API,
+    // qui attend "zone" — l'estimation ne recevait donc jamais la vraie zone.
     let draftMetier = null;
     let draftZone = null;
     let motsClesActuels = [];
@@ -238,7 +198,9 @@
         draftZone = draft.zone;
         if (Array.isArray(draft.mots_cles_choisis)) motsClesActuels = draft.mots_cles_choisis;
       } catch (e) { /* on continue avec metier/zone/mots-clés vides — repli générique côté API */ }
-      initMotsCles();
+      // Le choix des mots-clés se fait maintenant depuis le tableau de bord
+      // (panneau Pilotage Ads) — ici on ne fait que lire la sélection déjà
+      // enregistrée pour l'estimation de clics ci-dessus.
       chargerEstimation();
     }
 
@@ -360,95 +322,6 @@
       }
     });
 
-    function initMotsCles() {
-      // Utilise draftMetier / draftZone / motsClesActuels déjà récupérés par
-      // chargerDraftPuisInitialiser() — plus de requête Supabase séparée ici.
-      const zoneEl = document.getElementById('motsClesDescription');
-      const btnSuggerer = document.getElementById('btnSuggererMotsCles');
-      const listeEl = document.getElementById('motsClesListe');
-      const ajoutEl = document.getElementById('motsClesAjout');
-      const noteEl = document.getElementById('motsClesNote');
-      let selection = new Map(); // texte -> true/false (coché ou non)
-
-      if (motsClesActuels.length) {
-        motsClesActuels.forEach(m => selection.set(m, true));
-        ajoutEl.style.display = 'flex';
-        noteEl.textContent = 'Sélection déjà enregistrée — décochez ou ajoutez-en avant de lancer votre campagne.';
-        rendreListe();
-      }
-
-      function rendreListe() {
-        listeEl.innerHTML = [...selection.entries()].map(([texte, coche], i) => `
-          <label class="motscle-item">
-            <input type="checkbox" data-texte="${texte.replace(/"/g, '&quot;')}" ${coche ? 'checked' : ''}>
-            ${texte}
-          </label>
-        `).join('');
-        listeEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-          cb.addEventListener('change', () => {
-            selection.set(cb.dataset.texte, cb.checked);
-            sauvegarderSelection();
-          });
-        });
-      }
-
-      async function sauvegarderSelection() {
-        motsClesActuels = [...selection.entries()].filter(([, coche]) => coche).map(([texte]) => texte);
-        try {
-          await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
-            method: 'PATCH',
-            headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-            body: JSON.stringify({ mots_cles_choisis: motsClesActuels }),
-          });
-        } catch (e) { /* silencieux — la sélection reste visible côté artisan même si l'enregistrement échoue */ }
-        // Dès que les mots-clés changent, on recalcule le nombre de clics
-        // possible avec le budget actuel (mots-clés + zone → volume réel).
-        chargerEstimation();
-      }
-
-      btnSuggerer.addEventListener('click', async () => {
-        const description = zoneEl.value.trim();
-        if (!description) {
-          noteEl.textContent = 'Décrivez brièvement votre activité pour obtenir des suggestions.';
-          return;
-        }
-        btnSuggerer.disabled = true;
-        btnSuggerer.textContent = 'Génération en cours…';
-        noteEl.textContent = '';
-        try {
-          const res = await fetch('/api/suggerer-mots-cles', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ description, metier: draftMetier, zone: draftZone })
-          });
-          const data = await res.json();
-          if (data.success) {
-            data.motsCles.forEach(m => { if (!selection.has(m)) selection.set(m, true); });
-            rendreListe();
-            ajoutEl.style.display = 'flex';
-            noteEl.textContent = 'Décochez ceux que vous ne voulez pas utiliser, ou ajoutez les vôtres.';
-            sauvegarderSelection();
-          } else {
-            noteEl.textContent = data.error || 'Impossible de générer des suggestions pour le moment.';
-          }
-        } catch (e) {
-          noteEl.textContent = 'Impossible de contacter le serveur.';
-        } finally {
-          btnSuggerer.disabled = false;
-          btnSuggerer.textContent = '✨ Suggérer des mots-clés';
-        }
-      });
-
-      document.getElementById('btnAjouterMotCleManuel').addEventListener('click', () => {
-        const input = document.getElementById('motCleManuel');
-        const texte = input.value.trim();
-        if (!texte || selection.has(texte)) return;
-        selection.set(texte, true);
-        rendreListe();
-        sauvegarderSelection();
-        input.value = '';
-      });
-    }
   }
 </script>
 <div style="text-align:center; font-size:11px; color:#8a9891; padding:24px 16px 16px; line-height:1.7;">

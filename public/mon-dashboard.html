@@ -12,6 +12,11 @@
   .leaf-bg svg { display:block; filter:blur(0.5px); }
   .wrap { position:relative; z-index:1; max-width:980px; margin:0 auto; }
   .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+  .header-titre { display:flex; align-items:center; gap:14px; }
+  .logo-entreprise {
+    display:none; width:48px; height:48px; border-radius:12px; object-fit:contain;
+    background:#fff; padding:5px; box-shadow:0 4px 14px rgba(20,49,42,0.10); border:1px solid #eef2ef;
+  }
   h1 { font-size:1.5rem; }
   .btn-fonds { background:#e8622c; color:#fff; text-decoration:none; padding:12px 22px; border-radius:10px; font-weight:700; font-size:0.92rem; }
   .btn-fonds:hover { filter:brightness(1.05); }
@@ -164,7 +169,10 @@
 
 <div class="wrap">
   <div class="header">
-    <h1>Mon tableau de bord</h1>
+    <div class="header-titre">
+      <img class="logo-entreprise" id="logoEntreprise" alt="Logo">
+      <h1>Mon tableau de bord</h1>
+    </div>
     <a class="btn-fonds" id="btnFonds" href="#">💳 Mettre des fonds pour l'Ads</a>
   </div>
 
@@ -284,11 +292,27 @@
 
     document.getElementById('verifAccesOverlay').remove();
     document.getElementById('btnFonds').href = '/campagne.html?id=' + draftId;
+    chargerLogo();
     chargerStats();
     chargerSolde();
     chargerDemandes();
     initPilotageAds();
     verifierStatutPause();
+  }
+
+  async function chargerLogo() {
+    try {
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=logo_url`, {
+        headers: { apikey: SUPABASE_ANON_KEY }
+      });
+      const rows = await resp.json();
+      const logoUrl = rows[0]?.logo_url;
+      if (logoUrl) {
+        const img = document.getElementById('logoEntreprise');
+        img.src = logoUrl;
+        img.style.display = 'block';
+      }
+    } catch (e) { /* pas de logo, tant pis, on garde juste le titre */ }
   }
 
   async function verifierStatutPause() {

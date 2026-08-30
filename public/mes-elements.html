@@ -72,6 +72,11 @@
   .upload-box input[type=file] { display:none; }
   .upload-label { font-size:0.88rem; font-weight:600; color:#4a8a68; }
   .upload-status { font-size:0.78rem; color:#8a9891; margin-top:6px; }
+  .logo-preview-img { display:none; max-height:60px; max-width:180px; object-fit:contain; margin:0 auto 10px; }
+
+  .titre-option { margin-bottom:2px; }
+  .titre-option label { display:flex; align-items:flex-start; gap:10px; margin:0 0 10px; font-weight:400; font-size:0.92rem; cursor:pointer; color:#2a3d35; }
+  .titre-option input[type=radio] { margin-top:3px; accent-color:#4a8a68; width:auto; }
 
   .photos-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(88px,1fr)); gap:10px; margin-top:14px; }
   .photo-thumb { position:relative; aspect-ratio:1; border-radius:10px; overflow:hidden; background:#f0eee6; }
@@ -167,6 +172,7 @@
         <label>Logo de l'entreprise</label>
         <div class="upload-box" id="boxLogo">
           <input type="file" id="inputLogo" accept="image/*">
+          <img id="logoPreview" class="logo-preview-img" alt="Logo">
           <div class="upload-label">📁 Choisir un fichier</div>
           <div class="upload-status" id="statusLogo">Aucun fichier — PNG ou JPG, fond transparent de préférence</div>
         </div>
@@ -186,6 +192,27 @@
           <div class="upload-status" id="statusVideo">Ou colle un lien YouTube/Vimeo ci-dessous</div>
         </div>
         <input type="url" id="videoLien" placeholder="https://youtube.com/..." style="margin-top:10px;">
+      </div>
+    </div>
+  </div>
+
+  <div class="section" data-section="titre">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">🏷️</span>
+        <div>
+          <h2>Titre de votre vitrine</h2>
+          <p class="sub">Le grand titre affiché sur votre page — choisis celui qui te ressemble, ou écris le tien.</p>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="section-check visible" data-check="titre">✓ facultatif</span>
+        <span class="chevron">▾</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="section-body-inner" id="titreOptions">
+        <div class="hint">Renseigne d'abord ton métier dans l'estimation pour voir des suggestions adaptées — en attendant, une valeur par défaut est déjà utilisée.</div>
       </div>
     </div>
   </div>
@@ -345,6 +372,23 @@
   let photosUrls = [];
   let videoUrl = null;
   let metiersActuels = [];
+  let titreChoisi = '';
+
+  // Suggestions de titre par métier — doit rester cohérent avec les
+  // heroTitre par défaut de METIER_TEMPLATES dans apercu.html (le premier
+  // choix de chaque métier n'est PAS forcément identique au défaut : tant
+  // qu'aucun titre n'est choisi ici, apercu.html garde son propre défaut
+  // avec le retour à la ligne — un choix explicite ici l'écrase.)
+  const TITRES_PAR_METIER = {
+    paysagiste: ["Un extérieur qui vous ressemble.", "Votre jardin, transformé.", "Un aménagement extérieur pensé pour durer."],
+    piscine: ["Une piscine prête pour l'été.", "Votre bassin, sans mauvaise surprise.", "La piscine que vous imaginiez enfin chez vous."],
+    tonte: ["Le sol qui tient tête aux hivers bretons.", "Un jardin toujours impeccable.", "L'entretien de votre extérieur, sans y penser."],
+    terrasse: ["Une terrasse pour en profiter longtemps.", "Votre terrasse, posée dans les règles de l'art.", "L'extérieur qui vous donne envie de rester dehors."],
+    paysagiste_concepteur: ["Un plan pensé pour durer.", "Votre extérieur, conçu sur-mesure.", "Un projet paysager pensé avant d'être réalisé."],
+    arboriste: ["Des arbres bien tenus, en toute sécurité.", "Vos arbres, entre de bonnes mains.", "L'entretien de vos arbres, sans risque."],
+    espaces_verts: ["Des espaces verts toujours soignés.", "Un entretien fiable, saison après saison.", "Vos espaces verts, pris en charge du début à la fin."],
+    autre: ["Un projet sur-mesure, pensé pour vous.", "Votre projet, réalisé avec sérieux.", "Un artisan de confiance, près de chez vous."],
+  };
 
   // --- Accordéon ---
   document.querySelectorAll('.section-header').forEach(header => {
@@ -412,12 +456,19 @@
 
       metiersActuels = Array.isArray(draft.metier) ? draft.metier : (draft.metier ? [draft.metier] : []);
       construireLignesTarifs(metiersActuels, draft.tarification_detail || {});
+      construireOptionsTitre(metiersActuels, draft.titre_hero_choisi || '');
 
       if (draft.photos && draft.photos.length) {
         photosUrls = draft.photos;
         rafraichirGridPhotos();
       }
-      if (draft.logo_url) { logoUrl = draft.logo_url; document.getElementById('statusLogo').textContent = 'Logo déjà enregistré ✓'; document.getElementById('boxLogo').classList.add('has-file'); }
+      if (draft.logo_url) {
+        logoUrl = draft.logo_url;
+        document.getElementById('statusLogo').textContent = 'Logo déjà enregistré ✓';
+        document.getElementById('boxLogo').classList.add('has-file');
+        document.getElementById('logoPreview').src = draft.logo_url;
+        document.getElementById('logoPreview').style.display = 'block';
+      }
       if (draft.video_url) { videoUrl = draft.video_url; document.getElementById('videoLien').value = draft.video_url.startsWith('http') ? draft.video_url : ''; }
     } catch (e) { /* silencieux, on part d'un formulaire vide */ }
     calculerProgression();
@@ -540,6 +591,69 @@
     return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${nomFichier}`;
   }
 
+  // Enregistre immédiatement un ou plusieurs champs, sans attendre le bouton
+  // "Enregistrer mes éléments" final — évite qu'un logo/une photo/un titre
+  // envoyé avec succès (donc bien présent dans le stockage) reste perdu si
+  // la personne quitte la page via "Voir l'avancement" ou ferme l'onglet
+  // avant d'avoir cliqué sur le bouton d'enregistrement global.
+  async function sauvegarderChampsImmediat(champs) {
+    if (!draftId) return;
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
+        method: 'PATCH',
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify(champs),
+      });
+    } catch (e) { /* silencieux — l'enregistrement final au bas du formulaire rattrapera si besoin */ }
+  }
+
+  function construireOptionsTitre(metiers, titreActuel) {
+    const metierPrincipal = (metiers && metiers[0]) || 'autre';
+    const options = TITRES_PAR_METIER[metierPrincipal] || TITRES_PAR_METIER.autre;
+    const container = document.getElementById('titreOptions');
+    const estPersonnalise = !!titreActuel && !options.includes(titreActuel);
+    titreChoisi = titreActuel || '';
+
+    const echapper = (s) => s.replace(/"/g, '&quot;');
+
+    container.innerHTML = `
+      <label style="margin-top:0;">Choisis un titre, ou écris le tien</label>
+      ${options.map(t => `
+        <div class="titre-option">
+          <label>
+            <input type="radio" name="titreRadio" value="${echapper(t)}" ${titreActuel === t ? 'checked' : ''}>
+            <span>${t}</span>
+          </label>
+        </div>
+      `).join('')}
+      <div class="titre-option">
+        <label>
+          <input type="radio" name="titreRadio" value="custom" ${estPersonnalise ? 'checked' : ''}>
+          <span>✏️ Mon propre titre</span>
+        </label>
+      </div>
+      <input type="text" id="titrePersonnalise" placeholder="Ex : Votre projet, notre métier." style="margin-top:4px; ${estPersonnalise ? '' : 'display:none;'}" value="${estPersonnalise ? echapper(titreActuel) : ''}">
+    `;
+
+    const inputPerso = document.getElementById('titrePersonnalise');
+    container.querySelectorAll('input[name="titreRadio"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        if (radio.value === 'custom') {
+          inputPerso.style.display = 'block';
+          titreChoisi = inputPerso.value.trim();
+        } else {
+          inputPerso.style.display = 'none';
+          titreChoisi = radio.value;
+        }
+        sauvegarderChampsImmediat({ titre_hero_choisi: titreChoisi || null });
+      });
+    });
+    inputPerso.addEventListener('input', () => { titreChoisi = inputPerso.value.trim(); });
+    inputPerso.addEventListener('change', () => {
+      sauvegarderChampsImmediat({ titre_hero_choisi: titreChoisi || null });
+    });
+  }
+
   document.getElementById('boxLogo').addEventListener('click', () => document.getElementById('inputLogo').click());
   document.getElementById('inputLogo').addEventListener('change', async e => {
     const file = e.target.files[0];
@@ -549,6 +663,9 @@
       logoUrl = await uploaderFichier(file, 'logo');
       document.getElementById('statusLogo').textContent = 'Logo envoyé ✓';
       document.getElementById('boxLogo').classList.add('has-file');
+      document.getElementById('logoPreview').src = logoUrl;
+      document.getElementById('logoPreview').style.display = 'block';
+      sauvegarderChampsImmediat({ logo_url: logoUrl });
     } catch (err) {
       document.getElementById('statusLogo').textContent = 'Erreur : ' + err.message;
     }
@@ -567,6 +684,7 @@
     document.getElementById('statusPhotos').textContent = `${photosUrls.length} photo(s) ajoutée(s)`;
     document.getElementById('boxPhotos').classList.add('has-file');
     rafraichirGridPhotos();
+    sauvegarderChampsImmediat({ photos: photosUrls });
   });
 
   function rafraichirGridPhotos() {
@@ -582,6 +700,7 @@
         photosUrls.splice(parseInt(btn.dataset.index), 1);
         rafraichirGridPhotos();
         document.getElementById('statusPhotos').textContent = `${photosUrls.length} photo(s) ajoutée(s)`;
+        sauvegarderChampsImmediat({ photos: photosUrls });
       });
     });
   }
@@ -595,8 +714,19 @@
       videoUrl = await uploaderFichier(file, 'video');
       document.getElementById('statusVideo').textContent = 'Vidéo envoyée ✓';
       document.getElementById('boxVideo').classList.add('has-file');
+      sauvegarderChampsImmediat({ video_url: videoUrl });
     } catch (err) {
       document.getElementById('statusVideo').textContent = 'Erreur : ' + err.message;
+    }
+  });
+
+  // Lien vidéo (YouTube/Vimeo) saisi directement, sans upload — même logique
+  // d'enregistrement immédiat que le reste, pour ne rien perdre en quittant
+  // la page avant le bouton final.
+  document.getElementById('videoLien').addEventListener('change', () => {
+    const lien = document.getElementById('videoLien').value.trim();
+    if (lien && !videoUrl) {
+      sauvegarderChampsImmediat({ video_url: lien });
     }
   });
 
@@ -664,6 +794,7 @@
       logo_url: logoUrl,
       photos: photosUrls,
       video_url: videoFinal,
+      titre_hero_choisi: titreChoisi || null,
       tva_taux: document.getElementById('toggleChiffrage').checked ? parseFloat(document.getElementById('tvaTaux').value) : null,
       tarification_detail: document.getElementById('toggleChiffrage').checked ? tarificationDetail : null,
       tarif_actif: document.getElementById('toggleChiffrage').checked,

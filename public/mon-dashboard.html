@@ -243,6 +243,7 @@
         <a class="btn-fonds" id="btnFondsInverse" href="#" style="white-space:nowrap;">💳 Approvisionner ce montant</a>
       </div>
       <div class="estim-note">Ce budget n'est pas garanti sur une durée fixe — il est consommé au fur et à mesure des clics reçus.</div>
+      <div class="estim-note" id="volumeNote"></div>
     </div>
 
     <div class="ads-souspanel" id="motsClesPanel" style="display:none;">
@@ -581,8 +582,12 @@
 
     let avgCpcEur = 1.5; // repli générique si l'estimation échoue
     let draftInfo = {};
+    const slider = document.getElementById('clicsSlider');
+    const sliderValue = document.getElementById('clicsSliderValue');
+    const budgetValue = document.getElementById('budgetNecessaireValue');
+    const volumeNote = document.getElementById('volumeNote');
     try {
-      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=metier,zone`, {
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=metier,zone,mots_cles_choisis`, {
         headers: { apikey: SUPABASE_ANON_KEY }
       });
       const rows = await resp.json();
@@ -590,18 +595,26 @@
       const res = await fetch('/api/estimate-reach', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ metier: draftInfo.metier, zone: draftInfo.zone, budget: 100 })
+        body: JSON.stringify({ metier: draftInfo.metier, zone: draftInfo.zone, motsCles: draftInfo.mots_cles_choisis, budget: 100 })
       });
       const data = await res.json();
       if (data.success && data.avgCpcEur) avgCpcEur = data.avgCpcEur;
-    } catch (e) { /* on garde le repli générique */ }
+      // Calibre le curseur sur le nombre de clics réellement atteignable en un
+      // mois avec ces mots-clés et cette zone (volume de recherche réel via
+      // Google Ads Keyword Planner), au lieu du maximum fixe (150) d'avant.
+      if (data.success && data.totalMonthlyVolume) {
+        const maxRealiste = Math.max(20, Math.min(1000, data.totalMonthlyVolume));
+        slider.max = maxRealiste;
+        if (parseInt(slider.value, 10) > maxRealiste) slider.value = maxRealiste;
+        volumeNote.textContent = data.motsClesPersonnalises
+          ? `≈ ${data.totalMonthlyVolume} clics possibles ce mois-ci avec vos mots-clés et votre zone actuels (base du curseur).`
+          : `≈ ${data.totalMonthlyVolume} clics possibles ce mois-ci (estimation générique par métier — choisissez vos mots-clés dans "Approvisionner ce montant" pour affiner).`;
+      }
+    } catch (e) { /* on garde le repli générique et le maximum par défaut du curseur */ }
 
     initZoneCiblee(draftInfo.zone || '');
 
     const TAUX_COMMISSION_INVERSE = 0.50; // doit rester synchronisé avec les autres fichiers
-    const slider = document.getElementById('clicsSlider');
-    const sliderValue = document.getElementById('clicsSliderValue');
-    const budgetValue = document.getElementById('budgetNecessaireValue');
 
     function calculerBudgetInverse() {
       const clics = parseInt(slider.value, 10);

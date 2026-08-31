@@ -86,7 +86,11 @@ export default async function handler(req, res) {
             recurring: { interval: 'month' },
             product_data: {
               name: forfait.nom + (entreprise ? ' — ' + entreprise : ''),
-              description: `Prix HT : ${(forfait.centimesHT / 100).toFixed(2)} € — TVA 20% incluse. Prix spécial artisan : ${prixReduitHT} € HT/mois pendant les 12 premiers mois, puis ${(forfait.centimesHT / 100).toFixed(2)} € HT/mois. Votre formulaire vitrine en ligne, mis à jour et actif chaque mois. Sans engagement — vous arrêtez quand vous voulez.`,
+              // "Sans engagement" placé en tête : Stripe tronque la description
+              // dans la vue repliée du récapitulatif de paiement (visible
+              // seulement en cliquant sur la flèche pour dérouler) — la mettre
+              // en premier garantit qu'elle apparaît sans avoir à déplier.
+              description: `Sans engagement — vous arrêtez quand vous voulez. Prix HT : ${(forfait.centimesHT / 100).toFixed(2)} € — TVA 20% incluse. Prix spécial artisan : ${prixReduitHT} € HT/mois pendant les 12 premiers mois, puis ${(forfait.centimesHT / 100).toFixed(2)} € HT/mois. Votre formulaire vitrine en ligne, mis à jour et actif chaque mois.`,
             },
           },
           quantity: 1,

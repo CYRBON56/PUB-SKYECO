@@ -131,11 +131,11 @@ const METIER_TEMPLATES = {
     delaiBadge: "⏱️ Estimation en 3 minutes",
     intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation.",
     metierKey: "paysagiste",
-    getSteps(state, tarif){
+    getSteps(state){
       const s = [{ key:"type_projet", question:"Quel est le type de projet ?", type:"choice",
         options:[["creation","Création complète d'un aménagement"],["renovation","Rénovation d'un extérieur existant"],["ponctuel","Intervention ponctuelle"]] }];
       s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
-      pushQuantiteEtSuite(s, tarif, "surface du projet", state);
+      pushQuantiteEtSuite(s, state);
       return s;
     }
   },
@@ -146,13 +146,13 @@ const METIER_TEMPLATES = {
     delaiBadge: "⏱️ Estimation en 3 minutes",
     intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation.",
     metierKey: "piscine",
-    getSteps(state, tarif){
+    getSteps(state){
       const s = [{ key:"type_piscine", question:"Quel type de piscine ?", type:"choice",
         options:[["enterree","Piscine enterrée"],["hors_sol","Piscine hors-sol"],["plage_seule","Uniquement la plage / les abords"]] }];
       s.push({ key:"etat_terrain", question:"Dans quel état est le terrain actuellement ?", type:"choice",
         options:[["nu","Terrain nu, rien n'est fait"],["prepare","Déjà terrassé / préparé"]] });
       s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
-      pushQuantiteEtSuite(s, tarif, "surface totale (bassin + plage)", state);
+      pushQuantiteEtSuite(s, state);
       return s;
     }
   },
@@ -163,13 +163,13 @@ const METIER_TEMPLATES = {
     delaiBadge: "⏱️ Estimation en 3 minutes",
     intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation.",
     metierKey: "tonte",
-    getSteps(state, tarif){
+    getSteps(state){
       const s = [{ key:"frequence", question:"Souhaitez-vous une intervention ponctuelle ou régulière ?", type:"choice",
         options:[["ponctuelle","Ponctuelle, une seule fois"],["hebdo","Régulière — chaque semaine"],["bimensuel","Régulière — toutes les deux semaines"],["mensuel","Régulière — chaque mois"]] }];
       s.push({ key:"etat_actuel", question:"Dans quel état est le terrain actuellement ?", type:"choice",
         options:[["entretenu","Bien entretenu"],["a_reprendre","À reprendre, un peu haut"]] });
       s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
-      pushQuantiteEtSuite(s, tarif, "surface à tondre", state);
+      pushQuantiteEtSuite(s, state);
       return s;
     }
   },
@@ -180,13 +180,13 @@ const METIER_TEMPLATES = {
     delaiBadge: "⏱️ Estimation en 3 minutes",
     intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation.",
     metierKey: "terrasse",
-    getSteps(state, tarif){
+    getSteps(state){
       const s = [{ key:"materiau", question:"Quel matériau préférez-vous ?", type:"choice",
         options:[["bois","Bois"],["composite","Composite"],["dallage","Dallage / carrelage extérieur"],["pas_decide","Pas encore décidé"]] }];
       s.push({ key:"support_actuel", question:"Quel est le support actuel ?", type:"choice",
         options:[["dalle_existante","Dalle béton existante"],["terre_nue","Terre nue, rien n'existe"]] });
       s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
-      pushQuantiteEtSuite(s, tarif, "surface de la terrasse", state);
+      pushQuantiteEtSuite(s, state);
       return s;
     }
   },
@@ -197,11 +197,11 @@ const METIER_TEMPLATES = {
     delaiBadge: "⏱️ Estimation en 3 minutes",
     intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation.",
     metierKey: "paysagiste_concepteur",
-    getSteps(state, tarif){
+    getSteps(state){
       const s = [{ key:"prestation", question:"Quel type de prestation recherchez-vous ?", type:"choice",
         options:[["plan_seul","Un plan d'aménagement seul"],["plan_suivi","Un plan avec suivi de chantier"]] }];
       s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
-      pushQuantiteEtSuite(s, tarif, "surface du terrain concerné", state);
+      pushQuantiteEtSuite(s, state);
       return s;
     }
   },
@@ -212,12 +212,12 @@ const METIER_TEMPLATES = {
     delaiBadge: "⏱️ Estimation en 3 minutes",
     intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation.",
     metierKey: "arboriste",
-    getSteps(state, tarif){
+    getSteps(state){
       const s = [{ key:"intervention", question:"Quel type d'intervention ?", type:"choice",
         options:[["taille","Taille / élagage"],["abattage","Abattage"],["dessouchage","Dessouchage"]] }];
       s.push({ key:"nb_arbres", question:"Combien d'arbres sont concernés ?", type:"number", placeholder:"Ex : 2" });
       s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
-      pushQuantiteEtSuite(s, tarif, "volume / ampleur du chantier", state);
+      pushQuantiteEtSuite(s, state);
       return s;
     }
   },
@@ -228,13 +228,13 @@ const METIER_TEMPLATES = {
     delaiBadge: "⏱️ Estimation en 3 minutes",
     intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation.",
     metierKey: "espaces_verts",
-    getSteps(state, tarif){
+    getSteps(state){
       const s = [{ key:"type_site", question:"De quel type de site s'agit-il ?", type:"choice",
         options:[["copropriete","Copropriété"],["particulier","Particulier"],["entreprise","Entreprise / site professionnel"]] }];
       s.push({ key:"frequence", question:"Quelle fréquence d'entretien souhaitez-vous ?", type:"choice",
         options:[["hebdo","Hebdomadaire"],["mensuel","Mensuelle"],["ponctuel","Ponctuelle"]] });
       s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
-      pushQuantiteEtSuite(s, tarif, "surface totale à entretenir", state);
+      pushQuantiteEtSuite(s, state);
       return s;
     }
   },
@@ -245,45 +245,52 @@ const METIER_TEMPLATES = {
     delaiBadge: "⏱️ Estimation en 3 minutes",
     intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation.",
     metierKey: "autre",
-    getSteps(state, tarif){
+    getSteps(state){
       const s = [{ key:"identite", question:"Vos coordonnées", type:"identity" }];
-      pushQuantiteEtSuite(s, tarif, "ampleur du projet", state);
+      pushQuantiteEtSuite(s, state);
       return s;
     }
   }
 };
 
-// Ajoute la question de "quantité" (dont l'unité — m², ml, m³ ou forfait —
-// vient directement de ce que l'artisan a lui-même configuré dans son
-// chiffrage détaillé), puis les questions communes (détails, délai, localisation).
-function pushQuantiteEtSuite(s, tarif, libelleSurface, state){
+// Ajoute la question "Décrivez votre projet", puis — une fois le projet
+// classifié par api/classifier-projet-formulaire.js (voir wireStepEvents) —
+// la question de "quantité" (dont l'unité — m², ml, m³ ou forfait — vient du
+// produit chiffrable choisi par l'artisan) et ses questions spécifiques.
+// Si aucun produit ne correspond (state.produitChoisi reste null), on saute
+// directement ces questions et on garde délai/localisation, utiles dans tous
+// les cas — le prospect sera de toute façon orienté vers la prise de
+// rendez-vous avec un technicien (voir renderResultat).
+function pushQuantiteEtSuite(s, state){
   s.push({ key:"details_projet", question:"Décrivez votre projet en quelques mots", type:"textarea",
     placeholder:"Ex : nature des travaux, contraintes particulières, délais souhaités…", optional:true, dictable:true });
 
-  // Questions choisies par l'IA parmi celles validées par l'artisan (voir
-  // api/selectionner-questions-formulaire.js), selon le projet décrit
-  // ci-dessus — remplies de façon asynchrone après ce step (voir
-  // wireStepEvents). Tant que rien n'est encore revenu (ou que l'artisan n'a
-  // configuré aucune question), ce tableau est vide et rien ne change.
-  if(state && Array.isArray(state.questionsDynamiques)){
-    state.questionsDynamiques.forEach(q=>{
-      const cle = 'dyn_' + q.id;
-      if(q.type === 'nombre'){
-        const unites = { ml:'mètres linéaires', m2:'m²', m3:'m³' };
-        s.push({ key:cle, question:q.label, type:"nombre_perso", placeholder:"Ex : 30", unite: unites[q.unite] || '', optional:true });
-      } else if(q.type === 'case'){
-        s.push({ key:cle, question:q.label, type:"case_perso", optional:true });
-      } else {
-        s.push({ key:cle, question:q.label, type:"texte_perso", optional:true });
-      }
-    });
-  }
+  const produit = state && state.produitChoisi;
+  if(produit){
+    // Questions spécifiques à CE produit, choisies par l'IA parmi celles
+    // validées par l'artisan (voir api/classifier-projet-formulaire.js) —
+    // remplies de façon asynchrone après le step "details_projet" (voir
+    // wireStepEvents).
+    if(Array.isArray(state.questionsDynamiques)){
+      state.questionsDynamiques.forEach(q=>{
+        const cle = 'dyn_' + q.id;
+        if(q.type === 'nombre'){
+          const unites = { ml:'mètres linéaires', m2:'m²', m3:'m³' };
+          s.push({ key:cle, question:q.label, type:"nombre_perso", placeholder:"Ex : 30", unite: unites[q.unite] || '', optional:true });
+        } else if(q.type === 'case'){
+          s.push({ key:cle, question:q.label, type:"case_perso", optional:true });
+        } else {
+          s.push({ key:cle, question:q.label, type:"texte_perso", optional:true });
+        }
+      });
+    }
 
-  if(tarif && tarif.unite && tarif.unite !== 'forfait' && tarif.prix){
-    const unites = { m2:'m²', ml:'mètres linéaires', m3:'m³' };
-    const libelleUnite = unites[tarif.unite] || tarif.unite;
-    s.push({ key:"quantite", question:`Quelle ${libelleSurface}, en ${libelleUnite} environ ?`, type:"number",
-      placeholder:"Ex : 30" });
+    if(produit.unite && produit.unite !== 'forfait' && produit.prix){
+      const unites = { m2:'m²', ml:'mètres linéaires', m3:'m³' };
+      const libelleUnite = unites[produit.unite] || produit.unite;
+      s.push({ key:"quantite", question:`Pour "${produit.nom}", quelle quantité en ${libelleUnite} environ ?`, type:"number",
+        placeholder:"Ex : 30" });
+    }
   }
 
   s.push({ key:"delai", question:"Sous quel délai souhaitez-vous réaliser ce projet ?", type:"choice",
@@ -351,7 +358,6 @@ async function init(){
   const metiersListe = Array.isArray(draft.metier) ? draft.metier : (draft.metier ? [draft.metier] : []);
   const metierChoisi = metiersListe[0] || 'autre';
   const template = METIER_TEMPLATES[metierChoisi] || METIER_TEMPLATES.autre;
-  const tarifMetier = (draft.tarification_detail && draft.tarification_detail[metierChoisi]) || null;
   const tvaTaux = draft.tva_taux || 20;
   const brandColor = draft.couleur || '#E8622C';
 
@@ -532,14 +538,14 @@ async function init(){
       '<span>Paiement annulé — vous pouvez réessayer quand vous voulez.</span>';
   }
 
-  runWizard(template, brandColor, draft.id, tarifMetier, tvaTaux, draft);
+  runWizard(template, brandColor, draft.id, tvaTaux, draft);
 }
 
-function runWizard(template, brandColor, draftId, tarifMetier, tvaTaux, draftInfo){
+function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
   const state = { step:0 };
   const cardEl = document.getElementById('card');
   const progressEl = document.getElementById('progress');
-  function getSteps(){ return template.getSteps(state, tarifMetier); }
+  function getSteps(){ return template.getSteps(state); }
   function renderProgress(){
     const steps = getSteps(); progressEl.innerHTML='';
     const total = steps.length+1;
@@ -608,8 +614,9 @@ function runWizard(template, brandColor, draftId, tarifMetier, tvaTaux, draftInf
         '</div>'+
         '<div style="font-size:12px; color:#8a9490; margin-top:6px;">Facultatif — passez si vous préférez.</div>';
     }
+    const libelleNext = (s.key === 'identite') ? 'Recevoir mon estimation →' : 'Continuer';
     html += '<div class="nav-row"><button class="btn btn-ghost" id="btnBack"'+(state.step===0?" style='visibility:hidden'":'')+'>← Retour</button>'+
-      '<button class="btn btn-primary" id="btnNext">Continuer</button></div>';
+      '<button class="btn btn-primary" id="btnNext">'+libelleNext+'</button></div>';
     cardEl.innerHTML = html;
     wireStepEvents(s, steps);
     document.getElementById('btnNext').disabled = !canProceed(s);
@@ -742,27 +749,43 @@ function runWizard(template, brandColor, draftId, tarifMetier, tvaTaux, draftInf
     document.getElementById('btnNext').addEventListener('click', async ()=>{
       if(!canProceed(s)) return;
       // Juste après que le prospect a décrit son projet : si l'artisan a
-      // préparé des questions (formulaire_questions_pool), on demande à
-      // l'IA lesquelles sont pertinentes pour CE projet avant de continuer
-      // — jamais bloquant, et sans effet si aucun pool n'est configuré.
-      if(s.key === 'details_projet' && draftInfo && Array.isArray(draftInfo.formulaire_questions_pool) && draftInfo.formulaire_questions_pool.length && !state.questionsDynamiquesChargees){
-        const btnNext = document.getElementById('btnNext');
-        const texteOriginal = btnNext.textContent;
-        btnNext.disabled = true;
-        btnNext.textContent = 'Analyse de votre projet…';
-        try{
-          const res = await fetch('/api/selectionner-questions-formulaire', {
-            method:'POST', headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({ draftId, description: state.details_projet || '' })
-          });
-          const data = await res.json();
-          state.questionsDynamiques = (data && data.success && Array.isArray(data.questions)) ? data.questions : [];
-        } catch(err){
+      // défini des produits chiffrables, on demande à l'IA si ce projet
+      // correspond à l'un d'eux (api/classifier-projet-formulaire.js) avant
+      // de continuer — jamais bloquant : en cas d'échec ou d'absence de
+      // correspondance, le projet est simplement considéré non chiffrable
+      // (routage vers la prise de rendez-vous technicien, voir renderResultat).
+      if(s.key === 'details_projet' && !state.questionsDynamiquesChargees){
+        const produitsConfigures = draftInfo && Array.isArray(draftInfo.produits_chiffrables) ? draftInfo.produits_chiffrables : [];
+        if(!produitsConfigures.length){
+          state.produitChoisi = null;
           state.questionsDynamiques = [];
-        } finally {
           state.questionsDynamiquesChargees = true;
-          btnNext.disabled = false;
-          btnNext.textContent = texteOriginal;
+        } else {
+          const btnNext = document.getElementById('btnNext');
+          const texteOriginal = btnNext.textContent;
+          btnNext.disabled = true;
+          btnNext.textContent = 'Analyse de votre projet…';
+          try{
+            const res = await fetch('/api/classifier-projet-formulaire', {
+              method:'POST', headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({ draftId, description: state.details_projet || '' })
+            });
+            const data = await res.json();
+            if(data && data.success && data.chiffrable){
+              state.produitChoisi = data.produit;
+              state.questionsDynamiques = Array.isArray(data.questions) ? data.questions : [];
+            } else {
+              state.produitChoisi = null;
+              state.questionsDynamiques = [];
+            }
+          } catch(err){
+            state.produitChoisi = null;
+            state.questionsDynamiques = [];
+          } finally {
+            state.questionsDynamiquesChargees = true;
+            btnNext.disabled = false;
+            btnNext.textContent = texteOriginal;
+          }
         }
       }
       if(state.step<steps.length-1){ state.step+=1; renderProgress(); renderStep(); }
@@ -774,20 +797,21 @@ function runWizard(template, brandColor, draftId, tarifMetier, tvaTaux, draftInf
   // Calcule un prix indicatif si l'artisan a configuré un chiffrage précis
   // pour ce métier (unité + prix unitaire, saisis dans mes-elements.html).
   function calculerEstimation(){
-    if(!tarifMetier || !tarifMetier.prix) return { chiffrable:false };
+    const produit = state.produitChoisi;
+    if(!produit || !produit.prix) return { chiffrable:false };
     let montantHT;
-    if(tarifMetier.unite === 'forfait'){
-      montantHT = tarifMetier.prix;
+    if(produit.unite === 'forfait'){
+      montantHT = produit.prix;
     } else {
       const quantite = parseFloat(state.quantite);
       if(!quantite || quantite <= 0) return { chiffrable:false };
-      montantHT = quantite * tarifMetier.prix;
-      if(tarifMetier.minimum) montantHT = Math.max(montantHT, tarifMetier.minimum);
+      montantHT = quantite * produit.prix;
+      if(produit.minimum) montantHT = Math.max(montantHT, produit.minimum);
     }
     const montantTTC = +(montantHT * (1 + tvaTaux/100)).toFixed(2);
     const remisePourcent = 10; // remise indicative, à confirmer par l'artisan selon le volume réel
     const montantApresRemise = +(montantTTC * (1 - remisePourcent/100)).toFixed(2);
-    return { chiffrable:true, montantHT:+montantHT.toFixed(2), montantTTC, remisePourcent, montantApresRemise };
+    return { chiffrable:true, montantHT:+montantHT.toFixed(2), montantTTC, remisePourcent, montantApresRemise, produit, quantite: state.quantite };
   }
 
   async function enregistrerDemande(){
@@ -795,8 +819,30 @@ function runWizard(template, brandColor, draftId, tarifMetier, tvaTaux, draftInf
     document.getElementById('progress').style.display = 'none';
 
     // Sépare les champs identité (colonnes dédiées) du reste (stocké en jsonb "reponses").
-    const { nom, prenom, telephone, telephoneVerifie, email, ...reste } = state;
+    // produitChoisi est retiré de "reste" : déjà repris en détail dans "recap"
+    // ci-dessous, pas besoin de le dupliquer tel quel dans reponses.
+    const { nom, prenom, telephone, telephoneVerifie, email, produitChoisi, ...reste } = state;
     const estimation = calculerEstimation();
+
+    // Récapitulatif détaillé (cas chiffrable uniquement) envoyé à
+    // api/notify-nouvelle-demande.js pour un email complet, pas juste un
+    // montant sec — voir sa gestion du champ optionnel "recap".
+    let recap = null;
+    if(estimation.chiffrable){
+      const unitesLabels = { m2:'m²', ml:'ml', m3:'m³', forfait:'forfait' };
+      recap = [{ label:'Prestation', valeur: estimation.produit.nom }];
+      if(estimation.produit.unite !== 'forfait' && state.quantite){
+        recap.push({ label:'Quantité', valeur: state.quantite + ' ' + (unitesLabels[estimation.produit.unite] || '') });
+      }
+      if(Array.isArray(state.questionsDynamiques)){
+        state.questionsDynamiques.forEach(q=>{
+          const val = state['dyn_' + q.id];
+          if(val === undefined || val === null || val === '') return;
+          recap.push({ label: q.label, valeur: q.type === 'case' ? (val ? 'Oui' : 'Non') : val });
+        });
+      }
+      recap.push({ label:'Montant estimé', valeur: estimation.montantTTC + ' € TTC' });
+    }
 
     let error = null;
     let leadId = null;
@@ -806,7 +852,8 @@ function runWizard(template, brandColor, draftId, tarifMetier, tvaTaux, draftInf
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           draftId, nom, prenom, telephone, telephoneVerifie, email,
-          reponses: { ...reste, estimation_indicative: estimation.chiffrable ? estimation.montantTTC : null }
+          reponses: { ...reste, estimation_indicative: estimation.chiffrable ? estimation.montantTTC : null },
+          recap
         })
       });
       const data = await resp.json().catch(() => ({}));
@@ -833,7 +880,7 @@ function runWizard(template, brandColor, draftId, tarifMetier, tvaTaux, draftInf
   }
 
   function renderResultat(estimation, leadId){
-    let priceBlock;
+    let priceBlock, disclaimer;
     if(estimation.chiffrable){
       priceBlock =
         '<div class="result-box">'+
@@ -845,79 +892,22 @@ function runWizard(template, brandColor, draftId, tarifMetier, tvaTaux, draftInf
           '🎁 <strong>Remise de '+estimation.remisePourcent+'% possible selon le projet</strong><br/>'+
           'Soit <strong>'+estimation.montantApresRemise+' €</strong> au lieu de '+estimation.montantTTC+' € — à confirmer avec l\'artisan.'+
         '</div>';
+      disclaimer = 'Cette estimation reste indicative et devra être confirmée par l\'artisan lors d\'un appel téléphonique. Vous recevrez ce récapitulatif par email.';
     } else {
-      priceBlock = '<div class="result-box"><div class="result-note">Votre projet nécessite une évaluation personnalisée par l\'artisan.</div></div>';
+      // Projet non chiffrable automatiquement (aucun produit configuré par
+      // l'artisan ne correspond) : on oriente directement vers la vraie
+      // prise de rendez-vous (calendrier natif de l'artisan), jamais bloqué.
+      priceBlock =
+        '<div class="result-box"><div class="result-note">Ce projet nécessite l\'expertise d\'un technicien sur place pour vous donner un prix juste.</div></div>'+
+        '<a class="btn btn-primary" style="display:block; width:100%; text-align:center; text-decoration:none; margin-top:10px; box-sizing:border-box;" href="/prendre-rdv.html?id='+encodeURIComponent(draftId)+'" target="_blank" rel="noopener">📅 Prendre rendez-vous</a>';
+      disclaimer = 'Vous recevrez une confirmation de votre demande par email.';
     }
 
     cardEl.innerHTML =
       '<div class="success-icon">✅</div>'+
       '<div class="question" style="text-align:center;">Merci '+(state.prenom||'')+' !</div>'+
       priceBlock+
-      '<p class="disclaimer">Cette estimation reste indicative et devra être confirmée par l\'artisan lors d\'un appel téléphonique. Vous recevrez ce récapitulatif par email.</p>'+
-      '<div id="rdvSection">'+
-        '<button class="btn btn-primary" id="btnVoirCreneaux" style="width:100%; margin-top:10px;">📅 Choisir un créneau pour être rappelé·e</button>'+
-      '</div>';
-
-    document.getElementById('btnVoirCreneaux').addEventListener('click', () => afficherCreneaux(leadId));
-  }
-
-  // Génère les 5 prochains jours ouvrés, avec 2 créneaux chacun — solution
-  // simple sans dépendre d'un vrai système de calendrier par artisan.
-  function genererCreneaux(){
-    const creneaux = [];
-    let date = new Date();
-    let joursAjoutes = 0;
-    while(creneaux.length < 10){
-      date = new Date(date.getTime() + 24*60*60*1000);
-      const jourSemaine = date.getDay();
-      if(jourSemaine === 0 || jourSemaine === 6) continue; // week-end exclu
-      [10, 15].forEach(heure => {
-        const creneau = new Date(date);
-        creneau.setHours(heure, 0, 0, 0);
-        creneaux.push(creneau);
-      });
-    }
-    return creneaux.slice(0, 8);
-  }
-
-  function afficherCreneaux(leadId){
-    const section = document.getElementById('rdvSection');
-    const creneaux = genererCreneaux();
-    const optionsHtml = creneaux.map(d => {
-      const label = new Intl.DateTimeFormat('fr-FR', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit', timeZone:'Europe/Paris' }).format(d);
-      return '<div class="option" data-iso="'+d.toISOString()+'">'+label+'</div>';
-    }).join('');
-    section.innerHTML =
-      '<div class="step-label" style="margin-top:12px;">Choisissez un créneau d\'appel</div>'+
-      '<div class="options" id="creneauxOptions">'+optionsHtml+'</div>';
-    section.querySelectorAll('.option').forEach(el => {
-      el.addEventListener('click', () => confirmerCreneau(el.dataset.iso, leadId));
-    });
-  }
-
-  async function confirmerCreneau(iso, leadId){
-    const section = document.getElementById('rdvSection');
-    section.innerHTML = '<div style="text-align:center; padding:14px 0; color:#5b6b64; font-size:13.5px;">Confirmation en cours…</div>';
-    const label = new Intl.DateTimeFormat('fr-FR', { weekday:'long', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit', timeZone:'Europe/Paris' }).format(new Date(iso));
-    try {
-      await fetch('/api/notify-nouvelle-demande', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          draftId, nom: state.nom, prenom: state.prenom, telephone: state.telephone,
-          telephoneVerifie: state.telephoneVerifie, email: state.email,
-          reponses: { rdv_choisi: iso, rdv_choisi_libelle: label }
-        })
-      });
-      section.innerHTML =
-        '<div class="result-box" style="margin-top:12px;">'+
-          '<div class="result-note">✅ Rendez-vous demandé</div>'+
-          '<div class="result-price" style="font-size:18px;">'+label+'</div>'+
-          '<div class="result-note">L\'artisan vous appellera à ce créneau, sous réserve de confirmation.</div>'+
-        '</div>';
-    } catch (e) {
-      section.innerHTML = '<div style="text-align:center; padding:10px 0; color:#c0392b; font-size:13.5px;">Impossible de confirmer pour le moment. Réessayez.</div>';
-    }
+      '<p class="disclaimer">'+disclaimer+'</p>';
   }
 
   renderProgress();

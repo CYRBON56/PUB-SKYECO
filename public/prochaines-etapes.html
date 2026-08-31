@@ -21,14 +21,10 @@
     cursor:pointer; white-space:nowrap; transition:all 0.15s; background:#fff;
   }
   .selecteur-btn.couleur-vitrine { border-color:#14312a; color:#14312a; }
-  .selecteur-btn.couleur-essentiel { border-color:#8a9891; color:#8a9891; }
-  .selecteur-btn.couleur-pro { border-color:#1e6f4c; color:#1e6f4c; }
-  .selecteur-btn.couleur-business { border-color:#e8622c; color:#e8622c; }
+  .selecteur-btn.couleur-dashboard { border-color:#1e6f4c; color:#1e6f4c; }
 
   .selecteur-btn.couleur-vitrine.actif { background:#14312a; color:#fff; }
-  .selecteur-btn.couleur-essentiel.actif { background:#8a9891; color:#fff; }
-  .selecteur-btn.couleur-pro.actif { background:#1e6f4c; color:#fff; }
-  .selecteur-btn.couleur-business.actif { background:#e8622c; color:#fff; }
+  .selecteur-btn.couleur-dashboard.actif { background:#1e6f4c; color:#fff; }
 
   .wrap {
     position:relative; z-index:2; max-width:760px; margin:32px auto; padding:40px 40px 56px;
@@ -91,7 +87,7 @@
   .formules-section { margin:44px 0; }
   .formules-section h2 { font-size:1.15rem; margin-bottom:6px; }
   .formules-section .sub { font-size:0.85rem; color:#5b6b64; margin-bottom:18px; }
-  .formules-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .formules-grid { display:grid; grid-template-columns:1fr; max-width:360px; margin:0 auto; gap:12px; }
   .formule-card { border:1.5px solid #e2e8e5; border-radius:12px; padding:16px; position:relative; }
   .formule-card.recommandee { border-color:#1e6f4c; }
   .formule-badge {
@@ -122,9 +118,7 @@
 </head>
 <body>
 <iframe class="bg-preview active" id="bgPreviewVitrine" src=""></iframe>
-<iframe class="bg-preview" id="bgPreviewEssentiel" src="/mon-dashboard-demo-essentiel.html"></iframe>
-<iframe class="bg-preview" id="bgPreviewPro" src="/mon-dashboard-demo-pro.html"></iframe>
-<iframe class="bg-preview" id="bgPreviewBusiness" src="/mon-dashboard-demo-business.html"></iframe>
+<iframe class="bg-preview" id="bgPreviewDashboard" src="/mon-dashboard-demo.html"></iframe>
 <div class="bg-overlay"></div>
 
 <div class="wrap">
@@ -133,9 +127,7 @@
 
   <div class="selecteur-fond">
     <button class="selecteur-btn couleur-vitrine actif" data-cible="bgPreviewVitrine">👁️ Voir un exemple de formulaire vitrine</button>
-    <button class="selecteur-btn couleur-essentiel" data-cible="bgPreviewEssentiel">Tableau de bord Essentiel</button>
-    <button class="selecteur-btn couleur-pro" data-cible="bgPreviewPro">Tableau de bord Pro</button>
-    <button class="selecteur-btn couleur-business" data-cible="bgPreviewBusiness">Tableau de bord Business</button>
+    <button class="selecteur-btn couleur-dashboard" data-cible="bgPreviewDashboard">Voir le tableau de bord</button>
   </div>
 
   <p class="intro">
@@ -197,50 +189,20 @@
   </div>
 
   <div class="formules-section">
-    <h2>Nos formules</h2>
-    <p class="sub">Pour vous donner une idée dès maintenant — vous choisirez une fois votre vraie vitrine validée.</p>
+    <h2>Notre formule</h2>
+    <p class="sub">Pour vous donner une idée dès maintenant — vous validerez une fois votre vraie vitrine prête.</p>
     <div class="formules-grid">
-      <div class="formule-card" data-forfait="1" style="cursor:pointer;">
-        <div class="formule-badge" style="position:static; display:inline-block; margin-bottom:6px; background:#8a9891;">Essentiel</div>
-        <div class="formule-nom">Vitrine simple</div>
-        <div class="formule-prix">39,90 € <span>HT/mois</span></div>
-        <div style="font-size:0.7rem; color:#8a9891; margin-top:-6px; margin-bottom:8px;">soit 47,88 € TTC/mois</div>
-        <ul class="formule-features">
-          <li>Formulaire vitrine en ligne</li>
-          <li>SMS + email automatiques</li>
-        </ul>
-      </div>
-      <div class="formule-card recommandee" data-forfait="2" style="cursor:pointer;">
-        <div class="formule-badge">Pro — Recommandée</div>
-        <div class="formule-nom" style="margin-top:6px;">Vitrine + Dashboard</div>
-        <div class="formule-prix">59,90 € <span>HT/mois</span></div>
-        <div style="font-size:0.7rem; color:#8a9891; margin-top:-6px; margin-bottom:8px;">soit 71,88 € TTC/mois</div>
-        <ul class="formule-features">
-          <li>Tout le Forfait 1</li>
-          <li>Suivi clics et coûts</li>
-          <li>Gestion mots-clés, photos, vidéo</li>
-        </ul>
-      </div>
       <div class="formule-card" data-forfait="3" style="cursor:pointer;">
-        <div class="formule-badge" style="position:static; display:inline-block; margin-bottom:6px; background:#e8622c;">Business</div>
-        <div class="formule-nom">Relances SMS et devis avec signature électronique</div>
-        <div class="formule-prix">79,90 € <span>HT/mois</span></div>
-        <div style="font-size:0.7rem; color:#8a9891; margin-top:-6px; margin-bottom:8px;">soit 95,88 € TTC/mois</div>
+        <div class="formule-nom">Skyeco Pro</div>
+        <div style="display:inline-block; background:#fdf1ea; color:#e8622c; font-size:0.68rem; font-weight:700; padding:3px 9px; border-radius:999px; margin:4px 0 6px;">🎉 Offre de lancement — 12 mois</div>
+        <div class="formule-prix">39,90 € <span>HT/mois</span></div>
+        <div style="font-size:0.7rem; color:#8a9891; margin-top:-6px; margin-bottom:2px;">soit 47,88 € TTC/mois, pendant 12 mois</div>
+        <div style="font-size:0.72rem; color:#5b6b64; margin-bottom:8px;">Puis 79,90 € HT/mois (95,88 € TTC/mois)</div>
         <ul class="formule-features">
-          <li>Tout le Forfait 2</li>
+          <li>Formulaire vitrine en ligne + campagne Google Ads</li>
+          <li>Tableau de bord complet, suivi clics et coûts</li>
           <li>Relance SMS automatique</li>
-          <li>Devis signature électronique</li>
-        </ul>
-      </div>
-      <div class="formule-card" data-forfait="4" style="cursor:pointer;">
-        <div class="formule-badge" style="position:static; display:inline-block; margin-bottom:6px; background:#14312a;">Premium</div>
-        <div class="formule-nom">Vitrine référencée</div>
-        <div class="formule-prix">99,90 € <span>HT/mois</span></div>
-        <div style="font-size:0.7rem; color:#8a9891; margin-top:-6px; margin-bottom:8px;">soit 119,88 € TTC/mois</div>
-        <ul class="formule-features">
-          <li>Tout le Forfait 3</li>
-          <li>URL personnalisée</li>
-          <li>Fondations référencement Google</li>
+          <li>Devis avec signature électronique</li>
         </ul>
       </div>
     </div>
@@ -372,9 +334,7 @@
 
   const bgFrames = {
     bgPreviewVitrine: document.getElementById('bgPreviewVitrine'),
-    bgPreviewEssentiel: document.getElementById('bgPreviewEssentiel'),
-    bgPreviewPro: document.getElementById('bgPreviewPro'),
-    bgPreviewBusiness: document.getElementById('bgPreviewBusiness'),
+    bgPreviewDashboard: document.getElementById('bgPreviewDashboard'),
   };
 
   const overlay = document.querySelector('.bg-overlay');

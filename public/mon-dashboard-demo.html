@@ -19,8 +19,13 @@
   .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:10px; }
   h1 { font-size:1.3rem; }
   .demo-badge { background:#eaf4ef; color:#1e6f4c; font-size:0.72rem; font-weight:700; padding:5px 12px; border-radius:999px; white-space:nowrap; }
-  .intro-funnel { font-size:0.88rem; color:#5b6b64; line-height:1.6; margin-bottom:20px; }
+  .intro-funnel { font-size:0.88rem; color:#5b6b64; line-height:1.6; margin-bottom:14px; }
   .intro-funnel strong { color:#14312a; }
+  .btn-voir-vitrine-demo {
+    display:inline-flex; align-items:center; gap:6px; background:#fff; border:1.5px solid #1e6f4c; color:#1e6f4c;
+    font-size:0.82rem; font-weight:700; text-decoration:none; padding:8px 16px; border-radius:999px; margin-bottom:20px;
+  }
+  .btn-voir-vitrine-demo:hover { background:#eaf4ef; }
   .hint-clic {
     display:inline-flex; align-items:center; gap:6px; background:#fdf3ee; border:1px solid #f0c4ad; color:#c74f20;
     font-size:0.78rem; font-weight:700; padding:6px 12px; border-radius:999px; margin-bottom:22px;
@@ -34,6 +39,19 @@
 
   .solde-box { background:#fff; border:2px solid #1e6f4c; border-radius:14px; padding:20px; margin-bottom:16px; }
   .solde-box h3 { font-size:0.9rem; margin-bottom:12px; }
+
+  .abonnement-box { background:#fff; border:1px solid #eef1f0; border-radius:14px; padding:20px; margin-bottom:16px; }
+  .abonnement-box h3 { font-size:0.9rem; margin-bottom:6px; }
+  .abonnement-box .sub { font-size:0.8rem; color:#5b6b64; margin-bottom:14px; line-height:1.5; }
+  .abonnement-actions { display:flex; gap:10px; flex-wrap:wrap; }
+  .btn-pause-abonnement-demo {
+    background:#f2f4f1; color:#14312a; border:1.5px solid #d7dedb; border-radius:10px; padding:9px 15px;
+    font-size:0.8rem; font-weight:700; cursor:default;
+  }
+  .btn-resilier-demo {
+    background:none; color:#8a9891; border:none; font-size:0.8rem; font-weight:600; cursor:default;
+    text-decoration:underline;
+  }
   .solde-bar-track { background:#eef1f0; border-radius:8px; height:11px; overflow:hidden; margin-bottom:10px; }
   .solde-bar-fill { background:#e8622c; height:100%; width:58%; }
   .solde-stats { display:flex; justify-content:space-between; font-size:0.82rem; color:#5b6b64; }
@@ -111,6 +129,9 @@
   .statut-badge.devis-envoye { background:#fdf1ea; color:#e8622c; }
   .statut-badge.signe { background:#eaf4ef; color:#14312a; }
   .statut-badge.rdv-pris { background:#eaf0fb; color:#2a4d8f; }
+  .statut-badge.rappel-demande { background:#f1eefb; color:#5b3fa0; }
+  .btn-rappeler-demo { background:#f2f4f1; color:#14312a; font-size:0.68rem; font-weight:700; padding:4px 9px; border-radius:999px; border:none; white-space:nowrap; }
+  .stat-detail { font-size:0.68rem; color:#8a9891; margin-top:6px; line-height:1.4; }
   .btn-pdf-demo { background:#f2f4f1; color:#14312a; font-size:0.68rem; font-weight:700; padding:4px 9px; border-radius:999px; border:none; white-space:nowrap; }
 
   .rdv-panel { background:#fff; border-radius:14px; padding:20px; margin-bottom:16px; }
@@ -191,11 +212,13 @@
   <div id="introFunnel" style="display:none;" class="intro-funnel">
     Voici, avec des données fictives sur <strong>6 mois</strong>, à quoi ressemblera votre tableau de bord une fois votre vitrine en ligne.
   </div>
+  <a href="/vitrine-demo.html" target="_blank" rel="noopener" id="btnVoirVitrineDemo" class="btn-voir-vitrine-demo" style="display:none;">👁️ Voir un exemple de vitrine publiée</a>
   <div id="hintClic" style="display:none;" class="hint-clic">💡 Cliquez sur un encart pour voir à quoi il sert</div>
 
   <div class="stats-row">
-    <div class="stat-card explicable" data-explain-title="📥 Demandes reçues" data-explain="Chaque fois qu'un client remplit votre formulaire ou vous appelle, une nouvelle demande apparaît ici automatiquement, avec ses coordonnées et le détail de son projet.">
+    <div class="stat-card explicable" data-explain-title="📥 Demandes reçues" data-explain="Chaque demande apparaît ici automatiquement, quel que soit le canal utilisé par le client : formulaire complet, bouton rapide « être rappelé », ou réservation directe d'un rendez-vous.">
       <div class="stat-value">112</div><div class="stat-label">demandes reçues (6 mois)</div>
+      <div class="stat-detail">dont 21 via « être rappelé », 17 via prise de rendez-vous</div>
     </div>
     <div class="stat-card explicable" data-explain-title="🖱️ Clics publicitaires" data-explain="Le nombre de visiteurs arrivés sur votre vitrine en cliquant sur votre publicité Google Ads ce mois-ci — c'est ce budget qui vous amène ces visiteurs.">
       <div class="stat-value">42</div><div class="stat-label">clics ce mois-ci</div>
@@ -218,17 +241,26 @@
     <button class="btn-pause-demo">⏸️ Mettre en pause la diffusion</button>
   </div>
 
+  <div class="abonnement-box explicable" data-explain-title="⏸️ Mettre en pause votre abonnement" data-explain="En cas de baisse d'activité (vacances, carnet de commandes plein...), vous pouvez mettre votre abonnement en pause 1 mois sans être prélevé — votre vitrine n'est simplement plus visible pendant ce temps, puis reprend automatiquement. Vous pouvez aussi résilier à tout moment.">
+    <h3>Gérer mon abonnement</h3>
+    <div class="sub">Une baisse d'activité, des vacances, un carnet de commandes plein ? Vous gardez la main sur votre forfait à tout moment.</div>
+    <div class="abonnement-actions">
+      <button class="btn-pause-abonnement-demo">⏸️ Mettre en pause 1 mois (sans prélèvement)</button>
+      <button class="btn-resilier-demo">Résilier mon abonnement</button>
+    </div>
+  </div>
+
   <div class="ads-section">
     <h2>🎯 Pilotage Google Ads</h2>
     <div class="ads-sub">Le détail de votre campagne — où vous êtes visible, combien investir, quels mots-clés fonctionnent, et à quel moment vos clics arrivent.</div>
 
-    <div class="ads-souspanel explicable" data-explain-title="📍 Zone d'affichage" data-explain="Vous choisissez la zone géographique où vos annonces apparaissent — un client trop loin de chez vous ne verra jamais votre publicité.">
+    <div class="ads-souspanel explicable" data-explain-title="📍 Zone d'affichage" data-explain="Vos annonces ciblent votre département — un client d'un autre département ne verra jamais votre publicité. Vous pouvez décrire votre secteur d'intervention en texte libre, à titre indicatif.">
       <h3>Où voulez-vous être visible ?</h3>
       <div class="zone-affichage">
-        <span>Brech, Auray, Vannes et 20 km autour</span>
+        <span>Morbihan (56)</span>
         <button type="button" class="btn-modifier-zone-demo">✏️ Modifier</button>
       </div>
-      <div class="estim-note">Vos annonces ne se déclenchent que pour des recherches faites dans cette zone (ou à proximité).</div>
+      <div class="estim-note">Vos annonces ne se déclenchent que pour des recherches faites dans ce département.</div>
     </div>
 
     <div class="ads-souspanel explicable" data-explain-title="✨ Mots-clés" data-explain="On identifie automatiquement les recherches Google les plus fréquentes pour votre métier, pour que votre annonce apparaisse au bon moment, pour la bonne recherche.">
@@ -306,16 +338,18 @@
     </div>
   </div>
 
-  <div class="liste-panel explicable" data-explain-title="📋 Demandes d'estimation" data-explain="Chaque demande reçue apparaît ici avec son statut — nouveau, devis envoyé, rendez-vous pris, ou signé — mis à jour automatiquement, sans rien à faire de votre côté.">
+  <div class="liste-panel explicable" data-explain-title="📋 Demandes d'estimation" data-explain="Chaque demande reçue apparaît ici avec son statut et son canal d'entrée — nouveau, rappel demandé, rendez-vous pris, devis envoyé, ou signé — mis à jour automatiquement, sans rien à faire de votre côté.">
     <h3>Demandes d'estimation (6 derniers mois)</h3>
     <table>
       <thead><tr><th>Date</th><th>Nom</th><th>Adresse</th><th>Statut</th><th></th></tr></thead>
       <tbody>
         <tr><td>26/08</td><td>M. Le Roux</td><td>Vannes</td><td><span class="statut-badge">nouveau</span></td><td>—</td></tr>
+        <tr><td>25/08</td><td>M. Cadoret</td><td>Auray</td><td><span class="statut-badge rappel-demande">📞 Rappel demandé</span></td><td><button class="btn-rappeler-demo">📞 Rappeler</button></td></tr>
         <tr><td>24/08</td><td>Mme Guillou</td><td>Auray</td><td><span class="statut-badge devis-envoye">devis envoyé</span></td><td><button class="btn-pdf-demo">📄 Voir le PDF</button></td></tr>
         <tr><td>21/08</td><td>M. Even</td><td>Brech</td><td><span class="statut-badge signe">✓ signé électroniquement</span></td><td><button class="btn-pdf-demo">📄 Voir le PDF</button></td></tr>
         <tr><td>19/08</td><td>Mme Le Bris</td><td>Vannes</td><td><span class="statut-badge devis-envoye">devis envoyé</span></td><td><button class="btn-pdf-demo">📄 Voir le PDF</button></td></tr>
         <tr><td>12/08</td><td>M. Kervadec</td><td>Pluvigner</td><td><span class="statut-badge rdv-pris">📅 RDV pris</span></td><td>—</td></tr>
+        <tr><td>02/08</td><td>Mme Bernier</td><td>Vannes</td><td><span class="statut-badge rappel-demande">📞 Rappel demandé</span></td><td><button class="btn-rappeler-demo">📞 Rappeler</button></td></tr>
         <tr><td>28/07</td><td>Mme Tanguy</td><td>Auray</td><td><span class="statut-badge signe">✓ signé électroniquement</span></td><td><button class="btn-pdf-demo">📄 Voir le PDF</button></td></tr>
         <tr><td>15/07</td><td>M. Le Gall</td><td>Vannes</td><td><span class="statut-badge signe">✓ signé électroniquement</span></td><td><button class="btn-pdf-demo">📄 Voir le PDF</button></td></tr>
         <tr><td>02/06</td><td>Mme Robic</td><td>Brech</td><td><span class="statut-badge rdv-pris">📅 RDV pris</span></td><td>—</td></tr>
@@ -405,6 +439,7 @@
     document.getElementById('lienRetour').href = '/apercu.html?id=' + encodeURIComponent(draftId);
     document.getElementById('lienRetour').style.display = 'inline-flex';
     document.getElementById('introFunnel').style.display = 'block';
+    document.getElementById('btnVoirVitrineDemo').style.display = 'inline-flex';
     document.getElementById('hintClic').style.display = 'inline-flex';
     document.getElementById('badgeHaut').textContent = 'Aperçu de votre futur tableau de bord';
     document.getElementById('btnContinuer').href = '/choisir-forfait.html?id=' + encodeURIComponent(draftId);

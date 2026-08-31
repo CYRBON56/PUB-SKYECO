@@ -312,6 +312,13 @@
       const previewDesc = document.getElementById('previewDesc');
       const sauvegardeNote = document.getElementById('annonceSauvegardeNote');
 
+      // Domaine réellement affiché dans l'annonce Google, dérivé de l'hôte
+      // courant plutôt que codé en dur — reste juste automatiquement le
+      // jour où un nom de domaine personnalisé (app.skyeco.fr) remplace
+      // pub-skyeco-23ue.vercel.app, sans nouvelle modification de ce fichier.
+      const previewDomaine = document.getElementById('previewDomaine');
+      if (previewDomaine && window.location.hostname) previewDomaine.textContent = window.location.hostname;
+
       const defauts = genererAnnoncePropos();
       const titresDepart = Array.isArray(draftAnnonceTitres) && draftAnnonceTitres.length ? draftAnnonceTitres : defauts.titres;
       const descriptionsDepart = Array.isArray(draftAnnonceDescriptions) && draftAnnonceDescriptions.length ? draftAnnonceDescriptions : defauts.descriptions;

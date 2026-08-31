@@ -90,6 +90,12 @@
     font-size:0.82rem; font-weight:700; cursor:pointer; white-space:nowrap;
   }
   .motscles-note { font-size:0.76rem; color:#8a9891; margin-top:10px; }
+  .motscles-potentiel {
+    margin-top:14px; background:#fdf3ee; border:1.5px solid #f0c4ad; border-radius:10px;
+    padding:14px 16px;
+  }
+  .motscles-potentiel .chiffre { font-size:1.4rem; font-weight:800; color:#e8622c; }
+  .motscles-potentiel .detail { font-size:0.82rem; color:#5b6b64; margin-top:4px; line-height:1.5; }
 
   .slider-row { display:flex; align-items:center; gap:14px; margin-bottom:14px; }
   .slider-row input[type="range"] { flex:1; accent-color:#1e6f4c; height:6px; }
@@ -268,10 +274,14 @@
         <button type="button" id="btnAjouterMotCleManuel">+ Ajouter</button>
       </div>
       <div class="motscles-note" id="motsClesNote"></div>
+      <div class="motscles-potentiel" id="motsClesPotentiel" style="display:none;">
+        <div class="chiffre" id="motsClesPotentielChiffre">—</div>
+        <div class="detail" id="motsClesPotentielDetail"></div>
+      </div>
     </div>
 
     <div class="ads-souspanel">
-      <h3>Combien de clics voulez-vous ?</h3>
+      <h3>Vous voulez viser plus de clics ? Ajustez votre budget</h3>
       <div class="slider-row">
         <input type="range" id="clicsSlider" min="1" max="150" value="20">
         <span class="slider-value" id="clicsSliderValue">20 clics</span>
@@ -624,6 +634,9 @@
     const sliderValue = document.getElementById('clicsSliderValue');
     const budgetValue = document.getElementById('budgetNecessaireValue');
     const volumeNote = document.getElementById('volumeNote');
+    const potentielBox = document.getElementById('motsClesPotentiel');
+    const potentielChiffre = document.getElementById('motsClesPotentielChiffre');
+    const potentielDetail = document.getElementById('motsClesPotentielDetail');
     const TAUX_COMMISSION_INVERSE = 0.50; // doit rester synchronisé avec les autres fichiers
 
     function calculerBudgetInverse() {
@@ -633,6 +646,41 @@
       const budgetNecessaire = Math.max(100, budgetCalcule);
       budgetValue.textContent = budgetCalcule < 100 ? '100 € (minimum)' : '≈ ' + budgetNecessaire + ' €';
       document.getElementById('btnFondsInverse').href = '/campagne.html?id=' + draftId + '&budget=' + budgetNecessaire;
+    }
+
+    // Affiche, juste sous la liste des mots-clés, ce que CES mots-clés
+    // précis peuvent générer comme clics — sans que l'artisan ait besoin de
+    // toucher le curseur du dessous. Avant ce correctif (31/08), seule
+    // l'information "budget pour le nombre de clics choisi sur le curseur"
+    // était visible, et comme le curseur démarre à 20 clics avec un budget
+    // minimum de 100 €, l'affichage restait quasi toujours bloqué sur
+    // "100 € (minimum)" sans jamais dire combien de clics ce budget minimum
+    // permet réellement d'obtenir avec les mots-clés choisis.
+    function afficherPotentiel({ succes, erreur, totalMonthlyVolume, estimatedClicks, motsClesPersonnalises }) {
+      potentielBox.style.display = 'block';
+      if (!succes) {
+        potentielChiffre.textContent = '—';
+        potentielDetail.textContent = erreur || "Impossible de calculer le potentiel de clics pour le moment.";
+        return;
+      }
+      if (!totalMonthlyVolume) {
+        potentielChiffre.textContent = '—';
+        potentielDetail.textContent = motsClesPersonnalises
+          ? "Pas encore de volume de recherche connu pour ces mots-clés précis dans votre zone — essayez des mots-clés un peu plus larges."
+          : "Pas encore de volume de recherche connu pour votre zone.";
+        return;
+      }
+      if (estimatedClicks) {
+        potentielChiffre.textContent = `≈ ${estimatedClicks} clics/mois`;
+        potentielDetail.textContent = motsClesPersonnalises
+          ? `avec le budget minimum de 100 € — et jusqu'à ${totalMonthlyVolume} clics/mois au total avec ces mots-clés dans votre zone en investissant davantage (curseur ci-dessous).`
+          : `avec le budget minimum de 100 € (estimation générique par métier — choisissez vos mots-clés ci-dessus pour affiner).`;
+      } else {
+        potentielChiffre.textContent = `≈ ${totalMonthlyVolume} clics/mois possibles`;
+        potentielDetail.textContent = motsClesPersonnalises
+          ? "avec ces mots-clés dans votre zone (coût par clic pas encore connu pour ces mots-clés précis — le nombre exact obtenu avec 100 € ne peut pas encore être calculé)."
+          : "au total dans votre zone (estimation générique par métier).";
+      }
     }
 
     // Interroge le Keyword Planner Google Ads réel (CPC + volume) à partir des
@@ -652,15 +700,24 @@
           // Avant (bug du 31/08) : en cas d'erreur on ne touchait à rien,
           // donc après une régénération de mots-clés qui échouait côté API
           // rien ne semblait se passer côté "clics" — on l'affiche
-          // maintenant clairement.
+          // maintenant clairement, ici et dans le nouvel encart au-dessus.
           volumeNote.textContent = data.error || "Impossible de mettre à jour l'estimation de clics pour le moment.";
+          afficherPotentiel({ succes: false, erreur: data.error });
           return calculerBudgetInverse();
         }
         if (data.avgCpcEur) avgCpcEur = data.avgCpcEur;
         if (data.totalMonthlyVolume) {
           const maxRealiste = Math.max(20, Math.min(1000, data.totalMonthlyVolume));
           slider.max = maxRealiste;
-          if (parseInt(slider.value, 10) > maxRealiste) slider.value = maxRealiste;
+          // On positionne le curseur sur le nombre de clics réellement
+          // atteignable avec le budget minimum (100 €) — plutôt que de
+          // laisser la valeur de départ arbitraire (20) qui masquait ce que
+          // ces mots-clés permettent concrètement d'obtenir.
+          if (data.estimatedClicks) {
+            slider.value = Math.min(data.estimatedClicks, maxRealiste);
+          } else if (parseInt(slider.value, 10) > maxRealiste) {
+            slider.value = maxRealiste;
+          }
           volumeNote.textContent = data.motsClesPersonnalises
             ? `≈ ${data.totalMonthlyVolume} clics possibles ce mois-ci avec vos mots-clés et votre zone actuels (base du curseur).`
             : `≈ ${data.totalMonthlyVolume} clics possibles ce mois-ci (estimation générique par métier — choisissez vos mots-clés ci-dessus pour affiner).`;
@@ -674,8 +731,15 @@
             ? "Pas encore de volume de recherche connu pour ces mots-clés précis dans votre zone — le curseur garde une estimation générique. Essayez des mots-clés un peu plus larges si besoin."
             : "Pas encore de volume de recherche connu pour votre zone — le curseur garde une estimation générique.";
         }
+        afficherPotentiel({
+          succes: true,
+          totalMonthlyVolume: data.totalMonthlyVolume,
+          estimatedClicks: data.estimatedClicks,
+          motsClesPersonnalises: data.motsClesPersonnalises,
+        });
       } catch (e) {
         volumeNote.textContent = "Impossible de contacter le serveur pour mettre à jour l'estimation de clics.";
+        afficherPotentiel({ succes: false, erreur: "Impossible de contacter le serveur." });
       }
       calculerBudgetInverse();
     }

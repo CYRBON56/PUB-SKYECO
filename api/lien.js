@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
   };
 
-  let destination = "https://pub-skyeco-23ue.vercel.app/index.html";
+  let destination = "https://app.skyeco.fr/index.html";
 
   if (p) {
     try {
@@ -21,7 +21,7 @@ export default async function handler(req, res) {
       const prospect = rows && rows[0];
 
       if (prospect) {
-        destination = `https://pub-skyeco-23ue.vercel.app/apercu.html?id=${prospect.draft_id}`;
+        destination = `https://app.skyeco.fr/apercu.html?id=${prospect.draft_id}`;
         await fetch(`${process.env.SUPABASE_URL}/rest/v1/prospects_vitrine?id=eq.${encodeURIComponent(prospect.id)}`, {
           method: "PATCH",
           headers: { ...supaHeaders, "Content-Type": "application/json", Prefer: "return=minimal" },

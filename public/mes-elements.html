@@ -87,9 +87,6 @@
   .toggle-row input { width:auto; accent-color:#4a8a68; }
   .toggle-row label { margin:0; font-weight:600; }
 
-  .metier-tarif-row { border:1px solid #efece2; border-radius:12px; padding:16px; margin-top:12px; background:#fdfcf9; }
-  .metier-tarif-row .metier-nom { font-weight:700; font-size:0.9rem; margin-bottom:10px; color:#3d5248; }
-
   .extraction-box { background:#f4ece2; border-radius:12px; padding:14px 16px; margin-top:14px; font-size:0.82rem; color:#6b5e4c; line-height:1.6; }
   .btn-extraire { background:#e8622c; color:#fff; border:none; border-radius:10px; padding:10px 18px; font-size:0.82rem; font-weight:600; cursor:pointer; margin-top:10px; transition:filter 0.15s; }
 
@@ -110,6 +107,22 @@
   .formulaire-ajout { display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }
   .formulaire-ajout input[type="text"] { flex:1; min-width:200px; }
   .formulaire-ajout select { width:auto; }
+
+  .produit-card { border:1px solid #efece2; border-radius:14px; padding:16px; margin-top:14px; background:#fdfcf9; }
+  .produit-card-header { display:grid; grid-template-columns:2fr 1fr 1fr 1fr auto; gap:10px; align-items:start; }
+  .produit-card-header label { margin-top:0; font-size:0.72rem; }
+  .produit-card-header input, .produit-card-header select { margin-top:0; }
+  .btn-suppr-produit {
+    background:none; border:1.5px solid #e3ded2; color:#a3564a; border-radius:10px;
+    width:38px; height:38px; margin-top:22px; font-size:1rem; cursor:pointer; flex-shrink:0;
+  }
+  .btn-suppr-produit:hover { background:#fbeceb; border-color:#e0b3ac; }
+  .produit-questions-titre { font-size:0.78rem; font-weight:600; color:#8a9891; margin-top:16px; margin-bottom:2px; }
+  .btn-ajouter-produit {
+    background:none; border:1.5px dashed #c7d0c9; color:#4a8a68; border-radius:12px;
+    padding:12px; width:100%; font-size:0.86rem; font-weight:600; cursor:pointer; margin-top:14px; transition:all 0.15s;
+  }
+  .btn-ajouter-produit:hover { background:#f4f8f5; border-color:#4a8a68; }
 
   .btn-submit {
     width:100%; background:#3d7a5a; color:#fff; border:none; border-radius:14px; padding:18px; font-size:1rem; font-weight:700; cursor:pointer; margin-top:12px; transition:filter 0.15s;
@@ -327,76 +340,36 @@
     </div>
   </div>
 
-  <div class="section" data-section="chiffrage">
+  <div class="section" data-section="produits">
     <div class="section-header">
       <div class="section-title">
-        <span class="section-icon">💰</span>
+        <span class="section-icon">🧮</span>
         <div>
-          <h2>Chiffrage détaillé</h2>
-          <p class="sub">Facultatif — pour générer de vrais devis directement.</p>
+          <h2>Produits chiffrables</h2>
+          <p class="sub">Facultatif — pour donner automatiquement une estimation chiffrée quand le projet du prospect correspond à l'un de vos produits.</p>
         </div>
       </div>
       <span class="chevron">▾</span>
     </div>
     <div class="section-body">
       <div class="section-body-inner">
-        <div class="toggle-row">
-          <input type="checkbox" id="toggleChiffrage">
-          <label for="toggleChiffrage">Je veux proposer un chiffrage précis (m², ml, m³)</label>
-        </div>
-        <p class="hint">Sans ça, le formulaire reste un simple recueil de coordonnées, sans estimation de prix — et c'est très bien aussi.</p>
+        <p class="hint">Chaque "produit" est une prestation que vous facturez d'une façon précise (ex : "Enrobés" au m², "Pose de clôture" au ml). Quand le projet décrit par un prospect correspond à l'un de vos produits, il répond aux questions de CE produit et reçoit une estimation chiffrée. Sinon, il est invité à prendre rendez-vous avec un technicien — rien n'est perdu, jamais bloqué.</p>
 
-        <div id="chiffrageDetail" style="display:none;">
-          <label style="margin-top:0;">Décris comment tu factures, avec tes mots</label>
-          <textarea id="chiffrageLibre" rows="4" placeholder="Ex : Pour la tonte je facture 3€ le m², minimum 40€. Pour la taille de haie c'est 15€ le mètre linéaire, minimum 60€…"></textarea>
-          <p class="hint">Sois aussi précis que tu veux, dans l'ordre que tu veux — l'IA lit ta description et pré-remplit les champs ci-dessous pour chacun de tes métiers. Tu vérifies et corriges ensuite avant d'enregistrer, rien n'est figé.</p>
-          <button type="button" class="btn-extraire" id="btnAnalyserChiffrage">🤖 Analyser et pré-remplir</button>
-          <div class="extraction-box" id="chiffrageAnalyseResult" style="display:none;"></div>
+        <label style="margin-top:0;">Taux de TVA applicable</label>
+        <select id="tvaTaux">
+          <option value="20">20% — taux normal</option>
+          <option value="10">10% — travaux de rénovation (bâti de plus de 2 ans)</option>
+          <option value="5.5">5.5% — travaux d'amélioration énergétique</option>
+        </select>
 
-          <label>Taux de TVA applicable</label>
-          <select id="tvaTaux">
-            <option value="20">20% — taux normal</option>
-            <option value="10">10% — travaux de rénovation (bâti de plus de 2 ans)</option>
-            <option value="5.5">5.5% — travaux d'amélioration énergétique</option>
-          </select>
-          <div id="metiersTarifs"></div>
-        </div>
-      </div>
-    </div>
-  </div>
+        <label>Décrivez ce que vous facturez, avec vos mots</label>
+        <textarea id="produitsDescription" rows="4" placeholder="Ex : je pose de la résine EPDM pour terrasses à 45€/m², minimum 300€. Je pose aussi des clôtures à 35€/ml…"></textarea>
+        <p class="hint">L'IA identifie les différents produits que vous décrivez et pré-remplit une carte par produit ci-dessous (nom, unité, prix, questions). Vous vérifiez et corrigez ensuite avant d'enregistrer, rien n'est figé.</p>
+        <button type="button" class="btn-extraire" id="btnAnalyserProduits">✨ Analyser mon activité</button>
+        <div class="extraction-box" id="produitsAnalyseResult" style="display:none;"></div>
 
-  <div class="section" data-section="formulaires">
-    <div class="section-header">
-      <div class="section-title">
-        <span class="section-icon">📋</span>
-        <div>
-          <h2>Créer vos formulaires</h2>
-          <p class="sub">Facultatif — des questions adaptées à chaque projet, choisies automatiquement selon ce que décrit votre prospect.</p>
-        </div>
-      </div>
-      <span class="chevron">▾</span>
-    </div>
-    <div class="section-body">
-      <div class="section-body-inner">
-        <p class="hint">Décrivez ce que vous proposez comme prestations : on vous suggère des questions pertinentes (mètres linéaires, mètres carrés, volume…). Cochez celles à garder — au moment de la demande, chaque prospect ne verra QUE les questions pertinentes pour SON projet, choisies parmi celles-ci par l'IA.</p>
-        <textarea id="formulaireDescription" rows="4" placeholder="Ex : je pose des clôtures et portails, je fais aussi de la résine EPDM pour terrasses et allées, et du terrassement…"></textarea>
-        <button type="button" class="btn-extraire" id="btnSuggererQuestions">✨ Suggérer des questions</button>
-        <div id="formulaireListe" class="formulaire-liste"></div>
-        <div id="formulaireAjout" class="formulaire-ajout" style="display:none;">
-          <input type="text" id="questionManuelleLabel" placeholder="Ajouter votre propre question">
-          <select id="questionManuelleType">
-            <option value="texte">Réponse libre</option>
-            <option value="nombre">Nombre</option>
-            <option value="case">Oui / non</option>
-          </select>
-          <select id="questionManuelleUnite" style="display:none;">
-            <option value="ml">mètres linéaires</option>
-            <option value="m2">m²</option>
-            <option value="m3">m³ (volume)</option>
-          </select>
-          <button type="button" class="btn-extraire" id="btnAjouterQuestionManuelle">+ Ajouter</button>
-        </div>
-        <div id="formulaireNote" class="hint"></div>
+        <div id="produitsListe"></div>
+        <button type="button" class="btn-ajouter-produit" id="btnAjouterProduit">+ Ajouter un produit manuellement</button>
       </div>
     </div>
   </div>
@@ -418,6 +391,7 @@
   let photosUrls = [];
   let videoUrl = null;
   let metiersActuels = [];
+  let produitsActuels = new Map(); // id -> { metier, nom, unite, prix, minimum, questions: Map(id -> {label,type,unite,coche}) }
   let titreChoisi = '';
   let draftStatutActuel = null; // status du brouillon au chargement — sert à savoir où renvoyer après enregistrement
 
@@ -454,7 +428,7 @@
       coordonnees: () => !!(document.getElementById('telephone').value.trim() && document.getElementById('email').value.trim()),
       legal: () => !!document.getElementById('siret').value.trim(),
       siteweb: () => !!document.getElementById('siteExistant').value.trim(),
-      chiffrage: () => document.getElementById('toggleChiffrage').checked,
+      chiffrage: () => produitsActuels.size > 0,
     };
     let completes = 0;
     Object.entries(groupes).forEach(([nom, verif]) => {
@@ -504,9 +478,9 @@
       document.getElementById('siteExistant').value = draft.site_web_existant || '';
 
       metiersActuels = Array.isArray(draft.metier) ? draft.metier : (draft.metier ? [draft.metier] : []);
-      construireLignesTarifs(metiersActuels, draft.tarification_detail || {});
+      document.getElementById('tvaTaux').value = draft.tva_taux || 20;
       construireOptionsTitre(metiersActuels, draft.titre_hero_choisi || '');
-      initFormulaireBuilder(metiersActuels, draft.formulaire_questions_pool || [], draft.formulaire_description || '');
+      initProduitsChiffrables(metiersActuels, draft.produits_chiffrables || []);
 
       if (draft.photos && draft.photos.length) {
         photosUrls = draft.photos;
@@ -529,97 +503,6 @@
     paysagiste_concepteur: 'Paysagiste concepteur', arboriste: 'Arboriste élagueur', espaces_verts: "Entretien d'espaces verts", autre: 'Autre'
   };
   const UNITES = { m2: 'm² (surface)', ml: 'ml (mètre linéaire)', m3: 'm³ (volume)', forfait: 'Forfait' };
-
-  function construireLignesTarifs(metiers, tarifsExistants) {
-    const container = document.getElementById('metiersTarifs');
-    container.innerHTML = metiers.map(m => {
-      const t = tarifsExistants[m] || {};
-      return `
-        <div class="metier-tarif-row" data-metier="${m}">
-          <div class="metier-nom">${METIER_LABELS[m] || m}</div>
-          <div class="row3">
-            <div>
-              <label style="margin-top:0;">Unité de facturation</label>
-              <select class="tarif-unite">
-                ${Object.entries(UNITES).map(([k,v]) => `<option value="${k}" ${t.unite===k?'selected':''}>${v}</option>`).join('')}
-              </select>
-            </div>
-            <div>
-              <label style="margin-top:0;">Prix unitaire HT (€)</label>
-              <input type="number" class="tarif-prix" step="0.01" value="${t.prix || ''}">
-            </div>
-            <div>
-              <label style="margin-top:0;">Minimum facturé (€)</label>
-              <input type="number" class="tarif-minimum" step="1" value="${t.minimum || ''}">
-            </div>
-          </div>
-        </div>
-      `;
-    }).join('') || '<p class="hint">Aucun métier renseigné sur ce profil.</p>';
-  }
-
-  document.getElementById('toggleChiffrage').addEventListener('change', e => {
-    document.getElementById('chiffrageDetail').style.display = e.target.checked ? 'block' : 'none';
-  });
-
-  // --- Chiffrage décrit en langage libre, interprété par l'IA ---
-  document.getElementById('btnAnalyserChiffrage').addEventListener('click', async () => {
-    const texte = document.getElementById('chiffrageLibre').value.trim();
-    const resultBox = document.getElementById('chiffrageAnalyseResult');
-    const btn = document.getElementById('btnAnalyserChiffrage');
-
-    if (!texte) {
-      resultBox.style.display = 'block';
-      resultBox.textContent = "Décris d'abord tes prix dans le champ ci-dessus.";
-      return;
-    }
-    if (!metiersActuels.length) {
-      resultBox.style.display = 'block';
-      resultBox.textContent = "Aucun métier n'est renseigné sur ce profil — impossible de savoir quoi pré-remplir.";
-      return;
-    }
-
-    btn.disabled = true;
-    const texteOriginal = btn.textContent;
-    btn.textContent = 'Analyse en cours…';
-    resultBox.style.display = 'block';
-    resultBox.textContent = 'Lecture de ta description…';
-
-    try {
-      const res = await fetch('/api/interpreter-chiffrage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ texte, metiers: metiersActuels })
-      });
-      const data = await res.json();
-      if (!data.success) {
-        resultBox.textContent = data.error || "L'analyse n'a pas pu aboutir — remplis les champs manuellement.";
-        return;
-      }
-
-      let nbRemplis = 0;
-      const notes = [];
-      metiersActuels.forEach(m => {
-        const tarif = data.tarifs && data.tarifs[m];
-        if (!tarif) return;
-        const row = document.querySelector(`.metier-tarif-row[data-metier="${m}"]`);
-        if (!row) return;
-        if (tarif.unite && UNITES[tarif.unite]) row.querySelector('.tarif-unite').value = tarif.unite;
-        if (tarif.prix !== null && tarif.prix !== undefined) { row.querySelector('.tarif-prix').value = tarif.prix; nbRemplis++; }
-        if (tarif.minimum !== null && tarif.minimum !== undefined) row.querySelector('.tarif-minimum').value = tarif.minimum;
-        if (tarif.note) notes.push(`${METIER_LABELS[m] || m} : ${tarif.note}`);
-      });
-
-      resultBox.innerHTML = nbRemplis
-        ? `✓ ${nbRemplis} métier(s) pré-rempli(s) à partir de ta description — vérifie les valeurs ci-dessous avant d'enregistrer.` + (notes.length ? '<br><br>' + notes.join('<br>') : '')
-        : "Je n'ai pas trouvé assez d'informations exploitables dans ta description pour ces métiers — remplis les champs manuellement.";
-    } catch (e) {
-      resultBox.textContent = "Analyse indisponible pour le moment — remplis les champs manuellement.";
-    } finally {
-      btn.disabled = false;
-      btn.textContent = texteOriginal;
-    }
-  });
 
   // --- Upload générique vers Supabase Storage ---
   async function uploaderFichier(file, sousDossier) {
@@ -657,29 +540,34 @@
     } catch (e) { /* silencieux — l'enregistrement final au bas du formulaire rattrapera si besoin */ }
   }
 
-  // --- Créer vos formulaires : pool de questions que l'IA choisira ensuite,
-  // par prospect, selon le projet décrit (voir api/selectionner-questions-formulaire.js).
-  // Même mécanique que la sélection de mots-clés IA du dashboard : décrire
-  // son activité, cocher/décocher les suggestions, ajouter les siennes,
-  // sauvegarde automatique à chaque changement.
-  function initFormulaireBuilder(metiers, poolExistant, descriptionExistante) {
-    const descriptionEl = document.getElementById('formulaireDescription');
-    const btnSuggerer = document.getElementById('btnSuggererQuestions');
-    const listeEl = document.getElementById('formulaireListe');
-    const ajoutEl = document.getElementById('formulaireAjout');
-    const noteEl = document.getElementById('formulaireNote');
-    const typeManuel = document.getElementById('questionManuelleType');
-    const uniteManuel = document.getElementById('questionManuelleUnite');
-    let pool = new Map(); // id -> { label, type, unite, coche }
+  // --- Produits chiffrables : chaque produit a son propre prix (unité/prix/
+  // minimum) ET ses propres questions de devis. Remplace l'ancien couple
+  // "Chiffrage détaillé" (un seul prix par métier) + "Créer vos formulaires"
+  // (pool de questions plat). Voir api/classifier-projet-formulaire.js pour
+  // la sélection côté prospect.
+  function initProduitsChiffrables(metiers, produitsExistants) {
+    const descriptionEl = document.getElementById('produitsDescription');
+    const btnAnalyser = document.getElementById('btnAnalyserProduits');
+    const resultBox = document.getElementById('produitsAnalyseResult');
+    const listeEl = document.getElementById('produitsListe');
     let compteurManuel = 0;
 
-    descriptionEl.value = descriptionExistante || '';
-
-    if (Array.isArray(poolExistant) && poolExistant.length) {
-      poolExistant.forEach(q => { if (q && q.id && q.label) pool.set(q.id, { label: q.label, type: q.type || 'texte', unite: q.unite || null, coche: true }); });
-      ajoutEl.style.display = 'flex';
-      noteEl.textContent = 'Questions déjà enregistrées — décochez ou ajoutez-en pour affiner.';
-      rendreListeFormulaire();
+    if (Array.isArray(produitsExistants)) {
+      produitsExistants.forEach(p => {
+        if (!p || !p.id) return;
+        const questions = new Map();
+        (Array.isArray(p.questions) ? p.questions : []).forEach(q => {
+          if (q && q.id && q.label) questions.set(q.id, { label: q.label, type: q.type || 'texte', unite: q.unite || null, coche: true });
+        });
+        produitsActuels.set(p.id, {
+          metier: p.metier || metiers[0] || 'autre',
+          nom: p.nom || '',
+          unite: p.unite || 'forfait',
+          prix: p.prix != null ? p.prix : '',
+          minimum: p.minimum != null ? p.minimum : '',
+          questions,
+        });
+      });
     }
 
     function libelleType(type, unite) {
@@ -688,77 +576,183 @@
       return 'texte libre';
     }
 
-    function rendreListeFormulaire() {
-      listeEl.innerHTML = [...pool.entries()].map(([id, q]) => `
-        <label class="formulaire-item">
-          <input type="checkbox" data-id="${id}" ${q.coche ? 'checked' : ''}>
-          <span class="formulaire-texte">${q.label.replace(/</g, '&lt;')}</span>
-          <span class="formulaire-type">${libelleType(q.type, q.unite)}</span>
-        </label>
-      `).join('');
-      listeEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-        cb.addEventListener('change', () => {
-          const q = pool.get(cb.dataset.id);
-          if (q) q.coche = cb.checked;
-          enregistrerPoolSupabase();
-        });
-      });
+    function rendreProduits() {
+      listeEl.innerHTML = [...produitsActuels.entries()].map(([id, p]) => `
+        <div class="produit-card" data-produit-id="${id}">
+          <div class="produit-card-header">
+            <div>
+              <label>Nom du produit</label>
+              <input type="text" class="produit-nom" value="${(p.nom || '').replace(/"/g, '&quot;')}" placeholder="Ex : Enrobés">
+            </div>
+            <div>
+              <label>Unité</label>
+              <select class="produit-unite">
+                ${Object.entries(UNITES).map(([k, v]) => `<option value="${k}" ${p.unite === k ? 'selected' : ''}>${v}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label>Prix HT (€)</label>
+              <input type="number" class="produit-prix" step="0.01" value="${p.prix}">
+            </div>
+            <div>
+              <label>Minimum (€)</label>
+              <input type="number" class="produit-minimum" step="1" value="${p.minimum}">
+            </div>
+            <button type="button" class="btn-suppr-produit" title="Supprimer ce produit">✕</button>
+          </div>
+          <div class="produit-questions-titre">Questions spécifiques à ce produit (en plus de la question de quantité)</div>
+          <div class="formulaire-liste produit-questions-liste">
+            ${[...p.questions.entries()].map(([qid, q]) => `
+              <label class="formulaire-item">
+                <input type="checkbox" data-question-id="${qid}" ${q.coche ? 'checked' : ''}>
+                <span class="formulaire-texte">${q.label.replace(/</g, '&lt;')}</span>
+                <span class="formulaire-type">${libelleType(q.type, q.unite)}</span>
+              </label>
+            `).join('') || '<p class="hint">Aucune question pour l\'instant.</p>'}
+          </div>
+          <div class="formulaire-ajout">
+            <input type="text" class="question-manuelle-label" placeholder="Ajouter une question pour ce produit">
+            <select class="question-manuelle-type">
+              <option value="texte">Réponse libre</option>
+              <option value="nombre">Nombre</option>
+              <option value="case">Oui / non</option>
+            </select>
+            <select class="question-manuelle-unite" style="display:none;">
+              <option value="ml">mètres linéaires</option>
+              <option value="m2">m²</option>
+              <option value="m3">m³ (volume)</option>
+            </select>
+            <button type="button" class="btn-extraire btn-ajouter-question-manuelle">+ Ajouter</button>
+          </div>
+        </div>
+      `).join('') || '<p class="hint">Aucun produit pour l\'instant — décrivez votre activité ci-dessus ou ajoutez-en un manuellement.</p>';
     }
 
-    async function enregistrerPoolSupabase() {
-      const poolActif = [...pool.entries()].filter(([, q]) => q.coche).map(([id, q]) => ({ id, label: q.label, type: q.type, unite: q.unite }));
-      await sauvegarderChampsImmediat({ formulaire_questions_pool: poolActif, formulaire_description: descriptionEl.value.trim() });
+    function enregistrerProduitsSupabase() {
+      const produits = [...produitsActuels.entries()].map(([id, p]) => ({
+        id, metier: p.metier, nom: p.nom,
+        unite: p.unite,
+        prix: p.prix === '' || p.prix == null ? null : parseFloat(p.prix),
+        minimum: p.minimum === '' || p.minimum == null ? null : parseFloat(p.minimum),
+        questions: [...p.questions.entries()].filter(([, q]) => q.coche).map(([qid, q]) => ({ id: qid, label: q.label, type: q.type, unite: q.unite })),
+      }));
+      sauvegarderChampsImmediat({ produits_chiffrables: produits });
+      calculerProgression();
     }
 
-    typeManuel.addEventListener('change', () => {
-      uniteManuel.style.display = typeManuel.value === 'nombre' ? 'inline-block' : 'none';
+    rendreProduits();
+
+    // --- Délégation d'événements : la liste est reconstruite à chaque
+    // ajout/suppression, donc un seul jeu d'écouteurs posé sur le conteneur
+    // parent (jamais retiré) plutôt que de re-poser des écouteurs à chaque
+    // rendu.
+    listeEl.addEventListener('input', (e) => {
+      const carte = e.target.closest('.produit-card');
+      if (!carte) return;
+      const p = produitsActuels.get(carte.dataset.produitId);
+      if (!p) return;
+      if (e.target.classList.contains('produit-nom')) p.nom = e.target.value;
+      else if (e.target.classList.contains('produit-prix')) p.prix = e.target.value;
+      else if (e.target.classList.contains('produit-minimum')) p.minimum = e.target.value;
+      else return;
+      enregistrerProduitsSupabase();
     });
 
-    btnSuggerer.addEventListener('click', async () => {
-      const description = descriptionEl.value.trim();
-      if (!description) {
-        noteEl.textContent = 'Décrivez brièvement vos prestations pour obtenir des suggestions.';
-        return;
-      }
-      btnSuggerer.disabled = true;
-      btnSuggerer.textContent = 'Génération en cours…';
-      noteEl.textContent = '';
-      try {
-        const res = await fetch('/api/suggerer-questions-formulaire', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ description, metier: metiers }),
-        });
-        const data = await res.json();
-        if (data.success) {
-          data.questions.forEach(q => { if (!pool.has(q.id)) pool.set(q.id, { label: q.label, type: q.type, unite: q.unite, coche: true }); });
-          rendreListeFormulaire();
-          ajoutEl.style.display = 'flex';
-          noteEl.textContent = 'Décochez celles que vous ne voulez pas utiliser, ou ajoutez les vôtres.';
-          enregistrerPoolSupabase();
-        } else {
-          noteEl.textContent = data.error || 'Impossible de générer des suggestions pour le moment.';
-        }
-      } catch (e) {
-        noteEl.textContent = 'Impossible de contacter le serveur.';
-      } finally {
-        btnSuggerer.disabled = false;
-        btnSuggerer.textContent = '✨ Suggérer des questions';
+    listeEl.addEventListener('change', (e) => {
+      const carte = e.target.closest('.produit-card');
+      if (!carte) return;
+      const p = produitsActuels.get(carte.dataset.produitId);
+      if (!p) return;
+
+      if (e.target.classList.contains('produit-unite')) {
+        p.unite = e.target.value;
+        enregistrerProduitsSupabase();
+      } else if (e.target.classList.contains('question-manuelle-type')) {
+        carte.querySelector('.question-manuelle-unite').style.display = e.target.value === 'nombre' ? 'inline-block' : 'none';
+      } else if (e.target.dataset.questionId) {
+        const q = p.questions.get(e.target.dataset.questionId);
+        if (q) { q.coche = e.target.checked; enregistrerProduitsSupabase(); }
       }
     });
 
-    document.getElementById('btnAjouterQuestionManuelle').addEventListener('click', () => {
-      const input = document.getElementById('questionManuelleLabel');
-      const label = input.value.trim();
-      if (!label) return;
+    listeEl.addEventListener('click', (e) => {
+      const carte = e.target.closest('.produit-card');
+      if (!carte) return;
+      const p = produitsActuels.get(carte.dataset.produitId);
+      if (!p) return;
+
+      if (e.target.classList.contains('btn-suppr-produit')) {
+        produitsActuels.delete(carte.dataset.produitId);
+        rendreProduits();
+        enregistrerProduitsSupabase();
+      } else if (e.target.classList.contains('btn-ajouter-question-manuelle')) {
+        const input = carte.querySelector('.question-manuelle-label');
+        const label = input.value.trim();
+        if (!label) return;
+        compteurManuel += 1;
+        const qid = 'manuel-' + Date.now() + '-' + compteurManuel;
+        const type = carte.querySelector('.question-manuelle-type').value;
+        const unite = type === 'nombre' ? carte.querySelector('.question-manuelle-unite').value : null;
+        p.questions.set(qid, { label, type, unite, coche: true });
+        rendreProduits();
+        enregistrerProduitsSupabase();
+      }
+    });
+
+    document.getElementById('btnAjouterProduit').addEventListener('click', () => {
       compteurManuel += 1;
       const id = 'manuel-' + Date.now() + '-' + compteurManuel;
-      const type = typeManuel.value;
-      const unite = type === 'nombre' ? uniteManuel.value : null;
-      pool.set(id, { label, type, unite, coche: true });
-      rendreListeFormulaire();
-      enregistrerPoolSupabase();
-      input.value = '';
+      produitsActuels.set(id, { metier: metiers[0] || 'autre', nom: '', unite: 'forfait', prix: '', minimum: '', questions: new Map() });
+      rendreProduits();
+      enregistrerProduitsSupabase();
+    });
+
+    btnAnalyser.addEventListener('click', async () => {
+      const description = descriptionEl.value.trim();
+      if (!description) {
+        resultBox.style.display = 'block';
+        resultBox.textContent = 'Décrivez brièvement votre activité et vos prix pour obtenir des suggestions.';
+        return;
+      }
+      if (!metiers.length) {
+        resultBox.style.display = 'block';
+        resultBox.textContent = "Aucun métier n'est renseigné sur ce profil — impossible de savoir quoi analyser.";
+        return;
+      }
+
+      btnAnalyser.disabled = true;
+      const texteOriginal = btnAnalyser.textContent;
+      btnAnalyser.textContent = 'Analyse en cours…';
+      resultBox.style.display = 'block';
+      resultBox.textContent = 'Lecture de votre description…';
+
+      try {
+        const res = await fetch('/api/analyser-produits-chiffrables', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ description, metiers }),
+        });
+        const data = await res.json();
+        if (data.success && Array.isArray(data.produits) && data.produits.length) {
+          data.produits.forEach(p => {
+            let id = p.id;
+            while (produitsActuels.has(id)) id = id + '-b'; // évite toute collision avec un produit déjà présent
+            const questions = new Map();
+            (p.questions || []).forEach(q => questions.set(q.id, { label: q.label, type: q.type, unite: q.unite, coche: true }));
+            produitsActuels.set(id, { metier: p.metier, nom: p.nom, unite: p.unite, prix: p.prix != null ? p.prix : '', minimum: p.minimum != null ? p.minimum : '', questions });
+          });
+          rendreProduits();
+          enregistrerProduitsSupabase();
+          resultBox.innerHTML = `✓ ${data.produits.length} produit(s) identifié(s) et ajouté(s) ci-dessous — vérifiez et complétez les prix avant d'enregistrer.`;
+        } else {
+          resultBox.textContent = data.error || "L'analyse n'a pas pu aboutir — ajoutez vos produits manuellement.";
+        }
+      } catch (e) {
+        resultBox.textContent = 'Analyse indisponible pour le moment — ajoutez vos produits manuellement.';
+      } finally {
+        btnAnalyser.disabled = false;
+        btnAnalyser.textContent = texteOriginal;
+      }
     });
   }
 
@@ -921,16 +915,6 @@
     btn.disabled = true;
     btn.textContent = 'Enregistrement…';
 
-    const tarificationDetail = {};
-    document.querySelectorAll('.metier-tarif-row').forEach(row => {
-      const metier = row.dataset.metier;
-      tarificationDetail[metier] = {
-        unite: row.querySelector('.tarif-unite').value,
-        prix: parseFloat(row.querySelector('.tarif-prix').value) || null,
-        minimum: parseFloat(row.querySelector('.tarif-minimum').value) || null,
-      };
-    });
-
     const videoFinal = videoUrl || document.getElementById('videoLien').value.trim() || null;
 
     const payload = {
@@ -950,9 +934,7 @@
       photos: photosUrls,
       video_url: videoFinal,
       titre_hero_choisi: titreChoisi || null,
-      tva_taux: document.getElementById('toggleChiffrage').checked ? parseFloat(document.getElementById('tvaTaux').value) : null,
-      tarification_detail: document.getElementById('toggleChiffrage').checked ? tarificationDetail : null,
-      tarif_actif: document.getElementById('toggleChiffrage').checked,
+      tva_taux: parseFloat(document.getElementById('tvaTaux').value),
       elements_deposes_le: new Date().toISOString(),
     };
 

@@ -124,14 +124,29 @@ async function interrogerWindsorKeywordPlanner({ keywords, geoTargetConstantId }
   const accountId = chiffres.length === 10
     ? `${chiffres.slice(0, 3)}-${chiffres.slice(3, 6)}-${chiffres.slice(6)}`
     : chiffres;
+
+  // Format confirmé par le support Windsor.ai le 31/08 (réf. ticket 81695202,
+  // après plusieurs essais infructueux) : le sélecteur de compte est
+  // "select_accounts" (pas "accounts" ni "google_ads_accounts"), et les
+  // options spécifiques Keyword Planner doivent être imbriquées dans un
+  // objet JSON sous la clé du connecteur ("google_ads"), pas au premier
+  // niveau — {"google_ads": {"keyword_seeds": ..., ...}}, jamais
+  // {"keyword_seeds": ...} directement.
+  const options = JSON.stringify({
+    google_ads: {
+      keyword_seeds: keywords.join(','),
+      geo_target_constants: geoTargetConstantId,
+      language: '1002', // français
+      keyword_plan_network: 'GOOGLE_SEARCH',
+    },
+  });
+
   const params = new URLSearchParams({
     api_key: process.env.WINDSOR_API_KEY,
+    select_accounts: accountId,
+    date_preset: 'last_30d',
     fields: 'keyword,avg_monthly_searches,keyword_competition,competition_index,keyword_average_cpc',
-    accounts: accountId,
-    keyword_seeds: keywords.join(','),
-    geo_target_constants: geoTargetConstantId,
-    language: '1002', // français
-    keyword_plan_network: 'GOOGLE_SEARCH',
+    options,
   });
 
   const resp = await fetch(`${WINDSOR_BASE}?${params.toString()}`);

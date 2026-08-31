@@ -22,6 +22,12 @@
     color: var(--text);
   }
   .wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px 60px; }
+  .lien-retour {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--muted); text-decoration: none; font-size: 0.88rem;
+    margin-bottom: 16px;
+  }
+  .lien-retour:hover { color: var(--text); }
   h1 { font-size: 1.4rem; margin: 0 0 4px; }
   .sous-titre { color: var(--muted); margin: 0 0 24px; font-size: 0.95rem; }
 
@@ -115,6 +121,7 @@
 </head>
 <body>
 <div class="wrap">
+  <a href="#" id="lien-retour" class="lien-retour">← Retour</a>
   <h1 id="titre">Prendre rendez-vous</h1>
   <p class="sous-titre">Choisissez un créneau disponible (lundi–samedi, 9h–20h).</p>
 
@@ -161,6 +168,17 @@
   const messageEtat = document.getElementById('message-etat');
 
   let creneauSelectionneIso = null;
+
+  // Bouton retour : renvoie vers la vitrine de l'artisan (d'où vient
+  // toujours ce lien — estimation en ligne, SMS ou email) plutôt que
+  // l'historique du navigateur, peu fiable ici (page souvent ouverte dans
+  // un nouvel onglet, sans page précédente).
+  const lienRetour = document.getElementById('lien-retour');
+  if (draftId) {
+    lienRetour.href = '/apercu.html?id=' + encodeURIComponent(draftId);
+  } else {
+    lienRetour.style.display = 'none';
+  }
 
   if (!draftId) {
     zoneJours.innerHTML = '<p class="aucun-creneau">Lien invalide : identifiant manquant.</p>';

@@ -141,7 +141,13 @@ export default async function handler(req, res) {
 
   try {
     const accessToken = await obtenirAccessToken();
-    const customerId = process.env.GOOGLE_ADS_CUSTOMER_ID;
+    // On retire tout caractère non numérique (tirets compris) — Google Ads
+    // affiche les identifiants de compte avec des tirets ("735-335-0497")
+    // mais l'API REST les attend sans ("7353350497"). Erreur trouvée le
+    // 30/08 : "The caller does not have permission" alors que le vrai souci
+    // était un identifiant de compte qui ne correspondait pas au bon compte.
+    const customerId = (process.env.GOOGLE_ADS_CUSTOMER_ID || '').replace(/[^0-9]/g, '');
+    const loginCustomerId = (process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID || '').replace(/[^0-9]/g, '');
 
     const resp = await fetch(
       `${GOOGLE_ADS_BASE_URL}/customers/${customerId}:generateKeywordIdeas`,
@@ -150,7 +156,7 @@ export default async function handler(req, res) {
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'developer-token': process.env.GOOGLE_ADS_DEVELOPER_TOKEN,
-          'login-customer-id': process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID,
+          'login-customer-id': loginCustomerId,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({

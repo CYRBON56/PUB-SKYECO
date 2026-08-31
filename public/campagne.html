@@ -127,14 +127,15 @@
     const btnPayer = document.getElementById('btnPayer');
     let debounceTimer = null;
 
-    // Métier/zone/mots-clés du brouillon, récupérés une seule fois (voir
-    // chargerDraftPuisInitialiser ci-dessous) pour l'estimation de clics —
-    // le choix des mots-clés se fait maintenant depuis le tableau de bord
-    // (panneau Pilotage Ads dans mon-dashboard.html), pas ici. Avant ce fix,
-    // cette page envoyait en plus un champ "departement" inexistant à l'API,
-    // qui attend "zone" — l'estimation ne recevait donc jamais la vraie zone.
+    // Métier/zone/département/mots-clés du brouillon, récupérés une seule
+    // fois (voir chargerDraftPuisInitialiser ci-dessous) pour l'estimation
+    // de clics — le choix des mots-clés se fait maintenant depuis le
+    // tableau de bord (panneau Pilotage Ads dans mon-dashboard.html), pas
+    // ici. Le département (quand connu) permet à l'API un ciblage Google
+    // Ads précis au lieu d'une simple approximation par population.
     let draftMetier = null;
     let draftZone = null;
+    let draftDepartement = null;
     let motsClesActuels = [];
 
     function mettreAJourEstimation() {
@@ -158,7 +159,7 @@
         const res = await fetch('/api/estimate-reach', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ metier: draftMetier, zone: draftZone, motsCles: motsClesActuels, budget })
+          body: JSON.stringify({ metier: draftMetier, zone: draftZone, departement: draftDepartement, motsCles: motsClesActuels, budget })
         });
         const data = await res.json();
 
@@ -189,13 +190,14 @@
 
     async function chargerDraftPuisInitialiser() {
       try {
-        const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=metier,zone,mots_cles_choisis`, {
+        const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=metier,zone,departement,mots_cles_choisis`, {
           headers: { apikey: SUPABASE_ANON_KEY }
         });
         const rows = await resp.json();
         const draft = rows[0] || {};
         draftMetier = draft.metier;
         draftZone = draft.zone;
+        draftDepartement = draft.departement;
         if (Array.isArray(draft.mots_cles_choisis)) motsClesActuels = draft.mots_cles_choisis;
       } catch (e) { /* on continue avec metier/zone/mots-clés vides — repli générique côté API */ }
       // Le choix des mots-clés se fait maintenant depuis le tableau de bord

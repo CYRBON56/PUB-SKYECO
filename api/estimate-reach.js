@@ -213,8 +213,17 @@ export default async function handler(req, res) {
     : (zone && zone.includes(',') ? zone.split(',').pop().trim() : null);
   const populationShare = geoApprox && regionDeduite ? REGION_POPULATION_SHARE[regionDeduite] : null;
 
+  // Limité à 5 mots-clés envoyés à Windsor.ai (31/08) : au-delà, l'appel
+  // renvoyait systématiquement une "Internal Server Error" générique côté
+  // Windsor.ai en conditions réelles (testé avec 15 mots-clés), alors qu'un
+  // seul mot-clé fonctionnait parfaitement — malgré une limite annoncée de
+  // 20 dans leur documentation. Pas encore confirmé où se situe exactement
+  // le seuil réel ; 5 est une valeur prudente en attendant un retour de
+  // Windsor.ai (réf. ticket 81695202) sur la cause précise.
+  const keywordsPourWindsor = keywords.slice(0, 5);
+
   try {
-    const idees = await interrogerWindsorKeywordPlanner({ keywords, geoTargetConstantId });
+    const idees = await interrogerWindsorKeywordPlanner({ keywords: keywordsPourWindsor, geoTargetConstantId });
 
     const construireMotCle = (idee) => ({
       keyword: idee.keyword,
@@ -226,12 +235,12 @@ export default async function handler(req, res) {
     // On ne garde que les idées qui correspondent réellement à nos mots-clés
     // de départ (Windsor peut aussi renvoyer des suggestions élargies).
     const motsCles = idees
-      .filter((idee) => idee.keyword && keywords.some((k) => idee.keyword.toLowerCase().includes(k.split(' ')[0].toLowerCase())))
+      .filter((idee) => idee.keyword && keywordsPourWindsor.some((k) => idee.keyword.toLowerCase().includes(k.split(' ')[0].toLowerCase())))
       .map(construireMotCle);
 
     // Si le filtre n'a rien gardé, on retombe sur toutes les idées reçues
     // plutôt que de renvoyer un tableau vide.
-    const motsClesFinal = motsCles.length > 0 ? motsCles : idees.slice(0, keywords.length).map(construireMotCle);
+    const motsClesFinal = motsCles.length > 0 ? motsCles : idees.slice(0, keywordsPourWindsor.length).map(construireMotCle);
 
     const totalMonthlyVolumeBrut = motsClesFinal.reduce((sum, k) => sum + (k.monthly_volume || 0), 0);
 

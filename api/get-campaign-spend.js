@@ -13,6 +13,20 @@ const TAUX_COMMISSION = 0.50; // doit rester synchronisé avec les autres fichie
 const FACTEUR_CONSOMMATION = 1 / (1 - TAUX_COMMISSION);
 const SEUIL_ALERTE_SOLDE = 50; // €
 
+// Twilio exige un numero au format E.164 (+33...) pour le parametre "To" des
+// SMS envoyes via l'API Messages (contrairement a Twilio Verify, deja converti
+// ailleurs). Les numeros stockes en base viennent du formulaire d'inscription
+// au format national francais ("06 12 34 56 78"), jamais convertis avant ces
+// envois -> Twilio les rejetait silencieusement (erreur 21211, capturee par le
+// try/catch), d'ou les echecs d'envoi. Idempotent : ne change rien a un numero
+// deja au format E.164.
+function toE164(rawPhone) {
+  const digits = String(rawPhone || '').replace(/\D/g, '');
+  if (digits.startsWith('33') && digits.length === 11) return '+' + digits;
+  if (digits.startsWith('0') && digits.length === 10) return '+33' + digits.slice(1);
+  return rawPhone;
+}
+
 async function envoyerSMS(to, body, fromOverride) {
   if (!to) return;
   try {
@@ -25,7 +39,7 @@ async function envoyerSMS(to, body, fromOverride) {
         Authorization: 'Basic ' + Buffer.from(`${sid}:${token}`).toString('base64'),
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: new URLSearchParams({ To: to, From: from, Body: body }),
+      body: new URLSearchParams({ To: toE164(to), From: from, Body: body }),
     });
   } catch (e) {
     console.error('Erreur envoi SMS alerte solde :', e);

@@ -6,144 +6,258 @@
 <title>Choisissez votre forfait — Skyeco Pro</title>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f5f8f6; color:#14312a; }
+  :root {
+    --brand:#1e6f4c; --brand-dark:#0f4a30; --accent:#e8622c; --accent-dark:#c74f20;
+    --bg:#f5f8f6; --text:#14312a; --muted:#8a9891; --muted-2:#5b6b64; --border:#eef1f0;
+  }
+  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:var(--bg); color:var(--text); }
+
+  /* Décor "feuilles" — même motif que le reste de Skyeco Pro (dashboard, mes-rdv),
+     confiné à la section claire pour ne pas déborder sur le panneau sombre. */
+  .hero-bg-wrap { position:relative; overflow:hidden; }
+  .leaf-bg { position:absolute; z-index:0; pointer-events:none; }
+  .leaf-bg svg { display:block; filter:blur(0.5px); }
 
   /* Ordre volontaire : la décision (forfaits) en haut, l'aperçu du site en
      bas — la vitrine sert à confirmer/rassurer une fois la formule choisie,
      elle n'est plus le point d'entrée de la page. */
-  .plans-panel { max-width:960px; margin:0 auto; padding:40px 24px 48px; }
-  .plans-header { margin-bottom:24px; }
-  .plans-header h1 { font-size:1.6rem; margin-bottom:8px; }
-  .plans-header p { color:#5b6b64; font-size:0.95rem; }
+  .plans-panel { position:relative; z-index:1; max-width:960px; margin:0 auto; padding:48px 24px 56px; }
 
-  .preview-panel { background:#0f1a2b; }
-  .preview-inner { max-width:960px; margin:0 auto; padding:32px 24px 48px; }
-  .preview-header { color:#fff; font-size:0.85rem; opacity:0.7; margin-bottom:14px; }
-  .preview-frame-wrap { height:640px; }
-  .preview-frame-wrap iframe { width:100%; height:100%; border:none; border-radius:12px; background:#fff; box-shadow:0 20px 50px rgba(0,0,0,0.4); }
+  .eyebrow {
+    display:inline-flex; align-items:center; gap:6px; background:#e8f5ee; color:var(--brand);
+    font-size:0.76rem; font-weight:800; letter-spacing:0.03em; text-transform:uppercase;
+    padding:6px 14px; border-radius:999px; margin-bottom:16px;
+  }
+
+  .plans-header { margin-bottom:28px; }
+  .plans-header h1 { font-size:2rem; margin-bottom:10px; letter-spacing:-0.01em; }
+  .plans-header p { color:var(--muted-2); font-size:1rem; line-height:1.55; max-width:560px; }
+
+  .preview-panel { background:#0f1a2b; position:relative; overflow:hidden; }
+  .preview-panel::before {
+    content:''; position:absolute; top:-140px; right:-120px; width:360px; height:360px; border-radius:50%;
+    background:radial-gradient(circle, rgba(30,111,76,0.35) 0%, rgba(30,111,76,0) 70%);
+  }
+  .preview-inner { position:relative; z-index:1; max-width:960px; margin:0 auto; padding:40px 24px 56px; }
+  .preview-eyebrow {
+    display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.08); color:#cfe0d7;
+    font-size:0.74rem; font-weight:700; letter-spacing:0.03em; text-transform:uppercase;
+    padding:6px 14px; border-radius:999px; margin-bottom:18px;
+  }
+  .browser-mock {
+    background:#1a2638; border-radius:14px 14px 0 0; padding:10px 16px; display:flex; align-items:center; gap:10px;
+    box-shadow:0 -1px 0 rgba(255,255,255,0.06) inset;
+  }
+  .browser-dots { display:flex; gap:6px; }
+  .browser-dots span { width:9px; height:9px; border-radius:50%; display:block; }
+  .browser-dots span:nth-child(1){ background:#e8622c; }
+  .browser-dots span:nth-child(2){ background:#f0c04a; }
+  .browser-dots span:nth-child(3){ background:#1e6f4c; }
+  .browser-url {
+    flex:1; background:rgba(255,255,255,0.06); border-radius:8px; padding:5px 12px; color:#8fa39a;
+    font-size:0.76rem; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .preview-frame-wrap { height:640px; border-radius:0 0 14px 14px; overflow:hidden; box-shadow:0 24px 60px rgba(0,0,0,0.45); }
+  .preview-frame-wrap iframe { width:100%; height:100%; border:none; background:#fff; display:block; }
 
   .explication-box {
-    background:#eef1f0; border-radius:14px; padding:20px 22px; margin-bottom:28px;
-    font-size:0.88rem; line-height:1.6; color:#3a4a44;
+    background:#fff; border:1px solid var(--border); border-radius:18px; padding:24px 26px; margin-bottom:20px;
+    font-size:0.92rem; line-height:1.65; color:#3a4a44; box-shadow:0 4px 20px rgba(20,49,42,0.05);
   }
-  .explication-box strong { color:#14312a; }
-  .explication-box .accent { color:#e8622c; font-weight:700; }
+  .explication-box strong { color:var(--text); }
+  .explication-box .accent { color:var(--accent); font-weight:700; }
 
-  .estimateur-box { background:#fff; border:2px solid #1e6f4c; border-radius:14px; padding:22px; margin-bottom:32px; }
-  .estimateur-box h3 { font-size:0.95rem; margin-bottom:14px; }
-  .estimateur-row { display:flex; align-items:center; gap:14px; margin-bottom:16px; }
-  .estimateur-row label { font-size:0.85rem; font-weight:700; white-space:nowrap; }
+  .estimateur-box {
+    background:#fff; border:1px solid var(--border); border-radius:18px; padding:26px;
+    margin-bottom:28px; box-shadow:0 8px 28px rgba(20,49,42,0.08); position:relative;
+  }
+  .estimateur-box h3 { font-size:1.02rem; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+  .estimateur-row { display:flex; align-items:center; gap:14px; margin-bottom:18px; }
+  .estimateur-row label { font-size:0.85rem; font-weight:700; white-space:nowrap; color:var(--muted-2); }
+  .estimateur-input-wrap { flex:1; position:relative; }
   .estimateur-row input {
-    flex:1; font-size:1.3rem; font-weight:800; padding:10px 14px; border:2px solid #d7dedb;
-    border-radius:10px; color:#14312a;
+    width:100%; font-size:1.35rem; font-weight:800; padding:12px 40px 12px 16px; border:2px solid #e2e8e5;
+    border-radius:12px; color:var(--text); transition:border-color 0.15s ease;
   }
-  .estimateur-resultat { display:flex; gap:28px; }
-  .estimateur-resultat .chiffre { font-size:1.7rem; font-weight:800; color:#1e6f4c; }
-  .estimateur-resultat .label { font-size:0.78rem; color:#5b6b64; }
+  .estimateur-row input:focus { outline:none; border-color:var(--brand); }
+  .estimateur-input-wrap::after {
+    content:'€'; position:absolute; right:16px; top:50%; transform:translateY(-50%);
+    font-weight:800; font-size:1.1rem; color:var(--muted); pointer-events:none;
+  }
+  .estimateur-resultat { display:flex; gap:14px; }
+  .estimateur-stat { flex:1; background:var(--bg); border-radius:12px; padding:14px 16px; text-align:center; }
+  .estimateur-stat .chiffre { font-size:1.6rem; font-weight:800; color:var(--brand); line-height:1.2; }
+  .estimateur-stat .label { font-size:0.76rem; color:var(--muted-2); margin-top:2px; }
+  .estimateur-note { font-size:0.78rem; color:var(--muted); margin-top:14px; line-height:1.5; }
 
-  .plans-grid { display:grid; grid-template-columns:1fr; max-width:420px; margin:0 auto; gap:16px; }
+  .formule-intro { font-size:0.9rem; color:var(--muted-2); margin-bottom:16px; text-align:center; }
+
+  .cgv-row {
+    display:flex; align-items:flex-start; gap:10px; margin-bottom:22px; background:#fff;
+    border:1px solid var(--border); border-radius:14px; padding:14px 16px; cursor:pointer;
+  }
+  .cgv-row input { margin-top:3px; flex-shrink:0; width:18px; height:18px; accent-color:var(--brand); cursor:pointer; }
+  .cgv-row span { font-size:0.83rem; color:var(--muted-2); line-height:1.55; }
+  .cgv-row a { color:var(--brand); font-weight:700; }
+
+  .plans-grid { display:grid; grid-template-columns:1fr; max-width:440px; margin:0 auto; gap:16px; }
   @media (max-width:900px){ .preview-frame-wrap{ height:440px; } }
 
   .plan-card {
-    background:#fff; border:2px solid #e2e8e5; border-radius:16px; padding:24px;
-    display:flex; flex-direction:column; position:relative; transition:border-color 0.2s ease;
+    background:#fff; border:1px solid var(--border); border-radius:24px; padding:32px 28px;
+    display:flex; flex-direction:column; position:relative; box-shadow:0 20px 50px rgba(20,49,42,0.10);
   }
-  .plan-card.recommande { border-color:#1e6f4c; }
+  .plan-card.recommande { border-color:var(--brand); box-shadow:0 20px 50px rgba(30,111,76,0.18); }
   .plan-badge {
-    position:absolute; top:-11px; left:20px; background:#1e6f4c; color:#fff;
-    font-size:0.7rem; font-weight:700; padding:4px 12px; border-radius:999px; letter-spacing:0.02em;
+    position:absolute; top:-13px; left:28px; background:var(--brand); color:#fff;
+    font-size:0.72rem; font-weight:700; padding:5px 14px; border-radius:999px; letter-spacing:0.02em;
+    box-shadow:0 4px 12px rgba(30,111,76,0.35);
   }
-  .plan-name { font-size:1.05rem; font-weight:800; margin-bottom:4px; text-align:center; }
+  .plan-name { font-size:0.82rem; font-weight:800; letter-spacing:0.05em; text-transform:uppercase; color:var(--muted-2); text-align:center; margin-bottom:18px; }
 
-  /* Tuile "offre de lancement" — style inspiré des bandeaux promo (gros
+  /* Tuile "prix spécial artisan" — style inspiré des bandeaux promo (gros
      pourcentage, fond diagonal), pour que la remise saute aux yeux. */
   .promo-tile {
-    width:150px; height:150px; border-radius:20px; position:relative; overflow:hidden;
+    width:156px; height:156px; border-radius:22px; position:relative; overflow:hidden;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     background:linear-gradient(135deg, #f0a878 0%, #e8622c 55%, #c74f20 100%);
-    box-shadow:0 10px 26px rgba(232,98,44,0.38);
-    margin:0 auto 14px;
+    box-shadow:0 14px 32px rgba(232,98,44,0.4); transform:rotate(-3deg);
+    margin:0 auto 20px;
   }
   .promo-tile::before {
     content:''; position:absolute; inset:-30%;
     background:repeating-linear-gradient(45deg, rgba(255,255,255,0.10) 0 16px, transparent 16px 32px);
   }
   .promo-tile-label {
-    position:relative; z-index:1; color:#fff; font-size:0.64rem; font-weight:800;
+    position:relative; z-index:1; color:#fff; font-size:0.66rem; font-weight:800;
     letter-spacing:0.06em; text-transform:uppercase; margin-bottom:2px; text-align:center; line-height:1.25;
   }
   .promo-tile-percent {
-    position:relative; z-index:1; color:#FFE29A; font-size:2.5rem; font-weight:900; line-height:1;
+    position:relative; z-index:1; color:#FFE29A; font-size:2.6rem; font-weight:900; line-height:1;
     text-shadow:0 2px 10px rgba(0,0,0,0.18);
   }
   .promo-tile-duree {
-    position:relative; z-index:1; color:#fff; font-size:0.78rem; font-weight:700; margin-top:4px;
+    position:relative; z-index:1; color:#fff; font-size:0.8rem; font-weight:700; margin-top:4px;
   }
 
-  .plan-price { font-size:1.9rem; font-weight:800; color:#14312a; margin-bottom:2px; text-align:center; }
-  .plan-price span { font-size:0.9rem; font-weight:500; color:#8a9891; }
-  .plan-price-apres { font-size:0.78rem; color:#5b6b64; margin-bottom:2px; text-align:center; }
-  .plan-sub { font-size:0.78rem; color:#8a9891; margin-bottom:18px; text-align:center; }
+  .plan-price { font-size:2.5rem; font-weight:900; color:var(--text); margin-bottom:2px; text-align:center; letter-spacing:-0.01em; }
+  .plan-price span { font-size:0.95rem; font-weight:600; color:var(--muted); }
+  .plan-price-apres { font-size:0.8rem; color:var(--muted-2); margin-bottom:2px; text-align:center; }
+  .plan-sub { font-size:0.8rem; color:var(--muted); margin-bottom:4px; text-align:center; }
 
-  .plan-features { list-style:none; margin-bottom:22px; flex:1; }
-  .plan-features li { font-size:0.86rem; color:#3a4a44; padding:6px 0; padding-left:22px; position:relative; line-height:1.4; }
-  .plan-features li::before { content:'✓'; position:absolute; left:0; color:#1e6f4c; font-weight:800; }
+  .plan-slogan {
+    background:#fdf1ee; border:1px solid #f3c9be; color:#c0392b; font-weight:700;
+    font-size:0.86rem; line-height:1.5; text-align:center; border-radius:14px;
+    padding:12px 16px; margin:16px 0 22px;
+  }
+
+  .plan-features { list-style:none; margin-bottom:26px; flex:1; }
+  .plan-features li { display:flex; align-items:flex-start; gap:10px; font-size:0.9rem; color:#3a4a44; padding:7px 0; line-height:1.45; }
+  .plan-features li .check {
+    flex-shrink:0; width:20px; height:20px; border-radius:50%; background:#e8f5ee; color:var(--brand);
+    display:flex; align-items:center; justify-content:center; font-size:0.66rem; font-weight:900; margin-top:2px;
+  }
   .plan-features li.a-venir { color:#a8b3ae; }
-  .plan-features li.a-venir::before { content:'—'; color:#c8d0cc; }
+  .plan-features li.a-venir .check { background:#f2f4f1; color:#c8d0cc; }
 
   .btn-choisir {
-    width:100%; background:#e8622c; color:#fff; border:none; border-radius:10px;
-    padding:13px; font-size:0.92rem; font-weight:700; cursor:pointer;
+    width:100%; background:linear-gradient(135deg, #f0a878 0%, var(--accent) 55%, var(--accent-dark) 100%);
+    color:#fff; border:none; border-radius:12px;
+    padding:16px; font-size:0.98rem; font-weight:800; cursor:pointer;
+    box-shadow:0 12px 28px rgba(232,98,44,0.35); transition:transform 0.15s ease, box-shadow 0.15s ease;
   }
-  .btn-choisir:hover { filter:brightness(1.05); }
-  .btn-choisir:disabled { opacity:0.5; cursor:wait; }
-  .plan-card.recommande .btn-choisir { background:#1e6f4c; }
+  .btn-choisir:hover { transform:translateY(-2px); box-shadow:0 16px 34px rgba(232,98,44,0.42); }
+  .btn-choisir:disabled { opacity:0.55; cursor:wait; transform:none; }
+  .plan-card.recommande .btn-choisir { background:linear-gradient(135deg, #4a9d6e 0%, var(--brand) 55%, var(--brand-dark) 100%); box-shadow:0 12px 28px rgba(30,111,76,0.35); }
 
-  .loading { text-align:center; padding:80px 20px; color:#5b6b64; }
+  .btn-securise { text-align:center; font-size:0.76rem; color:var(--muted); margin-top:12px; }
+
+  .loading { text-align:center; padding:80px 20px; color:var(--muted-2); }
 </style>
 </head>
 <body>
-  <div class="plans-panel">
-    <div class="plans-header">
-      <h1>Votre vitrine est prête !</h1>
-      <p>Elle ne vous a rien coûté. Voici ce qui fait vraiment la différence maintenant.</p>
+  <div class="hero-bg-wrap">
+    <div class="leaf-bg" style="top:-90px; right:-100px; opacity:0.22;">
+      <svg width="300" height="300" viewBox="0 0 360 360">
+        <defs>
+          <radialGradient id="leafGradA" cx="35%" cy="30%" r="75%">
+            <stop offset="0%" stop-color="#4a9d6e"/>
+            <stop offset="55%" stop-color="#1e6f4c"/>
+            <stop offset="100%" stop-color="#0f4a30"/>
+          </radialGradient>
+          <filter id="leafShadowA" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="8" dy="14" stdDeviation="16" flood-color="#0a3320" flood-opacity="0.3"/>
+          </filter>
+        </defs>
+        <path filter="url(#leafShadowA)" fill="url(#leafGradA)" d="M180,30 C260,50 320,120 300,210 C280,300 190,330 130,290 C70,250 50,160 90,100 C115,63 145,40 180,30 Z"/>
+        <path d="M180,50 C180,140 200,220 260,270" stroke="#0a3320" stroke-width="4" fill="none" opacity="0.35" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="leaf-bg" style="top:420px; left:-120px; opacity:0.14;">
+      <svg width="320" height="320" viewBox="0 0 420 420">
+        <defs>
+          <radialGradient id="leafGradB" cx="40%" cy="35%" r="70%">
+            <stop offset="0%" stop-color="#f3a878"/>
+            <stop offset="55%" stop-color="#e8622c"/>
+            <stop offset="100%" stop-color="#b8481c"/>
+          </radialGradient>
+          <filter id="leafShadowB" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="-6" dy="12" stdDeviation="18" flood-color="#7a2e10" flood-opacity="0.25"/>
+          </filter>
+        </defs>
+        <path filter="url(#leafShadowB)" fill="url(#leafGradB)" d="M210,40 C300,70 370,150 350,240 C330,330 230,370 150,330 C70,290 40,190 80,120 C110,70 160,45 210,40 Z"/>
+        <path d="M210,60 C205,160 220,260 300,320" stroke="#7a2e10" stroke-width="5" fill="none" opacity="0.3" stroke-linecap="round"/>
+      </svg>
     </div>
 
-    <div class="explication-box">
-      <strong>Votre site est gratuit</strong> — la création du formulaire vitrine ne vous coûte rien.<br><br>
-      Ce qui a un coût, c'est de <strong>le mettre en ligne et de le faire vivre</strong> : c'est ça qui vous amène des clients. Concrètement, c'est <span class="accent">Skyeco Ads</span> qui rend votre vitrine visible sur Google — et le nombre de clients qui la découvrent dépend directement du budget que vous choisissez d'y consacrer chaque mois.
-    </div>
-
-    <div class="estimateur-box">
-      <h3>Combien de clics pouvez-vous obtenir ?</h3>
-      <div class="estimateur-row">
-        <label for="budgetEstim">Budget à investir</label>
-        <input type="number" id="budgetEstim" min="100" step="10" value="300">
-        <span style="font-weight:800; font-size:1.2rem;">€</span>
+    <div class="plans-panel">
+      <div class="eyebrow">🎉 Vitrine créée gratuitement</div>
+      <div class="plans-header">
+        <h1>Votre vitrine est prête !</h1>
+        <p>Elle ne vous a rien coûté. Voici ce qui fait vraiment la différence maintenant.</p>
       </div>
-      <div class="estimateur-resultat">
-        <div><div class="chiffre" id="clicsEstimValue">—</div><div class="label">clics estimés</div></div>
-        <div><div class="chiffre" id="cpcEstimValue">—</div><div class="label">CPC moyen estimé</div></div>
+
+      <div class="explication-box">
+        <strong>Votre site est gratuit</strong> — la création du formulaire vitrine ne vous coûte rien.<br><br>
+        Ce qui a un coût, c'est de <strong>le mettre en ligne et de le faire vivre</strong> : c'est ça qui vous amène des clients. Concrètement, c'est <span class="accent">Skyeco Ads</span> qui rend votre vitrine visible sur Google — et le nombre de clients qui la découvrent dépend directement du budget que vous choisissez d'y consacrer chaque mois.
       </div>
-      <p style="font-size:0.76rem; color:#8a9891; margin-top:10px;">
-        Ce budget n'est pas garanti sur un mois — il est consommé au fur et à mesure des clics reçus, plus ou moins vite selon la concurrence du moment.
-      </p>
-    </div>
 
-    <p style="font-size:0.85rem; color:#5b6b64; margin-bottom:14px;">Une formule unique, tout compris. Sans engagement — annulez à tout moment.</p>
+      <div class="estimateur-box">
+        <h3>📊 Combien de clics pouvez-vous obtenir ?</h3>
+        <div class="estimateur-row">
+          <label for="budgetEstim">Budget à investir</label>
+          <div class="estimateur-input-wrap">
+            <input type="number" id="budgetEstim" min="100" step="10" value="300">
+          </div>
+        </div>
+        <div class="estimateur-resultat">
+          <div class="estimateur-stat"><div class="chiffre" id="clicsEstimValue">—</div><div class="label">clics estimés</div></div>
+          <div class="estimateur-stat"><div class="chiffre" id="cpcEstimValue">—</div><div class="label">CPC moyen estimé</div></div>
+        </div>
+        <p class="estimateur-note">
+          Ce budget n'est pas garanti sur un mois — il est consommé au fur et à mesure des clics reçus, plus ou moins vite selon la concurrence du moment.
+        </p>
+      </div>
 
-    <label style="display:flex; align-items:flex-start; gap:8px; margin-bottom:18px; font-size:0.82rem; color:#5b6b64; line-height:1.5; cursor:pointer;">
-      <input type="checkbox" id="checkCgv" style="margin-top:2px; flex-shrink:0;">
-      <span>J'ai lu et j'accepte les <a href="/cgv.html" target="_blank" style="color:#1e6f4c;">Conditions Générales de Vente</a>. *</span>
-    </label>
-    <div class="plans-grid" id="plansGrid">
-      <div class="loading">Chargement…</div>
+      <p class="formule-intro">Une formule unique, tout compris. Sans engagement — annulez à tout moment.</p>
+
+      <label class="cgv-row">
+        <input type="checkbox" id="checkCgv">
+        <span>J'ai lu et j'accepte les <a href="/cgv.html" target="_blank">Conditions Générales de Vente</a>. *</span>
+      </label>
+      <div class="plans-grid" id="plansGrid">
+        <div class="loading">Chargement…</div>
+      </div>
     </div>
   </div>
 
   <div class="preview-panel">
     <div class="preview-inner">
-      <div class="preview-header">Pour rappel, voici l'aperçu de votre vitrine en direct</div>
+      <div class="preview-eyebrow">👀 Aperçu en direct</div>
+      <div class="browser-mock">
+        <div class="browser-dots"><span></span><span></span><span></span></div>
+        <div class="browser-url">votrevitrine.skyeco-pro.fr</div>
+      </div>
       <div class="preview-frame-wrap">
         <iframe id="vitrineFrame" src=""></iframe>
       </div>
@@ -247,7 +361,7 @@
   // aux nouveaux clients. L'id "3" est conservé côté code (create-checkout-session,
   // simuler-paiement-test, Supabase) pour rester cohérent avec les abonnements
   // déjà en cours sur d'anciens forfaits, qui ne sont pas concernés par ce changement.
-  // Remise de lancement 1ère année (31/08) : 39,90€ HT/mois pendant 12 mois
+  // Remise 1ère année (31/08) : 39,90€ HT/mois pendant 12 mois
   // (au lieu de 79,90€), puis retour automatique au tarif normal. Gérée côté
   // paiement par un coupon Stripe (api/create-checkout-session.js) — ici,
   // uniquement l'affichage.
@@ -286,12 +400,13 @@
         <div class="plan-price">${f.prixPromo || f.prix} € <span>HT/mois</span></div>
         <div class="plan-sub" style="margin-bottom:2px;">soit ${(parseFloat((f.prixPromo || f.prix).replace(',', '.')) * 1.2).toFixed(2).replace('.', ',')} € TTC/mois${f.prixPromo ? ` pendant ${f.dureePromoMois} mois` : ''}</div>
         ${f.prixPromo ? `<div class="plan-price-apres">Puis ${f.prix} € HT/mois (soit ${(parseFloat(f.prix.replace(',', '.')) * 1.2).toFixed(2).replace('.', ',')} € TTC/mois)</div>` : ''}
-        <div class="plan-sub" style="color:#c0392b; font-weight:700;">Un jour, une semaine, un mois, un an pour juger.<br>Zéro engagement pour rester.</div>
+        <div class="plan-slogan">Un jour, une semaine, un mois, un an pour juger.<br>Zéro engagement pour rester.</div>
         <ul class="plan-features">
-          ${f.features.map(t => `<li>${t}</li>`).join('')}
-          ${f.aVenir.map(t => `<li class="a-venir">${t}</li>`).join('')}
+          ${f.features.map(t => `<li><span class="check">✓</span><span>${t}</span></li>`).join('')}
+          ${f.aVenir.map(t => `<li class="a-venir"><span class="check">—</span><span>${t}</span></li>`).join('')}
         </ul>
         <button class="btn-choisir" data-plan="${f.id}">Profiter de l'offre -50%</button>
+        <div class="btn-securise">🔒 Paiement sécurisé via Stripe</div>
       </div>
     `).join('');
 

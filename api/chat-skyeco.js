@@ -15,16 +15,15 @@ COMMENT ÇA MARCHE :
 3. Une fois sa vraie vitrine prête, il la valide et choisit une formule.
 4. Il peut ensuite financer des campagnes Google Ads pour recevoir des demandes de devis de vrais clients.
 
-LES 4 FORMULES (prix HT/mois, sans engagement) :
-- Essentiel — 39,90€ : formulaire vitrine + tableau de bord pour piloter la publicité.
-- Pro — 59,90€ : tout l'Essentiel + visualisation des demandes de devis reçues + possibilité d'envoyer un SMS pour proposer un rendez-vous.
-- Business — 79,90€ : tout le Pro + envoi de devis avec signature électronique par SMS + relances automatiques avec offres.
-- Premium — 99,90€ : formulaire vitrine avec nom de domaine personnalisé + fondations de référencement naturel (SEO).
+LA FORMULE (prix HT/mois, sans engagement) — une seule formule, tout compris :
+- Formulaire vitrine en ligne + tableau de bord complet pour piloter la publicité (clics, coûts, mots-clés).
+- Visualisation détaillée des demandes de devis reçues + possibilité d'envoyer un SMS pour proposer un rendez-vous.
+- Envoi de devis avec signature électronique par SMS + relances automatiques avec offres.
+- Tarif : 39,90€ HT/mois pendant les 12 premiers mois (offre de lancement, appliquée automatiquement), puis 79,90€ HT/mois ensuite.
 
 POINTS IMPORTANTS :
 - La création du site est gratuite dans tous les cas — l'abonnement démarre seulement une fois que l'artisan valide sa vraie vitrine.
 - Sans engagement : résiliable à tout moment, ou pause possible 1 mois sans prélèvement.
-- Changer de formule : une augmentation de formule s'applique immédiatement avec paiement de la différence ; une diminution prend effet à la fin de la période déjà payée.
 - Le budget publicitaire (Google Ads) est séparé de l'abonnement — une commission de service est prélevée dessus, le reste finance vraiment les clics.
 - Le budget publicitaire n'est pas garanti sur un mois fixe : il est consommé au rythme réel des clics reçus.
 

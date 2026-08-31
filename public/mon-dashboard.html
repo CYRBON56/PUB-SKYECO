@@ -281,7 +281,10 @@
       <img class="logo-entreprise" id="logoEntreprise" alt="Logo">
       <h1>Mon tableau de bord</h1>
     </div>
-    <a class="btn-elements" id="btnElements" href="#">✏️ Modifier mes éléments</a>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <a class="btn-elements" id="btnMesRdv" href="#" style="background:#fff; color:#1e6f4c; border:1.5px solid #1e6f4c;">📅 Mes rendez-vous</a>
+      <a class="btn-elements" id="btnElements" href="#">✏️ Modifier mes éléments</a>
+    </div>
   </div>
 
   <div id="banniereePause" style="display:none; background:#fdf1ea; border:1.5px solid #e8622c; border-radius:14px; padding:16px 20px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
@@ -492,6 +495,7 @@
 
     document.getElementById('verifAccesOverlay').remove();
     document.getElementById('btnElements').href = '/mes-elements.html?id=' + draftId;
+    document.getElementById('btnMesRdv').href = '/mes-rdv.html?id=' + draftId;
     chargerLogo();
     chargerStats();
     chargerSolde();

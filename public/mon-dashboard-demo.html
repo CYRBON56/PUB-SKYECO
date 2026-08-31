@@ -6,75 +6,374 @@
 <title>Aperçu du dashboard — Skyeco Pro</title>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f5f8f6; color:#14312a; padding:28px 24px; }
-  .wrap { max-width:980px; margin:0 auto; }
-  .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f5f8f6; color:#14312a; padding:28px 24px; position:relative; overflow-x:hidden; }
+  .shape-bg { position:fixed; z-index:0; pointer-events:none; opacity:0.16; }
+  .wrap { max-width:980px; margin:0 auto; position:relative; z-index:1; }
+
+  .lien-retour {
+    display:inline-flex; align-items:center; gap:6px; color:#5b6b64; text-decoration:none;
+    font-size:0.88rem; margin-bottom:14px;
+  }
+  .lien-retour:hover { color:#14312a; }
+
+  .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:10px; }
   h1 { font-size:1.3rem; }
-  .demo-badge { background:#eaf4ef; color:#1e6f4c; font-size:0.72rem; font-weight:700; padding:5px 12px; border-radius:999px; }
+  .demo-badge { background:#eaf4ef; color:#1e6f4c; font-size:0.72rem; font-weight:700; padding:5px 12px; border-radius:999px; white-space:nowrap; }
+  .intro-funnel { font-size:0.88rem; color:#5b6b64; line-height:1.6; margin-bottom:20px; }
+  .intro-funnel strong { color:#14312a; }
+  .hint-clic {
+    display:inline-flex; align-items:center; gap:6px; background:#fdf3ee; border:1px solid #f0c4ad; color:#c74f20;
+    font-size:0.78rem; font-weight:700; padding:6px 12px; border-radius:999px; margin-bottom:22px;
+  }
 
-  .stats-row { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin-bottom:24px; }
+  .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
+  @media (max-width:640px){ .stats-row{ grid-template-columns:repeat(2,1fr); } }
   .stat-card { background:#fff; border-radius:14px; padding:18px; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
-  .stat-value { font-size:1.7rem; font-weight:800; }
-  .stat-label { font-size:0.75rem; color:#8a9891; margin-top:2px; }
+  .stat-value { font-size:1.6rem; font-weight:800; }
+  .stat-label { font-size:0.72rem; color:#8a9891; margin-top:2px; }
 
-  .solde-box { background:#fff; border:2px solid #1e6f4c; border-radius:14px; padding:20px; margin-bottom:24px; }
+  .solde-box { background:#fff; border:2px solid #1e6f4c; border-radius:14px; padding:20px; margin-bottom:16px; }
   .solde-box h3 { font-size:0.9rem; margin-bottom:12px; }
   .solde-bar-track { background:#eef1f0; border-radius:8px; height:11px; overflow:hidden; margin-bottom:10px; }
   .solde-bar-fill { background:#e8622c; height:100%; width:58%; }
   .solde-stats { display:flex; justify-content:space-between; font-size:0.82rem; color:#5b6b64; }
   .solde-stats strong { color:#14312a; font-size:1rem; }
+  .btn-pause-demo { background:#f2f4f1; color:#14312a; border:1.5px solid #d7dedb; border-radius:10px; padding:8px 14px; font-size:0.78rem; font-weight:700; margin-top:12px; cursor:default; }
 
-  .liste-panel { background:#fff; border-radius:14px; padding:20px; }
+  .ads-section { background:#fff; border-radius:14px; padding:22px; margin-bottom:16px; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
+  .ads-section h2 { font-size:1.05rem; margin-bottom:4px; }
+  .ads-section .ads-sub { font-size:0.82rem; color:#5b6b64; margin-bottom:20px; }
+  .ads-souspanel { border-top:1.5px solid #eef1f0; padding-top:20px; margin-top:20px; }
+  .ads-souspanel:first-of-type { border-top:none; padding-top:0; margin-top:0; }
+  .ads-souspanel h3 { font-size:0.9rem; margin-bottom:12px; }
+
+  .zone-affichage { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; }
+  .zone-affichage span { font-weight:700; font-size:0.98rem; }
+  .btn-modifier-zone-demo { background:#f2f4f1; color:#14312a; border:none; border-radius:8px; padding:8px 14px; font-size:0.82rem; font-weight:700; cursor:default; white-space:nowrap; }
+  .estim-note { font-size:0.74rem; color:#8a9891; margin-top:10px; }
+
+  .motscles-liste { display:flex; flex-direction:column; gap:8px; margin-bottom:6px; }
+  .motscle-item { display:flex; align-items:center; gap:8px; font-size:0.86rem; }
+  .motscle-item input[type="checkbox"] { width:16px; height:16px; accent-color:#1e6f4c; flex-shrink:0; }
+  .motscle-texte { flex:1; }
+  .motscle-potentiel-badge {
+    font-size:0.7rem; font-weight:700; white-space:nowrap; border-radius:6px; padding:2px 8px;
+    background:#eaf5ef; color:#1e6f4c; flex-shrink:0;
+  }
+  .motscle-potentiel-badge.faible { background:#f2f4f1; color:#8a9891; }
+  .motscles-potentiel {
+    margin-top:14px; background:#fdf3ee; border:1.5px solid #f0c4ad; border-radius:10px;
+    padding:14px 16px;
+  }
+  .motscles-potentiel .chiffre { font-size:1.4rem; font-weight:800; color:#e8622c; }
+  .motscles-potentiel .detail { font-size:0.82rem; color:#5b6b64; margin-top:4px; line-height:1.5; }
+  .btn-rafraichir-demo {
+    margin-top:10px; background:#5b6b64; color:#fff; border:none; border-radius:9px;
+    padding:9px 15px; font-size:0.82rem; font-weight:700; cursor:default;
+  }
+
+  .annonce-hint { font-size:0.8rem; color:#5b6b64; margin-bottom:16px; line-height:1.5; }
+  .annonce-preview { border:1px solid #d7dedb; border-radius:8px; padding:14px 16px; margin-bottom:14px; font-family:Arial, sans-serif; }
+  .annonce-preview .badge-annonce {
+    display:inline-block; font-size:11px; font-weight:700; color:#1a1a1a; border:1px solid #1a1a1a;
+    border-radius:3px; padding:0 4px; margin-right:6px; vertical-align:middle;
+  }
+  .annonce-preview .domaine-annonce { font-size:14px; color:#006621; vertical-align:middle; }
+  .annonce-preview .titre-annonce { font-size:19px; color:#1a0dab; font-weight:400; margin-top:3px; line-height:1.3; }
+  .annonce-preview .desc-annonce { font-size:13.5px; color:#4d5156; margin-top:4px; line-height:1.5; }
+  .annonce-champ { margin-bottom:10px; }
+  .annonce-champ label { display:flex; justify-content:space-between; font-size:0.78rem; font-weight:700; margin-bottom:5px; color:#14312a; }
+  .annonce-champ label .compteur { font-weight:400; color:#8a9891; }
+  .annonce-champ input, .annonce-champ textarea {
+    width:100%; padding:9px 11px; border:1.5px solid #d7dedb; border-radius:8px; font-size:0.85rem;
+    font-family:inherit; color:#14312a; background:#f9faf9;
+  }
+  .annonce-champ textarea { resize:none; min-height:46px; }
+
+  .ga-slider-row { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+  .ga-slider-row input[type="range"] { flex:1; accent-color:#e8622c; }
+  .ga-slider-row span { font-weight:800; font-size:0.9rem; min-width:60px; text-align:right; }
+  .ga-budget-resultat { font-size:0.83rem; color:#5b6b64; margin-bottom:6px; }
+  .ga-budget-resultat strong { color:#e8622c; font-size:1.05rem; }
+
+  .ga-heures-chart { display:flex; align-items:flex-end; gap:3px; height:60px; margin-bottom:4px; }
+  .ga-heure-barre { flex:1; background:#fbe0d0; border-radius:2px 2px 0 0; min-height:2px; }
+  .ga-heure-barre.pointe { background:#e8622c; }
+  .ga-heures-note { font-size:0.74rem; color:#8a9891; margin-top:8px; }
+  .ga-heures-note strong { color:#e8622c; }
+
+  .liste-panel { background:#fff; border-radius:14px; padding:20px; margin-bottom:16px; }
   .liste-panel h3 { font-size:0.9rem; margin-bottom:14px; }
   table { width:100%; border-collapse:collapse; font-size:0.8rem; }
   th { text-align:left; padding:8px 6px; color:#8a9891; font-weight:700; font-size:0.68rem; text-transform:uppercase; border-bottom:1.5px solid #eef1f0; }
-  td { padding:9px 6px; border-bottom:1px solid #eef1f0; }
-  .statut-badge { font-size:0.66rem; font-weight:700; padding:3px 8px; border-radius:999px; background:#eaf4ef; color:#1e6f4c; }
+  td { padding:9px 6px; border-bottom:1px solid #eef1f0; vertical-align:middle; }
+  .statut-badge { font-size:0.66rem; font-weight:700; padding:3px 8px; border-radius:999px; background:#eaf4ef; color:#1e6f4c; white-space:nowrap; }
   .statut-badge.devis-envoye { background:#fdf1ea; color:#e8622c; }
   .statut-badge.signe { background:#eaf4ef; color:#14312a; }
+  .statut-badge.rdv-pris { background:#eaf0fb; color:#2a4d8f; }
+  .btn-pdf-demo { background:#f2f4f1; color:#14312a; font-size:0.68rem; font-weight:700; padding:4px 9px; border-radius:999px; border:none; white-space:nowrap; }
 
-  .relance-panel { background:#fff; border-radius:14px; padding:20px; margin-top:14px; }
+  .rdv-panel { background:#fff; border-radius:14px; padding:20px; margin-bottom:16px; }
+  .rdv-panel h3 { font-size:0.9rem; margin-bottom:14px; }
+  .rdv-liste { display:flex; flex-direction:column; gap:10px; }
+  .rdv-card {
+    display:flex; align-items:center; gap:14px; border:1.5px solid #eef1f0; border-radius:12px; padding:12px 14px;
+  }
+  .rdv-quand { flex-shrink:0; width:92px; text-align:center; }
+  .rdv-jour { font-size:0.72rem; font-weight:700; color:#8a9891; text-transform:uppercase; }
+  .rdv-heure { font-size:1.05rem; font-weight:800; color:#1e6f4c; }
+  .rdv-infos { flex:1; }
+  .rdv-nom { font-weight:700; font-size:0.86rem; }
+  .rdv-type { font-size:0.78rem; color:#8a9891; margin-top:1px; }
+  .rdv-source { font-size:0.68rem; font-weight:700; color:#1e6f4c; background:#eaf4ef; padding:3px 9px; border-radius:999px; white-space:nowrap; }
+
+  .devis-panel { background:#fff; border-radius:14px; padding:20px; margin-bottom:16px; }
+  .devis-panel h3 { font-size:0.9rem; margin-bottom:14px; }
+  .devis-card { display:flex; align-items:center; gap:14px; border:1.5px solid #eef1f0; border-radius:12px; padding:14px; margin-bottom:10px; }
+  .devis-card:last-child { margin-bottom:0; }
+  .devis-icone { width:42px; height:52px; background:#fdf1ea; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }
+  .devis-infos { flex:1; }
+  .devis-nom { font-weight:700; font-size:0.86rem; }
+  .devis-montant { font-size:0.78rem; color:#8a9891; margin-top:1px; }
+  .devis-actions { display:flex; gap:6px; }
+  .btn-signature { background:#1e6f4c; color:#fff; font-size:0.7rem; font-weight:700; padding:6px 11px; border-radius:8px; border:none; white-space:nowrap; }
+
+  .relance-panel { background:#fff; border-radius:14px; padding:20px; }
   .relance-panel h3 { font-size:0.9rem; margin-bottom:12px; }
-  .relance-row { display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid #eef1f0; font-size:0.8rem; }
+  .relance-row { display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid #eef1f0; font-size:0.8rem; gap:10px; flex-wrap:wrap; }
   .relance-row:last-child { border-bottom:none; }
-  .btn-relance-demo { background:#e8622c; color:#fff; font-size:0.68rem; font-weight:700; padding:4px 10px; border-radius:999px; border:none; }
+  .btn-relance-demo { background:#e8622c; color:#fff; font-size:0.68rem; font-weight:700; padding:4px 10px; border-radius:999px; border:none; white-space:nowrap; }
+
+  /* Zones cliquables "ça explique ce que c'est" */
+  .explicable { cursor:help; border-radius:14px; transition:box-shadow 0.15s ease, outline-color 0.15s ease; outline:2px solid transparent; outline-offset:2px; }
+  .explicable:hover { outline-color:#1e6f4c; }
+  .explain-bubble {
+    position:absolute; z-index:10000; max-width:300px; background:#14312a; color:#fff; border-radius:12px;
+    padding:14px 16px; font-size:0.82rem; line-height:1.5; box-shadow:0 14px 34px rgba(0,0,0,0.28);
+  }
+  .explain-title { font-weight:800; font-size:0.84rem; margin-bottom:5px; color:#a9e0c4; }
+  .explain-text { color:#e6ede9; }
+  .explain-close {
+    position:absolute; top:6px; right:8px; background:none; border:none; color:#a9e0c4; font-size:1rem;
+    font-weight:700; cursor:pointer; line-height:1; padding:2px 4px;
+  }
+
+  .cta-funnel {
+    background:#fff; border:2px solid #1e6f4c; border-radius:16px; padding:26px 24px; margin-top:24px;
+    text-align:center;
+  }
+  .cta-funnel p { font-size:0.94rem; color:#3a4a44; margin-bottom:16px; line-height:1.55; }
+  .cta-funnel p strong { color:#14312a; }
+  .btn-continuer {
+    display:inline-block; background:#e8622c; color:#fff; text-decoration:none; font-weight:800;
+    font-size:0.98rem; padding:14px 30px; border-radius:12px; box-shadow:0 12px 28px rgba(232,98,44,0.35);
+  }
 </style>
 </head>
 <body>
+
+<svg class="shape-bg" style="top:-60px; right:-100px;" width="320" height="320" viewBox="0 0 320 320">
+  <defs><radialGradient id="s1" cx="35%" cy="30%" r="75%"><stop offset="0%" stop-color="#f0a878"/><stop offset="100%" stop-color="#e8622c"/></radialGradient></defs>
+  <path d="M160,20 C240,40 300,110 280,190 C260,270 170,300 100,260 C30,220 15,130 60,70 C90,30 125,15 160,20 Z" fill="url(#s1)"/>
+</svg>
+<svg class="shape-bg" style="bottom:-90px; left:-90px;" width="300" height="300" viewBox="0 0 300 300">
+  <defs><radialGradient id="s2" cx="35%" cy="30%" r="75%"><stop offset="0%" stop-color="#4a6a5a"/><stop offset="100%" stop-color="#14312a"/></radialGradient></defs>
+  <circle cx="150" cy="150" r="130" fill="url(#s2)"/>
+</svg>
+
 <div class="wrap">
+  <a href="#" id="lienRetour" class="lien-retour" style="display:none;">← Retour à ma vitrine</a>
+
   <div class="header">
     <h1>Mon tableau de bord</h1>
-    <span class="demo-badge">Exemple illustratif — Forfait Business</span>
+    <span class="demo-badge" id="badgeHaut">Exemple illustratif — Skyeco Pro</span>
   </div>
+  <div id="introFunnel" style="display:none;" class="intro-funnel">
+    Voici, avec des données fictives sur <strong>6 mois</strong>, à quoi ressemblera votre tableau de bord une fois votre vitrine en ligne.
+  </div>
+  <div id="hintClic" style="display:none;" class="hint-clic">💡 Cliquez sur un encart pour voir à quoi il sert</div>
 
   <div class="stats-row">
-    <div class="stat-card"><div class="stat-value">18</div><div class="stat-label">demandes reçues</div></div>
-    <div class="stat-card"><div class="stat-value">42</div><div class="stat-label">clics ce mois-ci</div></div>
+    <div class="stat-card explicable" data-explain-title="📥 Demandes reçues" data-explain="Chaque fois qu'un client remplit votre formulaire ou vous appelle, une nouvelle demande apparaît ici automatiquement, avec ses coordonnées et le détail de son projet.">
+      <div class="stat-value">112</div><div class="stat-label">demandes reçues (6 mois)</div>
+    </div>
+    <div class="stat-card explicable" data-explain-title="🖱️ Clics publicitaires" data-explain="Le nombre de visiteurs arrivés sur votre vitrine en cliquant sur votre publicité Google Ads ce mois-ci — c'est ce budget qui vous amène ces visiteurs.">
+      <div class="stat-value">42</div><div class="stat-label">clics ce mois-ci</div>
+    </div>
+    <div class="stat-card explicable" data-explain-title="✍️ Devis signés" data-explain="Le nombre de devis que vos clients ont acceptés et signés électroniquement, directement depuis leur téléphone, sans rendez-vous ni papier.">
+      <div class="stat-value">24</div><div class="stat-label">devis signés (6 mois)</div>
+    </div>
+    <div class="stat-card explicable" data-explain-title="📅 Rendez-vous pris" data-explain="Le nombre de rendez-vous que vos prospects ont réservés eux-mêmes dans votre agenda en ligne — vous n'avez plus besoin de les rappeler pour caler une date.">
+      <div class="stat-value">17</div><div class="stat-label">rendez-vous pris (6 mois)</div>
+    </div>
   </div>
 
-  <div class="solde-box">
+  <div class="solde-box explicable" data-explain-title="💶 Budget publicitaire" data-explain="C'est le budget que vous avez choisi de consacrer à la publicité Google Ads ce mois-ci. Il se consomme au fur et à mesure des clics reçus — vous pouvez le mettre en pause à tout moment.">
     <h3>Solde publicitaire</h3>
     <div class="solde-bar-track"><div class="solde-bar-fill"></div></div>
     <div class="solde-stats">
       <span>Consommé : <strong>174 €</strong></span>
       <span>Restant : <strong>126 €</strong> / 300 €</span>
     </div>
+    <button class="btn-pause-demo">⏸️ Mettre en pause la diffusion</button>
   </div>
 
-  <div class="liste-panel">
-    <h3>Demandes d'estimation</h3>
+  <div class="ads-section">
+    <h2>🎯 Pilotage Google Ads</h2>
+    <div class="ads-sub">Le détail de votre campagne — où vous êtes visible, combien investir, quels mots-clés fonctionnent, et à quel moment vos clics arrivent.</div>
+
+    <div class="ads-souspanel explicable" data-explain-title="📍 Zone d'affichage" data-explain="Vous choisissez la zone géographique où vos annonces apparaissent — un client trop loin de chez vous ne verra jamais votre publicité.">
+      <h3>Où voulez-vous être visible ?</h3>
+      <div class="zone-affichage">
+        <span>Brech, Auray, Vannes et 20 km autour</span>
+        <button type="button" class="btn-modifier-zone-demo">✏️ Modifier</button>
+      </div>
+      <div class="estim-note">Vos annonces ne se déclenchent que pour des recherches faites dans cette zone (ou à proximité).</div>
+    </div>
+
+    <div class="ads-souspanel explicable" data-explain-title="✨ Mots-clés" data-explain="On identifie automatiquement les recherches Google les plus fréquentes pour votre métier, pour que votre annonce apparaisse au bon moment, pour la bonne recherche.">
+      <h3>✨ Quels mots-clés pour votre annonce ?</h3>
+      <div class="motscles-liste">
+        <div class="motscle-item"><input type="checkbox" checked disabled><span class="motscle-texte">aménagement extérieur paysagiste</span><span class="motscle-potentiel-badge">≈ 320 recherches/mois</span></div>
+        <div class="motscle-item"><input type="checkbox" checked disabled><span class="motscle-texte">devis paysagiste</span><span class="motscle-potentiel-badge">≈ 210 recherches/mois</span></div>
+        <div class="motscle-item"><input type="checkbox" checked disabled><span class="motscle-texte">paysagiste prix</span><span class="motscle-potentiel-badge">≈ 90 recherches/mois</span></div>
+        <div class="motscle-item"><input type="checkbox" disabled><span class="motscle-texte">entretien jardin copropriété</span><span class="motscle-potentiel-badge faible">aucune recherche connue</span></div>
+      </div>
+      <button type="button" class="btn-rafraichir-demo">🔄 Rafraîchir l'estimation de clics</button>
+      <div class="motscles-potentiel">
+        <div class="chiffre">≈ 55 clics/mois possibles</div>
+        <div class="detail">Avec ces mots-clés dans votre zone, pour un budget de 300 € — coût par clic moyen estimé : 1,20 €.</div>
+      </div>
+    </div>
+
+    <div class="ads-souspanel explicable" data-explain-title="🔎 Votre annonce" data-explain="Voici exactement à quoi ressemblera votre publicité sur Google — modifiable à tout moment depuis votre espace, sans compétence technique.">
+      <h3>🔎 Votre annonce Google Ads</h3>
+      <div class="annonce-hint">Voici à quoi ressemblera votre annonce sur Google. Modifiable à tout moment depuis votre espace.</div>
+      <div class="annonce-preview">
+        <div><span class="badge-annonce">Annonce</span><span class="domaine-annonce">app.skyeco.fr</span></div>
+        <div class="titre-annonce">RM Paysages | Aménagement extérieur | Devis sous 24h</div>
+        <div class="desc-annonce">Obtenez votre estimation en 2 minutes, sans engagement. Artisan local à Auray — réponse rapide garantie.</div>
+      </div>
+      <div class="annonce-champ">
+        <label>Titre 1 <span class="compteur">21/30</span></label>
+        <input type="text" value="RM Paysages" disabled>
+      </div>
+      <div class="annonce-champ">
+        <label>Description 1 <span class="compteur">78/90</span></label>
+        <textarea disabled>Obtenez votre estimation en 2 minutes, sans engagement. Artisan local à Auray.</textarea>
+      </div>
+    </div>
+
+    <div class="ads-souspanel explicable" data-explain-title="🎚️ Budget" data-explain="Ajustez votre budget pour viser plus ou moins de clics, selon vos objectifs du moment — plus ou moins de chantiers à honorer.">
+      <h3>Vous voulez viser plus de clics ? Ajustez votre budget</h3>
+      <div class="ga-slider-row">
+        <input type="range" min="1" max="150" value="55" disabled>
+        <span>55 clics</span>
+      </div>
+      <div class="ga-budget-resultat">Budget ads estimé : <strong>≈ 330 €</strong></div>
+      <div class="estim-note">Ce budget n'est pas garanti sur une durée fixe — il est consommé au fur et à mesure des clics reçus.</div>
+    </div>
+
+    <div class="ads-souspanel explicable" data-explain-title="🕐 Heures de clics" data-explain="On vous montre à quel moment de la journée vos futurs clients cliquent le plus, pour mieux comprendre le rythme de votre activité.">
+      <h3>À quelle heure vos clics arrivent-ils ?</h3>
+      <div class="ga-heures-chart">
+        <div class="ga-heure-barre" style="height:12%;"></div>
+        <div class="ga-heure-barre" style="height:8%;"></div>
+        <div class="ga-heure-barre" style="height:6%;"></div>
+        <div class="ga-heure-barre" style="height:5%;"></div>
+        <div class="ga-heure-barre" style="height:4%;"></div>
+        <div class="ga-heure-barre" style="height:14%;"></div>
+        <div class="ga-heure-barre" style="height:26%;"></div>
+        <div class="ga-heure-barre" style="height:42%;"></div>
+        <div class="ga-heure-barre" style="height:60%;"></div>
+        <div class="ga-heure-barre pointe" style="height:82%;"></div>
+        <div class="ga-heure-barre pointe" style="height:96%;"></div>
+        <div class="ga-heure-barre pointe" style="height:100%;"></div>
+        <div class="ga-heure-barre" style="height:64%;"></div>
+        <div class="ga-heure-barre" style="height:48%;"></div>
+        <div class="ga-heure-barre" style="height:38%;"></div>
+        <div class="ga-heure-barre" style="height:42%;"></div>
+        <div class="ga-heure-barre" style="height:52%;"></div>
+        <div class="ga-heure-barre" style="height:66%;"></div>
+        <div class="ga-heure-barre pointe" style="height:80%;"></div>
+        <div class="ga-heure-barre" style="height:54%;"></div>
+        <div class="ga-heure-barre" style="height:32%;"></div>
+        <div class="ga-heure-barre" style="height:20%;"></div>
+        <div class="ga-heure-barre" style="height:12%;"></div>
+        <div class="ga-heure-barre" style="height:7%;"></div>
+      </div>
+      <div class="ga-heures-note">Vos clics sont les plus nombreux vers <strong>10h-12h</strong> et <strong>19h</strong> — les créneaux les plus rentables pour ce métier.</div>
+    </div>
+  </div>
+
+  <div class="liste-panel explicable" data-explain-title="📋 Demandes d'estimation" data-explain="Chaque demande reçue apparaît ici avec son statut — nouveau, devis envoyé, rendez-vous pris, ou signé — mis à jour automatiquement, sans rien à faire de votre côté.">
+    <h3>Demandes d'estimation (6 derniers mois)</h3>
     <table>
-      <thead><tr><th>Date</th><th>Nom</th><th>Adresse</th><th>Statut</th></tr></thead>
+      <thead><tr><th>Date</th><th>Nom</th><th>Adresse</th><th>Statut</th><th></th></tr></thead>
       <tbody>
-        <tr><td>26/08</td><td>M. Le Roux</td><td>Vannes</td><td><span class="statut-badge">nouveau</span></td></tr>
-        <tr><td>24/08</td><td>Mme Guillou</td><td>Auray</td><td><span class="statut-badge devis-envoye">devis envoyé</span></td></tr>
-        <tr><td>21/08</td><td>M. Even</td><td>Brech</td><td><span class="statut-badge signe">✓ signé électroniquement</span></td></tr>
-        <tr><td>19/08</td><td>Mme Le Bris</td><td>Vannes</td><td><span class="statut-badge devis-envoye">devis envoyé</span></td></tr>
+        <tr><td>26/08</td><td>M. Le Roux</td><td>Vannes</td><td><span class="statut-badge">nouveau</span></td><td>—</td></tr>
+        <tr><td>24/08</td><td>Mme Guillou</td><td>Auray</td><td><span class="statut-badge devis-envoye">devis envoyé</span></td><td><button class="btn-pdf-demo">📄 Voir le PDF</button></td></tr>
+        <tr><td>21/08</td><td>M. Even</td><td>Brech</td><td><span class="statut-badge signe">✓ signé électroniquement</span></td><td><button class="btn-pdf-demo">📄 Voir le PDF</button></td></tr>
+        <tr><td>19/08</td><td>Mme Le Bris</td><td>Vannes</td><td><span class="statut-badge devis-envoye">devis envoyé</span></td><td><button class="btn-pdf-demo">📄 Voir le PDF</button></td></tr>
+        <tr><td>12/08</td><td>M. Kervadec</td><td>Pluvigner</td><td><span class="statut-badge rdv-pris">📅 RDV pris</span></td><td>—</td></tr>
+        <tr><td>28/07</td><td>Mme Tanguy</td><td>Auray</td><td><span class="statut-badge signe">✓ signé électroniquement</span></td><td><button class="btn-pdf-demo">📄 Voir le PDF</button></td></tr>
+        <tr><td>15/07</td><td>M. Le Gall</td><td>Vannes</td><td><span class="statut-badge signe">✓ signé électroniquement</span></td><td><button class="btn-pdf-demo">📄 Voir le PDF</button></td></tr>
+        <tr><td>02/06</td><td>Mme Robic</td><td>Brech</td><td><span class="statut-badge rdv-pris">📅 RDV pris</span></td><td>—</td></tr>
+        <tr><td>19/05</td><td>M. Danielou</td><td>Vannes</td><td><span class="statut-badge signe">✓ signé électroniquement</span></td><td><button class="btn-pdf-demo">📄 Voir le PDF</button></td></tr>
+        <tr><td>04/04</td><td>Mme Perrot</td><td>Auray</td><td><span class="statut-badge signe">✓ signé électroniquement</span></td><td><button class="btn-pdf-demo">📄 Voir le PDF</button></td></tr>
+        <tr><td>21/03</td><td>M. Guého</td><td>Pluvigner</td><td><span class="statut-badge signe">✓ signé électroniquement</span></td><td><button class="btn-pdf-demo">📄 Voir le PDF</button></td></tr>
       </tbody>
     </table>
   </div>
 
-  <div class="relance-panel">
+  <div class="rdv-panel explicable" data-explain-title="📅 Calendrier de rendez-vous" data-explain="Vos prospects réservent eux-mêmes un rendez-vous dans votre agenda en ligne, sur les créneaux que vous avez ouverts — vous n'avez plus besoin de les rappeler pour caler une date.">
+    <h3>Prochains rendez-vous</h3>
+    <div class="rdv-liste">
+      <div class="rdv-card">
+        <div class="rdv-quand"><div class="rdv-jour">Lun. 01 sept.</div><div class="rdv-heure">09:00</div></div>
+        <div class="rdv-infos"><div class="rdv-nom">M. Le Roux</div><div class="rdv-type">Estimation terrasse résine — Vannes</div></div>
+        <div class="rdv-source">Réservé en ligne</div>
+      </div>
+      <div class="rdv-card">
+        <div class="rdv-quand"><div class="rdv-jour">Mer. 03 sept.</div><div class="rdv-heure">14:30</div></div>
+        <div class="rdv-infos"><div class="rdv-nom">Mme Kervadec</div><div class="rdv-type">Devis clôture + portail — Pluvigner</div></div>
+        <div class="rdv-source">Réservé en ligne</div>
+      </div>
+      <div class="rdv-card">
+        <div class="rdv-quand"><div class="rdv-jour">Ven. 05 sept.</div><div class="rdv-heure">11:00</div></div>
+        <div class="rdv-infos"><div class="rdv-nom">Mme Robic</div><div class="rdv-type">Aménagement extérieur — Brech</div></div>
+        <div class="rdv-source">Réservé en ligne</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="devis-panel explicable" data-explain-title="✍️ Devis & signature" data-explain="Ici, vous téléchargez le devis PDF et l'envoyez par SMS pour signature électronique en un clic — votre client signe directement depuis son téléphone, sans rendez-vous.">
+    <h3>Devis en attente de signature</h3>
+    <div class="devis-card">
+      <div class="devis-icone">📄</div>
+      <div class="devis-infos">
+        <div class="devis-nom">Mme Guillou — Terrasse composite 24m²</div>
+        <div class="devis-montant">Devis : 3 240 € TTC — envoyé le 24/08</div>
+      </div>
+      <div class="devis-actions">
+        <button class="btn-pdf-demo">📄 PDF</button>
+        <button class="btn-signature">✍️ Relancer signature SMS</button>
+      </div>
+    </div>
+    <div class="devis-card">
+      <div class="devis-icone">📄</div>
+      <div class="devis-infos">
+        <div class="devis-nom">Mme Le Bris — Aménagement paysager</div>
+        <div class="devis-montant">Devis : 5 680 € TTC — envoyé le 19/08</div>
+      </div>
+      <div class="devis-actions">
+        <button class="btn-pdf-demo">📄 PDF</button>
+        <button class="btn-signature">✍️ Relancer signature SMS</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="relance-panel explicable" data-explain-title="🔔 Relances automatiques" data-explain="Si un client ne répond pas après quelques jours, Skyeco Pro lui envoie automatiquement un SMS de relance — sans que vous ayez à y penser.">
     <h3>Relances automatiques</h3>
     <div class="relance-row">
       <span>Mme Guillou — devis envoyé il y a 3 jours, sans réponse</span>
@@ -85,7 +384,80 @@
       <button class="btn-relance-demo">Relancer par SMS</button>
     </div>
   </div>
+
+  <div id="ctaFunnel" class="cta-funnel" style="display:none;">
+    <p>C'est exactement <strong>ce qui vous attend</strong> une fois votre vitrine en ligne — vos vrais clients, vos vraies demandes, à cet endroit.</p>
+    <a href="#" id="btnContinuer" class="btn-continuer">Choisir mon forfait →</a>
+  </div>
 </div>
+
+<script>
+  // Mode "funnel" : cette page démo est utilisée à deux endroits différents.
+  // 1) Intégrée en petit aperçu générique dans prochaines-etapes.html (sans
+  //    "?id="), tôt dans le tunnel — on ne touche pas à ce comportement.
+  // 2) Ouverte en pleine page juste après que l'artisan a cliqué "Mettre en
+  //    ligne" sur sa vraie vitrine (apercu.html), avec "?id=<draftId>" — on
+  //    ajoute alors le lien retour et le bouton de poursuite vers le choix
+  //    du forfait.
+  const params = new URLSearchParams(window.location.search);
+  const draftId = params.get('id');
+  if (draftId) {
+    document.getElementById('lienRetour').href = '/apercu.html?id=' + encodeURIComponent(draftId);
+    document.getElementById('lienRetour').style.display = 'inline-flex';
+    document.getElementById('introFunnel').style.display = 'block';
+    document.getElementById('hintClic').style.display = 'inline-flex';
+    document.getElementById('badgeHaut').textContent = 'Aperçu de votre futur tableau de bord';
+    document.getElementById('btnContinuer').href = '/choisir-forfait.html?id=' + encodeURIComponent(draftId);
+    document.getElementById('ctaFunnel').style.display = 'block';
+  }
+
+  // Petit système "cliquez pour comprendre" : chaque encart avec
+  // data-explain affiche une bulle d'explication à côté, au clic.
+  (function initExplications() {
+    let ouvertSur = null;
+    let bulle = null;
+
+    function fermer() {
+      if (bulle) { bulle.remove(); bulle = null; }
+      ouvertSur = null;
+    }
+
+    document.querySelectorAll('[data-explain]').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (ouvertSur === el) { fermer(); return; }
+        fermer();
+        ouvertSur = el;
+
+        bulle = document.createElement('div');
+        bulle.className = 'explain-bubble';
+        bulle.innerHTML =
+          '<button type="button" class="explain-close" aria-label="Fermer">×</button>' +
+          '<div class="explain-title">' + (el.dataset.explainTitle || '💡 Astuce') + '</div>' +
+          '<div class="explain-text">' + el.dataset.explain + '</div>';
+        document.body.appendChild(bulle);
+
+        const r = el.getBoundingClientRect();
+        const bulleLargeur = 300;
+        let top = r.bottom + window.scrollY + 10;
+        let left = r.left + window.scrollX;
+        const maxLeft = window.scrollX + document.documentElement.clientWidth - bulleLargeur - 16;
+        if (left > maxLeft) left = Math.max(16, maxLeft);
+        bulle.style.top = top + 'px';
+        bulle.style.left = left + 'px';
+
+        bulle.querySelector('.explain-close').addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          fermer();
+        });
+      });
+    });
+
+    document.addEventListener('click', fermer);
+    window.addEventListener('scroll', fermer, true);
+  })();
+</script>
+
 <!-- SKYECO_COOKIE_BANNER_START -->
 <div id="skyeco-cookies" style="position:fixed; left:0; right:0; bottom:0; z-index:99999; background:#14202B; color:#F4F7F9; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; box-shadow:0 -6px 24px rgba(0,0,0,0.25); display:none;">
   <div style="max-width:1000px; margin:0 auto; padding:18px 20px; display:flex; align-items:center; gap:24px; flex-wrap:wrap;">

@@ -116,16 +116,22 @@ const GEO_TARGET_FRANCE = '2250';
 // keyword_average_cpc — la description Windsor de "keyword" est explicite :
 // "The keyword idea text returned by Keyword Planner").
 async function interrogerWindsorKeywordPlanner({ keywords, geoTargetConstantId }) {
-  const accountId = (process.env.GOOGLE_ADS_ACCOUNT_ID || '').replace(/[^0-9]/g, '');
+  // Format du compte : testé et confirmé le 31/08 via l'outil MCP Windsor.ai
+  // (get_data) avec le tiret inclus ("784-990-3984"), pas la forme sans
+  // tiret utilisée ailleurs (create-google-ads-campaign.js, endpoint
+  // /actions — un format différent pour un endpoint différent).
+  const chiffres = (process.env.GOOGLE_ADS_ACCOUNT_ID || '').replace(/[^0-9]/g, '');
+  const accountId = chiffres.length === 10
+    ? `${chiffres.slice(0, 3)}-${chiffres.slice(3, 6)}-${chiffres.slice(6)}`
+    : chiffres;
   const params = new URLSearchParams({
     api_key: process.env.WINDSOR_API_KEY,
     fields: 'keyword,avg_monthly_searches,keyword_competition,competition_index,keyword_average_cpc',
-    google_ads_accounts: accountId,
+    accounts: accountId,
     keyword_seeds: keywords.join(','),
     geo_target_constants: geoTargetConstantId,
     language: '1002', // français
     keyword_plan_network: 'GOOGLE_SEARCH',
-    _max_rows: '500',
   });
 
   const resp = await fetch(`${WINDSOR_BASE}?${params.toString()}`);

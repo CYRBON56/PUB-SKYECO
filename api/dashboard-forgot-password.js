@@ -11,7 +11,7 @@
 
 import crypto from 'crypto';
 
-const SITE_BASE_URL = 'https://pub-skyeco-23ue.vercel.app';
+const SITE_BASE_URL = 'https://app.skyeco.fr';
 const RESEND_FROM = 'Skyeco Pro <notifications@ecoskybyrms.fr>';
 const REPONSE_GENERIQUE = { success: true, message: 'Si un compte existe avec cet email, un lien de réinitialisation vient de vous être envoyé par SMS et par email.' };
 

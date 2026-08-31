@@ -470,7 +470,11 @@ async function init(){
   }
 
   document.getElementById('btnPublier').addEventListener('click', ()=>{
-    window.location.href = 'choisir-forfait.html?id=' + draft.id;
+    // Avant de choisir le forfait, on montre un aperçu "vivant" du futur
+    // tableau de bord (données fictives sur 6 mois, cliquable pour
+    // comprendre chaque encart) — pour que l'artisan voie concrètement ce
+    // qui l'attend avant de s'engager sur une formule.
+    window.location.href = 'mon-dashboard-demo.html?id=' + draft.id;
   });
   document.getElementById('btnFooterCallback').addEventListener('click', ()=>{
     const zone = document.getElementById('footerCallbackZone');

@@ -61,7 +61,7 @@ export default async function handler(req, res) {
 
   try {
     const draftResp = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}&select=entreprise,metier,zone,tarif_prix,mots_cles_choisis`,
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}&select=entreprise,metier,zone,tarif_prix,mots_cles_choisis,annonce_titres,annonce_descriptions`,
       { headers: supaHeaders }
     );
     const draftRows = await draftResp.json();
@@ -117,16 +117,26 @@ export default async function handler(req, res) {
       status: 'enabled',
     });
 
-    // 4. Créer l'annonce elle-même.
+    // 4. Créer l'annonce elle-même — textes choisis/modifiés par l'artisan
+    // dans l'aperçu d'annonce de campagne.html (colonnes annonce_titres /
+    // annonce_descriptions, 31/08), sinon repli sur les textes génériques
+    // d'origine si l'artisan n'a jamais ouvert cet aperçu.
+    const titresValides = Array.isArray(draft.annonce_titres)
+      ? draft.annonce_titres.filter(t => typeof t === 'string' && t.trim()).map(t => t.trim().substring(0, 30)).slice(0, 3)
+      : [];
+    const descriptionsValides = Array.isArray(draft.annonce_descriptions)
+      ? draft.annonce_descriptions.filter(d => typeof d === 'string' && d.trim()).map(d => d.trim().substring(0, 90)).slice(0, 2)
+      : [];
+
     const urlVitrine = `https://pub-skyeco-23ue.vercel.app/apercu.html?id=${draft_id}`;
     await executerAction('create_responsive_search_ad', {
       ad_group_id: adGroupId,
-      headlines: [
+      headlines: titresValides.length ? titresValides : [
         `${draft.entreprise || 'Devis gratuit'}`,
         'Estimation gratuite en ligne',
         'Devis sous 24h',
       ],
-      descriptions: [
+      descriptions: descriptionsValides.length ? descriptionsValides : [
         'Obtenez votre estimation en 2 minutes, sans engagement.',
         'Artisan local — réponse rapide garantie.',
       ],

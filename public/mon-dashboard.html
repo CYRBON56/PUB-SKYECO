@@ -81,6 +81,12 @@
   .motscles-liste { margin-top:14px; display:flex; flex-direction:column; gap:8px; }
   .motscle-item { display:flex; align-items:center; gap:8px; font-size:0.86rem; }
   .motscle-item input[type="checkbox"] { width:16px; height:16px; accent-color:#1e6f4c; flex-shrink:0; }
+  .motscle-texte { flex:1; }
+  .motscle-potentiel-badge {
+    font-size:0.7rem; font-weight:700; white-space:nowrap; border-radius:6px; padding:2px 8px;
+    background:#eaf5ef; color:#1e6f4c; flex-shrink:0;
+  }
+  .motscle-potentiel-badge.faible { background:#f2f4f1; color:#8a9891; }
   .motscles-ajout { display:flex; gap:8px; margin-top:12px; }
   .motscles-ajout input {
     flex:1; padding:9px 11px; border:1.5px solid #d7dedb; border-radius:8px; font-size:0.85rem; font-family:inherit;
@@ -704,7 +710,8 @@
           // maintenant clairement, ici et dans le nouvel encart au-dessus.
           volumeNote.textContent = data.error || "Impossible de mettre à jour l'estimation de clics pour le moment.";
           afficherPotentiel({ succes: false, erreur: data.error });
-          return calculerBudgetInverse();
+          calculerBudgetInverse();
+          return data;
         }
         if (data.avgCpcEur) avgCpcEur = data.avgCpcEur;
         if (data.totalMonthlyVolume) {
@@ -738,11 +745,14 @@
           estimatedClicks: data.estimatedClicks,
           motsClesPersonnalises: data.motsClesPersonnalises,
         });
+        calculerBudgetInverse();
+        return data;
       } catch (e) {
         volumeNote.textContent = "Impossible de contacter le serveur pour mettre à jour l'estimation de clics.";
         afficherPotentiel({ succes: false, erreur: "Impossible de contacter le serveur." });
+        calculerBudgetInverse();
+        return null;
       }
-      calculerBudgetInverse();
     }
 
     try {
@@ -754,11 +764,12 @@
     } catch (e) { /* on garde draftInfo vide — repli générique dans rafraichirEstimationVolume */ }
 
     initZoneCiblee(draftInfo.zone || '');
-    initMotsCles(draftInfo, rafraichirEstimationVolume);
+    const motsClesApi = initMotsCles(draftInfo, rafraichirEstimationVolume);
 
     slider.addEventListener('input', calculerBudgetInverse);
     calculerBudgetInverse(); // affichage immédiat avec le CPC générique, affiné juste après
-    rafraichirEstimationVolume(Array.isArray(draftInfo.mots_cles_choisis) ? draftInfo.mots_cles_choisis : []);
+    const dataInitiale = await rafraichirEstimationVolume(Array.isArray(draftInfo.mots_cles_choisis) ? draftInfo.mots_cles_choisis : []);
+    if (dataInitiale && dataInitiale.keywords) motsClesApi.appliquerStats(dataInitiale.keywords);
 
     try {
       const res = await fetch('/api/get-google-ads-details', {
@@ -852,6 +863,11 @@
     const draftMetier = draftInfo.metier;
     const draftZone = draftInfo.zone;
     let selection = new Map(); // texte -> true/false (coché ou non)
+    // Potentiel par mot-clé (recherches/mois), renseigné par Windsor.ai à
+    // chaque rafraîchissement — permet d'afficher un badge à côté de chaque
+    // mot-clé pour aider l'artisan à choisir les plus pertinents plutôt que
+    // de ne voir qu'un total global (demande du 31/08).
+    let statsParMotCle = new Map(); // texte du mot-clé (minuscules) -> { monthly_volume, cpc_eur }
 
     if (Array.isArray(draftInfo.mots_cles_choisis) && draftInfo.mots_cles_choisis.length) {
       draftInfo.mots_cles_choisis.forEach(m => selection.set(m, true));
@@ -860,13 +876,47 @@
       rendreListe();
     }
 
+    // Windsor.ai renvoie des idées de mots-clés proches de nos "seeds", pas
+    // forcément le texte EXACT choisi par l'artisan (ex. singulier/pluriel,
+    // ordre des mots) — on cherche d'abord une correspondance exacte, sinon
+    // une correspondance partielle, comme le fait déjà estimate-reach.js
+    // côté serveur pour rattacher les idées reçues à nos mots-clés de départ.
+    function trouverStats(texte) {
+      const t = texte.trim().toLowerCase();
+      if (statsParMotCle.has(t)) return statsParMotCle.get(t);
+      for (const [k, v] of statsParMotCle.entries()) {
+        if (k.includes(t) || t.includes(k)) return v;
+      }
+      return null;
+    }
+
+    // Appelée après chaque rafraîchissement réussi (chargement initial,
+    // régénération IA, ou clic sur "Rafraîchir l'estimation de clics") avec
+    // le tableau `keywords` renvoyé par /api/estimate-reach.
+    function appliquerStats(keywordsData) {
+      statsParMotCle = new Map();
+      if (Array.isArray(keywordsData)) {
+        keywordsData.forEach((k) => {
+          if (k && k.keyword) statsParMotCle.set(String(k.keyword).trim().toLowerCase(), k);
+        });
+      }
+      rendreListe();
+    }
+
     function rendreListe() {
-      listeEl.innerHTML = [...selection.entries()].map(([texte, coche]) => `
+      listeEl.innerHTML = [...selection.entries()].map(([texte, coche]) => {
+        const stats = trouverStats(texte);
+        const badge = stats
+          ? `<span class="motscle-potentiel-badge${stats.monthly_volume ? '' : ' faible'}">${stats.monthly_volume ? '≈ ' + stats.monthly_volume + ' recherches/mois' : 'aucune recherche connue'}</span>`
+          : '';
+        return `
         <label class="motscle-item">
           <input type="checkbox" data-texte="${texte.replace(/"/g, '&quot;')}" ${coche ? 'checked' : ''}>
-          ${texte}
+          <span class="motscle-texte">${texte}</span>
+          ${badge}
         </label>
-      `).join('');
+      `;
+      }).join('');
       listeEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
         cb.addEventListener('change', () => {
           selection.set(cb.dataset.texte, cb.checked);
@@ -907,7 +957,10 @@
     async function sauvegarderEtRafraichir() {
       const motsClesActifs = await enregistrerSelectionSupabase();
       btnRafraichir.style.display = 'inline-block';
-      if (onSelectionChange) onSelectionChange(motsClesActifs);
+      if (onSelectionChange) {
+        const data = await onSelectionChange(motsClesActifs);
+        if (data && data.keywords) appliquerStats(data.keywords);
+      }
     }
 
     btnRafraichir.addEventListener('click', async () => {
@@ -915,7 +968,10 @@
       btnRafraichir.textContent = 'Mise à jour…';
       const motsClesActifs = [...selection.entries()].filter(([, coche]) => coche).map(([texte]) => texte);
       try {
-        if (onSelectionChange) await onSelectionChange(motsClesActifs);
+        if (onSelectionChange) {
+          const data = await onSelectionChange(motsClesActifs);
+          if (data && data.keywords) appliquerStats(data.keywords);
+        }
       } finally {
         btnRafraichir.disabled = false;
         btnRafraichir.textContent = "🔄 Rafraîchir l'estimation de clics";
@@ -965,6 +1021,8 @@
       signalerSelectionModifiee();
       input.value = '';
     });
+
+    return { appliquerStats };
   }
 
   function pertinenceClasse(clics, maxClics) {

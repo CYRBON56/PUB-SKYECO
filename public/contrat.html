@@ -15,9 +15,26 @@
 
   .prix-box { background:#fff; border-radius:16px; padding:24px; margin-bottom:20px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
   .prix-nom { font-size:0.85rem; font-weight:700; color:#8a9891; text-transform:uppercase; letter-spacing:0.03em; }
+
+  /* Tuile "offre de lancement" — même style que sur choisir-forfait.html. */
+  .promo-tile {
+    width:130px; height:130px; border-radius:18px; position:relative; overflow:hidden;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:linear-gradient(135deg, #f0a878 0%, #e8622c 55%, #c74f20 100%);
+    box-shadow:0 10px 24px rgba(232,98,44,0.35); margin:12px auto 14px;
+  }
+  .promo-tile::before {
+    content:''; position:absolute; inset:-30%;
+    background:repeating-linear-gradient(45deg, rgba(255,255,255,0.10) 0 14px, transparent 14px 28px);
+  }
+  .promo-tile-label { position:relative; z-index:1; color:#fff; font-size:0.6rem; font-weight:800; letter-spacing:0.05em; text-transform:uppercase; text-align:center; line-height:1.2; }
+  .promo-tile-percent { position:relative; z-index:1; color:#FFE29A; font-size:2.1rem; font-weight:900; line-height:1; text-shadow:0 2px 8px rgba(0,0,0,0.18); }
+  .promo-tile-duree { position:relative; z-index:1; color:#fff; font-size:0.68rem; font-weight:700; margin-top:3px; }
+
   .prix-montant { font-size:2.2rem; font-weight:800; margin:6px 0 2px; }
   .prix-montant span { font-size:1rem; font-weight:600; color:#8a9891; }
   .prix-ttc { font-size:0.82rem; color:#8a9891; }
+  .prix-apres { font-size:0.82rem; color:#5b6b64; margin-top:8px; }
 
   .section-titre { font-size:0.78rem; text-transform:uppercase; letter-spacing:0.04em; color:#8a9891; font-weight:700; margin:24px 0 10px; }
 
@@ -50,62 +67,46 @@
 <script>
   const params = new URLSearchParams(window.location.search);
   const draftId = params.get('id');
-  const forfaitChoisi = parseInt(params.get('forfait'), 10);
-
-  const FORFAITS = {
-    1: {
-      nom: 'Essentiel',
-      prixHT: 39.90,
-      inclus: [
-        'Mise en service complète de votre formulaire vitrine en ligne',
-        'Connexion et paramétrage de votre campagne Google Ads',
-        'Recherche et sélection des mots-clés pertinents pour votre métier, avec exclusion des mots-clés non pertinents',
-        'Ciblage de votre zone d\'intervention',
-        'Envoi automatique de SMS et d\'email à chaque nouvelle demande reçue',
-        'Tableau de bord : demandes reçues, clics, solde publicitaire, export PDF',
-        'Vérification par SMS des demandes reçues, pour limiter les faux contacts',
-      ]
-    },
-    2: {
-      nom: 'Pro',
-      prixHT: 59.90,
-      inclus: [
-        'Tout le contenu du forfait Essentiel',
-        'Visualisation détaillée de chaque demande directement dans le tableau de bord (nom, adresse, statut)',
-        'Envoi de SMS pour proposer un rendez-vous précis à vos prospects',
-        'Gestion de vos photos, vidéo et mots-clés directement depuis votre espace',
-      ]
-    },
-    3: {
-      nom: 'Business',
-      prixHT: 79.90,
-      inclus: [
-        'Tout le contenu du forfait Pro',
-        'Génération et envoi de devis au format PDF',
-        'Signature électronique du devis par SMS, avec horodatage et numéro vérifié comme preuve',
-        'Relances automatiques des devis envoyés sans réponse',
-        'Envoi de promotions ou d\'offres ciblées à vos prospects',
-      ]
-    },
-    4: {
-      nom: 'Premium',
-      prixHT: 99.90,
-      inclus: [
-        'Tout le contenu du forfait Business',
-        'Nom de domaine personnalisé pour votre vitrine (à votre nom, pas un sous-domaine générique)',
-        'Fondations de référencement naturel (SEO) pour être mieux positionné sur Google au fil du temps',
-      ]
-    }
+  // Forfait unique (31/08) : il n'y a plus qu'une seule offre, on ignore
+  // désormais le paramètre ?forfait=N de l'URL (conservé pour compatibilité
+  // avec d'éventuels anciens liens déjà envoyés, mais sans effet). L'id "3"
+  // ci-dessous est celui utilisé côté Supabase/Stripe pour cette offre.
+  const ID_FORFAIT = 3;
+  // Remise de lancement 1ère année (31/08) : 39,90€ HT/mois pendant 12 mois,
+  // puis retour automatique à 79,90€ HT/mois. Gérée côté paiement par un
+  // coupon Stripe (api/create-checkout-session.js) — ici, uniquement l'affichage.
+  const FORFAIT = {
+    nom: 'Skyeco Pro',
+    prixHT: 79.90,
+    prixPromoHT: 39.90,
+    dureePromoMois: 12,
+    inclus: [
+      'Mise en service complète de votre formulaire vitrine en ligne',
+      'Connexion et paramétrage de votre campagne Google Ads',
+      'Recherche et sélection des mots-clés pertinents pour votre métier, avec exclusion des mots-clés non pertinents',
+      'Ciblage de votre zone d\'intervention',
+      'Envoi automatique de SMS et d\'email à chaque nouvelle demande reçue',
+      'Tableau de bord : demandes reçues, clics, solde publicitaire, export PDF',
+      'Vérification par SMS des demandes reçues, pour limiter les faux contacts',
+      'Visualisation détaillée de chaque demande directement dans le tableau de bord (nom, adresse, statut)',
+      'Envoi de SMS pour proposer un rendez-vous précis à vos prospects',
+      'Gestion de vos photos, vidéo et mots-clés directement depuis votre espace',
+      'Génération et envoi de devis au format PDF',
+      'Signature électronique du devis par SMS, avec horodatage et numéro vérifié comme preuve',
+      'Relances automatiques des devis envoyés sans réponse',
+      'Envoi de promotions ou d\'offres ciblées à vos prospects',
+    ]
   };
 
-  if(!draftId || !FORFAITS[forfaitChoisi]){
-    document.getElementById('contenu').innerHTML = '<div class="loading">Lien invalide — forfait ou identifiant manquant.</div>';
+  if(!draftId){
+    document.getElementById('contenu').innerHTML = '<div class="loading">Lien invalide — identifiant manquant.</div>';
   } else {
-    afficherContrat(FORFAITS[forfaitChoisi]);
+    afficherContrat(FORFAIT);
   }
 
   function afficherContrat(forfait){
     const prixTTC = (forfait.prixHT * 1.2).toFixed(2);
+    const prixPromoTTC = (forfait.prixPromoHT * 1.2).toFixed(2);
     document.getElementById('contenu').innerHTML = `
       <div class="eyebrow">Votre contrat</div>
       <h1>Récapitulatif du forfait ${forfait.nom}</h1>
@@ -113,8 +114,14 @@
 
       <div class="prix-box">
         <div class="prix-nom">Forfait ${forfait.nom}</div>
-        <div class="prix-montant">${forfait.prixHT.toFixed(2)} € <span>HT / mois</span></div>
-        <div class="prix-ttc">soit ${prixTTC} € TTC / mois</div>
+        <div class="promo-tile">
+          <div class="promo-tile-label">Offre de<br>lancement</div>
+          <div class="promo-tile-percent">-50%</div>
+          <div class="promo-tile-duree">1ère année</div>
+        </div>
+        <div class="prix-montant">${forfait.prixPromoHT.toFixed(2)} € <span>HT / mois</span></div>
+        <div class="prix-ttc">soit ${prixPromoTTC} € TTC / mois, pendant ${forfait.dureePromoMois} mois</div>
+        <div class="prix-apres">Puis ${forfait.prixHT.toFixed(2)} € HT/mois (soit ${prixTTC} € TTC/mois)</div>
       </div>
 
       <div class="section-titre">Ce qui est inclus</div>
@@ -126,7 +133,7 @@
       <div class="inclus-box">
         <div class="inclus-item"><span class="check">✓</span><span>Créer votre formulaire vitrine, sur la base des éléments que vous nous transmettrez juste après (logo, photos, coordonnées)</span></div>
         <div class="inclus-item"><span class="check">✓</span><span>Créer votre campagne publicitaire Google Ads et en assurer la diffusion, ciblée sur votre métier et votre zone</span></div>
-        <div class="inclus-item"><span class="check">✓</span><span>Mettre en place le paiement récurrent du forfait <strong>${forfait.nom}</strong> à ${forfait.prixHT.toFixed(2)} € HT/mois — arrêtable à tout moment</span></div>
+        <div class="inclus-item"><span class="check">✓</span><span>Mettre en place le paiement récurrent du forfait <strong>${forfait.nom}</strong> à ${forfait.prixPromoHT.toFixed(2)} € HT/mois pendant ${forfait.dureePromoMois} mois, puis ${forfait.prixHT.toFixed(2)} € HT/mois — arrêtable à tout moment</span></div>
       </div>
 
       <div class="engagement-box">
@@ -134,7 +141,7 @@
       </div>
 
       <div class="engagement-box">
-        <strong>Sans engagement.</strong> Vous pouvez mettre en pause ou résilier à tout moment — l'abonnement continue jusqu'à la fin de la période déjà payée, sans surprise. Changer de forfait : une augmentation s'applique immédiatement avec paiement de la différence ; une diminution prend effet à la fin de votre période en cours. Le budget publicitaire (Google Ads) est séparé de cet abonnement et n'est jamais garanti sur un mois fixe — il est consommé au rythme réel des clics reçus.
+        <strong>Sans engagement.</strong> Vous pouvez mettre en pause ou résilier à tout moment — l'abonnement continue jusqu'à la fin de la période déjà payée, sans surprise. Le budget publicitaire (Google Ads) est séparé de cet abonnement et n'est jamais garanti sur un mois fixe — il est consommé au rythme réel des clics reçus.
       </div>
 
       <div class="checkbox-row">
@@ -162,7 +169,7 @@
         await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
           method: 'PATCH',
           headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-          body: JSON.stringify({ forfait_preselectionne: forfaitChoisi, forfait_preselectionne_le: new Date().toISOString() })
+          body: JSON.stringify({ forfait_preselectionne: ID_FORFAIT, forfait_preselectionne_le: new Date().toISOString() })
         });
       } catch (e) { /* on continue même si l'enregistrement échoue, ce n'est pas bloquant */ }
 

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Votre devis</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background:#f4f1ea; margin:0; padding:0; color:#1a2e24; }
+  .wrap { max-width:520px; margin:0 auto; padding:28px 18px 60px; }
+  .header { text-align:center; margin-bottom:22px; }
+  .header h1 { font-size:1.3rem; color:#14312a; margin:0 0 6px; }
+  .header p { font-size:0.9rem; color:#5b6b64; margin:0; }
+  .card { background:#fff; border-radius:16px; padding:22px; box-shadow:0 4px 20px rgba(20,49,42,0.08); margin-bottom:18px; }
+  .pdf-link { display:flex; align-items:center; gap:12px; padding:16px; background:#f4f1ea; border-radius:12px; text-decoration:none; color:#14312a; font-weight:700; }
+  .pdf-link .icone { font-size:1.8rem; }
+  .pdf-link .sous { display:block; font-size:0.78rem; font-weight:400; color:#5b6b64; margin-top:2px; }
+  .signature-box { margin-top:20px; }
+  .signature-check { display:flex; align-items:flex-start; gap:10px; font-size:0.88rem; color:#3a4a43; margin-bottom:16px; }
+  .signature-check input { margin-top:3px; width:18px; height:18px; flex-shrink:0; }
+  .btn-signer { width:100%; background:#1e6f4c; color:#fff; border:none; border-radius:12px; padding:16px; font-size:1rem; font-weight:700; cursor:pointer; }
+  .btn-signer:disabled { background:#a9b7b0; cursor:not-allowed; }
+  .msg { text-align:center; font-size:0.85rem; margin-top:12px; }
+  .msg.erreur { color:#c0392b; }
+  .msg.ok { color:#1e6f4c; }
+  .signe-badge { text-align:center; padding:28px 18px; }
+  .signe-badge .check { font-size:3rem; margin-bottom:10px; }
+  .signe-badge h2 { color:#1e6f4c; margin:0 0 8px; }
+  .signe-badge p { color:#5b6b64; font-size:0.9rem; }
+  .loading, .invalide { text-align:center; padding:60px 20px; color:#5b6b64; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div id="contenu" class="loading">Chargement de votre devis…</div>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('t');
+  const contenu = document.getElementById('contenu');
+
+  if (!token) {
+    contenu.innerHTML = '<div class="invalide">Lien invalide.</div>';
+  } else {
+    charger();
+  }
+
+  async function charger() {
+    try {
+      const resp = await fetch('/api/signer-devis?t=' + encodeURIComponent(token));
+      const data = await resp.json();
+      if (!resp.ok || !data.success) {
+        contenu.innerHTML = `<div class="invalide">${escapeHtml(data.error || 'Ce lien de devis est invalide ou a expiré.')}</div>`;
+        return;
+      }
+      afficher(data);
+    } catch (e) {
+      contenu.innerHTML = '<div class="invalide">Impossible de charger votre devis pour le moment. Réessayez dans un instant.</div>';
+    }
+  }
+
+  function afficher(data) {
+    if (data.statut === 'signe') {
+      const date = data.signeLe ? new Date(data.signeLe).toLocaleDateString('fr-FR') : '';
+      contenu.innerHTML = `
+        <div class="header">
+          <h1>${escapeHtml(data.entreprise)}</h1>
+          <p>${data.nomClient ? 'Bonjour ' + escapeHtml(data.nomClient) : ''}</p>
+        </div>
+        <div class="card signe-badge">
+          <div class="check">✅</div>
+          <h2>Devis déjà signé</h2>
+          <p>Vous avez confirmé ce devis${date ? ' le ' + date : ''}. ${escapeHtml(data.entreprise)} a été notifié et reviendra vers vous pour la suite.</p>
+        </div>
+        <div class="card">
+          <a class="pdf-link" href="${data.pdfUrl}" target="_blank" rel="noopener">
+            <span class="icone">📄</span>
+            <span>Revoir le devis PDF<span class="sous">S'ouvre dans un nouvel onglet</span></span>
+          </a>
+        </div>
+      `;
+      return;
+    }
+
+    contenu.innerHTML = `
+      <div class="header">
+        <h1>${escapeHtml(data.entreprise)}</h1>
+        <p>${data.nomClient ? 'Bonjour ' + escapeHtml(data.nomClient) + ', voici votre devis.' : 'Voici votre devis.'}</p>
+      </div>
+      <div class="card">
+        <a class="pdf-link" href="${data.pdfUrl}" target="_blank" rel="noopener">
+          <span class="icone">📄</span>
+          <span>Consulter le devis PDF<span class="sous">S'ouvre dans un nouvel onglet</span></span>
+        </a>
+        <div class="signature-box">
+          <label class="signature-check">
+            <input type="checkbox" id="caseAccord">
+            <span>Je confirme avoir lu et j'accepte ce devis de ${escapeHtml(data.entreprise)}.</span>
+          </label>
+          <button class="btn-signer" id="btnSigner" disabled>✅ J'accepte ce devis</button>
+          <div id="msgSignature" class="msg"></div>
+        </div>
+      </div>
+    `;
+
+    const caseAccord = document.getElementById('caseAccord');
+    const btnSigner = document.getElementById('btnSigner');
+    caseAccord.addEventListener('change', () => { btnSigner.disabled = !caseAccord.checked; });
+
+    btnSigner.addEventListener('click', async () => {
+      btnSigner.disabled = true;
+      btnSigner.textContent = 'Enregistrement…';
+      const msg = document.getElementById('msgSignature');
+      try {
+        const resp = await fetch('/api/signer-devis', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token }),
+        });
+        const result = await resp.json();
+        if (!resp.ok || !result.success) {
+          msg.textContent = result.error || "La signature n'a pas pu être enregistrée.";
+          msg.className = 'msg erreur';
+          btnSigner.disabled = false;
+          btnSigner.textContent = '✅ J\'accepte ce devis';
+          return;
+        }
+        afficher({ ...data, statut: 'signe', signeLe: result.signeLe });
+      } catch (e) {
+        msg.textContent = 'Erreur de connexion — réessayez.';
+        msg.className = 'msg erreur';
+        btnSigner.disabled = false;
+        btnSigner.textContent = '✅ J\'accepte ce devis';
+      }
+    });
+  }
+
+  function escapeHtml(str) {
+    return String(str || '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  }
+</script>
+</body>
+</html>

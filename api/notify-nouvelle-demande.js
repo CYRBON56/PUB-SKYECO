@@ -5,9 +5,9 @@
 //   - Au PROSPECT : SMS + email confirmant que son estimation arrive
 //   - À l'ARTISAN : SMS + email l'informant d'une nouvelle demande
 //
-// C'est la fondation technique du Forfait 1 (39,90€/mois) — sans cet
-// endpoint, personne ne recevait de notification, seule la ligne était
-// enregistrée en base.
+// C'est la fondation technique de l'abonnement Skyeco Pro (79,90€/mois) —
+// sans cet endpoint, personne ne recevait de notification, seule la ligne
+// était enregistrée en base.
 //
 // Variables d'environnement requises :
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
@@ -51,6 +51,30 @@ async function envoyerSMS(to, body, fromOverride) {
   return { success: true, sid: data.sid };
 }
 
+function echapperHtml(valeur) {
+  return String(valeur)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// Construit un récapitulatif HTML (produit, quantité, réponses, montant) à
+// partir du tableau optionnel "recap" envoyé par apercu.html — uniquement
+// rempli quand le projet du prospect a pu être chiffré automatiquement (voir
+// api/classifier-projet-formulaire.js). Sans "recap" (projet non chiffrable,
+// ou ancien appelant), renvoie une chaîne vide et l'email garde son texte
+// minimal habituel.
+function construireRecapHtml(recap) {
+  if (!Array.isArray(recap) || !recap.length) return '';
+  const lignes = recap
+    .filter(r => r && r.label && r.valeur !== undefined && r.valeur !== null && r.valeur !== '')
+    .map(r => `<li><strong>${echapperHtml(r.label)}</strong> : ${echapperHtml(r.valeur)}</li>`)
+    .join('');
+  if (!lignes) return '';
+  return `<p><strong>Récapitulatif de la demande :</strong></p><ul style="margin:6px 0 14px; padding-left:20px; line-height:1.7;">${lignes}</ul>`;
+}
+
 async function envoyerEmail(to, subject, html) {
   if (!to) return { skipped: true, reason: 'email manquant' };
   const resp = await fetch('https://api.resend.com/emails', {
@@ -74,7 +98,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Méthode non autorisée' });
   }
 
-  const { draftId, nom, prenom, telephone, telephoneVerifie, email, reponses } = req.body || {};
+  const { draftId, nom, prenom, telephone, telephoneVerifie, email, reponses, recap } = req.body || {};
   if (!draftId) {
     return res.status(400).json({ error: 'draftId manquant' });
   }
@@ -108,7 +132,10 @@ export default async function handler(req, res) {
         telephone: telephone || null,
         telephone_verifie: !!telephoneVerifie,
         email: email || null,
-        reponses: reponses || {},
+        // Le récap détaillé (produit/quantité/réponses/montant), quand présent,
+        // est conservé dans "reponses" (jsonb) pour rester visible depuis le
+        // dashboard artisan, en plus d'être inclus dans les emails ci-dessous.
+        reponses: Array.isArray(recap) && recap.length ? { ...(reponses || {}), recap } : (reponses || {}),
         statut: 'nouveau',
       }]),
     });
@@ -122,6 +149,7 @@ export default async function handler(req, res) {
     const prenomAffiche = prenom || 'Bonjour';
     const nomEntreprise = draft.entreprise || 'votre artisan';
     const numeroExpediteur = draft.twilio_phone_number || null; // repli automatique sur TWILIO_FROM_NUMBER si absent
+    const recapHtml = construireRecapHtml(recap); // vide si pas de recap (projet non chiffrable, ou appelant plus ancien)
 
     const [smsProspect, emailProspect, smsArtisan, emailArtisan] = await Promise.allSettled([
       envoyerSMS(
@@ -132,7 +160,7 @@ export default async function handler(req, res) {
       envoyerEmail(
         email,
         `Votre estimation ${nomEntreprise} est en cours`,
-        `<p>Bonjour ${prenomAffiche},</p><p>Votre demande d'estimation auprès de <strong>${nomEntreprise}</strong> a bien été enregistrée.</p><p>Un conseiller vous recontacte sous 24h pour affiner votre projet.</p>`
+        `<p>Bonjour ${prenomAffiche},</p><p>Votre demande d'estimation auprès de <strong>${nomEntreprise}</strong> a bien été enregistrée.</p>${recapHtml}<p>Un conseiller vous recontacte sous 24h pour affiner votre projet.</p>`
       ),
       envoyerSMS(
         draft.telephone,
@@ -142,7 +170,7 @@ export default async function handler(req, res) {
       envoyerEmail(
         draft.email,
         'Nouvelle demande reçue sur votre vitrine Skyeco Pro',
-        `<p>Bonjour,</p><p>Vous avez reçu une nouvelle demande de la part de <strong>${prenomAffiche} ${nom || ''}</strong>.</p><p>Téléphone : ${telephone || 'non fourni'}<br>Email : ${email || 'non fourni'}</p><p>Pensez à le rappeler rapidement pour transformer cette demande en client.</p>`
+        `<p>Bonjour,</p><p>Vous avez reçu une nouvelle demande de la part de <strong>${prenomAffiche} ${nom || ''}</strong>.</p><p>Téléphone : ${telephone || 'non fourni'}<br>Email : ${email || 'non fourni'}</p>${recapHtml}<p>Pensez à le rappeler rapidement pour transformer cette demande en client.</p>`
       ),
     ]);
 

@@ -149,8 +149,18 @@ async function interrogerWindsorKeywordPlanner({ keywords, geoTargetConstantId }
     options,
   });
 
-  const resp = await fetch(`${WINDSOR_BASE}?${params.toString()}`);
+  const url = `${WINDSOR_BASE}?${params.toString()}`;
+  // Log de diagnostic (31/08) : mêmes contenus testés manuellement dans le
+  // navigateur fonctionnent, mais l'appel serveur échoue quand même — pour
+  // savoir si la différence vient de la clé API stockée sur Vercel (espace,
+  // saut de ligne...) ou d'autre chose, on journalise ici l'URL réellement
+  // envoyée (clé masquée) et la longueur exacte de la clé utilisée, visible
+  // dans les logs Vercel (Vercel → projet → Functions/Logs).
+  console.log('[estimate-reach] appel Windsor.ai, longueur clé =', (process.env.WINDSOR_API_KEY || '').length, 'url (clé masquée) =', url.replace(/api_key=[^&]+/, 'api_key=***'));
+
+  const resp = await fetch(url);
   const raw = await resp.text();
+  console.log('[estimate-reach] Windsor.ai a répondu, statut =', resp.status, 'corps (300 premiers car.) =', raw.slice(0, 300));
   let data;
   try { data = JSON.parse(raw); } catch (e) {
     throw new Error('Réponse Windsor.ai illisible (pas du JSON) : ' + raw.slice(0, 300));

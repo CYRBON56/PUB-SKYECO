@@ -10,7 +10,7 @@
 //   RESEND_API_KEY
 //   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER
 
-const SITE_BASE_URL = 'https://pub-skyeco-23ue.vercel.app';
+const SITE_BASE_URL = 'https://app.skyeco.fr';
 const RESEND_FROM = 'Skyeco Pro <notifications@ecoskybyrms.fr>';
 
 function toE164(rawPhone) {

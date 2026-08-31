@@ -232,10 +232,10 @@
         </div>
         <div class="estimateur-resultat">
           <div class="estimateur-stat"><div class="chiffre" id="clicsEstimValue">—</div><div class="label">clics estimés</div></div>
-          <div class="estimateur-stat"><div class="chiffre" id="cpcEstimValue">—</div><div class="label">CPC moyen estimé</div></div>
+          <div class="estimateur-stat"><div class="chiffre" id="cpcEstimValue">—</div><div class="label">coût par clic estimé</div></div>
         </div>
         <p class="estimateur-note">
-          Ce budget n'est pas garanti sur un mois — il est consommé au fur et à mesure des clics reçus, plus ou moins vite selon la concurrence du moment.
+          Ce budget n'est pas garanti sur un mois — il est consommé au fur et à mesure des clics reçus. Le coût par clic est variable : il dépend des enchères en temps réel sur Google Ads et de la concurrence du moment.
         </p>
       </div>
 
@@ -342,7 +342,15 @@
         const data = await res.json();
         if (data.success) {
           document.getElementById('clicsEstimValue').textContent = data.estimatedClicks !== null ? '≈ ' + data.estimatedClicks : '—';
-          document.getElementById('cpcEstimValue').textContent = data.avgCpcEur ? data.avgCpcEur + ' €' : '—';
+
+          // On affiche le coût par clic effectif pour le client (budget total
+          // investi ÷ clics obtenus), pas le CPC brut de la place de marché
+          // Google Ads — c'est le seul chiffre pertinent pour l'artisan (le
+          // prix qu'il paie réellement par clic reçu), et il correspond
+          // toujours exactement au budget saisi, sans jamais laisser
+          // apparaître de répartition interne.
+          const cpcEffectif = (data.estimatedClicks && budget) ? +(budget / data.estimatedClicks).toFixed(2) : null;
+          document.getElementById('cpcEstimValue').textContent = cpcEffectif ? cpcEffectif + ' €' : '—';
         }
       } catch (e) {
         document.getElementById('clicsEstimValue').textContent = '—';

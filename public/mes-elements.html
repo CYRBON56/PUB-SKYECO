@@ -96,6 +96,12 @@
     text-decoration:none; margin-bottom:24px; transition:background 0.15s;
   }
   .btn-avancement:hover { background:#f0f7f2; }
+
+  .lien-retour-dashboard {
+    display:inline-flex; align-items:center; gap:6px; color:#8a9891; text-decoration:none;
+    font-size:0.85rem; font-weight:600; margin-bottom:16px;
+  }
+  .lien-retour-dashboard:hover { color:#3d7a5a; }
   .btn-extraire:hover { filter:brightness(1.06); }
 
   .formulaire-liste { display:flex; flex-direction:column; gap:2px; margin-top:14px; }
@@ -162,6 +168,7 @@
 </div>
 
 <div class="wrap">
+  <a href="#" id="lienRetourDashboard" class="lien-retour-dashboard" style="display:none;">← Retour au tableau de bord</a>
   <div class="eyebrow">Construction de votre vitrine</div>
   <h1>Prenons le temps de bien faire les choses</h1>
   <p class="intro">
@@ -463,6 +470,16 @@
       if (!draft) return;
 
       draftStatutActuel = draft.status || null;
+
+      // Bouton retour visible uniquement quand un tableau de bord existe
+      // réellement pour cet artisan (site déjà publié, ou en pause) — un
+      // premier passage jamais publié n'a pas encore de tableau de bord
+      // (accès protégé par mot de passe, créé seulement à la publication).
+      if (draftStatutActuel === 'published' || draftStatutActuel === 'en_pause') {
+        const lienRetour = document.getElementById('lienRetourDashboard');
+        lienRetour.href = '/mon-dashboard.html?id=' + draftId;
+        lienRetour.style.display = 'inline-flex';
+      }
 
       document.getElementById('telephone').value = draft.telephone || '';
       document.getElementById('email').value = draft.email || '';

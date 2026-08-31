@@ -41,8 +41,8 @@
   .estimateur-resultat .chiffre { font-size:1.7rem; font-weight:800; color:#1e6f4c; }
   .estimateur-resultat .label { font-size:0.78rem; color:#5b6b64; }
 
-  .plans-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-  @media (max-width:900px){ .plans-grid{ grid-template-columns:1fr; } .preview-frame-wrap{ height:440px; } }
+  .plans-grid { display:grid; grid-template-columns:1fr; max-width:420px; margin:0 auto; gap:16px; }
+  @media (max-width:900px){ .preview-frame-wrap{ height:440px; } }
 
   .plan-card {
     background:#fff; border:2px solid #e2e8e5; border-radius:16px; padding:24px;
@@ -54,8 +54,13 @@
     font-size:0.7rem; font-weight:700; padding:4px 12px; border-radius:999px; letter-spacing:0.02em;
   }
   .plan-name { font-size:1.05rem; font-weight:800; margin-bottom:4px; }
+  .plan-promo-badge {
+    display:inline-block; background:#fdf1ea; color:#e8622c; font-size:0.72rem; font-weight:700;
+    padding:3px 10px; border-radius:999px; margin-bottom:8px;
+  }
   .plan-price { font-size:1.9rem; font-weight:800; color:#14312a; margin-bottom:2px; }
   .plan-price span { font-size:0.9rem; font-weight:500; color:#8a9891; }
+  .plan-price-apres { font-size:0.78rem; color:#5b6b64; margin-bottom:2px; }
   .plan-sub { font-size:0.78rem; color:#8a9891; margin-bottom:18px; }
 
   .plan-features { list-style:none; margin-bottom:22px; flex:1; }
@@ -103,7 +108,7 @@
       </p>
     </div>
 
-    <p style="font-size:0.85rem; color:#5b6b64; margin-bottom:14px;">Choisissez la formule qui correspond à vos besoins. Sans engagement — changez ou annulez à tout moment.</p>
+    <p style="font-size:0.85rem; color:#5b6b64; margin-bottom:14px;">Une formule unique, tout compris. Sans engagement — annulez à tout moment.</p>
 
     <label style="display:flex; align-items:flex-start; gap:8px; margin-bottom:18px; font-size:0.82rem; color:#5b6b64; line-height:1.5; cursor:pointer;">
       <input type="checkbox" id="checkCgv" style="margin-top:2px; flex-shrink:0;">
@@ -130,7 +135,7 @@
   // Mode test (usage interne uniquement) : ajouter "&test=1" à l'URL affiche
   // un bouton de simulation de paiement à la place du vrai paiement Stripe —
   // protégé par le mot de passe interne, jamais accessible à un artisan qui
-  // ne le connaît pas. Sert à essayer les 4 forfaits, avec autant d'artisans
+  // ne le connaît pas. Sert à essayer le parcours, avec autant d'artisans
   // de test que voulu, sans payer réellement.
   const TEST_MODE = params.get('test') === '1';
 
@@ -215,44 +220,30 @@
     chargerEstimation();
   }
 
+  // Forfait unique (31/08) : auparavant 4 formules (1 à 4), il ne reste que
+  // l'ancien Forfait 3 — le plus complet — désormais seule offre proposée
+  // aux nouveaux clients. L'id "3" est conservé côté code (create-checkout-session,
+  // simuler-paiement-test, Supabase) pour rester cohérent avec les abonnements
+  // déjà en cours sur d'anciens forfaits, qui ne sont pas concernés par ce changement.
+  // Remise de lancement 1ère année (31/08) : 39,90€ HT/mois pendant 12 mois
+  // (au lieu de 79,90€), puis retour automatique au tarif normal. Gérée côté
+  // paiement par un coupon Stripe (api/create-checkout-session.js) — ici,
+  // uniquement l'affichage.
   const FORFAITS = [
     {
-      id: 1, nom: 'Vitrine simple', prix: '39,90', recommande: false,
+      id: 3, nom: 'Skyeco Pro', prix: '79,90', prixPromo: '39,90', dureePromoMois: 12, recommande: false,
       features: [
         'Formulaire vitrine en ligne',
         'Réception SMS + email (vous et vos prospects)',
-        'Mise à jour illimitée du contenu'
-      ],
-      aVenir: []
-    },
-    {
-      id: 2, nom: 'Vitrine + Dashboard', prix: '59,90', recommande: true,
-      features: [
-        'Tout le Forfait 1',
+        'Mise à jour illimitée du contenu',
         'Tableau de bord complet',
         'Suivi des clics et du coût publicitaire',
         'Gestion des mots-clés',
-        'Changer vos photos et votre vidéo à tout moment'
-      ],
-      aVenir: []
-    },
-    {
-      id: 3, nom: 'Relances SMS et devis avec signature électronique', prix: '79,90', recommande: false,
-      features: [
-        'Tout le Forfait 2',
+        'Changer vos photos et votre vidéo à tout moment',
         'Relance SMS automatique des prospects',
         'Envoi de devis avec signature électronique'
       ],
       aVenir: []
-    },
-    {
-      id: 4, nom: 'Vitrine référencée', prix: '99,90', recommande: false,
-      features: [
-        'Tout le Forfait 3',
-        'Adresse URL personnalisée (pas de lien technique)',
-        'Fondations techniques de référencement Google'
-      ],
-      aVenir: ['Classement Google non garanti — dépend aussi du contenu et de la concurrence locale']
     }
   ];
 
@@ -262,8 +253,10 @@
       <div class="plan-card ${f.recommande ? 'recommande' : ''}">
         ${f.recommande ? '<div class="plan-badge">Recommandé</div>' : ''}
         <div class="plan-name">${f.nom}</div>
-        <div class="plan-price">${f.prix} € <span>HT/mois</span></div>
-        <div class="plan-sub" style="margin-bottom:2px;">soit ${(parseFloat(f.prix.replace(',', '.')) * 1.2).toFixed(2).replace('.', ',')} € TTC/mois</div>
+        ${f.prixPromo ? `<div class="plan-promo-badge">🎉 Offre de lancement — ${f.dureePromoMois} mois</div>` : ''}
+        <div class="plan-price">${f.prixPromo || f.prix} € <span>HT/mois</span></div>
+        <div class="plan-sub" style="margin-bottom:2px;">soit ${(parseFloat((f.prixPromo || f.prix).replace(',', '.')) * 1.2).toFixed(2).replace('.', ',')} € TTC/mois${f.prixPromo ? ` pendant ${f.dureePromoMois} mois` : ''}</div>
+        ${f.prixPromo ? `<div class="plan-price-apres">Puis ${f.prix} € HT/mois (soit ${(parseFloat(f.prix.replace(',', '.')) * 1.2).toFixed(2).replace('.', ',')} € TTC/mois)</div>` : ''}
         <div class="plan-sub">Sans engagement</div>
         <ul class="plan-features">
           ${f.features.map(t => `<li>${t}</li>`).join('')}
@@ -349,5 +342,53 @@
   23 Route de Corn Er Hoet, 56400 Brech — <a href="mailto:infos@ecosky.fr" style="color:#8a9891;">infos@ecosky.fr</a><br>
   <a href="/mentions-legales.html" style="color:#8a9891;">Mentions légales</a> · <a href="/politique-confidentialite.html" style="color:#8a9891;">Confidentialité</a> · <a href="/cgv.html" style="color:#8a9891;">CGV</a>
 </div>
+<!-- SKYECO_COOKIE_BANNER_START -->
+<div id="skyeco-cookies" style="position:fixed; left:0; right:0; bottom:0; z-index:99999; background:#14202B; color:#F4F7F9; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; box-shadow:0 -6px 24px rgba(0,0,0,0.25); display:none;">
+  <div style="max-width:1000px; margin:0 auto; padding:18px 20px; display:flex; align-items:center; gap:24px; flex-wrap:wrap;">
+    <p style="flex:1; min-width:240px; margin:0; font-size:13.5px; line-height:1.5; color:#C9D6DF;">
+      Nous utilisons des cookies n&#233;cessaires au fonctionnement du site et, avec votre accord, des cookies de mesure d&#8217;audience et de suivi publicitaire (Google Ads) pour am&#233;liorer nos services.
+      <a href="/politique-confidentialite.html" style="color:#E8622C; text-decoration:underline;">En savoir plus</a>
+    </p>
+    <div style="display:flex; gap:10px; flex-shrink:0; flex-wrap:wrap;">
+      <button type="button" onclick="skyecoCookiesChoix('essentiel')" style="background:transparent; border:1px solid rgba(255,255,255,0.35); color:#F4F7F9; padding:10px 16px; font-size:13px; font-weight:600; cursor:pointer; border-radius:4px;">Essentiels uniquement</button>
+      <button type="button" onclick="skyecoCookiesChoix('tous')" style="background:#E8622C; border:1px solid #E8622C; color:#fff; padding:10px 18px; font-size:13px; font-weight:700; cursor:pointer; border-radius:4px;">Tout accepter</button>
+    </div>
+  </div>
+</div>
+<button type="button" id="skyeco-cookies-lien" onclick="skyecoCookiesOuvrir()" aria-label="G&#233;rer mes cookies" style="display:none; position:fixed; left:16px; bottom:16px; z-index:99998; background:#14202B; color:#F4F7F9; border:1px solid rgba(255,255,255,0.25); border-radius:20px; padding:8px 14px; font-size:12px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; cursor:pointer;">&#x1F36A; Cookies</button>
+<script>
+(function(){
+  var CLE = 'skyeco_cookie_consent';
+  function lireChoix(){ try { return JSON.parse(localStorage.getItem(CLE) || 'null'); } catch(e){ return null; } }
+  function appliquerChoix(choix){
+    // Point d'extension : charger ici Google Ads / Analytics uniquement si choix.niveau === 'tous'.
+    // Rien n'est charge pour l'instant.
+    window.skyecoConsentement = choix;
+  }
+  window.skyecoCookiesChoix = function(niveau){
+    var choix = { niveau: niveau, date: new Date().toISOString() };
+    try { localStorage.setItem(CLE, JSON.stringify(choix)); } catch(e){}
+    var b = document.getElementById('skyeco-cookies'); if(b) b.style.display = 'none';
+    var l = document.getElementById('skyeco-cookies-lien'); if(l) l.style.display = 'block';
+    appliquerChoix(choix);
+  };
+  window.skyecoCookiesOuvrir = function(){
+    var b = document.getElementById('skyeco-cookies'); if(b) b.style.display = 'block';
+    var l = document.getElementById('skyeco-cookies-lien'); if(l) l.style.display = 'none';
+  };
+  document.addEventListener('DOMContentLoaded', function(){
+    var choix = lireChoix();
+    var b = document.getElementById('skyeco-cookies');
+    var l = document.getElementById('skyeco-cookies-lien');
+    if(choix && choix.niveau){
+      if(l) l.style.display = 'block';
+      appliquerChoix(choix);
+    } else if(b){
+      b.style.display = 'block';
+    }
+  });
+})();
+</script>
+<!-- SKYECO_COOKIE_BANNER_END -->
 </body>
 </html>

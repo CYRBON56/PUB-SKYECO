@@ -1,26 +1,23 @@
 // api/mes-rdv.js
 //
-// GET /api/mes-rdv?jours=30
+// POST /api/mes-rdv   body: { draftId, token, jours? }
 //
-// Renvoie, pour L'ARTISAN CONNECTÉ (identifié via sa session, pas via un
-// paramètre d'URL — voir requireArtisanSession ci-dessous), tous ses créneaux
-// des `jours` prochains jours (30 par défaut) avec leur état :
+// Renvoie, pour L'ARTISAN CONNECTÉ (identifié via son jeton de session — le
+// même que mon-dashboard.html, vérifié ici avec la même logique que
+// dashboard-verify-session.js), tous ses créneaux des `jours` prochains jours
+// (30 par défaut) avec leur état :
 //   'libre'         -> disponible, aucune ligne en base
 //   'confirme'      -> RDV client (nom/téléphone/email inclus)
 //   'indisponible'  -> bloqué manuellement par l'artisan
 //
-// Sert à alimenter public/mes-rdv.html (vue calendrier + blocage de créneaux
-// côté dashboard artisan).
+// En POST (et pas GET) volontairement : le jeton de session ne doit pas se
+// retrouver dans une query string (logs serveur, historique navigateur),
+// même logique que dashboard-verify-session.js.
 //
-// ⚠️ INTÉGRATION REQUISE : requireArtisanSession() ci-dessous est un
-// placeholder. Branche-le sur la MÊME vérification de session signée que
-// mon-dashboard.html utilise déjà (cookie signé avec DASHBOARD_SESSION_SECRET)
-// et fais-le retourner l'artisan_id de la session. Je n'ai pas le code exact
-// de mon-dashboard.html dans cette session pour le dupliquer correctement —
-// mieux vaut ce garde-fou explicite qu'une auth devinée et potentiellement
-// fausse (un artisan ne doit jamais pouvoir voir/bloquer le calendrier d'un
-// autre).
+// Variables d'environnement requises : SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
+// DASHBOARD_SESSION_SECRET
 
+import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -34,11 +31,27 @@ const HEURE_FERMETURE = 20;
 const JOURS_FERMES = [0];
 const JOURS_MAX = 60;
 
-function requireArtisanSession(req) {
-  // TODO : remplace ce bloc par la vraie vérification (cookie signé,
-  // DASHBOARD_SESSION_SECRET) déjà utilisée par mon-dashboard.html, et
-  // retourne l'artisan_id qu'elle contient.
-  throw Object.assign(new Error('requireArtisanSession non implémenté'), { statusCode: 501 });
+// --- Vérification de session : identique à api/dashboard-verify-session.js
+function verifierToken(token, draftIdAttendu) {
+  try {
+    const decode = Buffer.from(token, 'base64url').toString('utf8');
+    const parties = decode.split('.');
+    if (parties.length !== 4) return null;
+    const [draftId, role, expStr, sig] = parties;
+    if (draftId !== draftIdAttendu) return null;
+    const exp = parseInt(expStr, 10);
+    if (!exp || Date.now() / 1000 > exp) return null;
+
+    const payload = `${draftId}.${role}.${expStr}`;
+    const attendu = crypto.createHmac('sha256', process.env.DASHBOARD_SESSION_SECRET).update(payload).digest('hex');
+    const sigBuf = Buffer.from(sig, 'hex');
+    const attenduBuf = Buffer.from(attendu, 'hex');
+    if (sigBuf.length !== attenduBuf.length || !crypto.timingSafeEqual(sigBuf, attenduBuf)) return null;
+
+    return { draftId, role };
+  } catch (e) {
+    return null;
+  }
 }
 
 function decalageMinutes(dateUTC, fuseau) {
@@ -66,22 +79,24 @@ function maintenantAParis() {
     year: 'numeric', month: '2-digit', day: '2-digit',
   });
   const p = dtf.formatToParts(now).reduce((acc, x) => { acc[x.type] = x.value; return acc; }, {});
-  return { annee: +p.year, mois0: +p.month - 1, jour: +p.day, instantUTC: now };
+  return { annee: +p.year, mois0: +p.month - 1, jour: +p.day };
 }
 
 export default async function handler(req, res) {
-  if (req.method !== 'GET') {
+  if (req.method !== 'POST') {
     return res.status(405).json({ error: 'methode_non_autorisee' });
   }
 
-  let artisanId;
-  try {
-    artisanId = requireArtisanSession(req);
-  } catch (e) {
-    return res.status(e.statusCode || 401).json({ error: 'non_authentifie', message: e.message });
+  const { draftId, token } = req.body || {};
+  if (!draftId || !token) {
+    return res.status(401).json({ error: 'non_authentifie' });
+  }
+  const session = verifierToken(token, draftId);
+  if (!session) {
+    return res.status(401).json({ error: 'session_invalide' });
   }
 
-  let jours = parseInt(req.query.jours, 10);
+  let jours = parseInt(req.body?.jours, 10);
   if (!Number.isFinite(jours) || jours <= 0) jours = 30;
   jours = Math.min(jours, JOURS_MAX);
 
@@ -109,7 +124,7 @@ export default async function handler(req, res) {
   const { data: lignes, error } = await supabase
     .from('rendez_vous_artisans')
     .select('date_heure, statut, client_nom, client_telephone, client_email, client_message')
-    .eq('artisan_id', artisanId)
+    .eq('draft_id', draftId)
     .neq('statut', 'annule')
     .gte('date_heure', slots[0].iso)
     .lte('date_heure', slots[slots.length - 1].iso);

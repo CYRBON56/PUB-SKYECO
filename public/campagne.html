@@ -36,6 +36,29 @@
   .conso-stats strong { color:#14312a; }
   .conso-detail { font-size:0.76rem; color:#8a9891; margin-top:10px; line-height:1.6; }
 
+  .annonce-panel { background:#fff; border:1.5px solid #d7dedb; border-radius:12px; padding:20px; margin-bottom:24px; }
+  .annonce-panel h3 { font-size:0.95rem; margin-bottom:6px; }
+  .annonce-hint { font-size:0.78rem; color:#5b6b64; margin-bottom:16px; line-height:1.5; }
+  .annonce-preview { border:1px solid #d7dedb; border-radius:8px; padding:14px 16px; margin-bottom:18px; font-family:Arial, sans-serif; }
+  .annonce-preview .badge-annonce {
+    display:inline-block; font-size:11px; font-weight:700; color:#1a1a1a; border:1px solid #1a1a1a;
+    border-radius:3px; padding:0 4px; margin-right:6px; vertical-align:middle;
+  }
+  .annonce-preview .domaine-annonce { font-size:14px; color:#006621; vertical-align:middle; }
+  .annonce-preview .titre-annonce { font-size:19px; color:#1a0dab; font-weight:400; margin-top:3px; line-height:1.3; }
+  .annonce-preview .desc-annonce { font-size:13.5px; color:#4d5156; margin-top:4px; line-height:1.5; }
+  .annonce-champ { margin-bottom:12px; }
+  .annonce-champ label { display:flex; justify-content:space-between; font-size:0.78rem; font-weight:700; margin-bottom:5px; color:#14312a; }
+  .annonce-champ label .compteur { font-weight:400; color:#8a9891; }
+  .annonce-champ input, .annonce-champ textarea {
+    width:100%; padding:9px 11px; border:1.5px solid #d7dedb; border-radius:8px; font-size:0.85rem;
+    font-family:inherit; color:#14312a;
+  }
+  .annonce-champ input:focus, .annonce-champ textarea:focus { outline:none; border-color:#1e6f4c; }
+  .annonce-champ textarea { resize:vertical; min-height:50px; }
+  .annonce-champ input.trop-long, .annonce-champ textarea.trop-long { border-color:#c0392b; }
+  .annonce-sauvegarde-note { font-size:0.74rem; color:#8a9891; margin-top:4px; min-height:1em; }
+
   .btn-payer {
     width:100%; background:#e8622c; color:#fff; border:none; border-radius:12px;
     padding:16px; font-size:1.02rem; font-weight:700; cursor:pointer;
@@ -118,6 +141,37 @@
 
       <div class="breakdown" id="breakdown"></div>
 
+      <div class="annonce-panel">
+        <h3>🔎 Votre annonce Google Ads</h3>
+        <div class="annonce-hint">Voici à quoi ressemblera votre annonce sur Google. Modifiez les textes si besoin — c'est cette version qui sera utilisée au lancement.</div>
+        <div class="annonce-preview">
+          <div><span class="badge-annonce">Annonce</span><span class="domaine-annonce" id="previewDomaine">pub-skyeco-23ue.vercel.app</span></div>
+          <div class="titre-annonce" id="previewTitre">—</div>
+          <div class="desc-annonce" id="previewDesc">—</div>
+        </div>
+        <div class="annonce-champ">
+          <label>Titre 1 <span class="compteur" id="cptTitre1">0/30</span></label>
+          <input type="text" id="annonceTitre1" maxlength="30">
+        </div>
+        <div class="annonce-champ">
+          <label>Titre 2 <span class="compteur" id="cptTitre2">0/30</span></label>
+          <input type="text" id="annonceTitre2" maxlength="30">
+        </div>
+        <div class="annonce-champ">
+          <label>Titre 3 <span class="compteur" id="cptTitre3">0/30</span></label>
+          <input type="text" id="annonceTitre3" maxlength="30">
+        </div>
+        <div class="annonce-champ">
+          <label>Description 1 <span class="compteur" id="cptDesc1">0/90</span></label>
+          <textarea id="annonceDesc1" maxlength="90"></textarea>
+        </div>
+        <div class="annonce-champ">
+          <label>Description 2 <span class="compteur" id="cptDesc2">0/90</span></label>
+          <textarea id="annonceDesc2" maxlength="90"></textarea>
+        </div>
+        <div class="annonce-sauvegarde-note" id="annonceSauvegardeNote"></div>
+      </div>
+
       <button class="btn-payer" id="btnPayer" disabled>Payer et lancer ma campagne</button>
       <button class="resilier-link" id="btnPause" type="button">Mettre en pause 1 mois (sans prélèvement)</button>
       <button class="resilier-link" id="btnResilier" type="button">Résilier mon abonnement</button>
@@ -136,6 +190,9 @@
     let draftMetier = null;
     let draftZone = null;
     let draftDepartement = null;
+    let draftEntreprise = null;
+    let draftAnnonceTitres = null;
+    let draftAnnonceDescriptions = null;
     let motsClesActuels = [];
 
     function mettreAJourEstimation() {
@@ -190,20 +247,130 @@
 
     async function chargerDraftPuisInitialiser() {
       try {
-        const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=metier,zone,departement,mots_cles_choisis`, {
+        const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,metier,zone,departement,mots_cles_choisis,annonce_titres,annonce_descriptions`, {
           headers: { apikey: SUPABASE_ANON_KEY }
         });
         const rows = await resp.json();
         const draft = rows[0] || {};
+        draftEntreprise = draft.entreprise;
         draftMetier = draft.metier;
         draftZone = draft.zone;
         draftDepartement = draft.departement;
         if (Array.isArray(draft.mots_cles_choisis)) motsClesActuels = draft.mots_cles_choisis;
+        draftAnnonceTitres = draft.annonce_titres;
+        draftAnnonceDescriptions = draft.annonce_descriptions;
       } catch (e) { /* on continue avec metier/zone/mots-clés vides — repli générique côté API */ }
       // Le choix des mots-clés se fait maintenant depuis le tableau de bord
       // (panneau Pilotage Ads) — ici on ne fait que lire la sélection déjà
       // enregistrée pour l'estimation de clics ci-dessus.
       chargerEstimation();
+      initAnnonce();
+    }
+
+    // Aperçu (format Google : badge "Annonce", URL en vert, titre en bleu,
+    // description en gris) de l'annonce responsive search qui sera créée par
+    // create-google-ads-campaign.js — modifiable avant le lancement. Les
+    // valeurs par défaut reprennent le nom de l'entreprise, le premier
+    // mot-clé choisi et la zone ; l'artisan peut tout réécrire, c'est ce
+    // texte enregistré (annonce_titres / annonce_descriptions) qui sera
+    // utilisé au clic sur "Payer et lancer ma campagne" — sinon repli sur
+    // les textes génériques déjà utilisés côté serveur.
+    function genererAnnoncePropos() {
+      const premierMotCle = motsClesActuels[0] || '';
+      const motCleTitre = premierMotCle
+        ? premierMotCle.charAt(0).toUpperCase() + premierMotCle.slice(1)
+        : '';
+      return {
+        titres: [
+          (draftEntreprise || 'Devis gratuit').substring(0, 30),
+          (motCleTitre || 'Estimation gratuite en ligne').substring(0, 30),
+          'Devis sous 24h',
+        ],
+        descriptions: [
+          'Obtenez votre estimation en 2 minutes, sans engagement.',
+          (draftZone ? `Artisan local à ${draftZone} — réponse rapide garantie.` : 'Artisan local — réponse rapide garantie.').substring(0, 90),
+        ],
+      };
+    }
+
+    function initAnnonce() {
+      const champs = {
+        titre1: document.getElementById('annonceTitre1'),
+        titre2: document.getElementById('annonceTitre2'),
+        titre3: document.getElementById('annonceTitre3'),
+        desc1: document.getElementById('annonceDesc1'),
+        desc2: document.getElementById('annonceDesc2'),
+      };
+      const compteurs = {
+        titre1: document.getElementById('cptTitre1'),
+        titre2: document.getElementById('cptTitre2'),
+        titre3: document.getElementById('cptTitre3'),
+        desc1: document.getElementById('cptDesc1'),
+        desc2: document.getElementById('cptDesc2'),
+      };
+      const previewTitre = document.getElementById('previewTitre');
+      const previewDesc = document.getElementById('previewDesc');
+      const sauvegardeNote = document.getElementById('annonceSauvegardeNote');
+
+      const defauts = genererAnnoncePropos();
+      const titresDepart = Array.isArray(draftAnnonceTitres) && draftAnnonceTitres.length ? draftAnnonceTitres : defauts.titres;
+      const descriptionsDepart = Array.isArray(draftAnnonceDescriptions) && draftAnnonceDescriptions.length ? draftAnnonceDescriptions : defauts.descriptions;
+
+      champs.titre1.value = titresDepart[0] || '';
+      champs.titre2.value = titresDepart[1] || '';
+      champs.titre3.value = titresDepart[2] || '';
+      champs.desc1.value = descriptionsDepart[0] || '';
+      champs.desc2.value = descriptionsDepart[1] || '';
+
+      function majApercu() {
+        const titres = [champs.titre1.value, champs.titre2.value, champs.titre3.value].filter(t => t.trim());
+        previewTitre.textContent = titres.length ? titres.join(' | ') : 'Votre titre apparaîtra ici';
+        const descriptions = [champs.desc1.value, champs.desc2.value].filter(d => d.trim());
+        previewDesc.textContent = descriptions.length ? descriptions.join(' ') : 'Votre description apparaîtra ici.';
+      }
+
+      function majCompteur(cle) {
+        const el = champs[cle];
+        compteurs[cle].textContent = `${el.value.length}/${el.maxLength}`;
+        el.classList.toggle('trop-long', el.value.length >= el.maxLength);
+      }
+
+      let sauvegardeTimer = null;
+      async function sauvegarderAnnonce() {
+        const titres = [champs.titre1.value.trim(), champs.titre2.value.trim(), champs.titre3.value.trim()].filter(t => t);
+        const descriptions = [champs.desc1.value.trim(), champs.desc2.value.trim()].filter(d => d);
+        try {
+          await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
+            method: 'PATCH',
+            headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+            body: JSON.stringify({ annonce_titres: titres, annonce_descriptions: descriptions }),
+          });
+          sauvegardeNote.textContent = 'Modifications enregistrées.';
+        } catch (e) {
+          sauvegardeNote.textContent = "Impossible d'enregistrer ces modifications pour le moment.";
+        }
+      }
+
+      Object.keys(champs).forEach((cle) => {
+        champs[cle].addEventListener('input', () => {
+          majApercu();
+          majCompteur(cle);
+          sauvegardeNote.textContent = 'Enregistrement…';
+          clearTimeout(sauvegardeTimer);
+          sauvegardeTimer = setTimeout(sauvegarderAnnonce, 600);
+        });
+        majCompteur(cle);
+      });
+
+      majApercu();
+
+      // Si aucune annonce n'était encore enregistrée, on sauvegarde tout de
+      // suite les valeurs par défaut proposées (l'artisan voit déjà ce texte
+      // dans l'aperçu — autant que ce soit celui utilisé au lancement s'il
+      // ne touche à rien).
+      if (!(Array.isArray(draftAnnonceTitres) && draftAnnonceTitres.length)) {
+        sauvegarderAnnonce();
+      }
     }
 
     document.getElementById('btnPause').addEventListener('click', async () => {

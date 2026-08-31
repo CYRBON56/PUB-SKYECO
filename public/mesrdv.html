@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mes rendez-vous</title>
+<style>
+  :root {
+    --accent: #1a6d3f;
+    --bg: #f7f8f7;
+    --card: #ffffff;
+    --text: #1f2a24;
+    --muted: #6b7570;
+    --border: #e2e6e3;
+    --libre: #ffffff;
+    --confirme: #e6f4ea;
+    --confirme-border: #1a6d3f;
+    --bloque: #f1f2f1;
+    --bloque-border: #b7bdb9;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 24px 16px 60px; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  .sous-titre { color: var(--muted); margin: 0 0 20px; font-size: 0.9rem; }
+
+  .legende { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; font-size: 0.82rem; color: var(--muted); }
+  .legende span { display: inline-flex; align-items: center; gap: 6px; }
+  .pastille { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
+  .jours-scroll {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .jour-carte {
+    flex: 0 0 168px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+  }
+  .jour-carte h3 {
+    margin: 0 0 8px;
+    font-size: 0.85rem;
+    text-transform: capitalize;
+    text-align: center;
+  }
+  .bloquer-jour {
+    width: 100%;
+    padding: 5px 0;
+    margin-bottom: 8px;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--muted);
+    border-radius: 6px;
+    font-size: 0.72rem;
+    cursor: pointer;
+  }
+  .bloquer-jour:hover { background: var(--bg); }
+
+  .creneau {
+    width: 100%;
+    padding: 7px 6px;
+    margin-bottom: 6px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    text-align: left;
+    border: 1px solid var(--border);
+    background: var(--libre);
+    cursor: pointer;
+  }
+  .creneau .heure { font-weight: 600; }
+  .creneau.libre:hover { background: var(--bg); }
+  .creneau.confirme {
+    background: var(--confirme);
+    border-color: var(--confirme-border);
+    color: var(--confirme-border);
+    cursor: default;
+  }
+  .creneau.confirme .client { display: block; font-size: 0.72rem; font-weight: 400; margin-top: 2px; }
+  .creneau.indisponible {
+    background: var(--bloque);
+    border-color: var(--bloque-border);
+    color: var(--muted);
+    text-decoration: line-through;
+  }
+
+  .chargement { text-align: center; color: var(--muted); padding: 30px 0; }
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--text); color: #fff; padding: 10px 18px; border-radius: 8px;
+    font-size: 0.85rem; opacity: 0; transition: opacity 0.2s; pointer-events: none;
+  }
+  .toast.visible { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Mes rendez-vous</h1>
+  <p class="sous-titre">Cliquez sur un créneau libre pour le bloquer (vacances, indisponibilité), ou sur un créneau bloqué pour le libérer.</p>
+
+  <div class="legende">
+    <span><span class="pastille" style="background:var(--libre);border:1px solid var(--border)"></span>Libre</span>
+    <span><span class="pastille" style="background:var(--confirme);border:1px solid var(--confirme-border)"></span>RDV confirmé</span>
+    <span><span class="pastille" style="background:var(--bloque);border:1px solid var(--bloque-border)"></span>Bloqué par vous</span>
+  </div>
+
+  <div id="zone-jours" class="chargement">Chargement de votre calendrier…</div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+(function () {
+  const zoneJours = document.getElementById('zone-jours');
+  const toastEl = document.getElementById('toast');
+  let toastTimer;
+
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('visible');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('visible'), 2500);
+  }
+
+  function formatJourCourt(dateStr) {
+    const d = new Date(dateStr + 'T12:00:00Z');
+    const jour = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', timeZone: 'Europe/Paris' }).format(d);
+    const num = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '2-digit', timeZone: 'Europe/Paris' }).format(d);
+    return jour + ' ' + num;
+  }
+
+  async function charger() {
+    zoneJours.className = 'chargement';
+    zoneJours.textContent = 'Chargement de votre calendrier…';
+    try {
+      // Auth par session (cookie) : pas de token/artisan_id dans l'URL, le
+      // serveur identifie l'artisan connecté (voir api/mes-rdv.js).
+      const rep = await fetch('/api/mes-rdv?jours=30', { credentials: 'same-origin' });
+      if (rep.status === 401) {
+        zoneJours.className = '';
+        zoneJours.innerHTML = '<p>Session expirée, merci de vous reconnecter.</p>';
+        return;
+      }
+      const data = await rep.json();
+      afficherJours(data.jours || []);
+    } catch (e) {
+      zoneJours.className = '';
+      zoneJours.innerHTML = '<p>Impossible de charger votre calendrier pour le moment.</p>';
+    }
+  }
+
+  function afficherJours(jours) {
+    zoneJours.className = 'jours-scroll';
+    zoneJours.innerHTML = '';
+
+    jours.forEach((jour) => {
+      const carte = document.createElement('div');
+      carte.className = 'jour-carte';
+
+      const titre = document.createElement('h3');
+      titre.textContent = formatJourCourt(jour.date);
+      carte.appendChild(titre);
+
+      const libres = jour.creneaux.filter((c) => c.statut === 'libre');
+      if (libres.length > 0) {
+        const btnJour = document.createElement('button');
+        btnJour.className = 'bloquer-jour';
+        btnJour.textContent = 'Bloquer toute la journée';
+        btnJour.addEventListener('click', () => bloquerJournee(libres, carte));
+        carte.appendChild(btnJour);
+      }
+
+      jour.creneaux.forEach((c) => {
+        const btn = document.createElement('button');
+        btn.className = 'creneau ' + c.statut;
+
+        if (c.statut === 'libre') {
+          btn.innerHTML = '<span class="heure">' + String(c.heure).padStart(2, '0') + 'h00</span>';
+          btn.addEventListener('click', () => bloquer(c.iso, carte));
+        } else if (c.statut === 'indisponible') {
+          btn.innerHTML = '<span class="heure">' + String(c.heure).padStart(2, '0') + 'h00</span> — bloqué';
+          btn.addEventListener('click', () => debloquer(c.iso, carte));
+        } else {
+          btn.innerHTML = '<span class="heure">' + String(c.heure).padStart(2, '0') + 'h00</span>'
+            + '<span class="client">' + (c.client_nom || 'Client') + (c.client_telephone ? ' · ' + c.client_telephone : '') + '</span>';
+        }
+
+        carte.appendChild(btn);
+      });
+
+      zoneJours.appendChild(carte);
+    });
+  }
+
+  async function bloquer(iso, carteAActualiser) {
+    try {
+      const rep = await fetch('/api/bloquer-creneau', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ date_heure: iso }),
+      });
+      if (rep.status === 401) { toast('Session expirée.'); return; }
+      const data = await rep.json();
+      const r = data.resultats && data.resultats[0];
+      if (r && r.ok) {
+        toast('Créneau bloqué.');
+      } else {
+        toast('Ce créneau vient d\'être pris ou est déjà bloqué.');
+      }
+      charger();
+    } catch (e) {
+      toast('Erreur, réessayez.');
+    }
+  }
+
+  async function debloquer(iso) {
+    try {
+      const rep = await fetch('/api/debloquer-creneau', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ date_heure: iso }),
+      });
+      if (rep.status === 401) { toast('Session expirée.'); return; }
+      if (rep.ok) toast('Créneau libéré.');
+      else toast('Impossible de libérer ce créneau.');
+      charger();
+    } catch (e) {
+      toast('Erreur, réessayez.');
+    }
+  }
+
+  async function bloquerJournee(libres) {
+    if (!confirm('Bloquer les ' + libres.length + ' créneaux libres de cette journée ?')) return;
+    try {
+      const debut = libres[0].iso;
+      const fin = libres[libres.length - 1].iso;
+      const rep = await fetch('/api/bloquer-creneau', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ date_heure_debut: debut, date_heure_fin: fin }),
+      });
+      if (rep.status === 401) { toast('Session expirée.'); return; }
+      toast('Journée bloquée.');
+      charger();
+    } catch (e) {
+      toast('Erreur, réessayez.');
+    }
+  }
+
+  charger();
+})();
+</script>
+</body>
+</html>

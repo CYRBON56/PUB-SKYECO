@@ -120,9 +120,22 @@
 
 <script>
 (function () {
+  // Même schéma de session que mon-dashboard.html : draftId dans l'URL
+  // (?id=...), jeton signé dans sessionStorage sous
+  // 'skyeco_dashboard_token_<draftId>', vérifié via /api/dashboard-verify-session.
+  const params = new URLSearchParams(window.location.search);
+  const draftId = params.get('id');
+
   const zoneJours = document.getElementById('zone-jours');
   const toastEl = document.getElementById('toast');
   let toastTimer;
+  let token = null;
+
+  if (!draftId) {
+    zoneJours.className = '';
+    zoneJours.innerHTML = '<p>Lien invalide : identifiant manquant.</p>';
+    return;
+  }
 
   function toast(msg) {
     toastEl.textContent = msg;
@@ -138,16 +151,37 @@
     return jour + ' ' + num;
   }
 
+  async function verifierSession() {
+    token = sessionStorage.getItem('skyeco_dashboard_token_' + draftId);
+    if (!token) {
+      window.location.href = '/acces-dashboard.html?id=' + draftId;
+      return false;
+    }
+    const res = await fetch('/api/dashboard-verify-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ draftId, token }),
+    });
+    const data = await res.json();
+    if (!data.valid) {
+      sessionStorage.removeItem('skyeco_dashboard_token_' + draftId);
+      window.location.href = '/acces-dashboard.html?id=' + draftId;
+      return false;
+    }
+    return true;
+  }
+
   async function charger() {
     zoneJours.className = 'chargement';
     zoneJours.textContent = 'Chargement de votre calendrier…';
     try {
-      // Auth par session (cookie) : pas de token/artisan_id dans l'URL, le
-      // serveur identifie l'artisan connecté (voir api/mes-rdv.js).
-      const rep = await fetch('/api/mes-rdv?jours=30', { credentials: 'same-origin' });
+      const rep = await fetch('/api/mes-rdv', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token, jours: 30 }),
+      });
       if (rep.status === 401) {
-        zoneJours.className = '';
-        zoneJours.innerHTML = '<p>Session expirée, merci de vous reconnecter.</p>';
+        window.location.href = '/acces-dashboard.html?id=' + draftId;
         return;
       }
       const data = await rep.json();
@@ -175,7 +209,7 @@
         const btnJour = document.createElement('button');
         btnJour.className = 'bloquer-jour';
         btnJour.textContent = 'Bloquer toute la journée';
-        btnJour.addEventListener('click', () => bloquerJournee(libres, carte));
+        btnJour.addEventListener('click', () => bloquerJournee(libres));
         carte.appendChild(btnJour);
       }
 
@@ -185,10 +219,10 @@
 
         if (c.statut === 'libre') {
           btn.innerHTML = '<span class="heure">' + String(c.heure).padStart(2, '0') + 'h00</span>';
-          btn.addEventListener('click', () => bloquer(c.iso, carte));
+          btn.addEventListener('click', () => bloquer(c.iso));
         } else if (c.statut === 'indisponible') {
           btn.innerHTML = '<span class="heure">' + String(c.heure).padStart(2, '0') + 'h00</span> — bloqué';
-          btn.addEventListener('click', () => debloquer(c.iso, carte));
+          btn.addEventListener('click', () => debloquer(c.iso));
         } else {
           btn.innerHTML = '<span class="heure">' + String(c.heure).padStart(2, '0') + 'h00</span>'
             + '<span class="client">' + (c.client_nom || 'Client') + (c.client_telephone ? ' · ' + c.client_telephone : '') + '</span>';
@@ -201,22 +235,17 @@
     });
   }
 
-  async function bloquer(iso, carteAActualiser) {
+  async function bloquer(iso) {
     try {
       const rep = await fetch('/api/bloquer-creneau', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify({ date_heure: iso }),
+        body: JSON.stringify({ draftId, token, date_heure: iso }),
       });
-      if (rep.status === 401) { toast('Session expirée.'); return; }
+      if (rep.status === 401) { window.location.href = '/acces-dashboard.html?id=' + draftId; return; }
       const data = await rep.json();
       const r = data.resultats && data.resultats[0];
-      if (r && r.ok) {
-        toast('Créneau bloqué.');
-      } else {
-        toast('Ce créneau vient d\'être pris ou est déjà bloqué.');
-      }
+      toast(r && r.ok ? 'Créneau bloqué.' : 'Ce créneau vient d\'être pris ou est déjà bloqué.');
       charger();
     } catch (e) {
       toast('Erreur, réessayez.');
@@ -228,12 +257,10 @@
       const rep = await fetch('/api/debloquer-creneau', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify({ date_heure: iso }),
+        body: JSON.stringify({ draftId, token, date_heure: iso }),
       });
-      if (rep.status === 401) { toast('Session expirée.'); return; }
-      if (rep.ok) toast('Créneau libéré.');
-      else toast('Impossible de libérer ce créneau.');
+      if (rep.status === 401) { window.location.href = '/acces-dashboard.html?id=' + draftId; return; }
+      toast(rep.ok ? 'Créneau libéré.' : 'Impossible de libérer ce créneau.');
       charger();
     } catch (e) {
       toast('Erreur, réessayez.');
@@ -248,10 +275,9 @@
       const rep = await fetch('/api/bloquer-creneau', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify({ date_heure_debut: debut, date_heure_fin: fin }),
+        body: JSON.stringify({ draftId, token, date_heure_debut: debut, date_heure_fin: fin }),
       });
-      if (rep.status === 401) { toast('Session expirée.'); return; }
+      if (rep.status === 401) { window.location.href = '/acces-dashboard.html?id=' + draftId; return; }
       toast('Journée bloquée.');
       charger();
     } catch (e) {
@@ -259,7 +285,9 @@
     }
   }
 
-  charger();
+  (async () => {
+    if (await verifierSession()) charger();
+  })();
 })();
 </script>
 </body>

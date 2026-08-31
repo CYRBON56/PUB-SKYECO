@@ -135,7 +135,7 @@ const METIER_TEMPLATES = {
       const s = [{ key:"type_projet", question:"Quel est le type de projet ?", type:"choice",
         options:[["creation","Création complète d'un aménagement"],["renovation","Rénovation d'un extérieur existant"],["ponctuel","Intervention ponctuelle"]] }];
       s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
-      pushQuantiteEtSuite(s, tarif, "surface du projet");
+      pushQuantiteEtSuite(s, tarif, "surface du projet", state);
       return s;
     }
   },
@@ -152,7 +152,7 @@ const METIER_TEMPLATES = {
       s.push({ key:"etat_terrain", question:"Dans quel état est le terrain actuellement ?", type:"choice",
         options:[["nu","Terrain nu, rien n'est fait"],["prepare","Déjà terrassé / préparé"]] });
       s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
-      pushQuantiteEtSuite(s, tarif, "surface totale (bassin + plage)");
+      pushQuantiteEtSuite(s, tarif, "surface totale (bassin + plage)", state);
       return s;
     }
   },
@@ -169,7 +169,7 @@ const METIER_TEMPLATES = {
       s.push({ key:"etat_actuel", question:"Dans quel état est le terrain actuellement ?", type:"choice",
         options:[["entretenu","Bien entretenu"],["a_reprendre","À reprendre, un peu haut"]] });
       s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
-      pushQuantiteEtSuite(s, tarif, "surface à tondre");
+      pushQuantiteEtSuite(s, tarif, "surface à tondre", state);
       return s;
     }
   },
@@ -186,7 +186,7 @@ const METIER_TEMPLATES = {
       s.push({ key:"support_actuel", question:"Quel est le support actuel ?", type:"choice",
         options:[["dalle_existante","Dalle béton existante"],["terre_nue","Terre nue, rien n'existe"]] });
       s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
-      pushQuantiteEtSuite(s, tarif, "surface de la terrasse");
+      pushQuantiteEtSuite(s, tarif, "surface de la terrasse", state);
       return s;
     }
   },
@@ -201,7 +201,7 @@ const METIER_TEMPLATES = {
       const s = [{ key:"prestation", question:"Quel type de prestation recherchez-vous ?", type:"choice",
         options:[["plan_seul","Un plan d'aménagement seul"],["plan_suivi","Un plan avec suivi de chantier"]] }];
       s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
-      pushQuantiteEtSuite(s, tarif, "surface du terrain concerné");
+      pushQuantiteEtSuite(s, tarif, "surface du terrain concerné", state);
       return s;
     }
   },
@@ -217,7 +217,7 @@ const METIER_TEMPLATES = {
         options:[["taille","Taille / élagage"],["abattage","Abattage"],["dessouchage","Dessouchage"]] }];
       s.push({ key:"nb_arbres", question:"Combien d'arbres sont concernés ?", type:"number", placeholder:"Ex : 2" });
       s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
-      pushQuantiteEtSuite(s, tarif, "volume / ampleur du chantier");
+      pushQuantiteEtSuite(s, tarif, "volume / ampleur du chantier", state);
       return s;
     }
   },
@@ -234,7 +234,7 @@ const METIER_TEMPLATES = {
       s.push({ key:"frequence", question:"Quelle fréquence d'entretien souhaitez-vous ?", type:"choice",
         options:[["hebdo","Hebdomadaire"],["mensuel","Mensuelle"],["ponctuel","Ponctuelle"]] });
       s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
-      pushQuantiteEtSuite(s, tarif, "surface totale à entretenir");
+      pushQuantiteEtSuite(s, tarif, "surface totale à entretenir", state);
       return s;
     }
   },
@@ -247,7 +247,7 @@ const METIER_TEMPLATES = {
     metierKey: "autre",
     getSteps(state, tarif){
       const s = [{ key:"identite", question:"Vos coordonnées", type:"identity" }];
-      pushQuantiteEtSuite(s, tarif, "ampleur du projet");
+      pushQuantiteEtSuite(s, tarif, "ampleur du projet", state);
       return s;
     }
   }
@@ -256,9 +256,28 @@ const METIER_TEMPLATES = {
 // Ajoute la question de "quantité" (dont l'unité — m², ml, m³ ou forfait —
 // vient directement de ce que l'artisan a lui-même configuré dans son
 // chiffrage détaillé), puis les questions communes (détails, délai, localisation).
-function pushQuantiteEtSuite(s, tarif, libelleSurface){
+function pushQuantiteEtSuite(s, tarif, libelleSurface, state){
   s.push({ key:"details_projet", question:"Décrivez votre projet en quelques mots", type:"textarea",
-    placeholder:"Ex : nature des travaux, contraintes particulières, délais souhaités…", optional:true });
+    placeholder:"Ex : nature des travaux, contraintes particulières, délais souhaités…", optional:true, dictable:true });
+
+  // Questions choisies par l'IA parmi celles validées par l'artisan (voir
+  // api/selectionner-questions-formulaire.js), selon le projet décrit
+  // ci-dessus — remplies de façon asynchrone après ce step (voir
+  // wireStepEvents). Tant que rien n'est encore revenu (ou que l'artisan n'a
+  // configuré aucune question), ce tableau est vide et rien ne change.
+  if(state && Array.isArray(state.questionsDynamiques)){
+    state.questionsDynamiques.forEach(q=>{
+      const cle = 'dyn_' + q.id;
+      if(q.type === 'nombre'){
+        const unites = { ml:'mètres linéaires', m2:'m²', m3:'m³' };
+        s.push({ key:cle, question:q.label, type:"nombre_perso", placeholder:"Ex : 30", unite: unites[q.unite] || '', optional:true });
+      } else if(q.type === 'case'){
+        s.push({ key:cle, question:q.label, type:"case_perso", optional:true });
+      } else {
+        s.push({ key:cle, question:q.label, type:"texte_perso", optional:true });
+      }
+    });
+  }
 
   if(tarif && tarif.unite && tarif.unite !== 'forfait' && tarif.prix){
     const unites = { m2:'m²', ml:'mètres linéaires', m3:'m³' };
@@ -570,14 +589,63 @@ function runWizard(template, brandColor, draftId, tarifMetier, tvaTaux, draftInf
           '<span>J\'accepte de recevoir par SMS et email le suivi de ma demande et d\'éventuelles relances (désabonnement possible à tout moment).</span>'+
         '</label>';
     } else if(s.type==='textarea'){
-      html+='<textarea id="inputTextarea" placeholder="'+(s.placeholder||'')+'" style="width:100%; min-height:110px; border:1.5px solid #d8e3de; border-radius:10px; padding:12px 14px; font-size:15px; font-family:inherit; resize:vertical;">'+(state[s.key]||'')+'</textarea>'+
-        (s.optional ? '<div style="font-size:12px; color:#8a9490; margin-top:6px;">Facultatif — passez si vous préférez.</div>' : '');
+      html+='<div style="display:flex; gap:8px; align-items:flex-start;"><textarea id="inputTextarea" placeholder="'+(s.placeholder||'')+'" style="flex:1; width:100%; min-height:110px; border:1.5px solid #d8e3de; border-radius:10px; padding:12px 14px; font-size:15px; font-family:inherit; resize:vertical;">'+(state[s.key]||'')+'</textarea>'+
+        (s.dictable ? '<button type="button" id="btnMicApercu" title="Dicter à la voix" style="display:none; flex-shrink:0; width:44px; height:44px; border-radius:50%; border:1.5px solid #d8e3de; background:#fff; font-size:18px; cursor:pointer;">🎤</button>' : '')+
+        '</div>'+
+        (s.optional ? '<div style="font-size:12px; color:#8a9490; margin-top:6px;">Facultatif — passez si vous préférez.</div>' : '')+
+        '<div id="micStatusApercu" style="font-size:12px; color:#8a9490; margin-top:4px;"></div>';
+    } else if(s.type==='nombre_perso'){
+      html+='<input type="number" id="inputPerso" placeholder="'+(s.placeholder||'')+'" value="'+(state[s.key]||'')+'" min="0" />'+
+        (s.unite ? '<div style="font-size:12px; color:#8a9490; margin-top:6px;">En '+s.unite+'</div>' : '')+
+        '<div style="font-size:12px; color:#8a9490; margin-top:6px;">Facultatif — passez si vous ne savez pas encore.</div>';
+    } else if(s.type==='texte_perso'){
+      html+='<input type="text" id="inputPerso" value="'+(state[s.key]||'')+'" />'+
+        '<div style="font-size:12px; color:#8a9490; margin-top:6px;">Facultatif — passez si vous préférez.</div>';
+    } else if(s.type==='case_perso'){
+      html+='<div class="options">'+
+        '<div class="option'+(state[s.key]===true?' selected':'')+'" data-val="oui">Oui</div>'+
+        '<div class="option'+(state[s.key]===false?' selected':'')+'" data-val="non">Non</div>'+
+        '</div>'+
+        '<div style="font-size:12px; color:#8a9490; margin-top:6px;">Facultatif — passez si vous préférez.</div>';
     }
     html += '<div class="nav-row"><button class="btn btn-ghost" id="btnBack"'+(state.step===0?" style='visibility:hidden'":'')+'>← Retour</button>'+
-      '<button class="btn btn-primary" id="btnNext" disabled>Continuer</button></div>';
+      '<button class="btn btn-primary" id="btnNext">Continuer</button></div>';
     cardEl.innerHTML = html;
     wireStepEvents(s, steps);
     document.getElementById('btnNext').disabled = !canProceed(s);
+  }
+  // Dictée vocale (facultative) sur la question "Décrivez votre projet" —
+  // répond au besoin de pouvoir répondre "par écrit ou en parlant". Utilise
+  // l'API navigateur SpeechRecognition, sans dépendance externe ; le bouton
+  // reste simplement masqué si le navigateur ne la supporte pas (ex. Firefox
+  // desktop) — dégradation silencieuse, la saisie au clavier reste possible.
+  function initMicApercu(textarea){
+    const btn = document.getElementById('btnMicApercu');
+    const statusEl = document.getElementById('micStatusApercu');
+    if(!btn) return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SR) return; // pas de mic si l'API n'existe pas dans ce navigateur
+    btn.style.display = 'inline-flex';
+    btn.style.alignItems = 'center';
+    btn.style.justifyContent = 'center';
+    let ecoute = false;
+    let recognition = null;
+    btn.addEventListener('click', ()=>{
+      if(ecoute){ recognition && recognition.stop(); return; }
+      recognition = new SR();
+      recognition.lang = 'fr-FR';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      recognition.onstart = ()=>{ ecoute = true; btn.style.background = '#e8622c'; btn.style.color = '#fff'; statusEl.textContent = 'Je vous écoute…'; };
+      recognition.onresult = (event)=>{
+        const texte = Array.from(event.results).map(r=>r[0].transcript).join(' ');
+        textarea.value = (textarea.value ? textarea.value.trim() + ' ' : '') + texte;
+        textarea.dispatchEvent(new Event('input'));
+      };
+      recognition.onerror = ()=>{ statusEl.textContent = "La dictée vocale n'a pas fonctionné — vous pouvez écrire à la place."; };
+      recognition.onend = ()=>{ ecoute = false; btn.style.background = '#fff'; btn.style.color = '#000'; if(statusEl.textContent==='Je vous écoute…') statusEl.textContent=''; };
+      recognition.start();
+    });
   }
   function wireStepEvents(s, steps){
     if(s.type==='choice'){
@@ -662,10 +730,41 @@ function runWizard(template, brandColor, draftId, tarifMetier, tvaTaux, draftInf
       const ta=document.getElementById('inputTextarea');
       ta.addEventListener('input',()=>{ state[s.key]=ta.value; });
       ta.focus();
+      if(s.dictable) initMicApercu(ta);
+    } else if(s.type==='nombre_perso' || s.type==='texte_perso'){
+      const input=document.getElementById('inputPerso');
+      input.addEventListener('input',()=>{ state[s.key]=input.value; });
+      input.focus();
+    } else if(s.type==='case_perso'){
+      cardEl.querySelectorAll('.option').forEach(el=>{ el.addEventListener('click',()=>{ state[s.key]=(el.dataset.val==='oui'); renderProgress(); renderStep(); }); });
     }
     document.getElementById('btnBack').addEventListener('click',()=>{ if(state.step>0){ state.step-=1; renderProgress(); renderStep(); } });
-    document.getElementById('btnNext').addEventListener('click',()=>{
+    document.getElementById('btnNext').addEventListener('click', async ()=>{
       if(!canProceed(s)) return;
+      // Juste après que le prospect a décrit son projet : si l'artisan a
+      // préparé des questions (formulaire_questions_pool), on demande à
+      // l'IA lesquelles sont pertinentes pour CE projet avant de continuer
+      // — jamais bloquant, et sans effet si aucun pool n'est configuré.
+      if(s.key === 'details_projet' && draftInfo && Array.isArray(draftInfo.formulaire_questions_pool) && draftInfo.formulaire_questions_pool.length && !state.questionsDynamiquesChargees){
+        const btnNext = document.getElementById('btnNext');
+        const texteOriginal = btnNext.textContent;
+        btnNext.disabled = true;
+        btnNext.textContent = 'Analyse de votre projet…';
+        try{
+          const res = await fetch('/api/selectionner-questions-formulaire', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ draftId, description: state.details_projet || '' })
+          });
+          const data = await res.json();
+          state.questionsDynamiques = (data && data.success && Array.isArray(data.questions)) ? data.questions : [];
+        } catch(err){
+          state.questionsDynamiques = [];
+        } finally {
+          state.questionsDynamiquesChargees = true;
+          btnNext.disabled = false;
+          btnNext.textContent = texteOriginal;
+        }
+      }
       if(state.step<steps.length-1){ state.step+=1; renderProgress(); renderStep(); }
       else {
         enregistrerDemande();

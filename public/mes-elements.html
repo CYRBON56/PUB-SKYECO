@@ -101,6 +101,16 @@
   .btn-avancement:hover { background:#f0f7f2; }
   .btn-extraire:hover { filter:brightness(1.06); }
 
+  .formulaire-liste { display:flex; flex-direction:column; gap:2px; margin-top:14px; }
+  .formulaire-item { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid #f1efe7; }
+  .formulaire-item:last-child { border-bottom:none; }
+  .formulaire-item input[type="checkbox"] { width:auto; flex-shrink:0; accent-color:#4a8a68; }
+  .formulaire-item .formulaire-texte { flex:1; font-size:0.86rem; color:#3d5248; }
+  .formulaire-item .formulaire-type { font-size:0.72rem; color:#a3ab9e; background:#f4ece2; border-radius:20px; padding:2px 10px; white-space:nowrap; }
+  .formulaire-ajout { display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }
+  .formulaire-ajout input[type="text"] { flex:1; min-width:200px; }
+  .formulaire-ajout select { width:auto; }
+
   .btn-submit {
     width:100%; background:#3d7a5a; color:#fff; border:none; border-radius:14px; padding:18px; font-size:1rem; font-weight:700; cursor:pointer; margin-top:12px; transition:filter 0.15s;
   }
@@ -355,6 +365,42 @@
     </div>
   </div>
 
+  <div class="section" data-section="formulaires">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">📋</span>
+        <div>
+          <h2>Créer vos formulaires</h2>
+          <p class="sub">Facultatif — des questions adaptées à chaque projet, choisies automatiquement selon ce que décrit votre prospect.</p>
+        </div>
+      </div>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="section-body">
+      <div class="section-body-inner">
+        <p class="hint">Décrivez ce que vous proposez comme prestations : on vous suggère des questions pertinentes (mètres linéaires, mètres carrés, volume…). Cochez celles à garder — au moment de la demande, chaque prospect ne verra QUE les questions pertinentes pour SON projet, choisies parmi celles-ci par l'IA.</p>
+        <textarea id="formulaireDescription" rows="4" placeholder="Ex : je pose des clôtures et portails, je fais aussi de la résine EPDM pour terrasses et allées, et du terrassement…"></textarea>
+        <button type="button" class="btn-extraire" id="btnSuggererQuestions">✨ Suggérer des questions</button>
+        <div id="formulaireListe" class="formulaire-liste"></div>
+        <div id="formulaireAjout" class="formulaire-ajout" style="display:none;">
+          <input type="text" id="questionManuelleLabel" placeholder="Ajouter votre propre question">
+          <select id="questionManuelleType">
+            <option value="texte">Réponse libre</option>
+            <option value="nombre">Nombre</option>
+            <option value="case">Oui / non</option>
+          </select>
+          <select id="questionManuelleUnite" style="display:none;">
+            <option value="ml">mètres linéaires</option>
+            <option value="m2">m²</option>
+            <option value="m3">m³ (volume)</option>
+          </select>
+          <button type="button" class="btn-extraire" id="btnAjouterQuestionManuelle">+ Ajouter</button>
+        </div>
+        <div id="formulaireNote" class="hint"></div>
+      </div>
+    </div>
+  </div>
+
   <button class="btn-submit" id="btnSubmit">Enregistrer mes éléments</button>
   <p class="save-note">Tu peux revenir compléter ce formulaire plus tard, rien n'est perdu.</p>
   <div class="save-msg" id="saveMsg" style="display:none;"></div>
@@ -460,6 +506,7 @@
       metiersActuels = Array.isArray(draft.metier) ? draft.metier : (draft.metier ? [draft.metier] : []);
       construireLignesTarifs(metiersActuels, draft.tarification_detail || {});
       construireOptionsTitre(metiersActuels, draft.titre_hero_choisi || '');
+      initFormulaireBuilder(metiersActuels, draft.formulaire_questions_pool || [], draft.formulaire_description || '');
 
       if (draft.photos && draft.photos.length) {
         photosUrls = draft.photos;
@@ -608,6 +655,111 @@
         body: JSON.stringify(champs),
       });
     } catch (e) { /* silencieux — l'enregistrement final au bas du formulaire rattrapera si besoin */ }
+  }
+
+  // --- Créer vos formulaires : pool de questions que l'IA choisira ensuite,
+  // par prospect, selon le projet décrit (voir api/selectionner-questions-formulaire.js).
+  // Même mécanique que la sélection de mots-clés IA du dashboard : décrire
+  // son activité, cocher/décocher les suggestions, ajouter les siennes,
+  // sauvegarde automatique à chaque changement.
+  function initFormulaireBuilder(metiers, poolExistant, descriptionExistante) {
+    const descriptionEl = document.getElementById('formulaireDescription');
+    const btnSuggerer = document.getElementById('btnSuggererQuestions');
+    const listeEl = document.getElementById('formulaireListe');
+    const ajoutEl = document.getElementById('formulaireAjout');
+    const noteEl = document.getElementById('formulaireNote');
+    const typeManuel = document.getElementById('questionManuelleType');
+    const uniteManuel = document.getElementById('questionManuelleUnite');
+    let pool = new Map(); // id -> { label, type, unite, coche }
+    let compteurManuel = 0;
+
+    descriptionEl.value = descriptionExistante || '';
+
+    if (Array.isArray(poolExistant) && poolExistant.length) {
+      poolExistant.forEach(q => { if (q && q.id && q.label) pool.set(q.id, { label: q.label, type: q.type || 'texte', unite: q.unite || null, coche: true }); });
+      ajoutEl.style.display = 'flex';
+      noteEl.textContent = 'Questions déjà enregistrées — décochez ou ajoutez-en pour affiner.';
+      rendreListeFormulaire();
+    }
+
+    function libelleType(type, unite) {
+      if (type === 'nombre') return { ml: 'mètres linéaires', m2: 'm²', m3: 'm³' }[unite] || 'nombre';
+      if (type === 'case') return 'oui / non';
+      return 'texte libre';
+    }
+
+    function rendreListeFormulaire() {
+      listeEl.innerHTML = [...pool.entries()].map(([id, q]) => `
+        <label class="formulaire-item">
+          <input type="checkbox" data-id="${id}" ${q.coche ? 'checked' : ''}>
+          <span class="formulaire-texte">${q.label.replace(/</g, '&lt;')}</span>
+          <span class="formulaire-type">${libelleType(q.type, q.unite)}</span>
+        </label>
+      `).join('');
+      listeEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('change', () => {
+          const q = pool.get(cb.dataset.id);
+          if (q) q.coche = cb.checked;
+          enregistrerPoolSupabase();
+        });
+      });
+    }
+
+    async function enregistrerPoolSupabase() {
+      const poolActif = [...pool.entries()].filter(([, q]) => q.coche).map(([id, q]) => ({ id, label: q.label, type: q.type, unite: q.unite }));
+      await sauvegarderChampsImmediat({ formulaire_questions_pool: poolActif, formulaire_description: descriptionEl.value.trim() });
+    }
+
+    typeManuel.addEventListener('change', () => {
+      uniteManuel.style.display = typeManuel.value === 'nombre' ? 'inline-block' : 'none';
+    });
+
+    btnSuggerer.addEventListener('click', async () => {
+      const description = descriptionEl.value.trim();
+      if (!description) {
+        noteEl.textContent = 'Décrivez brièvement vos prestations pour obtenir des suggestions.';
+        return;
+      }
+      btnSuggerer.disabled = true;
+      btnSuggerer.textContent = 'Génération en cours…';
+      noteEl.textContent = '';
+      try {
+        const res = await fetch('/api/suggerer-questions-formulaire', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ description, metier: metiers }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          data.questions.forEach(q => { if (!pool.has(q.id)) pool.set(q.id, { label: q.label, type: q.type, unite: q.unite, coche: true }); });
+          rendreListeFormulaire();
+          ajoutEl.style.display = 'flex';
+          noteEl.textContent = 'Décochez celles que vous ne voulez pas utiliser, ou ajoutez les vôtres.';
+          enregistrerPoolSupabase();
+        } else {
+          noteEl.textContent = data.error || 'Impossible de générer des suggestions pour le moment.';
+        }
+      } catch (e) {
+        noteEl.textContent = 'Impossible de contacter le serveur.';
+      } finally {
+        btnSuggerer.disabled = false;
+        btnSuggerer.textContent = '✨ Suggérer des questions';
+      }
+    });
+
+    document.getElementById('btnAjouterQuestionManuelle').addEventListener('click', () => {
+      const input = document.getElementById('questionManuelleLabel');
+      const label = input.value.trim();
+      if (!label) return;
+      compteurManuel += 1;
+      const id = 'manuel-' + Date.now() + '-' + compteurManuel;
+      const type = typeManuel.value;
+      const unite = type === 'nombre' ? uniteManuel.value : null;
+      pool.set(id, { label, type, unite, coche: true });
+      rendreListeFormulaire();
+      enregistrerPoolSupabase();
+      input.value = '';
+    });
   }
 
   function construireOptionsTitre(metiers, titreActuel) {

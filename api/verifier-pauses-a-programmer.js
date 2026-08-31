@@ -12,12 +12,15 @@
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 //   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER
 //   CRON_SECRET
-//   SITE_BASE_URL (ex: https://pub-skyeco-23ue.vercel.app)
+//   SITE_BASE_URL (ex: https://app.skyeco.fr) — si cette variable est déjà
+//   définie sur Vercel avec l'ancienne adresse (pub-skyeco-23ue.vercel.app),
+//   il faut aussi la mettre à jour là-bas : le repli codé en dur ci-dessous
+//   n'est utilisé que si la variable n'existe pas du tout.
 
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const SITE_BASE_URL = process.env.SITE_BASE_URL || 'https://pub-skyeco-23ue.vercel.app';
+const SITE_BASE_URL = process.env.SITE_BASE_URL || 'https://app.skyeco.fr';
 
 // Twilio exige un numero au format E.164 (+33...) pour le parametre "To" des
 // SMS envoyes via l'API Messages (contrairement a Twilio Verify, deja converti

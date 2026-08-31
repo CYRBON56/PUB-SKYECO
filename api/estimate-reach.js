@@ -1,16 +1,38 @@
 // /api/estimate-reach.js
-// Calcule une estimation de clics/mois RÉELLE via le Keyword Planner de
-// l'API Google Ads (GenerateKeywordIdeas) — volume de recherche et CPC
-// directement issus de Google, avec un vrai ciblage géographique par
-// département (contrairement à l'ancienne version basée sur OpenRush, qui
-// ne connaissait que le niveau pays et approximait via la population).
+// Calcule une estimation de clics/mois RÉELLE via le Keyword Planner Google
+// Ads — volume de recherche et CPC — mais désormais via Windsor.ai plutôt
+// que l'API Google Ads directe.
 //
-// Variables d'environnement requises :
-//   GOOGLE_ADS_DEVELOPER_TOKEN, GOOGLE_ADS_CLIENT_ID, GOOGLE_ADS_CLIENT_SECRET,
-//   GOOGLE_ADS_REFRESH_TOKEN, GOOGLE_ADS_LOGIN_CUSTOMER_ID, GOOGLE_ADS_CUSTOMER_ID
+// Pourquoi ce changement (31/08) : l'appel direct à l'API Google Ads
+// (generateKeywordIdeas) échouait avec "The caller does not have
+// permission", causé par GOOGLE_ADS_LOGIN_CUSTOMER_ID pointant vers un
+// compte Manager (MCC) suspendu (735-335-0497, compte personnel de Cyrille,
+// sans rapport avec Skyeco Pro) — un Manager suspendu bloque TOUT appel API
+// fait à travers lui, quel que soit le compte enfant interrogé. Vérifié :
+// Windsor.ai a sa PROPRE connexion OAuth au compte Google Ads 784-990-3984
+// (ECOSKY by RMS), totalement indépendante de ce Manager suspendu — un test
+// en direct le 31/08 (via le connecteur google_ads de Windsor.ai) a bien
+// renvoyé les vraies données Keyword Planner (volumes, CPC) pour ce compte.
+// C'est exactement le même chemin Windsor.ai que create-google-ads-campaign.js
+// utilise déjà pour créer les campagnes réelles.
+//
+// Nouveau côté ciblage géographique : avant, la "zone" saisie par l'artisan
+// était toujours du texte libre (ex: "Brech, Bretagne"), jamais un vrai
+// ciblage Google Ads — le volume était mesuré au niveau France puis réduit
+// approximativement par la part de population de la région déduite du
+// texte. Depuis le 31/08, skyeco-pro-formulaire-creation.html enregistre
+// aussi le VRAI code département (déduit du SIRET) dans la colonne
+// `departement` de skyeco_pro_vitrine_drafts. Quand ce département a un
+// identifiant de géo-ciblage Google Ads vérifié dans GEO_TARGET_BY_DEPARTEMENT
+// ci-dessous, on interroge le Keyword Planner DIRECTEMENT sur cette zone
+// précise (volume réel local, pas une approximation) — sinon on retombe sur
+// l'ancienne approximation par population.
+//
+// Variables d'environnement requises : WINDSOR_API_KEY, GOOGLE_ADS_ACCOUNT_ID
+// (mêmes que create-google-ads-campaign.js — voir son commentaire d'en-tête
+// pour la confirmation du bon compte, 7849903984, sans tirets).
 
-const GOOGLE_ADS_API_VERSION = 'v25';
-const GOOGLE_ADS_BASE_URL = `https://googleads.googleapis.com/${GOOGLE_ADS_API_VERSION}`;
+const WINDSOR_BASE = 'https://connectors.windsor.ai/google_ads';
 
 const KEYWORDS_BY_METIER = {
   paysagiste: ['paysagiste prix', 'aménagement extérieur paysagiste', 'devis paysagiste'],
@@ -23,20 +45,27 @@ const KEYWORDS_BY_METIER = {
   autre: ['devis travaux extérieur', 'artisan paysagiste devis'] // repli de sécurité, non sélectionnable dans le formulaire
 };
 
-// Mêmes codes de ciblage géographique que create-google-ads-campaign.js —
-// à tenir synchronisé, ou factoriser dans un fichier partagé si la liste grandit.
+// Ciblage géographique précis par département — MÊMES identifiants que
+// create-google-ads-campaign.js (à tenir synchronisé si l'un des deux fichiers
+// change). IMPORTANT : un identifiant de géo-ciblage Google Ads doit être
+// VÉRIFIÉ avant d'être ajouté ici (recherche du lieu dans l'outil de ciblage
+// géographique de Google Ads, ou GeoTargetConstantService une fois le nouveau
+// compte Manager en place) — ne jamais deviner un identifiant à partir d'une
+// source tierce non confirmée, une erreur ici cible silencieusement la
+// mauvaise zone.
 const GEO_TARGET_BY_DEPARTEMENT = {
   '56': '1006094', // Morbihan
   '35': '1006083', // Ille-et-Vilaine
   '29': '1006082', // Finistère
   '22': '1006081', // Côtes-d'Armor
   '44': '1006095', // Loire-Atlantique
-  // TODO: compléter avec les autres départements au besoin
+  // TODO: compléter avec les autres départements au besoin, un par un, vérifié.
 };
 
 // Correspondance officielle département → région (découpage administratif
 // fixe depuis 2016, fiable à 100% — contrairement à la pondération par
-// population ci-dessous, qui reste une approximation).
+// population ci-dessous, qui reste une approximation, utilisée seulement en
+// repli quand le département n'est pas dans GEO_TARGET_BY_DEPARTEMENT).
 const DEPARTEMENT_TO_REGION = {
   '01':'Auvergne-Rhône-Alpes','02':'Hauts-de-France','03':'Auvergne-Rhône-Alpes',
   '04':"Provence-Alpes-Côte d'Azur",'05':"Provence-Alpes-Côte d'Azur",'06':"Provence-Alpes-Côte d'Azur",
@@ -81,23 +110,41 @@ const REGION_POPULATION_SHARE = {
 // proportionnellement à la population de la région déduite du département.
 const GEO_TARGET_FRANCE = '2250';
 
-async function obtenirAccessToken() {
-  const resp = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      client_id: process.env.GOOGLE_ADS_CLIENT_ID,
-      client_secret: process.env.GOOGLE_ADS_CLIENT_SECRET,
-      refresh_token: process.env.GOOGLE_ADS_REFRESH_TOKEN,
-      grant_type: 'refresh_token',
-    }),
+// Interroge le Keyword Planner Google Ads via Windsor.ai (mêmes identifiants
+// de champs que ceux découverts et testés le 31/08 : keyword,
+// avg_monthly_searches, keyword_competition, competition_index,
+// keyword_average_cpc — la description Windsor de "keyword" est explicite :
+// "The keyword idea text returned by Keyword Planner").
+async function interrogerWindsorKeywordPlanner({ keywords, geoTargetConstantId }) {
+  const accountId = (process.env.GOOGLE_ADS_ACCOUNT_ID || '').replace(/[^0-9]/g, '');
+  const params = new URLSearchParams({
+    api_key: process.env.WINDSOR_API_KEY,
+    fields: 'keyword,avg_monthly_searches,keyword_competition,competition_index,keyword_average_cpc',
+    google_ads_accounts: accountId,
+    keyword_seeds: keywords.join(','),
+    geo_target_constants: geoTargetConstantId,
+    language: '1002', // français
+    keyword_plan_network: 'GOOGLE_SEARCH',
+    _max_rows: '500',
   });
-  if (!resp.ok) {
-    const detail = await resp.text();
-    throw new Error('Échec obtention access token Google : ' + detail);
+
+  const resp = await fetch(`${WINDSOR_BASE}?${params.toString()}`);
+  const raw = await resp.text();
+  let data;
+  try { data = JSON.parse(raw); } catch (e) {
+    throw new Error('Réponse Windsor.ai illisible (pas du JSON) : ' + raw.slice(0, 300));
   }
-  const data = await resp.json();
-  return data.access_token;
+  if (!resp.ok) {
+    throw new Error('Windsor.ai Keyword Planner erreur : ' + JSON.stringify(data));
+  }
+  // Windsor.ai renvoie en général { data: [...] } — mais on reste tolérant à
+  // d'autres formes (tableau direct, ou clé "result") pour ne pas casser
+  // silencieusement si le format exact diffère de ce qui a été testé via MCP.
+  const rows = Array.isArray(data) ? data : (data.data || data.result || []);
+  if (!Array.isArray(rows)) {
+    throw new Error('Format de réponse Windsor.ai inattendu : ' + JSON.stringify(data).slice(0, 300));
+  }
+  return rows;
 }
 
 export default async function handler(req, res) {
@@ -105,14 +152,15 @@ export default async function handler(req, res) {
     return res.status(405).json({ success: false, error: 'Méthode non autorisée' });
   }
 
-  const { metier, zone, motsCles, budget } = req.body || {};
+  const { metier, zone, motsCles, budget, departement } = req.body || {};
   // "metier" peut être un tableau (nouvelle sélection multiple) ou une chaîne
   // unique (anciens sites créés avant ce changement) — on gère les deux.
   const metiersListe = Array.isArray(metier) ? metier : (metier ? [metier] : []);
 
   // Priorité aux mots-clés choisis par l'artisan (checkboxes IA dans
-  // campagne.html, colonne mots_cles_choisis) — même logique de repli que
-  // create-google-ads-campaign.js : sinon on retombe sur la liste fixe par métier.
+  // mon-dashboard.html, colonne mots_cles_choisis) — même logique de repli
+  // que create-google-ads-campaign.js : sinon on retombe sur la liste fixe
+  // par métier.
   const motsClesChoisis = Array.isArray(motsCles)
     ? motsCles.filter(m => typeof m === 'string' && m.trim()).map(m => m.trim().substring(0, 80)).slice(0, 25)
     : [];
@@ -123,92 +171,48 @@ export default async function handler(req, res) {
         : KEYWORDS_BY_METIER.autre);
   const budgetNum = parseFloat(budget);
 
-  // Formule "abonnement" : 39,90€/mois (facturé séparément, hors de ce calcul)
-  // + commission de 20% prélevée sur le budget publicitaire alloué par le
-  // client. Le reste (80%) part réellement en dépense pub sur Google Ads.
+  // Formule "abonnement" : facturé séparément, hors de ce calcul — commission
+  // prélevée sur le budget publicitaire alloué par le client. Le reste part
+  // réellement en dépense pub sur Google Ads.
   const TAUX_COMMISSION = 0.50; // 50% pour l'instant
   const commissionPub = budgetNum ? +(budgetNum * TAUX_COMMISSION).toFixed(2) : 0;
   const budgetNetPub = Math.max(0, budgetNum - commissionPub);
 
-  // "zone" est du texte libre du type "BRECH, Bretagne" (ville + région),
-  // pas un code département — on interroge donc toujours au niveau France,
-  // puis on pondère par la région extraite directement de ce texte.
-  const geoTargetId = null;
-  const geoResourceName = `geoTargetConstants/${GEO_TARGET_FRANCE}`;
-  const geoApprox = true;
-  const regionDeduite = zone && zone.includes(',') ? zone.split(',').pop().trim() : null;
-  const populationShare = regionDeduite ? REGION_POPULATION_SHARE[regionDeduite] : null;
+  // Ciblage géographique : département précis si on l'a et qu'il est
+  // configuré dans GEO_TARGET_BY_DEPARTEMENT (volume RÉEL pour cette zone,
+  // pas d'approximation) — sinon repli sur le comportement précédent
+  // (France entière, pondérée par la population de la région déduite du
+  // texte libre "zone").
+  const departementCode = departement ? String(departement).trim().toUpperCase() : null;
+  const geoTargetPrecis = departementCode ? GEO_TARGET_BY_DEPARTEMENT[departementCode] : null;
+  const geoTargetConstantId = geoTargetPrecis || GEO_TARGET_FRANCE;
+  const geoApprox = !geoTargetPrecis;
+  const regionDeduite = departementCode && DEPARTEMENT_TO_REGION[departementCode]
+    ? DEPARTEMENT_TO_REGION[departementCode]
+    : (zone && zone.includes(',') ? zone.split(',').pop().trim() : null);
+  const populationShare = geoApprox && regionDeduite ? REGION_POPULATION_SHARE[regionDeduite] : null;
 
   try {
-    const accessToken = await obtenirAccessToken();
-    // On retire tout caractère non numérique (tirets compris) — Google Ads
-    // affiche les identifiants de compte avec des tirets ("735-335-0497")
-    // mais l'API REST les attend sans ("7353350497"). Erreur trouvée le
-    // 30/08 : "The caller does not have permission" alors que le vrai souci
-    // était un identifiant de compte qui ne correspondait pas au bon compte.
-    const customerId = (process.env.GOOGLE_ADS_CUSTOMER_ID || '').replace(/[^0-9]/g, '');
-    const loginCustomerId = (process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID || '').replace(/[^0-9]/g, '');
+    const idees = await interrogerWindsorKeywordPlanner({ keywords, geoTargetConstantId });
 
-    const resp = await fetch(
-      `${GOOGLE_ADS_BASE_URL}/customers/${customerId}:generateKeywordIdeas`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'developer-token': process.env.GOOGLE_ADS_DEVELOPER_TOKEN,
-          'login-customer-id': loginCustomerId,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          geoTargetConstants: [geoResourceName],
-          language: 'languageConstants/1002', // Français
-          keywordSeed: { keywords },
-          keywordPlanNetwork: 'GOOGLE_SEARCH',
-        }),
-      }
-    );
-
-    const data = await resp.json();
-    if (!resp.ok) {
-      console.error('Google Ads Keyword Planner erreur :', JSON.stringify(data));
-      throw new Error(data.error?.message || 'Échec Keyword Planner');
-    }
-
-    const idees = data.results || [];
-
-    // On ne garde que les idées qui correspondent réellement à nos mots-clés
-    // de départ (l'API renvoie aussi des suggestions élargies qu'on ignore ici).
-    const motsCles = idees
-      .filter((idee) => keywords.some((k) => idee.text?.toLowerCase().includes(k.split(' ')[0].toLowerCase())))
-      .map((idee) => {
-        const m = idee.keywordIdeaMetrics || {};
-        const lowMicros = parseInt(m.lowTopOfPageBidMicros || '0', 10);
-        const highMicros = parseInt(m.highTopOfPageBidMicros || '0', 10);
-        const cpcMoyenMicros = lowMicros && highMicros ? (lowMicros + highMicros) / 2 : (lowMicros || highMicros || 0);
-        return {
-          keyword: idee.text,
-          monthly_volume: parseInt(m.avgMonthlySearches || '0', 10),
-          cpc_eur: +(cpcMoyenMicros / 1_000_000).toFixed(2),
-          competition: m.competition || 'UNKNOWN',
-        };
-      });
-
-    // Si le filtre n'a rien gardé (l'API a renvoyé des variantes trop éloignées),
-    // on retombe sur toutes les idées reçues plutôt que de renvoyer un tableau vide.
-    const motsClesFinal = motsCles.length > 0 ? motsCles : idees.slice(0, keywords.length).map((idee) => {
-      const m = idee.keywordIdeaMetrics || {};
-      const lowMicros = parseInt(m.lowTopOfPageBidMicros || '0', 10);
-      const highMicros = parseInt(m.highTopOfPageBidMicros || '0', 10);
-      const cpcMoyenMicros = lowMicros && highMicros ? (lowMicros + highMicros) / 2 : (lowMicros || highMicros || 0);
-      return {
-        keyword: idee.text,
-        monthly_volume: parseInt(m.avgMonthlySearches || '0', 10),
-        cpc_eur: +(cpcMoyenMicros / 1_000_000).toFixed(2),
-        competition: m.competition || 'UNKNOWN',
-      };
+    const construireMotCle = (idee) => ({
+      keyword: idee.keyword,
+      monthly_volume: parseInt(idee.avg_monthly_searches || 0, 10),
+      cpc_eur: +((parseFloat(idee.keyword_average_cpc || 0)) / 1_000_000).toFixed(2),
+      competition: idee.keyword_competition || 'UNKNOWN',
     });
 
-    const totalMonthlyVolumeBrut = motsClesFinal.reduce((sum, k) => sum + k.monthly_volume, 0);
+    // On ne garde que les idées qui correspondent réellement à nos mots-clés
+    // de départ (Windsor peut aussi renvoyer des suggestions élargies).
+    const motsCles = idees
+      .filter((idee) => idee.keyword && keywords.some((k) => idee.keyword.toLowerCase().includes(k.split(' ')[0].toLowerCase())))
+      .map(construireMotCle);
+
+    // Si le filtre n'a rien gardé, on retombe sur toutes les idées reçues
+    // plutôt que de renvoyer un tableau vide.
+    const motsClesFinal = motsCles.length > 0 ? motsCles : idees.slice(0, keywords.length).map(construireMotCle);
+
+    const totalMonthlyVolumeBrut = motsClesFinal.reduce((sum, k) => sum + (k.monthly_volume || 0), 0);
 
     // Si on n'a pas de ciblage département précis, on réduit le volume
     // (mesuré au niveau France) proportionnellement à la population de la
@@ -232,11 +236,12 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
-      source: 'google_ads_keyword_planner',
+      source: 'windsor_ai_keyword_planner',
       motsClesPersonnalises: motsClesChoisis.length > 0, // true = basé sur les mots-clés choisis par l'artisan, false = liste générique par métier
       zone: zone || null,
+      departement: departementCode,
       region: regionDeduite,
-      geoApproximatif: geoApprox, // true = volume France pondéré par population, pas un ciblage département natif
+      geoApproximatif: geoApprox, // true = volume France pondéré par population (pas de département précis disponible) ; false = volume réel mesuré directement sur le département ciblé
       populationShare,
       keywords: motsClesFinal,
       totalMonthlyVolumeNational: geoApprox ? totalMonthlyVolumeBrut : null,
@@ -249,7 +254,7 @@ export default async function handler(req, res) {
       estimatedClicks,
     });
   } catch (err) {
-    console.error('Erreur estimation Keyword Planner :', err);
+    console.error('Erreur estimation Keyword Planner (Windsor.ai) :', err);
     return res.status(500).json({ success: false, error: "Impossible de calculer l'estimation pour le moment : " + err.message });
   }
 }

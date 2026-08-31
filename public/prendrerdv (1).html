@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prendre rendez-vous</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  :root {
+    --brand: #E8622C; /* remplacé dynamiquement par la couleur de l'artisan */
+    --bg: #f7f8f7;
+    --card: #ffffff;
+    --text: #1f2a24;
+    --muted: #6b7570;
+    --border: #e2e6e3;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px 60px; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  .sous-titre { color: var(--muted); margin: 0 0 24px; font-size: 0.95rem; }
+
+  .jours-scroll {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .jour-carte {
+    flex: 0 0 148px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+  }
+  .jour-carte h3 {
+    margin: 0 0 10px;
+    font-size: 0.85rem;
+    text-transform: capitalize;
+    color: var(--text);
+    text-align: center;
+  }
+  .creneau-btn {
+    display: block;
+    width: 100%;
+    padding: 8px 0;
+    margin-bottom: 6px;
+    border: 1px solid var(--brand);
+    background: #fff;
+    color: var(--brand);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .creneau-btn:hover { background: var(--brand); color: #fff; }
+  .creneau-btn.selectionne { background: var(--brand); color: #fff; }
+  .aucun-creneau { color: var(--muted); font-size: 0.85rem; text-align: center; padding: 10px 0; }
+
+  .formulaire {
+    margin-top: 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    display: none;
+  }
+  .formulaire.visible { display: block; }
+  .formulaire .creneau-choisi {
+    font-weight: 600;
+    margin-bottom: 14px;
+    color: var(--brand);
+  }
+  .champ { margin-bottom: 12px; }
+  .champ label { display: block; font-size: 0.85rem; margin-bottom: 4px; color: var(--muted); }
+  .champ input, .champ textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+  }
+  .btn-confirmer {
+    width: 100%;
+    padding: 13px;
+    border: none;
+    border-radius: 8px;
+    background: var(--brand);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 6px;
+  }
+  .btn-confirmer:disabled { opacity: 0.6; cursor: default; }
+
+  .message-etat {
+    margin-top: 16px;
+    padding: 14px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+  }
+  .message-etat.succes { background: #e6f4ea; color: #1a6d3f; }
+  .message-etat.erreur { background: #fdecea; color: #b3261e; }
+
+  .chargement { text-align: center; color: var(--muted); padding: 30px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 id="titre">Prendre rendez-vous</h1>
+  <p class="sous-titre">Choisissez un créneau disponible (lundi–samedi, 9h–20h).</p>
+
+  <div id="zone-jours" class="chargement">Chargement des créneaux…</div>
+
+  <div id="formulaire" class="formulaire">
+    <div class="creneau-choisi" id="creneau-choisi-texte"></div>
+    <div class="champ">
+      <label for="nom">Nom et prénom *</label>
+      <input type="text" id="nom" required>
+    </div>
+    <div class="champ">
+      <label for="telephone">Téléphone *</label>
+      <input type="tel" id="telephone" required placeholder="06 12 34 56 78">
+    </div>
+    <div class="champ">
+      <label for="email">Email (optionnel)</label>
+      <input type="email" id="email">
+    </div>
+    <div class="champ">
+      <label for="message">Message (optionnel)</label>
+      <textarea id="message" rows="3"></textarea>
+    </div>
+    <button class="btn-confirmer" id="btn-confirmer">Confirmer le rendez-vous</button>
+    <div id="message-etat"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  // Mêmes identifiants publics (clé anon) que le reste du site Skyeco Pro
+  // (voir public/apercu.html) : lecture seule, RLS restreint déjà les writes.
+  const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const params = new URLSearchParams(window.location.search);
+  const draftId = params.get('id');
+
+  const zoneJours = document.getElementById('zone-jours');
+  const formulaire = document.getElementById('formulaire');
+  const creneauChoisiTexte = document.getElementById('creneau-choisi-texte');
+  const btnConfirmer = document.getElementById('btn-confirmer');
+  const messageEtat = document.getElementById('message-etat');
+
+  let creneauSelectionneIso = null;
+
+  if (!draftId) {
+    zoneJours.innerHTML = '<p class="aucun-creneau">Lien invalide : identifiant manquant.</p>';
+    return;
+  }
+
+  async function chargerArtisan() {
+    try {
+      const { data: draft } = await supabaseClient
+        .from('skyeco_pro_vitrine_drafts')
+        .select('entreprise, couleur')
+        .eq('id', draftId)
+        .single();
+      if (draft) {
+        if (draft.entreprise) {
+          document.getElementById('titre').textContent = 'Prendre rendez-vous avec ' + draft.entreprise;
+        }
+        if (draft.couleur) {
+          document.documentElement.style.setProperty('--brand', draft.couleur);
+        }
+      }
+    } catch (e) {
+      // Non bloquant : la page reste utilisable avec le titre/couleur par défaut
+    }
+  }
+
+  function formatJourCourt(dateStr) {
+    const d = new Date(dateStr + 'T12:00:00Z');
+    const jour = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', timeZone: 'Europe/Paris' }).format(d);
+    const num = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '2-digit', timeZone: 'Europe/Paris' }).format(d);
+    return jour + ' ' + num;
+  }
+
+  async function chargerCreneaux() {
+    zoneJours.className = 'chargement';
+    zoneJours.textContent = 'Chargement des créneaux…';
+    try {
+      const rep = await fetch('/api/creneaux-disponibles?draft_id=' + encodeURIComponent(draftId) + '&jours=14');
+      const data = await rep.json();
+      afficherJours(data.jours || []);
+    } catch (e) {
+      zoneJours.className = '';
+      zoneJours.innerHTML = '<p class="aucun-creneau">Impossible de charger les créneaux pour le moment.</p>';
+    }
+  }
+
+  function afficherJours(jours) {
+    zoneJours.className = 'jours-scroll';
+    zoneJours.innerHTML = '';
+
+    if (jours.length === 0) {
+      zoneJours.className = '';
+      zoneJours.innerHTML = '<p class="aucun-creneau">Aucun créneau disponible pour le moment.</p>';
+      return;
+    }
+
+    jours.forEach((jour) => {
+      const carte = document.createElement('div');
+      carte.className = 'jour-carte';
+
+      const titre = document.createElement('h3');
+      titre.textContent = formatJourCourt(jour.date);
+      carte.appendChild(titre);
+
+      if (jour.creneaux.length === 0) {
+        const vide = document.createElement('div');
+        vide.className = 'aucun-creneau';
+        vide.textContent = 'Complet';
+        carte.appendChild(vide);
+      } else {
+        jour.creneaux.forEach((c) => {
+          const btn = document.createElement('button');
+          btn.className = 'creneau-btn';
+          btn.textContent = String(c.heure).padStart(2, '0') + 'h00';
+          btn.addEventListener('click', () => selectionnerCreneau(c.iso, btn));
+          carte.appendChild(btn);
+        });
+      }
+
+      zoneJours.appendChild(carte);
+    });
+  }
+
+  function selectionnerCreneau(iso, btnEl) {
+    document.querySelectorAll('.creneau-btn.selectionne').forEach((b) => b.classList.remove('selectionne'));
+    btnEl.classList.add('selectionne');
+    creneauSelectionneIso = iso;
+
+    const d = new Date(iso);
+    const texte = new Intl.DateTimeFormat('fr-FR', {
+      timeZone: 'Europe/Paris', weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
+    }).format(d);
+    creneauChoisiTexte.textContent = 'Créneau choisi : ' + texte;
+
+    formulaire.classList.add('visible');
+    messageEtat.innerHTML = '';
+    formulaire.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  btnConfirmer.addEventListener('click', async () => {
+    const nom = document.getElementById('nom').value.trim();
+    const telephone = document.getElementById('telephone').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const message = document.getElementById('message').value.trim();
+
+    if (!creneauSelectionneIso) {
+      messageEtat.innerHTML = '<div class="message-etat erreur">Choisissez d\'abord un créneau ci-dessus.</div>';
+      return;
+    }
+    if (!nom || !telephone) {
+      messageEtat.innerHTML = '<div class="message-etat erreur">Merci de renseigner votre nom et votre téléphone.</div>';
+      return;
+    }
+
+    btnConfirmer.disabled = true;
+    btnConfirmer.textContent = 'Confirmation en cours…';
+    messageEtat.innerHTML = '';
+
+    try {
+      const rep = await fetch('/api/reserver-creneau', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          draft_id: draftId,
+          date_heure: creneauSelectionneIso,
+          client_nom: nom,
+          client_telephone: telephone,
+          client_email: email || undefined,
+          client_message: message || undefined,
+        }),
+      });
+      const data = await rep.json();
+
+      if (rep.status === 409) {
+        messageEtat.innerHTML = '<div class="message-etat erreur">' + data.message + '</div>';
+        btnConfirmer.disabled = false;
+        btnConfirmer.textContent = 'Confirmer le rendez-vous';
+        formulaire.classList.remove('visible');
+        creneauSelectionneIso = null;
+        chargerCreneaux();
+        return;
+      }
+
+      if (!rep.ok) {
+        throw new Error(data.message || 'Erreur serveur');
+      }
+
+      messageEtat.innerHTML = '<div class="message-etat succes">Rendez-vous confirmé le ' + data.rdv.date_heure_fr + '. Vous allez recevoir une confirmation.</div>';
+      btnConfirmer.textContent = 'Rendez-vous confirmé';
+      document.getElementById('nom').disabled = true;
+      document.getElementById('telephone').disabled = true;
+      document.getElementById('email').disabled = true;
+      document.getElementById('message').disabled = true;
+    } catch (e) {
+      messageEtat.innerHTML = '<div class="message-etat erreur">Une erreur est survenue, merci de réessayer.</div>';
+      btnConfirmer.disabled = false;
+      btnConfirmer.textContent = 'Confirmer le rendez-vous';
+    }
+  });
+
+  chargerArtisan();
+  chargerCreneaux();
+})();
+</script>
+</body>
+</html>

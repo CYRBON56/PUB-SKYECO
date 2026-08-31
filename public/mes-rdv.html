@@ -3,20 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mes rendez-vous</title>
+<title>Mes rendez-vous — Skyeco Pro</title>
 <style>
   :root {
-    --accent: #1a6d3f;
-    --bg: #f7f8f7;
+    --brand: #1e6f4c; /* remplacé dynamiquement par la couleur de l'artisan */
+    --bg: #f5f8f6;
     --card: #ffffff;
-    --text: #1f2a24;
-    --muted: #6b7570;
-    --border: #e2e6e3;
-    --libre: #ffffff;
-    --confirme: #e6f4ea;
-    --confirme-border: #1a6d3f;
-    --bloque: #f1f2f1;
-    --bloque-border: #b7bdb9;
+    --text: #14312a;
+    --muted: #8a9891;
+    --border: #eef1f0;
+    --confirme-bg: #eaf5ef;
+    --confirme-border: #1e6f4c;
+    --bloque-bg: #f2f4f1;
+    --bloque-border: #c7cdc9;
   }
   * { box-sizing: border-box; }
   body {
@@ -24,103 +23,180 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
     background: var(--bg);
     color: var(--text);
+    position: relative;
+    overflow-x: hidden;
   }
-  .wrap { max-width: 960px; margin: 0 auto; padding: 24px 16px 60px; }
+
+  /* Feuilles décoratives en arrière-plan — même signature visuelle que
+     mon-dashboard.html, en plus discret pour ne pas distraire du calendrier. */
+  .leaf-bg { position: fixed; z-index: 0; pointer-events: none; }
+  .leaf-bg svg { display: block; filter: blur(0.5px); }
+
+  .wrap { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; padding: 28px 20px 70px; }
+
   .lien-retour {
     display: inline-flex; align-items: center; gap: 6px;
-    color: var(--muted); text-decoration: none; font-size: 0.88rem;
-    margin-bottom: 16px;
+    color: var(--muted); text-decoration: none; font-size: 0.85rem; font-weight: 600;
+    margin-bottom: 18px; transition: color 0.15s;
   }
-  .lien-retour:hover { color: var(--text); }
-  h1 { font-size: 1.4rem; margin: 0 0 4px; }
-  .sous-titre { color: var(--muted); margin: 0 0 20px; font-size: 0.9rem; }
+  .lien-retour:hover { color: var(--brand); }
 
-  .legende { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; font-size: 0.82rem; color: var(--muted); }
-  .legende span { display: inline-flex; align-items: center; gap: 6px; }
-  .pastille { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+  .header-card {
+    background: #fff; border-radius: 18px; padding: 22px 26px;
+    box-shadow: 0 6px 24px rgba(20,49,42,0.08);
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    margin-bottom: 22px;
+  }
+  .header-titre { display: flex; align-items: center; gap: 14px; }
+  .logo-entreprise {
+    display: none; width: 52px; height: 52px; border-radius: 12px; object-fit: contain;
+    background: #fff; padding: 5px; box-shadow: 0 4px 14px rgba(20,49,42,0.10); border: 1px solid #eef2ef;
+    flex-shrink: 0;
+  }
+  h1 { font-size: 1.45rem; margin: 0 0 2px; }
+  .sous-titre { color: var(--muted); margin: 0; font-size: 0.86rem; }
+  .badge-periode {
+    background: var(--brand); color: #fff; font-size: 0.76rem; font-weight: 700;
+    padding: 9px 18px; border-radius: 999px; white-space: nowrap;
+  }
+
+  .legende { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 22px; }
+  .legende-item {
+    display: inline-flex; align-items: center; gap: 7px; font-size: 0.8rem; color: var(--text);
+    background: #fff; border: 1px solid var(--border); border-radius: 999px; padding: 7px 14px 7px 10px;
+    box-shadow: 0 2px 8px rgba(20,49,42,0.05);
+  }
+  .pastille { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
 
   .jours-scroll {
-    display: flex;
-    gap: 12px;
-    overflow-x: auto;
-    padding-bottom: 8px;
-    -webkit-overflow-scrolling: touch;
+    display: flex; gap: 14px; overflow-x: auto; padding: 4px 4px 14px;
+    -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity;
   }
+  .jours-scroll::-webkit-scrollbar { height: 8px; }
+  .jours-scroll::-webkit-scrollbar-thumb { background: #d7dedb; border-radius: 8px; }
+  .jours-scroll::-webkit-scrollbar-track { background: transparent; }
+
   .jour-carte {
-    flex: 0 0 168px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 12px;
+    flex: 0 0 192px; scroll-snap-align: start;
+    background: var(--card); border: 1.5px solid var(--border); border-radius: 16px;
+    padding: 16px; box-shadow: 0 4px 18px rgba(20,49,42,0.06);
+    transition: box-shadow 0.15s, border-color 0.15s;
   }
-  .jour-carte h3 {
-    margin: 0 0 8px;
-    font-size: 0.85rem;
-    text-transform: capitalize;
-    text-align: center;
+  .jour-carte:hover { box-shadow: 0 8px 28px rgba(20,49,42,0.10); }
+  .jour-carte.aujourdhui { border-color: var(--brand); }
+
+  .jour-entete { text-align: center; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .jour-jour { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+  .jour-numero { font-size: 1.65rem; font-weight: 800; color: var(--text); line-height: 1.15; }
+  .jour-mois { font-size: 0.7rem; color: var(--muted); text-transform: capitalize; }
+  .jour-badge-auj {
+    display: inline-block; margin-top: 5px; font-size: 0.6rem; font-weight: 700; color: #fff;
+    background: var(--brand); border-radius: 999px; padding: 2px 9px;
   }
+
   .bloquer-jour {
-    width: 100%;
-    padding: 5px 0;
-    margin-bottom: 8px;
-    border: 1px solid var(--border);
-    background: #fff;
-    color: var(--muted);
-    border-radius: 6px;
-    font-size: 0.72rem;
-    cursor: pointer;
+    width: 100%; padding: 7px 0; margin-bottom: 10px; border: 1.5px dashed var(--border);
+    background: transparent; color: var(--muted); border-radius: 8px; font-size: 0.7rem; font-weight: 700;
+    cursor: pointer; transition: border-color 0.15s, color 0.15s; font-family: inherit;
   }
-  .bloquer-jour:hover { background: var(--bg); }
+  .bloquer-jour:hover { border-color: #c0392b; color: #c0392b; }
 
   .creneau {
-    width: 100%;
-    padding: 7px 6px;
-    margin-bottom: 6px;
-    border-radius: 8px;
-    font-size: 0.82rem;
-    text-align: left;
-    border: 1px solid var(--border);
-    background: var(--libre);
-    cursor: pointer;
+    width: 100%; padding: 9px 11px; margin-bottom: 7px; border-radius: 10px;
+    font-size: 0.82rem; text-align: left; border: 1.5px solid var(--border);
+    background: #fff; cursor: pointer; transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    font-family: inherit;
   }
-  .creneau .heure { font-weight: 600; }
-  .creneau.libre:hover { background: var(--bg); }
+  .creneau .heure { font-weight: 700; }
+  .creneau.libre:hover { border-color: var(--brand); background: var(--bg); transform: translateY(-1px); }
   .creneau.confirme {
-    background: var(--confirme);
-    border-color: var(--confirme-border);
-    color: var(--confirme-border);
-    cursor: default;
+    background: var(--confirme-bg); border-color: var(--confirme-border); color: var(--confirme-border); cursor: default;
   }
-  .creneau.confirme .client { display: block; font-size: 0.72rem; font-weight: 400; margin-top: 2px; }
+  .creneau.confirme .client { display: block; font-size: 0.72rem; font-weight: 500; margin-top: 3px; color: var(--text); opacity: 0.8; }
   .creneau.indisponible {
-    background: var(--bloque);
-    border-color: var(--bloque-border);
-    color: var(--muted);
-    text-decoration: line-through;
+    background: var(--bloque-bg); border-color: var(--bloque-border); color: var(--muted); text-decoration: line-through;
   }
+  .creneau.indisponible:hover { text-decoration: none; border-color: #c0392b; color: #c0392b; }
 
-  .chargement { text-align: center; color: var(--muted); padding: 30px 0; }
-  .toast {
-    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-    background: var(--text); color: #fff; padding: 10px 18px; border-radius: 8px;
-    font-size: 0.85rem; opacity: 0; transition: opacity 0.2s; pointer-events: none;
+  .etat-info {
+    background: #fff; border-radius: 16px; padding: 46px 20px; text-align: center;
+    color: var(--muted); box-shadow: 0 4px 18px rgba(20,49,42,0.06);
   }
-  .toast.visible { opacity: 1; }
+  .etat-info .icone { font-size: 2rem; margin-bottom: 10px; }
+  .etat-info .points::after { content: '…'; animation: points 1.2s steps(4, end) infinite; }
+  @keyframes points { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75%, 100% { content: '...'; } }
+
+  .toast {
+    position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(10px);
+    background: var(--text); color: #fff; padding: 11px 20px; border-radius: 10px;
+    font-size: 0.85rem; font-weight: 600; opacity: 0; transition: opacity 0.2s, transform 0.2s; pointer-events: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  }
+  .toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 520px) {
+    .wrap { padding: 18px 14px 60px; }
+    .header-card { padding: 18px; }
+    .jour-carte { flex-basis: 168px; }
+  }
 </style>
 </head>
 <body>
+
+<div class="leaf-bg" style="top:-70px; right:-90px; opacity:0.30;">
+  <svg width="300" height="300" viewBox="0 0 360 360">
+    <defs>
+      <radialGradient id="leafGradA" cx="35%" cy="30%" r="75%">
+        <stop offset="0%" stop-color="#4a9d6e"/>
+        <stop offset="55%" stop-color="#1e6f4c"/>
+        <stop offset="100%" stop-color="#0f4a30"/>
+      </radialGradient>
+      <filter id="leafShadowA" x="-50%" y="-50%" width="200%" height="200%">
+        <feDropShadow dx="8" dy="14" stdDeviation="16" flood-color="#0a3320" flood-opacity="0.3"/>
+      </filter>
+    </defs>
+    <path filter="url(#leafShadowA)" fill="url(#leafGradA)" d="M180,30 C260,50 320,120 300,210 C280,300 190,330 130,290 C70,250 50,160 90,100 C115,63 145,40 180,30 Z"/>
+    <path d="M180,50 C180,140 200,220 260,270" stroke="#0a3320" stroke-width="4" fill="none" opacity="0.35" stroke-linecap="round"/>
+  </svg>
+</div>
+<div class="leaf-bg" style="bottom:-110px; left:-110px; opacity:0.22;">
+  <svg width="360" height="360" viewBox="0 0 420 420">
+    <defs>
+      <radialGradient id="leafGradB" cx="40%" cy="35%" r="70%">
+        <stop offset="0%" stop-color="#f3a878"/>
+        <stop offset="55%" stop-color="#e8622c"/>
+        <stop offset="100%" stop-color="#b8481c"/>
+      </radialGradient>
+      <filter id="leafShadowB" x="-50%" y="-50%" width="200%" height="200%">
+        <feDropShadow dx="-6" dy="12" stdDeviation="18" flood-color="#7a2e10" flood-opacity="0.25"/>
+      </filter>
+    </defs>
+    <path filter="url(#leafShadowB)" fill="url(#leafGradB)" d="M210,40 C300,70 370,150 350,240 C330,330 230,370 150,330 C70,290 40,190 80,120 C110,70 160,45 210,40 Z"/>
+    <path d="M210,60 C205,160 220,260 300,320" stroke="#7a2e10" stroke-width="5" fill="none" opacity="0.3" stroke-linecap="round"/>
+  </svg>
+</div>
+
 <div class="wrap">
   <a href="#" id="lien-retour" class="lien-retour">← Retour au tableau de bord</a>
-  <h1>Mes rendez-vous</h1>
-  <p class="sous-titre">Cliquez sur un créneau libre pour le bloquer (vacances, indisponibilité), ou sur un créneau bloqué pour le libérer.</p>
 
-  <div class="legende">
-    <span><span class="pastille" style="background:var(--libre);border:1px solid var(--border)"></span>Libre</span>
-    <span><span class="pastille" style="background:var(--confirme);border:1px solid var(--confirme-border)"></span>RDV confirmé</span>
-    <span><span class="pastille" style="background:var(--bloque);border:1px solid var(--bloque-border)"></span>Bloqué par vous</span>
+  <div class="header-card">
+    <div class="header-titre">
+      <img class="logo-entreprise" id="logoEntreprise" alt="Logo">
+      <div>
+        <h1>Mon calendrier</h1>
+        <p class="sous-titre" id="sousTitre">Cliquez sur un créneau libre pour le bloquer, ou sur un créneau bloqué pour le libérer.</p>
+      </div>
+    </div>
+    <span class="badge-periode">📅 30 prochains jours</span>
   </div>
 
-  <div id="zone-jours" class="chargement">Chargement de votre calendrier…</div>
+  <div class="legende">
+    <span class="legende-item"><span class="pastille" style="background:#fff;border:1.5px solid var(--border)"></span>Libre</span>
+    <span class="legende-item"><span class="pastille" style="background:var(--confirme-bg);border:1.5px solid var(--confirme-border)"></span>RDV confirmé</span>
+    <span class="legende-item"><span class="pastille" style="background:var(--bloque-bg);border:1.5px solid var(--bloque-border)"></span>Bloqué par vous</span>
+  </div>
+
+  <div id="zone-jours" class="etat-info"><div class="icone">📅</div><p class="points">Chargement de votre calendrier</p></div>
 </div>
 
 <div id="toast" class="toast"></div>
@@ -130,6 +206,9 @@
   // Même schéma de session que mon-dashboard.html : draftId dans l'URL
   // (?id=...), jeton signé dans sessionStorage sous
   // 'skyeco_dashboard_token_<draftId>', vérifié via /api/dashboard-verify-session.
+  const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+
   const params = new URLSearchParams(window.location.search);
   const draftId = params.get('id');
 
@@ -146,9 +225,33 @@
   }
 
   if (!draftId) {
-    zoneJours.className = '';
-    zoneJours.innerHTML = '<p>Lien invalide : identifiant manquant.</p>';
+    zoneJours.className = 'etat-info';
+    zoneJours.innerHTML = '<div class="icone">⚠️</div><p>Lien invalide : identifiant manquant.</p>';
     return;
+  }
+
+  // Habillage aux couleurs et au logo de l'artisan (lecture publique, même
+  // principe que public/prendre-rdv.html) — purement cosmétique, ne bloque
+  // jamais l'affichage du calendrier si indisponible.
+  async function chargerBranding() {
+    try {
+      const resp = await fetch(
+        `${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,couleur,logo_url`,
+        { headers: { apikey: SUPABASE_ANON_KEY } }
+      );
+      const rows = await resp.json();
+      const draft = rows[0];
+      if (!draft) return;
+      if (draft.couleur) document.documentElement.style.setProperty('--brand', draft.couleur);
+      if (draft.entreprise) {
+        document.getElementById('sousTitre').textContent = 'Le calendrier de ' + draft.entreprise;
+      }
+      if (draft.logo_url) {
+        const img = document.getElementById('logoEntreprise');
+        img.src = draft.logo_url;
+        img.style.display = 'block';
+      }
+    } catch (e) { /* purement cosmétique, tant pis */ }
   }
 
   function toast(msg) {
@@ -158,11 +261,19 @@
     toastTimer = setTimeout(() => toastEl.classList.remove('visible'), 2500);
   }
 
-  function formatJourCourt(dateStr) {
+  function estAujourdHui(dateStr) {
+    const auj = new Intl.DateTimeFormat('fr-CA', { timeZone: 'Europe/Paris' }).format(new Date()); // AAAA-MM-JJ
+    return dateStr === auj;
+  }
+
+  function formatJourInfos(dateStr) {
     const d = new Date(dateStr + 'T12:00:00Z');
-    const jour = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', timeZone: 'Europe/Paris' }).format(d);
-    const num = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '2-digit', timeZone: 'Europe/Paris' }).format(d);
-    return jour + ' ' + num;
+    return {
+      jour: new Intl.DateTimeFormat('fr-FR', { weekday: 'short', timeZone: 'Europe/Paris' }).format(d),
+      num: new Intl.DateTimeFormat('fr-FR', { day: 'numeric', timeZone: 'Europe/Paris' }).format(d),
+      mois: new Intl.DateTimeFormat('fr-FR', { month: 'short', timeZone: 'Europe/Paris' }).format(d),
+      aujourdHui: estAujourdHui(dateStr),
+    };
   }
 
   async function verifierSession() {
@@ -186,8 +297,8 @@
   }
 
   async function charger() {
-    zoneJours.className = 'chargement';
-    zoneJours.textContent = 'Chargement de votre calendrier…';
+    zoneJours.className = 'etat-info';
+    zoneJours.innerHTML = '<div class="icone">📅</div><p class="points">Chargement de votre calendrier</p>';
     try {
       const rep = await fetch('/api/mes-rdv', {
         method: 'POST',
@@ -201,28 +312,40 @@
       const data = await rep.json();
       afficherJours(data.jours || []);
     } catch (e) {
-      zoneJours.className = '';
-      zoneJours.innerHTML = '<p>Impossible de charger votre calendrier pour le moment.</p>';
+      zoneJours.className = 'etat-info';
+      zoneJours.innerHTML = '<div class="icone">⚠️</div><p>Impossible de charger votre calendrier pour le moment.</p>';
     }
   }
 
   function afficherJours(jours) {
+    if (!jours.length) {
+      zoneJours.className = 'etat-info';
+      zoneJours.innerHTML = '<div class="icone">📅</div><p>Aucun créneau à afficher pour le moment.</p>';
+      return;
+    }
+
     zoneJours.className = 'jours-scroll';
     zoneJours.innerHTML = '';
 
     jours.forEach((jour) => {
+      const infos = formatJourInfos(jour.date);
       const carte = document.createElement('div');
-      carte.className = 'jour-carte';
+      carte.className = 'jour-carte' + (infos.aujourdHui ? ' aujourdhui' : '');
 
-      const titre = document.createElement('h3');
-      titre.textContent = formatJourCourt(jour.date);
-      carte.appendChild(titre);
+      const entete = document.createElement('div');
+      entete.className = 'jour-entete';
+      entete.innerHTML =
+        '<div class="jour-jour">' + infos.jour + '</div>' +
+        '<div class="jour-numero">' + infos.num + '</div>' +
+        '<div class="jour-mois">' + infos.mois + '</div>' +
+        (infos.aujourdHui ? '<span class="jour-badge-auj">Aujourd\'hui</span>' : '');
+      carte.appendChild(entete);
 
       const libres = jour.creneaux.filter((c) => c.statut === 'libre');
       if (libres.length > 0) {
         const btnJour = document.createElement('button');
         btnJour.className = 'bloquer-jour';
-        btnJour.textContent = 'Bloquer toute la journée';
+        btnJour.textContent = '🚫 Bloquer la journée';
         btnJour.addEventListener('click', () => bloquerJournee(libres));
         carte.appendChild(btnJour);
       }
@@ -238,7 +361,7 @@
           btn.innerHTML = '<span class="heure">' + String(c.heure).padStart(2, '0') + 'h00</span> — bloqué';
           btn.addEventListener('click', () => debloquer(c.iso));
         } else {
-          btn.innerHTML = '<span class="heure">' + String(c.heure).padStart(2, '0') + 'h00</span>'
+          btn.innerHTML = '<span class="heure">✓ ' + String(c.heure).padStart(2, '0') + 'h00</span>'
             + '<span class="client">' + (c.client_nom || 'Client') + (c.client_telephone ? ' · ' + c.client_telephone : '') + '</span>';
         }
 
@@ -299,6 +422,7 @@
     }
   }
 
+  chargerBranding();
   (async () => {
     if (await verifierSession()) charger();
   })();

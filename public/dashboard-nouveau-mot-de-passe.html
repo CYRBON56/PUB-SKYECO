@@ -91,5 +91,53 @@
     });
   }
 </script>
+<!-- SKYECO_COOKIE_BANNER_START -->
+<div id="skyeco-cookies" style="position:fixed; left:0; right:0; bottom:0; z-index:99999; background:#14202B; color:#F4F7F9; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; box-shadow:0 -6px 24px rgba(0,0,0,0.25); display:none;">
+  <div style="max-width:1000px; margin:0 auto; padding:18px 20px; display:flex; align-items:center; gap:24px; flex-wrap:wrap;">
+    <p style="flex:1; min-width:240px; margin:0; font-size:13.5px; line-height:1.5; color:#C9D6DF;">
+      Nous utilisons des cookies n&#233;cessaires au fonctionnement du site et, avec votre accord, des cookies de mesure d&#8217;audience et de suivi publicitaire (Google Ads) pour am&#233;liorer nos services.
+      <a href="/politique-confidentialite.html" style="color:#E8622C; text-decoration:underline;">En savoir plus</a>
+    </p>
+    <div style="display:flex; gap:10px; flex-shrink:0; flex-wrap:wrap;">
+      <button type="button" onclick="skyecoCookiesChoix('essentiel')" style="background:transparent; border:1px solid rgba(255,255,255,0.35); color:#F4F7F9; padding:10px 16px; font-size:13px; font-weight:600; cursor:pointer; border-radius:4px;">Essentiels uniquement</button>
+      <button type="button" onclick="skyecoCookiesChoix('tous')" style="background:#E8622C; border:1px solid #E8622C; color:#fff; padding:10px 18px; font-size:13px; font-weight:700; cursor:pointer; border-radius:4px;">Tout accepter</button>
+    </div>
+  </div>
+</div>
+<button type="button" id="skyeco-cookies-lien" onclick="skyecoCookiesOuvrir()" aria-label="G&#233;rer mes cookies" style="display:none; position:fixed; left:16px; bottom:16px; z-index:99998; background:#14202B; color:#F4F7F9; border:1px solid rgba(255,255,255,0.25); border-radius:20px; padding:8px 14px; font-size:12px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; cursor:pointer;">&#x1F36A; Cookies</button>
+<script>
+(function(){
+  var CLE = 'skyeco_cookie_consent';
+  function lireChoix(){ try { return JSON.parse(localStorage.getItem(CLE) || 'null'); } catch(e){ return null; } }
+  function appliquerChoix(choix){
+    // Point d'extension : charger ici Google Ads / Analytics uniquement si choix.niveau === 'tous'.
+    // Rien n'est charge pour l'instant.
+    window.skyecoConsentement = choix;
+  }
+  window.skyecoCookiesChoix = function(niveau){
+    var choix = { niveau: niveau, date: new Date().toISOString() };
+    try { localStorage.setItem(CLE, JSON.stringify(choix)); } catch(e){}
+    var b = document.getElementById('skyeco-cookies'); if(b) b.style.display = 'none';
+    var l = document.getElementById('skyeco-cookies-lien'); if(l) l.style.display = 'block';
+    appliquerChoix(choix);
+  };
+  window.skyecoCookiesOuvrir = function(){
+    var b = document.getElementById('skyeco-cookies'); if(b) b.style.display = 'block';
+    var l = document.getElementById('skyeco-cookies-lien'); if(l) l.style.display = 'none';
+  };
+  document.addEventListener('DOMContentLoaded', function(){
+    var choix = lireChoix();
+    var b = document.getElementById('skyeco-cookies');
+    var l = document.getElementById('skyeco-cookies-lien');
+    if(choix && choix.niveau){
+      if(l) l.style.display = 'block';
+      appliquerChoix(choix);
+    } else if(b){
+      b.style.display = 'block';
+    }
+  });
+})();
+</script>
+<!-- SKYECO_COOKIE_BANNER_END -->
 </body>
 </html>

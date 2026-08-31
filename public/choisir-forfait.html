@@ -277,7 +277,7 @@
         ${f.recommande ? '<div class="plan-badge">Recommandé</div>' : ''}
         ${f.prixPromo ? `
           <div class="promo-tile">
-            <div class="promo-tile-label">Offre de<br>lancement</div>
+            <div class="promo-tile-label">Prix spécial<br>artisan</div>
             <div class="promo-tile-percent">-50%</div>
             <div class="promo-tile-duree">1ère année</div>
           </div>
@@ -286,7 +286,7 @@
         <div class="plan-price">${f.prixPromo || f.prix} € <span>HT/mois</span></div>
         <div class="plan-sub" style="margin-bottom:2px;">soit ${(parseFloat((f.prixPromo || f.prix).replace(',', '.')) * 1.2).toFixed(2).replace('.', ',')} € TTC/mois${f.prixPromo ? ` pendant ${f.dureePromoMois} mois` : ''}</div>
         ${f.prixPromo ? `<div class="plan-price-apres">Puis ${f.prix} € HT/mois (soit ${(parseFloat(f.prix.replace(',', '.')) * 1.2).toFixed(2).replace('.', ',')} € TTC/mois)</div>` : ''}
-        <div class="plan-sub" style="color:#c0392b; font-weight:700;">Sans engagement</div>
+        <div class="plan-sub" style="color:#c0392b; font-weight:700;">Un jour, une semaine, un mois, un an pour juger.<br>Zéro engagement pour rester.</div>
         <ul class="plan-features">
           ${f.features.map(t => `<li>${t}</li>`).join('')}
           ${f.aVenir.map(t => `<li class="a-venir">${t}</li>`).join('')}

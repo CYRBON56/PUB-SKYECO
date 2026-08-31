@@ -3,297 +3,236 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Skyeco Pro — Ne perdez plus jamais un chantier</title>
+<title>Skyeco Pro — Des devis chiffrés, pas des clics.</title>
+<meta name="description" content="Skyeco Pro pilote vos campagnes Google Ads, capte vos prospects avec une estimation en ligne, les relance par SMS et gère vos devis avec signature électronique.">
 <link rel="icon" href="/skyeco-icon-devis.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --navy: #14304A;
-    --blue: #2C5F8A;
-    --blue-light: #6E97B8;
-    --paper: #F4F7F9;
-    --paper-line: #DCE4E9;
-    --orange: #E8622C;
-    --orange-dark: #C74F20;
-    --concrete: #5B6268;
-    --white: #FFFFFF;
-  }
 
-  *{ box-sizing: border-box; margin:0; padding:0; }
-  html{ scroll-behavior: smooth; }
-  body{
-    font-family: 'IBM Plex Sans', sans-serif;
-    background: var(--paper);
-    color: var(--navy);
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-  }
-  img,svg{ display:block; max-width:100%; }
-  a{ color: inherit; }
+    :root{
+      --navy: #14304A;
+      --blue: #2C5F8A;
+      --blue-light: #6E97B8;
+      --paper: #F4F7F9;
+      --paper-line: #DCE4E9;
+      --orange: #E8622C;
+      --orange-dark: #C74F20;
+      --concrete: #5B6268;
+      --white: #FFFFFF;
+    }
+    *{ box-sizing: border-box; margin:0; padding:0; }
+    html{ scroll-behavior: smooth; }
+    body{
+      font-family: 'IBM Plex Sans', sans-serif;
+      background: var(--paper);
+      color: var(--navy);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    img,svg{ display:block; max-width:100%; }
+    a{ color: var(--orange); }
+    a:hover{ color: var(--orange-dark); }
 
-  .mono{ font-family:'IBM Plex Mono', monospace; letter-spacing: 0.04em; }
-  .display{ font-family:'Big Shoulders Display', sans-serif; text-transform: uppercase; }
+    .mono{ font-family:'IBM Plex Mono', monospace; letter-spacing: 0.04em; }
+    .display{ font-family:'Big Shoulders Display', sans-serif; text-transform: uppercase; }
 
-  :focus-visible{ outline: 3px solid var(--orange); outline-offset: 3px; }
+    .ruler{
+      height: 14px; width: 100%;
+      background-image: repeating-linear-gradient(90deg, var(--blue-light) 0px, var(--blue-light) 1px, transparent 1px, transparent 12px);
+      background-position: 0 100%; background-repeat: repeat-x; background-size: 12px 8px;
+      opacity: 0.55;
+    }
+    .ruler.dark{ background-image: repeating-linear-gradient(90deg, rgba(255,255,255,0.35) 0px, rgba(255,255,255,0.35) 1px, transparent 1px, transparent 12px); }
 
+    .wrap{ max-width: 1120px; margin: 0 auto; padding: 0 28px; }
+
+    header{ background: var(--navy); color: var(--white); padding: 18px 0 0; }
+    .nav{ display:flex; align-items:center; justify-content:space-between; padding-bottom: 18px; gap: 20px; }
+    .logo{ display:flex; align-items:center; }
+    .nav-cta{
+      font-family:'IBM Plex Mono', monospace; font-size: 13px;
+      border: 1px solid rgba(255,255,255,0.4); padding: 9px 16px;
+      text-decoration: none; white-space: nowrap; color: var(--white); flex-shrink:0;
+    }
+    .nav-cta:hover{ border-color: var(--orange); color: var(--orange); }
+
+    .hero{ background: var(--navy); color: var(--white); padding: 56px 0 0; position: relative; }
+    .hero-grid{ display:grid; grid-template-columns: 1.05fr 0.95fr; gap: 48px; align-items: center; padding-bottom: 60px; }
+    .eyebrow{
+      font-family:'IBM Plex Mono', monospace; font-size: 12px; color: var(--blue-light);
+      letter-spacing: 0.12em; margin-bottom: 18px; display:flex; align-items:center; gap: 10px;
+    }
+    .eyebrow::before{ content:''; width: 22px; height:1px; background: var(--blue-light); }
+    h1{
+      font-family:'Big Shoulders Display', sans-serif; font-weight: 900;
+      font-size: clamp(38px, 5vw, 58px); line-height: 0.98; letter-spacing: 0.005em; margin-bottom: 22px;
+    }
+    h1 em{ color: var(--orange); font-style: normal; }
+    .hero p.lead{ font-size: 18px; color: #C9D6DF; max-width: 480px; margin-bottom: 30px; }
+    .cta-row{ display:flex; gap: 14px; flex-wrap: wrap; align-items:center; }
+    .btn{
+      display:inline-block; font-family:'IBM Plex Sans', sans-serif; font-weight: 600;
+      font-size: 15px; padding: 15px 26px; text-decoration: none; border: 2px solid transparent; cursor:pointer;
+    }
+    .btn-primary{ background: var(--orange); color: var(--white); }
+    .btn-primary:hover{ background: var(--orange-dark); }
+    .btn-ghost{ border-color: rgba(255,255,255,0.35); color: var(--white); }
+    .btn-ghost:hover{ border-color: var(--white); }
+
+    .plan-card{ background: #0F2740; border: 1px solid rgba(110,151,184,0.4); padding: 22px 20px 16px; position: relative; }
+    .cartouche{
+      border-top: 1px solid rgba(110,151,184,0.4); margin-top: 16px; padding-top: 10px;
+      display:grid; grid-template-columns: repeat(4, 1fr);
+      font-family:'IBM Plex Mono', monospace; font-size: 10px; color: var(--blue-light); letter-spacing: 0.05em;
+    }
+    .cartouche div span{ display:block; color: #7F97A9; font-size: 9px; margin-bottom: 3px; }
+    .diagram-label{ font-family:'IBM Plex Mono', monospace; font-size: 10.5px; fill: var(--blue-light); }
+    .diagram-label.hot{ fill: var(--orange); }
+
+    section{ padding: 78px 0; }
+    .section-head{ max-width: 620px; margin-bottom: 46px; }
+    .kicker{ font-family:'IBM Plex Mono', monospace; font-size: 12px; color: var(--blue); letter-spacing: 0.1em; margin-bottom: 12px; }
+    h2{
+      font-family:'Big Shoulders Display', sans-serif; font-weight: 800;
+      font-size: clamp(28px, 3.4vw, 40px); line-height: 1.02; color: var(--navy);
+    }
+    .section-head p{ color: var(--concrete); font-size: 16.5px; margin-top: 14px; }
+
+    .problem-list{ display:grid; grid-template-columns: repeat(2,1fr); gap: 2px; background: var(--paper-line); border: 1px solid var(--paper-line); }
+    .problem-item{ background: var(--white); padding: 26px 24px; display:flex; gap: 16px; }
+    .problem-item .num{ font-family:'IBM Plex Mono', monospace; color: var(--orange); font-size: 13px; flex-shrink:0; padding-top: 3px; }
+    .problem-item p{ color: var(--concrete); font-size: 15px; }
+    .problem-item strong{ color: var(--navy); display:block; margin-bottom: 4px; font-size: 16px; }
+
+    .feature-grid{ display:grid; grid-template-columns: 0.9fr 1.1fr; gap: 54px; align-items:start; }
+    .feature-points{ display:flex; flex-direction:column; gap: 28px; }
+    .feature-point{ display:flex; gap: 16px; }
+    .feature-point .num{ font-family:'IBM Plex Mono', monospace; color: var(--orange); font-size: 13px; flex-shrink:0; padding-top: 3px; }
+    .feature-point strong{ display:block; color: var(--navy); font-size: 16px; margin-bottom: 4px; }
+    .feature-point p{ color: var(--concrete); font-size: 14.5px; }
+
+    .estimator-mock{ background: var(--paper); border: 1px solid var(--paper-line); padding: 24px 24px 26px; }
+    .estimator-head{ display:flex; justify-content:space-between; font-size: 11px; color: var(--blue); letter-spacing: 0.06em; margin-bottom: 12px; }
+    .step-indicator{ color: var(--orange); }
+    .progress-track{ height: 4px; background: var(--paper-line); margin-bottom: 20px; position:relative; }
+    .progress-fill{ position:absolute; left:0; top:0; height:100%; width: 66%; background: var(--orange); }
+
+    .chip-row{ display:flex; gap: 8px; margin-bottom: 22px; flex-wrap:wrap; }
+    .chip{ font-family:'IBM Plex Sans', sans-serif; font-size: 12.5px; padding: 8px 14px; border: 1px solid var(--paper-line); color: var(--concrete); background: var(--white); }
+    .chip.active{ border-color: var(--orange); color: var(--orange); font-weight:600; background: #FDF1EC; }
+
+    .slider-mock{ margin-bottom: 24px; }
+    .slider-label{ display:flex; justify-content:space-between; font-size: 13px; color: var(--navy); margin-bottom: 8px; }
+    .slider-val{ font-weight:700; color: var(--orange); font-family:'IBM Plex Mono', monospace; }
+    .slider-track{ height: 5px; background: var(--paper-line); position:relative; }
+    .slider-fill{ position:absolute; left:0; top:0; height:100%; width: 42%; background: var(--blue); }
+    .slider-thumb{ position:absolute; left:42%; top:50%; transform:translate(-50%,-50%); width:16px; height:16px; border-radius:50%; background: var(--white); border: 2.5px solid var(--blue); }
+
+    .estimator-result{ background: var(--navy); color: var(--white); padding: 18px 20px; margin-bottom: 18px; }
+    .result-label{ font-size: 10.5px; color: var(--blue-light); letter-spacing: 0.06em; margin-bottom: 8px; }
+    .result-value{ font-size: 26px; font-weight:800; margin-bottom: 8px; }
+    .result-note{ font-size: 12.5px; color: #C9D6DF; }
+
+    .estimator-cta{ text-align:center; font-family:'IBM Plex Sans', sans-serif; font-weight:600; font-size: 14px; color: var(--white); background: var(--orange); padding: 13px 18px; }
+
+    .steps{ display:grid; grid-template-columns: repeat(4,1fr); gap: 0; position:relative; }
+    .step{ padding: 0 24px 0 0; position:relative; }
+    .step:not(:last-child)::after{
+      content:''; position:absolute; top: 26px; right: -1px; width: 40px; height:1px;
+      background: repeating-linear-gradient(90deg, var(--blue-light) 0 6px, transparent 6px 10px);
+    }
+    .step-num{
+      font-family:'Big Shoulders Display', sans-serif; font-size: 46px; font-weight: 900;
+      color: var(--paper-line); -webkit-text-stroke: 1.5px var(--blue-light); margin-bottom: 6px;
+    }
+    .step h3{ font-family:'IBM Plex Sans', sans-serif; font-weight:700; font-size: 18px; margin-bottom: 8px; color: var(--navy); }
+    .step p{ color: var(--concrete); font-size: 14.5px; }
+
+    .pricing-grid{ display:grid; grid-template-columns: repeat(4,1fr); gap: 16px; }
+    .plan{ border: 1px solid var(--paper-line); background: var(--white); padding: 26px 20px; display:flex; flex-direction:column; }
+    .plan.featured{ border-color: var(--orange); box-shadow: 0 0 0 1px var(--orange); }
+    .plan-tag{ font-family:'IBM Plex Mono', monospace; font-size: 10px; color: var(--orange); letter-spacing: 0.06em; margin-bottom: 12px; }
+    .plan h3{ font-family:'Big Shoulders Display', sans-serif; font-weight:800; font-size: 19px; color: var(--navy); margin-bottom: 12px; line-height:1.08; min-height: 44px; }
+    .plan .price{ font-size: 30px; font-weight:700; color: var(--navy); margin-bottom: 2px; }
+    .plan .price span{ font-size: 13px; font-weight:500; color: var(--concrete); }
+    .plan .price-sub{ font-family:'IBM Plex Mono', monospace; font-size: 11px; color: var(--concrete); margin-bottom: 16px; }
+    .plan ul{ list-style:none; margin: 4px 0 22px; flex-grow:1; }
+    .plan li{ font-size: 13.5px; color: var(--concrete); padding: 7px 0 7px 18px; border-top: 1px solid var(--paper-line); position:relative; }
+    .plan li::before{ content:'—'; position:absolute; left:0; color: var(--blue); }
+    .plan .btn{ text-align:center; font-size: 13.5px; padding: 13px 18px; }
+
+    .proof{ background: var(--navy); color: var(--white); }
+    .proof-grid{ display:grid; grid-template-columns: 1fr 1fr; gap: 50px; align-items:center; }
+    .proof p{ color: #C9D6DF; font-size: 16.5px; margin-bottom: 16px; }
+    .signature-block{ font-family:'IBM Plex Mono', monospace; font-size: 13px; color: var(--blue-light); margin-top: 22px; padding-top: 16px; border-top: 1px solid rgba(110,151,184,0.35); }
+    .stat-card{ border: 1px solid rgba(110,151,184,0.4); padding: 22px; }
+    .stat{ display:flex; justify-content:space-between; padding: 14px 0; border-top: 1px solid rgba(110,151,184,0.25); }
+    .stat:first-child{ border-top:none; }
+    .stat .label{ font-family:'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--blue-light); }
+    .stat .val{ font-family:'Big Shoulders Display', sans-serif; font-weight:800; font-size: 20px; }
+
+    .final{ text-align:center; }
+    .final h2{ margin-bottom: 16px; }
+    .final p{ color: var(--concrete); max-width: 480px; margin: 0 auto 32px; font-size: 16.5px; }
+
+    footer{
+      background: var(--navy); color: #7F97A9; padding: 28px 0;
+      font-family:'IBM Plex Mono', monospace; font-size: 12px;
+      display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;
+    }
+
+    @media (max-width: 960px){
+      .steps{ grid-template-columns: 1fr 1fr; gap: 28px; }
+      .step:not(:last-child)::after{ display:none; }
+    }
+    @media (max-width: 860px){
+      .hero-grid{ grid-template-columns: 1fr; }
+      .feature-grid{ grid-template-columns: 1fr; }
+      .problem-list{ grid-template-columns: 1fr; }
+      .steps{ grid-template-columns: 1fr; gap: 28px; }
+      .step:not(:last-child)::after{ display:none; }
+      .pricing-grid{ grid-template-columns: 1fr 1fr; }
+      .proof-grid{ grid-template-columns: 1fr; }
+      .cartouche{ grid-template-columns: repeat(2,1fr); row-gap: 10px; }
+    }
+    @media (max-width: 560px){
+      .pricing-grid{ grid-template-columns: 1fr; }
+    }
+  
   @media (prefers-reduced-motion: reduce){
     *{ animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
   }
-
-  /* Ruler / tick-mark motif — recurring device, echoes measurement on a devis */
-  .ruler{
-    height: 14px;
-    width: 100%;
-    background-image: repeating-linear-gradient(
-      90deg,
-      var(--blue-light) 0px, var(--blue-light) 1px,
-      transparent 1px, transparent 12px
-    );
-    background-position: 0 100%;
-    background-repeat: repeat-x;
-    background-size: 12px 8px;
-    opacity: 0.55;
-  }
-  .ruler.dark{ background-image: repeating-linear-gradient(90deg, rgba(255,255,255,0.35) 0px, rgba(255,255,255,0.35) 1px, transparent 1px, transparent 12px); }
-
-  .wrap{ max-width: 1120px; margin: 0 auto; padding: 0 28px; }
-
-  /* ---------- HEADER ---------- */
-  header{
-    background: var(--navy);
-    color: var(--white);
-    padding: 18px 0 0;
-  }
-  .nav{
-    display:flex; align-items:center; justify-content:space-between;
-    padding-bottom: 18px;
-  }
-  .logo{
-    font-family:'Big Shoulders Display', sans-serif;
-    font-weight:900; font-size: 22px; letter-spacing: 0.02em;
-    display:flex; align-items:center; gap:10px;
-  }
-  .logo .dot{ width:9px; height:9px; background: var(--orange); display:inline-block; }
-  .nav-cta{
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 13px;
-    border: 1px solid rgba(255,255,255,0.4);
-    padding: 9px 16px;
-    text-decoration: none;
-    white-space: nowrap;
-  }
-  .nav-cta:hover{ border-color: var(--orange); color: var(--orange); }
-
-  /* ---------- HERO ---------- */
-  .hero{
-    background: var(--navy);
-    color: var(--white);
-    padding: 56px 0 0;
-    position: relative;
-  }
-  .hero-grid{
-    display:grid; grid-template-columns: 1.05fr 0.95fr; gap: 48px;
-    align-items: center;
-    padding-bottom: 60px;
-  }
-  .eyebrow{
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 12px;
-    color: var(--blue-light);
-    letter-spacing: 0.12em;
-    margin-bottom: 18px;
-    display:flex; align-items:center; gap: 10px;
-  }
-  .eyebrow::before{ content:''; width: 22px; height:1px; background: var(--blue-light); }
-  h1{
-    font-family:'Big Shoulders Display', sans-serif;
-    font-weight: 900;
-    font-size: clamp(38px, 5vw, 58px);
-    line-height: 0.98;
-    letter-spacing: 0.005em;
-    margin-bottom: 22px;
-  }
-  h1 em{ color: var(--orange); font-style: normal; }
-  .hero p.lead{
-    font-size: 18px;
-    color: #C9D6DF;
-    max-width: 480px;
-    margin-bottom: 30px;
-  }
-  .cta-row{ display:flex; gap: 14px; flex-wrap: wrap; align-items:center; }
-  .btn{
-    display:inline-block;
-    font-family:'IBM Plex Sans', sans-serif;
-    font-weight: 600;
-    font-size: 15px;
-    padding: 15px 26px;
-    text-decoration: none;
-    border: 2px solid transparent;
-  }
-  .btn-primary{ background: var(--orange); color: var(--white); }
-  .btn-primary:hover{ background: var(--orange-dark); }
-  .btn-ghost{ border-color: rgba(255,255,255,0.35); color: var(--white); }
-  .btn-ghost:hover{ border-color: var(--white); }
-
-  /* Blueprint diagram — signature element */
-  .plan-card{
-    background: #0F2740;
-    border: 1px solid rgba(110,151,184,0.4);
-    padding: 22px 20px 16px;
-    position: relative;
-  }
-  .cartouche{
-    border-top: 1px solid rgba(110,151,184,0.4);
-    margin-top: 16px;
-    padding-top: 10px;
-    display:grid;
-    grid-template-columns: repeat(4, 1fr);
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 10px;
-    color: var(--blue-light);
-    letter-spacing: 0.05em;
-  }
-  .cartouche div span{ display:block; color: #7F97A9; font-size: 9px; margin-bottom: 3px; }
-  .diagram-label{
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 10.5px;
-    fill: var(--blue-light);
-  }
-  .diagram-label.hot{ fill: var(--orange); }
-
-  /* ---------- SECTIONS ---------- */
-  section{ padding: 78px 0; }
-  .section-head{ max-width: 620px; margin-bottom: 46px; }
-  .kicker{
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 12px; color: var(--blue);
-    letter-spacing: 0.1em; margin-bottom: 12px;
-  }
-  h2{
-    font-family:'Big Shoulders Display', sans-serif;
-    font-weight: 800;
-    font-size: clamp(28px, 3.4vw, 40px);
-    line-height: 1.02;
-    color: var(--navy);
-  }
-  .section-head p{ color: var(--concrete); font-size: 16.5px; margin-top: 14px; }
-
-  /* Problem section */
-  .problem-list{
-    display:grid; grid-template-columns: repeat(2,1fr); gap: 2px;
-    background: var(--paper-line);
-    border: 1px solid var(--paper-line);
-  }
-  .problem-item{
-    background: var(--white);
-    padding: 26px 24px;
-    display:flex; gap: 16px;
-  }
-  .problem-item .num{
-    font-family:'IBM Plex Mono', monospace;
-    color: var(--orange); font-size: 13px; flex-shrink:0; padding-top: 3px;
-  }
-  .problem-item p{ color: var(--concrete); font-size: 15px; }
-  .problem-item strong{ color: var(--navy); display:block; margin-bottom: 4px; font-size: 16px; }
-
-  /* How it works — real sequence, numbers earned */
-  .steps{ display:grid; grid-template-columns: repeat(3,1fr); gap: 0; position:relative; }
-  .step{ padding: 0 24px 0 0; position:relative; }
-  .step:not(:last-child)::after{
-    content:'';
-    position:absolute; top: 26px; right: -1px; width: 40px; height:1px;
-    background: repeating-linear-gradient(90deg, var(--blue-light) 0 6px, transparent 6px 10px);
-  }
-  .step-num{
-    font-family:'Big Shoulders Display', sans-serif;
-    font-size: 46px; font-weight: 900; color: var(--paper-line);
-    -webkit-text-stroke: 1.5px var(--blue-light);
-    margin-bottom: 6px;
-  }
-  .step h3{
-    font-family:'IBM Plex Sans', sans-serif; font-weight:700; font-size: 18px;
-    margin-bottom: 8px; color: var(--navy);
-  }
-  .step p{ color: var(--concrete); font-size: 14.5px; }
-
-  /* Pricing */
-  .pricing-grid{ display:grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
-  .plan{
-    border: 1px solid var(--paper-line);
-    background: var(--white);
-    padding: 28px 24px;
-    display:flex; flex-direction:column;
-  }
-  .plan.featured{
-    border-color: var(--orange);
-    box-shadow: 0 0 0 1px var(--orange);
-  }
-  .plan-tag{
-    font-family:'IBM Plex Mono', monospace; font-size: 10.5px;
-    color: var(--orange); letter-spacing: 0.08em; margin-bottom: 14px;
-  }
-  .plan h3{
-    font-family:'Big Shoulders Display', sans-serif; font-weight:800;
-    font-size: 24px; color: var(--navy); margin-bottom: 4px;
-  }
-  .plan .setup{ font-family:'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--concrete); margin-bottom: 18px; }
-  .plan .price{ font-size: 34px; font-weight:700; color: var(--navy); margin-bottom: 2px; }
-  .plan .price span{ font-size: 14px; font-weight:500; color: var(--concrete); }
-  .plan ul{ list-style:none; margin: 20px 0 26px; flex-grow:1; }
-  .plan li{
-    font-size: 14.5px; color: var(--concrete); padding: 8px 0 8px 20px;
-    border-top: 1px solid var(--paper-line); position:relative;
-  }
-  .plan li::before{ content:'—'; position:absolute; left:0; color: var(--blue); }
-  .plan .btn{ text-align:center; }
-
-  /* Proof / about */
-  .proof{ background: var(--navy); color: var(--white); }
-  .proof-grid{ display:grid; grid-template-columns: 1fr 1fr; gap: 50px; align-items:center; }
-  .proof p{ color: #C9D6DF; font-size: 16.5px; margin-bottom: 16px; }
-  .signature-block{
-    font-family:'IBM Plex Mono', monospace; font-size: 13px; color: var(--blue-light);
-    margin-top: 22px; padding-top: 16px; border-top: 1px solid rgba(110,151,184,0.35);
-  }
-  .stat-card{
-    border: 1px solid rgba(110,151,184,0.4);
-    padding: 22px;
-  }
-  .stat{ display:flex; justify-content:space-between; padding: 14px 0; border-top: 1px solid rgba(110,151,184,0.25); }
-  .stat:first-child{ border-top:none; }
-  .stat .label{ font-family:'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--blue-light); }
-  .stat .val{ font-family:'Big Shoulders Display', sans-serif; font-weight:800; font-size: 20px; }
-
-  /* Final CTA */
-  .final{ text-align:center; }
-  .final h2{ margin-bottom: 16px; }
-  .final p{ color: var(--concrete); max-width: 480px; margin: 0 auto 32px; font-size: 16.5px; }
-
-  footer{
-    background: var(--navy); color: #7F97A9;
-    padding: 28px 0; font-family:'IBM Plex Mono', monospace; font-size: 12px;
-    display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;
-  }
-
-  @media (max-width: 860px){
-    .hero-grid{ grid-template-columns: 1fr; }
-    .problem-list{ grid-template-columns: 1fr; }
-    .steps{ grid-template-columns: 1fr; gap: 28px; }
-    .step:not(:last-child)::after{ display:none; }
-    .pricing-grid{ grid-template-columns: 1fr; }
-    .proof-grid{ grid-template-columns: 1fr; }
-    .cartouche{ grid-template-columns: repeat(2,1fr); row-gap: 10px; }
-  }
+  :focus-visible{ outline: 3px solid var(--orange); outline-offset: 3px; }
 </style>
 </head>
 <body>
-
 <header>
   <div class="wrap nav">
-    <div class="logo"><img src="/skyeco-logo-devis.svg" alt="Skyeco Pro" style="height:36px; display:block;"></div>
-    <a class="nav-cta" href="#contact">Demander une démo →</a>
+    <div class="logo">
+      <svg viewBox="0 0 640 160" width="220" xmlns="http://www.w3.org/2000/svg">
+        <g transform="translate(10,10)">
+          <rect x="0" y="0" width="140" height="140" rx="28" fill="#14304A"/>
+          <g transform="rotate(-6 62 70)">
+            <rect x="30" y="24" width="64" height="86" rx="6" fill="#F4F7F9"/>
+            <rect x="40" y="38" width="34" height="5" rx="2" fill="#14304A" opacity="0.55"/>
+            <rect x="40" y="50" width="44" height="5" rx="2" fill="#14304A" opacity="0.35"/>
+            <rect x="40" y="62" width="28" height="5" rx="2" fill="#14304A" opacity="0.35"/>
+            <rect x="40" y="90" width="44" height="2" fill="#14304A" opacity="0.25"/>
+          </g>
+          <circle cx="96" cy="92" r="30" fill="#E8622C"/>
+          <text x="96" y="104" text-anchor="middle" font-family="'Big Shoulders Display', Arial, sans-serif" font-weight="900" font-size="34" fill="#F4F7F9">&#8364;</text>
+          <path d="M 22 46 L 40 30 L 40 38 L 56 38 L 56 46 L 40 46 L 40 54 Z" fill="#E8622C"/>
+        </g>
+        <g transform="translate(172,0)">
+          <text x="0" y="76" font-family="'Big Shoulders Display', Arial, sans-serif" font-weight="800" font-size="56" letter-spacing="0.5" fill="#14304A">SKY<tspan fill="#E8622C">ECO</tspan></text>
+          <text x="2" y="108" font-family="'IBM Plex Mono', 'Courier New', monospace" font-weight="600" font-size="16" letter-spacing="6" fill="#E8622C">PRO</text>
+          <text x="2" y="132" font-family="'IBM Plex Sans', Arial, sans-serif" font-weight="500" font-size="15" letter-spacing="0.2" fill="#5B6268">Des devis chiffr&#233;s, pas des clics.</text>
+        </g>
+      </svg>
+    </div>
+    <a class="nav-cta" href="https://pub-skyeco-23ue.vercel.app/skyeco-pro-formulaire-creation.html" target="_blank" rel="noopener">Demander un formulaire vitrine &#8594;</a>
   </div>
   <div class="ruler dark"></div>
 </header>
@@ -302,213 +241,276 @@
   <div class="wrap hero-grid">
     <div>
       <div class="eyebrow mono">POUR LES ENTREPRISES DU BTP &amp; VRD</div>
-      <h1>Vos devis ne se perdent plus <em>entre deux messages.</em></h1>
-      <p class="lead">Skyeco Pro capte chaque demande de chantier depuis votre site, vous alerte dans la minute, et garde tout organisé dans un tableau de bord — comme un plan d'exécution pour vos leads.</p>
+      <h1>Du clic Google Ads au devis sign&#233;, <em>sans rien perdre en route.</em></h1>
+      <p class="lead">Skyeco Pro pilote vos campagnes Google Ads, capte chaque prospect avec un formulaire vitrine vivant qui donne d&#233;j&#224; une enveloppe budg&#233;taire en 3 minutes, le relance aussit&#244;t par SMS pour caler un rendez-vous, puis vous fait envoyer un devis avec signature &#233;lectronique &#8212; jusqu'&#224; la conversion suivie.</p>
       <div class="cta-row">
-        <a class="btn btn-primary" href="#contact">Voir une démo de 5 minutes</a>
+        <a class="btn btn-primary" href="https://salesflow-ecosky.vercel.app/estimation.html" target="_blank" rel="noopener">Voir une d&#233;mo de 5 minutes</a>
         <a class="btn btn-ghost" href="#tarifs">Voir les tarifs</a>
       </div>
     </div>
 
     <div class="plan-card">
       <svg viewBox="0 0 400 260" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <!-- dimension line top -->
         <line x1="10" y1="18" x2="390" y2="18" stroke="#3A5D7C" stroke-width="1"/>
         <line x1="10" y1="12" x2="10" y2="24" stroke="#3A5D7C" stroke-width="1"/>
         <line x1="390" y1="12" x2="390" y2="24" stroke="#3A5D7C" stroke-width="1"/>
-        <text x="175" y="12" class="diagram-label">TRAJET D'UNE DEMANDE — ÉCH. 1:1</text>
+        <text x="175" y="12" class="diagram-label">PARCOURS D'UN PROSPECT &#8212; &#201;CH. 1:1</text>
 
-        <!-- node 1: form -->
         <rect x="20" y="50" width="90" height="64" fill="none" stroke="#6E97B8" stroke-width="1.2"/>
-        <line x1="34" y1="66" x2="86" y2="66" stroke="#6E97B8" stroke-width="1"/>
-        <line x1="34" y1="78" x2="96" y2="78" stroke="#6E97B8" stroke-width="1"/>
-        <line x1="34" y1="90" x2="76" y2="90" stroke="#6E97B8" stroke-width="1"/>
-        <text x="65" y="132" text-anchor="middle" class="diagram-label">DEMANDE CLIENT</text>
+        <path d="M42 92 l10 -22 l8 10 l8 -16 l8 12" stroke="#6E97B8" stroke-width="1.3" fill="none"/>
+        <circle cx="42" cy="70" r="2.4" fill="#6E97B8"/>
+        <circle cx="60" cy="80" r="2.4" fill="#6E97B8"/>
+        <circle cx="68" cy="64" r="2.4" fill="#6E97B8"/>
+        <circle cx="76" cy="76" r="2.4" fill="#6E97B8"/>
+        <text x="65" y="132" text-anchor="middle" class="diagram-label" font-size="9">ANNONCE G&#201;R&#201;E</text>
+        <text x="65" y="144" text-anchor="middle" class="diagram-label">GOOGLE ADS</text>
 
-        <!-- arrow 1 -->
         <line x1="112" y1="82" x2="150" y2="82" stroke="#6E97B8" stroke-width="1" stroke-dasharray="3 4"/>
         <polygon points="150,78 158,82 150,86" fill="#6E97B8"/>
 
-        <!-- node 2: alert (hot / orange) -->
         <rect x="160" y="50" width="90" height="64" fill="none" stroke="#E8622C" stroke-width="1.4"/>
         <circle cx="205" cy="72" r="9" fill="none" stroke="#E8622C" stroke-width="1.4"/>
         <path d="M205 68 v5 l3 3" stroke="#E8622C" stroke-width="1.2" fill="none"/>
-        <text x="205" y="98" text-anchor="middle" class="diagram-label hot" font-size="9">ALERTE SMS</text>
-        <text x="205" y="132" text-anchor="middle" class="diagram-label hot">&lt; 60 SECONDES</text>
+        <text x="205" y="98" text-anchor="middle" class="diagram-label hot" font-size="9">ESTIMATION 3 MIN</text>
+        <text x="205" y="132" text-anchor="middle" class="diagram-label hot">+ SMS &amp; RDV AUTO</text>
 
-        <!-- arrow 2 -->
         <line x1="252" y1="82" x2="290" y2="82" stroke="#6E97B8" stroke-width="1" stroke-dasharray="3 4"/>
         <polygon points="290,78 298,82 290,86" fill="#6E97B8"/>
 
-        <!-- node 3: dashboard -->
         <rect x="300" y="50" width="90" height="64" fill="none" stroke="#6E97B8" stroke-width="1.2"/>
         <rect x="312" y="60" width="24" height="18" fill="none" stroke="#6E97B8" stroke-width="1"/>
+        <path d="M316 74 l4 -6 l4 3 l4 -8" stroke="#6E97B8" stroke-width="1" fill="none"/>
         <rect x="342" y="60" width="36" height="8" fill="none" stroke="#6E97B8" stroke-width="1"/>
         <rect x="342" y="72" width="36" height="8" fill="none" stroke="#6E97B8" stroke-width="1"/>
         <rect x="312" y="84" width="66" height="18" fill="none" stroke="#6E97B8" stroke-width="1"/>
-        <text x="345" y="132" text-anchor="middle" class="diagram-label">TABLEAU DE BORD</text>
+        <text x="345" y="132" text-anchor="middle" class="diagram-label" font-size="9">DEVIS SIGN&#201;</text>
+        <text x="345" y="144" text-anchor="middle" class="diagram-label">+ CONVERSION SUIVIE</text>
 
-        <!-- side dimension -->
         <line x1="8" y1="50" x2="8" y2="114" stroke="#3A5D7C" stroke-width="1"/>
-        <text x="-82" y="6" transform="rotate(-90)" class="diagram-label" font-size="9">DÉLAI</text>
 
-        <!-- bottom note -->
         <line x1="20" y1="165" x2="390" y2="165" stroke="#2A4762" stroke-width="1"/>
-        <text x="20" y="185" class="diagram-label" font-size="10">Statuts : nouveau → contacté → devis envoyé → gagné</text>
-        <text x="20" y="203" class="diagram-label" font-size="10">Rien n'est perdu, tout reste visible.</text>
+        <text x="20" y="185" class="diagram-label" font-size="10">Statuts&#160;: nouveau &#8594; contact&#233; &#8594; devis envoy&#233; &#8594; gagn&#233;</text>
+        <text x="20" y="203" class="diagram-label" font-size="10">Chaque euro de pub est trac&#233; jusqu'au devis sign&#233;.</text>
       </svg>
 
       <div class="cartouche">
         <div><span>PROJET</span>SKYECO PRO</div>
-        <div><span>OBJET</span>CAPTATION LEADS</div>
+        <div><span>OBJET</span>ADS + LEADS + DEVIS</div>
         <div><span>IND.</span>A</div>
-        <div><span>ÉCHELLE</span>1:1</div>
+        <div><span>&#201;CHELLE</span>1:1</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- PROBLEM -->
 <section>
   <div class="wrap">
     <div class="section-head">
       <div class="kicker">LE CONSTAT</div>
-      <h2>Le problème n'est pas le manque de demandes. C'est ce qu'il en reste après.</h2>
-      <p>Résine, clôture, terrassement, assainissement — même métier, même angle mort : les demandes arrivent de partout, et personne ne les suit vraiment.</p>
+      <h2>Le probl&#232;me n'est pas votre budget pub. C'est ce qu'il en reste apr&#232;s le clic.</h2>
+      <p>R&#233;sine, cl&#244;ture, terrassement, assainissement &#8212; m&#234;me m&#233;tier, m&#234;me angle mort&#160;: vous payez pour du trafic, mais rien n'est organis&#233; pour transformer ce trafic en chantiers sign&#233;s.</p>
     </div>
     <div class="problem-list">
       <div class="problem-item">
         <div class="num mono">01</div>
-        <p><strong>Les demandes se dispersent</strong>Téléphone, Messenger, mail, formulaire de contact générique — rien n'est centralisé, rien n'est priorisé.</p>
+        <div><strong>Le clic Google Ads ne devient pas un lead</strong><p>Sans formulaire d'estimation, le visiteur repart sans laisser ses coordonn&#233;es &#8212; le budget pub part pour rien.</p></div>
       </div>
       <div class="problem-item">
         <div class="num mono">02</div>
-        <p><strong>La réponse arrive trop tard</strong>Le temps de recroiser ses messages le soir, le client a déjà rappelé un concurrent plus réactif.</p>
+        <div><strong>Personne ne relance dans la foul&#233;e</strong><p>Le temps de rappeler soi-m&#234;me, le prospect a d&#233;j&#224; pris rendez-vous avec un concurrent plus rapide.</p></div>
       </div>
       <div class="problem-item">
         <div class="num mono">03</div>
-        <p><strong>Le suivi n'existe pas</strong>Impossible de savoir combien de devis sont partis, en attente, ou oubliés depuis trois semaines.</p>
+        <div><strong>Le devis part sans suivi ni signature</strong><p>Un fichier envoy&#233; par mail, jamais relanc&#233;, jamais sign&#233; &#8212; impossible de savoir o&#249; il en est.</p></div>
       </div>
       <div class="problem-item">
         <div class="num mono">04</div>
-        <p><strong>L'information est incomplète</strong>Un message vocal ne donne ni la surface, ni le budget, ni les photos du chantier — il faut tout redemander.</p>
+        <div><strong>Le retour sur la pub reste invisible</strong><p>Impossible de savoir quel mot-cl&#233; ou quelle annonce a vraiment amen&#233; un chantier gagn&#233;.</p></div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- HOW IT WORKS -->
+<section style="background:var(--white); border-top:1px solid var(--paper-line);">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="kicker">CE QUI FAIT LA DIFF&#201;RENCE</div>
+      <h2>Un formulaire vitrine vivant, qui donne d&#233;j&#224; une enveloppe budg&#233;taire.</h2>
+      <p>Un prospect qui vous contacte cherche presque toujours un prix. Avec Skyeco Pro, c'est vous qui construisez le parcours de questions qui aide votre prospect &#224; cerner un budget &#8212; adapt&#233; &#224; votre m&#233;tier, et plus simple &#224; construire pour les projets qui se chiffrent au m&#232;tre carr&#233;, au m&#232;tre lin&#233;aire ou au volume. Le r&#233;sultat reste une enveloppe, pas un devis ferm&#233;. Le prospect pourra toujours comparer ailleurs, mais vous &#234;tes le premier &#224; lui avoir donn&#233; un vrai chiffre&#160;: c'est vers vous qu'il revient.</p>
+    </div>
+
+    <div class="feature-grid">
+      <div class="feature-points">
+        <div class="feature-point">
+          <div class="num mono">A</div>
+          <div><strong>Vous construisez vos propres questions</strong><p>Vous composez le parcours &#8212; quelques questions cl&#233;s pour votre m&#233;tier &#8212; qui aide votre prospect &#224; cerner un budget&#160;: ce n'est pas un formulaire g&#233;n&#233;rique impos&#233;.</p></div>
+        </div>
+        <div class="feature-point">
+          <div class="num mono">B</div>
+          <div><strong>&#201;tape par &#233;tape, pas un pav&#233; de questions</strong><p>Le prospect avance dans un parcours anim&#233;, quelques choix &#224; la fois &#8212; il va jusqu'au bout au lieu d'abandonner.</p></div>
+        </div>
+        <div class="feature-point">
+          <div class="num mono">C</div>
+          <div><strong>Plus simple au m&#178;, au ml ou au volume</strong><p>Id&#233;al pour une terrasse, un sol r&#233;sine, une cl&#244;ture ou du terrassement &#8212; les projets qui se chiffrent par unit&#233; de mesure.</p></div>
+        </div>
+        <div class="feature-point">
+          <div class="num mono">D</div>
+          <div><strong>Une enveloppe, jamais un prix ferm&#233;</strong><p>Le message reste clair&#160;: &#171;&#160;&#224; affiner sur place&#160;&#187;. &#199;a donne envie d'aller plus loin, sans figer un montant que vous ne pourriez pas tenir.</p></div>
+        </div>
+      </div>
+
+      <div class="estimator-mock">
+        <div class="estimator-head">
+          <span class="mono">ESTIMATION EN LIGNE</span>
+          <span class="mono step-indicator">&#201;TAPE 2/3</span>
+        </div>
+        <div class="progress-track"><div class="progress-fill"></div></div>
+
+        <div class="chip-row">
+          <span class="chip">Cl&#244;ture</span>
+          <span class="chip active">Terrasse</span>
+          <span class="chip">Portail</span>
+        </div>
+
+        <div class="slider-mock">
+          <div class="slider-label"><span>Surface</span><span class="slider-val">42 m&#178;</span></div>
+          <div class="slider-track"><div class="slider-fill"></div><div class="slider-thumb"></div></div>
+        </div>
+
+        <div class="estimator-result">
+          <div class="result-label mono">ENVELOPPE BUDG&#201;TAIRE ESTIM&#201;E</div>
+          <div class="result-value display">3&#160;200&#8364; &#8211; 4&#160;100&#8364;</div>
+          <div class="result-note">&#192; affiner sur place&#160;: acc&#232;s, terrassement, finitions.</div>
+        </div>
+
+        <div class="estimator-cta">Recevoir mon estimation d&#233;taill&#233;e &#8594;</div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section style="background:var(--white); border-top:1px solid var(--paper-line); border-bottom:1px solid var(--paper-line);">
   <div class="wrap">
     <div class="section-head">
       <div class="kicker">LE FONCTIONNEMENT</div>
-      <h2>Trois étapes, aucune perte.</h2>
+      <h2>De l'annonce au chantier sign&#233;, un seul outil.</h2>
     </div>
     <div class="steps">
       <div class="step">
         <div class="step-num">01</div>
-        <h3>Le client remplit le formulaire</h3>
-        <p>Intégré à votre site ou sur une page dédiée : type de chantier, surface, budget, photos. Une demande claire, pas un message vague.</p>
+        <h3>Vos annonces Google Ads sont pilot&#233;es</h3>
+        <p>Skyeco Pro configure et g&#232;re la diffusion de vos campagnes et de vos mots-cl&#233;s &#8212; vous n'avez rien &#224; param&#233;trer.</p>
       </div>
       <div class="step">
         <div class="step-num">02</div>
-        <h3>Vous êtes alerté immédiatement</h3>
-        <p>SMS ou email dès que la demande arrive. Vous répondez pendant que le client y pense encore.</p>
+        <h3>Le prospect fait une estimation en 3&#160;min</h3>
+        <p>Un parcours anim&#233; qui affiche d&#233;j&#224; une enveloppe budg&#233;taire (au m&#178;, au ml ou au volume) et capte le lead &#8212; pas un simple &#171;&#160;contactez-nous&#160;&#187;.</p>
       </div>
       <div class="step">
         <div class="step-num">03</div>
-        <h3>Vous suivez tout dans le dashboard</h3>
-        <p>Chaque demande a un statut : nouveau, contacté, devis envoyé, gagné ou perdu. Plus rien ne se perd dans une boîte mail.</p>
+        <h3>Un SMS relance le prospect aussit&#244;t</h3>
+        <p>D&#232;s la demande re&#231;ue, un SMS automatique lui propose un lien pour caler un rendez-vous t&#233;l&#233;phonique ou sur place.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <h3>Devis sign&#233; et conversions suivies</h3>
+        <p>Vous envoyez un devis avec signature &#233;lectronique, et vous voyez ce que chaque euro de pub Google Ads a rapport&#233;.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- PRICING -->
 <section id="tarifs">
   <div class="wrap">
     <div class="section-head">
       <div class="kicker">LES FORMULES</div>
-      <h2>Un tarif de mise en place, un abonnement clair. Rien de caché.</h2>
-      <p>Chaque formule inclut la configuration complète de votre formulaire et de votre dashboard — vous n'avez rien à installer.</p>
+      <h2>Quatre formules, un abonnement clair. Rien de cach&#233;.</h2>
+      <p>Chaque formule inclut la configuration compl&#232;te de votre vitrine et de votre dashboard &#8212; vous n'avez rien &#224; installer.</p>
     </div>
     <div class="pricing-grid">
       <div class="plan">
-        <div class="plan-tag mono">ESSENTIEL</div>
-        <h3>Démarrer proprement</h3>
-        <div class="setup mono">390 € — mise en place</div>
-        <div class="price">39 €<span>/mois</span></div>
+        <div class="plan-tag mono">FORFAIT 1</div>
+        <h3>Vitrine simple</h3>
+        <div class="price">39,90&#8364;<span> HT/mois</span></div>
+        <div class="price-sub">soit 47,88&#8364; TTC/mois</div>
         <ul>
-          <li>Formulaire de demande personnalisé</li>
-          <li>Tableau de bord de suivi</li>
-          <li>Notification par email</li>
-          <li>1 utilisateur</li>
+          <li>Formulaire vitrine en ligne</li>
+          <li>R&#233;ception SMS + email</li>
+          <li>Mise &#224; jour illimit&#233;e du contenu</li>
         </ul>
-        <a class="btn btn-ghost" style="border-color:var(--paper-line); color:var(--navy);" href="#contact">Choisir Essentiel</a>
+        <a class="btn btn-ghost" style="border-color:var(--paper-line); color:var(--navy);" href="mailto:infos@ecosky.fr?subject=Skyeco%20Pro%20-%20Forfait%20Vitrine%20simple">Choisir ce forfait</a>
       </div>
       <div class="plan featured">
-        <div class="plan-tag mono">PRO — LE PLUS CHOISI</div>
-        <h3>Réagir en premier</h3>
-        <div class="setup mono">590 € — mise en place</div>
-        <div class="price">79 €<span>/mois</span></div>
+        <div class="plan-tag mono">FORFAIT 2 &#8212; LE PLUS CHOISI</div>
+        <h3>Vitrine + Dashboard</h3>
+        <div class="price">59,90&#8364;<span> HT/mois</span></div>
+        <div class="price-sub">soit 71,88&#8364; TTC/mois</div>
         <ul>
-          <li>Tout Essentiel, plus :</li>
-          <li>Alerte SMS automatique</li>
-          <li>Statuts de suivi personnalisables</li>
-          <li>Export des demandes</li>
-          <li>3 utilisateurs</li>
+          <li>Tout le Forfait 1</li>
+          <li>Tableau de bord complet</li>
+          <li>Suivi des clics et du co&#251;t publicitaire</li>
+          <li>Gestion des mots-cl&#233;s</li>
         </ul>
-        <a class="btn btn-primary" href="#contact">Choisir Pro</a>
+        <a class="btn btn-primary" href="mailto:infos@ecosky.fr?subject=Skyeco%20Pro%20-%20Forfait%20Vitrine%20%2B%20Dashboard">Choisir ce forfait</a>
       </div>
       <div class="plan">
-        <div class="plan-tag mono">SUR-MESURE</div>
-        <h3>Aller jusqu'au devis</h3>
-        <div class="setup mono">à partir de 990 € — mise en place</div>
-        <div class="price">129 €<span>/mois</span></div>
+        <div class="plan-tag mono">FORFAIT 3</div>
+        <h3>Relances &amp; devis sign&#233;s</h3>
+        <div class="price">79,90&#8364;<span> HT/mois</span></div>
+        <div class="price-sub">soit 95,88&#8364; TTC/mois</div>
         <ul>
-          <li>Tout Pro, plus :</li>
-          <li>Génération de devis</li>
-          <li>Signature électronique</li>
-          <li>Suivi des paiements</li>
+          <li>Tout le Forfait 2</li>
+          <li>Relance SMS automatique</li>
+          <li>Devis avec signature &#233;lectronique</li>
         </ul>
-        <a class="btn btn-ghost" style="border-color:var(--paper-line); color:var(--navy);" href="#contact">En discuter</a>
+        <a class="btn btn-ghost" style="border-color:var(--paper-line); color:var(--navy);" href="mailto:infos@ecosky.fr?subject=Skyeco%20Pro%20-%20Forfait%20Relances">Choisir ce forfait</a>
+      </div>
+      <div class="plan">
+        <div class="plan-tag mono">FORFAIT 4</div>
+        <h3>Vitrine r&#233;f&#233;renc&#233;e</h3>
+        <div class="price">99,90&#8364;<span> HT/mois</span></div>
+        <div class="price-sub">soit 119,88&#8364; TTC/mois</div>
+        <ul>
+          <li>Tout le Forfait 3</li>
+          <li>Adresse URL personnalis&#233;e</li>
+          <li>Fondations techniques de r&#233;f&#233;rencement Google</li>
+        </ul>
+        <a class="btn btn-ghost" style="border-color:var(--paper-line); color:var(--navy);" href="mailto:infos@ecosky.fr?subject=Skyeco%20Pro%20-%20Forfait%20R%C3%A9f%C3%A9renc%C3%A9e">Choisir ce forfait</a>
       </div>
     </div>
   </div>
 </section>
 
-<!-- PROOF -->
 <section class="proof">
   <div class="wrap proof-grid">
     <div>
       <div class="kicker" style="color:var(--blue-light);">POURQUOI NOUS CROIRE</div>
       <h2 style="color:var(--white);">Construit par un artisan, pour des artisans.</h2>
-      <p>Je dirige EcoSky by RMS, une entreprise de revêtements de sol résine en Bretagne. J'avais exactement ce problème : des demandes de chantier qui se perdaient entre les mails et les appels manqués.</p>
-      <p>J'ai développé mon propre système pour ne plus perdre un seul lead — et je l'utilise tous les jours sur mes propres chantiers. Skyeco Pro, c'est cet outil, ouvert à d'autres entreprises du BTP.</p>
-      <div class="signature-block">CYRILLE BON — DIRIGEANT, ECOSKY BY RMS · BRECH (56)</div>
+      <p>Je dirige EcoSky by RMS, une entreprise de rev&#234;tements de sol r&#233;sine en Bretagne. J'avais exactement ce probl&#232;me&#160;: je payais pour des campagnes Google Ads sans savoir ce qu'elles me rapportaient vraiment, et les demandes qui arrivaient finissaient par se perdre entre deux messages.</p>
+      <p>J'ai d&#233;velopp&#233; mon propre syst&#232;me pour piloter mes annonces, capter chaque prospect et suivre chaque devis jusqu'&#224; la signature &#8212; et je l'utilise tous les jours sur mes propres chantiers. Skyeco Pro, c'est cet outil, ouvert &#224; d'autres entreprises du BTP.</p>
+      <div class="signature-block">CYRILLE BON &#8212; DIRIGEANT, ECOSKY BY RMS &#183; BRECH (56)</div>
     </div>
     <div class="stat-card">
-      <div class="stat"><span class="label mono">ALERTE ENVOYÉE EN</span><span class="val display">&lt; 60 SEC</span></div>
+      <div class="stat"><span class="label mono">SMS DE RELANCE ENVOY&#201; EN</span><span class="val display">&lt; 60 SEC</span></div>
       <div class="stat"><span class="label mono">MISE EN PLACE</span><span class="val display">SOUS 1 SEMAINE</span></div>
-      <div class="stat"><span class="label mono">DEMANDES PERDUES</span><span class="val display">ZÉRO</span></div>
+      <div class="stat"><span class="label mono">CONVERSIONS ADS SUIVIES</span><span class="val display">100%</span></div>
     </div>
   </div>
 </section>
 
-<!-- FINAL CTA -->
 <section class="final" id="contact">
   <div class="wrap">
     <div class="kicker" style="justify-content:center; display:flex;">PARLONS-EN</div>
-    <h2>Montrez-moi comment vous gérez vos devis aujourd'hui.</h2>
+    <h2>Montrez-moi comment vous g&#233;rez vos annonces et vos devis aujourd'hui.</h2>
     <p>Cinq minutes suffisent pour voir si Skyeco Pro peut vous faire gagner des chantiers que vous perdez aujourd'hui.</p>
-    <a class="btn btn-primary" href="mailto:infos@ecosky.fr?subject=Demande%20de%20d%C3%A9mo%20Skyeco%20Pro">Demander une démo par email</a>
+    <a class="btn btn-primary" href="https://pub-skyeco-23ue.vercel.app/skyeco-pro-formulaire-creation.html" target="_blank" rel="noopener">Demander un formulaire vitrine</a>
   </div>
 </section>
 
 <footer>
   <div class="wrap" style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; width:100%;">
-    <span>SKYECO PRO — UN OUTIL ECOSKY BY RMS</span>
-    <span>BRECH (56) — BRETAGNE</span>
+    <span>SKYECO PRO &#8212; UN OUTIL ECOSKY BY RMS</span>
+    <span>BRECH (56) &#8212; BRETAGNE</span>
   </div>
 </footer>
 

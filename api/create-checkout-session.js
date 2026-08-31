@@ -8,15 +8,51 @@ import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// Les 4 forfaits Skyeco Pro — prix HT. La TVA française (20%) est ajoutée
-// au moment du paiement, sur le montant réellement facturé via Stripe.
+// Forfait unique Skyeco Pro (31/08) — prix HT. La TVA française (20%) est
+// ajoutée au moment du paiement, sur le montant réellement facturé via
+// Stripe. Auparavant 4 forfaits (1 à 4) ; seul l'ancien forfait 3 (le plus
+// complet) reste proposé aux nouveaux clients. L'id "3" et la structure en
+// map sont conservés pour rester cohérents avec les metadata Stripe déjà
+// enregistrées sur les abonnements existants d'anciens forfaits (1/2/4),
+// qui ne sont pas concernés par ce changement et ne passent plus par ce
+// endpoint de toute façon.
 const TAUX_TVA = 0.20;
 const FORFAITS = {
-  1: { nom: 'Forfait 1 — Vitrine simple', centimesHT: 3990 },
-  2: { nom: 'Forfait 2 — Vitrine + Dashboard', centimesHT: 5990 },
-  3: { nom: 'Forfait 3 — + Relance & devis signés', centimesHT: 7990 },
-  4: { nom: 'Forfait 4 — Vitrine référencée (URL propre)', centimesHT: 9990 },
+  3: { nom: 'Skyeco Pro — Vitrine + Dashboard + Relances & devis signés', centimesHT: 7990 },
 };
+
+// Remise de lancement 1ère année (31/08) : offre permanente pour tout
+// nouveau client — 39,90€ HT/mois pendant 12 mois (soit 40€ HT/mois de
+// remise), puis retour automatique à 79,90€ HT/mois à partir du 13e mois.
+// Gérée nativement par un coupon Stripe "repeating" sur 12 mois : Stripe
+// applique et retire la remise tout seul, aucune action de notre part au
+// bout d'un an. Le montant du coupon est exprimé en TTC (4800 centimes,
+// soit 48€ TTC = 40€ HT) car nos prix n'utilisent pas le calcul de taxe
+// Stripe — la TVA est déjà intégrée dans unit_amount ci-dessous.
+const COUPON_REMISE_ID = 'skyeco-remise-1ere-annee';
+const REMISE_DUREE_MOIS = 12;
+const REMISE_MONTANT_CENTIMES_TTC = 4800;
+
+async function assurerCouponRemise() {
+  try {
+    await stripe.coupons.retrieve(COUPON_REMISE_ID);
+  } catch (e) {
+    // N'existe pas encore (1er appel) : on le crée une fois pour toutes.
+    // Si deux requêtes arrivent en même temps et que la création échoue
+    // parce qu'il vient d'être créé par l'autre, on l'ignore : le coupon
+    // existe de toute façon.
+    try {
+      await stripe.coupons.create({
+        id: COUPON_REMISE_ID,
+        duration: 'repeating',
+        duration_in_months: REMISE_DUREE_MOIS,
+        amount_off: REMISE_MONTANT_CENTIMES_TTC,
+        currency: 'eur',
+        name: 'Remise 1ère année Skyeco Pro',
+      });
+    } catch (e2) { /* déjà créé entre-temps, ou erreur transitoire : pas bloquant */ }
+  }
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -28,12 +64,16 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'draftId manquant' });
   }
 
-  const forfait = FORFAITS[plan] || FORFAITS[1]; // Forfait 1 par défaut si non précisé
+  const forfait = FORFAITS[plan] || FORFAITS[3]; // Forfait unique par défaut si non précisé
 
   const origin = req.headers.origin || `https://${req.headers.host}`;
 
   try {
+    await assurerCouponRemise();
+
     const centimesTTC = Math.round(forfait.centimesHT * (1 + TAUX_TVA));
+    const remiseCentimesHT = Math.round(REMISE_MONTANT_CENTIMES_TTC / (1 + TAUX_TVA));
+    const prixReduitHT = ((forfait.centimesHT - remiseCentimesHT) / 100).toFixed(2);
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
@@ -46,12 +86,13 @@ export default async function handler(req, res) {
             recurring: { interval: 'month' },
             product_data: {
               name: forfait.nom + (entreprise ? ' — ' + entreprise : ''),
-              description: `Prix HT : ${(forfait.centimesHT / 100).toFixed(2)} € — TVA 20% incluse. Votre formulaire vitrine en ligne, mis à jour et actif chaque mois.`,
+              description: `Prix HT : ${(forfait.centimesHT / 100).toFixed(2)} € — TVA 20% incluse. Offre de lancement : ${prixReduitHT} € HT/mois pendant les 12 premiers mois, puis ${(forfait.centimesHT / 100).toFixed(2)} € HT/mois. Votre formulaire vitrine en ligne, mis à jour et actif chaque mois.`,
             },
           },
           quantity: 1,
         },
       ],
+      discounts: [{ coupon: COUPON_REMISE_ID }],
       metadata: { draft_id: draftId, plan: String(plan || 1) },
       subscription_data: {
         metadata: { draft_id: draftId, plan: String(plan || 1) },

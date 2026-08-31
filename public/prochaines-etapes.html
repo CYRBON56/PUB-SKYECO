@@ -94,9 +94,33 @@
     position:absolute; top:-9px; left:14px; background:#1e6f4c; color:#fff;
     font-size:0.66rem; font-weight:700; padding:3px 10px; border-radius:999px;
   }
-  .formule-nom { font-size:0.88rem; font-weight:800; margin-top:4px; }
-  .formule-prix { font-size:1.3rem; font-weight:800; margin:4px 0; }
+  .formule-nom { font-size:0.88rem; font-weight:800; margin-top:4px; text-align:center; }
+  .formule-prix { font-size:1.3rem; font-weight:800; margin:4px 0; text-align:center; }
   .formule-prix span { font-size:0.75rem; font-weight:500; color:#8a9891; }
+
+  /* Tuile "offre de lancement" — même style que sur choisir-forfait.html. */
+  .promo-tile {
+    width:110px; height:110px; border-radius:16px; position:relative; overflow:hidden;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:linear-gradient(135deg, #f0a878 0%, #e8622c 55%, #c74f20 100%);
+    box-shadow:0 8px 18px rgba(232,98,44,0.35);
+    margin:0 auto 10px;
+  }
+  .promo-tile::before {
+    content:''; position:absolute; inset:-30%;
+    background:repeating-linear-gradient(45deg, rgba(255,255,255,0.10) 0 12px, transparent 12px 24px);
+  }
+  .promo-tile-label {
+    position:relative; z-index:1; color:#fff; font-size:0.5rem; font-weight:800;
+    letter-spacing:0.05em; text-transform:uppercase; text-align:center; line-height:1.2;
+  }
+  .promo-tile-percent {
+    position:relative; z-index:1; color:#FFE29A; font-size:1.8rem; font-weight:900; line-height:1;
+    text-shadow:0 2px 8px rgba(0,0,0,0.18);
+  }
+  .promo-tile-duree {
+    position:relative; z-index:1; color:#fff; font-size:0.58rem; font-weight:700; margin-top:2px;
+  }
   .formule-features { list-style:none; margin-top:10px; }
   .formule-features li { font-size:0.76rem; color:#5b6b64; padding:3px 0 3px 16px; position:relative; }
   .formule-features li::before { content:'✓'; position:absolute; left:0; color:#1e6f4c; font-weight:800; }
@@ -193,11 +217,15 @@
     <p class="sub">Pour vous donner une idée dès maintenant — vous validerez une fois votre vraie vitrine prête.</p>
     <div class="formules-grid">
       <div class="formule-card" data-forfait="3" style="cursor:pointer;">
+        <div class="promo-tile">
+          <div class="promo-tile-label">Prix spécial<br>artisan</div>
+          <div class="promo-tile-percent">-50%</div>
+          <div class="promo-tile-duree">1ère année</div>
+        </div>
         <div class="formule-nom">Skyeco Pro</div>
-        <div style="display:inline-block; background:#fdf1ea; color:#e8622c; font-size:0.68rem; font-weight:700; padding:3px 9px; border-radius:999px; margin:4px 0 6px;">🎉 Offre de lancement — 12 mois</div>
         <div class="formule-prix">39,90 € <span>HT/mois</span></div>
-        <div style="font-size:0.7rem; color:#8a9891; margin-top:-6px; margin-bottom:2px;">soit 47,88 € TTC/mois, pendant 12 mois</div>
-        <div style="font-size:0.72rem; color:#5b6b64; margin-bottom:8px;">Puis 79,90 € HT/mois (95,88 € TTC/mois)</div>
+        <div style="font-size:0.7rem; color:#8a9891; margin-top:-6px; margin-bottom:2px; text-align:center;">soit 47,88 € TTC/mois, pendant 12 mois</div>
+        <div style="font-size:0.72rem; color:#5b6b64; margin-bottom:8px; text-align:center;">Puis 79,90 € HT/mois (95,88 € TTC/mois)</div>
         <ul class="formule-features">
           <li>Formulaire vitrine en ligne + campagne Google Ads</li>
           <li>Tableau de bord complet, suivi clics et coûts</li>
@@ -206,7 +234,7 @@
         </ul>
       </div>
     </div>
-    <p class="formules-note" style="font-size:1.15rem; font-weight:800; color:#c0392b;">Sans engagement — annulable à tout moment.</p>
+    <p class="formules-note" style="font-size:1.15rem; font-weight:800; color:#c0392b;">Un jour, une semaine, un mois, un an pour juger.<br>Zéro engagement pour rester.</p>
   </div>
 
   <div class="cta-box">

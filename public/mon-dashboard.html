@@ -46,6 +46,37 @@
 
   .liste-panel { background:#fff; border-radius:14px; padding:22px; }
 
+  .panel-tabs { display:flex; gap:14px; margin-bottom:24px; flex-wrap:wrap; }
+  .panel-tab {
+    flex:1; min-width:220px; display:flex; align-items:center; gap:14px; text-align:left;
+    background:#fff; border:2px solid #e6e2d6; border-radius:16px; padding:18px 20px;
+    cursor:pointer; box-shadow:0 4px 16px rgba(20,49,42,0.06); transition:border-color 0.2s, transform 0.15s;
+  }
+  .panel-tab:hover { transform:translateY(-1px); }
+  .panel-tab.active { border-color:#1e6f4c; background:#f2f8f5; }
+  .panel-tab-icone { font-size:1.7rem; flex-shrink:0; }
+  .panel-tab-texte { font-size:1rem; font-weight:800; color:#14312a; display:flex; flex-direction:column; gap:2px; }
+  .panel-tab-sous { font-size:0.76rem; font-weight:400; color:#5b6b64; }
+
+  .zones-liste { display:flex; flex-direction:column; gap:8px; }
+  .zone-ligne { display:flex; align-items:center; gap:12px; }
+  .zone-ligne .zone-nom { flex:0 0 180px; font-size:0.85rem; color:#3a4a43; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .zone-ligne .zone-barre-track { flex:1; background:#eef1f0; border-radius:6px; height:10px; overflow:hidden; }
+  .zone-ligne .zone-barre-fill { background:#1e6f4c; height:100%; border-radius:6px; }
+  .zone-ligne .zone-clics { flex:0 0 70px; text-align:right; font-size:0.85rem; font-weight:700; color:#14312a; }
+
+  .devis-badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:0.72rem; font-weight:700; white-space:nowrap; }
+  .devis-badge.aucun { background:#eef1f0; color:#8a9891; }
+  .devis-badge.envoye { background:#e6f0ff; color:#2f5fa8; }
+  .devis-badge.relance { background:#fdf1ea; color:#b8571f; }
+  .devis-badge.signe { background:#e3f5ea; color:#1e6f4c; }
+  .devis-actions { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .btn-devis { border:none; border-radius:8px; padding:6px 10px; font-size:0.74rem; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .btn-devis.envoyer { background:#1e6f4c; color:#fff; }
+  .btn-devis.relancer { background:#e8622c; color:#fff; }
+  .btn-devis.voir { background:#eef1f0; color:#3a4a43; text-decoration:none; }
+  .btn-devis:disabled { opacity:0.6; cursor:wait; }
+
   .estim-box { background:#fff; border:2px solid #e8622c; border-radius:14px; padding:22px; margin-bottom:28px; }
   .estim-box h3 { font-size:0.95rem; margin-bottom:14px; }
   .estim-row { display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
@@ -272,6 +303,18 @@
   <button class="btn-pause-diffusion" id="btnPauseDiffusion" style="display:none;"></button>
   <p class="pause-note">Mettre en pause n'arrête que la diffusion des annonces — votre solde publicitaire reste intact, relancez quand vous voulez.</p>
 
+  <div class="panel-tabs" id="panelTabs">
+    <button type="button" class="panel-tab active" id="tabAds" data-tab="ads">
+      <span class="panel-tab-icone">🎯</span>
+      <span class="panel-tab-texte">Gérer Google Ads<span class="panel-tab-sous">Ciblage, mots-clés, budget, clics</span></span>
+    </button>
+    <button type="button" class="panel-tab" id="tabClients" data-tab="clients">
+      <span class="panel-tab-icone">👥</span>
+      <span class="panel-tab-texte">Gérer les clients<span class="panel-tab-sous">Demandes, devis, signatures</span></span>
+    </button>
+  </div>
+
+  <div id="panelAds">
   <div class="ads-section" id="adsSection" style="display:none;">
     <h2>🎯 Pilotage Google Ads</h2>
     <div class="ads-sub">Le détail de votre campagne — où vous êtes visible, combien investir, quels mots-clés fonctionnent, et à quel moment vos clics arrivent.</div>
@@ -375,6 +418,12 @@
       <div class="heures-note" id="heuresNote"></div>
     </div>
 
+    <div class="ads-souspanel" id="zonesPanel" style="display:none;">
+      <h3>🌍 D'où viennent vos clics ?</h3>
+      <div id="zonesContent"><div class="loading">Chargement…</div></div>
+      <div class="estim-note" id="zonesNote"></div>
+    </div>
+
     <div class="ads-souspanel coaching-panel" id="coachingPanel" style="display:none;">
       <h3>💡 Conseils pour améliorer vos conversions</h3>
       <ul id="coachingListe" class="coaching-liste"></ul>
@@ -382,7 +431,9 @@
 
     <div class="empty-msg" id="adsSectionVide" style="display:none; padding:12px 0;">Pas encore de campagne active — approvisionnez votre budget pour démarrer.</div>
   </div>
+  </div>
 
+  <div id="panelClients" style="display:none;">
   <div class="liste-panel">
     <div class="liste-header">
       <h3>Demandes d'estimation</h3>
@@ -390,10 +441,13 @@
     </div>
     <div id="listeContent"><div class="loading">Chargement des demandes…</div></div>
   </div>
+  </div>
 </div>
 
 <script>
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+  const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
+  const DEVIS_BUCKET = 'skyeco-pro-media';
   const params = new URLSearchParams(window.location.search);
   const draftId = params.get('id');
   let leadsData = [];
@@ -444,6 +498,64 @@
     chargerDemandes();
     initPilotageAds();
     verifierStatutPause();
+    chargerZones();
+    initPanelTabs();
+  }
+
+  function initPanelTabs() {
+    const onglets = { ads: document.getElementById('panelAds'), clients: document.getElementById('panelClients') };
+    document.querySelectorAll('.panel-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.panel-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const cible = btn.dataset.tab;
+        onglets.ads.style.display = cible === 'ads' ? '' : 'none';
+        onglets.clients.style.display = cible === 'clients' ? '' : 'none';
+      });
+    });
+  }
+
+  async function chargerZones() {
+    const zonesPanel = document.getElementById('zonesPanel');
+    const content = document.getElementById('zonesContent');
+    const note = document.getElementById('zonesNote');
+    try {
+      const resp = await fetch('/api/clics-par-zone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draft_id: draftId }),
+      });
+      const data = await resp.json();
+      if (!resp.ok || !data.success || !data.campagneExiste) return; // pas de campagne active -> panneau masqué
+
+      zonesPanel.style.display = '';
+      if (!data.zones.length) {
+        content.innerHTML = '<div class="empty-msg">Pas encore assez de clics pour afficher une répartition par zone.</div>';
+        return;
+      }
+
+      const maxClics = Math.max(...data.zones.map(z => z.clics));
+      content.innerHTML = `
+        <div class="zones-liste">
+          ${data.zones.map(z => `
+            <div class="zone-ligne">
+              <div class="zone-nom" title="${escapeHtmlDash(z.label)}">${escapeHtmlDash(z.label)}</div>
+              <div class="zone-barre-track"><div class="zone-barre-fill" style="width:${Math.max(4, Math.round((z.clics / maxClics) * 100))}%;"></div></div>
+              <div class="zone-clics">${z.clics}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      note.textContent = data.resolutionDisponible
+        ? 'Sur les 30 derniers jours, du plus au moins de clics.'
+        : "Sur les 30 derniers jours. Google identifie ces zones par référence technique — les noms de ville ne sont pas encore résolus pour toutes.";
+    } catch (e) {
+      // Panneau discret : on n'affiche rien plutôt qu'une erreur si Windsor.ai est indisponible.
+    }
+  }
+
+  function escapeHtmlDash(str) {
+    return String(str || '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
   }
 
   async function chargerLogo() {
@@ -609,7 +721,7 @@
       content.innerHTML = `
         <table>
           <thead>
-            <tr><th>Date</th><th>Nom</th><th>Adresse</th><th>Téléphone</th><th>Email</th><th>Statut</th></tr>
+            <tr><th>Date</th><th>Nom</th><th>Adresse</th><th>Téléphone</th><th>Email</th><th>Statut</th><th>Devis</th></tr>
           </thead>
           <tbody>
             ${leadsData.map(l => `
@@ -620,13 +732,118 @@
                 <td>${l.telephone || '—'}</td>
                 <td>${l.email || '—'}</td>
                 <td><span class="statut-badge">${l.statut || 'nouveau'}</span></td>
+                <td>${celluleDevis(l)}</td>
               </tr>
             `).join('')}
           </tbody>
         </table>
       `;
+      content.querySelectorAll('[data-action="envoyer-devis"]').forEach(btn => {
+        btn.addEventListener('click', () => declencherUploadDevis(btn.dataset.lead));
+      });
+      content.querySelectorAll('[data-action="relancer-devis"]').forEach(btn => {
+        btn.addEventListener('click', () => relancerDevis(btn.dataset.lead, btn));
+      });
     } catch (e) {
       content.innerHTML = '<div class="empty-msg">Impossible de charger les demandes pour le moment.</div>';
+    }
+  }
+
+  function celluleDevis(l) {
+    const statut = l.devis_statut || 'aucun';
+    const badges = {
+      aucun: '',
+      envoye: '<span class="devis-badge envoye">Envoyé</span>',
+      relance: `<span class="devis-badge relance">Relancé${l.devis_nb_relances ? ' ×' + l.devis_nb_relances : ''}</span>`,
+      signe: `<span class="devis-badge signe">✅ Signé${l.devis_signe_le ? ' le ' + new Date(l.devis_signe_le).toLocaleDateString('fr-FR') : ''}</span>`,
+    };
+    const lienVoir = l.devis_pdf_url ? `<a class="btn-devis voir" href="${l.devis_pdf_url}" target="_blank" rel="noopener">Voir</a>` : '';
+
+    if (statut === 'aucun') {
+      return `<div class="devis-actions"><button type="button" class="btn-devis envoyer" data-action="envoyer-devis" data-lead="${l.id}">📄 Envoyer un devis</button></div>`;
+    }
+    if (statut === 'signe') {
+      return `<div class="devis-actions">${badges.signe}${lienVoir}</div>`;
+    }
+    return `<div class="devis-actions">${badges[statut] || ''}${lienVoir}<button type="button" class="btn-devis relancer" data-action="relancer-devis" data-lead="${l.id}">🔁 Relancer</button></div>`;
+  }
+
+  function obtenirInputDevis() {
+    let input = document.getElementById('inputDevisFichier');
+    if (!input) {
+      input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'application/pdf';
+      input.id = 'inputDevisFichier';
+      input.style.display = 'none';
+      document.body.appendChild(input);
+    }
+    return input;
+  }
+
+  function declencherUploadDevis(leadId) {
+    const input = obtenirInputDevis();
+    input.onchange = async () => {
+      const fichier = input.files[0];
+      input.value = '';
+      if (!fichier) return;
+      if (fichier.type !== 'application/pdf') {
+        alert('Merci de choisir un fichier PDF.');
+        return;
+      }
+      await uploaderEtEnvoyerDevis(leadId, fichier);
+    };
+    input.click();
+  }
+
+  async function uploaderEtEnvoyerDevis(leadId, fichier) {
+    const ligneCellule = document.querySelector(`[data-lead="${leadId}"]`);
+    if (ligneCellule) { ligneCellule.disabled = true; ligneCellule.textContent = 'Envoi…'; }
+    try {
+      const chemin = `devis-artisan/${draftId}/${leadId}-${Date.now()}.pdf`;
+      const uploadResp = await fetch(
+        `${SUPABASE_URL}/storage/v1/object/${DEVIS_BUCKET}/${chemin}?apikey=${encodeURIComponent(SUPABASE_ANON_KEY)}`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${SUPABASE_ANON_KEY}`, apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/pdf' },
+          body: fichier,
+        }
+      );
+      if (!uploadResp.ok) throw new Error("Échec de l'envoi du fichier : " + (await uploadResp.text().catch(() => '')));
+      const pdfUrl = `${SUPABASE_URL}/storage/v1/object/public/${DEVIS_BUCKET}/${chemin}`;
+
+      const resp = await fetch('/api/envoyer-devis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leadId, pdfUrl }),
+      });
+      const data = await resp.json();
+      if (!resp.ok || !data.success) throw new Error(data.error || "Le devis n'a pas pu être envoyé.");
+
+      await chargerDemandes();
+    } catch (e) {
+      alert(e.message || "Une erreur est survenue lors de l'envoi du devis.");
+      await chargerDemandes();
+    }
+  }
+
+  async function relancerDevis(leadId, btn) {
+    if (!confirm('Renvoyer un SMS de relance pour ce devis ?')) return;
+    btn.disabled = true;
+    btn.textContent = 'Envoi…';
+    try {
+      const resp = await fetch('/api/relancer-devis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leadId }),
+      });
+      const data = await resp.json();
+      if (!resp.ok || !data.success) throw new Error(data.error || "La relance n'a pas pu être envoyée.");
+      await chargerDemandes();
+    } catch (e) {
+      alert(e.message || 'Une erreur est survenue.');
+      btn.disabled = false;
+      btn.textContent = '🔁 Relancer';
     }
   }
 

@@ -6,7 +6,13 @@
 // Variables d'environnement requises :
 //   WINDSOR_API_KEY
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-//   GOOGLE_ADS_ACCOUNT_ID (ex: "7849903984" — le compte ECOSKY by RMS, sans tirets)
+//   GOOGLE_ADS_ACCOUNT_ID = "7849903984" — le compte ECOSKY by RMS réellement
+//   utilisé pour les annonces (784-990-3984 dans l'interface Google Ads),
+//   SANS tirets ici (retirés automatiquement de toute façon, voir plus bas).
+//   Confirmé le 30/08 : 735-335-0497 est un AUTRE compte Google Ads
+//   (personnel de Cyrille, suspendu) — ce n'est pas celui-ci. Ne pas
+//   remplacer 7849903984 par 7353350497 malgré ce qui a pu être dit plus
+//   tôt dans cette conversation.
 
 const WINDSOR_BASE = 'https://connectors.windsor.ai/google_ads';
 const TAUX_COMMISSION = 0.50; // doit rester synchronisé avec les autres fichiers
@@ -23,10 +29,14 @@ const KEYWORDS_BY_METIER = {
 };
 
 async function executerAction(action, params) {
+  // Tirets retirés par sécurité (Google Ads affiche l'ID avec des tirets,
+  // "735-335-0497", mais les identifiants de compte doivent être transmis
+  // sans — voir le commentaire d'en-tête, erreur de permission du 30/08).
+  const accountId = (process.env.GOOGLE_ADS_ACCOUNT_ID || '').replace(/[^0-9]/g, '');
   const resp = await fetch(`${WINDSOR_BASE}/actions?api_key=${process.env.WINDSOR_API_KEY}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ account: process.env.GOOGLE_ADS_ACCOUNT_ID, action, params }),
+    body: JSON.stringify({ account: accountId, action, params }),
   });
   const data = await resp.json();
   if (!resp.ok) throw new Error(`Action Windsor.ai "${action}" échouée : ${JSON.stringify(data)}`);

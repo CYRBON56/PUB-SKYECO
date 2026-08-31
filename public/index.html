@@ -150,7 +150,7 @@
     .step h3{ font-family:'IBM Plex Sans', sans-serif; font-weight:700; font-size: 18px; margin-bottom: 8px; color: var(--navy); }
     .step p{ color: var(--concrete); font-size: 14.5px; }
 
-    .pricing-grid{ display:grid; grid-template-columns: repeat(4,1fr); gap: 16px; }
+    .pricing-grid{ display:grid; grid-template-columns: 1fr; max-width: 380px; margin: 0 auto; gap: 16px; }
     .plan{ border: 1px solid var(--paper-line); background: var(--white); padding: 26px 20px; display:flex; flex-direction:column; }
     .plan.featured{ border-color: var(--orange); box-shadow: 0 0 0 1px var(--orange); }
     .plan-tag{ font-family:'IBM Plex Mono', monospace; font-size: 10px; color: var(--orange); letter-spacing: 0.06em; margin-bottom: 12px; }
@@ -193,12 +193,8 @@
       .problem-list{ grid-template-columns: 1fr; }
       .steps{ grid-template-columns: 1fr; gap: 28px; }
       .step:not(:last-child)::after{ display:none; }
-      .pricing-grid{ grid-template-columns: 1fr 1fr; }
       .proof-grid{ grid-template-columns: 1fr; }
       .cartouche{ grid-template-columns: repeat(2,1fr); row-gap: 10px; }
-    }
-    @media (max-width: 560px){
-      .pricing-grid{ grid-template-columns: 1fr; }
     }
   
   @media (prefers-reduced-motion: reduce){
@@ -423,59 +419,27 @@
 <section id="tarifs">
   <div class="wrap">
     <div class="section-head">
-      <div class="kicker">LES FORMULES</div>
-      <h2>Quatre formules, un abonnement clair. Rien de cach&#233;.</h2>
-      <p>Chaque formule inclut la configuration compl&#232;te de votre vitrine et de votre dashboard &#8212; vous n'avez rien &#224; installer.</p>
+      <div class="kicker">LA FORMULE</div>
+      <h2>Une formule unique, un abonnement clair. Rien de cach&#233;.</h2>
+      <p>Elle inclut la configuration compl&#232;te de votre vitrine et de votre dashboard &#8212; vous n'avez rien &#224; installer. <strong>39,90&#8364; HT/mois pendant 12 mois</strong>, puis 79,90&#8364; HT/mois.</p>
     </div>
     <div class="pricing-grid">
-      <div class="plan">
-        <div class="plan-tag mono">FORFAIT 1</div>
-        <h3>Vitrine simple</h3>
+      <div class="plan featured">
+        <div class="plan-tag mono">SKYECO PRO</div>
+        <h3>Vitrine + Dashboard + Relances &amp; devis sign&#233;s</h3>
+        <div class="price-sub" style="color:var(--orange); font-weight:700; margin-bottom:4px;">&#127881; Offre de lancement &#8212; 12 mois</div>
         <div class="price">39,90&#8364;<span> HT/mois</span></div>
-        <div class="price-sub">soit 47,88&#8364; TTC/mois</div>
+        <div class="price-sub">soit 47,88&#8364; TTC/mois, pendant 12 mois</div>
+        <div class="price-sub" style="margin-top:-8px;">Puis 79,90&#8364; HT/mois (95,88&#8364; TTC/mois)</div>
         <ul>
           <li>Formulaire vitrine en ligne</li>
-          <li>R&#233;ception SMS + email</li>
-          <li>Mise &#224; jour illimit&#233;e du contenu</li>
-        </ul>
-        <a class="btn btn-ghost" style="border-color:var(--paper-line); color:var(--navy);" href="mailto:infos@ecosky.fr?subject=Skyeco%20Pro%20-%20Forfait%20Vitrine%20simple">Choisir ce forfait</a>
-      </div>
-      <div class="plan featured">
-        <div class="plan-tag mono">FORFAIT 2 &#8212; LE PLUS CHOISI</div>
-        <h3>Vitrine + Dashboard</h3>
-        <div class="price">59,90&#8364;<span> HT/mois</span></div>
-        <div class="price-sub">soit 71,88&#8364; TTC/mois</div>
-        <ul>
-          <li>Tout le Forfait 1</li>
           <li>Tableau de bord complet</li>
           <li>Suivi des clics et du co&#251;t publicitaire</li>
           <li>Gestion des mots-cl&#233;s</li>
-        </ul>
-        <a class="btn btn-primary" href="mailto:infos@ecosky.fr?subject=Skyeco%20Pro%20-%20Forfait%20Vitrine%20%2B%20Dashboard">Choisir ce forfait</a>
-      </div>
-      <div class="plan">
-        <div class="plan-tag mono">FORFAIT 3</div>
-        <h3>Relances &amp; devis sign&#233;s</h3>
-        <div class="price">79,90&#8364;<span> HT/mois</span></div>
-        <div class="price-sub">soit 95,88&#8364; TTC/mois</div>
-        <ul>
-          <li>Tout le Forfait 2</li>
           <li>Relance SMS automatique</li>
           <li>Devis avec signature &#233;lectronique</li>
         </ul>
-        <a class="btn btn-ghost" style="border-color:var(--paper-line); color:var(--navy);" href="mailto:infos@ecosky.fr?subject=Skyeco%20Pro%20-%20Forfait%20Relances">Choisir ce forfait</a>
-      </div>
-      <div class="plan">
-        <div class="plan-tag mono">FORFAIT 4</div>
-        <h3>Vitrine r&#233;f&#233;renc&#233;e</h3>
-        <div class="price">99,90&#8364;<span> HT/mois</span></div>
-        <div class="price-sub">soit 119,88&#8364; TTC/mois</div>
-        <ul>
-          <li>Tout le Forfait 3</li>
-          <li>Adresse URL personnalis&#233;e</li>
-          <li>Fondations techniques de r&#233;f&#233;rencement Google</li>
-        </ul>
-        <a class="btn btn-ghost" style="border-color:var(--paper-line); color:var(--navy);" href="mailto:infos@ecosky.fr?subject=Skyeco%20Pro%20-%20Forfait%20R%C3%A9f%C3%A9renc%C3%A9e">Choisir ce forfait</a>
+        <a class="btn btn-primary" href="mailto:infos@ecosky.fr?subject=Skyeco%20Pro%20-%20Demande%20d%27information">Choisir cette formule</a>
       </div>
     </div>
   </div>

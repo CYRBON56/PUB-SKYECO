@@ -648,16 +648,35 @@
           body: JSON.stringify({ metier: draftInfo.metier, zone: draftInfo.zone, departement: draftInfo.departement, motsCles, budget: 100 })
         });
         const data = await res.json();
-        if (data.success && data.avgCpcEur) avgCpcEur = data.avgCpcEur;
-        if (data.success && data.totalMonthlyVolume) {
+        if (!data.success) {
+          // Avant (bug du 31/08) : en cas d'erreur on ne touchait à rien,
+          // donc après une régénération de mots-clés qui échouait côté API
+          // rien ne semblait se passer côté "clics" — on l'affiche
+          // maintenant clairement.
+          volumeNote.textContent = data.error || "Impossible de mettre à jour l'estimation de clics pour le moment.";
+          return calculerBudgetInverse();
+        }
+        if (data.avgCpcEur) avgCpcEur = data.avgCpcEur;
+        if (data.totalMonthlyVolume) {
           const maxRealiste = Math.max(20, Math.min(1000, data.totalMonthlyVolume));
           slider.max = maxRealiste;
           if (parseInt(slider.value, 10) > maxRealiste) slider.value = maxRealiste;
           volumeNote.textContent = data.motsClesPersonnalises
             ? `≈ ${data.totalMonthlyVolume} clics possibles ce mois-ci avec vos mots-clés et votre zone actuels (base du curseur).`
             : `≈ ${data.totalMonthlyVolume} clics possibles ce mois-ci (estimation générique par métier — choisissez vos mots-clés ci-dessus pour affiner).`;
+        } else {
+          // Réponse reçue avec succès mais volume nul pour CES mots-clés
+          // précis dans cette zone (fréquent avec des suggestions IA très
+          // spécifiques/locales) — c'était le cœur du bug rapporté le 31/08 :
+          // le curseur restait figé sans aucune explication après une
+          // régénération. On le dit maintenant explicitement.
+          volumeNote.textContent = data.motsClesPersonnalises
+            ? "Pas encore de volume de recherche connu pour ces mots-clés précis dans votre zone — le curseur garde une estimation générique. Essayez des mots-clés un peu plus larges si besoin."
+            : "Pas encore de volume de recherche connu pour votre zone — le curseur garde une estimation générique.";
         }
-      } catch (e) { /* on garde les valeurs précédentes */ }
+      } catch (e) {
+        volumeNote.textContent = "Impossible de contacter le serveur pour mettre à jour l'estimation de clics.";
+      }
       calculerBudgetInverse();
     }
 

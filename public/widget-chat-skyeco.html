@@ -68,10 +68,8 @@
   });
   closeBtn.addEventListener('click', () => { chatWindow.style.display = 'none'; });
 
-  // Ouverture automatique à l'arrivée sur la page — reste dans son coin
-  // (position fixe, ne modifie pas la mise en page du reste de la page),
-  // léger délai pour ne pas apparaître brutalement dès le premier instant.
-  setTimeout(ouvrirChat, 1200);
+  // Le chat reste fermé à l'arrivée sur la page — seule la bulle (avatar)
+  // est visible ; il ne s'ouvre que si l'artisan clique dessus.
 
   // --- Saisie vocale (reconnaissance de la parole) ---
   const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;

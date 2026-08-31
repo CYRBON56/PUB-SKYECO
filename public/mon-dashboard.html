@@ -273,6 +273,7 @@
         <input type="text" id="motCleManuel" placeholder="Ajouter un mot-clé de votre choix">
         <button type="button" id="btnAjouterMotCleManuel">+ Ajouter</button>
       </div>
+      <button type="button" class="btn-suggerer" id="btnRafraichirEstimation" style="display:none; margin-top:10px; background:#5b6b64;">🔄 Rafraîchir l'estimation de clics</button>
       <div class="motscles-note" id="motsClesNote"></div>
       <div class="motscles-potentiel" id="motsClesPotentiel" style="display:none;">
         <div class="chiffre" id="motsClesPotentielChiffre">—</div>
@@ -847,6 +848,7 @@
     const listeEl = document.getElementById('motsClesListe');
     const ajoutEl = document.getElementById('motsClesAjout');
     const noteEl = document.getElementById('motsClesNote');
+    const btnRafraichir = document.getElementById('btnRafraichirEstimation');
     const draftMetier = draftInfo.metier;
     const draftZone = draftInfo.zone;
     let selection = new Map(); // texte -> true/false (coché ou non)
@@ -868,12 +870,20 @@
       listeEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
         cb.addEventListener('change', () => {
           selection.set(cb.dataset.texte, cb.checked);
-          sauvegarderSelection();
+          // On enregistre tout de suite la sélection (Supabase), mais on
+          // n'interroge PAS Windsor.ai à chaque coche/décoche — sinon
+          // décocher plusieurs mots-clés à la suite déclenche autant
+          // d'appels API à la suite. On laisse l'artisan cliquer sur
+          // "Rafraîchir l'estimation de clics" une fois sa sélection prête
+          // (demande explicite du 31/08 : pouvoir rafraîchir avec un bouton
+          // après avoir enlevé des mots-clés).
+          enregistrerSelectionSupabase();
+          signalerSelectionModifiee();
         });
       });
     }
 
-    async function sauvegarderSelection() {
+    async function enregistrerSelectionSupabase() {
       const motsClesActifs = [...selection.entries()].filter(([, coche]) => coche).map(([texte]) => texte);
       try {
         await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
@@ -882,8 +892,35 @@
           body: JSON.stringify({ mots_cles_choisis: motsClesActifs }),
         });
       } catch (e) { /* silencieux — la sélection reste visible même si l'enregistrement échoue */ }
+      return motsClesActifs;
+    }
+
+    function signalerSelectionModifiee() {
+      btnRafraichir.style.display = 'inline-block';
+      noteEl.textContent = 'Sélection modifiée — cliquez sur "🔄 Rafraîchir l\'estimation de clics" pour mettre à jour le potentiel ci-dessous.';
+    }
+
+    // Utilisé uniquement après une génération de mots-clés par l'IA : on
+    // enregistre ET on rafraîchit tout de suite l'estimation, pour que
+    // l'artisan voie le potentiel de clics sans action supplémentaire
+    // (c'est le parcours principal, corrigé le 31/08).
+    async function sauvegarderEtRafraichir() {
+      const motsClesActifs = await enregistrerSelectionSupabase();
+      btnRafraichir.style.display = 'inline-block';
       if (onSelectionChange) onSelectionChange(motsClesActifs);
     }
+
+    btnRafraichir.addEventListener('click', async () => {
+      btnRafraichir.disabled = true;
+      btnRafraichir.textContent = 'Mise à jour…';
+      const motsClesActifs = [...selection.entries()].filter(([, coche]) => coche).map(([texte]) => texte);
+      try {
+        if (onSelectionChange) await onSelectionChange(motsClesActifs);
+      } finally {
+        btnRafraichir.disabled = false;
+        btnRafraichir.textContent = "🔄 Rafraîchir l'estimation de clics";
+      }
+    });
 
     btnSuggerer.addEventListener('click', async () => {
       const description = descriptionEl.value.trim();
@@ -906,7 +943,7 @@
           rendreListe();
           ajoutEl.style.display = 'flex';
           noteEl.textContent = 'Décochez ceux que vous ne voulez pas utiliser, ou ajoutez les vôtres.';
-          sauvegarderSelection();
+          sauvegarderEtRafraichir();
         } else {
           noteEl.textContent = data.error || 'Impossible de générer des suggestions pour le moment.';
         }
@@ -924,7 +961,8 @@
       if (!texte || selection.has(texte)) return;
       selection.set(texte, true);
       rendreListe();
-      sauvegarderSelection();
+      enregistrerSelectionSupabase();
+      signalerSelectionModifiee();
       input.value = '';
     });
   }

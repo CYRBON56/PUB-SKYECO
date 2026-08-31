@@ -7,7 +7,7 @@
 
 import twilio from "twilio";
 
-const BASE_URL = "https://pub-skyeco-23ue.vercel.app";
+const BASE_URL = "https://app.skyeco.fr";
 const TAILLE_LOT = 100;
 
 function decouperEnLots(t, taille = TAILLE_LOT) { const l = []; for (let i=0;i<t.length;i+=taille) l.push(t.slice(i,i+taille)); return l; }

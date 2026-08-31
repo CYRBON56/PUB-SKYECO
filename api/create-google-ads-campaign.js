@@ -128,7 +128,7 @@ export default async function handler(req, res) {
       ? draft.annonce_descriptions.filter(d => typeof d === 'string' && d.trim()).map(d => d.trim().substring(0, 90)).slice(0, 2)
       : [];
 
-    const urlVitrine = `https://pub-skyeco-23ue.vercel.app/apercu.html?id=${draft_id}`;
+    const urlVitrine = `https://app.skyeco.fr/apercu.html?id=${draft_id}`;
     await executerAction('create_responsive_search_ad', {
       ad_group_id: adGroupId,
       headlines: titresValides.length ? titresValides : [

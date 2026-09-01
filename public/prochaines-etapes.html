@@ -341,7 +341,7 @@
 
     function calculerBudget() {
       const clics = parseInt(clicsInput.value, 10);
-      const cpc = avgCpcEur || 1.5; // repli générique si l'API n'a pas répondu
+      const cpc = avgCpcEur || 1.9; // repli générique si l'API n'a pas répondu
       if (!clics || clics < 1) {
         document.getElementById('budgetNecessaireValue').textContent = '—';
         return;

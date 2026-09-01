@@ -270,11 +270,13 @@
     // Aperçu (format Google : badge "Annonce", URL en vert, titre en bleu,
     // description en gris) de l'annonce responsive search qui sera créée par
     // create-google-ads-campaign.js — modifiable avant le lancement. Les
-    // valeurs par défaut reprennent le nom de l'entreprise, le premier
-    // mot-clé choisi et la zone ; l'artisan peut tout réécrire, c'est ce
-    // texte enregistré (annonce_titres / annonce_descriptions) qui sera
-    // utilisé au clic sur "Payer et lancer ma campagne" — sinon repli sur
-    // les textes génériques déjà utilisés côté serveur.
+    // valeurs par défaut reprennent le nom de l'entreprise, le mot-clé le
+    // plus pertinent (motsClesActuels[0] — trié par volume de recherche
+    // décroissant au moment de l'enregistrement, voir enregistrerSelectionSupabase()
+    // dans mon-dashboard.html) et la zone ; l'artisan peut tout réécrire,
+    // c'est ce texte enregistré (annonce_titres / annonce_descriptions) qui
+    // sera utilisé au clic sur "Payer et lancer ma campagne" — sinon repli
+    // sur les textes génériques déjà utilisés côté serveur.
     function genererAnnoncePropos() {
       const premierMotCle = motsClesActuels[0] || '';
       const motCleTitre = premierMotCle
@@ -371,13 +373,9 @@
 
       majApercu();
 
-      // Si aucune annonce n'était encore enregistrée, on sauvegarde tout de
-      // suite les valeurs par défaut proposées (l'artisan voit déjà ce texte
-      // dans l'aperçu — autant que ce soit celui utilisé au lancement s'il
-      // ne touche à rien).
-      if (!(Array.isArray(draftAnnonceTitres) && draftAnnonceTitres.length)) {
-        sauvegarderAnnonce();
-      }
+      // Sauvegarde automatique retirée (01/09) — même correctif que
+      // mon-dashboard.html : elle figeait le texte générique dès le premier
+      // chargement, avant même que l'artisan ait pu cocher un mot-clé.
     }
 
     document.getElementById('btnPause').addEventListener('click', async () => {

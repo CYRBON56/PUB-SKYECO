@@ -226,7 +226,7 @@
           document.getElementById('estimationDetail').textContent =
             (data.avgCpcEur ? `CPC moyen estimé : ${data.avgCpcEur} €` : '') + potentiel;
           document.getElementById('breakdown').innerHTML =
-            `Sur vos <strong>${budget} €</strong> : <strong>${data.commissionPub ?? '—'} €</strong> de frais de service (${Math.round((data.tauxCommission||0)*100)}%), <strong>${data.budgetNetPub ?? '—'} €</strong> réellement investis en publicité.`;
+            `Ce budget couvre la gestion de votre campagne et sa diffusion sur Google Ads.`;
           btnPayer.disabled = false;
           btnPayer.textContent = `Payer ${budget} € et lancer ma campagne`;
         } else {

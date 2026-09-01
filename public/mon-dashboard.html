@@ -296,8 +296,8 @@
   </div>
 
   <div class="stats-row" id="statsRow">
-    <div class="stat-card"><div class="stat-value" id="statProspects">—</div><div class="stat-label">demandes reçues</div></div>
-    <div class="stat-card"><div class="stat-value" id="statClics">—</div><div class="stat-label">clics ce mois-ci</div></div>
+    <div class="stat-card"><div class="stat-value" id="statProspects">0</div><div class="stat-label">demandes reçues</div></div>
+    <div class="stat-card"><div class="stat-value" id="statClics">0</div><div class="stat-label">clics ce mois-ci</div></div>
   </div>
 
   <div class="solde-box" id="soldeBox">
@@ -645,7 +645,7 @@
       const count = resp.headers.get('content-range')?.split('/')[1] || (await resp.json()).length;
       document.getElementById('statProspects').textContent = count;
     } catch (e) {
-      document.getElementById('statProspects').textContent = '—';
+      document.getElementById('statProspects').textContent = '0';
     }
   }
 
@@ -668,7 +668,7 @@
         return;
       }
 
-      document.getElementById('statClics').textContent = data.clics ?? '—';
+      document.getElementById('statClics').textContent = data.clics ?? '0';
 
       const alerte = data.pourcentageConsomme >= 90 ? 'alerte' : '';
       const statutBadge = data.diffusionPausee

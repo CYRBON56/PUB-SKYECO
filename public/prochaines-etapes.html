@@ -195,23 +195,6 @@
     </li>
   </ul>
 
-  <div class="inverse-box">
-    <h3>Combien de clics voulez-vous ?</h3>
-    <div class="sub">Dites-nous votre objectif, on vous dit le budget nécessaire.</div>
-    <div class="inverse-row">
-      <span class="txt">Je veux environ</span>
-      <input type="number" id="clicsVoulus" min="1" value="6">
-      <span class="txt">clics par mois</span>
-    </div>
-    <div class="inverse-resultat">
-      <div class="chiffre" id="budgetNecessaireValue">—</div>
-      <div class="label">budget ads estimé</div>
-    </div>
-    <p style="font-size:0.76rem; color:#8a9891; margin-top:10px; line-height:1.5;">
-      Ce n'est pas un abonnement "par mois" fixe — ce budget est consommé au fur et à mesure des clics reçus. Selon la concurrence et la demande du moment, il peut être utilisé en quelques jours comme sur plusieurs semaines : c'est variable, pas garanti sur une durée précise.
-    </p>
-  </div>
-
   <div class="formules-section">
     <h2>Notre formule</h2>
     <p class="sub">Pour vous donner une idée dès maintenant — vous validerez une fois votre vraie vitrine prête.</p>
@@ -262,7 +245,6 @@
   if (draftId) {
     document.getElementById('bgPreviewVitrine').src = '/apercu.html?id=' + draftId;
   }
-  initCalculateurInverse();
 
   document.querySelectorAll('.formule-card[data-forfait]').forEach(card => {
     card.addEventListener('click', () => {
@@ -314,51 +296,6 @@
       btn.textContent = 'Demander à être rappelé';
     }
   });
-
-  async function initCalculateurInverse() {
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
-    const TAUX_COMMISSION = 0.50; // doit rester synchronisé avec estimate-reach.js
-    const clicsInput = document.getElementById('clicsVoulus');
-    let avgCpcEur = null;
-    let debounceTimer = null;
-
-    if (draftId) {
-      try {
-        const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=metier,zone,departement`, {
-          headers: { apikey: SUPABASE_ANON_KEY }
-        });
-        const rows = await resp.json();
-        const draft = rows[0] || {};
-        const res = await fetch('/api/estimate-reach', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ metier: draft.metier, zone: draft.zone, departement: draft.departement, budget: 100 })
-        });
-        const data = await res.json();
-        if (data.success) avgCpcEur = data.avgCpcEur;
-      } catch (e) { /* silencieux, on retombe sur l'estimation générique ci-dessous */ }
-    }
-
-    function calculerBudget() {
-      const clics = parseInt(clicsInput.value, 10);
-      const cpc = avgCpcEur || 1.5; // repli générique si l'API n'a pas répondu
-      if (!clics || clics < 1) {
-        document.getElementById('budgetNecessaireValue').textContent = '—';
-        return;
-      }
-      const budgetCalcule = Math.round((clics * cpc) / (1 - TAUX_COMMISSION));
-      const budgetNecessaire = Math.max(100, budgetCalcule);
-      const auMinimum = budgetCalcule < 100;
-      document.getElementById('budgetNecessaireValue').textContent =
-        (auMinimum ? '100 € (minimum)' : '≈ ' + budgetNecessaire + ' €');
-    }
-
-    clicsInput.addEventListener('input', () => {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(calculerBudget, 300);
-    });
-    calculerBudget();
-  }
 
   const bgFrames = {
     bgPreviewVitrine: document.getElementById('bgPreviewVitrine'),

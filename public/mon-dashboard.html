@@ -463,6 +463,22 @@
   const DEVIS_BUCKET = 'skyeco-pro-media';
   const params = new URLSearchParams(window.location.search);
   const draftId = params.get('id');
+  // Partagé entre initMotsCles(), initAnnonce() et initZoneCiblee() : compte
+  // les sauvegardes réseau en cours (zone, mots-clés, annonce). Tant que ce
+  // compteur est > 0, on avertit avant de quitter/recharger la page — sinon
+  // une sauvegarde tout juste lancée (coche d'un mot-clé, saisie dans
+  // l'annonce...) peut être interrompue par un F5 trop rapide, avant même
+  // d'avoir atteint le serveur, et sembler "disparaître" au rechargement
+  // alors qu'elle n'a en réalité jamais été enregistrée.
+  let sauvegardesEnCours = 0;
+  function demarrerSauvegarde() { sauvegardesEnCours++; }
+  function terminerSauvegarde() { sauvegardesEnCours = Math.max(0, sauvegardesEnCours - 1); }
+  window.addEventListener('beforeunload', (e) => {
+    if (sauvegardesEnCours > 0) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
   // Partagé entre initMotsCles() et initAnnonce() : reflète en permanence,
   // en mémoire, les mots-clés actuellement cochés à l'écran (triés par
   // volume décroissant) — utilisé par le bouton "Régénérer depuis mes
@@ -1171,6 +1187,7 @@
       if (!nouvelleZone) return;
       btnEnregistrer.disabled = true;
       btnEnregistrer.textContent = '…';
+      demarrerSauvegarde();
       try {
         const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
           method: 'PATCH',
@@ -1186,6 +1203,7 @@
       } catch (e) {
         alert("Impossible d'enregistrer la zone pour le moment.");
       } finally {
+        terminerSauvegarde();
         btnEnregistrer.disabled = false;
         btnEnregistrer.textContent = 'Enregistrer';
       }
@@ -1270,6 +1288,7 @@
     async function sauvegarderAnnonce() {
       const titres = [champs.titre1.value.trim(), champs.titre2.value.trim(), champs.titre3.value.trim()].filter(t => t);
       const descriptions = [champs.desc1.value.trim(), champs.desc2.value.trim()].filter(d => d);
+      demarrerSauvegarde();
       try {
         await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
           method: 'PATCH',
@@ -1279,6 +1298,8 @@
         sauvegardeNote.textContent = 'Modifications enregistrées.';
       } catch (e) {
         sauvegardeNote.textContent = "Impossible d'enregistrer ces modifications pour le moment.";
+      } finally {
+        terminerSauvegarde();
       }
     }
 
@@ -1437,13 +1458,17 @@
           return volB - volA;
         });
       motsClesSelectionActuelle = motsClesActifs;
+      demarrerSauvegarde();
       try {
         await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
           method: 'PATCH',
           headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
           body: JSON.stringify({ mots_cles_choisis: motsClesActifs }),
         });
-      } catch (e) { /* silencieux — la sélection reste visible même si l'enregistrement échoue */ }
+      } catch (e) { /* silencieux — la sélection reste visible même si l'enregistrement échoue */
+      } finally {
+        terminerSauvegarde();
+      }
       return motsClesActifs;
     }
 

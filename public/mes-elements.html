@@ -97,11 +97,15 @@
   }
   .btn-avancement:hover { background:#f0f7f2; }
 
-  .lien-retour-dashboard {
-    display:inline-flex; align-items:center; gap:6px; color:#8a9891; text-decoration:none;
-    font-size:0.85rem; font-weight:600; margin-bottom:16px;
+  .btn-dashboard-hero {
+    display:flex; align-items:center; justify-content:center; gap:12px;
+    width:100%; background:linear-gradient(135deg, #4a9d6e 0%, #3d7a5a 55%, #2a5940 100%);
+    color:#fff; border:none; border-radius:16px; padding:20px; margin-bottom:24px;
+    font-size:1.05rem; font-weight:800; text-decoration:none;
+    box-shadow:0 14px 32px rgba(61,122,90,0.35); transition:transform 0.15s ease, box-shadow 0.15s ease;
   }
-  .lien-retour-dashboard:hover { color:#3d7a5a; }
+  .btn-dashboard-hero:hover { transform:translateY(-2px); box-shadow:0 18px 38px rgba(61,122,90,0.42); }
+  .btn-dashboard-hero .icon { font-size:1.3rem; }
   .btn-extraire:hover { filter:brightness(1.06); }
 
   .formulaire-liste { display:flex; flex-direction:column; gap:2px; margin-top:14px; }
@@ -168,7 +172,7 @@
 </div>
 
 <div class="wrap">
-  <a href="#" id="lienRetourDashboard" class="lien-retour-dashboard" style="display:none;">← Retour au tableau de bord</a>
+  <a href="#" id="lienRetourDashboard" class="btn-dashboard-hero" style="display:none;"><span class="icon">📊</span> Accéder à mon tableau de bord</a>
   <div class="eyebrow">Construction de votre vitrine</div>
   <h1>Prenons le temps de bien faire les choses</h1>
   <p class="intro">
@@ -474,15 +478,15 @@
 
       draftStatutActuel = draft.status || null;
 
-      // Bouton retour visible uniquement quand un tableau de bord existe
-      // réellement pour cet artisan (site déjà publié, ou en pause) — un
-      // premier passage jamais publié n'a pas encore de tableau de bord
-      // (accès protégé par mot de passe, créé seulement à la publication).
-      if (draftStatutActuel === 'published' || draftStatutActuel === 'en_pause' || draftStatutActuel === 'essai') {
-        const lienRetour = document.getElementById('lienRetourDashboard');
-        lienRetour.href = '/mon-dashboard.html?id=' + draftId;
-        lienRetour.style.display = 'inline-flex';
-      }
+      // Le bouton est toujours affiché : on n'arrive sur cette page qu'avec
+      // un id de brouillon réel, soit via "Modifier mes éléments" depuis un
+      // tableau de bord déjà existant, soit via un premier passage — dans
+      // les deux cas un lien direct est plus utile qu'un bouton caché à
+      // cause d'un statut imprévu (ex : resté "preview" après un essai
+      // interrompu avant correction de la contrainte Supabase).
+      const lienRetour = document.getElementById('lienRetourDashboard');
+      lienRetour.href = '/mon-dashboard.html?id=' + draftId;
+      lienRetour.style.display = 'flex';
 
       document.getElementById('telephone').value = draft.telephone || '';
       document.getElementById('email').value = draft.email || '';

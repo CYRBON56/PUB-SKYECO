@@ -1,989 +1,1054 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Aperçu de votre formulaire vitrine — Skyeco Pro</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vos éléments — Skyeco Pro</title>
 <style>
-  * { box-sizing: border-box; }
-  body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color:#14312a; }
-  .split-layout { display:flex; height:100vh; overflow:hidden; }
-  .image-panel { flex:1 1 45%; position:relative; overflow:hidden; background:var(--brand-dark,#14312a); display:flex; align-items:center; justify-content:center; order:2; }
-  .image-panel img { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity .8s ease-in-out; }
-  .image-panel img.active { opacity:1; }
-  .image-panel::before { content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(20,49,42,0.55) 0%, rgba(20,49,42,0.15) 35%, rgba(20,49,42,0.55) 100%); z-index:1; pointer-events:none; }
-  .image-panel-title { position:absolute; top:50%; left:32px; right:32px; transform:translateY(-50%); z-index:2; color:#fff; font-size:clamp(1.6rem,3vw,2.4rem); font-weight:700; line-height:1.25; text-align:center; text-shadow:0 2px 12px rgba(0,0,0,0.35); }
-  @media (max-width:800px){ .image-panel-title{ font-size:1.3rem; left:20px; right:20px; } }
-  .form-panel { flex:1 1 55%; position:relative; display:flex; align-items:stretch; justify-content:center; padding:20px 24px; overflow:hidden; order:1; }
-  .form-bg-overlay { position:absolute; inset:0; z-index:-1; background:rgba(246,244,239,0.55); }
-  .form-bg-carousel { position:absolute; inset:0; z-index:-2; overflow:hidden; }
-  .form-bg-carousel img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 1.2s ease-in-out; }
-  .form-bg-carousel img.active { opacity:1; }
-  @media (max-width:800px){ .split-layout{ flex-direction:column; height:100vh; overflow:hidden; } .image-panel{ flex:0 0 110px; } .form-panel{ padding:12px 16px; } }
-  @media (max-width:480px){ .image-panel{ flex:0 0 64px; } .form-panel{ padding:10px 14px; } .header-block{ padding:10px 14px; margin-bottom:10px; } h1{ font-size:19px; margin:4px 0 6px; } .eyebrow{ font-size:11px; } .sub{ font-size:14px; margin-bottom:0; line-height:1.45; } .card{ padding:16px; } .question{ font-size:17px; margin-bottom:14px; line-height:1.35; } .option{ padding:14px 16px; font-size:15.5px; } .progress{ margin-bottom:12px; } input[type="text"],input[type="tel"],input[type="email"],input[type="number"]{ font-size:16px; padding:13px 14px; margin-bottom:10px; } label.field-label{ font-size:14px; } .nav-row{ flex-wrap:wrap; margin-top:16px; } button.btn{ font-size:15px; padding:13px 16px; } .btn-primary{ flex:1 1 100%; order:1; } .btn-ghost{ order:2; padding:8px 0; font-size:14px; } .trust-footer{ margin-top:10px; padding-top:10px; } .trust-badges-row{ display:none !important; } }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background:#f7f5f0; color:#2a3d35; padding:40px 20px 100px;
+    position:relative; overflow-x:hidden; line-height:1.6;
+  }
 
-  /* Pas de vidéo uploadée par l'artisan : le carrousel photo passe en plein
-     écran (au lieu de rester confiné aux 45% du panneau de gauche), et le
-     formulaire devient une carte flottante centrée par-dessus, avec son
-     propre fond pour rester lisible. Activé via la classe "sans-video" posée
-     sur .split-layout par le JS (voir plus bas, selon draft.video_url). */
-  .split-layout.sans-video { position:relative; display:block; }
-  .split-layout.sans-video .image-panel { position:absolute; inset:0; flex:none; width:100%; height:100%; order:0; z-index:0; }
-  .split-layout.sans-video .image-panel-title { display:none; }
-  .split-layout.sans-video .form-panel {
-    position:relative; z-index:2; order:0; flex:none;
-    max-width:480px; width:calc(100% - 32px); margin:0 auto; height:100vh;
-    padding:20px 0;
-  }
-  .split-layout.sans-video .form-panel::before {
-    content:''; position:absolute; inset:0; margin:0 -24px; background:rgba(246,244,239,0.72); backdrop-filter:blur(2px); z-index:-1;
-  }
-  @media (max-width:800px){ .split-layout.sans-video .image-panel{ flex:none; } }
-  @media (max-width:480px){ .split-layout.sans-video .image-panel{ flex:none; } }
-  .wrap { max-width:480px; width:100%; height:100%; margin:0; padding:0; display:flex; flex-direction:column; }
-  .middle-scroll { flex:1 1 auto; overflow-y:auto; min-height:0; padding-right:2px; }
-  .header-block { margin-bottom:12px; background:rgba(255,255,255,0.7); border-radius:14px; padding:12px 16px; flex-shrink:0; }
-  .eyebrow { font-size:12px; font-weight:700; letter-spacing:1px; color:var(--brand,#1e6f4c); text-transform:uppercase; }
-  h1 { font-size:22px; margin:6px 0 8px; }
-  .sub { font-size:14px; color:#5b6b64; margin:0 0 24px; line-height:1.5; }
-  .progress { display:flex; gap:4px; margin-bottom:26px; }
-  .progress-seg { flex:1; height:4px; border-radius:2px; background:#e0ddd2; }
-  .progress-seg.done { background:var(--brand,#1e6f4c); }
-  .card { background:white; border:1px solid #e2e0d5; border-radius:14px; padding:22px; box-shadow:0 4px 18px rgba(20,49,42,0.06); }
-  .step-label { font-size:12px; color:#8a9490; margin-bottom:6px; }
-  .question { font-size:16px; font-weight:600; margin:0 0 16px; line-height:1.4; }
-  .options { display:flex; flex-direction:column; gap:10px; }
-  .option { border:1.5px solid #d8e3de; border-radius:10px; padding:13px 16px; font-size:14.5px; cursor:pointer; background:white; transition:border-color .15s, background .15s; }
-  .option:hover { border-color:var(--brand,#1e6f4c); }
-  .option.selected { border-color:var(--brand,#1e6f4c); background:var(--brand-tint,#eaf4ef); font-weight:600; }
-  input[type="text"],input[type="tel"],input[type="email"],input[type="number"] { width:100%; border:1.5px solid #d8e3de; border-radius:10px; padding:12px 14px; font-size:15px; margin-bottom:12px; font-family:inherit; }
-  input:focus { outline:none; border-color:var(--brand,#1e6f4c); }
-  label.field-label { display:block; font-size:12.5px; color:#5b6b64; margin-bottom:4px; font-weight:600; }
-  .nav-row { display:flex; justify-content:space-between; margin-top:22px; gap:10px; }
-  button.btn { border:none; border-radius:10px; padding:12px 20px; font-size:14.5px; font-weight:700; cursor:pointer; }
-  .btn-primary { background:var(--brand,#1e6f4c); color:white; flex:1; }
-  .btn-primary:disabled { opacity:.45; cursor:default; }
-  .btn-ghost { background:transparent; color:#5b6b64; }
-  .result-box { background:var(--brand-tint,#eaf4ef); border:1.5px solid var(--brand,#1e6f4c); border-radius:12px; padding:20px; margin-top:10px; }
-  .result-note { font-size:13px; color:#4a5a54; line-height:1.5; }
-  .disclaimer { font-size:12px; color:#8a9490; margin-top:14px; line-height:1.5; }
-  .success-icon { font-size:40px; text-align:center; margin-bottom:8px; }
-  .trust-footer { margin-top:12px; padding-top:12px; border-top:1px solid #e2e0d5; font-size:11px; color:#8a9490; line-height:1.5; text-align:center; flex-shrink:0; }
-  .trust-footer .trust-badges { display:flex; justify-content:center; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-size:12px; color:#4a5a54; font-weight:600; }
-  .trust-footer .legal-line { color:#14312a; }
-  .btn-footer-callback { background:white; border:1.5px solid var(--brand,#1e6f4c); color:#14312a; padding:8px 16px; font-size:12.5px; font-weight:700; border-radius:10px; cursor:pointer; }
+  /* Fond végétal, très discret — juste une présence apaisante, jamais distrayant */
+  .leaf-bg { position:fixed; z-index:0; pointer-events:none; }
+  .leaf-bg svg { display:block; }
 
-  /* Bandeau "aperçu" — visible uniquement tant que le mini-site n'est pas publié */
-  .preview-banner {
-    position:fixed; top:0; left:0; right:0; z-index:100;
-    background:#14312a; color:#fff; font-size:13px; font-weight:600;
-    padding:10px 16px; display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap;
+  .wrap { position:relative; z-index:1; max-width:640px; margin:0 auto; }
+
+  .eyebrow { font-size:0.78rem; font-weight:600; color:#4a8a68; letter-spacing:0.04em; text-transform:uppercase; margin-bottom:10px; }
+  h1 { font-size:1.7rem; font-weight:700; margin-bottom:14px; letter-spacing:-0.01em; }
+  .intro { font-size:0.98rem; color:#5f6f66; line-height:1.75; margin-bottom:8px; max-width:52ch; }
+  .reassurance { font-size:0.84rem; color:#7a8880; margin-bottom:36px; display:flex; align-items:center; gap:8px; }
+
+  /* Barre de progression douce */
+  .progress-wrap { margin-bottom:32px; }
+  .progress-track { background:#e9e5db; border-radius:999px; height:6px; overflow:hidden; }
+  .progress-fill { background:#4a8a68; height:100%; border-radius:999px; transition:width 0.5s ease; width:0%; }
+  .progress-label { font-size:0.76rem; color:#8a9891; margin-top:8px; }
+
+  .section {
+    background:#fffdfa; border-radius:20px; margin-bottom:16px;
+    box-shadow:0 1px 3px rgba(42,61,53,0.04), 0 8px 24px rgba(42,61,53,0.05);
+    overflow:hidden; border:1px solid rgba(42,61,53,0.04);
   }
-  .preview-banner button {
-    background:#E8622C; color:#fff; border:none; border-radius:6px; padding:6px 14px; font-size:12.5px; font-weight:700; cursor:pointer;
+  .section-header {
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:22px 26px; cursor:pointer; user-select:none;
   }
-  .preview-banner a.btn-retour-elements {
-    background:transparent; color:#fff; border:1.5px solid rgba(255,255,255,0.5); border-radius:6px; padding:6px 14px;
-    font-size:12.5px; font-weight:700; text-decoration:none; cursor:pointer;
+  .section-header:hover { background:rgba(74,138,104,0.03); }
+  .section-title { display:flex; align-items:center; gap:12px; }
+  .section-icon { font-size:1.3rem; }
+  .section h2 { font-size:1.05rem; font-weight:700; }
+  .section .sub { font-size:0.82rem; color:#8a9891; margin-top:3px; }
+  .section-check { font-size:0.78rem; color:#4a8a68; font-weight:600; opacity:0; transition:opacity 0.2s; }
+  .section-check.visible { opacity:1; }
+  .chevron { color:#c2c9c3; font-size:0.9rem; transition:transform 0.25s ease; flex-shrink:0; }
+  .section.open .chevron { transform:rotate(180deg); }
+
+  .section-body { max-height:0; overflow:hidden; transition:max-height 0.35s ease; }
+  .section.open .section-body { max-height:none; }
+  .section-body-inner { padding:4px 26px 26px; }
+
+  label { display:block; font-size:0.84rem; font-weight:600; color:#3d5248; margin-bottom:7px; margin-top:18px; }
+  label:first-of-type { margin-top:0; }
+  input[type=text], input[type=email], input[type=tel], input[type=url], input[type=number], select, textarea {
+    width:100%; padding:12px 14px; border:1.5px solid #e3ded2; border-radius:12px; font-size:0.95rem;
+    font-family:inherit; color:#2a3d35; background:#fdfcf9; transition:border-color 0.15s;
   }
-  .preview-banner a.btn-retour-elements:hover { border-color:#fff; }
-  .loading-state { display:flex; align-items:center; justify-content:center; height:100vh; font-family:inherit; color:#5b6b64; font-size:14px; }
+  input:focus, select:focus, textarea:focus { outline:none; border-color:#4a8a68; }
+  textarea { resize:vertical; min-height:70px; }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .row3 { display:grid; grid-template-columns:2fr 1fr 1fr; gap:14px; }
+  .hint { font-size:0.76rem; color:#a3ab9e; margin-top:6px; line-height:1.5; }
+
+  .upload-box {
+    border:1.5px dashed #d8d2c2; border-radius:14px; padding:24px; text-align:center; cursor:pointer; transition:all 0.2s; background:#fdfcf9;
+  }
+  .upload-box:hover { border-color:#4a8a68; background:#f4f8f5; }
+  .upload-box.has-file { border-style:solid; border-color:#4a8a68; background:#f0f7f2; }
+  .upload-box input[type=file] { display:none; }
+  .upload-label { font-size:0.88rem; font-weight:600; color:#4a8a68; }
+  .upload-status { font-size:0.78rem; color:#8a9891; margin-top:6px; }
+  .logo-preview-img { display:none; max-height:60px; max-width:180px; object-fit:contain; margin:0 auto 10px; }
+
+  .titre-option { margin-bottom:2px; }
+  .titre-option label { display:flex; align-items:flex-start; gap:10px; margin:0 0 10px; font-weight:400; font-size:0.92rem; cursor:pointer; color:#2a3d35; }
+  .titre-option input[type=radio] { margin-top:3px; accent-color:#4a8a68; width:auto; }
+
+  .photos-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(88px,1fr)); gap:10px; margin-top:14px; }
+  .photo-thumb { position:relative; aspect-ratio:1; border-radius:10px; overflow:hidden; background:#f0eee6; }
+  .photo-thumb img { width:100%; height:100%; object-fit:cover; }
+  .photo-thumb .del { position:absolute; top:4px; right:4px; background:rgba(42,61,53,0.55); color:#fff; border:none; border-radius:50%; width:22px; height:22px; font-size:13px; cursor:pointer; line-height:1; }
+
+  .toggle-row { display:flex; align-items:center; gap:10px; margin-bottom:4px; }
+  .toggle-row input { width:auto; accent-color:#4a8a68; }
+  .toggle-row label { margin:0; font-weight:600; }
+
+  .extraction-box { background:#f4ece2; border-radius:12px; padding:14px 16px; margin-top:14px; font-size:0.82rem; color:#6b5e4c; line-height:1.6; }
+  .btn-extraire { background:#e8622c; color:#fff; border:none; border-radius:10px; padding:10px 18px; font-size:0.82rem; font-weight:600; cursor:pointer; margin-top:10px; transition:filter 0.15s; }
+
+  .btn-avancement {
+    display:inline-flex; align-items:center; gap:8px; background:#fff; border:1.5px solid #4a8a68;
+    color:#3d7a5a; border-radius:999px; padding:10px 18px; font-size:0.84rem; font-weight:600;
+    text-decoration:none; margin-bottom:24px; transition:background 0.15s;
+  }
+  .btn-avancement:hover { background:#f0f7f2; }
+
+  .lien-retour-dashboard {
+    display:inline-flex; align-items:center; gap:6px; color:#8a9891; text-decoration:none;
+    font-size:0.85rem; font-weight:600; margin-bottom:16px;
+  }
+  .lien-retour-dashboard:hover { color:#3d7a5a; }
+  .btn-extraire:hover { filter:brightness(1.06); }
+
+  .formulaire-liste { display:flex; flex-direction:column; gap:2px; margin-top:14px; }
+  .formulaire-item { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid #f1efe7; }
+  .formulaire-item:last-child { border-bottom:none; }
+  .formulaire-item input[type="checkbox"] { width:auto; flex-shrink:0; accent-color:#4a8a68; }
+  .formulaire-item .formulaire-texte { flex:1; font-size:0.86rem; color:#3d5248; }
+  .formulaire-item .formulaire-type { font-size:0.72rem; color:#a3ab9e; background:#f4ece2; border-radius:20px; padding:2px 10px; white-space:nowrap; }
+  .formulaire-ajout { display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }
+  .formulaire-ajout input[type="text"] { flex:1; min-width:200px; }
+  .formulaire-ajout select { width:auto; }
+
+  .produit-card { border:1px solid #efece2; border-radius:14px; padding:16px; margin-top:14px; background:#fdfcf9; }
+  .produit-card-header { display:grid; grid-template-columns:2fr 1fr 1fr 1fr auto; gap:10px; align-items:start; }
+  .produit-card-header label { margin-top:0; font-size:0.72rem; }
+  .produit-card-header input, .produit-card-header select { margin-top:0; }
+  .btn-suppr-produit {
+    background:none; border:1.5px solid #e3ded2; color:#a3564a; border-radius:10px;
+    width:38px; height:38px; margin-top:22px; font-size:1rem; cursor:pointer; flex-shrink:0;
+  }
+  .btn-suppr-produit:hover { background:#fbeceb; border-color:#e0b3ac; }
+  .produit-questions-titre { font-size:0.78rem; font-weight:600; color:#8a9891; margin-top:16px; margin-bottom:2px; }
+  .btn-ajouter-produit {
+    background:none; border:1.5px dashed #c7d0c9; color:#4a8a68; border-radius:12px;
+    padding:12px; width:100%; font-size:0.86rem; font-weight:600; cursor:pointer; margin-top:14px; transition:all 0.15s;
+  }
+  .btn-ajouter-produit:hover { background:#f4f8f5; border-color:#4a8a68; }
+
+  .btn-submit {
+    width:100%; background:#3d7a5a; color:#fff; border:none; border-radius:14px; padding:18px; font-size:1rem; font-weight:700; cursor:pointer; margin-top:12px; transition:filter 0.15s;
+  }
+  .btn-submit:hover { filter:brightness(1.05); }
+  .btn-submit:disabled { opacity:0.55; cursor:not-allowed; }
+  .save-note { text-align:center; font-size:0.78rem; color:#a3ab9e; margin-top:12px; }
+  .save-msg { text-align:center; font-size:0.88rem; margin-top:14px; padding:14px; border-radius:12px; line-height:1.5; }
+  .save-msg.ok { background:#eef5ef; color:#3d7a5a; }
+  .save-msg.err { background:#fbeeec; color:#b5482a; }
 </style>
 </head>
 <body>
 
-<div id="loadingState" class="loading-state">Chargement de votre aperçu…</div>
-
-<div id="previewBanner" class="preview-banner" style="display:none;">
-  <span>👁️ Ceci est un aperçu gratuit, pas encore en ligne publiquement.</span>
-  <a id="btnRetourDashboard" class="btn-retour-elements" href="#">← Retour au tableau de bord</a>
-  <a id="btnRetourElements" class="btn-retour-elements" href="#">← Retour à mes éléments</a>
-  <button id="btnPublier">Mettre en ligne</button>
+<!-- Fond végétal très discret, purement d'ambiance -->
+<div class="leaf-bg" style="top:-40px; right:-100px; opacity:0.12;">
+  <svg width="320" height="320" viewBox="0 0 320 320">
+    <defs>
+      <radialGradient id="lf1" cx="35%" cy="30%" r="75%">
+        <stop offset="0%" stop-color="#7bc79e"/>
+        <stop offset="100%" stop-color="#3d7a5a"/>
+      </radialGradient>
+    </defs>
+    <path fill="url(#lf1)" d="M160,25 C230,45 280,105 265,180 C250,255 175,280 120,245 C65,210 50,135 85,80 C110,48 135,32 160,25 Z"/>
+  </svg>
+</div>
+<div class="leaf-bg" style="bottom:-80px; left:-90px; opacity:0.10;">
+  <svg width="380" height="380" viewBox="0 0 380 380">
+    <defs>
+      <radialGradient id="lf2" cx="40%" cy="35%" r="70%">
+        <stop offset="0%" stop-color="#f0a878"/>
+        <stop offset="100%" stop-color="#e8622c"/>
+      </radialGradient>
+    </defs>
+    <path fill="url(#lf2)" d="M190,35 C270,60 330,130 315,210 C300,290 210,325 140,290 C70,255 45,165 80,105 C105,62 150,42 190,35 Z"/>
+  </svg>
 </div>
 
-<div id="appRoot" style="display:none;">
-  <div class="split-layout">
-    <div class="image-panel" id="heroImagePanel">
-      <div class="image-panel-title" id="heroTitle"></div>
+<div class="wrap">
+  <a href="#" id="lienRetourDashboard" class="lien-retour-dashboard" style="display:none;">← Retour au tableau de bord</a>
+  <div class="eyebrow">Construction de votre vitrine</div>
+  <h1>Prenons le temps de bien faire les choses</h1>
+  <p class="intro">
+    Suite à notre échange, dépose ici ce qui nous permettra de construire ta vraie vitrine — à ton rythme, section par section.
+  </p>
+  <p class="reassurance">🌿 Rien n'est chronométré, et chaque section s'enregistre à part.</p>
+
+  <a class="btn-avancement" id="btnAvancement" href="#">📊 Voir l'avancement de mon site</a>
+
+  <div class="progress-wrap">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label" id="progressLabel">0% complété</div>
+  </div>
+
+  <div class="section open" data-section="visuel">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">🎨</span>
+        <div>
+          <h2>Identité visuelle</h2>
+          <p class="sub">Logo, photos, vidéo — ce que tu as sous la main suffit.</p>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="section-check" data-check="visuel">✓ complété</span>
+        <span class="chevron">▾</span>
+      </div>
     </div>
-    <div class="form-panel">
-      <div class="form-bg-carousel" id="formBgCarousel"></div>
-      <div class="form-bg-overlay"></div>
-      <div class="wrap">
-        <div class="header-block">
-          <img id="logoArtisan" src="" alt="" style="display:none; height:38px; margin-bottom:12px; object-fit:contain;">
-          <div class="eyebrow" id="eyebrow"></div>
-          <h1 id="mainTitle"></h1>
-          <div style="font-size:20px; font-weight:800; color:var(--brand,#1e6f4c); margin:2px 0 10px; line-height:1.2;" id="delaiBadge"></div>
-          <p class="sub" style="margin-bottom:0;" id="introText"></p>
+    <div class="section-body">
+      <div class="section-body-inner">
+        <label>Logo de l'entreprise</label>
+        <div class="upload-box" id="boxLogo">
+          <input type="file" id="inputLogo" accept="image/*">
+          <img id="logoPreview" class="logo-preview-img" alt="Logo">
+          <div class="upload-label">📁 Choisir un fichier</div>
+          <div class="upload-status" id="statusLogo">Aucun fichier — PNG ou JPG, fond transparent de préférence</div>
         </div>
-        <div style="display:flex; gap:14px; flex-wrap:wrap; margin-bottom:14px; font-size:12.5px; color:#4a5a54;" id="miniBadges"></div>
-        <div class="middle-scroll">
-          <div class="progress" id="progress"></div>
-          <div class="card" id="card"></div>
+
+        <label>Photos pour le carrousel (jusqu'à 10)</label>
+        <div class="upload-box" id="boxPhotos">
+          <input type="file" id="inputPhotos" accept="image/*" multiple>
+          <div class="upload-label">📁 Ajouter des photos</div>
+          <div class="upload-status" id="statusPhotos">Aucune photo ajoutée</div>
         </div>
-        <div class="trust-footer">
-          <div class="legal-line" id="legalLine"></div>
-          <div id="footerCallbackZone" style="margin-top:10px;">
-            <button class="btn btn-footer-callback" id="btnFooterCallback">📞 Être rappelé</button>
-          </div>
+        <div class="photos-grid" id="photosGrid"></div>
+
+        <label>Vidéo de chantier ou avant/après (optionnel)</label>
+        <div class="upload-box" id="boxVideo">
+          <input type="file" id="inputVideo" accept="video/*">
+          <div class="upload-label">📁 Choisir une vidéo</div>
+          <div class="upload-status" id="statusVideo">Ou colle un lien YouTube/Vimeo ci-dessous</div>
+        </div>
+        <input type="url" id="videoLien" placeholder="https://youtube.com/..." style="margin-top:10px;">
+      </div>
+    </div>
+  </div>
+
+  <div class="section" data-section="titre">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">🏷️</span>
+        <div>
+          <h2>Titre de votre vitrine</h2>
+          <p class="sub">Le grand titre affiché sur votre page — choisis celui qui te ressemble, ou écris le tien.</p>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="section-check visible" data-check="titre">✓ facultatif</span>
+        <span class="chevron">▾</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="section-body-inner" id="titreOptions">
+        <div class="hint">Renseigne d'abord ton métier dans l'estimation pour voir des suggestions adaptées — en attendant, une valeur par défaut est déjà utilisée.</div>
+      </div>
+      <button type="button" id="btnSuggererTitre" style="margin-top:10px; background:#1e6f4c; color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:0.85rem; font-weight:700; cursor:pointer;">✨ Suggérer un titre avec l'IA</button>
+      <div id="suggestionsTitreIA" style="margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <div class="section" data-section="coordonnees">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">📍</span>
+        <div><h2>Coordonnées</h2></div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="section-check" data-check="coordonnees">✓ complété</span>
+        <span class="chevron">▾</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="section-body-inner">
+        <label>Téléphone</label>
+        <input type="tel" id="telephone" placeholder="06 12 34 56 78">
+
+        <label>Email</label>
+        <input type="email" id="email" placeholder="contact@monentreprise.fr">
+
+        <label>Adresse</label>
+        <input type="text" id="adresseRue" placeholder="Numéro et rue">
+        <div class="row2" style="margin-top:10px;">
+          <input type="text" id="adresseCp" placeholder="Code postal">
+          <input type="text" id="adresseVille" placeholder="Ville">
         </div>
       </div>
     </div>
   </div>
+
+  <div class="section" data-section="legal">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">⚖️</span>
+        <div>
+          <h2>Informations légales</h2>
+          <p class="sub">Pour tes mentions légales et tes futurs devis.</p>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="section-check" data-check="legal">✓ complété</span>
+        <span class="chevron">▾</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="section-body-inner">
+        <label>SIRET</label>
+        <input type="text" id="siret" placeholder="14 chiffres">
+
+        <label>Forme juridique</label>
+        <select id="formeJuridique">
+          <option value="">— Sélectionner —</option>
+          <option>Entreprise individuelle (EI)</option>
+          <option>Micro-entreprise</option>
+          <option>EURL</option>
+          <option>SARL</option>
+          <option>SASU</option>
+          <option>SAS</option>
+          <option>Autre</option>
+        </select>
+
+        <div class="row2">
+          <div>
+            <label>Capital social (si société)</label>
+            <input type="text" id="capitalSocial" placeholder="Ex : 10 000 €">
+          </div>
+          <div>
+            <label>Ville d'immatriculation RCS</label>
+            <input type="text" id="rcsVille" placeholder="Ex : Lorient">
+          </div>
+        </div>
+
+        <label>Assurance décennale — assureur</label>
+        <input type="text" id="assuranceAssureur" placeholder="Ex : ERGO France">
+
+        <label>Assurance décennale — numéro de police</label>
+        <input type="text" id="assuranceNumero" placeholder="Numéro de contrat">
+      </div>
+    </div>
+  </div>
+
+  <div class="section" data-section="siteweb">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">🔗</span>
+        <div>
+          <h2>Site web existant</h2>
+          <p class="sub">Facultatif — utile si tu en as déjà un.</p>
+        </div>
+      </div>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="section-body">
+      <div class="section-body-inner">
+        <input type="url" id="siteExistant" placeholder="https://monsite.fr">
+        <button type="button" class="btn-extraire" id="btnExtraire">🔍 Essayer de récupérer les infos légales</button>
+        <div class="extraction-box" id="extractionResult" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" data-section="produits">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">🧮</span>
+        <div>
+          <h2>Produits chiffrables</h2>
+          <p class="sub">Facultatif — pour donner automatiquement une estimation chiffrée quand le projet du prospect correspond à l'un de vos produits.</p>
+        </div>
+      </div>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="section-body">
+      <div class="section-body-inner">
+        <p class="hint">Chaque "produit" est une prestation que vous facturez d'une façon précise (ex : "Enrobés" au m², "Pose de clôture" au ml). Quand le projet décrit par un prospect correspond à l'un de vos produits, il répond aux questions de CE produit et reçoit une estimation chiffrée. Sinon, il est invité à prendre rendez-vous avec un technicien — rien n'est perdu, jamais bloqué.</p>
+
+        <label style="margin-top:0;">Taux de TVA applicable</label>
+        <select id="tvaTaux">
+          <option value="20">20% — taux normal</option>
+          <option value="10">10% — travaux de rénovation (bâti de plus de 2 ans)</option>
+          <option value="5.5">5.5% — travaux d'amélioration énergétique</option>
+        </select>
+
+        <label>Décrivez ce que vous facturez, avec vos mots</label>
+        <textarea id="produitsDescription" rows="4" placeholder="Ex : je pose de la résine EPDM pour terrasses à 45€/m², minimum 300€. Je pose aussi des clôtures à 35€/ml…"></textarea>
+        <p class="hint">L'IA identifie les différents produits que vous décrivez et pré-remplit une carte par produit ci-dessous (nom, unité, prix, questions). Vous vérifiez et corrigez ensuite avant d'enregistrer, rien n'est figé.</p>
+        <button type="button" class="btn-extraire" id="btnAnalyserProduits">✨ Analyser mon activité</button>
+        <div class="extraction-box" id="produitsAnalyseResult" style="display:none;"></div>
+
+        <div id="produitsListe"></div>
+        <button type="button" class="btn-ajouter-produit" id="btnAjouterProduit">+ Ajouter un produit manuellement</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-submit" id="btnSubmit">Enregistrer mes éléments</button>
+  <p class="save-note">Tu peux revenir compléter ce formulaire plus tard, rien n'est perdu.</p>
+  <div class="save-msg" id="saveMsg" style="display:none;"></div>
 </div>
 
 <script>
-const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+  const BUCKET = 'skyeco-pro-media';
 
-/* -----------------------------------------------------------------
-   Gabarits de questions par défaut, par métier. Réutilisent le même
-   moteur générique que skyeco-pro-moteur-generique.html.
-   ----------------------------------------------------------------- */
-const METIER_TEMPLATES = {
-  paysagiste: {
-    heroTitre: "Un extérieur<br>qui vous ressemble.",
-    eyebrow: "Estimation détaillée",
-    titre: "Votre estimation personnalisée",
-    delaiBadge: "⏱️ Estimation en 3 minutes",
-    intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation.",
-    metierKey: "paysagiste",
-    getSteps(state){
-      const s = [{ key:"type_projet", question:"Quel est le type de projet ?", type:"choice",
-        options:[["creation","Création complète d'un aménagement"],["renovation","Rénovation d'un extérieur existant"],["ponctuel","Intervention ponctuelle"]] }];
-      s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
-      pushQuantiteEtSuite(s, state);
-      return s;
-    }
-  },
-  piscine: {
-    heroTitre: "Une piscine<br>prête pour l'été.",
-    eyebrow: "Estimation détaillée",
-    titre: "Votre estimation personnalisée",
-    delaiBadge: "⏱️ Estimation en 3 minutes",
-    intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation.",
-    metierKey: "piscine",
-    getSteps(state){
-      const s = [{ key:"type_piscine", question:"Quel type de piscine ?", type:"choice",
-        options:[["enterree","Piscine enterrée"],["hors_sol","Piscine hors-sol"],["plage_seule","Uniquement la plage / les abords"]] }];
-      s.push({ key:"etat_terrain", question:"Dans quel état est le terrain actuellement ?", type:"choice",
-        options:[["nu","Terrain nu, rien n'est fait"],["prepare","Déjà terrassé / préparé"]] });
-      s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
-      pushQuantiteEtSuite(s, state);
-      return s;
-    }
-  },
-  tonte: {
-    heroTitre: "Le sol qui tient tête<br>aux hivers bretons",
-    eyebrow: "Estimation détaillée",
-    titre: "Votre estimation personnalisée",
-    delaiBadge: "⏱️ Estimation en 3 minutes",
-    intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation.",
-    metierKey: "tonte",
-    getSteps(state){
-      const s = [{ key:"frequence", question:"Souhaitez-vous une intervention ponctuelle ou régulière ?", type:"choice",
-        options:[["ponctuelle","Ponctuelle, une seule fois"],["hebdo","Régulière — chaque semaine"],["bimensuel","Régulière — toutes les deux semaines"],["mensuel","Régulière — chaque mois"]] }];
-      s.push({ key:"etat_actuel", question:"Dans quel état est le terrain actuellement ?", type:"choice",
-        options:[["entretenu","Bien entretenu"],["a_reprendre","À reprendre, un peu haut"]] });
-      s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
-      pushQuantiteEtSuite(s, state);
-      return s;
-    }
-  },
-  terrasse: {
-    heroTitre: "Une terrasse<br>pour en profiter longtemps.",
-    eyebrow: "Estimation détaillée",
-    titre: "Votre estimation personnalisée",
-    delaiBadge: "⏱️ Estimation en 3 minutes",
-    intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation.",
-    metierKey: "terrasse",
-    getSteps(state){
-      const s = [{ key:"materiau", question:"Quel matériau préférez-vous ?", type:"choice",
-        options:[["bois","Bois"],["composite","Composite"],["dallage","Dallage / carrelage extérieur"],["pas_decide","Pas encore décidé"]] }];
-      s.push({ key:"support_actuel", question:"Quel est le support actuel ?", type:"choice",
-        options:[["dalle_existante","Dalle béton existante"],["terre_nue","Terre nue, rien n'existe"]] });
-      s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
-      pushQuantiteEtSuite(s, state);
-      return s;
-    }
-  },
-  paysagiste_concepteur: {
-    heroTitre: "Un plan pensé<br>pour durer.",
-    eyebrow: "Estimation détaillée",
-    titre: "Votre estimation personnalisée",
-    delaiBadge: "⏱️ Estimation en 3 minutes",
-    intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation.",
-    metierKey: "paysagiste_concepteur",
-    getSteps(state){
-      const s = [{ key:"prestation", question:"Quel type de prestation recherchez-vous ?", type:"choice",
-        options:[["plan_seul","Un plan d'aménagement seul"],["plan_suivi","Un plan avec suivi de chantier"]] }];
-      s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
-      pushQuantiteEtSuite(s, state);
-      return s;
-    }
-  },
-  arboriste: {
-    heroTitre: "Des arbres bien tenus,<br>en toute sécurité.",
-    eyebrow: "Estimation détaillée",
-    titre: "Votre estimation personnalisée",
-    delaiBadge: "⏱️ Estimation en 3 minutes",
-    intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation.",
-    metierKey: "arboriste",
-    getSteps(state){
-      const s = [{ key:"intervention", question:"Quel type d'intervention ?", type:"choice",
-        options:[["taille","Taille / élagage"],["abattage","Abattage"],["dessouchage","Dessouchage"]] }];
-      s.push({ key:"nb_arbres", question:"Combien d'arbres sont concernés ?", type:"number", placeholder:"Ex : 2" });
-      s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
-      pushQuantiteEtSuite(s, state);
-      return s;
-    }
-  },
-  espaces_verts: {
-    heroTitre: "Des espaces verts<br>toujours soignés.",
-    eyebrow: "Estimation détaillée",
-    titre: "Votre estimation personnalisée",
-    delaiBadge: "⏱️ Estimation en 3 minutes",
-    intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation.",
-    metierKey: "espaces_verts",
-    getSteps(state){
-      const s = [{ key:"type_site", question:"De quel type de site s'agit-il ?", type:"choice",
-        options:[["copropriete","Copropriété"],["particulier","Particulier"],["entreprise","Entreprise / site professionnel"]] }];
-      s.push({ key:"frequence", question:"Quelle fréquence d'entretien souhaitez-vous ?", type:"choice",
-        options:[["hebdo","Hebdomadaire"],["mensuel","Mensuelle"],["ponctuel","Ponctuelle"]] });
-      s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
-      pushQuantiteEtSuite(s, state);
-      return s;
-    }
-  },
-  autre: {
-    heroTitre: "Un projet sur-mesure,<br>pensé pour vous.",
-    eyebrow: "Estimation détaillée",
-    titre: "Votre estimation personnalisée",
-    delaiBadge: "⏱️ Estimation en 3 minutes",
-    intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation.",
-    metierKey: "autre",
-    getSteps(state){
-      const s = [{ key:"identite", question:"Vos coordonnées", type:"identity" }];
-      pushQuantiteEtSuite(s, state);
-      return s;
-    }
-  }
-};
-
-// Ajoute la question "Décrivez votre projet", puis — une fois le projet
-// classifié par api/classifier-projet-formulaire.js (voir wireStepEvents) —
-// la question de "quantité" (dont l'unité — m², ml, m³ ou forfait — vient du
-// produit chiffrable choisi par l'artisan) et ses questions spécifiques.
-// Si aucun produit ne correspond (state.produitChoisi reste null), on saute
-// directement ces questions et on garde délai/localisation, utiles dans tous
-// les cas — le prospect sera de toute façon orienté vers la prise de
-// rendez-vous avec un technicien (voir renderResultat).
-function pushQuantiteEtSuite(s, state){
-  s.push({ key:"details_projet", question:"Décrivez votre projet en quelques mots", type:"textarea",
-    placeholder:"Ex : nature des travaux, contraintes particulières, délais souhaités…", optional:true, dictable:true });
-
-  const produit = state && state.produitChoisi;
-  if(produit){
-    // Questions spécifiques à CE produit, choisies par l'IA parmi celles
-    // validées par l'artisan (voir api/classifier-projet-formulaire.js) —
-    // remplies de façon asynchrone après le step "details_projet" (voir
-    // wireStepEvents).
-    if(Array.isArray(state.questionsDynamiques)){
-      state.questionsDynamiques.forEach(q=>{
-        const cle = 'dyn_' + q.id;
-        if(q.type === 'nombre'){
-          const unites = { ml:'mètres linéaires', m2:'m²', m3:'m³' };
-          s.push({ key:cle, question:q.label, type:"nombre_perso", placeholder:"Ex : 30", unite: unites[q.unite] || '', optional:true });
-        } else if(q.type === 'case'){
-          s.push({ key:cle, question:q.label, type:"case_perso", optional:true });
-        } else {
-          s.push({ key:cle, question:q.label, type:"texte_perso", optional:true });
-        }
-      });
-    }
-
-    if(produit.unite && produit.unite !== 'forfait' && produit.prix){
-      const unites = { m2:'m²', ml:'mètres linéaires', m3:'m³' };
-      const libelleUnite = unites[produit.unite] || produit.unite;
-      s.push({ key:"quantite", question:`Pour "${produit.nom}", quelle quantité en ${libelleUnite} environ ?`, type:"number",
-        placeholder:"Ex : 30" });
-    }
-  }
-
-  s.push({ key:"delai", question:"Sous quel délai souhaitez-vous réaliser ce projet ?", type:"choice",
-    options:[["urgent","Le plus vite possible"],["1_3_mois","Dans 1 à 3 mois"],["plus_tard","Plus tard"]] });
-  s.push({ key:"localisation", question:"Où se situe le projet ?", type:"location" });
-}
-
-const FALLBACK_IMAGES = {
-  paysagiste: [
-    "https://images.unsplash.com/photo-1558904541-efa843a96f01?w=1200",
-    "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=1200",
-    "https://images.unsplash.com/photo-1493957988430-a5f2e15f39a3?w=1200"
-  ],
-  piscine: [
-    "https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/5-piscine-beige.jpg",
-    "https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/6-piscine-pool-house.jpg",
-    "https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/7-piscine-jardin.jpg"
-  ],
-  tonte: [
-    "https://images.unsplash.com/photo-1592417817098-8fd3d9eb14a5?w=1200",
-    "https://images.unsplash.com/photo-1558904541-efa843a96f01?w=1200"
-  ],
-  terrasse: [
-    "https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/1-terrasse-mobilier-noir.jpg",
-    "https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/8-escalier-terrasse.jpg",
-    "https://images.unsplash.com/photo-1416339306562-c3e64c3a3fb2?w=1200"
-  ],
-  paysagiste_concepteur: [
-    "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=1200",
-    "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=1200"
-  ],
-  arboriste: [
-    "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1200",
-    "https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=1200"
-  ],
-  espaces_verts: [
-    "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1200",
-    "https://images.unsplash.com/photo-1493957988430-a5f2e15f39a3?w=1200"
-  ],
-  autre: [
-    "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=1200",
-    "https://images.unsplash.com/photo-1493957988430-a5f2e15f39a3?w=1200"
-  ]
-};
-
-async function init(){
   const params = new URLSearchParams(window.location.search);
-  const id = params.get('id');
-  if(!id){
-    document.getElementById('loadingState').textContent = "Aucun aperçu à afficher — identifiant manquant dans l'adresse.";
-    return;
+  const draftId = params.get('id');
+
+  let logoUrl = null;
+  let photosUrls = [];
+  let videoUrl = null;
+  let metiersActuels = [];
+  let produitsActuels = new Map(); // id -> { metier, nom, unite, prix, minimum, questions: Map(id -> {label,type,unite,coche}) }
+  let titreChoisi = '';
+  let draftStatutActuel = null; // status du brouillon au chargement — sert à savoir où renvoyer après enregistrement
+  let zoneActuelle = null;
+
+  // Suggestions de titre par métier — doit rester cohérent avec les
+  // heroTitre par défaut de METIER_TEMPLATES dans apercu.html (le premier
+  // choix de chaque métier n'est PAS forcément identique au défaut : tant
+  // qu'aucun titre n'est choisi ici, apercu.html garde son propre défaut
+  // avec le retour à la ligne — un choix explicite ici l'écrase.)
+  const TITRES_PAR_METIER = {
+    paysagiste: ["Un extérieur qui vous ressemble.", "Votre jardin, transformé.", "Un aménagement extérieur pensé pour durer."],
+    piscine: ["Une piscine prête pour l'été.", "Votre bassin, sans mauvaise surprise.", "La piscine que vous imaginiez enfin chez vous."],
+    tonte: ["Le sol qui tient tête aux hivers bretons.", "Un jardin toujours impeccable.", "L'entretien de votre extérieur, sans y penser."],
+    terrasse: ["Une terrasse pour en profiter longtemps.", "Votre terrasse, posée dans les règles de l'art.", "L'extérieur qui vous donne envie de rester dehors."],
+    paysagiste_concepteur: ["Un plan pensé pour durer.", "Votre extérieur, conçu sur-mesure.", "Un projet paysager pensé avant d'être réalisé."],
+    arboriste: ["Des arbres bien tenus, en toute sécurité.", "Vos arbres, entre de bonnes mains.", "L'entretien de vos arbres, sans risque."],
+    espaces_verts: ["Des espaces verts toujours soignés.", "Un entretien fiable, saison après saison.", "Vos espaces verts, pris en charge du début à la fin."],
+    autre: ["Un projet sur-mesure, pensé pour vous.", "Votre projet, réalisé avec sérieux.", "Un artisan de confiance, près de chez vous."],
+  };
+
+  // --- Accordéon ---
+  document.querySelectorAll('.section-header').forEach(header => {
+    header.addEventListener('click', () => {
+      const section = header.closest('.section');
+      const estOuverte = section.classList.contains('open');
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('open'));
+      if (!estOuverte) section.classList.add('open');
+    });
+  });
+
+  // --- Barre de progression douce, recalculée à chaque saisie ---
+  function calculerProgression() {
+    const groupes = {
+      visuel: () => !!(logoUrl || photosUrls.length),
+      coordonnees: () => !!(document.getElementById('telephone').value.trim() && document.getElementById('email').value.trim()),
+      legal: () => !!document.getElementById('siret').value.trim(),
+      siteweb: () => !!document.getElementById('siteExistant').value.trim(),
+      chiffrage: () => produitsActuels.size > 0,
+    };
+    let completes = 0;
+    Object.entries(groupes).forEach(([nom, verif]) => {
+      const rempli = verif();
+      const badge = document.querySelector(`[data-check="${nom}"]`);
+      if (badge) badge.classList.toggle('visible', rempli);
+      if (rempli) completes++;
+    });
+    const pourcentage = Math.round((completes / Object.keys(groupes).length) * 100);
+    document.getElementById('progressFill').style.width = pourcentage + '%';
+    document.getElementById('progressLabel').textContent = pourcentage === 100
+      ? 'Tout est renseigné ✓'
+      : `${pourcentage}% complété`;
   }
+  document.body.addEventListener('input', calculerProgression);
+  document.body.addEventListener('change', calculerProgression);
 
-  const { data: draft, error } = await supabaseClient
-    .from('skyeco_pro_vitrine_drafts')
-    .select('*')
-    .eq('id', id)
-    .single();
-
-  if(error || !draft){
-    document.getElementById('loadingState').textContent = "Cet aperçu est introuvable ou a expiré.";
-    return;
-  }
-
-  const metiersListe = Array.isArray(draft.metier) ? draft.metier : (draft.metier ? [draft.metier] : []);
-  const metierChoisi = metiersListe[0] || 'autre';
-  const template = METIER_TEMPLATES[metierChoisi] || METIER_TEMPLATES.autre;
-  const tvaTaux = draft.tva_taux || 20;
-  const brandColor = draft.couleur || '#E8622C';
-
-  document.documentElement.style.setProperty('--brand', brandColor);
-  document.documentElement.style.setProperty('--brand-tint', brandColor + '1A');
-  document.documentElement.style.setProperty('--brand-dark', '#14312a');
-
-  document.getElementById('heroTitle').innerHTML = (draft.titre_hero_choisi || template.heroTitre) +
-    '<span style="display:block; margin-top:14px; font-size:0.45em; font-weight:600; opacity:0.9;">' + draft.entreprise + '</span>';
-  if (draft.logo_url) {
-    const logoEl = document.getElementById('logoArtisan');
-    logoEl.src = draft.logo_url;
-    logoEl.style.display = 'block';
-  }
-
-  document.getElementById('eyebrow').textContent = draft.entreprise + ' — ' + template.eyebrow;
-  document.getElementById('mainTitle').textContent = template.titre;
-  document.getElementById('delaiBadge').textContent = template.delaiBadge;
-  document.getElementById('introText').textContent = draft.description || template.intro;
-  document.getElementById('miniBadges').innerHTML = ['✅ Sans engagement','⏱️ Réponse sous 24h','🔒 Données confidentielles'].map(b=>'<span>'+b+'</span>').join('');
-
-  // Mentions légales complètes — n'affiche que ce qui a réellement été renseigné,
-  // pour ne jamais montrer de champ vide même si l'artisan n'a pas tout complété.
-  const adresseComplete = [draft.adresse_rue, draft.adresse_cp, draft.adresse_ville].filter(Boolean).join(' ');
-  const formeEtCapital = [draft.forme_juridique, draft.capital_social ? `au capital de ${draft.capital_social}` : null].filter(Boolean).join(' ');
-  const assurance = draft.assurance_decennale_assureur
-    ? `Assurance décennale : ${draft.assurance_decennale_assureur}` + (draft.assurance_decennale_numero ? ` (n° ${draft.assurance_decennale_numero})` : '')
-    : null;
-
-  const lignesLegales = [
-    draft.entreprise + (formeEtCapital ? ' — ' + formeEtCapital : ''),
-    draft.siret ? `SIRET ${draft.siret}` : null,
-    draft.rcs_ville ? `RCS ${draft.rcs_ville}` : null,
-    adresseComplete || null,
-    assurance,
-    draft.zone ? 'Intervient sur : ' + draft.zone : null,
-    [draft.telephone, draft.email].filter(Boolean).join(' — ') || null,
-  ].filter(Boolean);
-
-  document.getElementById('legalLine').innerHTML = lignesLegales.join('<br/>');
-
-  // Carrousel de photos en fond du formulaire — indépendant du panneau
-  // gauche (qui peut afficher la vidéo à la place).
-  (function initFormBgCarousel(){
-    const metiersPourFond = Array.isArray(draft.metier) ? draft.metier : (draft.metier ? [draft.metier] : []);
-    const imagesFallbackFond = metiersPourFond.length
-      ? [...new Set(metiersPourFond.flatMap(m => FALLBACK_IMAGES[m] || []))]
-      : FALLBACK_IMAGES.autre;
-    const imagesFond = (draft.photos && draft.photos.length) ? draft.photos : (imagesFallbackFond.length ? imagesFallbackFond : FALLBACK_IMAGES.autre);
-    const fondContainer = document.getElementById('formBgCarousel');
-    const fondImgs = imagesFond.map((src,i)=>{ const img=document.createElement('img'); img.src=src; if(i===0) img.className='active'; fondContainer.appendChild(img); return img; });
-    if(fondImgs.length>1){
-      let idxFond=0;
-      setInterval(()=>{ fondImgs[idxFond].classList.remove('active'); idxFond=(idxFond+1)%fondImgs.length; fondImgs[idxFond].classList.add('active'); }, 3500);
-    }
-  })();
-
-  const container = document.getElementById('heroImagePanel');
-  if(draft.video_url){
-    const video = document.createElement('video');
-    video.src = draft.video_url;
-    video.autoplay = true; video.muted = true; video.loop = true; video.playsInline = true;
-    video.className = 'active';
-    video.style.cssText = 'position:absolute; inset:0; width:100%; height:100%; object-fit:cover;';
-    container.insertBefore(video, container.firstChild);
+  if (!draftId) {
+    document.body.innerHTML = '<div style="text-align:center; margin-top:100px;">Lien invalide — identifiant du site manquant.</div>';
   } else {
-    // Pas de vidéo : le carrousel passe en plein écran (voir CSS
-    // .split-layout.sans-video) plutôt que de rester confiné au panneau de
-    // gauche — plus d'impact visuel quand l'artisan n'a fourni que des photos.
-    document.querySelector('.split-layout').classList.add('sans-video');
-    const metiersListeApercu = Array.isArray(draft.metier) ? draft.metier : (draft.metier ? [draft.metier] : []);
-    const imagesFallback = metiersListeApercu.length
-      ? [...new Set(metiersListeApercu.flatMap(m => FALLBACK_IMAGES[m] || []))]
-      : FALLBACK_IMAGES.autre;
-    const images = (draft.photos && draft.photos.length) ? draft.photos : (imagesFallback.length ? imagesFallback : FALLBACK_IMAGES.autre);
-    const imgs = images.map((src,i)=>{ const img=document.createElement('img'); img.src=src; if(i===0) img.className='active'; container.appendChild(img); return img; });
-    if(imgs.length>1){
-      let idx=0;
-      setInterval(()=>{ imgs[idx].classList.remove('active'); idx=(idx+1)%imgs.length; imgs[idx].classList.add('active'); }, 2500);
+    document.getElementById('btnAvancement').href = '/apercu.html?id=' + draftId;
+    chargerDraftExistant();
+  }
+
+  async function chargerDraftExistant() {
+    try {
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=*`, {
+        headers: { apikey: SUPABASE_ANON_KEY }
+      });
+      const rows = await resp.json();
+      const draft = rows[0];
+      if (!draft) return;
+
+      draftStatutActuel = draft.status || null;
+
+      // Bouton retour visible uniquement quand un tableau de bord existe
+      // réellement pour cet artisan (site déjà publié, ou en pause) — un
+      // premier passage jamais publié n'a pas encore de tableau de bord
+      // (accès protégé par mot de passe, créé seulement à la publication).
+      if (draftStatutActuel === 'published' || draftStatutActuel === 'en_pause' || draftStatutActuel === 'essai') {
+        const lienRetour = document.getElementById('lienRetourDashboard');
+        lienRetour.href = '/mon-dashboard.html?id=' + draftId;
+        lienRetour.style.display = 'inline-flex';
+      }
+
+      document.getElementById('telephone').value = draft.telephone || '';
+      document.getElementById('email').value = draft.email || '';
+      document.getElementById('adresseRue').value = draft.adresse_rue || '';
+      document.getElementById('adresseCp').value = draft.adresse_cp || '';
+      document.getElementById('adresseVille').value = draft.adresse_ville || '';
+      document.getElementById('siret').value = draft.siret || '';
+      document.getElementById('formeJuridique').value = draft.forme_juridique || '';
+      document.getElementById('capitalSocial').value = draft.capital_social || '';
+      document.getElementById('rcsVille').value = draft.rcs_ville || '';
+      document.getElementById('assuranceAssureur').value = draft.assurance_decennale_assureur || '';
+      document.getElementById('assuranceNumero').value = draft.assurance_decennale_numero || '';
+      document.getElementById('siteExistant').value = draft.site_web_existant || '';
+
+      metiersActuels = Array.isArray(draft.metier) ? draft.metier : (draft.metier ? [draft.metier] : []);
+      zoneActuelle = draft.zone || null;
+      document.getElementById('tvaTaux').value = draft.tva_taux || 20;
+      construireOptionsTitre(metiersActuels, draft.titre_hero_choisi || '');
+      initProduitsChiffrables(metiersActuels, draft.produits_chiffrables || []);
+
+      if (draft.photos && draft.photos.length) {
+        photosUrls = draft.photos;
+        rafraichirGridPhotos();
+      }
+      if (draft.logo_url) {
+        logoUrl = draft.logo_url;
+        document.getElementById('statusLogo').textContent = 'Logo déjà enregistré ✓';
+        document.getElementById('boxLogo').classList.add('has-file');
+        document.getElementById('logoPreview').src = draft.logo_url;
+        document.getElementById('logoPreview').style.display = 'block';
+      }
+      if (draft.video_url) { videoUrl = draft.video_url; document.getElementById('videoLien').value = draft.video_url.startsWith('http') ? draft.video_url : ''; }
+    } catch (e) { /* silencieux, on part d'un formulaire vide */ }
+    calculerProgression();
+  }
+
+  const METIER_LABELS = {
+    paysagiste: 'Paysagiste', piscine: 'Pose piscine', tonte: 'Tonte et coupe', terrasse: 'Terrasse',
+    paysagiste_concepteur: 'Paysagiste concepteur', arboriste: 'Arboriste élagueur', espaces_verts: "Entretien d'espaces verts", autre: 'Autre'
+  };
+  const UNITES = { m2: 'm² (surface)', ml: 'ml (mètre linéaire)', m3: 'm³ (volume)', forfait: 'Forfait' };
+
+  // --- Upload générique vers Supabase Storage ---
+  async function uploaderFichier(file, sousDossier) {
+    const ext = file.name.split('.').pop();
+    const nomFichier = `elements-artisan/${draftId}/${sousDossier}-${Date.now()}.${ext}`;
+    const resp = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${nomFichier}?apikey=${encodeURIComponent(SUPABASE_ANON_KEY)}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        apikey: SUPABASE_ANON_KEY,
+        'Content-Type': file.type || 'application/octet-stream',
+      },
+      body: file,
+    });
+    if (!resp.ok) {
+      const detail = await resp.text().catch(() => '');
+      throw new Error("Échec de l'envoi du fichier : " + detail);
     }
+    return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${nomFichier}`;
   }
 
-  document.getElementById('loadingState').style.display = 'none';
-  document.getElementById('appRoot').style.display = 'block';
-  if(draft.status === 'preview'){
-    document.getElementById('previewBanner').style.display = 'flex';
-    document.getElementById('btnRetourDashboard').href = '/mon-dashboard.html?id=' + draft.id;
-    document.getElementById('btnRetourElements').href = '/mes-elements.html?id=' + draft.id;
-  }
-  if(draft.status === 'en_pause'){
-    document.getElementById('appRoot').innerHTML =
-      '<div style="max-width:560px; margin:60px auto; text-align:center; padding:0 20px;">' +
-        '<span style="display:inline-block; background:#fdf1ea; color:#e8622c; font-size:0.78rem; font-weight:700; padding:6px 14px; border-radius:999px; margin-bottom:16px;">⏸️ En pause</span>' +
-        '<h2 style="margin-bottom:10px;">Cette vitrine est temporairement mise en pause</h2>' +
-        '<p style="color:#5b6b64; margin-bottom:24px; line-height:1.6;">' +
-          'L\'artisan a mis son abonnement en pause — ce n\'est pas définitif, elle reprendra automatiquement bientôt. Si vous êtes l\'artisan concerné, vous pouvez reprendre dès maintenant depuis votre tableau de bord.' +
-        '</p>' +
-        '<a href="/mon-dashboard.html?id=' + draft.id + '" style="display:inline-block; background:#1e6f4c; color:#fff; text-decoration:none; padding:14px 28px; border-radius:10px; font-weight:700;">Je suis l\'artisan — reprendre maintenant</a>' +
-      '</div>';
-    return;
-  }
-  if(draft.status === 'desactive'){
-    document.getElementById('appRoot').innerHTML =
-      '<div style="max-width:560px; margin:60px auto; text-align:center; padding:0 20px;">' +
-        '<h2 style="margin-bottom:10px;">Ce site n\'est plus en ligne pour le moment</h2>' +
-        '<p style="color:#5b6b64; margin-bottom:24px; line-height:1.6;">' +
-          'Cette vitrine n\'accepte plus de nouvelles demandes. Si vous êtes l\'artisan concerné, regardez la vidéo ci-dessous pour un rappel du fonctionnement, puis reconnectez-vous à votre tableau de bord pour réactiver votre site.' +
-        '</p>' +
-        '<video controls style="width:100%; border-radius:14px; margin-bottom:24px; box-shadow:0 6px 24px rgba(0,0,0,0.15);">' +
-          '<source src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/puv%20skyeco/video.mp4" type="video/mp4">' +
-        '</video>' +
-        '<a href="/mon-dashboard.html?id=' + draft.id + '" style="display:inline-block; background:#e8622c; color:#fff; text-decoration:none; padding:14px 28px; border-radius:10px; font-weight:700;">Je suis l\'artisan — accéder à mon tableau de bord</a>' +
-      '</div>';
-    return;
+  // Enregistre immédiatement un ou plusieurs champs, sans attendre le bouton
+  // "Enregistrer mes éléments" final — évite qu'un logo/une photo/un titre
+  // envoyé avec succès (donc bien présent dans le stockage) reste perdu si
+  // la personne quitte la page via "Voir l'avancement" ou ferme l'onglet
+  // avant d'avoir cliqué sur le bouton d'enregistrement global.
+  async function sauvegarderChampsImmediat(champs) {
+    if (!draftId) return;
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
+        method: 'PATCH',
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify(champs),
+      });
+    } catch (e) { /* silencieux — l'enregistrement final au bas du formulaire rattrapera si besoin */ }
   }
 
-  document.getElementById('btnPublier').addEventListener('click', ()=>{
-    // Avant de choisir le forfait, on montre un aperçu "vivant" du futur
-    // tableau de bord (données fictives sur 6 mois, cliquable pour
-    // comprendre chaque encart) — pour que l'artisan voie concrètement ce
-    // qui l'attend avant de s'engager sur une formule.
-    window.location.href = 'mon-dashboard-demo.html?id=' + draft.id;
-  });
-  document.getElementById('btnFooterCallback').addEventListener('click', ()=>{
-    const zone = document.getElementById('footerCallbackZone');
-    zone.innerHTML =
-      '<div style="max-width:320px; margin:0 auto; text-align:left;">'+
-        '<input type="text" id="footerNom" placeholder="Votre nom" style="width:100%; border:1.5px solid #d8e3de; border-radius:10px; padding:10px 12px; font-size:14px; margin-bottom:8px;" />'+
-        '<input type="tel" id="footerTel" placeholder="Votre téléphone" style="width:100%; border:1.5px solid #d8e3de; border-radius:10px; padding:10px 12px; font-size:14px; margin-bottom:10px;" />'+
-        '<button class="btn btn-primary" id="btnFooterCallbackConfirm" style="width:100%; padding:10px;">Confirmer</button>'+
-      '</div>';
-    document.getElementById('btnFooterCallbackConfirm').addEventListener('click', async ()=>{
-      const nomVal = document.getElementById('footerNom').value.trim();
-      const telVal = document.getElementById('footerTel').value.trim();
-      if(!nomVal || telVal.length < 8){ return; }
-      zone.innerHTML = '<div style="font-size:13px; color:#5b6b64;">Envoi en cours…</div>';
+  // --- Produits chiffrables : chaque produit a son propre prix (unité/prix/
+  // minimum) ET ses propres questions de devis. Remplace l'ancien couple
+  // "Chiffrage détaillé" (un seul prix par métier) + "Créer vos formulaires"
+  // (pool de questions plat). Voir api/classifier-projet-formulaire.js pour
+  // la sélection côté prospect.
+  function initProduitsChiffrables(metiers, produitsExistants) {
+    const descriptionEl = document.getElementById('produitsDescription');
+    const btnAnalyser = document.getElementById('btnAnalyserProduits');
+    const resultBox = document.getElementById('produitsAnalyseResult');
+    const listeEl = document.getElementById('produitsListe');
+    let compteurManuel = 0;
+
+    if (Array.isArray(produitsExistants)) {
+      produitsExistants.forEach(p => {
+        if (!p || !p.id) return;
+        const questions = new Map();
+        (Array.isArray(p.questions) ? p.questions : []).forEach(q => {
+          if (q && q.id && q.label) questions.set(q.id, { label: q.label, type: q.type || 'texte', unite: q.unite || null, coche: true });
+        });
+        produitsActuels.set(p.id, {
+          metier: p.metier || metiers[0] || 'autre',
+          nom: p.nom || '',
+          unite: p.unite || 'forfait',
+          prix: p.prix != null ? p.prix : '',
+          minimum: p.minimum != null ? p.minimum : '',
+          questions,
+        });
+      });
+    }
+
+    function libelleType(type, unite) {
+      if (type === 'nombre') return { ml: 'mètres linéaires', m2: 'm²', m3: 'm³' }[unite] || 'nombre';
+      if (type === 'case') return 'oui / non';
+      return 'texte libre';
+    }
+
+    function rendreProduits() {
+      listeEl.innerHTML = [...produitsActuels.entries()].map(([id, p]) => `
+        <div class="produit-card" data-produit-id="${id}">
+          <div class="produit-card-header">
+            <div>
+              <label>Nom du produit</label>
+              <input type="text" class="produit-nom" value="${(p.nom || '').replace(/"/g, '&quot;')}" placeholder="Ex : Enrobés">
+            </div>
+            <div>
+              <label>Unité</label>
+              <select class="produit-unite">
+                ${Object.entries(UNITES).map(([k, v]) => `<option value="${k}" ${p.unite === k ? 'selected' : ''}>${v}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label>Prix HT (€)</label>
+              <input type="number" class="produit-prix" step="0.01" value="${p.prix}">
+            </div>
+            <div>
+              <label>Minimum (€)</label>
+              <input type="number" class="produit-minimum" step="1" value="${p.minimum}">
+            </div>
+            <button type="button" class="btn-suppr-produit" title="Supprimer ce produit">✕</button>
+          </div>
+          <div class="produit-questions-titre">Questions spécifiques à ce produit (en plus de la question de quantité)</div>
+          <div class="formulaire-liste produit-questions-liste">
+            ${[...p.questions.entries()].map(([qid, q]) => `
+              <label class="formulaire-item">
+                <input type="checkbox" data-question-id="${qid}" ${q.coche ? 'checked' : ''}>
+                <span class="formulaire-texte">${q.label.replace(/</g, '&lt;')}</span>
+                <span class="formulaire-type">${libelleType(q.type, q.unite)}</span>
+              </label>
+            `).join('') || '<p class="hint">Aucune question pour l\'instant.</p>'}
+          </div>
+          <div class="formulaire-ajout">
+            <input type="text" class="question-manuelle-label" placeholder="Ajouter une question pour ce produit">
+            <select class="question-manuelle-type">
+              <option value="texte">Réponse libre</option>
+              <option value="nombre">Nombre</option>
+              <option value="case">Oui / non</option>
+            </select>
+            <select class="question-manuelle-unite" style="display:none;">
+              <option value="ml">mètres linéaires</option>
+              <option value="m2">m²</option>
+              <option value="m3">m³ (volume)</option>
+            </select>
+            <button type="button" class="btn-extraire btn-ajouter-question-manuelle">+ Ajouter</button>
+          </div>
+        </div>
+      `).join('') || '<p class="hint">Aucun produit pour l\'instant — décrivez votre activité ci-dessus ou ajoutez-en un manuellement.</p>';
+    }
+
+    function enregistrerProduitsSupabase() {
+      const produits = [...produitsActuels.entries()].map(([id, p]) => ({
+        id, metier: p.metier, nom: p.nom,
+        unite: p.unite,
+        prix: p.prix === '' || p.prix == null ? null : parseFloat(p.prix),
+        minimum: p.minimum === '' || p.minimum == null ? null : parseFloat(p.minimum),
+        questions: [...p.questions.entries()].filter(([, q]) => q.coche).map(([qid, q]) => ({ id: qid, label: q.label, type: q.type, unite: q.unite })),
+      }));
+      sauvegarderChampsImmediat({ produits_chiffrables: produits });
+      calculerProgression();
+    }
+
+    rendreProduits();
+
+    // --- Délégation d'événements : la liste est reconstruite à chaque
+    // ajout/suppression, donc un seul jeu d'écouteurs posé sur le conteneur
+    // parent (jamais retiré) plutôt que de re-poser des écouteurs à chaque
+    // rendu.
+    listeEl.addEventListener('input', (e) => {
+      const carte = e.target.closest('.produit-card');
+      if (!carte) return;
+      const p = produitsActuels.get(carte.dataset.produitId);
+      if (!p) return;
+      if (e.target.classList.contains('produit-nom')) p.nom = e.target.value;
+      else if (e.target.classList.contains('produit-prix')) p.prix = e.target.value;
+      else if (e.target.classList.contains('produit-minimum')) p.minimum = e.target.value;
+      else return;
+      enregistrerProduitsSupabase();
+    });
+
+    listeEl.addEventListener('change', (e) => {
+      const carte = e.target.closest('.produit-card');
+      if (!carte) return;
+      const p = produitsActuels.get(carte.dataset.produitId);
+      if (!p) return;
+
+      if (e.target.classList.contains('produit-unite')) {
+        p.unite = e.target.value;
+        enregistrerProduitsSupabase();
+      } else if (e.target.classList.contains('question-manuelle-type')) {
+        carte.querySelector('.question-manuelle-unite').style.display = e.target.value === 'nombre' ? 'inline-block' : 'none';
+      } else if (e.target.dataset.questionId) {
+        const q = p.questions.get(e.target.dataset.questionId);
+        if (q) { q.coche = e.target.checked; enregistrerProduitsSupabase(); }
+      }
+    });
+
+    listeEl.addEventListener('click', (e) => {
+      const carte = e.target.closest('.produit-card');
+      if (!carte) return;
+      const p = produitsActuels.get(carte.dataset.produitId);
+      if (!p) return;
+
+      if (e.target.classList.contains('btn-suppr-produit')) {
+        produitsActuels.delete(carte.dataset.produitId);
+        rendreProduits();
+        enregistrerProduitsSupabase();
+      } else if (e.target.classList.contains('btn-ajouter-question-manuelle')) {
+        const input = carte.querySelector('.question-manuelle-label');
+        const label = input.value.trim();
+        if (!label) return;
+        compteurManuel += 1;
+        const qid = 'manuel-' + Date.now() + '-' + compteurManuel;
+        const type = carte.querySelector('.question-manuelle-type').value;
+        const unite = type === 'nombre' ? carte.querySelector('.question-manuelle-unite').value : null;
+        p.questions.set(qid, { label, type, unite, coche: true });
+        rendreProduits();
+        enregistrerProduitsSupabase();
+      }
+    });
+
+    document.getElementById('btnAjouterProduit').addEventListener('click', () => {
+      compteurManuel += 1;
+      const id = 'manuel-' + Date.now() + '-' + compteurManuel;
+      produitsActuels.set(id, { metier: metiers[0] || 'autre', nom: '', unite: 'forfait', prix: '', minimum: '', questions: new Map() });
+      rendreProduits();
+      enregistrerProduitsSupabase();
+    });
+
+    btnAnalyser.addEventListener('click', async () => {
+      const description = descriptionEl.value.trim();
+      if (!description) {
+        resultBox.style.display = 'block';
+        resultBox.textContent = 'Décrivez brièvement votre activité et vos prix pour obtenir des suggestions.';
+        return;
+      }
+      if (!metiers.length) {
+        resultBox.style.display = 'block';
+        resultBox.textContent = "Aucun métier n'est renseigné sur ce profil — impossible de savoir quoi analyser.";
+        return;
+      }
+
+      btnAnalyser.disabled = true;
+      const texteOriginal = btnAnalyser.textContent;
+      btnAnalyser.textContent = 'Analyse en cours…';
+      resultBox.style.display = 'block';
+      resultBox.textContent = 'Lecture de votre description…';
+
       try {
-        await fetch('/api/notify-nouvelle-demande', {
+        const res = await fetch('/api/analyser-produits-chiffrables', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ draftId: draft.id, nom: nomVal, telephone: telVal, reponses: { type_demande: 'rappel_rapide_footer' } })
+          body: JSON.stringify({ description, metiers }),
         });
-        zone.innerHTML = '<div style="font-size:13px; color:#1e6f4c; font-weight:600;">✅ Demande envoyée, on vous rappelle très vite !</div>';
-      } catch (e) {
-        zone.innerHTML = '<div style="font-size:13px; color:#c0392b;">Impossible d\'envoyer la demande. Réessayez.</div>';
-      }
-    });
-  });
-
-  // Retour depuis Stripe après paiement : on vérifie et on publie côté serveur.
-  const returningSessionId = params.get('session_id');
-  if (returningSessionId) {
-    document.getElementById('previewBanner').innerHTML =
-      '<span>⏳ Vérification du paiement en cours…</span>';
-    try {
-      const res = await fetch('/api/confirm-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId: returningSessionId, draftId: draft.id })
-      });
-      const data = await res.json();
-      if (data.success) {
-        document.getElementById('previewBanner').style.background = '#1e6f4c';
-        document.getElementById('previewBanner').innerHTML =
-          '<span>✅ Votre mini-site est en ligne — création de votre accès au tableau de bord…</span>';
-        // Envoi SMS/email du lien d'accès en secours (au cas où l'artisan
-        // fermerait la page avant la fin de la redirection ci-dessous), puis
-        // direction immédiate vers la création du mot de passe du dashboard.
-        fetch('/api/envoyer-acces-dashboard', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ draftId: draft.id })
-        }).catch(() => {});
-        setTimeout(() => {
-          window.location.href = '/acces-dashboard.html?id=' + draft.id;
-        }, 1800);
-      } else {
-        document.getElementById('previewBanner').innerHTML =
-          "<span>⚠️ " + (data.error || "Le paiement n'a pas pu être confirmé.") + "</span>";
-      }
-    } catch (err) {
-      document.getElementById('previewBanner').innerHTML =
-        '<span>⚠️ Impossible de vérifier le paiement pour le moment.</span>';
-    }
-  } else if (params.get('paiement') === 'annule') {
-    document.getElementById('previewBanner').innerHTML =
-      '<span>Paiement annulé — vous pouvez réessayer quand vous voulez.</span>';
-  }
-
-  runWizard(template, brandColor, draft.id, tvaTaux, draft);
-}
-
-function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
-  const state = { step:0 };
-  const cardEl = document.getElementById('card');
-  const progressEl = document.getElementById('progress');
-  function getSteps(){ return template.getSteps(state); }
-  function renderProgress(){
-    const steps = getSteps(); progressEl.innerHTML='';
-    const total = steps.length+1;
-    for(let i=0;i<total;i++){ const seg=document.createElement('div'); seg.className='progress-seg'+(i<=state.step?' done':''); progressEl.appendChild(seg); }
-  }
-  function canProceed(s){
-    if(!s) return true;
-    if(s.type==='choice') return !!state[s.key];
-    if(s.type==='number') return state[s.key] && parseFloat(state[s.key])>0;
-    if(s.type==='location') return state.code_postal && state.code_postal.length===5;
-    if(s.type==='identity') return state.nom && state.telephone && state.telephone.length>=8 && state.telephoneVerifie && state.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email) && state.rgpdAccepte;
-    return true;
-  }
-  function renderStep(){
-    const steps=getSteps(); if(state.step>=steps.length) state.step=steps.length-1;
-    const s=steps[state.step];
-    let html = '<div class="step-label">Étape '+(state.step+1)+' sur '+steps.length+'</div>';
-    html += '<div class="question">'+s.question+'</div>';
-    if(s.type==='choice'){
-      html+='<div class="options">';
-      s.options.forEach(([val,label])=>{ const sel=state[s.key]===val?' selected':''; html+='<div class="option'+sel+'" data-val="'+val+'">'+label+'</div>'; });
-      html+='</div>';
-    } else if(s.type==='number'){
-      html+='<input type="number" id="inputNum" placeholder="'+s.placeholder+'" value="'+(state[s.key]||'')+'" min="1" />';
-    } else if(s.type==='location'){
-      html+='<label class="field-label">Ville</label><input type="text" id="inputVille" placeholder="Ex : Brech" value="'+(state.ville||'')+'" />'+
-        '<label class="field-label">Code postal</label><input type="text" id="inputCP" placeholder="Ex : 56400" value="'+(state.code_postal||'')+'" maxlength="5" />';
-    } else if(s.type==='identity'){
-      html+='<label class="field-label">Nom</label><input type="text" id="inputNom" value="'+(state.nom||'')+'" />'+
-        '<label class="field-label">Prénom</label><input type="text" id="inputPrenom" value="'+(state.prenom||'')+'" />'+
-        '<label class="field-label">Téléphone</label><input type="tel" id="inputTel" value="'+(state.telephone||'')+'" placeholder="06 XX XX XX XX" />'+
-        '<div id="smsStatusApercu" style="font-size:13px; margin:6px 0 4px;"></div>'+
-        (state.telephoneVerifie
-          ? '<div style="font-size:13px; color:#1e6f4c; font-weight:600; margin-bottom:10px;">✓ Numéro vérifié</div>'
-          : '<button type="button" id="btnEnvoyerCodeApercu" style="background:#eaf4ef;color:#1e6f4c;border:1.5px solid #1e6f4c;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:10px;" disabled>Vérifier mon numéro par SMS</button>'+
-            '<div id="smsCodeRowApercu" style="display:none; gap:8px; margin-bottom:10px;">'+
-              '<input type="text" id="smsCodeApercu" inputmode="numeric" maxlength="6" placeholder="Code reçu" style="flex:1; letter-spacing:.3em; text-align:center; border:1.5px solid #d8e3de; border-radius:8px; padding:10px;" />'+
-              '<button type="button" id="btnVerifierCodeApercu" style="background:#eaf4ef;color:#1e6f4c;border:1.5px solid #1e6f4c;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">Valider</button>'+
-            '</div>')+
-        '<label class="field-label">Email</label><input type="email" id="inputEmail" value="'+(state.email||'')+'" />'+
-        '<label style="display:flex; align-items:flex-start; gap:8px; margin-top:14px; font-size:12.5px; color:#5b6b64; line-height:1.5; cursor:pointer;">'+
-          '<input type="checkbox" id="checkRgpd" style="margin-top:2px; flex-shrink:0;" '+(state.rgpdAccepte?'checked':'')+' />'+
-          '<span>J\'accepte que mes données soient transmises à l\'artisan pour traiter ma demande, conformément à la <a href="/politique-confidentialite.html" target="_blank">politique de confidentialité</a>. *</span>'+
-        '</label>'+
-        '<label style="display:flex; align-items:flex-start; gap:8px; margin-top:8px; font-size:12.5px; color:#5b6b64; line-height:1.5; cursor:pointer;">'+
-          '<input type="checkbox" id="checkMarketing" style="margin-top:2px; flex-shrink:0;" '+(state.marketingAccepte?'checked':'')+' />'+
-          '<span>J\'accepte de recevoir par SMS et email le suivi de ma demande et d\'éventuelles relances (désabonnement possible à tout moment).</span>'+
-        '</label>';
-    } else if(s.type==='textarea'){
-      html+='<div style="display:flex; gap:8px; align-items:flex-start;"><textarea id="inputTextarea" placeholder="'+(s.placeholder||'')+'" style="flex:1; width:100%; min-height:110px; border:1.5px solid #d8e3de; border-radius:10px; padding:12px 14px; font-size:15px; font-family:inherit; resize:vertical;">'+(state[s.key]||'')+'</textarea>'+
-        (s.dictable ? '<button type="button" id="btnMicApercu" title="Dicter à la voix" style="display:none; flex-shrink:0; width:44px; height:44px; border-radius:50%; border:1.5px solid #d8e3de; background:#fff; font-size:18px; cursor:pointer;">🎤</button>' : '')+
-        '</div>'+
-        (s.optional ? '<div style="font-size:12px; color:#8a9490; margin-top:6px;">Facultatif — passez si vous préférez.</div>' : '')+
-        '<div id="micStatusApercu" style="font-size:12px; color:#8a9490; margin-top:4px;"></div>';
-    } else if(s.type==='nombre_perso'){
-      html+='<input type="number" id="inputPerso" placeholder="'+(s.placeholder||'')+'" value="'+(state[s.key]||'')+'" min="0" />'+
-        (s.unite ? '<div style="font-size:12px; color:#8a9490; margin-top:6px;">En '+s.unite+'</div>' : '')+
-        '<div style="font-size:12px; color:#8a9490; margin-top:6px;">Facultatif — passez si vous ne savez pas encore.</div>';
-    } else if(s.type==='texte_perso'){
-      html+='<input type="text" id="inputPerso" value="'+(state[s.key]||'')+'" />'+
-        '<div style="font-size:12px; color:#8a9490; margin-top:6px;">Facultatif — passez si vous préférez.</div>';
-    } else if(s.type==='case_perso'){
-      html+='<div class="options">'+
-        '<div class="option'+(state[s.key]===true?' selected':'')+'" data-val="oui">Oui</div>'+
-        '<div class="option'+(state[s.key]===false?' selected':'')+'" data-val="non">Non</div>'+
-        '</div>'+
-        '<div style="font-size:12px; color:#8a9490; margin-top:6px;">Facultatif — passez si vous préférez.</div>';
-    }
-    const libelleNext = (s.key === 'identite') ? 'Recevoir mon estimation →' : 'Continuer';
-    html += '<div class="nav-row"><button class="btn btn-ghost" id="btnBack"'+(state.step===0?" style='visibility:hidden'":'')+'>← Retour</button>'+
-      '<button class="btn btn-primary" id="btnNext">'+libelleNext+'</button></div>';
-    cardEl.innerHTML = html;
-    wireStepEvents(s, steps);
-    document.getElementById('btnNext').disabled = !canProceed(s);
-  }
-  // Dictée vocale (facultative) sur la question "Décrivez votre projet" —
-  // répond au besoin de pouvoir répondre "par écrit ou en parlant". Utilise
-  // l'API navigateur SpeechRecognition, sans dépendance externe ; le bouton
-  // reste simplement masqué si le navigateur ne la supporte pas (ex. Firefox
-  // desktop) — dégradation silencieuse, la saisie au clavier reste possible.
-  function initMicApercu(textarea){
-    const btn = document.getElementById('btnMicApercu');
-    const statusEl = document.getElementById('micStatusApercu');
-    if(!btn) return;
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if(!SR) return; // pas de mic si l'API n'existe pas dans ce navigateur
-    btn.style.display = 'inline-flex';
-    btn.style.alignItems = 'center';
-    btn.style.justifyContent = 'center';
-    let ecoute = false;
-    let recognition = null;
-    btn.addEventListener('click', ()=>{
-      if(ecoute){ recognition && recognition.stop(); return; }
-      recognition = new SR();
-      recognition.lang = 'fr-FR';
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
-      recognition.onstart = ()=>{ ecoute = true; btn.style.background = '#e8622c'; btn.style.color = '#fff'; statusEl.textContent = 'Je vous écoute…'; };
-      recognition.onresult = (event)=>{
-        const texte = Array.from(event.results).map(r=>r[0].transcript).join(' ');
-        textarea.value = (textarea.value ? textarea.value.trim() + ' ' : '') + texte;
-        textarea.dispatchEvent(new Event('input'));
-      };
-      recognition.onerror = ()=>{ statusEl.textContent = "La dictée vocale n'a pas fonctionné — vous pouvez écrire à la place."; };
-      recognition.onend = ()=>{ ecoute = false; btn.style.background = '#fff'; btn.style.color = '#000'; if(statusEl.textContent==='Je vous écoute…') statusEl.textContent=''; };
-      recognition.start();
-    });
-  }
-  function wireStepEvents(s, steps){
-    if(s.type==='choice'){
-      cardEl.querySelectorAll('.option').forEach(el=>{ el.addEventListener('click',()=>{ state[s.key]=el.dataset.val; renderProgress(); renderStep(); }); });
-    } else if(s.type==='number'){
-      const input=document.getElementById('inputNum');
-      input.addEventListener('input',()=>{ state[s.key]=input.value; document.getElementById('btnNext').disabled=!canProceed(s); });
-      input.focus();
-    } else if(s.type==='location'){
-      const ville=document.getElementById('inputVille'), cp=document.getElementById('inputCP');
-      ville.addEventListener('input',()=>{ state.ville=ville.value; });
-      cp.addEventListener('input',()=>{ state.code_postal=cp.value; document.getElementById('btnNext').disabled=!canProceed(s); });
-      ville.focus();
-    } else if(s.type==='identity'){
-      const nom=document.getElementById('inputNom'), prenom=document.getElementById('inputPrenom'), tel=document.getElementById('inputTel'), email=document.getElementById('inputEmail');
-      [nom,prenom,email].forEach(el=>{ el.addEventListener('input',()=>{ state.nom=nom.value; state.prenom=prenom.value; state.email=email.value; document.getElementById('btnNext').disabled=!canProceed(s); }); });
-      document.getElementById('checkRgpd').addEventListener('change', (e)=>{ state.rgpdAccepte = e.target.checked; document.getElementById('btnNext').disabled=!canProceed(s); });
-      document.getElementById('checkMarketing').addEventListener('change', (e)=>{ state.marketingAccepte = e.target.checked; });
-      tel.addEventListener('input',()=>{
-        state.telephone = tel.value;
-        state.telephoneVerifie = false;
-        const btn = document.getElementById('btnEnvoyerCodeApercu');
-        if(!btn){ renderStep(); return; }
-        const digits = tel.value.replace(/\D/g,'');
-        btn.disabled = digits.length !== 10;
-        document.getElementById('btnNext').disabled = !canProceed(s);
-      });
-      const btnEnvoyer = document.getElementById('btnEnvoyerCodeApercu');
-      if(btnEnvoyer){
-        btnEnvoyer.disabled = !(state.telephone && state.telephone.replace(/\D/g,'').length===10);
-        btnEnvoyer.addEventListener('click', async ()=>{
-          const statusEl = document.getElementById('smsStatusApercu');
-          btnEnvoyer.disabled = true;
-          statusEl.textContent = 'Envoi du code…';
-          statusEl.style.color = '#8a9490';
-          try{
-            const res = await fetch('/api/verify-send-code', {
-              method:'POST', headers:{'Content-Type':'application/json'},
-              body: JSON.stringify({ telephone: state.telephone })
-            });
-            const data = await res.json();
-            if(!data.success) throw new Error(data.error || "Erreur lors de l'envoi.");
-            document.getElementById('smsCodeRowApercu').style.display = 'flex';
-            statusEl.textContent = 'Code envoyé par SMS.';
-            statusEl.style.color = '#1e6f4c';
-          } catch(err){
-            statusEl.textContent = err.message;
-            statusEl.style.color = '#c0392b';
-          } finally {
-            btnEnvoyer.disabled = false;
-          }
-        });
-      }
-      const btnVerifier = document.getElementById('btnVerifierCodeApercu');
-      if(btnVerifier){
-        btnVerifier.addEventListener('click', async ()=>{
-          const statusEl = document.getElementById('smsStatusApercu');
-          const codeInput = document.getElementById('smsCodeApercu');
-          btnVerifier.disabled = true;
-          statusEl.textContent = 'Vérification…';
-          statusEl.style.color = '#8a9490';
-          try{
-            const res = await fetch('/api/verify-check-code', {
-              method:'POST', headers:{'Content-Type':'application/json'},
-              body: JSON.stringify({ telephone: state.telephone, code: codeInput.value.trim() })
-            });
-            const data = await res.json();
-            if(!data.success || !data.verified) throw new Error(data.error || 'Code invalide.');
-            state.telephoneVerifie = true;
-            renderStep();
-          } catch(err){
-            statusEl.textContent = err.message;
-            statusEl.style.color = '#c0392b';
-          } finally {
-            btnVerifier.disabled = false;
-            document.getElementById('btnNext').disabled = !canProceed(s);
-          }
-        });
-      }
-      nom.focus();
-    } else if(s.type==='textarea'){
-      const ta=document.getElementById('inputTextarea');
-      ta.addEventListener('input',()=>{ state[s.key]=ta.value; });
-      ta.focus();
-      if(s.dictable) initMicApercu(ta);
-    } else if(s.type==='nombre_perso' || s.type==='texte_perso'){
-      const input=document.getElementById('inputPerso');
-      input.addEventListener('input',()=>{ state[s.key]=input.value; });
-      input.focus();
-    } else if(s.type==='case_perso'){
-      cardEl.querySelectorAll('.option').forEach(el=>{ el.addEventListener('click',()=>{ state[s.key]=(el.dataset.val==='oui'); renderProgress(); renderStep(); }); });
-    }
-    document.getElementById('btnBack').addEventListener('click',()=>{ if(state.step>0){ state.step-=1; renderProgress(); renderStep(); } });
-    document.getElementById('btnNext').addEventListener('click', async ()=>{
-      if(!canProceed(s)) return;
-      // Juste après que le prospect a décrit son projet : si l'artisan a
-      // défini des produits chiffrables, on demande à l'IA si ce projet
-      // correspond à l'un d'eux (api/classifier-projet-formulaire.js) avant
-      // de continuer — jamais bloquant : en cas d'échec ou d'absence de
-      // correspondance, le projet est simplement considéré non chiffrable
-      // (routage vers la prise de rendez-vous technicien, voir renderResultat).
-      if(s.key === 'details_projet' && !state.questionsDynamiquesChargees){
-        const produitsConfigures = draftInfo && Array.isArray(draftInfo.produits_chiffrables) ? draftInfo.produits_chiffrables : [];
-        if(!produitsConfigures.length){
-          state.produitChoisi = null;
-          state.questionsDynamiques = [];
-          state.questionsDynamiquesChargees = true;
+        const data = await res.json();
+        if (data.success && Array.isArray(data.produits) && data.produits.length) {
+          data.produits.forEach(p => {
+            let id = p.id;
+            while (produitsActuels.has(id)) id = id + '-b'; // évite toute collision avec un produit déjà présent
+            const questions = new Map();
+            (p.questions || []).forEach(q => questions.set(q.id, { label: q.label, type: q.type, unite: q.unite, coche: true }));
+            produitsActuels.set(id, { metier: p.metier, nom: p.nom, unite: p.unite, prix: p.prix != null ? p.prix : '', minimum: p.minimum != null ? p.minimum : '', questions });
+          });
+          rendreProduits();
+          enregistrerProduitsSupabase();
+          resultBox.innerHTML = `✓ ${data.produits.length} produit(s) identifié(s) et ajouté(s) ci-dessous — vérifiez et complétez les prix avant d'enregistrer.`;
         } else {
-          const btnNext = document.getElementById('btnNext');
-          const texteOriginal = btnNext.textContent;
-          btnNext.disabled = true;
-          btnNext.textContent = 'Analyse de votre projet…';
-          try{
-            const res = await fetch('/api/classifier-projet-formulaire', {
-              method:'POST', headers:{'Content-Type':'application/json'},
-              body: JSON.stringify({ draftId, description: state.details_projet || '' })
-            });
-            const data = await res.json();
-            if(data && data.success && data.chiffrable){
-              state.produitChoisi = data.produit;
-              state.questionsDynamiques = Array.isArray(data.questions) ? data.questions : [];
-            } else {
-              state.produitChoisi = null;
-              state.questionsDynamiques = [];
-            }
-          } catch(err){
-            state.produitChoisi = null;
-            state.questionsDynamiques = [];
-          } finally {
-            state.questionsDynamiquesChargees = true;
-            btnNext.disabled = false;
-            btnNext.textContent = texteOriginal;
-          }
+          resultBox.textContent = data.error || "L'analyse n'a pas pu aboutir — ajoutez vos produits manuellement.";
         }
-      }
-      if(state.step<steps.length-1){ state.step+=1; renderProgress(); renderStep(); }
-      else {
-        enregistrerDemande();
+      } catch (e) {
+        resultBox.textContent = 'Analyse indisponible pour le moment — ajoutez vos produits manuellement.';
+      } finally {
+        btnAnalyser.disabled = false;
+        btnAnalyser.textContent = texteOriginal;
       }
     });
   }
-  // Calcul de prix automatique désactivé (01/09) : chaque demande passe
-  // désormais systématiquement par le chemin "non chiffrable" de
-  // renderResultat() — le prospect décrit son projet dans le champ texte
-  // libre "details_projet" (déjà présent dans pushQuantiteEtSuite) et est
-  // orienté vers la prise de rendez-vous téléphonique avec un technicien,
-  // qui construit le vrai chiffrage avec lui. On garde la fonction (plutôt
-  // que de la supprimer) pour ne pas casser les appels existants à
-  // calculerEstimation() ailleurs dans ce fichier.
-  function calculerEstimation(){
-    return { chiffrable:false };
+
+  function construireOptionsTitre(metiers, titreActuel) {
+    const metierPrincipal = (metiers && metiers[0]) || 'autre';
+    const options = TITRES_PAR_METIER[metierPrincipal] || TITRES_PAR_METIER.autre;
+    const container = document.getElementById('titreOptions');
+    const estPersonnalise = !!titreActuel && !options.includes(titreActuel);
+    titreChoisi = titreActuel || '';
+
+    const echapper = (s) => s.replace(/"/g, '&quot;');
+
+    container.innerHTML = `
+      <label style="margin-top:0;">Choisis un titre, ou écris le tien</label>
+      ${options.map(t => `
+        <div class="titre-option">
+          <label>
+            <input type="radio" name="titreRadio" value="${echapper(t)}" ${titreActuel === t ? 'checked' : ''}>
+            <span>${t}</span>
+          </label>
+        </div>
+      `).join('')}
+      <div class="titre-option">
+        <label>
+          <input type="radio" name="titreRadio" value="custom" ${estPersonnalise ? 'checked' : ''}>
+          <span>✏️ Mon propre titre</span>
+        </label>
+      </div>
+      <input type="text" id="titrePersonnalise" placeholder="Ex : Votre projet, notre métier." style="margin-top:4px; ${estPersonnalise ? '' : 'display:none;'}" value="${estPersonnalise ? echapper(titreActuel) : ''}">
+    `;
+
+    const inputPerso = document.getElementById('titrePersonnalise');
+    container.querySelectorAll('input[name="titreRadio"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        if (radio.value === 'custom') {
+          inputPerso.style.display = 'block';
+          titreChoisi = inputPerso.value.trim();
+        } else {
+          inputPerso.style.display = 'none';
+          titreChoisi = radio.value;
+        }
+        sauvegarderChampsImmediat({ titre_hero_choisi: titreChoisi || null });
+      });
+    });
+    inputPerso.addEventListener('input', () => { titreChoisi = inputPerso.value.trim(); });
+    inputPerso.addEventListener('change', () => {
+      sauvegarderChampsImmediat({ titre_hero_choisi: titreChoisi || null });
+    });
   }
 
-  async function enregistrerDemande(){
-    cardEl.innerHTML = '<div class="question" style="text-align:center;">Enregistrement de votre demande…</div>';
-    document.getElementById('progress').style.display = 'none';
+  // Suggestion de titre par IA (Claude) — vient compléter les titres
+  // pré-écrits de TITRES_PAR_METIER, sans les remplacer. Utilise le(s)
+  // métier(s) déjà renseignés dans la section Estimation ; si aucun métier
+  // n'est encore choisi, on prévient l'artisan au lieu d'appeler l'API pour
+  // rien.
+  document.getElementById('btnSuggererTitre').addEventListener('click', async () => {
+    const btn = document.getElementById('btnSuggererTitre');
+    const zoneBox = document.getElementById('suggestionsTitreIA');
+    const metiers = metiersActuels && metiersActuels.length ? metiersActuels : [];
 
-    // Sépare les champs identité (colonnes dédiées) du reste (stocké en jsonb "reponses").
-    // produitChoisi est retiré de "reste" : déjà repris en détail dans "recap"
-    // ci-dessous, pas besoin de le dupliquer tel quel dans reponses.
-    const { nom, prenom, telephone, telephoneVerifie, email, produitChoisi, ...reste } = state;
-    const estimation = calculerEstimation();
-
-    // Récapitulatif détaillé (cas chiffrable uniquement) envoyé à
-    // api/notify-nouvelle-demande.js pour un email complet, pas juste un
-    // montant sec — voir sa gestion du champ optionnel "recap".
-    let recap = null;
-    if(estimation.chiffrable){
-      const unitesLabels = { m2:'m²', ml:'ml', m3:'m³', forfait:'forfait' };
-      recap = [{ label:'Prestation', valeur: estimation.produit.nom }];
-      if(estimation.produit.unite !== 'forfait' && state.quantite){
-        recap.push({ label:'Quantité', valeur: state.quantite + ' ' + (unitesLabels[estimation.produit.unite] || '') });
-      }
-      if(Array.isArray(state.questionsDynamiques)){
-        state.questionsDynamiques.forEach(q=>{
-          const val = state['dyn_' + q.id];
-          if(val === undefined || val === null || val === '') return;
-          recap.push({ label: q.label, valeur: q.type === 'case' ? (val ? 'Oui' : 'Non') : val });
-        });
-      }
-      recap.push({ label:'Montant estimé', valeur: estimation.montantTTC + ' € TTC' });
-    }
-
-    let error = null;
-    let leadId = null;
-    try {
-      const resp = await fetch('/api/notify-nouvelle-demande', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          draftId, nom, prenom, telephone, telephoneVerifie, email,
-          reponses: { ...reste, estimation_indicative: estimation.chiffrable ? estimation.montantTTC : null },
-          recap
-        })
-      });
-      const data = await resp.json().catch(() => ({}));
-      if (!resp.ok) {
-        error = data.error || 'Erreur serveur';
-      } else {
-        leadId = data.leadId || null;
-      }
-    } catch (e) {
-      error = e.message;
-    }
-
-    if(error){
-      cardEl.innerHTML = '<div class="question" style="text-align:center;">Une erreur est survenue.</div>'+
-        '<div class="result-box" style="border-color:#c0392b; background:#fdecea;"><div class="result-note" style="color:#c0392b;">'+
-        "Votre demande n'a pas pu être enregistrée. Merci de réessayer ou de nous contacter directement par téléphone."+
-        '</div></div>'+
-        '<div class="nav-row"><button class="btn btn-primary" id="btnRetryEnregistrement" style="flex:1;">Réessayer</button></div>';
-      document.getElementById('btnRetryEnregistrement').addEventListener('click', enregistrerDemande);
+    if (!metiers.length) {
+      zoneBox.innerHTML = '<div class="hint">Renseigne d\'abord ton métier dans la section Estimation pour obtenir des suggestions adaptées.</div>';
       return;
     }
 
-    renderResultat(estimation, leadId);
-  }
+    const texteOriginal = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Génération…';
+    zoneBox.innerHTML = '';
 
-  function renderResultat(estimation, leadId){
-    let priceBlock, disclaimer;
-    if(estimation.chiffrable){
-      priceBlock =
-        '<div class="result-box">'+
-          '<div class="result-note">Estimation indicative</div>'+
-          '<div class="result-price">'+estimation.montantTTC+' € TTC</div>'+
-          '<div class="result-note">TVA à '+tvaTaux+'% incluse.</div>'+
-        '</div>'+
-        '<div style="background:var(--brand-tint,#eaf4ef); border:1.5px solid var(--brand,#1e6f4c); border-radius:10px; padding:12px 14px; margin-top:10px; font-size:13px; color:#14312a; text-align:center;">'+
-          '🎁 <strong>Remise de '+estimation.remisePourcent+'% possible selon le projet</strong><br/>'+
-          'Soit <strong>'+estimation.montantApresRemise+' €</strong> au lieu de '+estimation.montantTTC+' € — à confirmer avec l\'artisan.'+
-        '</div>';
-      disclaimer = 'Cette estimation reste indicative et devra être confirmée par l\'artisan lors d\'un appel téléphonique. Vous recevrez ce récapitulatif par email.';
-    } else {
-      // Projet non chiffrable automatiquement (aucun produit configuré par
-      // l'artisan ne correspond) : on oriente directement vers la vraie
-      // prise de rendez-vous (calendrier natif de l'artisan), jamais bloqué.
-      priceBlock =
-        '<div class="result-box"><div class="result-note">Ce projet nécessite l\'expertise d\'un technicien sur place pour vous donner un prix juste.</div></div>'+
-        '<a class="btn btn-primary" style="display:block; width:100%; text-align:center; text-decoration:none; margin-top:10px; box-sizing:border-box;" href="/prendre-rdv.html?id='+encodeURIComponent(draftId)+'" target="_blank" rel="noopener">📅 Prendre rendez-vous</a>';
-      disclaimer = 'Vous recevrez une confirmation de votre demande par email.';
-    }
-
-    cardEl.innerHTML =
-      '<div class="success-icon">✅</div>'+
-      '<div class="question" style="text-align:center;">Merci '+(state.prenom||'')+' !</div>'+
-      priceBlock+
-      '<p class="disclaimer">'+disclaimer+'</p>';
-  }
-
-  renderProgress();
-  renderStep();
-}
-
-init();
-</script>
-<!-- SKYECO_COOKIE_BANNER_START -->
-<div id="skyeco-cookies" style="position:fixed; left:0; right:0; bottom:0; z-index:99999; background:#14202B; color:#F4F7F9; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; box-shadow:0 -6px 24px rgba(0,0,0,0.25); display:none;">
-  <div style="max-width:1000px; margin:0 auto; padding:18px 20px; display:flex; align-items:center; gap:24px; flex-wrap:wrap;">
-    <p style="flex:1; min-width:240px; margin:0; font-size:13.5px; line-height:1.5; color:#C9D6DF;">
-      Nous utilisons des cookies n&#233;cessaires au fonctionnement du site et, avec votre accord, des cookies de mesure d&#8217;audience et de suivi publicitaire (Google Ads) pour am&#233;liorer nos services.
-      <a href="/politique-confidentialite.html" style="color:#E8622C; text-decoration:underline;">En savoir plus</a>
-    </p>
-    <div style="display:flex; gap:10px; flex-shrink:0; flex-wrap:wrap;">
-      <button type="button" onclick="skyecoCookiesChoix('essentiel')" style="background:transparent; border:1px solid rgba(255,255,255,0.35); color:#F4F7F9; padding:10px 16px; font-size:13px; font-weight:600; cursor:pointer; border-radius:4px;">Essentiels uniquement</button>
-      <button type="button" onclick="skyecoCookiesChoix('tous')" style="background:#E8622C; border:1px solid #E8622C; color:#fff; padding:10px 18px; font-size:13px; font-weight:700; cursor:pointer; border-radius:4px;">Tout accepter</button>
-    </div>
-  </div>
-</div>
-<button type="button" id="skyeco-cookies-lien" onclick="skyecoCookiesOuvrir()" aria-label="G&#233;rer mes cookies" style="display:none; position:fixed; left:16px; bottom:16px; z-index:99998; background:#14202B; color:#F4F7F9; border:1px solid rgba(255,255,255,0.25); border-radius:20px; padding:8px 14px; font-size:12px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; cursor:pointer;">&#x1F36A; Cookies</button>
-<script>
-(function(){
-  var CLE = 'skyeco_cookie_consent';
-  function lireChoix(){ try { return JSON.parse(localStorage.getItem(CLE) || 'null'); } catch(e){ return null; } }
-  function appliquerChoix(choix){
-    // Point d'extension : charger ici Google Ads / Analytics uniquement si choix.niveau === 'tous'.
-    // Rien n'est charge pour l'instant.
-    window.skyecoConsentement = choix;
-  }
-  window.skyecoCookiesChoix = function(niveau){
-    var choix = { niveau: niveau, date: new Date().toISOString() };
-    try { localStorage.setItem(CLE, JSON.stringify(choix)); } catch(e){}
-    var b = document.getElementById('skyeco-cookies'); if(b) b.style.display = 'none';
-    var l = document.getElementById('skyeco-cookies-lien'); if(l) l.style.display = 'block';
-    appliquerChoix(choix);
-  };
-  window.skyecoCookiesOuvrir = function(){
-    var b = document.getElementById('skyeco-cookies'); if(b) b.style.display = 'block';
-    var l = document.getElementById('skyeco-cookies-lien'); if(l) l.style.display = 'none';
-  };
-  document.addEventListener('DOMContentLoaded', function(){
-    var choix = lireChoix();
-    var b = document.getElementById('skyeco-cookies');
-    var l = document.getElementById('skyeco-cookies-lien');
-    if(choix && choix.niveau){
-      if(l) l.style.display = 'block';
-      appliquerChoix(choix);
-    } else if(b){
-      b.style.display = 'block';
+    try {
+      const res = await fetch('/api/suggerer-titre', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ metiers, zone: zoneActuelle })
+      });
+      const data = await res.json();
+      if (data.success && data.titres && data.titres.length) {
+        zoneBox.innerHTML = data.titres.map(t => `
+          <button type="button" class="titre-suggestion-ia" style="display:block; width:100%; text-align:left; margin-bottom:6px; padding:10px 12px; background:#f5f8f6; border:1px solid #dde5e1; border-radius:8px; cursor:pointer; font-size:0.88rem;">${t.replace(/"/g, '&quot;')}</button>
+        `).join('');
+        zoneBox.querySelectorAll('.titre-suggestion-ia').forEach(elBtn => {
+          elBtn.addEventListener('click', () => {
+            const radioCustom = document.querySelector('input[name="titreRadio"][value="custom"]');
+            const inputPerso = document.getElementById('titrePersonnalise');
+            if (radioCustom) radioCustom.checked = true;
+            if (inputPerso) {
+              inputPerso.style.display = 'block';
+              inputPerso.value = elBtn.textContent;
+            }
+            titreChoisi = elBtn.textContent;
+            sauvegarderChampsImmediat({ titre_hero_choisi: titreChoisi });
+            zoneBox.innerHTML = '';
+          });
+        });
+      } else {
+        zoneBox.innerHTML = '<div class="hint">' + (data.error || "Suggestion indisponible pour le moment, réessaie plus tard.") + '</div>';
+      }
+    } catch (e) {
+      zoneBox.innerHTML = '<div class="hint">Suggestion indisponible pour le moment, réessaie plus tard.</div>';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = texteOriginal;
     }
   });
-})();
+
+  document.getElementById('boxLogo').addEventListener('click', () => document.getElementById('inputLogo').click());
+  document.getElementById('inputLogo').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    document.getElementById('statusLogo').textContent = 'Envoi en cours…';
+    try {
+      logoUrl = await uploaderFichier(file, 'logo');
+      document.getElementById('statusLogo').textContent = 'Logo envoyé ✓';
+      document.getElementById('boxLogo').classList.add('has-file');
+      document.getElementById('logoPreview').src = logoUrl;
+      document.getElementById('logoPreview').style.display = 'block';
+      sauvegarderChampsImmediat({ logo_url: logoUrl });
+    } catch (err) {
+      document.getElementById('statusLogo').textContent = 'Erreur : ' + err.message;
+    }
+  });
+
+  document.getElementById('boxPhotos').addEventListener('click', () => document.getElementById('inputPhotos').click());
+  document.getElementById('inputPhotos').addEventListener('change', async e => {
+    const files = Array.from(e.target.files).slice(0, 10 - photosUrls.length);
+    document.getElementById('statusPhotos').textContent = `Envoi de ${files.length} photo(s)…`;
+    for (const file of files) {
+      try {
+        const url = await uploaderFichier(file, 'photo');
+        photosUrls.push(url);
+      } catch (err) { /* on continue les autres */ }
+    }
+    document.getElementById('statusPhotos').textContent = `${photosUrls.length} photo(s) ajoutée(s)`;
+    document.getElementById('boxPhotos').classList.add('has-file');
+    rafraichirGridPhotos();
+    sauvegarderChampsImmediat({ photos: photosUrls });
+  });
+
+  function rafraichirGridPhotos() {
+    const grid = document.getElementById('photosGrid');
+    grid.innerHTML = photosUrls.map((url, i) => `
+      <div class="photo-thumb">
+        <img src="${url}" alt="">
+        <button type="button" class="del" data-index="${i}">×</button>
+      </div>
+    `).join('');
+    grid.querySelectorAll('.del').forEach(btn => {
+      btn.addEventListener('click', () => {
+        photosUrls.splice(parseInt(btn.dataset.index), 1);
+        rafraichirGridPhotos();
+        document.getElementById('statusPhotos').textContent = `${photosUrls.length} photo(s) ajoutée(s)`;
+        sauvegarderChampsImmediat({ photos: photosUrls });
+      });
+    });
+  }
+
+  document.getElementById('boxVideo').addEventListener('click', () => document.getElementById('inputVideo').click());
+  document.getElementById('inputVideo').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    document.getElementById('statusVideo').textContent = 'Envoi en cours…';
+    try {
+      videoUrl = await uploaderFichier(file, 'video');
+      document.getElementById('statusVideo').textContent = 'Vidéo envoyée ✓';
+      document.getElementById('boxVideo').classList.add('has-file');
+      sauvegarderChampsImmediat({ video_url: videoUrl });
+    } catch (err) {
+      document.getElementById('statusVideo').textContent = 'Erreur : ' + err.message;
+    }
+  });
+
+  // Lien vidéo (YouTube/Vimeo) saisi directement, sans upload — même logique
+  // d'enregistrement immédiat que le reste, pour ne rien perdre en quittant
+  // la page avant le bouton final.
+  document.getElementById('videoLien').addEventListener('change', () => {
+    const lien = document.getElementById('videoLien').value.trim();
+    if (lien && !videoUrl) {
+      sauvegarderChampsImmediat({ video_url: lien });
+    }
+  });
+
+  // --- Extraction best-effort des mentions légales depuis un site existant ---
+  document.getElementById('btnExtraire').addEventListener('click', async () => {
+    const url = document.getElementById('siteExistant').value.trim();
+    const box = document.getElementById('extractionResult');
+    if (!url) { alert('Renseigne d\'abord une URL.'); return; }
+    box.style.display = 'block';
+    box.textContent = 'Recherche en cours…';
+    try {
+      const res = await fetch('/api/extraire-donnees-site', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+      const data = await res.json();
+      if (!data.success) { box.textContent = data.error || "Rien n'a pu être extrait automatiquement — remplis les champs manuellement."; return; }
+
+      let trouve = [];
+      if (data.siret) { document.getElementById('siret').value = document.getElementById('siret').value || data.siret; trouve.push('SIRET'); }
+      if (data.rcsVille) { document.getElementById('rcsVille').value = document.getElementById('rcsVille').value || data.rcsVille; trouve.push('RCS'); }
+      if (data.capitalSocial) { document.getElementById('capitalSocial').value = document.getElementById('capitalSocial').value || data.capitalSocial; trouve.push('capital social'); }
+
+      box.textContent = trouve.length
+        ? `Trouvé automatiquement : ${trouve.join(', ')}. Vérifie que c'est correct avant d'enregistrer — cette extraction n'est pas garantie fiable.`
+        : "Rien n'a pu être extrait automatiquement sur cette page — remplis les champs manuellement.";
+    } catch (e) {
+      box.textContent = "Impossible de vérifier ce site pour le moment — remplis les champs manuellement.";
+    }
+  });
+
+  // --- Enregistrement final ---
+  document.getElementById('btnSubmit').addEventListener('click', async () => {
+    const btn = document.getElementById('btnSubmit');
+    const msg = document.getElementById('saveMsg');
+    btn.disabled = true;
+    btn.textContent = 'Enregistrement…';
+
+    const videoFinal = videoUrl || document.getElementById('videoLien').value.trim() || null;
+
+    const payload = {
+      telephone: document.getElementById('telephone').value.trim(),
+      email: document.getElementById('email').value.trim(),
+      adresse_rue: document.getElementById('adresseRue').value.trim(),
+      adresse_cp: document.getElementById('adresseCp').value.trim(),
+      adresse_ville: document.getElementById('adresseVille').value.trim(),
+      siret: document.getElementById('siret').value.trim(),
+      forme_juridique: document.getElementById('formeJuridique').value,
+      capital_social: document.getElementById('capitalSocial').value.trim(),
+      rcs_ville: document.getElementById('rcsVille').value.trim(),
+      assurance_decennale_assureur: document.getElementById('assuranceAssureur').value.trim(),
+      assurance_decennale_numero: document.getElementById('assuranceNumero').value.trim(),
+      site_web_existant: document.getElementById('siteExistant').value.trim(),
+      logo_url: logoUrl,
+      photos: photosUrls,
+      video_url: videoFinal,
+      titre_hero_choisi: titreChoisi || null,
+      tva_taux: parseFloat(document.getElementById('tvaTaux').value),
+      elements_deposes_le: new Date().toISOString(),
+    };
+
+    try {
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
+        method: 'PATCH',
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify(payload),
+      });
+      if (!resp.ok) throw new Error();
+
+      // Un artisan déjà publié qui vient corriger ses éléments (depuis le lien
+      // "Modifier mes éléments" du dashboard) doit revenir à son dashboard —
+      // seul un tout premier passage (status encore "preview") continue vers
+      // l'aperçu de sa vraie vitrine (apercu.html), qui enchaîne lui-même
+      // vers la démo du tableau de bord puis le choix de formule — l'artisan
+      // doit voir son site avant de décider quoi que ce soit.
+      const versDashboard = draftStatutActuel === 'published' || draftStatutActuel === 'en_pause' || draftStatutActuel === 'essai';
+      msg.className = 'save-msg ok';
+      msg.textContent = versDashboard
+        ? '✓ Tes éléments ont bien été enregistrés. On te ramène à ton tableau de bord…'
+        : '✓ Tes éléments ont bien été enregistrés. On t\'emmène voir ta vitrine…';
+      msg.style.display = 'block';
+      btn.textContent = 'Enregistré ✓';
+      setTimeout(() => {
+        window.location.href = versDashboard
+          ? '/mon-dashboard.html?id=' + draftId
+          : '/apercu.html?id=' + draftId;
+      }, 1500);
+    } catch (e) {
+      msg.className = 'save-msg err';
+      msg.textContent = "Une erreur est survenue — réessaie ou contacte-nous directement.";
+      msg.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Enregistrer mes éléments';
+    }
+  });
 </script>
-<!-- SKYECO_COOKIE_BANNER_END -->
 </body>
 </html>

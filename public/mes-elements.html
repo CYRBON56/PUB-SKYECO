@@ -1026,18 +1026,20 @@
       // Un artisan déjà publié qui vient corriger ses éléments (depuis le lien
       // "Modifier mes éléments" du dashboard) doit revenir à son dashboard —
       // seul un tout premier passage (status encore "preview") continue vers
-      // le choix de formule.
-      const versDashboard = draftStatutActuel === 'published' || draftStatutActuel === 'en_pause';
+      // l'aperçu de sa vraie vitrine (apercu.html), qui enchaîne lui-même
+      // vers la démo du tableau de bord puis le choix de formule — l'artisan
+      // doit voir son site avant de décider quoi que ce soit.
+      const versDashboard = draftStatutActuel === 'published' || draftStatutActuel === 'en_pause' || draftStatutActuel === 'essai';
       msg.className = 'save-msg ok';
       msg.textContent = versDashboard
         ? '✓ Tes éléments ont bien été enregistrés. On te ramène à ton tableau de bord…'
-        : '✓ Tes éléments ont bien été enregistrés. On t\'emmène vers le choix de ta formule…';
+        : '✓ Tes éléments ont bien été enregistrés. On t\'emmène voir ta vitrine…';
       msg.style.display = 'block';
       btn.textContent = 'Enregistré ✓';
       setTimeout(() => {
         window.location.href = versDashboard
           ? '/mon-dashboard.html?id=' + draftId
-          : '/choisir-forfait.html?id=' + draftId;
+          : '/apercu.html?id=' + draftId;
       }, 1500);
     } catch (e) {
       msg.className = 'save-msg err';

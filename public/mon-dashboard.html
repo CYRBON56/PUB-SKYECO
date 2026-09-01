@@ -423,6 +423,11 @@
       <div class="heures-chart" id="heuresChart"></div>
       <div class="heures-labels" id="heuresLabels"></div>
       <div class="heures-note" id="heuresNote"></div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;">
+        <button type="button" id="btnHorairesPointe" style="background:#1e6f4c; color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:0.82rem; font-weight:700; cursor:pointer;">🕐 Limiter la diffusion aux heures de pointe</button>
+        <button type="button" id="btnHorairesToute" style="background:#fff; color:#5b6b64; border:1.5px solid #d8e3de; border-radius:8px; padding:10px 16px; font-size:0.82rem; font-weight:700; cursor:pointer;">Revenir à une diffusion 24h/24</button>
+      </div>
+      <div id="horairesNote" style="font-size:0.78rem; color:#8a9891; margin-top:8px;"></div>
     </div>
 
     <div class="ads-souspanel" id="zonesPanel" style="display:none;">
@@ -1351,7 +1356,20 @@
     }
 
     async function enregistrerSelectionSupabase() {
-      const motsClesActifs = [...selection.entries()].filter(([, coche]) => coche).map(([texte]) => texte);
+      // Triés par volume de recherche décroissant (le plus pertinent en
+      // premier) avant l'enregistrement — c'est ce premier mot-clé qui sert
+      // ensuite de Titre 2 par défaut pour l'annonce Google Ads (voir
+      // genererAnnoncePropos() dans campagne.html, qui prend simplement
+      // motsClesActuels[0]). Un mot-clé sans donnée de volume connue est
+      // classé après ceux qui en ont une.
+      const motsClesActifs = [...selection.entries()]
+        .filter(([, coche]) => coche)
+        .map(([texte]) => texte)
+        .sort((a, b) => {
+          const volA = trouverStats(a)?.monthly_volume || 0;
+          const volB = trouverStats(b)?.monthly_volume || 0;
+          return volB - volA;
+        });
       try {
         await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
           method: 'PATCH',
@@ -1457,7 +1475,9 @@
       return;
     }
     const maxClics = Math.max(...motsCles.map(m => m.clics));
+    const aExclureEnMasse = motsCles.filter(m => m.clics === 0 && m.statut !== 'REMOVED');
     content.innerHTML = `
+      ${aExclureEnMasse.length ? `<button type="button" id="btnExclureZeroClic" style="margin-bottom:10px; background:#fdecea; color:#c0392b; border:1.5px solid #f0b3ab; border-radius:8px; padding:9px 14px; font-size:0.82rem; font-weight:700; cursor:pointer;">🚫 Exclure les ${aExclureEnMasse.length} mot${aExclureEnMasse.length > 1 ? 's' : ''}-clé${aExclureEnMasse.length > 1 ? 's' : ''} à 0 clic</button>` : ''}
       <table class="kw-table">
         <thead><tr><th>Mot-clé</th><th>Clics</th><th>Coût</th><th>CPC moyen</th><th></th></tr></thead>
         <tbody>
@@ -1473,6 +1493,38 @@
         </tbody>
       </table>
     `;
+    const btnMasse = document.getElementById('btnExclureZeroClic');
+    if (btnMasse) {
+      btnMasse.addEventListener('click', async () => {
+        if (!confirm(`Exclure ces ${aExclureEnMasse.length} mots-clés qui n'ont généré aucun clic ? Vos annonces ne se déclencheront plus pour ces recherches.`)) return;
+        btnMasse.disabled = true;
+        btnMasse.textContent = 'Exclusion en cours…';
+        for (const m of aExclureEnMasse) {
+          try {
+            await fetch('/api/manage-keywords', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ draftId, action: 'exclude', texte: m.texte, matchType: m.matchType }),
+            });
+          } catch (e) { /* on continue avec les suivants même si un appel échoue */ }
+        }
+        // Recharge les données pour refléter les exclusions (même appel
+        // que celui qui alimente ce tableau au premier chargement).
+        try {
+          const res = await fetch('/api/get-google-ads-details', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ draft_id: draftId })
+          });
+          const data = await res.json();
+          if (data.success && data.campagneExiste) {
+            afficherMotsCles(data.motsCles || []);
+            afficherHeures(data.clicsParHeure || [], data.heuresDePointe || []);
+            afficherCoaching(data.motsCles || [], data.heuresDePointe || []);
+          }
+        } catch (e) { /* silencieux */ }
+      });
+    }
   }
 
   function afficherHeures(clicsParHeure, heuresDePointe) {
@@ -1491,6 +1543,57 @@
       note.textContent = "Pas encore assez de clics pour dégager un créneau horaire dominant.";
     }
   }
+
+  document.getElementById('btnHorairesPointe').addEventListener('click', async () => {
+    const btn = document.getElementById('btnHorairesPointe');
+    const note = document.getElementById('horairesNote');
+    btn.disabled = true;
+    btn.textContent = 'Application en cours…';
+    note.textContent = '';
+    try {
+      const res = await fetch('/api/definir-horaires-diffusion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, mode: 'heures_pointe' })
+      });
+      const data = await res.json();
+      if (data.success) {
+        const heuresTxt = data.heuresDePointe.map(h => h + 'h').join(', ');
+        note.textContent = `✓ Diffusion limitée autour de ${heuresTxt} (avec 1h de marge), tous les jours.`;
+      } else {
+        note.textContent = data.error || "Impossible d'appliquer ce réglage pour le moment.";
+      }
+    } catch (e) {
+      note.textContent = "Impossible de contacter le serveur.";
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🕐 Limiter la diffusion aux heures de pointe';
+    }
+  });
+
+  document.getElementById('btnHorairesToute').addEventListener('click', async () => {
+    const btn = document.getElementById('btnHorairesToute');
+    const note = document.getElementById('horairesNote');
+    btn.disabled = true;
+    btn.textContent = '…';
+    note.textContent = '';
+    try {
+      const res = await fetch('/api/definir-horaires-diffusion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, mode: 'toute_heure' })
+      });
+      const data = await res.json();
+      note.textContent = data.success
+        ? '✓ Vos annonces peuvent à nouveau se diffuser à toute heure.'
+        : (data.error || "Impossible d'appliquer ce réglage pour le moment.");
+    } catch (e) {
+      note.textContent = "Impossible de contacter le serveur.";
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Revenir à une diffusion 24h/24';
+    }
+  });
 
   function afficherCoaching(motsCles, heuresDePointe) {
     const panel = document.getElementById('coachingPanel');

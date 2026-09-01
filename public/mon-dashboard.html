@@ -386,6 +386,7 @@
         <label>Description 2 <span class="compteur" id="cptDesc2">0/90</span></label>
         <textarea id="annonceDesc2" maxlength="90"></textarea>
       </div>
+      <button type="button" id="btnRegenererAnnonce" style="margin-top:4px; background:#fff; color:#1e6f4c; border:1.5px solid #1e6f4c; border-radius:8px; padding:9px 14px; font-size:0.82rem; font-weight:700; cursor:pointer;">🔄 Régénérer depuis mes mots-clés</button>
       <div class="annonce-sauvegarde-note" id="annonceSauvegardeNote"></div>
     </div>
 
@@ -1265,9 +1266,42 @@
 
     majApercu();
 
-    if (!(Array.isArray(draftInfo.annonce_titres) && draftInfo.annonce_titres.length)) {
-      sauvegarderAnnonce();
-    }
+    // Sauvegarde automatique du texte générique au premier chargement
+    // retirée (01/09) : elle se déclenchait AVANT que l'artisan ait pu
+    // cocher un seul mot-clé, figeant définitivement le texte par défaut
+    // ("Devis gratuit"...) puisque tant qu'annonce_titres existe en base,
+    // plus rien ne se régénère automatiquement (voir titresDepart
+    // ci-dessus). Sans effet néfaste de la retirer : create-google-ads-campaign.js
+    // a déjà son propre repli sur un texte générique si annonce_titres est
+    // vide au moment de lancer la campagne.
+
+    document.getElementById('btnRegenererAnnonce').addEventListener('click', async () => {
+      const btn = document.getElementById('btnRegenererAnnonce');
+      btn.disabled = true;
+      btn.textContent = '…';
+      try {
+        const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,zone,mots_cles_choisis`, {
+          headers: { apikey: SUPABASE_ANON_KEY }
+        });
+        const rows = await resp.json();
+        const infosActuelles = rows[0] || draftInfo;
+        const nouveauxDefauts = genererAnnoncePropos(infosActuelles);
+        champs.titre1.value = nouveauxDefauts.titres[0] || '';
+        champs.titre2.value = nouveauxDefauts.titres[1] || '';
+        champs.titre3.value = nouveauxDefauts.titres[2] || '';
+        champs.desc1.value = nouveauxDefauts.descriptions[0] || '';
+        champs.desc2.value = nouveauxDefauts.descriptions[1] || '';
+        Object.keys(champs).forEach(majCompteur);
+        majApercu();
+        sauvegardeNote.textContent = 'Enregistrement…';
+        await sauvegarderAnnonce();
+      } catch (e) {
+        sauvegardeNote.textContent = "Impossible de régénérer pour le moment.";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🔄 Régénérer depuis mes mots-clés';
+      }
+    });
   }
 
   // Panneau "✨ Quels mots-clés pour votre annonce ?" — décrire son activité,

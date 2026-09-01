@@ -649,8 +649,11 @@
       document.getElementById('statClics').textContent = data.clics ?? '—';
 
       const alerte = data.pourcentageConsomme >= 90 ? 'alerte' : '';
+      const statutBadge = data.diffusionPausee
+        ? '<span class="statut-badge" style="background:#fdf1ea; color:#e8622c;">⏸️ En pause</span>'
+        : '<span class="statut-badge" style="background:#eaf4ef; color:#1e6f4c;">🟢 Active</span>';
       box.innerHTML = `
-        <h3>Solde publicitaire</h3>
+        <h3>Solde publicitaire ${statutBadge}</h3>
         <div class="solde-bar-track"><div class="solde-bar-fill ${alerte}" style="width:${data.pourcentageConsomme}%"></div></div>
         <div class="solde-stats">
           <span>Consommé : <strong>${data.consommationAjustee} €</strong></span>

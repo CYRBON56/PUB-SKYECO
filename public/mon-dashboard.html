@@ -326,22 +326,6 @@
       <h3>Où voulez-vous être visible ?</h3>
       <div id="zoneAffichage" class="zone-affichage">
         <span id="zoneValeur">—</span>
-        <button type="button" id="btnModifierZone" class="btn-modifier-zone">✏️ Modifier</button>
-      </div>
-      <div id="zoneEdition" class="zone-edition" style="display:none;">
-        <input type="text" id="zoneInput" placeholder="Ex : Brech et ses environs">
-        <div style="display:flex; gap:10px; margin-top:10px;">
-          <div style="flex:1;">
-            <label style="font-size:0.78rem; color:#5b6b64; display:block; margin-bottom:4px;">Ville de référence</label>
-            <input type="text" id="villeCiblageInput" placeholder="Ex : Brech">
-          </div>
-          <div style="width:110px;">
-            <label style="font-size:0.78rem; color:#5b6b64; display:block; margin-bottom:4px;">Rayon (km)</label>
-            <input type="number" id="rayonCiblageInput" min="1" max="100" placeholder="Ex : 20">
-          </div>
-        </div>
-        <button type="button" id="btnEnregistrerZone">Enregistrer</button>
-        <button type="button" id="btnAnnulerZone" class="btn-annuler-zone">Annuler</button>
       </div>
       <div class="estim-note">
         Ce texte décrit votre secteur d'intervention pour vos clients.
@@ -1109,66 +1093,9 @@
   }
 
   function initZoneCiblee(zoneActuelle, villeActuelle, rayonActuel) {
-    let zone = zoneActuelle;
-    let ville = villeActuelle;
-    let rayon = rayonActuel;
-    const affichage = document.getElementById('zoneAffichage');
-    const edition = document.getElementById('zoneEdition');
     const valeurEl = document.getElementById('zoneValeur');
-    const input = document.getElementById('zoneInput');
-    const villeInput = document.getElementById('villeCiblageInput');
-    const rayonInput = document.getElementById('rayonCiblageInput');
-    const btnModifier = document.getElementById('btnModifierZone');
-    const btnEnregistrer = document.getElementById('btnEnregistrerZone');
-    const btnAnnuler = document.getElementById('btnAnnulerZone');
-
-    function rafraichirAffichage() {
-      const precision = (ville && rayon) ? ` (${ville}, ${rayon} km)` : '';
-      valeurEl.textContent = (zone || 'Aucune zone renseignée pour le moment') + precision;
-    }
-    rafraichirAffichage();
-
-    btnModifier.addEventListener('click', () => {
-      input.value = zone;
-      villeInput.value = ville;
-      rayonInput.value = rayon;
-      affichage.style.display = 'none';
-      edition.style.display = 'flex';
-      input.focus();
-    });
-
-    btnAnnuler.addEventListener('click', () => {
-      edition.style.display = 'none';
-      affichage.style.display = 'flex';
-    });
-
-    btnEnregistrer.addEventListener('click', async () => {
-      const nouvelleZone = input.value.trim();
-      const nouvelleVille = villeInput.value.trim();
-      const nouveauRayon = rayonInput.value ? parseInt(rayonInput.value, 10) : null;
-      if (!nouvelleZone) return;
-      btnEnregistrer.disabled = true;
-      btnEnregistrer.textContent = '…';
-      try {
-        const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
-          method: 'PATCH',
-          headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-          body: JSON.stringify({ zone: nouvelleZone, ville_ciblage: nouvelleVille || null, rayon_ciblage_km: nouveauRayon }),
-        });
-        if (!resp.ok) throw new Error();
-        zone = nouvelleZone;
-        ville = nouvelleVille;
-        rayon = nouveauRayon;
-        rafraichirAffichage();
-        edition.style.display = 'none';
-        affichage.style.display = 'flex';
-      } catch (e) {
-        alert("Impossible d'enregistrer la zone pour le moment.");
-      } finally {
-        btnEnregistrer.disabled = false;
-        btnEnregistrer.textContent = 'Enregistrer';
-      }
-    });
+    const precision = (villeActuelle && rayonActuel) ? ` (${villeActuelle}, ${rayonActuel} km)` : '';
+    valeurEl.textContent = (zoneActuelle || 'Aucune zone renseignée pour le moment') + precision;
   }
 
   // Aperçu (format Google : badge "Annonce", URL en vert, titre en bleu,

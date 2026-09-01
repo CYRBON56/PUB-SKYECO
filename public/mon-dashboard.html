@@ -327,10 +327,7 @@
       <div id="zoneAffichage" class="zone-affichage">
         <span id="zoneValeur">—</span>
       </div>
-      <div class="estim-note">
-        Ce texte décrit votre secteur d'intervention pour vos clients.
-        La ville + le rayon servent de repère pour poser le ciblage précis directement dans Google Ads — le connecteur utilisé aujourd'hui ne permet pas encore de le faire automatiquement, ce sera fait manuellement en attendant, sur la base de ces deux valeurs.
-      </div>
+      <div class="estim-note">Ce texte décrit votre secteur d'intervention pour vos clients. Le ciblage réel de vos annonces se pose actuellement à la main dans Google Ads (le connecteur utilisé ne le permet pas encore automatiquement).</div>
     </div>
 
     <div class="ads-souspanel">
@@ -1051,14 +1048,14 @@
     }
 
     try {
-      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,metier,zone,departement,ville_ciblage,rayon_ciblage_km,mots_cles_choisis,annonce_titres,annonce_descriptions`, {
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,metier,zone,departement,mots_cles_choisis,annonce_titres,annonce_descriptions`, {
         headers: { apikey: SUPABASE_ANON_KEY }
       });
       const rows = await resp.json();
       draftInfo = rows[0] || {};
     } catch (e) { /* on garde draftInfo vide — repli générique dans rafraichirEstimationVolume */ }
 
-    initZoneCiblee(draftInfo.zone || '', draftInfo.ville_ciblage || '', draftInfo.rayon_ciblage_km || '');
+    initZoneCiblee(draftInfo.zone || '');
     const motsClesApi = initMotsCles(draftInfo, rafraichirEstimationVolume);
     initAnnonce(draftInfo);
 
@@ -1092,10 +1089,9 @@
     }
   }
 
-  function initZoneCiblee(zoneActuelle, villeActuelle, rayonActuel) {
+  function initZoneCiblee(zoneActuelle) {
     const valeurEl = document.getElementById('zoneValeur');
-    const precision = (villeActuelle && rayonActuel) ? ` (${villeActuelle}, ${rayonActuel} km)` : '';
-    valeurEl.textContent = (zoneActuelle || 'Aucune zone renseignée pour le moment') + precision;
+    valeurEl.textContent = zoneActuelle || 'Aucune zone renseignée pour le moment';
   }
 
   // Aperçu (format Google : badge "Annonce", URL en vert, titre en bleu,

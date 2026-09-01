@@ -3,1760 +3,1056 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mon tableau de bord — Skyeco Pro</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<title>Vos éléments — Skyeco Pro</title>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f5f8f6; color:#14312a; padding:32px 24px 60px; position:relative; overflow-x:hidden; }
+  body {
+    font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background:#f7f5f0; color:#2a3d35; padding:40px 20px 100px;
+    position:relative; overflow-x:hidden; line-height:1.6;
+  }
+
+  /* Fond végétal, très discret — juste une présence apaisante, jamais distrayant */
   .leaf-bg { position:fixed; z-index:0; pointer-events:none; }
-  .leaf-bg svg { display:block; filter:blur(0.5px); }
-  .wrap { position:relative; z-index:1; max-width:980px; margin:0 auto; }
-  .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
-  .header-titre { display:flex; align-items:center; gap:14px; }
-  .logo-entreprise {
-    display:none; width:48px; height:48px; border-radius:12px; object-fit:contain;
-    background:#fff; padding:5px; box-shadow:0 4px 14px rgba(20,49,42,0.10); border:1px solid #eef2ef;
+  .leaf-bg svg { display:block; }
+
+  .wrap { position:relative; z-index:1; max-width:640px; margin:0 auto; }
+
+  .eyebrow { font-size:0.78rem; font-weight:600; color:#4a8a68; letter-spacing:0.04em; text-transform:uppercase; margin-bottom:10px; }
+  h1 { font-size:1.7rem; font-weight:700; margin-bottom:14px; letter-spacing:-0.01em; }
+  .intro { font-size:0.98rem; color:#5f6f66; line-height:1.75; margin-bottom:8px; max-width:52ch; }
+  .reassurance { font-size:0.84rem; color:#7a8880; margin-bottom:36px; display:flex; align-items:center; gap:8px; }
+
+  /* Barre de progression douce */
+  .progress-wrap { margin-bottom:32px; }
+  .progress-track { background:#e9e5db; border-radius:999px; height:6px; overflow:hidden; }
+  .progress-fill { background:#4a8a68; height:100%; border-radius:999px; transition:width 0.5s ease; width:0%; }
+  .progress-label { font-size:0.76rem; color:#8a9891; margin-top:8px; }
+
+  .section {
+    background:#fffdfa; border-radius:20px; margin-bottom:16px;
+    box-shadow:0 1px 3px rgba(42,61,53,0.04), 0 8px 24px rgba(42,61,53,0.05);
+    overflow:hidden; border:1px solid rgba(42,61,53,0.04);
   }
-  h1 { font-size:1.5rem; }
-  .btn-fonds { background:#e8622c; color:#fff; text-decoration:none; padding:12px 22px; border-radius:10px; font-weight:700; font-size:0.92rem; }
-  .btn-fonds:hover { filter:brightness(1.05); }
-  .btn-elements { background:#1e6f4c; color:#fff; text-decoration:none; padding:12px 22px; border-radius:10px; font-weight:700; font-size:0.92rem; }
-  .btn-elements:hover { filter:brightness(1.08); }
-
-  .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:28px; }
-  .stat-card { background:#fff; border-radius:14px; padding:20px; box-shadow:0 4px 20px rgba(20,49,42,0.08); }
-  .stat-value { font-size:1.9rem; font-weight:800; }
-  .stat-label { font-size:0.78rem; color:#8a9891; margin-top:2px; }
-
-  .solde-box { background:#fff; border:2px solid #1e6f4c; border-radius:14px; padding:22px; margin-bottom:28px; }
-  .btn-pause-diffusion {
-    background:#f2f4f1; color:#14312a; border:1.5px solid #d7dedb; border-radius:10px;
-    padding:9px 16px; font-size:0.82rem; font-weight:700; cursor:pointer; margin-top:14px;
+  .section-header {
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:22px 26px; cursor:pointer; user-select:none;
   }
-  .btn-pause-diffusion.actif-pause { background:#fdf1ea; border-color:#e8622c; color:#e8622c; }
-  .btn-pause-diffusion:disabled { opacity:0.5; cursor:not-allowed; }
-  .pause-note { font-size:0.76rem; color:#8a9891; margin-top:6px; }
-  .solde-box h3 { font-size:0.95rem; margin-bottom:14px; }
-  .solde-bar-track { background:#eef1f0; border-radius:8px; height:12px; overflow:hidden; margin-bottom:10px; }
-  .solde-bar-fill { background:#e8622c; height:100%; transition:width 0.4s ease; }
-  .solde-bar-fill.alerte { background:#c0392b; }
-  .solde-stats { display:flex; justify-content:space-between; font-size:0.85rem; color:#5b6b64; margin-bottom:14px; }
-  .solde-stats strong { color:#14312a; font-size:1.05rem; }
-  .solde-detail { font-size:0.76rem; color:#8a9891; line-height:1.6; }
+  .section-header:hover { background:rgba(74,138,104,0.03); }
+  .section-title { display:flex; align-items:center; gap:12px; }
+  .section-icon { font-size:1.3rem; }
+  .section h2 { font-size:1.05rem; font-weight:700; }
+  .section .sub { font-size:0.82rem; color:#8a9891; margin-top:3px; }
+  .section-check { font-size:0.78rem; color:#4a8a68; font-weight:600; opacity:0; transition:opacity 0.2s; }
+  .section-check.visible { opacity:1; }
+  .chevron { color:#c2c9c3; font-size:0.9rem; transition:transform 0.25s ease; flex-shrink:0; }
+  .section.open .chevron { transform:rotate(180deg); }
 
-  .liste-panel { background:#fff; border-radius:14px; padding:22px; }
+  .section-body { max-height:0; overflow:hidden; transition:max-height 0.35s ease; }
+  .section.open .section-body { max-height:none; }
+  .section-body-inner { padding:4px 26px 26px; }
 
-  .panel-tabs { display:flex; gap:14px; margin-bottom:24px; flex-wrap:wrap; }
-  .panel-tab {
-    flex:1; min-width:220px; display:flex; align-items:center; gap:14px; text-align:left;
-    background:#fff; border:2px solid #e6e2d6; border-radius:16px; padding:18px 20px;
-    cursor:pointer; box-shadow:0 4px 16px rgba(20,49,42,0.06); transition:border-color 0.2s, transform 0.15s;
+  label { display:block; font-size:0.84rem; font-weight:600; color:#3d5248; margin-bottom:7px; margin-top:18px; }
+  label:first-of-type { margin-top:0; }
+  input[type=text], input[type=email], input[type=tel], input[type=url], input[type=number], select, textarea {
+    width:100%; padding:12px 14px; border:1.5px solid #e3ded2; border-radius:12px; font-size:0.95rem;
+    font-family:inherit; color:#2a3d35; background:#fdfcf9; transition:border-color 0.15s;
   }
-  .panel-tab:hover { transform:translateY(-1px); }
-  .panel-tab.active { border-color:#1e6f4c; background:#f2f8f5; }
-  .panel-tab-icone { font-size:1.7rem; flex-shrink:0; }
-  .panel-tab-texte { font-size:1rem; font-weight:800; color:#14312a; display:flex; flex-direction:column; gap:2px; }
-  .panel-tab-sous { font-size:0.76rem; font-weight:400; color:#5b6b64; }
+  input:focus, select:focus, textarea:focus { outline:none; border-color:#4a8a68; }
+  textarea { resize:vertical; min-height:70px; }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .row3 { display:grid; grid-template-columns:2fr 1fr 1fr; gap:14px; }
+  .hint { font-size:0.76rem; color:#a3ab9e; margin-top:6px; line-height:1.5; }
 
-  .zones-liste { display:flex; flex-direction:column; gap:8px; }
-  .zone-ligne { display:flex; align-items:center; gap:12px; }
-  .zone-ligne .zone-nom { flex:0 0 180px; font-size:0.85rem; color:#3a4a43; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .zone-ligne .zone-barre-track { flex:1; background:#eef1f0; border-radius:6px; height:10px; overflow:hidden; }
-  .zone-ligne .zone-barre-fill { background:#1e6f4c; height:100%; border-radius:6px; }
-  .zone-ligne .zone-clics { flex:0 0 70px; text-align:right; font-size:0.85rem; font-weight:700; color:#14312a; }
-
-  .devis-badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:0.72rem; font-weight:700; white-space:nowrap; }
-  .devis-badge.aucun { background:#eef1f0; color:#8a9891; }
-  .devis-badge.envoye { background:#e6f0ff; color:#2f5fa8; }
-  .devis-badge.relance { background:#fdf1ea; color:#b8571f; }
-  .devis-badge.signe { background:#e3f5ea; color:#1e6f4c; }
-  .devis-actions { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
-  .btn-devis { border:none; border-radius:8px; padding:6px 10px; font-size:0.74rem; font-weight:700; cursor:pointer; white-space:nowrap; }
-  .btn-devis.envoyer { background:#1e6f4c; color:#fff; }
-  .btn-devis.relancer { background:#e8622c; color:#fff; }
-  .btn-devis.voir { background:#eef1f0; color:#3a4a43; text-decoration:none; }
-  .btn-devis:disabled { opacity:0.6; cursor:wait; }
-
-  .estim-box { background:#fff; border:2px solid #e8622c; border-radius:14px; padding:22px; margin-bottom:28px; }
-  .estim-box h3 { font-size:0.95rem; margin-bottom:14px; }
-  .estim-row { display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
-  .estim-row label { font-size:0.85rem; font-weight:700; }
-  .estim-row input {
-    width:110px; font-size:1.15rem; font-weight:800; padding:8px 12px; border:2px solid #d7dedb;
-    border-radius:10px; color:#14312a;
+  .upload-box {
+    border:1.5px dashed #d8d2c2; border-radius:14px; padding:24px; text-align:center; cursor:pointer; transition:all 0.2s; background:#fdfcf9;
   }
-  .estim-resultat { display:flex; gap:28px; }
-  .estim-resultat .chiffre { font-size:1.5rem; font-weight:800; color:#e8622c; }
-  .estim-resultat .label { font-size:0.76rem; color:#5b6b64; }
-  .estim-note { font-size:0.74rem; color:#8a9891; margin-top:10px; }
+  .upload-box:hover { border-color:#4a8a68; background:#f4f8f5; }
+  .upload-box.has-file { border-style:solid; border-color:#4a8a68; background:#f0f7f2; }
+  .upload-box input[type=file] { display:none; }
+  .upload-label { font-size:0.88rem; font-weight:600; color:#4a8a68; }
+  .upload-status { font-size:0.78rem; color:#8a9891; margin-top:6px; }
+  .logo-preview-img { display:none; max-height:60px; max-width:180px; object-fit:contain; margin:0 auto 10px; }
 
-  .ads-section { background:#fff; border-radius:14px; padding:22px; margin-bottom:28px; box-shadow:0 4px 20px rgba(20,49,42,0.08); }
-  .ads-section h2 { font-size:1.05rem; margin-bottom:4px; }
-  .ads-section .ads-sub { font-size:0.82rem; color:#5b6b64; margin-bottom:20px; }
-  .ads-souspanel { border-top:1.5px solid #eef1f0; padding-top:20px; margin-top:20px; }
-  .ads-souspanel:first-of-type { border-top:none; padding-top:0; margin-top:0; }
-  .ads-souspanel h3 { font-size:0.9rem; margin-bottom:12px; }
+  .titre-option { margin-bottom:2px; }
+  .titre-option label { display:flex; align-items:flex-start; gap:10px; margin:0 0 10px; font-weight:400; font-size:0.92rem; cursor:pointer; color:#2a3d35; }
+  .titre-option input[type=radio] { margin-top:3px; accent-color:#4a8a68; width:auto; }
 
-  .motscles-hint { font-size:0.8rem; color:#5b6b64; margin-bottom:12px; line-height:1.5; }
-  .motscles-textarea {
-    width:100%; min-height:70px; padding:11px 12px; border:1.5px solid #d7dedb; border-radius:9px;
-    font-size:0.88rem; font-family:inherit; resize:vertical; color:#14312a;
+  .photos-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(88px,1fr)); gap:10px; margin-top:14px; }
+  .photo-thumb { position:relative; aspect-ratio:1; border-radius:10px; overflow:hidden; background:#f0eee6; }
+  .photo-thumb img { width:100%; height:100%; object-fit:cover; }
+  .photo-thumb .del { position:absolute; top:4px; right:4px; background:rgba(42,61,53,0.55); color:#fff; border:none; border-radius:50%; width:22px; height:22px; font-size:13px; cursor:pointer; line-height:1; }
+
+  .toggle-row { display:flex; align-items:center; gap:10px; margin-bottom:4px; }
+  .toggle-row input { width:auto; accent-color:#4a8a68; }
+  .toggle-row label { margin:0; font-weight:600; }
+
+  .extraction-box { background:#f4ece2; border-radius:12px; padding:14px 16px; margin-top:14px; font-size:0.82rem; color:#6b5e4c; line-height:1.6; }
+  .btn-extraire { background:#e8622c; color:#fff; border:none; border-radius:10px; padding:10px 18px; font-size:0.82rem; font-weight:600; cursor:pointer; margin-top:10px; transition:filter 0.15s; }
+
+  .btn-avancement {
+    display:inline-flex; align-items:center; gap:8px; background:#fff; border:1.5px solid #4a8a68;
+    color:#3d7a5a; border-radius:999px; padding:10px 18px; font-size:0.84rem; font-weight:600;
+    text-decoration:none; margin-bottom:24px; transition:background 0.15s;
   }
-  .motscles-textarea:focus { outline:none; border-color:#1e6f4c; }
-  .btn-suggerer {
-    margin-top:10px; background:#1e6f4c; color:#fff; border:none; border-radius:9px;
-    padding:10px 16px; font-size:0.85rem; font-weight:700; cursor:pointer;
+  .btn-avancement:hover { background:#f0f7f2; }
+
+  .btn-dashboard-hero {
+    display:flex; align-items:center; justify-content:center; gap:12px;
+    width:100%; background:linear-gradient(135deg, #4a9d6e 0%, #3d7a5a 55%, #2a5940 100%);
+    color:#fff; border:none; border-radius:16px; padding:20px; margin-bottom:24px;
+    font-size:1.05rem; font-weight:800; text-decoration:none;
+    box-shadow:0 14px 32px rgba(61,122,90,0.35); transition:transform 0.15s ease, box-shadow 0.15s ease;
   }
-  .btn-suggerer:hover:not(:disabled) { filter:brightness(1.08); }
-  .btn-suggerer:disabled { opacity:0.6; cursor:wait; }
-  .motscles-liste { margin-top:14px; display:flex; flex-direction:column; gap:8px; }
-  .motscle-item { display:flex; align-items:center; gap:8px; font-size:0.86rem; }
-  .motscle-item input[type="checkbox"] { width:16px; height:16px; accent-color:#1e6f4c; flex-shrink:0; }
-  .motscle-texte { flex:1; }
-  .motscle-potentiel-badge {
-    font-size:0.7rem; font-weight:700; white-space:nowrap; border-radius:6px; padding:2px 8px;
-    background:#eaf5ef; color:#1e6f4c; flex-shrink:0;
+  .btn-dashboard-hero:hover { transform:translateY(-2px); box-shadow:0 18px 38px rgba(61,122,90,0.42); }
+  .btn-dashboard-hero .icon { font-size:1.3rem; }
+  .btn-extraire:hover { filter:brightness(1.06); }
+
+  .formulaire-liste { display:flex; flex-direction:column; gap:2px; margin-top:14px; }
+  .formulaire-item { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid #f1efe7; }
+  .formulaire-item:last-child { border-bottom:none; }
+  .formulaire-item input[type="checkbox"] { width:auto; flex-shrink:0; accent-color:#4a8a68; }
+  .formulaire-item .formulaire-texte { flex:1; font-size:0.86rem; color:#3d5248; }
+  .formulaire-item .formulaire-type { font-size:0.72rem; color:#a3ab9e; background:#f4ece2; border-radius:20px; padding:2px 10px; white-space:nowrap; }
+  .formulaire-ajout { display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }
+  .formulaire-ajout input[type="text"] { flex:1; min-width:200px; }
+  .formulaire-ajout select { width:auto; }
+
+  .produit-card { border:1px solid #efece2; border-radius:14px; padding:16px; margin-top:14px; background:#fdfcf9; }
+  .produit-card-header { display:grid; grid-template-columns:2fr 1fr 1fr 1fr auto; gap:10px; align-items:start; }
+  .produit-card-header label { margin-top:0; font-size:0.72rem; }
+  .produit-card-header input, .produit-card-header select { margin-top:0; }
+  .btn-suppr-produit {
+    background:none; border:1.5px solid #e3ded2; color:#a3564a; border-radius:10px;
+    width:38px; height:38px; margin-top:22px; font-size:1rem; cursor:pointer; flex-shrink:0;
   }
-  .motscle-potentiel-badge.faible { background:#f2f4f1; color:#8a9891; }
-  .motscles-ajout { display:flex; gap:8px; margin-top:12px; }
-  .motscles-ajout input {
-    flex:1; padding:9px 11px; border:1.5px solid #d7dedb; border-radius:8px; font-size:0.85rem; font-family:inherit;
+  .btn-suppr-produit:hover { background:#fbeceb; border-color:#e0b3ac; }
+  .produit-questions-titre { font-size:0.78rem; font-weight:600; color:#8a9891; margin-top:16px; margin-bottom:2px; }
+  .btn-ajouter-produit {
+    background:none; border:1.5px dashed #c7d0c9; color:#4a8a68; border-radius:12px;
+    padding:12px; width:100%; font-size:0.86rem; font-weight:600; cursor:pointer; margin-top:14px; transition:all 0.15s;
   }
-  .motscles-ajout button {
-    background:#f2f4f1; color:#14312a; border:none; border-radius:8px; padding:9px 14px;
-    font-size:0.82rem; font-weight:700; cursor:pointer; white-space:nowrap;
+  .btn-ajouter-produit:hover { background:#f4f8f5; border-color:#4a8a68; }
+
+  .btn-submit {
+    width:100%; background:#3d7a5a; color:#fff; border:none; border-radius:14px; padding:18px; font-size:1rem; font-weight:700; cursor:pointer; margin-top:12px; transition:filter 0.15s;
   }
-  .motscles-note { font-size:0.76rem; color:#8a9891; margin-top:10px; }
-  .motscles-potentiel {
-    margin-top:14px; background:#fdf3ee; border:1.5px solid #f0c4ad; border-radius:10px;
-    padding:14px 16px;
-  }
-  .motscles-potentiel .chiffre { font-size:1.4rem; font-weight:800; color:#e8622c; }
-  .motscles-potentiel .detail { font-size:0.82rem; color:#5b6b64; margin-top:4px; line-height:1.5; }
-
-  .annonce-hint { font-size:0.8rem; color:#5b6b64; margin-bottom:16px; line-height:1.5; }
-  .annonce-preview { border:1px solid #d7dedb; border-radius:8px; padding:14px 16px; margin-bottom:18px; font-family:Arial, sans-serif; }
-  .annonce-preview .badge-annonce {
-    display:inline-block; font-size:11px; font-weight:700; color:#1a1a1a; border:1px solid #1a1a1a;
-    border-radius:3px; padding:0 4px; margin-right:6px; vertical-align:middle;
-  }
-  .annonce-preview .domaine-annonce { font-size:14px; color:#006621; vertical-align:middle; }
-  .annonce-preview .titre-annonce { font-size:19px; color:#1a0dab; font-weight:400; margin-top:3px; line-height:1.3; }
-  .annonce-preview .desc-annonce { font-size:13.5px; color:#4d5156; margin-top:4px; line-height:1.5; }
-  .annonce-champ { margin-bottom:12px; }
-  .annonce-champ label { display:flex; justify-content:space-between; font-size:0.78rem; font-weight:700; margin-bottom:5px; color:#14312a; }
-  .annonce-champ label .compteur { font-weight:400; color:#8a9891; }
-  .annonce-champ input, .annonce-champ textarea {
-    width:100%; padding:9px 11px; border:1.5px solid #d7dedb; border-radius:8px; font-size:0.85rem;
-    font-family:inherit; color:#14312a;
-  }
-  .annonce-champ input:focus, .annonce-champ textarea:focus { outline:none; border-color:#1e6f4c; }
-  .annonce-champ textarea { resize:vertical; min-height:50px; }
-  .annonce-champ input.trop-long, .annonce-champ textarea.trop-long { border-color:#c0392b; }
-  .annonce-sauvegarde-note { font-size:0.74rem; color:#8a9891; margin-top:4px; min-height:1em; }
-
-  .slider-row { display:flex; align-items:center; gap:14px; margin-bottom:14px; }
-  .slider-row input[type="range"] { flex:1; accent-color:#1e6f4c; height:6px; }
-  .slider-row .slider-value { font-weight:800; font-size:1.05rem; min-width:78px; text-align:right; color:#14312a; }
-
-  .kw-table { width:100%; border-collapse:collapse; font-size:0.82rem; }
-  .kw-table th { text-align:left; padding:8px 6px; color:#8a9891; font-weight:700; font-size:0.68rem; text-transform:uppercase; border-bottom:1.5px solid #eef1f0; }
-  .kw-table td { padding:9px 6px; border-bottom:1px solid #eef1f0; vertical-align:middle; }
-  .kw-table tr:last-child td { border-bottom:none; }
-  .kw-pertinence { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }
-  .kw-pertinence.haute { background:#1e6f4c; }
-  .kw-pertinence.moyenne { background:#e8b93c; }
-  .kw-pertinence.faible { background:#c0392b; }
-  .btn-exclure-kw { background:#fdf1ea; color:#c0392b; border:none; border-radius:8px; padding:5px 10px; font-size:0.72rem; font-weight:700; cursor:pointer; white-space:nowrap; }
-  .btn-exclure-kw:hover { background:#fbe0d5; }
-  .kw-negatif { color:#c0392b; font-size:0.7rem; font-weight:700; }
-
-  .ajout-kw-row { display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
-  .ajout-kw-row input[type="text"] { flex:1; min-width:160px; padding:9px 12px; border:1.5px solid #d7dedb; border-radius:9px; font-size:0.85rem; }
-  .ajout-kw-row select { padding:9px 10px; border:1.5px solid #d7dedb; border-radius:9px; font-size:0.82rem; background:#fff; }
-  .ajout-kw-row button { background:#1e6f4c; color:#fff; border:none; border-radius:9px; padding:9px 16px; font-weight:700; font-size:0.82rem; cursor:pointer; white-space:nowrap; }
-  .ajout-kw-row button:disabled { opacity:0.5; cursor:not-allowed; }
-
-  .heures-chart { display:flex; align-items:flex-end; gap:3px; height:120px; margin-bottom:6px; }
-  .heure-barre-wrap { flex:1; display:flex; flex-direction:column; justify-content:flex-end; height:100%; }
-  .heure-barre { width:100%; background:#cfe3d7; border-radius:3px 3px 0 0; min-height:2px; transition:background 0.15s; }
-  .heure-barre.pointe { background:#e8622c; }
-  .heures-labels { display:flex; gap:3px; }
-  .heures-labels span { flex:1; text-align:center; font-size:0.62rem; color:#8a9891; }
-  .heures-note { font-size:0.8rem; color:#5b6b64; margin-top:12px; }
-  .heures-note strong { color:#e8622c; }
-
-  .zone-affichage { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; }
-  .zone-affichage span { font-weight:700; font-size:0.98rem; }
-  .btn-modifier-zone { background:#f2f4f1; color:#14312a; border:none; border-radius:8px; padding:8px 14px; font-size:0.82rem; font-weight:700; cursor:pointer; white-space:nowrap; }
-  .btn-modifier-zone:hover { background:#e6ebe8; }
-  .zone-edition { display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
-  .zone-edition input { flex:1; min-width:220px; padding:10px 12px; border:1.5px solid #d7dedb; border-radius:9px; font-size:0.9rem; font-family:inherit; }
-  .zone-edition button { border:none; border-radius:9px; padding:10px 16px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap; }
-  #btnEnregistrerZone { background:#1e6f4c; color:#fff; }
-  .btn-annuler-zone { background:#f2f4f1; color:#14312a; }
-
-  .coaching-panel { background:#f6faf7; border:1.5px solid #d7e8dd; border-radius:14px; padding:18px 20px; margin-top:20px !important; }
-  .coaching-liste { list-style:none; display:flex; flex-direction:column; gap:10px; }
-  .coaching-liste li { font-size:0.85rem; line-height:1.5; color:#294038; padding-left:24px; position:relative; }
-  .coaching-liste li::before { content:'✓'; position:absolute; left:0; top:0; color:#1e6f4c; font-weight:800; }
-  .coaching-liste li strong { color:#14312a; }
-  .coaching-liste li.alerte::before { content:'⚠'; color:#e8622c; }
-
-  .liste-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
-  .liste-header h3 { font-size:0.95rem; }
-  .btn-pdf { background:#eef1f0; border:none; border-radius:8px; padding:9px 16px; font-size:0.82rem; font-weight:700; color:#14312a; cursor:pointer; }
-  .btn-pdf:hover { background:#e2e8e5; }
-
-  table { width:100%; border-collapse:collapse; font-size:0.85rem; }
-  th { text-align:left; padding:10px 8px; color:#8a9891; font-weight:700; font-size:0.72rem; text-transform:uppercase; border-bottom:1.5px solid #eef1f0; }
-  td { padding:10px 8px; border-bottom:1px solid #eef1f0; }
-  tr:last-child td { border-bottom:none; }
-  .statut-badge { font-size:0.7rem; font-weight:700; padding:3px 9px; border-radius:999px; background:#eaf4ef; color:#1e6f4c; }
-
-  .loading, .empty-msg { text-align:center; padding:40px; color:#8a9891; }
-
-  .verif-acces-overlay {
-    position:fixed; inset:0; z-index:2000; background:#f5f8f6;
-    display:flex; align-items:center; justify-content:center;
-    color:#5b6b64; font-size:0.95rem;
-  }
+  .btn-submit:hover { filter:brightness(1.05); }
+  .btn-submit:disabled { opacity:0.55; cursor:not-allowed; }
+  .save-note { text-align:center; font-size:0.78rem; color:#a3ab9e; margin-top:12px; }
+  .save-msg { text-align:center; font-size:0.88rem; margin-top:14px; padding:14px; border-radius:12px; line-height:1.5; }
+  .save-msg.ok { background:#eef5ef; color:#3d7a5a; }
+  .save-msg.err { background:#fbeeec; color:#b5482a; }
 </style>
 </head>
 <body>
 
-<div class="verif-acces-overlay" id="verifAccesOverlay">Vérification de votre accès…</div>
-
-<!-- Feuilles décoratives en arrière-plan, effet 3D via dégradés et ombres -->
-<div class="leaf-bg" style="top:-60px; right:-80px; opacity:0.55;">
-  <svg width="360" height="360" viewBox="0 0 360 360">
+<!-- Fond végétal très discret, purement d'ambiance -->
+<div class="leaf-bg" style="top:-40px; right:-100px; opacity:0.12;">
+  <svg width="320" height="320" viewBox="0 0 320 320">
     <defs>
-      <radialGradient id="leafGrad1" cx="35%" cy="30%" r="75%">
-        <stop offset="0%" stop-color="#4a9d6e"/>
-        <stop offset="55%" stop-color="#1e6f4c"/>
-        <stop offset="100%" stop-color="#0f4a30"/>
+      <radialGradient id="lf1" cx="35%" cy="30%" r="75%">
+        <stop offset="0%" stop-color="#7bc79e"/>
+        <stop offset="100%" stop-color="#3d7a5a"/>
       </radialGradient>
-      <filter id="leafShadow1" x="-50%" y="-50%" width="200%" height="200%">
-        <feDropShadow dx="8" dy="14" stdDeviation="16" flood-color="#0a3320" flood-opacity="0.35"/>
-      </filter>
     </defs>
-    <path filter="url(#leafShadow1)" fill="url(#leafGrad1)" d="M180,30 C260,50 320,120 300,210 C280,300 190,330 130,290 C70,250 50,160 90,100 C115,63 145,40 180,30 Z"/>
-    <path d="M180,50 C180,140 200,220 260,270" stroke="#0a3320" stroke-width="4" fill="none" opacity="0.4" stroke-linecap="round"/>
+    <path fill="url(#lf1)" d="M160,25 C230,45 280,105 265,180 C250,255 175,280 120,245 C65,210 50,135 85,80 C110,48 135,32 160,25 Z"/>
   </svg>
 </div>
-
-<div class="leaf-bg" style="bottom:-100px; left:-100px; opacity:0.4;">
-  <svg width="420" height="420" viewBox="0 0 420 420">
+<div class="leaf-bg" style="bottom:-80px; left:-90px; opacity:0.10;">
+  <svg width="380" height="380" viewBox="0 0 380 380">
     <defs>
-      <radialGradient id="leafGrad2" cx="40%" cy="35%" r="70%">
-        <stop offset="0%" stop-color="#f3a878"/>
-        <stop offset="55%" stop-color="#e8622c"/>
-        <stop offset="100%" stop-color="#b8481c"/>
-      </radialGradient>
-      <filter id="leafShadow2" x="-50%" y="-50%" width="200%" height="200%">
-        <feDropShadow dx="-6" dy="12" stdDeviation="18" flood-color="#7a2e10" flood-opacity="0.3"/>
-      </filter>
-    </defs>
-    <path filter="url(#leafShadow2)" fill="url(#leafGrad2)" d="M210,40 C300,70 370,150 350,240 C330,330 230,370 150,330 C70,290 40,190 80,120 C110,70 160,45 210,40 Z"/>
-    <path d="M210,60 C205,160 220,260 300,320" stroke="#7a2e10" stroke-width="5" fill="none" opacity="0.35" stroke-linecap="round"/>
-  </svg>
-</div>
-
-<div class="leaf-bg" style="top:35%; right:-140px; opacity:0.3;">
-  <svg width="280" height="280" viewBox="0 0 280 280">
-    <defs>
-      <radialGradient id="leafGrad3" cx="35%" cy="30%" r="75%">
-        <stop offset="0%" stop-color="#6fbf95"/>
-        <stop offset="55%" stop-color="#1e6f4c"/>
-        <stop offset="100%" stop-color="#0f4a30"/>
+      <radialGradient id="lf2" cx="40%" cy="35%" r="70%">
+        <stop offset="0%" stop-color="#f0a878"/>
+        <stop offset="100%" stop-color="#e8622c"/>
       </radialGradient>
     </defs>
-    <path fill="url(#leafGrad3)" d="M140,20 C210,40 250,100 230,170 C210,240 140,260 90,230 C40,200 25,130 60,80 C85,45 110,25 140,20 Z"/>
+    <path fill="url(#lf2)" d="M190,35 C270,60 330,130 315,210 C300,290 210,325 140,290 C70,255 45,165 80,105 C105,62 150,42 190,35 Z"/>
   </svg>
 </div>
 
 <div class="wrap">
-  <div class="header">
-    <div class="header-titre">
-      <img class="logo-entreprise" id="logoEntreprise" alt="Logo">
-      <h1>Mon tableau de bord</h1>
-    </div>
-    <div style="display:flex; gap:10px; flex-wrap:wrap;">
-      <a class="btn-elements" id="btnMesRdv" href="#" style="background:#fff; color:#1e6f4c; border:1.5px solid #1e6f4c;">📅 Mes rendez-vous</a>
-      <a class="btn-elements" id="btnElements" href="#">✏️ Modifier mes éléments</a>
-    </div>
+  <a href="#" id="lienRetourDashboard" class="btn-dashboard-hero" style="display:none;"><span class="icon">📊</span> Accéder à mon tableau de bord</a>
+  <div class="eyebrow">Construction de votre vitrine</div>
+  <h1>Prenons le temps de bien faire les choses</h1>
+  <p class="intro">
+    Suite à notre échange, dépose ici ce qui nous permettra de construire ta vraie vitrine — à ton rythme, section par section.
+  </p>
+  <p class="reassurance">🌿 Rien n'est chronométré, et chaque section s'enregistre à part.</p>
+
+  <a class="btn-avancement" id="btnAvancement" href="#">📊 Voir l'avancement de mon site</a>
+
+  <div class="progress-wrap">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label" id="progressLabel">0% complété</div>
   </div>
 
-  <div id="banniereePause" style="display:none; background:#fdf1ea; border:1.5px solid #e8622c; border-radius:14px; padding:16px 20px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
-    <div>
-      <strong style="color:#e8622c;">⏸️ Votre abonnement est en pause</strong>
-      <p style="font-size:0.85rem; color:#5b6b64; margin-top:4px;">Votre site n'est pas visible par vos prospects tant que la pause dure.</p>
-    </div>
-    <button id="btnReprendreMaintenant" style="background:#e8622c; color:#fff; border:none; border-radius:10px; padding:10px 18px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap;">Reprendre maintenant</button>
-  </div>
-
-  <div class="stats-row" id="statsRow">
-    <div class="stat-card"><div class="stat-value" id="statProspects">0</div><div class="stat-label">demandes reçues</div></div>
-    <div class="stat-card"><div class="stat-value" id="statClics">0</div><div class="stat-label">clics ce mois-ci</div></div>
-  </div>
-
-  <div class="solde-box" id="soldeBox">
-    <div class="loading">Chargement du solde…</div>
-  </div>
-  <button class="btn-pause-diffusion" id="btnPauseDiffusion" style="display:none;"></button>
-  <p class="pause-note">Mettre en pause n'arrête que la diffusion des annonces — votre solde publicitaire reste intact, relancez quand vous voulez.</p>
-
-  <div class="panel-tabs" id="panelTabs">
-    <button type="button" class="panel-tab active" id="tabAds" data-tab="ads">
-      <span class="panel-tab-icone">🎯</span>
-      <span class="panel-tab-texte">Gérer Google Ads<span class="panel-tab-sous">Ciblage, mots-clés, budget, clics</span></span>
-    </button>
-    <button type="button" class="panel-tab" id="tabClients" data-tab="clients">
-      <span class="panel-tab-icone">👥</span>
-      <span class="panel-tab-texte">Gérer les clients<span class="panel-tab-sous">Demandes, devis, signatures</span></span>
-    </button>
-  </div>
-
-  <div id="panelAds">
-  <div class="ads-section" id="adsSection" style="display:none;">
-    <h2>🎯 Pilotage Google Ads</h2>
-    <div class="ads-sub">Le détail de votre campagne — où vous êtes visible, combien investir, quels mots-clés fonctionnent, et à quel moment vos clics arrivent.</div>
-
-    <div class="ads-souspanel">
-      <h3>Où voulez-vous être visible ?</h3>
-      <div id="zoneAffichage" class="zone-affichage">
-        <span id="zoneValeur">—</span>
-        <button type="button" id="btnModifierZone" class="btn-modifier-zone">✏️ Modifier</button>
-      </div>
-      <div id="zoneEdition" class="zone-edition" style="display:none;">
-        <input type="text" id="zoneInput" placeholder="Ex : Brech et ses environs">
-        <div style="margin-top:10px;">
-          <label style="font-size:0.78rem; color:#5b6b64; display:block; margin-bottom:4px;">Rayon (km)</label>
-          <input type="number" id="rayonCiblageInput" min="1" max="100" placeholder="Ex : 20" style="width:110px;">
+  <div class="section open" data-section="visuel">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">🎨</span>
+        <div>
+          <h2>Identité visuelle</h2>
+          <p class="sub">Logo, photos, vidéo — ce que tu as sous la main suffit.</p>
         </div>
-        <button type="button" id="btnEnregistrerZone">Enregistrer</button>
-        <button type="button" id="btnAnnulerZone" class="btn-annuler-zone">Annuler</button>
       </div>
-      <div class="estim-note">Ce texte décrit votre secteur d'intervention pour vos clients. Le ciblage réel de vos annonces se pose actuellement à la main dans Google Ads (le connecteur utilisé ne le permet pas encore automatiquement).</div>
-    </div>
-
-    <div class="ads-souspanel">
-      <h3>✨ Quels mots-clés pour votre annonce ?</h3>
-      <div class="motscles-hint">Décrivez votre métier et ce que vous voulez mettre en avant (prestations, produits, ce qui attire vos clients) — l'IA vous propose des mots-clés à cocher. Cette sélection sert de base à votre annonce et à l'estimation de clics ci-dessous.</div>
-      <textarea class="motscles-textarea" id="motsClesDescription" placeholder="Ex : je pose des terrasses en bois et composite, je fais aussi des clôtures. Je veux surtout attirer des clients pour la pose de terrasse."></textarea>
-      <button type="button" class="btn-suggerer" id="btnSuggererMotsCles">✨ Suggérer des mots-clés</button>
-      <div class="motscles-liste" id="motsClesListe"></div>
-      <div class="motscles-ajout" id="motsClesAjout" style="display:none;">
-        <input type="text" id="motCleManuel" placeholder="Ajouter un mot-clé de votre choix">
-        <button type="button" id="btnAjouterMotCleManuel">+ Ajouter</button>
-      </div>
-      <button type="button" class="btn-suggerer" id="btnRafraichirEstimation" style="display:none; margin-top:10px; background:#5b6b64;">🔄 Rafraîchir l'estimation de clics</button>
-      <div class="motscles-note" id="motsClesNote"></div>
-      <div class="motscles-potentiel" id="motsClesPotentiel" style="display:none;">
-        <div class="chiffre" id="motsClesPotentielChiffre">—</div>
-        <div class="detail" id="motsClesPotentielDetail"></div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="section-check" data-check="visuel">✓ complété</span>
+        <span class="chevron">▾</span>
       </div>
     </div>
+    <div class="section-body">
+      <div class="section-body-inner">
+        <label>Logo de l'entreprise</label>
+        <div class="upload-box" id="boxLogo">
+          <input type="file" id="inputLogo" accept="image/*">
+          <img id="logoPreview" class="logo-preview-img" alt="Logo">
+          <div class="upload-label">📁 Choisir un fichier</div>
+          <div class="upload-status" id="statusLogo">Aucun fichier — PNG ou JPG, fond transparent de préférence</div>
+        </div>
 
-    <div class="ads-souspanel">
-      <h3>🔎 Votre annonce Google Ads</h3>
-      <div class="annonce-hint">Voici à quoi ressemblera votre annonce sur Google. Modifiez les textes si besoin — c'est cette version qui sera utilisée au lancement ou à la prochaine recharge de budget.</div>
-      <div class="annonce-preview">
-        <div><span class="badge-annonce">Annonce</span><span class="domaine-annonce" id="previewDomaine">app.skyeco.fr</span></div>
-        <div class="titre-annonce" id="previewTitre">—</div>
-        <div class="desc-annonce" id="previewDesc">—</div>
+        <label>Photos pour le carrousel (jusqu'à 10)</label>
+        <div class="upload-box" id="boxPhotos">
+          <input type="file" id="inputPhotos" accept="image/*" multiple>
+          <div class="upload-label">📁 Ajouter des photos</div>
+          <div class="upload-status" id="statusPhotos">Aucune photo ajoutée</div>
+        </div>
+        <div class="photos-grid" id="photosGrid"></div>
+
+        <label>Vidéo de chantier ou avant/après (optionnel)</label>
+        <div class="upload-box" id="boxVideo">
+          <input type="file" id="inputVideo" accept="video/*">
+          <div class="upload-label">📁 Choisir une vidéo</div>
+          <div class="upload-status" id="statusVideo">Ou colle un lien YouTube/Vimeo ci-dessous</div>
+        </div>
+        <input type="url" id="videoLien" placeholder="https://youtube.com/..." style="margin-top:10px;">
       </div>
-      <div class="annonce-champ">
-        <label>Titre 1 <span class="compteur" id="cptTitre1">0/30</span></label>
-        <input type="text" id="annonceTitre1" maxlength="30">
-      </div>
-      <div class="annonce-champ">
-        <label>Titre 2 <span class="compteur" id="cptTitre2">0/30</span></label>
-        <input type="text" id="annonceTitre2" maxlength="30">
-      </div>
-      <div class="annonce-champ">
-        <label>Titre 3 <span class="compteur" id="cptTitre3">0/30</span></label>
-        <input type="text" id="annonceTitre3" maxlength="30">
-      </div>
-      <div class="annonce-champ">
-        <label>Description 1 <span class="compteur" id="cptDesc1">0/90</span></label>
-        <textarea id="annonceDesc1" maxlength="90"></textarea>
-      </div>
-      <div class="annonce-champ">
-        <label>Description 2 <span class="compteur" id="cptDesc2">0/90</span></label>
-        <textarea id="annonceDesc2" maxlength="90"></textarea>
-      </div>
-      <div class="annonce-sauvegarde-note" id="annonceSauvegardeNote"></div>
     </div>
+  </div>
 
-    <div class="ads-souspanel">
-      <h3>Vous voulez viser plus de clics ? Ajustez votre budget</h3>
-      <div class="slider-row">
-        <input type="range" id="clicsSlider" min="1" max="150" value="20">
-        <span class="slider-value" id="clicsSliderValue">20 clics</span>
+  <div class="section" data-section="titre">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">🏷️</span>
+        <div>
+          <h2>Titre de votre vitrine</h2>
+          <p class="sub">Le grand titre affiché sur votre page — choisis celui qui te ressemble, ou écris le tien.</p>
+        </div>
       </div>
-      <div class="estim-resultat" style="align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
-        <div><div class="chiffre" id="budgetNecessaireValue">—</div><div class="label">budget ads estimé</div></div>
-        <a class="btn-fonds" id="btnFondsInverse" href="#" style="white-space:nowrap;">💳 Approvisionner ce montant</a>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="section-check visible" data-check="titre">✓ facultatif</span>
+        <span class="chevron">▾</span>
       </div>
-      <div class="estim-note">Ce budget n'est pas garanti sur une durée fixe — il est consommé au fur et à mesure des clics reçus.</div>
-      <div class="estim-note" id="volumeNote"></div>
     </div>
+    <div class="section-body">
+      <div class="section-body-inner" id="titreOptions">
+        <div class="hint">Renseigne d'abord ton métier dans l'estimation pour voir des suggestions adaptées — en attendant, une valeur par défaut est déjà utilisée.</div>
+      </div>
+      <button type="button" id="btnSuggererTitre" style="margin-top:10px; background:#1e6f4c; color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:0.85rem; font-weight:700; cursor:pointer;">✨ Suggérer un titre avec l'IA</button>
+      <div id="suggestionsTitreIA" style="margin-top:10px;"></div>
+    </div>
+  </div>
 
-    <div class="ads-souspanel" id="motsClesPanel" style="display:none;">
-      <h3>Quels mots-clés génèrent vos clics ?</h3>
-      <div id="motsClesContent"><div class="loading">Chargement…</div></div>
-      <div class="ajout-kw-row">
-        <input type="text" id="nouveauMotCle" placeholder="Ajouter un mot-clé (ex : pose terrasse composite)">
-        <select id="nouveauMotCleType">
-          <option value="PHRASE">Expression</option>
-          <option value="EXACT">Exact</option>
-          <option value="BROAD">Large</option>
+  <div class="section" data-section="coordonnees">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">📍</span>
+        <div><h2>Coordonnées</h2></div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="section-check" data-check="coordonnees">✓ complété</span>
+        <span class="chevron">▾</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="section-body-inner">
+        <label>Téléphone</label>
+        <input type="tel" id="telephone" placeholder="06 12 34 56 78">
+
+        <label>Email</label>
+        <input type="email" id="email" placeholder="contact@monentreprise.fr">
+
+        <label>Adresse</label>
+        <input type="text" id="adresseRue" placeholder="Numéro et rue">
+        <div class="row2" style="margin-top:10px;">
+          <input type="text" id="adresseCp" placeholder="Code postal">
+          <input type="text" id="adresseVille" placeholder="Ville">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" data-section="legal">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">⚖️</span>
+        <div>
+          <h2>Informations légales</h2>
+          <p class="sub">Pour tes mentions légales et tes futurs devis.</p>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="section-check" data-check="legal">✓ complété</span>
+        <span class="chevron">▾</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="section-body-inner">
+        <label>SIRET</label>
+        <input type="text" id="siret" placeholder="14 chiffres">
+
+        <label>Forme juridique</label>
+        <select id="formeJuridique">
+          <option value="">— Sélectionner —</option>
+          <option>Entreprise individuelle (EI)</option>
+          <option>Micro-entreprise</option>
+          <option>EURL</option>
+          <option>SARL</option>
+          <option>SASU</option>
+          <option>SAS</option>
+          <option>Autre</option>
         </select>
-        <button type="button" id="btnAjouterMotCle">+ Ajouter</button>
+
+        <div class="row2">
+          <div>
+            <label>Capital social (si société)</label>
+            <input type="text" id="capitalSocial" placeholder="Ex : 10 000 €">
+          </div>
+          <div>
+            <label>Ville d'immatriculation RCS</label>
+            <input type="text" id="rcsVille" placeholder="Ex : Lorient">
+          </div>
+        </div>
+
+        <label>Assurance décennale — assureur</label>
+        <input type="text" id="assuranceAssureur" placeholder="Ex : ERGO France">
+
+        <label>Assurance décennale — numéro de police</label>
+        <input type="text" id="assuranceNumero" placeholder="Numéro de contrat">
       </div>
-      <div class="estim-note" id="ajoutKwFeedback"></div>
     </div>
-
-    <div class="ads-souspanel" id="heuresPanel" style="display:none;">
-      <h3>À quelle heure vos clics arrivent-ils ?</h3>
-      <div class="heures-chart" id="heuresChart"></div>
-      <div class="heures-labels" id="heuresLabels"></div>
-      <div class="heures-note" id="heuresNote"></div>
-    </div>
-
-    <div class="ads-souspanel" id="zonesPanel" style="display:none;">
-      <h3>🌍 D'où viennent vos clics ?</h3>
-      <div id="zonesContent"><div class="loading">Chargement…</div></div>
-      <div class="estim-note" id="zonesNote"></div>
-    </div>
-
-    <div class="ads-souspanel coaching-panel" id="coachingPanel" style="display:none;">
-      <h3>💡 Conseils pour améliorer vos conversions</h3>
-      <ul id="coachingListe" class="coaching-liste"></ul>
-    </div>
-
-    <div class="empty-msg" id="adsSectionVide" style="display:none; padding:12px 0;">Pas encore de campagne active — approvisionnez votre budget pour démarrer.</div>
-  </div>
   </div>
 
-  <div id="panelClients" style="display:none;">
-  <div class="liste-panel">
-    <div class="liste-header">
-      <h3>Demandes d'estimation</h3>
-      <button class="btn-pdf" id="btnExportPdf">📄 Exporter en PDF</button>
+  <div class="section" data-section="siteweb">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">🔗</span>
+        <div>
+          <h2>Site web existant</h2>
+          <p class="sub">Facultatif — utile si tu en as déjà un.</p>
+        </div>
+      </div>
+      <span class="chevron">▾</span>
     </div>
-    <div id="listeContent"><div class="loading">Chargement des demandes…</div></div>
+    <div class="section-body">
+      <div class="section-body-inner">
+        <input type="url" id="siteExistant" placeholder="https://monsite.fr">
+        <button type="button" class="btn-extraire" id="btnExtraire">🔍 Essayer de récupérer les infos légales</button>
+        <div class="extraction-box" id="extractionResult" style="display:none;"></div>
+      </div>
+    </div>
   </div>
+
+  <div class="section" data-section="produits">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">🧮</span>
+        <div>
+          <h2>Produits chiffrables</h2>
+          <p class="sub">Facultatif — pour donner automatiquement une estimation chiffrée quand le projet du prospect correspond à l'un de vos produits.</p>
+        </div>
+      </div>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="section-body">
+      <div class="section-body-inner">
+        <p class="hint">Chaque "produit" est une prestation que vous facturez d'une façon précise (ex : "Enrobés" au m², "Pose de clôture" au ml). Quand le projet décrit par un prospect correspond à l'un de vos produits, il répond aux questions de CE produit et reçoit une estimation chiffrée. Sinon, il est invité à prendre rendez-vous avec un technicien — rien n'est perdu, jamais bloqué.</p>
+
+        <label style="margin-top:0;">Taux de TVA applicable</label>
+        <select id="tvaTaux">
+          <option value="20">20% — taux normal</option>
+          <option value="10">10% — travaux de rénovation (bâti de plus de 2 ans)</option>
+          <option value="5.5">5.5% — travaux d'amélioration énergétique</option>
+        </select>
+
+        <label>Décrivez ce que vous facturez, avec vos mots</label>
+        <textarea id="produitsDescription" rows="4" placeholder="Ex : je pose de la résine EPDM pour terrasses à 45€/m², minimum 300€. Je pose aussi des clôtures à 35€/ml…"></textarea>
+        <p class="hint">L'IA identifie les différents produits que vous décrivez et pré-remplit une carte par produit ci-dessous (nom, unité, prix, questions). Vous vérifiez et corrigez ensuite avant d'enregistrer, rien n'est figé.</p>
+        <button type="button" class="btn-extraire" id="btnAnalyserProduits">✨ Analyser mon activité</button>
+        <div class="extraction-box" id="produitsAnalyseResult" style="display:none;"></div>
+
+        <div id="produitsListe"></div>
+        <button type="button" class="btn-ajouter-produit" id="btnAjouterProduit">+ Ajouter un produit manuellement</button>
+      </div>
+    </div>
   </div>
+
+  <button class="btn-submit" id="btnSubmit">Enregistrer mes éléments</button>
+  <p class="save-note">Tu peux revenir compléter ce formulaire plus tard, rien n'est perdu.</p>
+  <div class="save-msg" id="saveMsg" style="display:none;"></div>
 </div>
 
 <script>
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
   const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
-  const DEVIS_BUCKET = 'skyeco-pro-media';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+  const BUCKET = 'skyeco-pro-media';
+
   const params = new URLSearchParams(window.location.search);
   const draftId = params.get('id');
-  let leadsData = [];
-  let nomEntreprise = '';
 
-  if (!draftId) {
-    document.body.innerHTML = '<div class="loading">Lien invalide — identifiant du site manquant.</div>';
-  } else {
-    verifierAccesPuisCharger();
-  }
-
-  // Accès protégé par mot de passe (voir acces-dashboard.html) : soit une
-  // session artisan normale (sessionStorage, posée après connexion), soit un
-  // jeton admin transmis dans l'URL par mes-artisans.html (Cyrille peut
-  // ouvrir n'importe quel dashboard sans connaître le mot de passe de
-  // l'artisan). Dans les deux cas, la validité est revérifiée côté serveur.
-  async function verifierAccesPuisCharger() {
-    const adminToken = params.get('admin_token');
-    const token = adminToken || sessionStorage.getItem('skyeco_dashboard_token_' + draftId);
-
-    if (!token) {
-      window.location.href = '/acces-dashboard.html?id=' + draftId;
-      return;
-    }
-
-    try {
-      const res = await fetch('/api/dashboard-verify-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, token })
-      });
-      const data = await res.json();
-      if (!data.valid) {
-        sessionStorage.removeItem('skyeco_dashboard_token_' + draftId);
-        window.location.href = '/acces-dashboard.html?id=' + draftId;
-        return;
-      }
-    } catch (e) {
-      document.getElementById('verifAccesOverlay').textContent = 'Impossible de vérifier votre accès pour le moment.';
-      return;
-    }
-
-    document.getElementById('verifAccesOverlay').remove();
-    document.getElementById('btnElements').href = '/mes-elements.html?id=' + draftId;
-    document.getElementById('btnMesRdv').href = '/mes-rdv.html?id=' + draftId;
-    chargerLogo();
-    chargerStats();
-    chargerSolde();
-    chargerDemandes();
-    initPilotageAds();
-    verifierStatutPause();
-    chargerZones();
-    initPanelTabs();
-  }
-
-  function initPanelTabs() {
-    const onglets = { ads: document.getElementById('panelAds'), clients: document.getElementById('panelClients') };
-    document.querySelectorAll('.panel-tab').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.panel-tab').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const cible = btn.dataset.tab;
-        onglets.ads.style.display = cible === 'ads' ? '' : 'none';
-        onglets.clients.style.display = cible === 'clients' ? '' : 'none';
-      });
-    });
-  }
-
-  async function chargerZones() {
-    const zonesPanel = document.getElementById('zonesPanel');
-    const content = document.getElementById('zonesContent');
-    const note = document.getElementById('zonesNote');
-    try {
-      const resp = await fetch('/api/clics-par-zone', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draft_id: draftId }),
-      });
-      const data = await resp.json();
-      if (!resp.ok || !data.success || !data.campagneExiste) return; // pas de campagne active -> panneau masqué
-
-      zonesPanel.style.display = '';
-      if (!data.zones.length) {
-        content.innerHTML = '<div class="empty-msg">Pas encore assez de clics pour afficher une répartition par zone.</div>';
-        return;
-      }
-
-      const maxClics = Math.max(...data.zones.map(z => z.clics));
-      content.innerHTML = `
-        <div class="zones-liste">
-          ${data.zones.map(z => `
-            <div class="zone-ligne">
-              <div class="zone-nom" title="${escapeHtmlDash(z.label)}">${escapeHtmlDash(z.label)}</div>
-              <div class="zone-barre-track"><div class="zone-barre-fill" style="width:${Math.max(4, Math.round((z.clics / maxClics) * 100))}%;"></div></div>
-              <div class="zone-clics">${z.clics}</div>
-            </div>
-          `).join('')}
-        </div>
-      `;
-      note.textContent = data.resolutionDisponible
-        ? 'Sur les 30 derniers jours, du plus au moins de clics.'
-        : "Sur les 30 derniers jours. Google identifie ces zones par référence technique — les noms de ville ne sont pas encore résolus pour toutes.";
-    } catch (e) {
-      // Panneau discret : on n'affiche rien plutôt qu'une erreur si Windsor.ai est indisponible.
-    }
-  }
-
-  function escapeHtmlDash(str) {
-    return String(str || '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
-  }
-
-  async function chargerLogo() {
-    try {
-      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=logo_url`, {
-        headers: { apikey: SUPABASE_ANON_KEY }
-      });
-      const rows = await resp.json();
-      const logoUrl = rows[0]?.logo_url;
-      if (logoUrl) {
-        const img = document.getElementById('logoEntreprise');
-        img.src = logoUrl;
-        img.style.display = 'block';
-      }
-    } catch (e) { /* pas de logo, tant pis, on garde juste le titre */ }
-  }
-
-  async function verifierStatutPause() {
-    try {
-      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=status,essai_gratuit_fin`, {
-        headers: { apikey: SUPABASE_ANON_KEY }
-      });
-      const rows = await resp.json();
-      const statut = rows[0]?.status;
-
-      if (statut === 'en_pause') {
-        document.getElementById('banniereePause').style.display = 'flex';
-      }
-
-      // Essai gratuit terminé sans paiement : on bloque l'accès au tableau
-      // de bord et on renvoie directement vers la page de choix de forfait
-      // pour régler (le statut 'essai_expire' est posé par la tâche
-      // planifiée api/verifier-essais-a-programmer.js le jour de l'échéance).
-      const params = new URLSearchParams(window.location.search);
-      if (statut === 'essai_expire' && !params.get('admin_token')) {
-        window.location.href = '/choisir-forfait.html?id=' + draftId;
-        return;
-      }
-
-      // Essai en cours : petit bandeau discret avec le nombre de jours
-      // restants, pour que l'artisan sache où il en est.
-      if (statut === 'essai' && rows[0]?.essai_gratuit_fin) {
-        const joursRestants = Math.max(0, Math.ceil((new Date(rows[0].essai_gratuit_fin) - Date.now()) / (24 * 60 * 60 * 1000)));
-        const banniereEssai = document.createElement('div');
-        banniereEssai.style.cssText = 'background:#e8f5ee; color:#1e6f4c; text-align:center; padding:10px; font-size:0.85rem; font-weight:600;';
-        banniereEssai.textContent = `🎁 Essai gratuit — ${joursRestants} jour${joursRestants > 1 ? 's' : ''} restant${joursRestants > 1 ? 's' : ''}`;
-        document.body.prepend(banniereEssai);
-      }
-    } catch (e) { /* silencieux */ }
-  }
-
-  document.getElementById('btnReprendreMaintenant').addEventListener('click', async () => {
-    const btn = document.getElementById('btnReprendreMaintenant');
-    btn.disabled = true;
-    btn.textContent = 'Reprise en cours…';
-    try {
-      const res = await fetch('/api/reprendre-subscription', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId })
-      });
-      const data = await res.json();
-      if (data.success) {
-        document.getElementById('banniereePause').style.display = 'none';
-        alert(data.message || 'Votre site est de nouveau en ligne.');
-      } else {
-        alert(data.error || 'Une erreur est survenue.');
-        btn.disabled = false;
-        btn.textContent = 'Reprendre maintenant';
-      }
-    } catch (e) {
-      alert('Impossible de contacter le serveur.');
-      btn.disabled = false;
-      btn.textContent = 'Reprendre maintenant';
-    }
-  });
-
-  async function chargerStats() {
-    try {
-      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_leads?draft_id=eq.${draftId}&select=id`, {
-        headers: { apikey: SUPABASE_ANON_KEY, Prefer: 'count=exact' }
-      });
-      const count = resp.headers.get('content-range')?.split('/')[1] || (await resp.json()).length;
-      document.getElementById('statProspects').textContent = count;
-    } catch (e) {
-      document.getElementById('statProspects').textContent = '0';
-    }
-  }
-
-  async function chargerSolde() {
-    const box = document.getElementById('soldeBox');
-    try {
-      const res = await fetch('/api/get-campaign-spend', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draft_id: draftId })
-      });
-      const data = await res.json();
-
-      if (!data.success || !data.campagneExiste) {
-        box.innerHTML = `
-          <h3>Solde publicitaire</h3>
-          <div class="empty-msg" style="padding:12px 0;">Aucune campagne active pour l'instant.</div>
-        `;
-        document.getElementById('statClics').textContent = '0';
-        return;
-      }
-
-      document.getElementById('statClics').textContent = data.clics ?? '0';
-
-      const alerte = data.pourcentageConsomme >= 90 ? 'alerte' : '';
-      const statutBadge = data.diffusionPausee
-        ? '<span class="statut-badge" style="background:#fdf1ea; color:#e8622c;">⏸️ En pause</span>'
-        : '<span class="statut-badge" style="background:#eaf4ef; color:#1e6f4c;">🟢 Active</span>';
-      box.innerHTML = `
-        <h3>Solde publicitaire ${statutBadge}</h3>
-        <div class="solde-bar-track"><div class="solde-bar-fill ${alerte}" style="width:${data.pourcentageConsomme}%"></div></div>
-        <div class="solde-stats">
-          <span>Consommé : <strong>${data.consommationAjustee} €</strong></span>
-          <span>Restant : <strong>${data.budgetRestant} €</strong> / ${data.budgetPaye} €</span>
-        </div>
-        <div class="solde-detail">
-          ${data.clics} clics réels (dépense Google : ${data.coutReelGoogleEuros} €, comptée double dans votre solde — commission de service incluse).
-        </div>
-      `;
-
-      const btnPause = document.getElementById('btnPauseDiffusion');
-      btnPause.style.display = 'inline-block';
-      diffusionPauseeActuelle = data.diffusionPausee;
-      mettreAJourBoutonPause();
-    } catch (e) {
-      box.innerHTML = '<h3>Solde publicitaire</h3><div class="empty-msg">Impossible de charger le solde pour le moment.</div>';
-    }
-  }
-
-  let diffusionPauseeActuelle = false;
-
-  function mettreAJourBoutonPause() {
-    const btn = document.getElementById('btnPauseDiffusion');
-    btn.classList.toggle('actif-pause', diffusionPauseeActuelle);
-    btn.textContent = diffusionPauseeActuelle ? '▶️ Relancer la diffusion' : '⏸️ Mettre en pause la diffusion';
-  }
-
-  document.getElementById('btnPauseDiffusion').addEventListener('click', async () => {
-    const btn = document.getElementById('btnPauseDiffusion');
-    const actionDemandee = diffusionPauseeActuelle ? 'reprendre' : 'pause';
-    btn.disabled = true;
-    btn.textContent = 'Un instant…';
-    try {
-      const res = await fetch('/api/pause-campagne-ads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, action: actionDemandee })
-      });
-      const data = await res.json();
-      if (data.success) {
-        diffusionPauseeActuelle = actionDemandee === 'pause';
-      } else {
-        alert(data.error || 'Une erreur est survenue.');
-      }
-    } catch (e) {
-      alert('Impossible de contacter le serveur.');
-    } finally {
-      btn.disabled = false;
-      mettreAJourBoutonPause();
-    }
-  });
-
-  async function chargerDemandes() {
-    const content = document.getElementById('listeContent');
-    try {
-      const draftResp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise`, {
-        headers: { apikey: SUPABASE_ANON_KEY }
-      });
-      const draftRows = await draftResp.json();
-      nomEntreprise = draftRows[0]?.entreprise || 'Mon entreprise';
-
-      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_leads?draft_id=eq.${draftId}&select=*&order=created_at.desc`, {
-        headers: { apikey: SUPABASE_ANON_KEY }
-      });
-      leadsData = await resp.json();
-
-      if (!leadsData.length) {
-        content.innerHTML = '<div class="empty-msg">Aucune demande reçue pour l\'instant.</div>';
-        return;
-      }
-
-      content.innerHTML = `
-        <table>
-          <thead>
-            <tr><th>Date</th><th>Nom</th><th>Adresse</th><th>Téléphone</th><th>Email</th><th>Statut</th><th>Devis</th></tr>
-          </thead>
-          <tbody>
-            ${leadsData.map(l => `
-              <tr>
-                <td>${new Date(l.created_at).toLocaleDateString('fr-FR')}</td>
-                <td>${(l.prenom || '') + ' ' + (l.nom || '')}</td>
-                <td>${extraireAdresse(l.reponses)}</td>
-                <td>${l.telephone || '—'}</td>
-                <td>${l.email || '—'}</td>
-                <td><span class="statut-badge">${l.statut || 'nouveau'}</span></td>
-                <td>${celluleDevis(l)}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      `;
-      content.querySelectorAll('[data-action="envoyer-devis"]').forEach(btn => {
-        btn.addEventListener('click', () => declencherUploadDevis(btn.dataset.lead));
-      });
-      content.querySelectorAll('[data-action="relancer-devis"]').forEach(btn => {
-        btn.addEventListener('click', () => relancerDevis(btn.dataset.lead, btn));
-      });
-    } catch (e) {
-      content.innerHTML = '<div class="empty-msg">Impossible de charger les demandes pour le moment.</div>';
-    }
-  }
-
-  function celluleDevis(l) {
-    const statut = l.devis_statut || 'aucun';
-    const badges = {
-      aucun: '',
-      envoye: '<span class="devis-badge envoye">Envoyé</span>',
-      relance: `<span class="devis-badge relance">Relancé${l.devis_nb_relances ? ' ×' + l.devis_nb_relances : ''}</span>`,
-      signe: `<span class="devis-badge signe">✅ Signé${l.devis_signe_le ? ' le ' + new Date(l.devis_signe_le).toLocaleDateString('fr-FR') : ''}</span>`,
-    };
-    const lienVoir = l.devis_pdf_url ? `<a class="btn-devis voir" href="${l.devis_pdf_url}" target="_blank" rel="noopener">Voir</a>` : '';
-
-    if (statut === 'aucun') {
-      return `<div class="devis-actions"><button type="button" class="btn-devis envoyer" data-action="envoyer-devis" data-lead="${l.id}">📄 Envoyer un devis</button></div>`;
-    }
-    if (statut === 'signe') {
-      return `<div class="devis-actions">${badges.signe}${lienVoir}</div>`;
-    }
-    return `<div class="devis-actions">${badges[statut] || ''}${lienVoir}<button type="button" class="btn-devis relancer" data-action="relancer-devis" data-lead="${l.id}">🔁 Relancer</button></div>`;
-  }
-
-  function obtenirInputDevis() {
-    let input = document.getElementById('inputDevisFichier');
-    if (!input) {
-      input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'application/pdf';
-      input.id = 'inputDevisFichier';
-      input.style.display = 'none';
-      document.body.appendChild(input);
-    }
-    return input;
-  }
-
-  function declencherUploadDevis(leadId) {
-    const input = obtenirInputDevis();
-    input.onchange = async () => {
-      const fichier = input.files[0];
-      input.value = '';
-      if (!fichier) return;
-      if (fichier.type !== 'application/pdf') {
-        alert('Merci de choisir un fichier PDF.');
-        return;
-      }
-      await uploaderEtEnvoyerDevis(leadId, fichier);
-    };
-    input.click();
-  }
-
-  async function uploaderEtEnvoyerDevis(leadId, fichier) {
-    const ligneCellule = document.querySelector(`[data-lead="${leadId}"]`);
-    if (ligneCellule) { ligneCellule.disabled = true; ligneCellule.textContent = 'Envoi…'; }
-    try {
-      const chemin = `devis-artisan/${draftId}/${leadId}-${Date.now()}.pdf`;
-      const uploadResp = await fetch(
-        `${SUPABASE_URL}/storage/v1/object/${DEVIS_BUCKET}/${chemin}?apikey=${encodeURIComponent(SUPABASE_ANON_KEY)}`,
-        {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${SUPABASE_ANON_KEY}`, apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/pdf' },
-          body: fichier,
-        }
-      );
-      if (!uploadResp.ok) throw new Error("Échec de l'envoi du fichier : " + (await uploadResp.text().catch(() => '')));
-      const pdfUrl = `${SUPABASE_URL}/storage/v1/object/public/${DEVIS_BUCKET}/${chemin}`;
-
-      const resp = await fetch('/api/envoyer-devis', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ leadId, pdfUrl }),
-      });
-      const data = await resp.json();
-      if (!resp.ok || !data.success) throw new Error(data.error || "Le devis n'a pas pu être envoyé.");
-
-      await chargerDemandes();
-    } catch (e) {
-      alert(e.message || "Une erreur est survenue lors de l'envoi du devis.");
-      await chargerDemandes();
-    }
-  }
-
-  async function relancerDevis(leadId, btn) {
-    if (!confirm('Renvoyer un SMS de relance pour ce devis ?')) return;
-    btn.disabled = true;
-    btn.textContent = 'Envoi…';
-    try {
-      const resp = await fetch('/api/relancer-devis', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ leadId }),
-      });
-      const data = await resp.json();
-      if (!resp.ok || !data.success) throw new Error(data.error || "La relance n'a pas pu être envoyée.");
-      await chargerDemandes();
-    } catch (e) {
-      alert(e.message || 'Une erreur est survenue.');
-      btn.disabled = false;
-      btn.textContent = '🔁 Relancer';
-    }
-  }
-
-  function extraireAdresse(reponses) {
-    if (!reponses || typeof reponses !== 'object') return '—';
-    // Cherche une clé qui ressemble à une adresse, quel que soit le métier/formulaire d'origine.
-    const cleAdresse = Object.keys(reponses).find(k => /adresse|address|localisation|ville/i.test(k));
-    return cleAdresse ? reponses[cleAdresse] : '—';
-  }
-
-  document.getElementById('btnExportPdf').addEventListener('click', () => {
-    if (!leadsData.length) {
-      alert('Aucune demande à exporter pour le moment.');
-      return;
-    }
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-
-    doc.setFontSize(16);
-    doc.text(`Demandes d'estimation — ${nomEntreprise}`, 14, 18);
-    doc.setFontSize(9);
-    doc.setTextColor(120);
-    doc.text(`Exporté le ${new Date().toLocaleDateString('fr-FR')} — ${leadsData.length} demande(s)`, 14, 25);
-
-    let y = 38;
-    doc.setFontSize(8);
-    doc.setTextColor(140);
-    doc.text('DATE', 14, y);
-    doc.text('NOM', 38, y);
-    doc.text('ADRESSE', 78, y);
-    doc.text('TÉLÉPHONE', 130, y);
-    doc.text('EMAIL', 165, y);
-    y += 4;
-    doc.setDrawColor(220);
-    doc.line(14, y, 196, y);
-    y += 6;
-
-    doc.setFontSize(8.5);
-    doc.setTextColor(30);
-    leadsData.forEach(l => {
-      if (y > 280) { doc.addPage(); y = 20; }
-      const date = new Date(l.created_at).toLocaleDateString('fr-FR');
-      const nomComplet = ((l.prenom || '') + ' ' + (l.nom || '')).trim() || '—';
-      const adresse = extraireAdresse(l.reponses);
-      doc.text(date, 14, y);
-      doc.text(nomComplet.substring(0, 22), 38, y);
-      doc.text(String(adresse).substring(0, 30), 78, y);
-      doc.text(l.telephone || '—', 130, y);
-      doc.text((l.email || '—').substring(0, 26), 165, y);
-      y += 7;
-    });
-
-    doc.save(`demandes-${nomEntreprise.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.pdf`);
-  });
-
-  // --- Pilotage Google Ads avancé : curseur clics -> budget, détail des
-  // mots-clés et répartition horaire des clics (données réelles via Windsor.ai).
-  async function initPilotageAds() {
-    document.getElementById('adsSection').style.display = 'block';
-
-    let avgCpcEur = 1.5; // repli générique si l'estimation échoue
-    let draftInfo = {};
-    const slider = document.getElementById('clicsSlider');
-    const sliderValue = document.getElementById('clicsSliderValue');
-    const budgetValue = document.getElementById('budgetNecessaireValue');
-    const volumeNote = document.getElementById('volumeNote');
-    const potentielBox = document.getElementById('motsClesPotentiel');
-    const potentielChiffre = document.getElementById('motsClesPotentielChiffre');
-    const potentielDetail = document.getElementById('motsClesPotentielDetail');
-    const TAUX_COMMISSION_INVERSE = 0.50; // doit rester synchronisé avec les autres fichiers
-
-    function calculerBudgetInverse() {
-      const clics = parseInt(slider.value, 10);
-      sliderValue.textContent = clics + (clics > 1 ? ' clics' : ' clic');
-      const budgetCalcule = Math.round((clics * avgCpcEur) / (1 - TAUX_COMMISSION_INVERSE));
-      const budgetNecessaire = Math.max(100, budgetCalcule);
-      budgetValue.textContent = budgetCalcule < 100 ? '100 € (minimum)' : '≈ ' + budgetNecessaire + ' €';
-      document.getElementById('btnFondsInverse').href = '/campagne.html?id=' + draftId + '&budget=' + budgetNecessaire;
-    }
-
-    // Affiche, juste sous la liste des mots-clés, ce que CES mots-clés
-    // précis peuvent générer comme clics — sans que l'artisan ait besoin de
-    // toucher le curseur du dessous. Avant ce correctif (31/08), seule
-    // l'information "budget pour le nombre de clics choisi sur le curseur"
-    // était visible, et comme le curseur démarre à 20 clics avec un budget
-    // minimum de 100 €, l'affichage restait quasi toujours bloqué sur
-    // "100 € (minimum)" sans jamais dire combien de clics ce budget minimum
-    // permet réellement d'obtenir avec les mots-clés choisis.
-    function afficherPotentiel({ succes, erreur, totalMonthlyVolume, estimatedClicks, motsClesPersonnalises }) {
-      potentielBox.style.display = 'block';
-      if (!succes) {
-        potentielChiffre.textContent = '—';
-        potentielDetail.textContent = erreur || "Impossible de calculer le potentiel de clics pour le moment.";
-        return;
-      }
-      if (!totalMonthlyVolume) {
-        potentielChiffre.textContent = '—';
-        potentielDetail.textContent = motsClesPersonnalises
-          ? "Pas encore de volume de recherche connu pour ces mots-clés précis dans votre zone — essayez des mots-clés un peu plus larges."
-          : "Pas encore de volume de recherche connu pour votre zone.";
-        return;
-      }
-      if (estimatedClicks) {
-        potentielChiffre.textContent = `≈ ${estimatedClicks} clics/mois`;
-        potentielDetail.textContent = motsClesPersonnalises
-          ? `avec le budget minimum de 100 € — et jusqu'à ${totalMonthlyVolume} clics/mois au total avec ces mots-clés dans votre zone en investissant davantage (curseur ci-dessous).`
-          : `avec le budget minimum de 100 € (estimation générique par métier — choisissez vos mots-clés ci-dessus pour affiner).`;
-      } else {
-        potentielChiffre.textContent = `≈ ${totalMonthlyVolume} clics/mois possibles`;
-        potentielDetail.textContent = motsClesPersonnalises
-          ? "avec ces mots-clés dans votre zone (coût par clic pas encore connu pour ces mots-clés précis — le nombre exact obtenu avec 100 € ne peut pas encore être calculé)."
-          : "au total dans votre zone (estimation générique par métier).";
-      }
-    }
-
-    // Interroge le Keyword Planner Google Ads réel (CPC + volume) à partir des
-    // mots-clés actuellement choisis (ou de la liste générique par métier s'il
-    // n'y en a pas encore) et de la zone, puis calibre le curseur en
-    // conséquence. Rappelée à chaque changement de la sélection de mots-clés
-    // (voir initMotsCles ci-dessous) pour que le curseur reste à jour.
-    async function rafraichirEstimationVolume(motsCles) {
-      try {
-        const res = await fetch('/api/estimate-reach', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ metier: draftInfo.metier, zone: draftInfo.zone, departement: draftInfo.departement, motsCles, budget: 100 })
-        });
-        const data = await res.json();
-        if (!data.success) {
-          // Avant (bug du 31/08) : en cas d'erreur on ne touchait à rien,
-          // donc après une régénération de mots-clés qui échouait côté API
-          // rien ne semblait se passer côté "clics" — on l'affiche
-          // maintenant clairement, ici et dans le nouvel encart au-dessus.
-          volumeNote.textContent = data.error || "Impossible de mettre à jour l'estimation de clics pour le moment.";
-          afficherPotentiel({ succes: false, erreur: data.error });
-          calculerBudgetInverse();
-          return data;
-        }
-        if (data.avgCpcEur) avgCpcEur = data.avgCpcEur;
-        if (data.totalMonthlyVolume) {
-          const maxRealiste = Math.max(20, Math.min(1000, data.totalMonthlyVolume));
-          slider.max = maxRealiste;
-          // On positionne le curseur sur le nombre de clics réellement
-          // atteignable avec le budget minimum (100 €) — plutôt que de
-          // laisser la valeur de départ arbitraire (20) qui masquait ce que
-          // ces mots-clés permettent concrètement d'obtenir.
-          if (data.estimatedClicks) {
-            slider.value = Math.min(data.estimatedClicks, maxRealiste);
-          } else if (parseInt(slider.value, 10) > maxRealiste) {
-            slider.value = maxRealiste;
-          }
-          volumeNote.textContent = data.motsClesPersonnalises
-            ? `≈ ${data.totalMonthlyVolume} clics possibles ce mois-ci avec vos mots-clés et votre zone actuels (base du curseur).`
-            : `≈ ${data.totalMonthlyVolume} clics possibles ce mois-ci (estimation générique par métier — choisissez vos mots-clés ci-dessus pour affiner).`;
-        } else {
-          // Réponse reçue avec succès mais volume nul pour CES mots-clés
-          // précis dans cette zone (fréquent avec des suggestions IA très
-          // spécifiques/locales) — c'était le cœur du bug rapporté le 31/08 :
-          // le curseur restait figé sans aucune explication après une
-          // régénération. On le dit maintenant explicitement.
-          volumeNote.textContent = data.motsClesPersonnalises
-            ? "Pas encore de volume de recherche connu pour ces mots-clés précis dans votre zone — le curseur garde une estimation générique. Essayez des mots-clés un peu plus larges si besoin."
-            : "Pas encore de volume de recherche connu pour votre zone — le curseur garde une estimation générique.";
-        }
-        afficherPotentiel({
-          succes: true,
-          totalMonthlyVolume: data.totalMonthlyVolume,
-          estimatedClicks: data.estimatedClicks,
-          motsClesPersonnalises: data.motsClesPersonnalises,
-        });
-        calculerBudgetInverse();
-        return data;
-      } catch (e) {
-        volumeNote.textContent = "Impossible de contacter le serveur pour mettre à jour l'estimation de clics.";
-        afficherPotentiel({ succes: false, erreur: "Impossible de contacter le serveur." });
-        calculerBudgetInverse();
-        return null;
-      }
-    }
-
-    try {
-      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,metier,zone,departement,rayon_ciblage_km,mots_cles_choisis,annonce_titres,annonce_descriptions`, {
-        headers: { apikey: SUPABASE_ANON_KEY }
-      });
-      const rows = await resp.json();
-      draftInfo = rows[0] || {};
-    } catch (e) { /* on garde draftInfo vide — repli générique dans rafraichirEstimationVolume */ }
-
-    initZoneCiblee(draftInfo.zone || '', draftInfo.rayon_ciblage_km || '');
-    const motsClesApi = initMotsCles(draftInfo, rafraichirEstimationVolume);
-    initAnnonce(draftInfo);
-
-    slider.addEventListener('input', calculerBudgetInverse);
-    calculerBudgetInverse(); // affichage immédiat avec le CPC générique, affiné juste après
-    const dataInitiale = await rafraichirEstimationVolume(Array.isArray(draftInfo.mots_cles_choisis) ? draftInfo.mots_cles_choisis : []);
-    if (dataInitiale && dataInitiale.keywords) motsClesApi.appliquerStats(dataInitiale.keywords);
-
-    try {
-      const res = await fetch('/api/get-google-ads-details', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draft_id: draftId })
-      });
-      const data = await res.json();
-
-      if (!data.success || !data.campagneExiste) {
-        document.getElementById('adsSectionVide').style.display = 'block';
-        return;
-      }
-
-      document.getElementById('motsClesPanel').style.display = 'block';
-      document.getElementById('heuresPanel').style.display = 'block';
-      afficherMotsCles(data.motsCles || []);
-      afficherHeures(data.clicsParHeure || [], data.heuresDePointe || []);
-      afficherCoaching(data.motsCles || [], data.heuresDePointe || []);
-    } catch (e) {
-      const vide = document.getElementById('adsSectionVide');
-      vide.textContent = 'Impossible de charger le détail de la campagne pour le moment.';
-      vide.style.display = 'block';
-    }
-  }
-
-  function initZoneCiblee(zoneActuelle, rayonActuel) {
-    let zone = zoneActuelle;
-    let rayon = rayonActuel;
-    const affichage = document.getElementById('zoneAffichage');
-    const edition = document.getElementById('zoneEdition');
-    const valeurEl = document.getElementById('zoneValeur');
-    const input = document.getElementById('zoneInput');
-    const rayonInput = document.getElementById('rayonCiblageInput');
-    const btnModifier = document.getElementById('btnModifierZone');
-    const btnEnregistrer = document.getElementById('btnEnregistrerZone');
-    const btnAnnuler = document.getElementById('btnAnnulerZone');
-
-    function rafraichirAffichage() {
-      const precision = rayon ? ` (rayon ${rayon} km)` : '';
-      valeurEl.textContent = (zone || 'Aucune zone renseignée pour le moment') + precision;
-    }
-    rafraichirAffichage();
-
-    btnModifier.addEventListener('click', () => {
-      input.value = zone;
-      rayonInput.value = rayon;
-      affichage.style.display = 'none';
-      edition.style.display = 'flex';
-      input.focus();
-    });
-
-    btnAnnuler.addEventListener('click', () => {
-      edition.style.display = 'none';
-      affichage.style.display = 'flex';
-    });
-
-    btnEnregistrer.addEventListener('click', async () => {
-      const nouvelleZone = input.value.trim();
-      const nouveauRayon = rayonInput.value ? parseInt(rayonInput.value, 10) : null;
-      if (!nouvelleZone) return;
-      btnEnregistrer.disabled = true;
-      btnEnregistrer.textContent = '…';
-      try {
-        const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
-          method: 'PATCH',
-          headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-          body: JSON.stringify({ zone: nouvelleZone, rayon_ciblage_km: nouveauRayon }),
-        });
-        if (!resp.ok) throw new Error();
-        zone = nouvelleZone;
-        rayon = nouveauRayon;
-        rafraichirAffichage();
-        edition.style.display = 'none';
-        affichage.style.display = 'flex';
-      } catch (e) {
-        alert("Impossible d'enregistrer la zone pour le moment.");
-      } finally {
-        btnEnregistrer.disabled = false;
-        btnEnregistrer.textContent = 'Enregistrer';
-      }
-    });
-  }
-
-  // Aperçu (format Google : badge "Annonce", URL en vert, titre en bleu,
-  // description en gris) de l'annonce responsive search que
-  // create-google-ads-campaign.js créera réellement — modifiable ici, dans
-  // le tableau de bord (mêmes colonnes annonce_titres / annonce_descriptions
-  // que le panneau équivalent de campagne.html, pour rester synchronisés
-  // quel que soit l'endroit où l'artisan modifie son annonce).
-  function genererAnnoncePropos(draftInfo) {
-    const motsClesChoisis = Array.isArray(draftInfo.mots_cles_choisis) ? draftInfo.mots_cles_choisis : [];
-    const premierMotCle = motsClesChoisis[0] || '';
-    const motCleTitre = premierMotCle
-      ? premierMotCle.charAt(0).toUpperCase() + premierMotCle.slice(1)
-      : '';
-    return {
-      titres: [
-        (draftInfo.entreprise || 'Devis gratuit').substring(0, 30),
-        (motCleTitre || 'Estimation gratuite en ligne').substring(0, 30),
-        'Devis sous 24h',
-      ],
-      descriptions: [
-        'Obtenez votre estimation en 2 minutes, sans engagement.',
-        (draftInfo.zone ? `Artisan local à ${draftInfo.zone} — réponse rapide garantie.` : 'Artisan local — réponse rapide garantie.').substring(0, 90),
-      ],
-    };
-  }
-
-  function initAnnonce(draftInfo) {
-    const champs = {
-      titre1: document.getElementById('annonceTitre1'),
-      titre2: document.getElementById('annonceTitre2'),
-      titre3: document.getElementById('annonceTitre3'),
-      desc1: document.getElementById('annonceDesc1'),
-      desc2: document.getElementById('annonceDesc2'),
-    };
-    const compteurs = {
-      titre1: document.getElementById('cptTitre1'),
-      titre2: document.getElementById('cptTitre2'),
-      titre3: document.getElementById('cptTitre3'),
-      desc1: document.getElementById('cptDesc1'),
-      desc2: document.getElementById('cptDesc2'),
-    };
-    const previewTitre = document.getElementById('previewTitre');
-    const previewDesc = document.getElementById('previewDesc');
-    const sauvegardeNote = document.getElementById('annonceSauvegardeNote');
-
-    // Domaine réellement affiché dans l'annonce Google, dérivé de l'hôte
-    // courant plutôt que codé en dur — reste juste automatiquement le jour
-    // où un nom de domaine personnalisé (app.skyeco.fr) remplace
-    // pub-skyeco-23ue.vercel.app, sans nouvelle modification de ce fichier.
-    const previewDomaine = document.getElementById('previewDomaine');
-    if (previewDomaine && window.location.hostname) previewDomaine.textContent = window.location.hostname;
-
-    const defauts = genererAnnoncePropos(draftInfo);
-    const titresDepart = Array.isArray(draftInfo.annonce_titres) && draftInfo.annonce_titres.length ? draftInfo.annonce_titres : defauts.titres;
-    const descriptionsDepart = Array.isArray(draftInfo.annonce_descriptions) && draftInfo.annonce_descriptions.length ? draftInfo.annonce_descriptions : defauts.descriptions;
-
-    champs.titre1.value = titresDepart[0] || '';
-    champs.titre2.value = titresDepart[1] || '';
-    champs.titre3.value = titresDepart[2] || '';
-    champs.desc1.value = descriptionsDepart[0] || '';
-    champs.desc2.value = descriptionsDepart[1] || '';
-
-    function majApercu() {
-      const titres = [champs.titre1.value, champs.titre2.value, champs.titre3.value].filter(t => t.trim());
-      previewTitre.textContent = titres.length ? titres.join(' | ') : 'Votre titre apparaîtra ici';
-      const descriptions = [champs.desc1.value, champs.desc2.value].filter(d => d.trim());
-      previewDesc.textContent = descriptions.length ? descriptions.join(' ') : 'Votre description apparaîtra ici.';
-    }
-
-    function majCompteur(cle) {
-      const el = champs[cle];
-      compteurs[cle].textContent = `${el.value.length}/${el.maxLength}`;
-      el.classList.toggle('trop-long', el.value.length >= el.maxLength);
-    }
-
-    let sauvegardeTimer = null;
-    async function sauvegarderAnnonce() {
-      const titres = [champs.titre1.value.trim(), champs.titre2.value.trim(), champs.titre3.value.trim()].filter(t => t);
-      const descriptions = [champs.desc1.value.trim(), champs.desc2.value.trim()].filter(d => d);
-      try {
-        await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
-          method: 'PATCH',
-          headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-          body: JSON.stringify({ annonce_titres: titres, annonce_descriptions: descriptions }),
-        });
-        sauvegardeNote.textContent = 'Modifications enregistrées.';
-      } catch (e) {
-        sauvegardeNote.textContent = "Impossible d'enregistrer ces modifications pour le moment.";
-      }
-    }
-
-    Object.keys(champs).forEach((cle) => {
-      champs[cle].addEventListener('input', () => {
-        majApercu();
-        majCompteur(cle);
-        sauvegardeNote.textContent = 'Enregistrement…';
-        clearTimeout(sauvegardeTimer);
-        sauvegardeTimer = setTimeout(sauvegarderAnnonce, 600);
-      });
-      majCompteur(cle);
-    });
-
-    majApercu();
-
-    if (!(Array.isArray(draftInfo.annonce_titres) && draftInfo.annonce_titres.length)) {
-      sauvegarderAnnonce();
-    }
-  }
-
-  // Panneau "✨ Quels mots-clés pour votre annonce ?" — décrire son activité,
-  // obtenir des suggestions de l'IA, cocher/décocher/ajouter à la main. La
-  // sélection est enregistrée dans mots_cles_choisis et sert à la fois de
-  // base à l'annonce Google Ads réelle (create-google-ads-campaign.js) et à
-  // l'estimation de clics ci-dessus (onSelectionChange rafraîchit le curseur).
-  function initMotsCles(draftInfo, onSelectionChange) {
-    const descriptionEl = document.getElementById('motsClesDescription');
-    const btnSuggerer = document.getElementById('btnSuggererMotsCles');
-    const listeEl = document.getElementById('motsClesListe');
-    const ajoutEl = document.getElementById('motsClesAjout');
-    const noteEl = document.getElementById('motsClesNote');
-    const btnRafraichir = document.getElementById('btnRafraichirEstimation');
-    const draftMetier = draftInfo.metier;
-    const draftZone = draftInfo.zone;
-    let selection = new Map(); // texte -> true/false (coché ou non)
-    // Potentiel par mot-clé (recherches/mois), renseigné par Windsor.ai à
-    // chaque rafraîchissement — permet d'afficher un badge à côté de chaque
-    // mot-clé pour aider l'artisan à choisir les plus pertinents plutôt que
-    // de ne voir qu'un total global (demande du 31/08).
-    let statsParMotCle = new Map(); // texte du mot-clé (minuscules) -> { monthly_volume, cpc_eur }
-
-    if (Array.isArray(draftInfo.mots_cles_choisis) && draftInfo.mots_cles_choisis.length) {
-      draftInfo.mots_cles_choisis.forEach(m => selection.set(m, true));
-      ajoutEl.style.display = 'flex';
-      noteEl.textContent = 'Sélection déjà enregistrée — décochez ou ajoutez-en pour affiner votre annonce.';
-      rendreListe();
-    }
-
-    // Windsor.ai renvoie des idées de mots-clés proches de nos "seeds", pas
-    // forcément le texte EXACT choisi par l'artisan (ex. singulier/pluriel,
-    // ordre des mots) — on cherche d'abord une correspondance exacte, sinon
-    // une correspondance partielle, comme le fait déjà estimate-reach.js
-    // côté serveur pour rattacher les idées reçues à nos mots-clés de départ.
-    function trouverStats(texte) {
-      const t = texte.trim().toLowerCase();
-      if (statsParMotCle.has(t)) return statsParMotCle.get(t);
-      for (const [k, v] of statsParMotCle.entries()) {
-        if (k.includes(t) || t.includes(k)) return v;
-      }
-      return null;
-    }
-
-    // Appelée après chaque rafraîchissement réussi (chargement initial,
-    // régénération IA, ou clic sur "Rafraîchir l'estimation de clics") avec
-    // le tableau `keywords` renvoyé par /api/estimate-reach.
-    function appliquerStats(keywordsData) {
-      statsParMotCle = new Map();
-      if (Array.isArray(keywordsData)) {
-        keywordsData.forEach((k) => {
-          if (k && k.keyword) statsParMotCle.set(String(k.keyword).trim().toLowerCase(), k);
-        });
-      }
-      rendreListe();
-    }
-
-    function rendreListe() {
-      listeEl.innerHTML = [...selection.entries()].map(([texte, coche]) => {
-        const stats = trouverStats(texte);
-        const badge = stats
-          ? `<span class="motscle-potentiel-badge${stats.monthly_volume ? '' : ' faible'}">${stats.monthly_volume ? '≈ ' + stats.monthly_volume + ' recherches/mois' : 'aucune recherche connue'}</span>`
-          : '';
-        return `
-        <label class="motscle-item">
-          <input type="checkbox" data-texte="${texte.replace(/"/g, '&quot;')}" ${coche ? 'checked' : ''}>
-          <span class="motscle-texte">${texte}</span>
-          ${badge}
-        </label>
-      `;
-      }).join('');
-      listeEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-        cb.addEventListener('change', () => {
-          selection.set(cb.dataset.texte, cb.checked);
-          // On enregistre tout de suite la sélection (Supabase), mais on
-          // n'interroge PAS Windsor.ai à chaque coche/décoche — sinon
-          // décocher plusieurs mots-clés à la suite déclenche autant
-          // d'appels API à la suite. On laisse l'artisan cliquer sur
-          // "Rafraîchir l'estimation de clics" une fois sa sélection prête
-          // (demande explicite du 31/08 : pouvoir rafraîchir avec un bouton
-          // après avoir enlevé des mots-clés).
-          enregistrerSelectionSupabase();
-          signalerSelectionModifiee();
-        });
-      });
-    }
-
-    async function enregistrerSelectionSupabase() {
-      const motsClesActifs = [...selection.entries()].filter(([, coche]) => coche).map(([texte]) => texte);
-      try {
-        await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
-          method: 'PATCH',
-          headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-          body: JSON.stringify({ mots_cles_choisis: motsClesActifs }),
-        });
-      } catch (e) { /* silencieux — la sélection reste visible même si l'enregistrement échoue */ }
-      return motsClesActifs;
-    }
-
-    function signalerSelectionModifiee() {
-      btnRafraichir.style.display = 'inline-block';
-      noteEl.textContent = 'Sélection modifiée — cliquez sur "🔄 Rafraîchir l\'estimation de clics" pour mettre à jour le potentiel ci-dessous.';
-    }
-
-    // Utilisé uniquement après une génération de mots-clés par l'IA : on
-    // enregistre ET on rafraîchit tout de suite l'estimation, pour que
-    // l'artisan voie le potentiel de clics sans action supplémentaire
-    // (c'est le parcours principal, corrigé le 31/08).
-    async function sauvegarderEtRafraichir() {
-      const motsClesActifs = await enregistrerSelectionSupabase();
-      btnRafraichir.style.display = 'inline-block';
-      if (onSelectionChange) {
-        const data = await onSelectionChange(motsClesActifs);
-        if (data && data.keywords) appliquerStats(data.keywords);
-      }
-    }
-
-    btnRafraichir.addEventListener('click', async () => {
-      btnRafraichir.disabled = true;
-      btnRafraichir.textContent = 'Mise à jour…';
-      const motsClesActifs = [...selection.entries()].filter(([, coche]) => coche).map(([texte]) => texte);
-      try {
-        if (onSelectionChange) {
-          const data = await onSelectionChange(motsClesActifs);
-          if (data && data.keywords) appliquerStats(data.keywords);
-        }
-      } finally {
-        btnRafraichir.disabled = false;
-        btnRafraichir.textContent = "🔄 Rafraîchir l'estimation de clics";
-      }
-    });
-
-    btnSuggerer.addEventListener('click', async () => {
-      const description = descriptionEl.value.trim();
-      if (!description) {
-        noteEl.textContent = 'Décrivez brièvement votre activité pour obtenir des suggestions.';
-        return;
-      }
-      btnSuggerer.disabled = true;
-      btnSuggerer.textContent = 'Génération en cours…';
-      noteEl.textContent = '';
-      try {
-        const res = await fetch('/api/suggerer-mots-cles', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ description, metier: draftMetier, zone: draftZone })
-        });
-        const data = await res.json();
-        if (data.success) {
-          data.motsCles.forEach(m => { if (!selection.has(m)) selection.set(m, true); });
-          rendreListe();
-          ajoutEl.style.display = 'flex';
-          noteEl.textContent = 'Décochez ceux que vous ne voulez pas utiliser, ou ajoutez les vôtres.';
-          sauvegarderEtRafraichir();
-        } else {
-          noteEl.textContent = data.error || 'Impossible de générer des suggestions pour le moment.';
-        }
-      } catch (e) {
-        noteEl.textContent = 'Impossible de contacter le serveur.';
-      } finally {
-        btnSuggerer.disabled = false;
-        btnSuggerer.textContent = '✨ Suggérer des mots-clés';
-      }
-    });
-
-    document.getElementById('btnAjouterMotCleManuel').addEventListener('click', () => {
-      const input = document.getElementById('motCleManuel');
-      const texte = input.value.trim();
-      if (!texte || selection.has(texte)) return;
-      selection.set(texte, true);
-      rendreListe();
-      enregistrerSelectionSupabase();
-      signalerSelectionModifiee();
-      input.value = '';
-    });
-
-    return { appliquerStats };
-  }
-
-  function pertinenceClasse(clics, maxClics) {
-    if (!maxClics) return 'moyenne';
-    const ratio = clics / maxClics;
-    if (ratio >= 0.5) return 'haute';
-    if (ratio >= 0.15) return 'moyenne';
-    return 'faible';
-  }
-
-  function afficherMotsCles(motsCles) {
-    const content = document.getElementById('motsClesContent');
-    if (!motsCles.length) {
-      content.innerHTML = '<div class="empty-msg" style="padding:12px 0;">Pas encore de données de clics par mot-clé.</div>';
-      return;
-    }
-    const maxClics = Math.max(...motsCles.map(m => m.clics));
-    content.innerHTML = `
-      <table class="kw-table">
-        <thead><tr><th>Mot-clé</th><th>Clics</th><th>Coût</th><th>CPC moyen</th><th></th></tr></thead>
-        <tbody>
-          ${motsCles.map(m => `
-            <tr>
-              <td><span class="kw-pertinence ${pertinenceClasse(m.clics, maxClics)}"></span>${m.texte}${m.statut === 'REMOVED' ? ' <span class="kw-negatif">(exclu)</span>' : ''}</td>
-              <td>${m.clics}</td>
-              <td>${m.coutEuros} €</td>
-              <td>${m.cpcMoyenEuros != null ? m.cpcMoyenEuros + ' €' : '—'}</td>
-              <td>${m.statut !== 'REMOVED' ? `<button class="btn-exclure-kw" data-texte="${m.texte.replace(/"/g, '&quot;')}" onclick="exclureMotCle(this)">🚫 Exclure</button>` : '—'}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    `;
-  }
-
-  function afficherHeures(clicsParHeure, heuresDePointe) {
-    const max = Math.max(...clicsParHeure, 1);
-    document.getElementById('heuresChart').innerHTML = clicsParHeure.map((v, h) => `
-      <div class="heure-barre-wrap" title="${h}h : ${v} clic${v > 1 ? 's' : ''}">
-        <div class="heure-barre ${heuresDePointe.includes(h) ? 'pointe' : ''}" style="height:${Math.max(4, Math.round((v / max) * 100))}%;"></div>
-      </div>
-    `).join('');
-    document.getElementById('heuresLabels').innerHTML = clicsParHeure.map((v, h) => `<span>${h % 3 === 0 ? h + 'h' : ''}</span>`).join('');
-    const note = document.getElementById('heuresNote');
-    if (heuresDePointe.length) {
-      const heuresTxt = heuresDePointe.map(h => h + 'h').join(', ');
-      note.innerHTML = `Vos clics sont les plus nombreux vers <strong>${heuresTxt}</strong> — c'est le créneau le plus rentable pour votre activité.`;
-    } else {
-      note.textContent = "Pas encore assez de clics pour dégager un créneau horaire dominant.";
-    }
-  }
-
-  function afficherCoaching(motsCles, heuresDePointe) {
-    const panel = document.getElementById('coachingPanel');
-    const liste = document.getElementById('coachingListe');
-    const conseils = [];
-
-    const actifs = motsCles.filter(m => m.statut !== 'REMOVED');
-    const exclus = motsCles.filter(m => m.statut === 'REMOVED');
-
-    if (!motsCles.length) {
-      conseils.push({ texte: "Pas encore assez de données sur vos mots-clés pour des conseils personnalisés — revenez dans quelques jours." });
-    } else {
-      const maxClics = Math.max(...actifs.map(m => m.clics), 1);
-      const meilleur = actifs.slice().sort((a, b) => b.clics - a.clics)[0];
-      if (meilleur && meilleur.clics > 0) {
-        conseils.push({ texte: `<strong>${meilleur.texte}</strong> est votre mot-clé le plus efficace avec ${meilleur.clics} clic${meilleur.clics > 1 ? 's' : ''} — assurez-vous qu'il reste actif.` });
-      }
-
-      const faibles = actifs.filter(m => (m.clics / maxClics) < 0.15 && m.coutEuros > 0).slice(0, 3);
-      if (faibles.length) {
-        const noms = faibles.map(m => `<strong>${m.texte}</strong>`).join(', ');
-        conseils.push({ texte: `Ces mots-clés coûtent du budget mais génèrent peu de clics : ${noms} — pensez à les exclure pour économiser.`, alerte: true });
-      } else if (exclus.length) {
-        conseils.push({ texte: `Vous avez déjà exclu ${exclus.length} mot${exclus.length > 1 ? 's' : ''}-clé${exclus.length > 1 ? 's' : ''} peu pertinent${exclus.length > 1 ? 's' : ''} — bon réflexe pour optimiser votre budget.` });
-      }
-
-      conseils.push({ texte: "Ajoutez de nouveaux mots-clés proches de votre activité (matériaux, prestations, quartiers) pour élargir votre audience sans augmenter votre budget." });
-    }
-
-    if (heuresDePointe.length) {
-      const heuresTxt = heuresDePointe.map(h => h + 'h').join(', ');
-      conseils.push({ texte: `Vos prospects cliquent surtout vers <strong>${heuresTxt}</strong> — c'est le bon moment pour être joignable au téléphone et répondre vite aux demandes.` });
-    }
-
-    liste.innerHTML = conseils.map(c => `<li${c.alerte ? ' class="alerte"' : ''}>${c.texte}</li>`).join('');
-    panel.style.display = 'block';
-  }
-
-  window.exclureMotCle = async function(btn) {
-    const texte = btn.dataset.texte;
-    if (!confirm(`Exclure le mot-clé "${texte}" ? Vos annonces ne se déclencheront plus pour les recherches contenant ce terme.`)) return;
-    btn.disabled = true;
-    btn.textContent = '…';
-    try {
-      const res = await fetch('/api/manage-keywords', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, action: 'exclude', texte })
-      });
-      const data = await res.json();
-      if (data.success) {
-        btn.closest('tr').querySelector('td').insertAdjacentHTML('beforeend', ' <span class="kw-negatif">(exclu)</span>');
-        btn.replaceWith(document.createTextNode('—'));
-      } else {
-        alert(data.error || "Erreur lors de l'exclusion.");
-        btn.disabled = false;
-        btn.textContent = '🚫 Exclure';
-      }
-    } catch (e) {
-      alert('Impossible de contacter le serveur.');
-      btn.disabled = false;
-      btn.textContent = '🚫 Exclure';
-    }
+  let logoUrl = null;
+  let photosUrls = [];
+  let videoUrl = null;
+  let metiersActuels = [];
+  let produitsActuels = new Map(); // id -> { metier, nom, unite, prix, minimum, questions: Map(id -> {label,type,unite,coche}) }
+  let titreChoisi = '';
+  let draftStatutActuel = null; // status du brouillon au chargement — sert à savoir où renvoyer après enregistrement
+  let zoneActuelle = null;
+
+  // Suggestions de titre par métier — doit rester cohérent avec les
+  // heroTitre par défaut de METIER_TEMPLATES dans apercu.html (le premier
+  // choix de chaque métier n'est PAS forcément identique au défaut : tant
+  // qu'aucun titre n'est choisi ici, apercu.html garde son propre défaut
+  // avec le retour à la ligne — un choix explicite ici l'écrase.)
+  const TITRES_PAR_METIER = {
+    paysagiste: ["Un extérieur qui vous ressemble.", "Votre jardin, transformé.", "Un aménagement extérieur pensé pour durer."],
+    piscine: ["Une piscine prête pour l'été.", "Votre bassin, sans mauvaise surprise.", "La piscine que vous imaginiez enfin chez vous."],
+    tonte: ["Le sol qui tient tête aux hivers bretons.", "Un jardin toujours impeccable.", "L'entretien de votre extérieur, sans y penser."],
+    terrasse: ["Une terrasse pour en profiter longtemps.", "Votre terrasse, posée dans les règles de l'art.", "L'extérieur qui vous donne envie de rester dehors."],
+    paysagiste_concepteur: ["Un plan pensé pour durer.", "Votre extérieur, conçu sur-mesure.", "Un projet paysager pensé avant d'être réalisé."],
+    arboriste: ["Des arbres bien tenus, en toute sécurité.", "Vos arbres, entre de bonnes mains.", "L'entretien de vos arbres, sans risque."],
+    espaces_verts: ["Des espaces verts toujours soignés.", "Un entretien fiable, saison après saison.", "Vos espaces verts, pris en charge du début à la fin."],
+    autre: ["Un projet sur-mesure, pensé pour vous.", "Votre projet, réalisé avec sérieux.", "Un artisan de confiance, près de chez vous."],
   };
 
-  document.getElementById('btnAjouterMotCle').addEventListener('click', async () => {
-    const input = document.getElementById('nouveauMotCle');
-    const select = document.getElementById('nouveauMotCleType');
-    const feedback = document.getElementById('ajoutKwFeedback');
-    const texte = input.value.trim();
-    if (!texte) return;
-    const btn = document.getElementById('btnAjouterMotCle');
-    btn.disabled = true;
-    btn.textContent = 'Ajout…';
+  // --- Accordéon ---
+  document.querySelectorAll('.section-header').forEach(header => {
+    header.addEventListener('click', () => {
+      const section = header.closest('.section');
+      const estOuverte = section.classList.contains('open');
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('open'));
+      if (!estOuverte) section.classList.add('open');
+    });
+  });
+
+  // --- Barre de progression douce, recalculée à chaque saisie ---
+  function calculerProgression() {
+    const groupes = {
+      visuel: () => !!(logoUrl || photosUrls.length),
+      coordonnees: () => !!(document.getElementById('telephone').value.trim() && document.getElementById('email').value.trim()),
+      legal: () => !!document.getElementById('siret').value.trim(),
+      siteweb: () => !!document.getElementById('siteExistant').value.trim(),
+      chiffrage: () => produitsActuels.size > 0,
+    };
+    let completes = 0;
+    Object.entries(groupes).forEach(([nom, verif]) => {
+      const rempli = verif();
+      const badge = document.querySelector(`[data-check="${nom}"]`);
+      if (badge) badge.classList.toggle('visible', rempli);
+      if (rempli) completes++;
+    });
+    const pourcentage = Math.round((completes / Object.keys(groupes).length) * 100);
+    document.getElementById('progressFill').style.width = pourcentage + '%';
+    document.getElementById('progressLabel').textContent = pourcentage === 100
+      ? 'Tout est renseigné ✓'
+      : `${pourcentage}% complété`;
+  }
+  document.body.addEventListener('input', calculerProgression);
+  document.body.addEventListener('change', calculerProgression);
+
+  if (!draftId) {
+    document.body.innerHTML = '<div style="text-align:center; margin-top:100px;">Lien invalide — identifiant du site manquant.</div>';
+  } else {
+    document.getElementById('btnAvancement').href = '/apercu.html?id=' + draftId;
+    chargerDraftExistant();
+  }
+
+  async function chargerDraftExistant() {
     try {
-      const res = await fetch('/api/manage-keywords', {
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=*`, {
+        headers: { apikey: SUPABASE_ANON_KEY }
+      });
+      const rows = await resp.json();
+      const draft = rows[0];
+      if (!draft) return;
+
+      draftStatutActuel = draft.status || null;
+
+      // Bouton retour visible uniquement quand un tableau de bord existe
+      // réellement pour cet artisan (site déjà publié, ou en pause) — un
+      // premier passage jamais publié n'a pas encore de tableau de bord
+      // (accès protégé par mot de passe, créé seulement à la publication).
+      if (draftStatutActuel === 'published' || draftStatutActuel === 'en_pause' || draftStatutActuel === 'essai') {
+        const lienRetour = document.getElementById('lienRetourDashboard');
+        lienRetour.href = '/mon-dashboard.html?id=' + draftId;
+        lienRetour.style.display = 'flex';
+      }
+
+      document.getElementById('telephone').value = draft.telephone || '';
+      document.getElementById('email').value = draft.email || '';
+      document.getElementById('adresseRue').value = draft.adresse_rue || '';
+      document.getElementById('adresseCp').value = draft.adresse_cp || '';
+      document.getElementById('adresseVille').value = draft.adresse_ville || '';
+      document.getElementById('siret').value = draft.siret || '';
+      document.getElementById('formeJuridique').value = draft.forme_juridique || '';
+      document.getElementById('capitalSocial').value = draft.capital_social || '';
+      document.getElementById('rcsVille').value = draft.rcs_ville || '';
+      document.getElementById('assuranceAssureur').value = draft.assurance_decennale_assureur || '';
+      document.getElementById('assuranceNumero').value = draft.assurance_decennale_numero || '';
+      document.getElementById('siteExistant').value = draft.site_web_existant || '';
+
+      metiersActuels = Array.isArray(draft.metier) ? draft.metier : (draft.metier ? [draft.metier] : []);
+      zoneActuelle = draft.zone || null;
+      document.getElementById('tvaTaux').value = draft.tva_taux || 20;
+      construireOptionsTitre(metiersActuels, draft.titre_hero_choisi || '');
+      initProduitsChiffrables(metiersActuels, draft.produits_chiffrables || []);
+
+      if (draft.photos && draft.photos.length) {
+        photosUrls = draft.photos;
+        rafraichirGridPhotos();
+      }
+      if (draft.logo_url) {
+        logoUrl = draft.logo_url;
+        document.getElementById('statusLogo').textContent = 'Logo déjà enregistré ✓';
+        document.getElementById('boxLogo').classList.add('has-file');
+        document.getElementById('logoPreview').src = draft.logo_url;
+        document.getElementById('logoPreview').style.display = 'block';
+      }
+      if (draft.video_url) { videoUrl = draft.video_url; document.getElementById('videoLien').value = draft.video_url.startsWith('http') ? draft.video_url : ''; }
+    } catch (e) { /* silencieux, on part d'un formulaire vide */ }
+    calculerProgression();
+  }
+
+  const METIER_LABELS = {
+    paysagiste: 'Paysagiste', piscine: 'Pose piscine', tonte: 'Tonte et coupe', terrasse: 'Terrasse',
+    paysagiste_concepteur: 'Paysagiste concepteur', arboriste: 'Arboriste élagueur', espaces_verts: "Entretien d'espaces verts", autre: 'Autre'
+  };
+  const UNITES = { m2: 'm² (surface)', ml: 'ml (mètre linéaire)', m3: 'm³ (volume)', forfait: 'Forfait' };
+
+  // --- Upload générique vers Supabase Storage ---
+  async function uploaderFichier(file, sousDossier) {
+    const ext = file.name.split('.').pop();
+    const nomFichier = `elements-artisan/${draftId}/${sousDossier}-${Date.now()}.${ext}`;
+    const resp = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${nomFichier}?apikey=${encodeURIComponent(SUPABASE_ANON_KEY)}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        apikey: SUPABASE_ANON_KEY,
+        'Content-Type': file.type || 'application/octet-stream',
+      },
+      body: file,
+    });
+    if (!resp.ok) {
+      const detail = await resp.text().catch(() => '');
+      throw new Error("Échec de l'envoi du fichier : " + detail);
+    }
+    return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${nomFichier}`;
+  }
+
+  // Enregistre immédiatement un ou plusieurs champs, sans attendre le bouton
+  // "Enregistrer mes éléments" final — évite qu'un logo/une photo/un titre
+  // envoyé avec succès (donc bien présent dans le stockage) reste perdu si
+  // la personne quitte la page via "Voir l'avancement" ou ferme l'onglet
+  // avant d'avoir cliqué sur le bouton d'enregistrement global.
+  async function sauvegarderChampsImmediat(champs) {
+    if (!draftId) return;
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
+        method: 'PATCH',
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify(champs),
+      });
+    } catch (e) { /* silencieux — l'enregistrement final au bas du formulaire rattrapera si besoin */ }
+  }
+
+  // --- Produits chiffrables : chaque produit a son propre prix (unité/prix/
+  // minimum) ET ses propres questions de devis. Remplace l'ancien couple
+  // "Chiffrage détaillé" (un seul prix par métier) + "Créer vos formulaires"
+  // (pool de questions plat). Voir api/classifier-projet-formulaire.js pour
+  // la sélection côté prospect.
+  function initProduitsChiffrables(metiers, produitsExistants) {
+    const descriptionEl = document.getElementById('produitsDescription');
+    const btnAnalyser = document.getElementById('btnAnalyserProduits');
+    const resultBox = document.getElementById('produitsAnalyseResult');
+    const listeEl = document.getElementById('produitsListe');
+    let compteurManuel = 0;
+
+    if (Array.isArray(produitsExistants)) {
+      produitsExistants.forEach(p => {
+        if (!p || !p.id) return;
+        const questions = new Map();
+        (Array.isArray(p.questions) ? p.questions : []).forEach(q => {
+          if (q && q.id && q.label) questions.set(q.id, { label: q.label, type: q.type || 'texte', unite: q.unite || null, coche: true });
+        });
+        produitsActuels.set(p.id, {
+          metier: p.metier || metiers[0] || 'autre',
+          nom: p.nom || '',
+          unite: p.unite || 'forfait',
+          prix: p.prix != null ? p.prix : '',
+          minimum: p.minimum != null ? p.minimum : '',
+          questions,
+        });
+      });
+    }
+
+    function libelleType(type, unite) {
+      if (type === 'nombre') return { ml: 'mètres linéaires', m2: 'm²', m3: 'm³' }[unite] || 'nombre';
+      if (type === 'case') return 'oui / non';
+      return 'texte libre';
+    }
+
+    function rendreProduits() {
+      listeEl.innerHTML = [...produitsActuels.entries()].map(([id, p]) => `
+        <div class="produit-card" data-produit-id="${id}">
+          <div class="produit-card-header">
+            <div>
+              <label>Nom du produit</label>
+              <input type="text" class="produit-nom" value="${(p.nom || '').replace(/"/g, '&quot;')}" placeholder="Ex : Enrobés">
+            </div>
+            <div>
+              <label>Unité</label>
+              <select class="produit-unite">
+                ${Object.entries(UNITES).map(([k, v]) => `<option value="${k}" ${p.unite === k ? 'selected' : ''}>${v}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label>Prix HT (€)</label>
+              <input type="number" class="produit-prix" step="0.01" value="${p.prix}">
+            </div>
+            <div>
+              <label>Minimum (€)</label>
+              <input type="number" class="produit-minimum" step="1" value="${p.minimum}">
+            </div>
+            <button type="button" class="btn-suppr-produit" title="Supprimer ce produit">✕</button>
+          </div>
+          <div class="produit-questions-titre">Questions spécifiques à ce produit (en plus de la question de quantité)</div>
+          <div class="formulaire-liste produit-questions-liste">
+            ${[...p.questions.entries()].map(([qid, q]) => `
+              <label class="formulaire-item">
+                <input type="checkbox" data-question-id="${qid}" ${q.coche ? 'checked' : ''}>
+                <span class="formulaire-texte">${q.label.replace(/</g, '&lt;')}</span>
+                <span class="formulaire-type">${libelleType(q.type, q.unite)}</span>
+              </label>
+            `).join('') || '<p class="hint">Aucune question pour l\'instant.</p>'}
+          </div>
+          <div class="formulaire-ajout">
+            <input type="text" class="question-manuelle-label" placeholder="Ajouter une question pour ce produit">
+            <select class="question-manuelle-type">
+              <option value="texte">Réponse libre</option>
+              <option value="nombre">Nombre</option>
+              <option value="case">Oui / non</option>
+            </select>
+            <select class="question-manuelle-unite" style="display:none;">
+              <option value="ml">mètres linéaires</option>
+              <option value="m2">m²</option>
+              <option value="m3">m³ (volume)</option>
+            </select>
+            <button type="button" class="btn-extraire btn-ajouter-question-manuelle">+ Ajouter</button>
+          </div>
+        </div>
+      `).join('') || '<p class="hint">Aucun produit pour l\'instant — décrivez votre activité ci-dessus ou ajoutez-en un manuellement.</p>';
+    }
+
+    function enregistrerProduitsSupabase() {
+      const produits = [...produitsActuels.entries()].map(([id, p]) => ({
+        id, metier: p.metier, nom: p.nom,
+        unite: p.unite,
+        prix: p.prix === '' || p.prix == null ? null : parseFloat(p.prix),
+        minimum: p.minimum === '' || p.minimum == null ? null : parseFloat(p.minimum),
+        questions: [...p.questions.entries()].filter(([, q]) => q.coche).map(([qid, q]) => ({ id: qid, label: q.label, type: q.type, unite: q.unite })),
+      }));
+      sauvegarderChampsImmediat({ produits_chiffrables: produits });
+      calculerProgression();
+    }
+
+    rendreProduits();
+
+    // --- Délégation d'événements : la liste est reconstruite à chaque
+    // ajout/suppression, donc un seul jeu d'écouteurs posé sur le conteneur
+    // parent (jamais retiré) plutôt que de re-poser des écouteurs à chaque
+    // rendu.
+    listeEl.addEventListener('input', (e) => {
+      const carte = e.target.closest('.produit-card');
+      if (!carte) return;
+      const p = produitsActuels.get(carte.dataset.produitId);
+      if (!p) return;
+      if (e.target.classList.contains('produit-nom')) p.nom = e.target.value;
+      else if (e.target.classList.contains('produit-prix')) p.prix = e.target.value;
+      else if (e.target.classList.contains('produit-minimum')) p.minimum = e.target.value;
+      else return;
+      enregistrerProduitsSupabase();
+    });
+
+    listeEl.addEventListener('change', (e) => {
+      const carte = e.target.closest('.produit-card');
+      if (!carte) return;
+      const p = produitsActuels.get(carte.dataset.produitId);
+      if (!p) return;
+
+      if (e.target.classList.contains('produit-unite')) {
+        p.unite = e.target.value;
+        enregistrerProduitsSupabase();
+      } else if (e.target.classList.contains('question-manuelle-type')) {
+        carte.querySelector('.question-manuelle-unite').style.display = e.target.value === 'nombre' ? 'inline-block' : 'none';
+      } else if (e.target.dataset.questionId) {
+        const q = p.questions.get(e.target.dataset.questionId);
+        if (q) { q.coche = e.target.checked; enregistrerProduitsSupabase(); }
+      }
+    });
+
+    listeEl.addEventListener('click', (e) => {
+      const carte = e.target.closest('.produit-card');
+      if (!carte) return;
+      const p = produitsActuels.get(carte.dataset.produitId);
+      if (!p) return;
+
+      if (e.target.classList.contains('btn-suppr-produit')) {
+        produitsActuels.delete(carte.dataset.produitId);
+        rendreProduits();
+        enregistrerProduitsSupabase();
+      } else if (e.target.classList.contains('btn-ajouter-question-manuelle')) {
+        const input = carte.querySelector('.question-manuelle-label');
+        const label = input.value.trim();
+        if (!label) return;
+        compteurManuel += 1;
+        const qid = 'manuel-' + Date.now() + '-' + compteurManuel;
+        const type = carte.querySelector('.question-manuelle-type').value;
+        const unite = type === 'nombre' ? carte.querySelector('.question-manuelle-unite').value : null;
+        p.questions.set(qid, { label, type, unite, coche: true });
+        rendreProduits();
+        enregistrerProduitsSupabase();
+      }
+    });
+
+    document.getElementById('btnAjouterProduit').addEventListener('click', () => {
+      compteurManuel += 1;
+      const id = 'manuel-' + Date.now() + '-' + compteurManuel;
+      produitsActuels.set(id, { metier: metiers[0] || 'autre', nom: '', unite: 'forfait', prix: '', minimum: '', questions: new Map() });
+      rendreProduits();
+      enregistrerProduitsSupabase();
+    });
+
+    btnAnalyser.addEventListener('click', async () => {
+      const description = descriptionEl.value.trim();
+      if (!description) {
+        resultBox.style.display = 'block';
+        resultBox.textContent = 'Décrivez brièvement votre activité et vos prix pour obtenir des suggestions.';
+        return;
+      }
+      if (!metiers.length) {
+        resultBox.style.display = 'block';
+        resultBox.textContent = "Aucun métier n'est renseigné sur ce profil — impossible de savoir quoi analyser.";
+        return;
+      }
+
+      btnAnalyser.disabled = true;
+      const texteOriginal = btnAnalyser.textContent;
+      btnAnalyser.textContent = 'Analyse en cours…';
+      resultBox.style.display = 'block';
+      resultBox.textContent = 'Lecture de votre description…';
+
+      try {
+        const res = await fetch('/api/analyser-produits-chiffrables', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ description, metiers }),
+        });
+        const data = await res.json();
+        if (data.success && Array.isArray(data.produits) && data.produits.length) {
+          data.produits.forEach(p => {
+            let id = p.id;
+            while (produitsActuels.has(id)) id = id + '-b'; // évite toute collision avec un produit déjà présent
+            const questions = new Map();
+            (p.questions || []).forEach(q => questions.set(q.id, { label: q.label, type: q.type, unite: q.unite, coche: true }));
+            produitsActuels.set(id, { metier: p.metier, nom: p.nom, unite: p.unite, prix: p.prix != null ? p.prix : '', minimum: p.minimum != null ? p.minimum : '', questions });
+          });
+          rendreProduits();
+          enregistrerProduitsSupabase();
+          resultBox.innerHTML = `✓ ${data.produits.length} produit(s) identifié(s) et ajouté(s) ci-dessous — vérifiez et complétez les prix avant d'enregistrer.`;
+        } else {
+          resultBox.textContent = data.error || "L'analyse n'a pas pu aboutir — ajoutez vos produits manuellement.";
+        }
+      } catch (e) {
+        resultBox.textContent = 'Analyse indisponible pour le moment — ajoutez vos produits manuellement.';
+      } finally {
+        btnAnalyser.disabled = false;
+        btnAnalyser.textContent = texteOriginal;
+      }
+    });
+  }
+
+  function construireOptionsTitre(metiers, titreActuel) {
+    const metierPrincipal = (metiers && metiers[0]) || 'autre';
+    const options = TITRES_PAR_METIER[metierPrincipal] || TITRES_PAR_METIER.autre;
+    const container = document.getElementById('titreOptions');
+    const estPersonnalise = !!titreActuel && !options.includes(titreActuel);
+    titreChoisi = titreActuel || '';
+
+    const echapper = (s) => s.replace(/"/g, '&quot;');
+
+    container.innerHTML = `
+      <label style="margin-top:0;">Choisis un titre, ou écris le tien</label>
+      ${options.map(t => `
+        <div class="titre-option">
+          <label>
+            <input type="radio" name="titreRadio" value="${echapper(t)}" ${titreActuel === t ? 'checked' : ''}>
+            <span>${t}</span>
+          </label>
+        </div>
+      `).join('')}
+      <div class="titre-option">
+        <label>
+          <input type="radio" name="titreRadio" value="custom" ${estPersonnalise ? 'checked' : ''}>
+          <span>✏️ Mon propre titre</span>
+        </label>
+      </div>
+      <input type="text" id="titrePersonnalise" placeholder="Ex : Votre projet, notre métier." style="margin-top:4px; ${estPersonnalise ? '' : 'display:none;'}" value="${estPersonnalise ? echapper(titreActuel) : ''}">
+    `;
+
+    const inputPerso = document.getElementById('titrePersonnalise');
+    container.querySelectorAll('input[name="titreRadio"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        if (radio.value === 'custom') {
+          inputPerso.style.display = 'block';
+          titreChoisi = inputPerso.value.trim();
+        } else {
+          inputPerso.style.display = 'none';
+          titreChoisi = radio.value;
+        }
+        sauvegarderChampsImmediat({ titre_hero_choisi: titreChoisi || null });
+      });
+    });
+    inputPerso.addEventListener('input', () => { titreChoisi = inputPerso.value.trim(); });
+    inputPerso.addEventListener('change', () => {
+      sauvegarderChampsImmediat({ titre_hero_choisi: titreChoisi || null });
+    });
+  }
+
+  // Suggestion de titre par IA (Claude) — vient compléter les titres
+  // pré-écrits de TITRES_PAR_METIER, sans les remplacer. Utilise le(s)
+  // métier(s) déjà renseignés dans la section Estimation ; si aucun métier
+  // n'est encore choisi, on prévient l'artisan au lieu d'appeler l'API pour
+  // rien.
+  document.getElementById('btnSuggererTitre').addEventListener('click', async () => {
+    const btn = document.getElementById('btnSuggererTitre');
+    const zoneBox = document.getElementById('suggestionsTitreIA');
+    const metiers = metiersActuels && metiersActuels.length ? metiersActuels : [];
+
+    if (!metiers.length) {
+      zoneBox.innerHTML = '<div class="hint">Renseigne d\'abord ton métier dans la section Estimation pour obtenir des suggestions adaptées.</div>';
+      return;
+    }
+
+    const texteOriginal = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Génération…';
+    zoneBox.innerHTML = '';
+
+    try {
+      const res = await fetch('/api/suggerer-titre', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, action: 'add', texte, matchType: select.value })
+        body: JSON.stringify({ metiers, zone: zoneActuelle })
       });
       const data = await res.json();
-      if (data.success) {
-        feedback.textContent = `✓ "${texte}" ajouté — les nouvelles statistiques apparaîtront après les premiers clics.`;
-        feedback.style.color = '#1e6f4c';
-        input.value = '';
+      if (data.success && data.titres && data.titres.length) {
+        zoneBox.innerHTML = data.titres.map(t => `
+          <button type="button" class="titre-suggestion-ia" style="display:block; width:100%; text-align:left; margin-bottom:6px; padding:10px 12px; background:#f5f8f6; border:1px solid #dde5e1; border-radius:8px; cursor:pointer; font-size:0.88rem;">${t.replace(/"/g, '&quot;')}</button>
+        `).join('');
+        zoneBox.querySelectorAll('.titre-suggestion-ia').forEach(elBtn => {
+          elBtn.addEventListener('click', () => {
+            const radioCustom = document.querySelector('input[name="titreRadio"][value="custom"]');
+            const inputPerso = document.getElementById('titrePersonnalise');
+            if (radioCustom) radioCustom.checked = true;
+            if (inputPerso) {
+              inputPerso.style.display = 'block';
+              inputPerso.value = elBtn.textContent;
+            }
+            titreChoisi = elBtn.textContent;
+            sauvegarderChampsImmediat({ titre_hero_choisi: titreChoisi });
+            zoneBox.innerHTML = '';
+          });
+        });
       } else {
-        feedback.textContent = data.error || "Erreur lors de l'ajout.";
-        feedback.style.color = '#c0392b';
+        zoneBox.innerHTML = '<div class="hint">' + (data.error || "Suggestion indisponible pour le moment, réessaie plus tard.") + '</div>';
       }
     } catch (e) {
-      feedback.textContent = 'Impossible de contacter le serveur.';
-      feedback.style.color = '#c0392b';
+      zoneBox.innerHTML = '<div class="hint">Suggestion indisponible pour le moment, réessaie plus tard.</div>';
     } finally {
       btn.disabled = false;
-      btn.textContent = '+ Ajouter';
+      btn.textContent = texteOriginal;
     }
   });
-</script>
-<!--
-  Widget de chat Skyeco Pro — à coller juste avant </body> sur les pages
-  où on veut le chat (prochaines-etapes.html, choisir-forfait.html, etc.)
--->
-<!--
-  Widget de chat Skyeco Pro — à coller juste avant </body> sur les pages
-  où on veut le chat. Inclut la saisie vocale (micro) et la lecture des
-  réponses à voix haute, via les API natives du navigateur (aucun service
-  externe, gratuit) — fonctionne sur Chrome/Edge, pas sur Safari/Firefox
-  pour la reconnaissance vocale (support partiel/absent côté navigateur).
--->
-<!--
-  Widget de chat Skyeco Pro — à coller juste avant </body> sur les pages
-  où on veut le chat. Inclut la saisie vocale (micro) et la lecture des
-  réponses à voix haute, via les API natives du navigateur (aucun service
-  externe, gratuit) — fonctionne sur Chrome/Edge, pas sur Safari/Firefox
-  pour la reconnaissance vocale (support partiel/absent côté navigateur).
--->
-<div id="skyecoChatBubble" style="position:fixed; bottom:22px; right:22px; z-index:999; background:#e8622c; color:#fff; width:58px; height:58px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:26px; cursor:pointer; box-shadow:0 6px 20px rgba(0,0,0,0.25); transition:transform 0.15s;">
-  💬
-</div>
 
-<div id="skyecoChatWindow" style="display:none; position:fixed; bottom:92px; right:22px; z-index:999; width:340px; max-width:calc(100vw - 32px); height:460px; max-height:70vh; background:#fff; border-radius:16px; box-shadow:0 10px 40px rgba(0,0,0,0.25); flex-direction:column; overflow:hidden; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-  <div style="background:#14312a; color:#fff; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
-    <div>
-      <div style="font-weight:700; font-size:0.92rem;">Skyeco Pro</div>
-      <div style="font-size:0.72rem; opacity:0.75;">Réponse en quelques secondes</div>
-    </div>
-    <div style="display:flex; align-items:center; gap:10px;">
-      <label style="display:flex; align-items:center; gap:4px; font-size:0.68rem; opacity:0.85; cursor:pointer;">
-        <input type="checkbox" id="skyecoChatLireVoix" style="width:auto; margin:0;"> 🔊 Lire les réponses
-      </label>
-      <button id="skyecoChatClose" style="background:none; border:none; color:#fff; font-size:20px; cursor:pointer; line-height:1;">×</button>
-    </div>
-  </div>
-  <div id="skyecoChatMessages" style="flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:10px; background:#f7f5f0;"></div>
-  <div style="padding:10px; border-top:1px solid #eef1ec; display:flex; gap:8px; background:#fff;">
-    <input type="text" id="skyecoChatInput" placeholder="Pose ta question ou parle…" style="flex:1; border:1.5px solid #e0e5df; border-radius:10px; padding:9px 12px; font-size:0.86rem;">
-    <button id="skyecoChatMic" title="Parler au lieu d'écrire" style="background:#f2f4f1; color:#14312a; border:none; border-radius:10px; padding:9px 12px; font-weight:700; cursor:pointer; font-size:0.9rem;">🎤</button>
-    <button id="skyecoChatSend" style="background:#1e6f4c; color:#fff; border:none; border-radius:10px; padding:9px 14px; font-weight:700; cursor:pointer; font-size:0.86rem;">→</button>
-  </div>
-</div>
-
-<script>
-(function() {
-  const bubble = document.getElementById('skyecoChatBubble');
-  const chatWindow = document.getElementById('skyecoChatWindow');
-  const closeBtn = document.getElementById('skyecoChatClose');
-  const messagesEl = document.getElementById('skyecoChatMessages');
-  const input = document.getElementById('skyecoChatInput');
-  const sendBtn = document.getElementById('skyecoChatSend');
-  const micBtn = document.getElementById('skyecoChatMic');
-  const lireVoixCheckbox = document.getElementById('skyecoChatLireVoix');
-
-  let historique = [];
-  let dejaOuvert = false;
-
-  function ajouterMessage(role, texte) {
-    const bulle = document.createElement('div');
-    bulle.style.cssText = role === 'user'
-      ? 'align-self:flex-end; background:#1e6f4c; color:#fff; padding:9px 13px; border-radius:14px 14px 3px 14px; font-size:0.85rem; max-width:80%; line-height:1.45;'
-      : 'align-self:flex-start; background:#fff; color:#14312a; padding:9px 13px; border-radius:14px 14px 14px 3px; font-size:0.85rem; max-width:85%; line-height:1.45; box-shadow:0 1px 3px rgba(0,0,0,0.08);';
-    bulle.textContent = texte;
-    messagesEl.appendChild(bulle);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-  }
-
-  function ouvrirChat() {
-    chatWindow.style.display = 'flex';
-    if (!dejaOuvert) {
-      dejaOuvert = true;
-      ajouterMessage('assistant', "Bonjour ! Je suis là pour répondre à tes questions sur Skyeco Pro — les formules, comment ça marche, la publicité... Qu'est-ce que tu veux savoir ?");
-    }
-  }
-
-  bubble.addEventListener('click', () => {
-    const estOuvert = chatWindow.style.display === 'flex';
-    if (estOuvert) { chatWindow.style.display = 'none'; } else { ouvrirChat(); }
-  });
-  closeBtn.addEventListener('click', () => { chatWindow.style.display = 'none'; });
-
-  // Le chat reste fermé à l'arrivée sur la page — seule la bulle (avatar)
-  // est visible ; il ne s'ouvre que si l'artisan clique dessus.
-
-  // --- Saisie vocale (reconnaissance de la parole) ---
-  const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognitionAPI) {
-    micBtn.style.display = 'none'; // navigateur non compatible (Safari/Firefox) — on masque simplement le micro
-  } else {
-    const recognition = new SpeechRecognitionAPI();
-    recognition.lang = 'fr-FR';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-    let enEcoute = false;
-
-    recognition.addEventListener('result', (e) => {
-      const texte = e.results[0][0].transcript;
-      input.value = texte;
-      envoyerMessage();
-    });
-    recognition.addEventListener('end', () => {
-      enEcoute = false;
-      micBtn.textContent = '🎤';
-      micBtn.style.background = '#f2f4f1';
-    });
-    recognition.addEventListener('error', () => {
-      enEcoute = false;
-      micBtn.textContent = '🎤';
-      micBtn.style.background = '#f2f4f1';
-    });
-
-    micBtn.addEventListener('click', () => {
-      if (enEcoute) { recognition.stop(); return; }
-      enEcoute = true;
-      micBtn.textContent = '🔴';
-      micBtn.style.background = '#fdeceb';
-      recognition.start();
-    });
-  }
-
-  // --- Lecture à voix haute des réponses (synthèse vocale) ---
-  function lireAVoixHaute(texte) {
-    if (!lireVoixCheckbox.checked || !window.speechSynthesis) return;
-    window.speechSynthesis.cancel(); // interrompt une lecture précédente si besoin
-    const utterance = new SpeechSynthesisUtterance(texte);
-    utterance.lang = 'fr-FR';
-    window.speechSynthesis.speak(utterance);
-  }
-
-  async function envoyerMessage() {
-    const texte = input.value.trim();
-    if (!texte) return;
-    ajouterMessage('user', texte);
-    historique.push({ role: 'user', content: texte });
-    input.value = '';
-    sendBtn.disabled = true;
-
-    const bulleAttente = document.createElement('div');
-    bulleAttente.id = 'skyecoChatWaiting';
-    bulleAttente.style.cssText = 'align-self:flex-start; color:#8a9891; font-size:0.8rem; padding:4px 8px;';
-    bulleAttente.textContent = '…';
-    messagesEl.appendChild(bulleAttente);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-
+  document.getElementById('boxLogo').addEventListener('click', () => document.getElementById('inputLogo').click());
+  document.getElementById('inputLogo').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    document.getElementById('statusLogo').textContent = 'Envoi en cours…';
     try {
-      const res = await fetch('/api/chat-skyeco', {
+      logoUrl = await uploaderFichier(file, 'logo');
+      document.getElementById('statusLogo').textContent = 'Logo envoyé ✓';
+      document.getElementById('boxLogo').classList.add('has-file');
+      document.getElementById('logoPreview').src = logoUrl;
+      document.getElementById('logoPreview').style.display = 'block';
+      sauvegarderChampsImmediat({ logo_url: logoUrl });
+    } catch (err) {
+      document.getElementById('statusLogo').textContent = 'Erreur : ' + err.message;
+    }
+  });
+
+  document.getElementById('boxPhotos').addEventListener('click', () => document.getElementById('inputPhotos').click());
+  document.getElementById('inputPhotos').addEventListener('change', async e => {
+    const files = Array.from(e.target.files).slice(0, 10 - photosUrls.length);
+    document.getElementById('statusPhotos').textContent = `Envoi de ${files.length} photo(s)…`;
+    for (const file of files) {
+      try {
+        const url = await uploaderFichier(file, 'photo');
+        photosUrls.push(url);
+      } catch (err) { /* on continue les autres */ }
+    }
+    document.getElementById('statusPhotos').textContent = `${photosUrls.length} photo(s) ajoutée(s)`;
+    document.getElementById('boxPhotos').classList.add('has-file');
+    rafraichirGridPhotos();
+    sauvegarderChampsImmediat({ photos: photosUrls });
+  });
+
+  function rafraichirGridPhotos() {
+    const grid = document.getElementById('photosGrid');
+    grid.innerHTML = photosUrls.map((url, i) => `
+      <div class="photo-thumb">
+        <img src="${url}" alt="">
+        <button type="button" class="del" data-index="${i}">×</button>
+      </div>
+    `).join('');
+    grid.querySelectorAll('.del').forEach(btn => {
+      btn.addEventListener('click', () => {
+        photosUrls.splice(parseInt(btn.dataset.index), 1);
+        rafraichirGridPhotos();
+        document.getElementById('statusPhotos').textContent = `${photosUrls.length} photo(s) ajoutée(s)`;
+        sauvegarderChampsImmediat({ photos: photosUrls });
+      });
+    });
+  }
+
+  document.getElementById('boxVideo').addEventListener('click', () => document.getElementById('inputVideo').click());
+  document.getElementById('inputVideo').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    document.getElementById('statusVideo').textContent = 'Envoi en cours…';
+    try {
+      videoUrl = await uploaderFichier(file, 'video');
+      document.getElementById('statusVideo').textContent = 'Vidéo envoyée ✓';
+      document.getElementById('boxVideo').classList.add('has-file');
+      sauvegarderChampsImmediat({ video_url: videoUrl });
+    } catch (err) {
+      document.getElementById('statusVideo').textContent = 'Erreur : ' + err.message;
+    }
+  });
+
+  // Lien vidéo (YouTube/Vimeo) saisi directement, sans upload — même logique
+  // d'enregistrement immédiat que le reste, pour ne rien perdre en quittant
+  // la page avant le bouton final.
+  document.getElementById('videoLien').addEventListener('change', () => {
+    const lien = document.getElementById('videoLien').value.trim();
+    if (lien && !videoUrl) {
+      sauvegarderChampsImmediat({ video_url: lien });
+    }
+  });
+
+  // --- Extraction best-effort des mentions légales depuis un site existant ---
+  document.getElementById('btnExtraire').addEventListener('click', async () => {
+    const url = document.getElementById('siteExistant').value.trim();
+    const box = document.getElementById('extractionResult');
+    if (!url) { alert('Renseigne d\'abord une URL.'); return; }
+    box.style.display = 'block';
+    box.textContent = 'Recherche en cours…';
+    try {
+      const res = await fetch('/api/extraire-donnees-site', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: historique })
+        body: JSON.stringify({ url })
       });
       const data = await res.json();
-      document.getElementById('skyecoChatWaiting')?.remove();
-      const reponse = data.success ? data.reponse : "Désolé, je n'ai pas pu répondre — réessaie dans un instant.";
-      ajouterMessage('assistant', reponse);
-      historique.push({ role: 'assistant', content: reponse });
-      lireAVoixHaute(reponse);
+      if (!data.success) { box.textContent = data.error || "Rien n'a pu être extrait automatiquement — remplis les champs manuellement."; return; }
+
+      let trouve = [];
+      if (data.siret) { document.getElementById('siret').value = document.getElementById('siret').value || data.siret; trouve.push('SIRET'); }
+      if (data.rcsVille) { document.getElementById('rcsVille').value = document.getElementById('rcsVille').value || data.rcsVille; trouve.push('RCS'); }
+      if (data.capitalSocial) { document.getElementById('capitalSocial').value = document.getElementById('capitalSocial').value || data.capitalSocial; trouve.push('capital social'); }
+
+      box.textContent = trouve.length
+        ? `Trouvé automatiquement : ${trouve.join(', ')}. Vérifie que c'est correct avant d'enregistrer — cette extraction n'est pas garantie fiable.`
+        : "Rien n'a pu être extrait automatiquement sur cette page — remplis les champs manuellement.";
     } catch (e) {
-      document.getElementById('skyecoChatWaiting')?.remove();
-      ajouterMessage('assistant', 'Connexion impossible pour le moment — réessaie.');
-    } finally {
-      sendBtn.disabled = false;
+      box.textContent = "Impossible de vérifier ce site pour le moment — remplis les champs manuellement.";
     }
-  }
+  });
 
-  sendBtn.addEventListener('click', envoyerMessage);
-  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') envoyerMessage(); });
-})();
+  // --- Enregistrement final ---
+  document.getElementById('btnSubmit').addEventListener('click', async () => {
+    const btn = document.getElementById('btnSubmit');
+    const msg = document.getElementById('saveMsg');
+    btn.disabled = true;
+    btn.textContent = 'Enregistrement…';
+
+    const videoFinal = videoUrl || document.getElementById('videoLien').value.trim() || null;
+
+    const payload = {
+      telephone: document.getElementById('telephone').value.trim(),
+      email: document.getElementById('email').value.trim(),
+      adresse_rue: document.getElementById('adresseRue').value.trim(),
+      adresse_cp: document.getElementById('adresseCp').value.trim(),
+      adresse_ville: document.getElementById('adresseVille').value.trim(),
+      siret: document.getElementById('siret').value.trim(),
+      forme_juridique: document.getElementById('formeJuridique').value,
+      capital_social: document.getElementById('capitalSocial').value.trim(),
+      rcs_ville: document.getElementById('rcsVille').value.trim(),
+      assurance_decennale_assureur: document.getElementById('assuranceAssureur').value.trim(),
+      assurance_decennale_numero: document.getElementById('assuranceNumero').value.trim(),
+      site_web_existant: document.getElementById('siteExistant').value.trim(),
+      logo_url: logoUrl,
+      photos: photosUrls,
+      video_url: videoFinal,
+      titre_hero_choisi: titreChoisi || null,
+      tva_taux: parseFloat(document.getElementById('tvaTaux').value),
+      elements_deposes_le: new Date().toISOString(),
+    };
+
+    try {
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
+        method: 'PATCH',
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify(payload),
+      });
+      if (!resp.ok) throw new Error();
+
+      // Un artisan déjà publié qui vient corriger ses éléments (depuis le lien
+      // "Modifier mes éléments" du dashboard) doit revenir à son dashboard —
+      // seul un tout premier passage (status encore "preview") continue vers
+      // l'aperçu de sa vraie vitrine (apercu.html), qui enchaîne lui-même
+      // vers la démo du tableau de bord puis le choix de formule — l'artisan
+      // doit voir son site avant de décider quoi que ce soit.
+      const versDashboard = draftStatutActuel === 'published' || draftStatutActuel === 'en_pause' || draftStatutActuel === 'essai';
+      msg.className = 'save-msg ok';
+      msg.textContent = versDashboard
+        ? '✓ Tes éléments ont bien été enregistrés. On te ramène à ton tableau de bord…'
+        : '✓ Tes éléments ont bien été enregistrés. On t\'emmène voir ta vitrine…';
+      msg.style.display = 'block';
+      btn.textContent = 'Enregistré ✓';
+      setTimeout(() => {
+        window.location.href = versDashboard
+          ? '/mon-dashboard.html?id=' + draftId
+          : '/apercu.html?id=' + draftId;
+      }, 1500);
+    } catch (e) {
+      msg.className = 'save-msg err';
+      msg.textContent = "Une erreur est survenue — réessaie ou contacte-nous directement.";
+      msg.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Enregistrer mes éléments';
+    }
+  });
 </script>
-
 </body>
 </html>

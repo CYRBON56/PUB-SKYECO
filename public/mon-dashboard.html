@@ -1088,6 +1088,27 @@
     const dataInitiale = await rafraichirEstimationVolume(Array.isArray(draftInfo.mots_cles_choisis) ? draftInfo.mots_cles_choisis : []);
     if (dataInitiale && dataInitiale.keywords) motsClesApi.appliquerStats(dataInitiale.keywords);
 
+    // Le CPC affiché ici (avgCpcEur) peut dater du dernier rafraîchissement
+    // — parfois plusieurs minutes plus tôt — alors que campagne.html
+    // recalcule le sien en direct au moment où l'artisan y arrive. Comme les
+    // enchères Google Ads varient en continu, ce léger décalage temporel
+    // suffit à donner un nombre de clics différent pour un même budget
+    // (33 ici, 28 là-bas par exemple). On limite l'écart en rafraîchissant
+    // le CPC juste avant de transmettre le budget à campagne.html, plutôt
+    // que d'utiliser une valeur qui peut avoir plusieurs minutes de retard.
+    document.getElementById('btnFondsInverse').addEventListener('click', async (e) => {
+      e.preventDefault();
+      const lien = e.currentTarget;
+      const texteOriginal = lien.textContent;
+      lien.textContent = 'Un instant…';
+      try {
+        await rafraichirEstimationVolume(motsClesSelectionActuelle.length ? motsClesSelectionActuelle : (Array.isArray(draftInfo.mots_cles_choisis) ? draftInfo.mots_cles_choisis : []));
+        calculerBudgetInverse(); // recalcule le budget affiché et le href avec le CPC frais
+      } catch (err) { /* on continue avec le href déjà calculé (moins frais, mais pas bloquant) */ }
+      lien.textContent = texteOriginal;
+      window.location.href = lien.href;
+    });
+
     try {
       const res = await fetch('/api/get-google-ads-details', {
         method: 'POST',

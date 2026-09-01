@@ -173,13 +173,14 @@
   .btn-securise { text-align:center; font-size:0.76rem; color:var(--muted); margin-top:12px; }
 
   .btn-essai-gratuit {
-    width:100%; background:#fff; color:var(--brand); border:2px solid var(--brand); border-radius:12px;
-    padding:14px; font-size:0.95rem; font-weight:800; cursor:pointer; margin-bottom:6px;
-    transition:background 0.15s ease;
+    width:100%; background:linear-gradient(135deg, #f0a878 0%, var(--accent) 55%, var(--accent-dark) 100%);
+    color:#fff; border:none; border-radius:12px;
+    padding:18px; font-size:1.05rem; font-weight:800; cursor:pointer; margin-bottom:8px;
+    box-shadow:0 12px 28px rgba(232,98,44,0.35); transition:transform 0.15s ease, box-shadow 0.15s ease;
   }
-  .btn-essai-gratuit:hover { background:#e8f5ee; }
-  .btn-essai-gratuit:disabled { opacity:0.55; cursor:wait; }
-  .btn-essai-sub { text-align:center; font-size:0.74rem; color:var(--muted); margin-bottom:16px; }
+  .btn-essai-gratuit:hover { transform:translateY(-2px); box-shadow:0 16px 34px rgba(232,98,44,0.42); }
+  .btn-essai-gratuit:disabled { opacity:0.55; cursor:wait; transform:none; }
+  .btn-essai-sub { text-align:center; font-size:0.78rem; color:var(--muted-2); font-weight:600; margin-bottom:16px; }
 
   .loading { text-align:center; padding:80px 20px; color:var(--muted-2); }
 </style>
@@ -231,23 +232,6 @@
         Ce qui a un coût, c'est de <strong>le mettre en ligne et de le faire vivre</strong> : c'est ça qui vous amène des clients. Concrètement, c'est <span class="accent">Skyeco Ads</span> qui rend votre vitrine visible sur Google — et le nombre de clients qui la découvrent dépend directement du budget que vous choisissez d'y consacrer chaque mois.
       </div>
 
-      <div class="estimateur-box">
-        <h3>📊 Combien de clics pouvez-vous obtenir ?</h3>
-        <div class="estimateur-row">
-          <label for="budgetEstim">Budget à investir</label>
-          <div class="estimateur-input-wrap">
-            <input type="number" id="budgetEstim" min="100" step="10" value="300">
-          </div>
-        </div>
-        <div class="estimateur-resultat">
-          <div class="estimateur-stat"><div class="chiffre" id="clicsEstimValue">—</div><div class="label">clics estimés</div></div>
-          <div class="estimateur-stat"><div class="chiffre" id="cpcEstimValue">—</div><div class="label">coût par clic estimé</div></div>
-        </div>
-        <p class="estimateur-note">
-          Ce budget n'est pas garanti sur un mois — il est consommé au fur et à mesure des clics reçus. Le coût par clic est variable : il dépend des enchères en temps réel sur Google Ads et de la concurrence du moment.
-        </p>
-      </div>
-
       <p class="formule-intro">Une formule unique, tout compris. Sans engagement — annulez à tout moment.</p>
 
       <label class="cgv-row">
@@ -292,7 +276,7 @@
 
   async function verifierEtCharger() {
     try {
-      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=id`, {
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=id,status`, {
         headers: { apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc' }
       });
       const rows = await resp.json();
@@ -316,61 +300,10 @@
       }
 
       document.getElementById('vitrineFrame').src = '/apercu.html?id=' + draftId;
-      renderPlans();
-      initEstimateur();
+      renderPlans(draft.status);
     } catch (e) {
       document.body.innerHTML = '<div class="loading">Impossible de charger la page pour le moment.</div>';
     }
-  }
-
-  async function initEstimateur() {
-    const budgetInput = document.getElementById('budgetEstim');
-    let draftInfo = null;
-    let debounceTimer = null;
-
-    try {
-      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=metier,zone,departement`, {
-        headers: { apikey: SUPABASE_ANON_KEY }
-      });
-      const rows = await resp.json();
-      draftInfo = rows[0] || {};
-    } catch (e) {
-      draftInfo = {};
-    }
-
-    async function chargerEstimation() {
-      const budget = parseFloat(budgetInput.value);
-      if (!budget || budget < 50) return;
-      document.getElementById('clicsEstimValue').textContent = '…';
-      try {
-        const res = await fetch('/api/estimate-reach', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ metier: draftInfo.metier, zone: draftInfo.zone, departement: draftInfo.departement, budget })
-        });
-        const data = await res.json();
-        if (data.success) {
-          document.getElementById('clicsEstimValue').textContent = data.estimatedClicks !== null ? '≈ ' + data.estimatedClicks : '—';
-
-          // On affiche le coût par clic effectif pour le client (budget total
-          // investi ÷ clics obtenus), pas le CPC brut de la place de marché
-          // Google Ads — c'est le seul chiffre pertinent pour l'artisan (le
-          // prix qu'il paie réellement par clic reçu), et il correspond
-          // toujours exactement au budget saisi, sans jamais laisser
-          // apparaître de répartition interne.
-          const cpcEffectif = (data.estimatedClicks && budget) ? +(budget / data.estimatedClicks).toFixed(2) : null;
-          document.getElementById('cpcEstimValue').textContent = cpcEffectif ? cpcEffectif + ' €' : '—';
-        }
-      } catch (e) {
-        document.getElementById('clicsEstimValue').textContent = '—';
-      }
-    }
-
-    budgetInput.addEventListener('input', () => {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(chargerEstimation, 400);
-    });
-    chargerEstimation();
   }
 
   // Forfait unique (31/08) : auparavant 4 formules (1 à 4), il ne reste que
@@ -401,7 +334,14 @@
     }
   ];
 
-  function renderPlans() {
+  // Un artisan qui a déjà consommé son essai gratuit (statut 'essai' en
+  // cours, ou 'essai_expire') ne doit plus revoir le bouton d'essai — sinon
+  // il pourrait recommencer indéfiniment sans jamais payer. Dans ce cas
+  // c'est le bouton de paiement classique qui s'affiche à la place. Pour
+  // tout le monde d'autre (premier passage), seul le bouton d'essai gratuit
+  // est visible — le paiement direct n'est plus proposé en premier choix.
+  function renderPlans(statutActuel) {
+    const dejaEssaye = statutActuel === 'essai' || statutActuel === 'essai_expire';
     const grid = document.getElementById('plansGrid');
     grid.innerHTML = FORFAITS.map(f => `
       <div class="plan-card ${f.recommande ? 'recommande' : ''}">
@@ -422,10 +362,13 @@
           ${f.features.map(t => `<li><span class="check">✓</span><span>${t}</span></li>`).join('')}
           ${f.aVenir.map(t => `<li class="a-venir"><span class="check">—</span><span>${t}</span></li>`).join('')}
         </ul>
-        <button class="btn-essai-gratuit" data-plan="${f.id}">Essayer gratuitement 1 mois</button>
-        <div class="btn-essai-sub">Sans carte bancaire — rappel par SMS avant la fin</div>
-        <button class="btn-choisir" data-plan="${f.id}">Profiter de l'offre -50%</button>
-        <div class="btn-securise">🔒 Paiement sécurisé via Stripe</div>
+        ${dejaEssaye ? `
+          <button class="btn-choisir" data-plan="${f.id}">Profiter de l'offre -50%</button>
+          <div class="btn-securise">🔒 Paiement sécurisé via Stripe</div>
+        ` : `
+          <button class="btn-essai-gratuit" data-plan="${f.id}">Essayer gratuitement 1 mois</button>
+          <div class="btn-essai-sub">Sans carte bancaire — rappel par SMS avant la fin</div>
+        `}
       </div>
     `).join('');
 

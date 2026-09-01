@@ -366,6 +366,7 @@
         <div class="titre-annonce" id="previewTitre">—</div>
         <div class="desc-annonce" id="previewDesc">—</div>
       </div>
+      <button type="button" id="btnRegenererAnnonce" style="margin:12px 0 18px; background:#fff; color:#1e6f4c; border:1.5px solid #1e6f4c; border-radius:8px; padding:9px 14px; font-size:0.82rem; font-weight:700; cursor:pointer;">🔄 Régénérer depuis mes mots-clés</button>
       <div class="annonce-champ">
         <label>Titre 1 <span class="compteur" id="cptTitre1">0/30</span></label>
         <input type="text" id="annonceTitre1" maxlength="30">
@@ -386,7 +387,6 @@
         <label>Description 2 <span class="compteur" id="cptDesc2">0/90</span></label>
         <textarea id="annonceDesc2" maxlength="90"></textarea>
       </div>
-      <button type="button" id="btnRegenererAnnonce" style="margin-top:4px; background:#fff; color:#1e6f4c; border:1.5px solid #1e6f4c; border-radius:8px; padding:9px 14px; font-size:0.82rem; font-weight:700; cursor:pointer;">🔄 Régénérer depuis mes mots-clés</button>
       <div class="annonce-sauvegarde-note" id="annonceSauvegardeNote"></div>
     </div>
 
@@ -463,6 +463,14 @@
   const DEVIS_BUCKET = 'skyeco-pro-media';
   const params = new URLSearchParams(window.location.search);
   const draftId = params.get('id');
+  // Partagé entre initMotsCles() et initAnnonce() : reflète en permanence,
+  // en mémoire, les mots-clés actuellement cochés à l'écran (triés par
+  // volume décroissant) — utilisé par le bouton "Régénérer depuis mes
+  // mots-clés" pour éviter de relire Supabase, qui peut être temporairement
+  // en retard sur l'état réel si plusieurs cases sont cochées rapidement
+  // (chaque case déclenche sa propre sauvegarde, sans attendre la
+  // précédente — l'état affiché à l'écran, lui, est toujours à jour).
+  let motsClesSelectionActuelle = [];
   let leadsData = [];
   let nomEntreprise = '';
 
@@ -1280,11 +1288,13 @@
       btn.disabled = true;
       btn.textContent = '…';
       try {
-        const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,zone,mots_cles_choisis`, {
-          headers: { apikey: SUPABASE_ANON_KEY }
-        });
-        const rows = await resp.json();
-        const infosActuelles = rows[0] || draftInfo;
+        // Utilise directement l'état à l'écran (motsClesSelectionActuelle,
+        // mis à jour en mémoire à chaque coche/décoche) plutôt qu'une
+        // relecture Supabase, qui peut être temporairement en retard —
+        // voir le commentaire sur sa déclaration. entreprise/zone n'ont
+        // pas ce problème (pas modifiables sur cette page), on garde
+        // draftInfo pour ces deux-là.
+        const infosActuelles = { ...draftInfo, mots_cles_choisis: motsClesSelectionActuelle };
         const nouveauxDefauts = genererAnnoncePropos(infosActuelles);
         champs.titre1.value = nouveauxDefauts.titres[0] || '';
         champs.titre2.value = nouveauxDefauts.titres[1] || '';
@@ -1327,6 +1337,7 @@
 
     if (Array.isArray(draftInfo.mots_cles_choisis) && draftInfo.mots_cles_choisis.length) {
       draftInfo.mots_cles_choisis.forEach(m => selection.set(m, true));
+      motsClesSelectionActuelle = draftInfo.mots_cles_choisis;
       ajoutEl.style.display = 'flex';
       noteEl.textContent = 'Sélection déjà enregistrée — décochez ou ajoutez-en pour affiner votre annonce.';
       rendreListe();
@@ -1404,6 +1415,7 @@
           const volB = trouverStats(b)?.monthly_volume || 0;
           return volB - volA;
         });
+      motsClesSelectionActuelle = motsClesActifs;
       try {
         await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
           method: 'PATCH',

@@ -149,6 +149,7 @@
           <div class="titre-annonce" id="previewTitre">—</div>
           <div class="desc-annonce" id="previewDesc">—</div>
         </div>
+        <button type="button" id="btnRegenererAnnonce" style="margin:12px 0 18px; background:#fff; color:#1e6f4c; border:1.5px solid #1e6f4c; border-radius:8px; padding:9px 14px; font-size:0.82rem; font-weight:700; cursor:pointer;">🔄 Régénérer depuis mes mots-clés</button>
         <div class="annonce-champ">
           <label>Titre 1 <span class="compteur" id="cptTitre1">0/30</span></label>
           <input type="text" id="annonceTitre1" maxlength="30">
@@ -376,6 +377,41 @@
       // Sauvegarde automatique retirée (01/09) — même correctif que
       // mon-dashboard.html : elle figeait le texte générique dès le premier
       // chargement, avant même que l'artisan ait pu cocher un mot-clé.
+
+      document.getElementById('btnRegenererAnnonce').addEventListener('click', async () => {
+        const btn = document.getElementById('btnRegenererAnnonce');
+        btn.disabled = true;
+        btn.textContent = '…';
+        try {
+          // motsClesActuels est lu une seule fois au chargement de cette
+          // page (le choix des mots-clés se fait depuis le tableau de
+          // bord, pas ici) — ce bouton sert donc surtout si l'artisan a
+          // modifié sa sélection sur le dashboard puis revient sur cette
+          // page sans la recharger : on relit la valeur la plus fraîche
+          // possible en base avant de régénérer.
+          const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=mots_cles_choisis`, {
+            headers: { apikey: SUPABASE_ANON_KEY }
+          });
+          const rows = await resp.json();
+          if (Array.isArray(rows[0]?.mots_cles_choisis)) motsClesActuels = rows[0].mots_cles_choisis;
+
+          const nouveauxDefauts = genererAnnoncePropos();
+          champs.titre1.value = nouveauxDefauts.titres[0] || '';
+          champs.titre2.value = nouveauxDefauts.titres[1] || '';
+          champs.titre3.value = nouveauxDefauts.titres[2] || '';
+          champs.desc1.value = nouveauxDefauts.descriptions[0] || '';
+          champs.desc2.value = nouveauxDefauts.descriptions[1] || '';
+          Object.keys(champs).forEach(majCompteur);
+          majApercu();
+          sauvegardeNote.textContent = 'Enregistrement…';
+          await sauvegarderAnnonce();
+        } catch (e) {
+          sauvegardeNote.textContent = "Impossible de régénérer pour le moment.";
+        } finally {
+          btn.disabled = false;
+          btn.textContent = '🔄 Régénérer depuis mes mots-clés';
+        }
+      });
     }
 
     document.getElementById('btnPause').addEventListener('click', async () => {

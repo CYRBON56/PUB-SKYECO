@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
+    "@vercel/edge": "^1.1.1",
     "stripe": "^17.4.0",
     "@supabase/supabase-js": "^2.45.4",
     "twilio": "^5.3.6"
   }
 }
+

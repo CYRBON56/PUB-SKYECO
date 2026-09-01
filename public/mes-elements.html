@@ -215,7 +215,7 @@
         </div>
         <div class="photos-grid" id="photosGrid"></div>
 
-        <label>Vidéo de présentation (optionnel)</label>
+        <label>Vidéo de chantier ou avant/après (optionnel)</label>
         <div class="upload-box" id="boxVideo">
           <input type="file" id="inputVideo" accept="video/*">
           <div class="upload-label">📁 Choisir une vidéo</div>
@@ -244,6 +244,8 @@
       <div class="section-body-inner" id="titreOptions">
         <div class="hint">Renseigne d'abord ton métier dans l'estimation pour voir des suggestions adaptées — en attendant, une valeur par défaut est déjà utilisée.</div>
       </div>
+      <button type="button" id="btnSuggererTitre" style="margin-top:10px; background:#1e6f4c; color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:0.85rem; font-weight:700; cursor:pointer;">✨ Suggérer un titre avec l'IA</button>
+      <div id="suggestionsTitreIA" style="margin-top:10px;"></div>
     </div>
   </div>
 
@@ -401,6 +403,7 @@
   let produitsActuels = new Map(); // id -> { metier, nom, unite, prix, minimum, questions: Map(id -> {label,type,unite,coche}) }
   let titreChoisi = '';
   let draftStatutActuel = null; // status du brouillon au chargement — sert à savoir où renvoyer après enregistrement
+  let zoneActuelle = null;
 
   // Suggestions de titre par métier — doit rester cohérent avec les
   // heroTitre par défaut de METIER_TEMPLATES dans apercu.html (le premier
@@ -495,6 +498,7 @@
       document.getElementById('siteExistant').value = draft.site_web_existant || '';
 
       metiersActuels = Array.isArray(draft.metier) ? draft.metier : (draft.metier ? [draft.metier] : []);
+      zoneActuelle = draft.zone || null;
       document.getElementById('tvaTaux').value = draft.tva_taux || 20;
       construireOptionsTitre(metiersActuels, draft.titre_hero_choisi || '');
       initProduitsChiffrables(metiersActuels, draft.produits_chiffrables || []);
@@ -819,6 +823,62 @@
       sauvegarderChampsImmediat({ titre_hero_choisi: titreChoisi || null });
     });
   }
+
+  // Suggestion de titre par IA (Claude) — vient compléter les titres
+  // pré-écrits de TITRES_PAR_METIER, sans les remplacer. Utilise le(s)
+  // métier(s) déjà renseignés dans la section Estimation ; si aucun métier
+  // n'est encore choisi, on prévient l'artisan au lieu d'appeler l'API pour
+  // rien.
+  document.getElementById('btnSuggererTitre').addEventListener('click', async () => {
+    const btn = document.getElementById('btnSuggererTitre');
+    const zoneBox = document.getElementById('suggestionsTitreIA');
+    const metiers = metiersActuels && metiersActuels.length ? metiersActuels : [];
+
+    if (!metiers.length) {
+      zoneBox.innerHTML = '<div class="hint">Renseigne d\'abord ton métier dans la section Estimation pour obtenir des suggestions adaptées.</div>';
+      return;
+    }
+
+    const texteOriginal = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Génération…';
+    zoneBox.innerHTML = '';
+
+    try {
+      const res = await fetch('/api/suggerer-titre', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ metiers, zone: zoneActuelle })
+      });
+      const data = await res.json();
+      if (data.success && data.titres && data.titres.length) {
+        zoneBox.innerHTML = data.titres.map(t => `
+          <button type="button" class="titre-suggestion-ia" style="display:block; width:100%; text-align:left; margin-bottom:6px; padding:10px 12px; background:#f5f8f6; border:1px solid #dde5e1; border-radius:8px; cursor:pointer; font-size:0.88rem;">${t.replace(/"/g, '&quot;')}</button>
+        `).join('');
+        zoneBox.querySelectorAll('.titre-suggestion-ia').forEach(elBtn => {
+          elBtn.addEventListener('click', () => {
+            const radioCustom = document.querySelector('input[name="titreRadio"][value="custom"]');
+            const inputPerso = document.getElementById('titrePersonnalise');
+            if (radioCustom) radioCustom.checked = true;
+            if (inputPerso) {
+              inputPerso.style.display = 'block';
+              inputPerso.value = elBtn.textContent;
+            }
+            titreChoisi = elBtn.textContent;
+            sauvegarderChampsImmediat({ titre_hero_choisi: titreChoisi });
+            zoneBox.innerHTML = '';
+          });
+        });
+      } else {
+        zoneBox.innerHTML = '<div class="hint">' + (data.error || "Suggestion indisponible pour le moment, réessaie plus tard.") + '</div>';
+      }
+    } catch (e) {
+      zoneBox.innerHTML = '<div class="hint">Suggestion indisponible pour le moment, réessaie plus tard.</div>';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = texteOriginal;
+    }
+  });
 
   document.getElementById('boxLogo').addEventListener('click', () => document.getElementById('inputLogo').click());
   document.getElementById('inputLogo').addEventListener('change', async e => {

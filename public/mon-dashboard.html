@@ -579,12 +579,34 @@
 
   async function verifierStatutPause() {
     try {
-      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=status`, {
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=status,essai_gratuit_fin`, {
         headers: { apikey: SUPABASE_ANON_KEY }
       });
       const rows = await resp.json();
-      if (rows[0]?.status === 'en_pause') {
+      const statut = rows[0]?.status;
+
+      if (statut === 'en_pause') {
         document.getElementById('banniereePause').style.display = 'flex';
+      }
+
+      // Essai gratuit terminé sans paiement : on bloque l'accès au tableau
+      // de bord et on renvoie directement vers la page de choix de forfait
+      // pour régler (le statut 'essai_expire' est posé par la tâche
+      // planifiée api/verifier-essais-a-programmer.js le jour de l'échéance).
+      const params = new URLSearchParams(window.location.search);
+      if (statut === 'essai_expire' && !params.get('admin_token')) {
+        window.location.href = '/choisir-forfait.html?id=' + draftId;
+        return;
+      }
+
+      // Essai en cours : petit bandeau discret avec le nombre de jours
+      // restants, pour que l'artisan sache où il en est.
+      if (statut === 'essai' && rows[0]?.essai_gratuit_fin) {
+        const joursRestants = Math.max(0, Math.ceil((new Date(rows[0].essai_gratuit_fin) - Date.now()) / (24 * 60 * 60 * 1000)));
+        const banniereEssai = document.createElement('div');
+        banniereEssai.style.cssText = 'background:#e8f5ee; color:#1e6f4c; text-align:center; padding:10px; font-size:0.85rem; font-weight:600;';
+        banniereEssai.textContent = `🎁 Essai gratuit — ${joursRestants} jour${joursRestants > 1 ? 's' : ''} restant${joursRestants > 1 ? 's' : ''}`;
+        document.body.prepend(banniereEssai);
       }
     } catch (e) { /* silencieux */ }
   }
@@ -911,7 +933,7 @@
   async function initPilotageAds() {
     document.getElementById('adsSection').style.display = 'block';
 
-    let avgCpcEur = 1.9; // repli générique si l'estimation échoue
+    let avgCpcEur = 1.5; // repli générique si l'estimation échoue
     let draftInfo = {};
     const slider = document.getElementById('clicsSlider');
     const sliderValue = document.getElementById('clicsSliderValue');

@@ -172,6 +172,15 @@
 
   .btn-securise { text-align:center; font-size:0.76rem; color:var(--muted); margin-top:12px; }
 
+  .btn-essai-gratuit {
+    width:100%; background:#fff; color:var(--brand); border:2px solid var(--brand); border-radius:12px;
+    padding:14px; font-size:0.95rem; font-weight:800; cursor:pointer; margin-bottom:6px;
+    transition:background 0.15s ease;
+  }
+  .btn-essai-gratuit:hover { background:#e8f5ee; }
+  .btn-essai-gratuit:disabled { opacity:0.55; cursor:wait; }
+  .btn-essai-sub { text-align:center; font-size:0.74rem; color:var(--muted); margin-bottom:16px; }
+
   .loading { text-align:center; padding:80px 20px; color:var(--muted-2); }
 </style>
 </head>
@@ -413,6 +422,8 @@
           ${f.features.map(t => `<li><span class="check">✓</span><span>${t}</span></li>`).join('')}
           ${f.aVenir.map(t => `<li class="a-venir"><span class="check">—</span><span>${t}</span></li>`).join('')}
         </ul>
+        <button class="btn-essai-gratuit" data-plan="${f.id}">Essayer gratuitement 1 mois</button>
+        <div class="btn-essai-sub">Sans carte bancaire — rappel par SMS avant la fin</div>
         <button class="btn-choisir" data-plan="${f.id}">Profiter de l'offre -50%</button>
         <div class="btn-securise">🔒 Paiement sécurisé via Stripe</div>
       </div>
@@ -421,6 +432,49 @@
     grid.querySelectorAll('.btn-choisir').forEach(btn => {
       btn.addEventListener('click', () => choisirForfait(parseInt(btn.dataset.plan, 10), btn));
     });
+    grid.querySelectorAll('.btn-essai-gratuit').forEach(btn => {
+      btn.addEventListener('click', () => demarrerEssaiGratuit(parseInt(btn.dataset.plan, 10), btn));
+    });
+  }
+
+  // Essai gratuit 1 mois : pas de carte bancaire, pas de session Stripe.
+  // On crée directement le compte (id + mot de passe dashboard) comme après
+  // un paiement, mais avec un statut 'essai' et une date de fin à J+30 —
+  // c'est api/verifier-essais-a-programmer.js (tâche planifiée quotidienne)
+  // qui enverra le SMS de rappel à J-1 puis basculera le statut en
+  // 'essai_expire' si rien n'a été payé, ce qui bloque l'accès au tableau de
+  // bord (redirection automatique vers cette page — voir mon-dashboard.html).
+  async function demarrerEssaiGratuit(plan, btn) {
+    if (!document.getElementById('checkCgv').checked) {
+      alert('Merci d\'accepter les Conditions Générales de Vente avant de continuer.');
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Démarrage…';
+    try {
+      const res = await fetch('/api/demarrer-essai-gratuit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, plan })
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetch('/api/envoyer-acces-dashboard', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId })
+        }).catch(() => {});
+        window.location.href = '/acces-dashboard.html?id=' + draftId;
+      } else {
+        alert(data.error || 'Impossible de démarrer l\'essai gratuit.');
+        btn.disabled = false;
+        btn.textContent = 'Essayer gratuitement 1 mois';
+      }
+    } catch (e) {
+      alert('Impossible de contacter le serveur.');
+      btn.disabled = false;
+      btn.textContent = 'Essayer gratuitement 1 mois';
+    }
   }
 
   async function choisirForfait(plan, btn) {

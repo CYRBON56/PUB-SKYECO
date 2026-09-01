@@ -475,7 +475,7 @@
       // réellement pour cet artisan (site déjà publié, ou en pause) — un
       // premier passage jamais publié n'a pas encore de tableau de bord
       // (accès protégé par mot de passe, créé seulement à la publication).
-      if (draftStatutActuel === 'published' || draftStatutActuel === 'en_pause') {
+      if (draftStatutActuel === 'published' || draftStatutActuel === 'en_pause' || draftStatutActuel === 'essai') {
         const lienRetour = document.getElementById('lienRetourDashboard');
         lienRetour.href = '/mon-dashboard.html?id=' + draftId;
         lienRetour.style.display = 'inline-flex';

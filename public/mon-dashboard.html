@@ -326,6 +326,12 @@
       <h3>Où voulez-vous être visible ?</h3>
       <div id="zoneAffichage" class="zone-affichage">
         <span id="zoneValeur">—</span>
+        <button type="button" id="btnModifierZone" class="btn-modifier-zone">✏️ Modifier</button>
+      </div>
+      <div id="zoneEdition" class="zone-edition" style="display:none;">
+        <input type="text" id="zoneInput" placeholder="Ex : Brech et ses environs">
+        <button type="button" id="btnEnregistrerZone">Enregistrer</button>
+        <button type="button" id="btnAnnulerZone" class="btn-annuler-zone">Annuler</button>
       </div>
       <div class="estim-note">Ce texte décrit votre secteur d'intervention pour vos clients. Le ciblage réel de vos annonces se pose actuellement à la main dans Google Ads (le connecteur utilisé ne le permet pas encore automatiquement).</div>
     </div>
@@ -1090,8 +1096,55 @@
   }
 
   function initZoneCiblee(zoneActuelle) {
+    let zone = zoneActuelle;
+    const affichage = document.getElementById('zoneAffichage');
+    const edition = document.getElementById('zoneEdition');
     const valeurEl = document.getElementById('zoneValeur');
-    valeurEl.textContent = zoneActuelle || 'Aucune zone renseignée pour le moment';
+    const input = document.getElementById('zoneInput');
+    const btnModifier = document.getElementById('btnModifierZone');
+    const btnEnregistrer = document.getElementById('btnEnregistrerZone');
+    const btnAnnuler = document.getElementById('btnAnnulerZone');
+
+    function rafraichirAffichage() {
+      valeurEl.textContent = zone || 'Aucune zone renseignée pour le moment';
+    }
+    rafraichirAffichage();
+
+    btnModifier.addEventListener('click', () => {
+      input.value = zone;
+      affichage.style.display = 'none';
+      edition.style.display = 'flex';
+      input.focus();
+    });
+
+    btnAnnuler.addEventListener('click', () => {
+      edition.style.display = 'none';
+      affichage.style.display = 'flex';
+    });
+
+    btnEnregistrer.addEventListener('click', async () => {
+      const nouvelleZone = input.value.trim();
+      if (!nouvelleZone) return;
+      btnEnregistrer.disabled = true;
+      btnEnregistrer.textContent = '…';
+      try {
+        const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
+          method: 'PATCH',
+          headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+          body: JSON.stringify({ zone: nouvelleZone }),
+        });
+        if (!resp.ok) throw new Error();
+        zone = nouvelleZone;
+        rafraichirAffichage();
+        edition.style.display = 'none';
+        affichage.style.display = 'flex';
+      } catch (e) {
+        alert("Impossible d'enregistrer la zone pour le moment.");
+      } finally {
+        btnEnregistrer.disabled = false;
+        btnEnregistrer.textContent = 'Enregistrer';
+      }
+    });
   }
 
   // Aperçu (format Google : badge "Annonce", URL en vert, titre en bleu,

@@ -22,6 +22,25 @@
   .form-bg-carousel img.active { opacity:1; }
   @media (max-width:800px){ .split-layout{ flex-direction:column; height:100vh; overflow:hidden; } .image-panel{ flex:0 0 110px; } .form-panel{ padding:12px 16px; } }
   @media (max-width:480px){ .image-panel{ flex:0 0 64px; } .form-panel{ padding:10px 14px; } .header-block{ padding:10px 14px; margin-bottom:10px; } h1{ font-size:19px; margin:4px 0 6px; } .eyebrow{ font-size:11px; } .sub{ font-size:14px; margin-bottom:0; line-height:1.45; } .card{ padding:16px; } .question{ font-size:17px; margin-bottom:14px; line-height:1.35; } .option{ padding:14px 16px; font-size:15.5px; } .progress{ margin-bottom:12px; } input[type="text"],input[type="tel"],input[type="email"],input[type="number"]{ font-size:16px; padding:13px 14px; margin-bottom:10px; } label.field-label{ font-size:14px; } .nav-row{ flex-wrap:wrap; margin-top:16px; } button.btn{ font-size:15px; padding:13px 16px; } .btn-primary{ flex:1 1 100%; order:1; } .btn-ghost{ order:2; padding:8px 0; font-size:14px; } .trust-footer{ margin-top:10px; padding-top:10px; } .trust-badges-row{ display:none !important; } }
+
+  /* Pas de vidéo uploadée par l'artisan : le carrousel photo passe en plein
+     écran (au lieu de rester confiné aux 45% du panneau de gauche), et le
+     formulaire devient une carte flottante centrée par-dessus, avec son
+     propre fond pour rester lisible. Activé via la classe "sans-video" posée
+     sur .split-layout par le JS (voir plus bas, selon draft.video_url). */
+  .split-layout.sans-video { position:relative; display:block; }
+  .split-layout.sans-video .image-panel { position:absolute; inset:0; flex:none; width:100%; height:100%; order:0; z-index:0; }
+  .split-layout.sans-video .image-panel-title { display:none; }
+  .split-layout.sans-video .form-panel {
+    position:relative; z-index:2; order:0; flex:none;
+    max-width:480px; width:calc(100% - 32px); margin:0 auto; height:100vh;
+    padding:20px 0;
+  }
+  .split-layout.sans-video .form-panel::before {
+    content:''; position:absolute; inset:0; margin:0 -24px; background:rgba(246,244,239,0.72); backdrop-filter:blur(2px); z-index:-1;
+  }
+  @media (max-width:800px){ .split-layout.sans-video .image-panel{ flex:none; } }
+  @media (max-width:480px){ .split-layout.sans-video .image-panel{ flex:none; } }
   .wrap { max-width:480px; width:100%; height:100%; margin:0; padding:0; display:flex; flex-direction:column; }
   .middle-scroll { flex:1 1 auto; overflow-y:auto; min-height:0; padding-right:2px; }
   .header-block { margin-bottom:12px; background:rgba(255,255,255,0.7); border-radius:14px; padding:12px 16px; flex-shrink:0; }
@@ -78,6 +97,7 @@
 
 <div id="previewBanner" class="preview-banner" style="display:none;">
   <span>👁️ Ceci est un aperçu gratuit, pas encore en ligne publiquement.</span>
+  <a id="btnRetourDashboard" class="btn-retour-elements" href="#">← Retour au tableau de bord</a>
   <a id="btnRetourElements" class="btn-retour-elements" href="#">← Retour à mes éléments</a>
   <button id="btnPublier">Mettre en ligne</button>
 </div>
@@ -424,6 +444,10 @@ async function init(){
     video.style.cssText = 'position:absolute; inset:0; width:100%; height:100%; object-fit:cover;';
     container.insertBefore(video, container.firstChild);
   } else {
+    // Pas de vidéo : le carrousel passe en plein écran (voir CSS
+    // .split-layout.sans-video) plutôt que de rester confiné au panneau de
+    // gauche — plus d'impact visuel quand l'artisan n'a fourni que des photos.
+    document.querySelector('.split-layout').classList.add('sans-video');
     const metiersListeApercu = Array.isArray(draft.metier) ? draft.metier : (draft.metier ? [draft.metier] : []);
     const imagesFallback = metiersListeApercu.length
       ? [...new Set(metiersListeApercu.flatMap(m => FALLBACK_IMAGES[m] || []))]
@@ -440,6 +464,7 @@ async function init(){
   document.getElementById('appRoot').style.display = 'block';
   if(draft.status === 'preview'){
     document.getElementById('previewBanner').style.display = 'flex';
+    document.getElementById('btnRetourDashboard').href = '/mon-dashboard.html?id=' + draft.id;
     document.getElementById('btnRetourElements').href = '/mes-elements.html?id=' + draft.id;
   }
   if(draft.status === 'en_pause'){
@@ -798,24 +823,16 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
       }
     });
   }
-  // Calcule un prix indicatif si l'artisan a configuré un chiffrage précis
-  // pour ce métier (unité + prix unitaire, saisis dans mes-elements.html).
+  // Calcul de prix automatique désactivé (01/09) : chaque demande passe
+  // désormais systématiquement par le chemin "non chiffrable" de
+  // renderResultat() — le prospect décrit son projet dans le champ texte
+  // libre "details_projet" (déjà présent dans pushQuantiteEtSuite) et est
+  // orienté vers la prise de rendez-vous téléphonique avec un technicien,
+  // qui construit le vrai chiffrage avec lui. On garde la fonction (plutôt
+  // que de la supprimer) pour ne pas casser les appels existants à
+  // calculerEstimation() ailleurs dans ce fichier.
   function calculerEstimation(){
-    const produit = state.produitChoisi;
-    if(!produit || !produit.prix) return { chiffrable:false };
-    let montantHT;
-    if(produit.unite === 'forfait'){
-      montantHT = produit.prix;
-    } else {
-      const quantite = parseFloat(state.quantite);
-      if(!quantite || quantite <= 0) return { chiffrable:false };
-      montantHT = quantite * produit.prix;
-      if(produit.minimum) montantHT = Math.max(montantHT, produit.minimum);
-    }
-    const montantTTC = +(montantHT * (1 + tvaTaux/100)).toFixed(2);
-    const remisePourcent = 10; // remise indicative, à confirmer par l'artisan selon le volume réel
-    const montantApresRemise = +(montantTTC * (1 - remisePourcent/100)).toFixed(2);
-    return { chiffrable:true, montantHT:+montantHT.toFixed(2), montantTTC, remisePourcent, montantApresRemise, produit, quantite: state.quantite };
+    return { chiffrable:false };
   }
 
   async function enregistrerDemande(){

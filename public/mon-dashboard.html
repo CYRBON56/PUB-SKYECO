@@ -330,6 +330,10 @@
       </div>
       <div id="zoneEdition" class="zone-edition" style="display:none;">
         <input type="text" id="zoneInput" placeholder="Ex : Brech et ses environs">
+        <div style="margin-top:10px;">
+          <label style="font-size:0.78rem; color:#5b6b64; display:block; margin-bottom:4px;">Rayon (km)</label>
+          <input type="number" id="rayonCiblageInput" min="1" max="100" placeholder="Ex : 20" style="width:110px;">
+        </div>
         <button type="button" id="btnEnregistrerZone">Enregistrer</button>
         <button type="button" id="btnAnnulerZone" class="btn-annuler-zone">Annuler</button>
       </div>
@@ -1054,14 +1058,14 @@
     }
 
     try {
-      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,metier,zone,departement,mots_cles_choisis,annonce_titres,annonce_descriptions`, {
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,metier,zone,departement,rayon_ciblage_km,mots_cles_choisis,annonce_titres,annonce_descriptions`, {
         headers: { apikey: SUPABASE_ANON_KEY }
       });
       const rows = await resp.json();
       draftInfo = rows[0] || {};
     } catch (e) { /* on garde draftInfo vide — repli générique dans rafraichirEstimationVolume */ }
 
-    initZoneCiblee(draftInfo.zone || '');
+    initZoneCiblee(draftInfo.zone || '', draftInfo.rayon_ciblage_km || '');
     const motsClesApi = initMotsCles(draftInfo, rafraichirEstimationVolume);
     initAnnonce(draftInfo);
 
@@ -1095,23 +1099,27 @@
     }
   }
 
-  function initZoneCiblee(zoneActuelle) {
+  function initZoneCiblee(zoneActuelle, rayonActuel) {
     let zone = zoneActuelle;
+    let rayon = rayonActuel;
     const affichage = document.getElementById('zoneAffichage');
     const edition = document.getElementById('zoneEdition');
     const valeurEl = document.getElementById('zoneValeur');
     const input = document.getElementById('zoneInput');
+    const rayonInput = document.getElementById('rayonCiblageInput');
     const btnModifier = document.getElementById('btnModifierZone');
     const btnEnregistrer = document.getElementById('btnEnregistrerZone');
     const btnAnnuler = document.getElementById('btnAnnulerZone');
 
     function rafraichirAffichage() {
-      valeurEl.textContent = zone || 'Aucune zone renseignée pour le moment';
+      const precision = rayon ? ` (rayon ${rayon} km)` : '';
+      valeurEl.textContent = (zone || 'Aucune zone renseignée pour le moment') + precision;
     }
     rafraichirAffichage();
 
     btnModifier.addEventListener('click', () => {
       input.value = zone;
+      rayonInput.value = rayon;
       affichage.style.display = 'none';
       edition.style.display = 'flex';
       input.focus();
@@ -1124,6 +1132,7 @@
 
     btnEnregistrer.addEventListener('click', async () => {
       const nouvelleZone = input.value.trim();
+      const nouveauRayon = rayonInput.value ? parseInt(rayonInput.value, 10) : null;
       if (!nouvelleZone) return;
       btnEnregistrer.disabled = true;
       btnEnregistrer.textContent = '…';
@@ -1131,10 +1140,11 @@
         const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
           method: 'PATCH',
           headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-          body: JSON.stringify({ zone: nouvelleZone }),
+          body: JSON.stringify({ zone: nouvelleZone, rayon_ciblage_km: nouveauRayon }),
         });
         if (!resp.ok) throw new Error();
         zone = nouvelleZone;
+        rayon = nouveauRayon;
         rafraichirAffichage();
         edition.style.display = 'none';
         affichage.style.display = 'flex';

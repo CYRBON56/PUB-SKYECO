@@ -276,7 +276,7 @@
 
   async function verifierEtCharger() {
     try {
-      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=id,status`, {
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=id,status,site_valide`, {
         headers: { apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc' }
       });
       const rows = await resp.json();
@@ -284,6 +284,45 @@
 
       if (!draft) {
         document.body.innerHTML = '<div class="loading">Site introuvable.</div>';
+        return;
+      }
+
+      // Verrou remis (02/09) : impossible de choisir une formule (payante
+      // ou essai gratuit) tant que Cyrille n'a pas validé le site depuis
+      // mes-artisans.html — même contrôle refait côté serveur dans
+      // api/create-checkout-session.js et api/demarrer-essai-gratuit.js,
+      // pour ne pas dépendre uniquement de ce blocage d'affichage.
+      if (!draft.site_valide && !TEST_MODE) {
+        document.querySelector('.plans-header').insertAdjacentHTML('beforeend', `
+          <div id="blocageValidation" style="background:#fff4ec; border:1.5px solid #f0c9a8; border-radius:12px; padding:20px; margin-top:18px; text-align:center;">
+            <div style="font-size:1.5rem; margin-bottom:8px;">⏳</div>
+            <p style="margin:0 0 16px; color:#5b4636;">Votre site est en cours de vérification par notre équipe avant de pouvoir être mis en ligne. Vous pourrez choisir votre formule dès qu'il sera validé.</p>
+            <button type="button" id="btnDemanderValidation" style="background:#e8622c; color:#fff; border:none; border-radius:10px; padding:12px 20px; font-size:0.9rem; font-weight:700; cursor:pointer;">🔔 Prévenir Cyrille que je suis prêt</button>
+            <div id="noteValidation" style="font-size:0.82rem; color:#8a6d5a; margin-top:10px;"></div>
+          </div>
+        `);
+        document.getElementById('plansGrid').style.display = 'none';
+        document.getElementById('btnDemanderValidation').addEventListener('click', async () => {
+          const btn = document.getElementById('btnDemanderValidation');
+          const note = document.getElementById('noteValidation');
+          btn.disabled = true;
+          btn.textContent = 'Envoi…';
+          try {
+            const r = await fetch('/api/demander-validation-site', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ draftId })
+            });
+            const d = await r.json();
+            note.textContent = d.success ? '✓ Cyrille a été prévenu.' : (d.error || "Impossible d'envoyer la demande.");
+          } catch (e) {
+            note.textContent = 'Impossible de contacter le serveur.';
+          } finally {
+            btn.disabled = false;
+            btn.textContent = '🔔 Prévenir Cyrille que je suis prêt';
+          }
+        });
+        document.getElementById('vitrineFrame').src = '/apercu.html?id=' + draftId;
         return;
       }
 

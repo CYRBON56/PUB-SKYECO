@@ -115,8 +115,23 @@
     });
   }
 
-  function connecterEtRediriger(token) {
+  async function connecterEtRediriger(token) {
     sessionStorage.setItem('skyeco_dashboard_token_' + draftId, token);
+    // Un artisan qui vient de démarrer son essai gratuit et n'a encore
+    // jamais déposé ses éléments (elements_deposes_le vide) est envoyé
+    // construire sa vitrine plutôt que sur un tableau de bord vide — pour
+    // tous les autres (déjà construits, ou revenant après coup), rien ne
+    // change : direction le tableau de bord comme avant.
+    try {
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=elements_deposes_le`, {
+        headers: { apikey: SUPABASE_ANON_KEY }
+      });
+      const rows = await resp.json();
+      if (!rows[0]?.elements_deposes_le) {
+        window.location.href = '/mes-elements.html?id=' + draftId;
+        return;
+      }
+    } catch (e) { /* en cas de doute, on part sur le comportement habituel ci-dessous */ }
     window.location.href = '/mon-dashboard.html?id=' + draftId;
   }
 

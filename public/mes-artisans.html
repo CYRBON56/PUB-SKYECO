@@ -72,6 +72,10 @@
   .btn-dashboard { background:#fff; border-color:#e0e5df; color:#14312a; }
   .btn-elements-admin, .btn-campagne-admin { background:#fff; border-color:#e0e5df; color:#14312a; text-decoration:none; }
   .badge-compteur-demandes { margin-left:8px; font-size:0.78rem; color:#5b6b64; }
+  .btn-onglet-vue { background:#fff; border:1.5px solid #e0e5df; color:#5b6b64; border-radius:8px; padding:9px 16px; font-size:0.85rem; font-weight:700; cursor:pointer; }
+  .btn-onglet-vue.actif { background:#14312a; border-color:#14312a; color:#fff; }
+  .btn-archiver { background:#fff; border-color:#e0e5df; color:#8a6b4c; }
+  .btn-desarchiver { background:#eaf4ef; border-color:#1e6f4c; color:#1e6f4c; }
   .btn-dashboard:hover { border-color:#14312a; }
   .badge-compte-cree { font-size:0.68rem; color:#1e6f4c; font-weight:700; margin-left:6px; }
   .badge-compte-absent { font-size:0.68rem; color:#8a9891; margin-left:6px; }
@@ -93,8 +97,12 @@
 
   <div class="stats-row" id="statsRow"></div>
 
-  <div class="filtre-row">
-    <input type="text" id="recherche" placeholder="Rechercher par nom d'entreprise ou téléphone…">
+  <div class="filtre-row" style="display:flex; gap:12px; align-items:center;">
+    <input type="text" id="recherche" placeholder="Rechercher par nom d'entreprise ou téléphone…" style="flex:1;">
+    <div style="display:flex; gap:6px;">
+      <button type="button" id="ongletActifs" class="btn-onglet-vue actif">Actifs</button>
+      <button type="button" id="ongletArchives" class="btn-onglet-vue">📦 Archives</button>
+    </div>
   </div>
 
   <div class="table-card">
@@ -108,21 +116,27 @@
   const SITE_BASE = 'https://app.skyeco.fr';
 
   let toutesLesFiches = [];
+  let vueArchives = false;
 
   chargerFiches();
 
   async function chargerFiches() {
     try {
-      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?select=id,entreprise,metier,telephone,status,site_valide,created_at,dashboard_password_hash&order=created_at.desc`, {
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?select=id,entreprise,metier,telephone,status,site_valide,archive,created_at,dashboard_password_hash&order=created_at.desc`, {
         headers: { apikey: SUPABASE_ANON_KEY }
       });
       toutesLesFiches = await resp.json();
       afficherStats(toutesLesFiches);
-      afficherTableau(toutesLesFiches);
+      afficherVueActuelle();
       chargerCompteursDemandes();
     } catch (e) {
       document.getElementById('contenu').innerHTML = '<div class="empty">Impossible de charger la liste pour le moment.</div>';
     }
+  }
+
+  function afficherVueActuelle() {
+    const fichesVue = toutesLesFiches.filter(f => vueArchives ? f.archive : !f.archive);
+    afficherTableau(fichesVue);
   }
 
   // Nombre de demandes reçues par artisan — un seul appel groupé (pas un
@@ -143,7 +157,8 @@
     } catch (e) { /* silencieux — le tableau reste utilisable sans ce détail */ }
   }
 
-  function afficherStats(fiches) {
+  function afficherStats(fichesToutes) {
+    const fiches = fichesToutes.filter(f => !f.archive); // les archivés ne comptent plus dans le suivi actif
     const total = fiches.length;
     const publies = fiches.filter(f => f.status === 'published').length;
     const enAttente = fiches.filter(f => f.status === 'preview').length;
@@ -206,6 +221,7 @@
                     <button class="btn-action btn-dashboard" data-id="${f.id}" onclick="ouvrirDashboardAdmin(this)">🔑 Dashboard</button>
                     <a class="btn-action btn-elements-admin" href="${lienElements}" target="_blank">✏️ Éléments</a>
                     <a class="btn-action btn-campagne-admin" href="${SITE_BASE}/campagne.html?id=${f.id}" target="_blank">📢 Campagne</a>
+                    <button class="btn-action ${f.archive ? 'btn-desarchiver' : 'btn-archiver'}" data-id="${f.id}" data-archive="${f.archive ? '1' : '0'}" onclick="toggleArchive(this)">${f.archive ? '↩️ Désarchiver' : '📦 Archiver'}</button>
                   </div>
                   <div class="feedback" id="feedback-${f.id}">
                     ${f.dashboard_password_hash ? '<span class="badge-compte-cree">✓ Compte créé</span>' : '<span class="badge-compte-absent">Compte pas encore créé</span>'}
@@ -287,6 +303,44 @@
     }
   };
 
+  // Archiver ne supprime rien — juste un drapeau qui retire l'artisan de la
+  // vue "Actifs" (et de son compteur de stats) sans toucher à ses données ;
+  // tout reste consultable dans l'onglet Archives, désarchivable à tout
+  // moment.
+  window.toggleArchive = async function(btn) {
+    const draftId = btn.dataset.id;
+    const nouvelEtat = btn.dataset.archive !== '1';
+    btn.disabled = true;
+    try {
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
+        method: 'PATCH',
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify({ archive: nouvelEtat })
+      });
+      if (!resp.ok) throw new Error();
+      const fiche = toutesLesFiches.find(f => String(f.id) === String(draftId));
+      if (fiche) fiche.archive = nouvelEtat;
+      afficherStats(toutesLesFiches);
+      afficherVueActuelle();
+    } catch (e) {
+      alert("Impossible de mettre à jour l'archivage pour le moment.");
+      btn.disabled = false;
+    }
+  };
+
+  document.getElementById('ongletActifs').addEventListener('click', () => {
+    vueArchives = false;
+    document.getElementById('ongletActifs').classList.add('actif');
+    document.getElementById('ongletArchives').classList.remove('actif');
+    afficherVueActuelle();
+  });
+  document.getElementById('ongletArchives').addEventListener('click', () => {
+    vueArchives = true;
+    document.getElementById('ongletArchives').classList.add('actif');
+    document.getElementById('ongletActifs').classList.remove('actif');
+    afficherVueActuelle();
+  });
+
   // Ouvre le dashboard d'un artisan sans connaître son mot de passe — sur
   // présentation du mot de passe interne (le même que celui des autres pages
   // d'admin). Demandé une seule fois par session de navigateur : conservé en
@@ -326,7 +380,8 @@
 
   document.getElementById('recherche').addEventListener('input', (e) => {
     const q = e.target.value.toLowerCase();
-    const filtrees = toutesLesFiches.filter(f =>
+    const base = toutesLesFiches.filter(f => vueArchives ? f.archive : !f.archive);
+    const filtrees = base.filter(f =>
       (f.entreprise || '').toLowerCase().includes(q) || (f.telephone || '').includes(q)
     );
     afficherTableau(filtrees);

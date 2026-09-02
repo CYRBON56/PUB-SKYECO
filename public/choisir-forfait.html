@@ -297,7 +297,7 @@
           <div id="blocageValidation" style="background:#fff4ec; border:1.5px solid #f0c9a8; border-radius:12px; padding:20px; margin-top:18px; text-align:center;">
             <div style="font-size:1.5rem; margin-bottom:8px;">⏳</div>
             <p style="margin:0 0 16px; color:#5b4636;">Votre site est en cours de vérification par notre équipe avant de pouvoir être mis en ligne. Vous pourrez choisir votre formule dès qu'il sera validé.</p>
-            <button type="button" id="btnDemanderValidation" style="background:#e8622c; color:#fff; border:none; border-radius:10px; padding:12px 20px; font-size:0.9rem; font-weight:700; cursor:pointer;">🔔 Prévenir Cyrille que je suis prêt</button>
+            <button type="button" id="btnDemanderValidation" style="background:#e8622c; color:#fff; border:none; border-radius:10px; padding:12px 20px; font-size:0.9rem; font-weight:700; cursor:pointer;">🔔 Demander la validation Skyeco</button>
             <div id="noteValidation" style="font-size:0.82rem; color:#8a6d5a; margin-top:10px;"></div>
           </div>
         `);
@@ -314,12 +314,12 @@
               body: JSON.stringify({ draftId })
             });
             const d = await r.json();
-            note.textContent = d.success ? '✓ Cyrille a été prévenu.' : (d.error || "Impossible d'envoyer la demande.");
+            note.textContent = d.success ? "✓ L'équipe Skyeco a été prévenue." : (d.error || "Impossible d'envoyer la demande.");
           } catch (e) {
             note.textContent = 'Impossible de contacter le serveur.';
           } finally {
             btn.disabled = false;
-            btn.textContent = '🔔 Prévenir Cyrille que je suis prêt';
+            btn.textContent = '🔔 Demander la validation Skyeco';
           }
         });
         document.getElementById('vitrineFrame').src = '/apercu.html?id=' + draftId;
@@ -407,6 +407,10 @@
         ` : `
           <button class="btn-essai-gratuit" data-plan="${f.id}">Essayer gratuitement 1 mois</button>
           <div class="btn-essai-sub">Sans carte bancaire — rappel par SMS avant la fin</div>
+          <div style="display:flex; align-items:center; justify-content:center; gap:6px; margin-top:10px; font-size:0.76rem; color:#8a9891;">
+            <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M12 2l4.5 7.79h-9L12 2z"/><path fill="#34A853" d="M3.5 9.79h9L7.75 22l-4.25-12.21z"/><path fill="#FBBC05" d="M16.5 9.79h4L16.25 22l-4.25-12.21h4.5z"/></svg>
+            Diffusion via Google Ads dès l'activation
+          </div>
         `}
       </div>
     `).join('');
@@ -420,10 +424,13 @@
   }
 
   // Essai gratuit 1 mois : pas de carte bancaire, pas de session Stripe.
-  // On crée directement le compte (id + mot de passe dashboard) comme après
-  // un paiement, mais avec un statut 'essai' et une date de fin à J+30 —
-  // c'est api/verifier-essais-a-programmer.js (tâche planifiée quotidienne)
-  // qui enverra le SMS de rappel à J-1 puis basculera le statut en
+  // Le compte (mot de passe dashboard) a déjà été créé bien plus tôt dans
+  // le parcours, sur mon-dashboard-demo.html, avant même de remplir les
+  // éléments — donc ici on pose juste le statut 'essai' + la date de fin à
+  // J+30, et on envoie directement vers campagne.html pour poser le budget
+  // Google Ads, sans repasser par acces-dashboard.html.
+  // api/verifier-essais-a-programmer.js (tâche planifiée quotidienne)
+  // enverra le SMS de rappel à J-1 puis basculera le statut en
   // 'essai_expire' si rien n'a été payé, ce qui bloque l'accès au tableau de
   // bord (redirection automatique vers cette page — voir mon-dashboard.html).
   async function demarrerEssaiGratuit(plan, btn) {
@@ -441,12 +448,25 @@
       });
       const data = await res.json();
       if (data.success) {
-        fetch('/api/envoyer-acces-dashboard', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ draftId })
-        }).catch(() => {});
-        window.location.href = '/acces-dashboard.html?id=' + draftId;
+        // Sécurité : si aucun compte n'existe encore pour ce brouillon (cas
+        // limite, ancien lien...), on passe par la création de mot de passe
+        // avant campagne.html plutôt que d'y envoyer quelqu'un sans accès.
+        try {
+          const verifCompte = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=dashboard_password_hash`, {
+            headers: { apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc' }
+          });
+          const compteRows = await verifCompte.json();
+          if (!compteRows[0]?.dashboard_password_hash) {
+            fetch('/api/envoyer-acces-dashboard', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ draftId })
+            }).catch(() => {});
+            window.location.href = '/acces-dashboard.html?id=' + draftId;
+            return;
+          }
+        } catch (e) { /* en cas de doute, on continue vers campagne.html ci-dessous */ }
+        window.location.href = '/campagne.html?id=' + draftId;
       } else {
         alert(data.error || 'Impossible de démarrer l\'essai gratuit.');
         btn.disabled = false;

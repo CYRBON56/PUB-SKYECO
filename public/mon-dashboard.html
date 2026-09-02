@@ -344,7 +344,7 @@
       </div>
       <div style="background:#f8f9fa; border:1px solid #e8eaed; border-radius:12px; padding:16px;">
         <div style="font-size:1.6rem; font-weight:800; color:#14312a;" id="metricCout">—</div>
-        <div style="font-size:0.78rem; color:#5f6368;">Consommé sur votre solde</div>
+        <div style="font-size:0.78rem; color:#5f6368;">Coût dépensé ce mois-ci</div>
       </div>
       <div style="background:#f8f9fa; border:1px solid #e8eaed; border-radius:12px; padding:16px;">
         <div style="font-size:1.6rem; font-weight:800; color:#34A853;" id="metricConversions">—</div>
@@ -751,7 +751,7 @@
       const metricClics = document.getElementById('metricClics');
       if (metricClics) metricClics.textContent = data.clics ?? '0';
       const metricCout = document.getElementById('metricCout');
-      if (metricCout) metricCout.textContent = (data.consommationAjustee ?? '0') + ' €';
+      if (metricCout) metricCout.textContent = (data.coutReelGoogleEuros ?? '0') + ' €';
 
       const alerte = data.pourcentageConsomme >= 90 ? 'alerte' : '';
       const statutBadge = data.diffusionPausee

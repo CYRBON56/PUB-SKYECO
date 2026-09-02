@@ -42,7 +42,7 @@ export default async function handler(req, res) {
             product_data: {
               name: 'Budget publicitaire Skyeco Ads',
               description: `Financement de campagne — ${budgetNum} € (dont commission de service incluse).`,
-              images: ['https://www.skyeco.fr/icons/skyeco-google-ads.png'],
+              images: ['https://www.skyeco.fr/skyeco-google-ads.png'],
             },
           },
           quantity: 1,

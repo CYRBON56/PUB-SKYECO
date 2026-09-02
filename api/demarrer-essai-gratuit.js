@@ -32,6 +32,22 @@ export default async function handler(req, res) {
     'Content-Type': 'application/json',
   };
 
+  // Vérification serveur : impossible de démarrer l'essai tant que Cyrille
+  // n'a pas validé le site depuis mes-artisans.html — même contrôle que
+  // api/create-checkout-session.js.
+  try {
+    const verifResp = await fetch(
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=site_valide`,
+      { headers: supaHeaders }
+    );
+    const verifRows = await verifResp.json();
+    if (!verifRows[0]?.site_valide) {
+      return res.status(403).json({ success: false, error: "Ce site n'a pas encore été validé — demandez la validation depuis votre page." });
+    }
+  } catch (e) {
+    return res.status(500).json({ success: false, error: 'Impossible de vérifier le statut du site pour le moment.' });
+  }
+
   try {
     const maintenant = new Date();
     const finEssai = new Date(maintenant.getTime() + 30 * 24 * 60 * 60 * 1000);

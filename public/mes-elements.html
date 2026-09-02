@@ -430,6 +430,7 @@
   let produitsActuels = new Map(); // id -> { metier, nom, unite, prix, minimum, questions: Map(id -> {label,type,unite,coche}) }
   let titreChoisi = '';
   let draftStatutActuel = null; // status du brouillon au chargement — sert à savoir où renvoyer après enregistrement
+  let compteDejaExistant = false; // dashboard_password_hash déjà posé (compte créé avant même d'arriver ici, voir mon-dashboard-demo.html)
   let zoneActuelle = null;
   let tvaTauxActuel = 20;
 
@@ -501,6 +502,7 @@
       if (!draft) return;
 
       draftStatutActuel = draft.status || null;
+      compteDejaExistant = !!draft.dashboard_password_hash;
 
       // Le bouton est toujours affiché : on n'arrive sur cette page qu'avec
       // un id de brouillon réel, soit via "Modifier mes éléments" depuis un
@@ -1116,7 +1118,11 @@
       // l'aperçu de sa vraie vitrine (apercu.html), qui enchaîne lui-même
       // vers la démo du tableau de bord puis le choix de formule — l'artisan
       // doit voir son site avant de décider quoi que ce soit.
-      const versDashboard = draftStatutActuel === 'published' || draftStatutActuel === 'en_pause' || draftStatutActuel === 'essai';
+      // Un compte déjà créé (voir mon-dashboard-demo.html — la création se
+      // fait maintenant AVANT d'arriver ici) va directement au vrai tableau
+      // de bord, quel que soit le statut du brouillon. Sinon, comportement
+      // historique conservé pour les liens plus anciens.
+      const versDashboard = compteDejaExistant || draftStatutActuel === 'published' || draftStatutActuel === 'en_pause' || draftStatutActuel === 'essai';
       msg.className = 'save-msg ok';
       msg.textContent = versDashboard
         ? '✓ Tes éléments ont bien été enregistrés. On te ramène à ton tableau de bord…'

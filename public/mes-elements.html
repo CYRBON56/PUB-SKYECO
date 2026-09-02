@@ -386,6 +386,9 @@
         <label>Décrivez réellement ce que vous voudriez chiffrer, avec vos mots</label>
         <textarea id="produitsDescription" rows="4" placeholder="Ex : je pose de la résine EPDM pour terrasses à 45€/m², minimum 300€. Je pose aussi des clôtures à 35€/ml…"></textarea>
         <p class="hint">Décrivez ce que représente concrètement chaque prestation (unité de mesure, prix, minimum de facturation…) — l'IA identifie les différents produits que vous décrivez et pré-remplit une carte par produit ci-dessous (nom, unité, prix, questions). Vous vérifiez et corrigez ensuite avant d'enregistrer, rien n'est figé.</p>
+        <div style="background:#eaf4ef; border:1.5px solid #c3ddd0; border-radius:12px; padding:14px 16px; margin-bottom:16px; font-size:0.86rem; color:#2a4a3c; line-height:1.55;">
+          <strong>💡 Comment bien décrire votre prix :</strong> précisez si vous facturez au m² (surface), au ml (mètre linéaire), au m³ (volume) ou en forfait fixe, et ce que ce prix inclut (matériaux, pose, finitions…). L'IA repère aussi automatiquement ce qui ne peut PAS être chiffré à distance (état réel du terrain, accès chantier, réseaux enterrés…) et l'affiche en rouge sous chaque produit — ces points-là resteront à vérifier par un technicien lors du rendez-vous, le prix affiché au prospect reste une estimation.
+        </div>
         <button type="button" class="btn-extraire" id="btnAnalyserProduits">✨ Analyser mon activité</button>
         <div class="extraction-box" id="produitsAnalyseResult" style="display:none;"></div>
 
@@ -649,6 +652,7 @@
           prix: p.prix != null ? p.prix : '',
           minimum: p.minimum != null ? p.minimum : '',
           questions,
+          limites: Array.isArray(p.limites) ? p.limites : [],
         });
       });
     }
@@ -707,6 +711,14 @@
             </select>
             <button type="button" class="btn-extraire btn-ajouter-question-manuelle">+ Ajouter</button>
           </div>
+          ${p.limites && p.limites.length ? `
+            <div style="background:#fdecea; border:1.5px solid #f0b3ab; border-radius:10px; padding:12px 14px; margin-top:14px;">
+              <div style="color:#c0392b; font-weight:700; font-size:0.82rem; margin-bottom:6px;">⚠️ À vérifier sur place avant de confirmer ce prix :</div>
+              <ul style="margin:0; padding-left:18px; color:#8b2f24; font-size:0.84rem; line-height:1.6;">
+                ${p.limites.map(l => `<li>${l.replace(/</g, '&lt;')}</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
         </div>
       `).join('') || '<p class="hint">Aucun produit pour l\'instant — décrivez votre activité ci-dessus ou ajoutez-en un manuellement.</p>';
     }
@@ -718,6 +730,7 @@
         prix: p.prix === '' || p.prix == null ? null : parseFloat(p.prix),
         minimum: p.minimum === '' || p.minimum == null ? null : parseFloat(p.minimum),
         questions: [...p.questions.entries()].filter(([, q]) => q.coche).map(([qid, q]) => ({ id: qid, label: q.label, type: q.type, unite: q.unite })),
+        limites: Array.isArray(p.limites) ? p.limites : [],
       }));
       sauvegarderChampsImmediat({ produits_chiffrables: produits });
       calculerProgression();
@@ -822,7 +835,7 @@
             while (produitsActuels.has(id)) id = id + '-b'; // évite toute collision avec un produit déjà présent
             const questions = new Map();
             (p.questions || []).forEach(q => questions.set(q.id, { label: q.label, type: q.type, unite: q.unite, coche: true }));
-            produitsActuels.set(id, { metier: p.metier, nom: p.nom, unite: p.unite, prix: p.prix != null ? p.prix : '', minimum: p.minimum != null ? p.minimum : '', questions });
+            produitsActuels.set(id, { metier: p.metier, nom: p.nom, unite: p.unite, prix: p.prix != null ? p.prix : '', minimum: p.minimum != null ? p.minimum : '', questions, limites: Array.isArray(p.limites) ? p.limites : [] });
           });
           rendreProduits();
           enregistrerProduitsSupabase();

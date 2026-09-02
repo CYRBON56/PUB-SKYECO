@@ -389,7 +389,7 @@
         <div style="background:#eaf4ef; border:1.5px solid #c3ddd0; border-radius:12px; padding:14px 16px; margin-bottom:16px; font-size:0.86rem; color:#2a4a3c; line-height:1.55;">
           <strong>💡 Comment bien décrire votre prix :</strong> précisez si vous facturez au m² (surface), au ml (mètre linéaire), au m³ (volume) ou en forfait fixe, et ce que ce prix inclut (matériaux, pose, finitions…). L'IA repère aussi automatiquement ce qui ne peut PAS être chiffré à distance (état réel du terrain, accès chantier, réseaux enterrés…) et l'affiche en rouge sous chaque produit — ces points-là resteront à vérifier par un technicien lors du rendez-vous, le prix affiché au prospect reste une estimation.
         </div>
-        <button type="button" class="btn-extraire" id="btnAnalyserProduits">✨ Analyser ce que j'ai décrit</button>
+        <button type="button" class="btn-extraire" id="btnAnalyserProduits">✨ Analyser mon projet</button>
         <div class="extraction-box" id="produitsAnalyseResult" style="display:none;"></div>
 
         <div id="produitsListe"></div>
@@ -529,7 +529,13 @@
       zoneActuelle = draft.zone || null;
       construireOptionsTitre(metiersActuels, draft.titre_hero_choisi || '');
       tvaTauxActuel = draft.tva_taux || 20;
-      initProduitsChiffrables(metiersActuels, draft.produits_chiffrables || []);
+      try {
+        initProduitsChiffrables(metiersActuels, draft.produits_chiffrables || []);
+      } catch (erreurProduits) {
+        console.error('Erreur initProduitsChiffrables :', erreurProduits);
+        const listeEl = document.getElementById('produitsListe');
+        if (listeEl) listeEl.innerHTML = '<p class="hint" style="color:#c0392b;">Un problème empêche l\'affichage de cette section pour le moment — rechargez la page, ou contactez le support si ça persiste.</p>';
+      }
 
       if (draft.photos && draft.photos.length) {
         photosUrls = draft.photos;
@@ -543,7 +549,7 @@
         document.getElementById('logoPreview').style.display = 'block';
       }
       if (draft.video_url) { videoUrl = draft.video_url; document.getElementById('videoLien').value = draft.video_url.startsWith('http') ? draft.video_url : ''; }
-    } catch (e) { /* silencieux, on part d'un formulaire vide */ }
+    } catch (e) { console.error('Erreur chargerDraftExistant :', e); /* on part d'un formulaire vide plutôt que de bloquer la page */ }
     calculerProgression();
   }
 

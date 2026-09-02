@@ -28,11 +28,11 @@ function toE164(rawPhone) {
 }
 
 async function envoyerSMS(to, body) {
-  if (!to) return;
+  if (!to) throw new Error('ADMIN_PHONE est vide');
   const sid = process.env.TWILIO_ACCOUNT_SID;
   const token = process.env.TWILIO_AUTH_TOKEN;
   const from = process.env.TWILIO_FROM_NUMBER;
-  await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+  const resp = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
     method: 'POST',
     headers: {
       Authorization: 'Basic ' + Buffer.from(`${sid}:${token}`).toString('base64'),
@@ -40,10 +40,11 @@ async function envoyerSMS(to, body) {
     },
     body: new URLSearchParams({ To: toE164(to), From: from, Body: body }),
   });
+  if (!resp.ok) throw new Error(`Twilio a répondu ${resp.status} : ${await resp.text()}`);
 }
 
 async function envoyerEmail(sujet, texte) {
-  await fetch('https://api.resend.com/emails', {
+  const resp = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
@@ -56,6 +57,7 @@ async function envoyerEmail(sujet, texte) {
       html: `<p>${texte}</p>`,
     }),
   });
+  if (!resp.ok) throw new Error(`Resend a répondu ${resp.status} : ${await resp.text()}`);
 }
 
 export default async function handler(req, res) {
@@ -95,10 +97,13 @@ export default async function handler(req, res) {
     const lien = `https://www.skyeco.fr/valider-site.html?id=${draftId}&token=${token}`;
     const texte = `🔔 ${entreprise} demande la validation de son site Skyeco pour pouvoir payer/démarrer son essai. Valider : ${lien}`;
 
-    await Promise.allSettled([
+    const resultats = await Promise.allSettled([
       envoyerSMS(ADMIN_PHONE, texte),
       envoyerEmail('🔔 Demande de validation de site — ' + entreprise, texte),
     ]);
+    const [resultSms, resultEmail] = resultats;
+    if (resultSms.status === 'rejected') console.error('Échec envoi SMS validation-site :', resultSms.reason);
+    if (resultEmail.status === 'rejected') console.error('Échec envoi email validation-site :', resultEmail.reason);
 
     return res.status(200).json({ success: true });
   } catch (err) {

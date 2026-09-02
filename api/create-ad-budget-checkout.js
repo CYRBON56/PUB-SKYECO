@@ -33,6 +33,7 @@ export default async function handler(req, res) {
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       payment_method_types: ['card'],
+      locale: 'fr',
       line_items: [
         {
           price_data: {
@@ -41,6 +42,7 @@ export default async function handler(req, res) {
             product_data: {
               name: 'Budget publicitaire Skyeco Ads',
               description: `Financement de campagne — ${budgetNum} € (dont commission de service incluse).`,
+              images: ['https://www.skyeco.fr/icons/skyeco-google-ads.png'],
             },
           },
           quantity: 1,

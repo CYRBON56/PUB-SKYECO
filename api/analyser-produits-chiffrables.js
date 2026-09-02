@@ -29,11 +29,12 @@ L'artisan te décrit librement son activité et comment il facture. Ta tâche : 
   - "label" : la question en français
   - "type" : "nombre" (réponse chiffrée), "texte" (réponse courte libre), ou "case" (oui/non)
   - "unite" : uniquement si type="nombre" et qu'une unité de mesure a du sens — "ml", "m2" ou "m3" ; sinon null
+- "limites" : 1 à 4 éléments concrets, propres à CE métier et CE produit, qui ne peuvent PAS être fiablement chiffrés à distance et nécessitent obligatoirement un déplacement d'un technicien pour valider le prix final (ex : nature exacte du sol en place, présence de réseaux enterrés, dénivelé du terrain, accès poids-lourd, état d'une dalle existante sous la résine…). Formule chaque élément comme une courte mise en garde destinée au PROSPECT, du type "Le prix ne prend pas en compte X — un technicien devra le vérifier sur place." Si le produit est un vrai forfait fixe sans variable de terrain (ex: entretien ponctuel simple), tableau vide.
 
 N'invente aucun prix qui n'est pas dans le texte ou clairement déductible. Si l'artisan ne décrit qu'une seule façon de facturer, renvoie un seul produit. Identifie entre 1 et 8 produits selon ce que décrit réellement le texte — jamais plus qu'il n'y a de prestations réellement distinctes.
 
 Réponds UNIQUEMENT avec un tableau JSON d'objets, sans aucun texte avant ou après, sans balises markdown. Exemple exact de format :
-[{"nom":"Enrobés","metier":"resine","unite":"m2","prix":45,"minimum":300,"questions":[{"label":"Quel est le support actuel (dalle, terre, autre) ?","type":"texte","unite":null},{"label":"Combien de mètres carrés à recouvrir ?","type":"nombre","unite":"m2"}]}]`;
+[{"nom":"Enrobés","metier":"resine","unite":"m2","prix":45,"minimum":300,"questions":[{"label":"Quel est le support actuel (dalle, terre, autre) ?","type":"texte","unite":null},{"label":"Combien de mètres carrés à recouvrir ?","type":"nombre","unite":"m2"}],"limites":["Le prix ne prend pas en compte l'état réel du support existant (fissures, affaissement) — un technicien devra le vérifier sur place.","L'accès chantier difficile (camion-toupie, brouette uniquement) peut modifier le prix final."]}]`;
 
 function genererId(nom, index) {
   const slug = String(nom || '')
@@ -126,7 +127,11 @@ export default async function handler(req, res) {
             return { id: genererIdQuestion(label, i, j), label, type, unite: uniteQ };
           })
           .slice(0, 6);
-        return { id: genererId(nom, i), nom, metier, unite, prix, minimum, questions };
+        const limites = (Array.isArray(p.limites) ? p.limites : [])
+          .filter(l => typeof l === 'string' && l.trim())
+          .map(l => l.trim().substring(0, 200))
+          .slice(0, 4);
+        return { id: genererId(nom, i), nom, metier, unite, prix, minimum, questions, limites };
       })
       .slice(0, 8);
 

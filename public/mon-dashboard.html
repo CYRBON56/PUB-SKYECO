@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mon tableau de bord — Skyeco Pro</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1e6f4c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Skyeco Pro">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
@@ -293,6 +300,14 @@
       <p style="font-size:0.85rem; color:#5b6b64; margin-top:4px;">Votre site n'est pas visible par vos prospects tant que la pause dure.</p>
     </div>
     <button id="btnReprendreMaintenant" style="background:#e8622c; color:#fff; border:none; border-radius:10px; padding:10px 18px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap;">Reprendre maintenant</button>
+  </div>
+
+  <div id="banniereMettreEnLigne" style="display:none; background:#eaf4ef; border:1.5px solid #1e6f4c; border-radius:14px; padding:16px 20px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
+    <div>
+      <strong style="color:#1e6f4c;">🚀 Votre site n'est pas encore en ligne</strong>
+      <p style="font-size:0.85rem; color:#5b6b64; margin-top:4px;">Une fois vos mots-clés et votre annonce prêts, mettez votre vitrine en ligne pour commencer à recevoir des demandes.</p>
+    </div>
+    <a id="btnMettreEnLigne" href="#" style="background:#1e6f4c; color:#fff; border:none; border-radius:10px; padding:10px 18px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap; text-decoration:none; display:inline-block;">Mettre en ligne</a>
   </div>
 
   <div class="stats-row" id="statsRow">
@@ -621,6 +636,15 @@
 
       if (statut === 'en_pause') {
         document.getElementById('banniereePause').style.display = 'flex';
+      }
+
+      // Site jamais mis en ligne : bannière + bouton "Mettre en ligne", qui
+      // envoie vers choisir-forfait.html — c'est là que se pose le verrou
+      // de vérification (voir site_valide) avant de pouvoir payer/démarrer
+      // l'essai gratuit.
+      if (statut === 'preview') {
+        document.getElementById('btnMettreEnLigne').href = '/choisir-forfait.html?id=' + draftId;
+        document.getElementById('banniereMettreEnLigne').style.display = 'flex';
       }
 
       // Essai gratuit terminé sans paiement : on bloque l'accès au tableau
@@ -1951,6 +1975,19 @@
   sendBtn.addEventListener('click', envoyerMessage);
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') envoyerMessage(); });
 })();
+</script>
+
+<script>
+  // Installation PWA — permet à l'artisan (ou toi) d'ajouter le tableau de
+  // bord à l'écran d'accueil du téléphone comme une vraie app (icône, plein
+  // écran, pas de barre d'adresse). Aucun impact si le navigateur ne
+  // supporte pas les service workers (Safari ancien, etc.) — le site
+  // continue de fonctionner normalement dans tous les cas.
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+  }
 </script>
 
 </body>

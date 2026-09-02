@@ -383,13 +383,6 @@
         </div>
         <p class="hint">Chaque "produit" est une prestation que vous facturez d'une façon précise (ex : "Enrobés" au m², "Pose de clôture" au ml). Quand le projet décrit par un prospect correspond à l'un de vos produits, il répond aux questions de CE produit et reçoit une estimation chiffrée. Sinon, il est invité à prendre rendez-vous avec un technicien — rien n'est perdu, jamais bloqué.</p>
 
-        <label style="margin-top:0;">Taux de TVA applicable</label>
-        <select id="tvaTaux">
-          <option value="20">20% — taux normal</option>
-          <option value="10">10% — travaux de rénovation (bâti de plus de 2 ans)</option>
-          <option value="5.5">5.5% — travaux d'amélioration énergétique</option>
-        </select>
-
         <label>Décrivez réellement ce que vous voudriez chiffrer, avec vos mots</label>
         <textarea id="produitsDescription" rows="4" placeholder="Ex : je pose de la résine EPDM pour terrasses à 45€/m², minimum 300€. Je pose aussi des clôtures à 35€/ml…"></textarea>
         <p class="hint">Décrivez ce que représente concrètement chaque prestation (unité de mesure, prix, minimum de facturation…) — l'IA identifie les différents produits que vous décrivez et pré-remplit une carte par produit ci-dessous (nom, unité, prix, questions). Vous vérifiez et corrigez ensuite avant d'enregistrer, rien n'est figé.</p>
@@ -435,6 +428,7 @@
   let titreChoisi = '';
   let draftStatutActuel = null; // status du brouillon au chargement — sert à savoir où renvoyer après enregistrement
   let zoneActuelle = null;
+  let tvaTauxActuel = 20;
 
   // Suggestions de titre par métier — doit rester cohérent avec les
   // heroTitre par défaut de METIER_TEMPLATES dans apercu.html (le premier
@@ -530,8 +524,8 @@
 
       metiersActuels = Array.isArray(draft.metier) ? draft.metier : (draft.metier ? [draft.metier] : []);
       zoneActuelle = draft.zone || null;
-      document.getElementById('tvaTaux').value = draft.tva_taux || 20;
       construireOptionsTitre(metiersActuels, draft.titre_hero_choisi || '');
+      tvaTauxActuel = draft.tva_taux || 20;
       initProduitsChiffrables(metiersActuels, draft.produits_chiffrables || []);
 
       if (draft.photos && draft.photos.length) {
@@ -614,7 +608,6 @@
     assuranceAssureur: 'assurance_decennale_assureur',
     assuranceNumero: 'assurance_decennale_numero',
     siteExistant: 'site_web_existant',
-    tvaTaux: 'tva_taux',
   };
   const minuteursAutoSave = {};
   Object.entries(CHAMPS_AUTO_SAVE).forEach(([idChamp, colonne]) => {
@@ -1080,7 +1073,13 @@
       photos: photosUrls,
       video_url: videoFinal,
       titre_hero_choisi: titreChoisi || null,
-      tva_taux: parseFloat(document.getElementById('tvaTaux').value),
+      // Champ retiré du formulaire (02/09) — on renvoie le taux déjà
+      // enregistré (tvaTauxActuel, lu au chargement) pour ne pas écraser un
+      // réglage existant chez un artisan qui en avait un différent de 20%
+      // (10% rénovation, 5.5% amélioration énergétique) ; 20% par défaut
+      // pour un tout nouvel artisan. Modifiable directement en base si
+      // besoin.
+      tva_taux: tvaTauxActuel,
       elements_deposes_le: new Date().toISOString(),
     };
 

@@ -70,6 +70,8 @@
   .btn-valide-off:hover { border-color:#1e6f4c; color:#1e6f4c; }
   .btn-valide-on { background:#eaf4ef; border-color:#1e6f4c; color:#1e6f4c; }
   .btn-dashboard { background:#fff; border-color:#e0e5df; color:#14312a; }
+  .btn-elements-admin, .btn-campagne-admin { background:#fff; border-color:#e0e5df; color:#14312a; text-decoration:none; }
+  .badge-compteur-demandes { margin-left:8px; font-size:0.78rem; color:#5b6b64; }
   .btn-dashboard:hover { border-color:#14312a; }
   .badge-compte-cree { font-size:0.68rem; color:#1e6f4c; font-weight:700; margin-left:6px; }
   .badge-compte-absent { font-size:0.68rem; color:#8a9891; margin-left:6px; }
@@ -117,9 +119,28 @@
       toutesLesFiches = await resp.json();
       afficherStats(toutesLesFiches);
       afficherTableau(toutesLesFiches);
+      chargerCompteursDemandes();
     } catch (e) {
       document.getElementById('contenu').innerHTML = '<div class="empty">Impossible de charger la liste pour le moment.</div>';
     }
+  }
+
+  // Nombre de demandes reçues par artisan — un seul appel groupé (pas un
+  // par artisan) pour rester léger même avec beaucoup d'inscrits ; complète
+  // le tableau une fois chargé plutôt que de bloquer son premier affichage.
+  async function chargerCompteursDemandes() {
+    try {
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_leads?select=draft_id`, {
+        headers: { apikey: SUPABASE_ANON_KEY }
+      });
+      const leads = await resp.json();
+      const compteurs = {};
+      leads.forEach(l => { compteurs[l.draft_id] = (compteurs[l.draft_id] || 0) + 1; });
+      Object.entries(compteurs).forEach(([draftId, n]) => {
+        const el = document.getElementById('demandes-' + draftId);
+        if (el) el.textContent = `📩 ${n} demande${n > 1 ? 's' : ''}`;
+      });
+    } catch (e) { /* silencieux — le tableau reste utilisable sans ce détail */ }
   }
 
   function afficherStats(fiches) {
@@ -146,6 +167,9 @@
     const STATUT_LABELS = {
       preview: '<span class="badge badge-preview">Aperçu</span>',
       published: '<span class="badge badge-published">Publié</span>',
+      en_pause: '<span class="badge badge-desactive">En pause</span>',
+      essai: '<span class="badge badge-preview">Essai gratuit</span>',
+      essai_expire: '<span class="badge badge-desactive">Essai expiré</span>',
       desactive: '<span class="badge badge-desactive">Désactivé</span>',
     };
 
@@ -180,9 +204,12 @@
                     <a class="btn-action btn-voir" href="/apercu.html?id=${f.id}" target="_blank">👁️ Voir</a>
                     <button class="btn-action ${f.site_valide ? 'btn-valide-on' : 'btn-valide-off'}" data-id="${f.id}" data-valide="${f.site_valide ? '1' : '0'}" onclick="toggleValidation(this)">${f.site_valide ? '✓ Site validé' : '☐ Valider le site'}</button>
                     <button class="btn-action btn-dashboard" data-id="${f.id}" onclick="ouvrirDashboardAdmin(this)">🔑 Dashboard</button>
+                    <a class="btn-action btn-elements-admin" href="${lienElements}" target="_blank">✏️ Éléments</a>
+                    <a class="btn-action btn-campagne-admin" href="${SITE_BASE}/campagne.html?id=${f.id}" target="_blank">📢 Campagne</a>
                   </div>
                   <div class="feedback" id="feedback-${f.id}">
                     ${f.dashboard_password_hash ? '<span class="badge-compte-cree">✓ Compte créé</span>' : '<span class="badge-compte-absent">Compte pas encore créé</span>'}
+                    <span class="badge-compteur-demandes" id="demandes-${f.id}"></span>
                   </div>
                 </td>
               </tr>

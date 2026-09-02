@@ -337,6 +337,22 @@
     <h2 style="display:flex; align-items:center; gap:10px;"><svg width="26" height="26" viewBox="0 0 24 24"><path fill="#4285F4" d="M12 2l4.5 7.79h-9L12 2z"/><path fill="#34A853" d="M3.5 9.79h9L7.75 22l-4.25-12.21z"/><path fill="#FBBC05" d="M16.5 9.79h4L16.25 22l-4.25-12.21h4.5z"/></svg> Pilotage Google Ads</h2>
     <div class="ads-sub">Le détail de votre campagne — où vous êtes visible, combien investir, quels mots-clés fonctionnent, et à quel moment vos clics arrivent.</div>
 
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:12px; margin:18px 0 24px;">
+      <div style="background:#f8f9fa; border:1px solid #e8eaed; border-radius:12px; padding:16px;">
+        <div style="font-size:1.6rem; font-weight:800; color:#14312a;" id="metricClics">—</div>
+        <div style="font-size:0.78rem; color:#5f6368;">Clics ce mois-ci</div>
+      </div>
+      <div style="background:#f8f9fa; border:1px solid #e8eaed; border-radius:12px; padding:16px;">
+        <div style="font-size:1.6rem; font-weight:800; color:#14312a;" id="metricCout">—</div>
+        <div style="font-size:0.78rem; color:#5f6368;">Coût dépensé ce mois-ci</div>
+      </div>
+      <div style="background:#f8f9fa; border:1px solid #e8eaed; border-radius:12px; padding:16px;">
+        <div style="font-size:1.6rem; font-weight:800; color:#34A853;" id="metricConversions">—</div>
+        <div style="font-size:0.78rem; color:#5f6368;">Conversions (demandes reçues)</div>
+      </div>
+    </div>
+    <a href="#" id="btnApprovisionnerRapide" style="display:inline-flex; align-items:center; gap:8px; background:#1e6f4c; color:#fff; text-decoration:none; border-radius:10px; padding:11px 18px; font-size:0.85rem; font-weight:700; margin-bottom:24px;">💳 Approvisionner mon budget</a>
+
     <div class="ads-souspanel">
       <h3>Où voulez-vous être visible ?</h3>
       <div id="zoneAffichage" class="zone-affichage">
@@ -478,6 +494,7 @@
   const DEVIS_BUCKET = 'skyeco-pro-media';
   const params = new URLSearchParams(window.location.search);
   const draftId = params.get('id');
+  document.getElementById('btnApprovisionnerRapide').href = '/campagne.html?id=' + draftId;
   // Partagé entre initMotsCles(), initAnnonce() et initZoneCiblee() : compte
   // les sauvegardes réseau en cours (zone, mots-clés, annonce). Tant que ce
   // compteur est > 0, on avertit avant de quitter/recharger la page — sinon
@@ -702,6 +719,8 @@
       });
       const count = resp.headers.get('content-range')?.split('/')[1] || (await resp.json()).length;
       document.getElementById('statProspects').textContent = count;
+      const metricConv = document.getElementById('metricConversions');
+      if (metricConv) metricConv.textContent = count;
     } catch (e) {
       document.getElementById('statProspects').textContent = '0';
     }
@@ -723,10 +742,16 @@
           <div class="empty-msg" style="padding:12px 0;">Aucune campagne active pour l'instant.</div>
         `;
         document.getElementById('statClics').textContent = '0';
+        const mc = document.getElementById('metricClics'); if (mc) mc.textContent = '0';
+        const mco = document.getElementById('metricCout'); if (mco) mco.textContent = '0 €';
         return;
       }
 
       document.getElementById('statClics').textContent = data.clics ?? '0';
+      const metricClics = document.getElementById('metricClics');
+      if (metricClics) metricClics.textContent = data.clics ?? '0';
+      const metricCout = document.getElementById('metricCout');
+      if (metricCout) metricCout.textContent = (data.coutReelGoogleEuros ?? '0') + ' €';
 
       const alerte = data.pourcentageConsomme >= 90 ? 'alerte' : '';
       const statutBadge = data.diffusionPausee

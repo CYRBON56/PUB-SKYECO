@@ -369,14 +369,18 @@
       <div class="section-title">
         <span class="section-icon">🧮</span>
         <div>
-          <h2>Produits chiffrables</h2>
-          <p class="sub">Facultatif — pour donner automatiquement une estimation chiffrée quand le projet du prospect correspond à l'un de vos produits.</p>
+          <h2>Formulaire estimatif</h2>
+          <p class="sub">La section la plus importante — c'est elle qui génère le plus de prises de rendez-vous avec un technicien.</p>
         </div>
       </div>
       <span class="chevron">▾</span>
     </div>
     <div class="section-body">
       <div class="section-body-inner">
+        <div style="background:#fff4ec; border:1.5px solid #f0c9a8; border-radius:12px; padding:14px 16px; margin-bottom:16px;">
+          <strong style="color:#c9601f;">⚡ Pourquoi c'est important :</strong>
+          <span style="color:#5b4636;"> quand un prospect décrit son projet et qu'il correspond à l'un de vos produits, il reçoit tout de suite une estimation chiffrée — c'est ce qui le convainc de passer à l'étape suivante et de prendre rendez-vous avec un technicien. Sans cette section, il est simplement invité à prendre rendez-vous sans avoir rien vu de chiffré, ce qui convertit beaucoup moins.</span>
+        </div>
         <p class="hint">Chaque "produit" est une prestation que vous facturez d'une façon précise (ex : "Enrobés" au m², "Pose de clôture" au ml). Quand le projet décrit par un prospect correspond à l'un de vos produits, il répond aux questions de CE produit et reçoit une estimation chiffrée. Sinon, il est invité à prendre rendez-vous avec un technicien — rien n'est perdu, jamais bloqué.</p>
 
         <label style="margin-top:0;">Taux de TVA applicable</label>
@@ -386,9 +390,9 @@
           <option value="5.5">5.5% — travaux d'amélioration énergétique</option>
         </select>
 
-        <label>Décrivez ce que vous facturez, avec vos mots</label>
+        <label>Décrivez réellement ce que vous voudriez chiffrer, avec vos mots</label>
         <textarea id="produitsDescription" rows="4" placeholder="Ex : je pose de la résine EPDM pour terrasses à 45€/m², minimum 300€. Je pose aussi des clôtures à 35€/ml…"></textarea>
-        <p class="hint">L'IA identifie les différents produits que vous décrivez et pré-remplit une carte par produit ci-dessous (nom, unité, prix, questions). Vous vérifiez et corrigez ensuite avant d'enregistrer, rien n'est figé.</p>
+        <p class="hint">Décrivez ce que représente concrètement chaque prestation (unité de mesure, prix, minimum de facturation…) — l'IA identifie les différents produits que vous décrivez et pré-remplit une carte par produit ci-dessous (nom, unité, prix, questions). Vous vérifiez et corrigez ensuite avant d'enregistrer, rien n'est figé.</p>
         <button type="button" class="btn-extraire" id="btnAnalyserProduits">✨ Analyser mon activité</button>
         <div class="extraction-box" id="produitsAnalyseResult" style="display:none;"></div>
 

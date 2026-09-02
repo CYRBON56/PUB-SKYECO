@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Valider un site — Skyeco Pro</title>
+<style>
+  body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; background:#f4ece2; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#14312a; padding:24px; }
+  .card { max-width:420px; width:100%; background:#fff; border-radius:16px; padding:32px 28px; box-shadow:0 10px 30px rgba(0,0,0,0.08); text-align:center; }
+  h1 { font-size:1.3rem; margin:0 0 10px; }
+  p { color:#5b6b64; line-height:1.55; margin:0 0 22px; }
+  button { width:100%; background:#1e6f4c; color:#fff; border:none; border-radius:10px; padding:14px; font-size:1rem; font-weight:700; cursor:pointer; }
+  button:disabled { opacity:0.6; cursor:wait; }
+  .ok { color:#1e6f4c; font-weight:700; }
+  .err { color:#c0392b; font-weight:700; }
+</style>
+</head>
+<body>
+  <div class="card" id="card">
+    <div>Chargement…</div>
+  </div>
+
+<script>
+  const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+  const params = new URLSearchParams(window.location.search);
+  const draftId = params.get('id');
+  const token = params.get('token');
+  const card = document.getElementById('card');
+
+  async function init() {
+    if (!draftId || !token) {
+      card.innerHTML = '<h1>Lien invalide</h1><p>Il manque des informations dans ce lien.</p>';
+      return;
+    }
+    try {
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,site_valide,validation_token`, {
+        headers: { apikey: SUPABASE_ANON_KEY }
+      });
+      const rows = await resp.json();
+      const draft = rows[0];
+      if (!draft) {
+        card.innerHTML = '<h1>Introuvable</h1><p>Ce site n\'existe plus.</p>';
+        return;
+      }
+      if (draft.site_valide) {
+        card.innerHTML = `<h1>${draft.entreprise || 'Ce site'}</h1><p class="ok">✓ Déjà validé.</p>`;
+        return;
+      }
+      if (draft.validation_token !== token) {
+        card.innerHTML = '<h1>Lien expiré</h1><p>Une nouvelle demande de validation a peut-être été envoyée depuis — vérifiez votre dernier SMS.</p>';
+        return;
+      }
+      card.innerHTML = `
+        <h1>${draft.entreprise || 'Cet artisan'}</h1>
+        <p>Confirmer que ce site est prêt à être mis en ligne (l'artisan pourra alors payer ou démarrer son essai gratuit).</p>
+        <button id="btnValider">✓ Confirmer la validation</button>
+      `;
+      document.getElementById('btnValider').addEventListener('click', async () => {
+        const btn = document.getElementById('btnValider');
+        btn.disabled = true;
+        btn.textContent = '…';
+        try {
+          const patch = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
+            method: 'PATCH',
+            headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+            body: JSON.stringify({ site_valide: true }),
+          });
+          if (!patch.ok) throw new Error();
+          card.innerHTML = `<h1>${draft.entreprise || 'Ce site'}</h1><p class="ok">✓ Site validé — l'artisan peut maintenant payer ou démarrer son essai gratuit.</p>`;
+        } catch (e) {
+          btn.disabled = false;
+          btn.textContent = '✓ Confirmer la validation';
+          alert('Impossible de valider pour le moment.');
+        }
+      });
+    } catch (e) {
+      card.innerHTML = '<h1>Erreur</h1><p class="err">Impossible de charger cette page pour le moment.</p>';
+    }
+  }
+  init();
+</script>
+</body>
+</html>

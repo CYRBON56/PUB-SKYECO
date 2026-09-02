@@ -235,8 +235,8 @@
     <h3>Solde publicitaire <span class="statut-badge" style="font-size:0.7rem; font-weight:700; padding:3px 9px; border-radius:999px; background:#eaf4ef; color:#1e6f4c;">🟢 Active</span></h3>
     <div class="solde-bar-track"><div class="solde-bar-fill"></div></div>
     <div class="solde-stats">
-      <span>Consommé : <strong>160 €</strong></span>
-      <span>Restant : <strong>140 €</strong> / 300 €</span>
+      <span>Consommé : <strong>126 €</strong></span>
+      <span>Restant : <strong>174 €</strong> / 300 €</span>
     </div>
     <button class="btn-pause-demo">⏸️ Mettre en pause la diffusion</button>
   </div>
@@ -274,7 +274,7 @@
       <button type="button" class="btn-rafraichir-demo">🔄 Rafraîchir l'estimation de clics</button>
       <div class="motscles-potentiel">
         <div class="chiffre">≈ 79 clics/mois possibles</div>
-        <div class="detail">Avec ces mots-clés dans votre zone, pour un budget de 300 € — coût par clic moyen estimé : 1,90 €.</div>
+        <div class="detail">Avec ces mots-clés dans votre zone, pour un budget de 300 € — coût par clic moyen estimé : 1,50 €.</div>
       </div>
     </div>
 
@@ -302,7 +302,7 @@
         <input type="range" min="1" max="150" value="55" disabled>
         <span>55 clics</span>
       </div>
-      <div class="ga-budget-resultat">Budget ads estimé : <strong>≈ 210 €</strong></div>
+      <div class="ga-budget-resultat">Budget ads estimé : <strong>≈ 165 €</strong></div>
       <div class="estim-note">Ce budget n'est pas garanti sur une durée fixe — il est consommé au fur et à mesure des clics reçus.</div>
     </div>
 
@@ -421,7 +421,22 @@
 
   <div id="ctaFunnel" class="cta-funnel" style="display:none;">
     <p>C'est exactement <strong>ce qui vous attend</strong> une fois votre vitrine en ligne — vos vrais clients, vos vraies demandes, à cet endroit.</p>
-    <a href="#" id="btnContinuer" class="btn-continuer">Choisir mon forfait →</a>
+    <button type="button" id="btnContinuer" class="btn-continuer">✨ Créer votre formulaire vitrine</button>
+
+    <div id="panneauCompte" style="display:none; max-width:420px; margin:20px auto 0; background:#fff; border-radius:14px; padding:22px; text-align:left; box-shadow:0 10px 30px rgba(0,0,0,0.08);">
+      <p style="margin:0 0 14px; font-size:0.9rem; color:#3a4a44; line-height:1.55;">
+        Vous allez créer votre <strong>formulaire vitrine + Google Ads</strong> — gardez bien votre mot de passe et votre identifiant (votre email ci-dessous), ils vous serviront à chaque connexion.
+      </p>
+      <label style="font-size:0.8rem; font-weight:700; color:#14312a; display:block; margin-bottom:4px;">Votre identifiant (email)</label>
+      <input type="email" id="compteEmail" readonly style="width:100%; padding:10px 12px; border:1.5px solid #e0e5df; border-radius:8px; background:#f5f8f6; margin-bottom:14px; font-size:0.9rem;">
+      <label style="font-size:0.8rem; font-weight:700; color:#14312a; display:block; margin-bottom:4px;">Choisissez un mot de passe</label>
+      <div style="position:relative; margin-bottom:6px;">
+        <input type="password" id="compteMotDePasse" placeholder="Au moins 8 caractères" style="width:100%; padding:10px 40px 10px 12px; border:1.5px solid #e0e5df; border-radius:8px; font-size:0.9rem;">
+        <button type="button" id="btnVoirMdp" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:1.1rem;">👁️</button>
+      </div>
+      <div id="compteErreur" style="color:#c0392b; font-size:0.82rem; margin-bottom:10px; display:none;"></div>
+      <button type="button" id="btnCreerCompte" style="width:100%; background:#1e6f4c; color:#fff; border:none; border-radius:10px; padding:13px; font-size:0.94rem; font-weight:700; cursor:pointer; margin-top:6px;">Créer mon compte et continuer →</button>
+    </div>
   </div>
 </div>
 
@@ -435,6 +450,8 @@
   //    du forfait.
   const params = new URLSearchParams(window.location.search);
   const draftId = params.get('id');
+  const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
   if (draftId) {
     document.getElementById('lienRetour').href = '/apercu.html?id=' + encodeURIComponent(draftId);
     document.getElementById('lienRetour').style.display = 'inline-flex';
@@ -442,8 +459,76 @@
     document.getElementById('btnVoirVitrineDemo').style.display = 'inline-flex';
     document.getElementById('hintClic').style.display = 'inline-flex';
     document.getElementById('badgeHaut').textContent = 'Aperçu de votre futur tableau de bord';
-    document.getElementById('btnContinuer').href = '/choisir-forfait.html?id=' + encodeURIComponent(draftId);
     document.getElementById('ctaFunnel').style.display = 'block';
+
+    // Clic sur "Créer votre formulaire vitrine" : si un compte existe déjà
+    // pour ce brouillon (retour en arrière après coup), on saute directement
+    // à la suite ; sinon on affiche le panneau de création de compte.
+    document.getElementById('btnContinuer').addEventListener('click', async () => {
+      const btn = document.getElementById('btnContinuer');
+      btn.disabled = true;
+      try {
+        const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=email,dashboard_password_hash`, {
+          headers: { apikey: SUPABASE_ANON_KEY }
+        });
+        const rows = await resp.json();
+        const draft = rows[0];
+        if (draft && draft.dashboard_password_hash) {
+          window.location.href = '/mes-elements.html?id=' + encodeURIComponent(draftId);
+          return;
+        }
+        document.getElementById('compteEmail').value = (draft && draft.email) || '';
+        document.getElementById('panneauCompte').style.display = 'block';
+        btn.style.display = 'none';
+      } catch (e) {
+        alert('Impossible de continuer pour le moment.');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    document.getElementById('btnVoirMdp').addEventListener('click', () => {
+      const champ = document.getElementById('compteMotDePasse');
+      const estVisible = champ.type === 'text';
+      champ.type = estVisible ? 'password' : 'text';
+      document.getElementById('btnVoirMdp').textContent = estVisible ? '👁️' : '🙈';
+    });
+
+    document.getElementById('btnCreerCompte').addEventListener('click', async () => {
+      const btn = document.getElementById('btnCreerCompte');
+      const erreurEl = document.getElementById('compteErreur');
+      const motDePasse = document.getElementById('compteMotDePasse').value;
+      erreurEl.style.display = 'none';
+      if (motDePasse.length < 8) {
+        erreurEl.textContent = 'Le mot de passe doit contenir au moins 8 caractères.';
+        erreurEl.style.display = 'block';
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'Création en cours…';
+      try {
+        const res = await fetch('/api/dashboard-set-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId, motDePasse })
+        });
+        const data = await res.json();
+        if (data.success) {
+          sessionStorage.setItem('skyeco_dashboard_token_' + draftId, data.token);
+          window.location.href = '/mes-elements.html?id=' + encodeURIComponent(draftId);
+        } else {
+          erreurEl.textContent = data.error || 'Impossible de créer le compte pour le moment.';
+          erreurEl.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Créer mon compte et continuer →';
+        }
+      } catch (e) {
+        erreurEl.textContent = 'Impossible de contacter le serveur.';
+        erreurEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Créer mon compte et continuer →';
+      }
+    });
   }
 
   // Petit système "cliquez pour comprendre" : chaque encart avec

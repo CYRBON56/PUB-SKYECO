@@ -410,6 +410,18 @@
 
   const params = new URLSearchParams(window.location.search);
   const draftId = params.get('id');
+  // Avertit avant de quitter/recharger la page si une sauvegarde (auto ou
+  // upload de fichier) est encore en cours — même logique que sur le
+  // tableau de bord, pour éviter de perdre une saisie envoyée trop tard.
+  let sauvegardesEnCours = 0;
+  function demarrerSauvegarde() { sauvegardesEnCours++; }
+  function terminerSauvegarde() { sauvegardesEnCours = Math.max(0, sauvegardesEnCours - 1); }
+  window.addEventListener('beforeunload', (e) => {
+    if (sauvegardesEnCours > 0) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
 
   let logoUrl = null;
   let photosUrls = [];
@@ -567,14 +579,52 @@
   // avant d'avoir cliqué sur le bouton d'enregistrement global.
   async function sauvegarderChampsImmediat(champs) {
     if (!draftId) return;
+    demarrerSauvegarde();
     try {
       await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
         method: 'PATCH',
         headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
         body: JSON.stringify(champs),
       });
-    } catch (e) { /* silencieux — l'enregistrement final au bas du formulaire rattrapera si besoin */ }
+    } catch (e) { /* silencieux — l'enregistrement final au bas du formulaire rattrapera si besoin */
+    } finally {
+      terminerSauvegarde();
+    }
   }
+
+  // --- Auto-enregistrement des champs texte restants (coordonnées, infos
+  // légales) — jusqu'ici ces champs n'étaient sauvegardés qu'au clic final
+  // sur "Enregistrer" en bas de page ; en cas de fermeture d'onglet ou de
+  // perte de connexion avant ce clic, tout était perdu. Un court délai
+  // (900ms sans frappe) évite d'enregistrer à chaque lettre tapée.
+  const CHAMPS_AUTO_SAVE = {
+    telephone: 'telephone',
+    email: 'email',
+    adresseRue: 'adresse_rue',
+    adresseCp: 'adresse_cp',
+    adresseVille: 'adresse_ville',
+    siret: 'siret',
+    formeJuridique: 'forme_juridique',
+    capitalSocial: 'capital_social',
+    rcsVille: 'rcs_ville',
+    assuranceAssureur: 'assurance_decennale_assureur',
+    assuranceNumero: 'assurance_decennale_numero',
+    siteExistant: 'site_web_existant',
+    tvaTaux: 'tva_taux',
+  };
+  const minuteursAutoSave = {};
+  Object.entries(CHAMPS_AUTO_SAVE).forEach(([idChamp, colonne]) => {
+    const el = document.getElementById(idChamp);
+    if (!el) return;
+    const evenement = el.tagName === 'SELECT' ? 'change' : 'input';
+    el.addEventListener(evenement, () => {
+      clearTimeout(minuteursAutoSave[idChamp]);
+      minuteursAutoSave[idChamp] = setTimeout(() => {
+        const valeur = colonne === 'tva_taux' ? parseFloat(el.value) : el.value.trim();
+        sauvegarderChampsImmediat({ [colonne]: valeur });
+      }, 900);
+    });
+  });
 
   // --- Produits chiffrables : chaque produit a son propre prix (unité/prix/
   // minimum) ET ses propres questions de devis. Remplace l'ancien couple

@@ -106,7 +106,10 @@
         return;
       }
       app.innerHTML = `
-        <h1>✅ Campagne lancée</h1>
+        <div style="display:flex; justify-content:center; margin-bottom:18px;">
+          <svg width="72" height="72" viewBox="0 0 24 24"><path fill="#4285F4" d="M12 2l4.5 7.79h-9L12 2z"/><path fill="#34A853" d="M3.5 9.79h9L7.75 22l-4.25-12.21z"/><path fill="#FBBC05" d="M16.5 9.79h4L16.25 22l-4.25-12.21h4.5z"/></svg>
+        </div>
+        <h1 style="text-align:center;">✅ Campagne lancée</h1>
         <p class="sub">Votre budget de ${data.budgetActif} € est actif.</p>
         <div class="estimation-box">
           <div class="detail" style="font-size:0.92rem; color:#14312a;">${data.campagneMessage}</div>
@@ -119,7 +122,10 @@
 
   function render() {
     app.innerHTML = `
-      <h1>Lancer votre campagne</h1>
+      <div style="display:flex; justify-content:center; margin-bottom:18px;">
+        <svg width="72" height="72" viewBox="0 0 24 24"><path fill="#4285F4" d="M12 2l4.5 7.79h-9L12 2z"/><path fill="#34A853" d="M3.5 9.79h9L7.75 22l-4.25-12.21z"/><path fill="#FBBC05" d="M16.5 9.79h4L16.25 22l-4.25-12.21h4.5z"/></svg>
+      </div>
+      <h1 style="text-align:center;">Lancer votre campagne</h1>
       <p class="sub">Choisissez le montant que vous souhaitez investir ce mois-ci. Le calcul se met à jour automatiquement.</p>
 
       <div id="consommationSection"></div>

@@ -64,6 +64,23 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'draftId manquant' });
   }
 
+  // Vérification serveur (pas seulement côté page) : impossible de payer
+  // tant que Cyrille n'a pas validé le site depuis mes-artisans.html — ce
+  // même contrôle protège aussi api/demarrer-essai-gratuit.js. Empêche un
+  // contournement en appelant directement cet endpoint.
+  try {
+    const verifResp = await fetch(
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=site_valide`,
+      { headers: { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}` } }
+    );
+    const verifRows = await verifResp.json();
+    if (!verifRows[0]?.site_valide) {
+      return res.status(403).json({ error: "Ce site n'a pas encore été validé — demandez la validation depuis votre page." });
+    }
+  } catch (e) {
+    return res.status(500).json({ error: 'Impossible de vérifier le statut du site pour le moment.' });
+  }
+
   const forfait = FORFAITS[plan] || FORFAITS[3]; // Forfait unique par défaut si non précisé
 
   const origin = req.headers.origin || `https://${req.headers.host}`;

@@ -109,7 +109,7 @@ export default async function handler(req, res) {
               // seulement en cliquant sur la flèche pour dérouler) — la mettre
               // en premier garantit qu'elle apparaît sans avoir à déplier.
               description: `Sans engagement — vous arrêtez quand vous voulez. Prix HT : ${(forfait.centimesHT / 100).toFixed(2)} € — TVA 20% incluse. Prix spécial artisan : ${prixReduitHT} € HT/mois pendant les 12 premiers mois, puis ${(forfait.centimesHT / 100).toFixed(2)} € HT/mois. Votre formulaire vitrine en ligne, mis à jour et actif chaque mois.`,
-              images: ['https://www.skyeco.fr/skyeco-google-ads.png'],
+              images: ['https://www.skyeco.fr/skyeco-google-ads-carre.png'],
             },
           },
           quantity: 1,

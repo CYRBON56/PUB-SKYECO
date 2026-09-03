@@ -84,11 +84,11 @@ export default async function handler(req, res) {
   // admin_token évite un aller-retour par la page de connexion — si le
   // secret n'est pas configuré, on retombe sur le lien générique plutôt que
   // de faire échouer toute l'alerte.
-  let lien = `https://www.skyeco.fr/mon-dashboard.html?id=${draftId}#sectionZoneCiblee`;
+  let lien = `https://app.skyeco.fr/mon-dashboard.html?id=${draftId}#sectionZoneCiblee`;
   if (process.env.DASHBOARD_SESSION_SECRET) {
     try {
       const token = signerTokenAdmin(draftId);
-      lien = `https://www.skyeco.fr/mon-dashboard.html?id=${draftId}&admin_token=${token}#sectionZoneCiblee`;
+      lien = `https://app.skyeco.fr/mon-dashboard.html?id=${draftId}&admin_token=${token}#sectionZoneCiblee`;
     } catch (e) {
       console.error('Échec génération admin_token alerte-zone :', e);
     }

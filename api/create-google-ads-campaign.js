@@ -212,7 +212,7 @@ export default async function handler(req, res) {
       : [];
 
     const urlVitrine = `https://app.skyeco.fr/apercu.html?id=${draft_id}`;
-    await executerAction('create_responsive_search_ad', {
+    const annonce = await executerAction('create_responsive_search_ad', {
       ad_group_id: adGroupId,
       headlines: titresValides.length ? titresValides : [
         `${draft.entreprise || 'Devis gratuit'}`,
@@ -226,14 +226,35 @@ export default async function handler(req, res) {
       final_url: urlVitrine,
       status: 'paused',
     });
+    // Bug corrigé le 03/09 : l'id de l'annonce créée (format Windsor.ai
+    // "<ad_group_id>~<ad_id>", voir extraireId) n'était jusqu'ici jamais
+    // capturé ni enregistré — impossible ensuite de la réactiver
+    // individuellement (action enable_ad, distincte de enable_campaign et
+    // enable_ad_group) une fois la campagne validée. Voir aussi
+    // pause-campagne-ads.js, qui l'utilise désormais.
+    const adResource = extraireId(annonce);
 
+    // Bug corrigé le 03/09 (racine de "je ne vois pas l'annonce dans Google") :
+    // la campagne est créée en PAUSE dans Google Ads (ci-dessus, sécurité —
+    // en attente de validation avant diffusion réelle), mais rien ne posait
+    // jusqu'ici campagne_diffusion_pausee=true côté Supabase. Or c'est CE
+    // champ, pas le vrai statut Google Ads, que lit le tableau de bord
+    // (get-campaign-spend.js) pour son badge "🟢 Active"/"⏸️ En pause" — la
+    // campagne restait donc indéfiniment en pause dans Google Ads tout en
+    // s'affichant "Active" sur le dashboard, sans qu'aucun bouton ne signale
+    // qu'il fallait cliquer sur "Relancer la diffusion" pour l'activer
+    // réellement. On pose maintenant ce champ à true à la création, pour que
+    // le dashboard affiche bien "En pause" et propose ce bouton — qui appelle
+    // déjà correctement enable_campaign (voir pause-campagne-ads.js).
     await fetch(`${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}`, {
       method: 'PATCH',
       headers: { ...supaHeaders, Prefer: 'return=minimal' },
       body: JSON.stringify({
         google_ads_campaign_resource: String(campaignId),
         google_ads_ad_group_resource: String(adGroupId),
+        google_ads_ad_resource: adResource ? String(adResource) : null,
         google_ads_cree_le: new Date().toISOString(),
+        campagne_diffusion_pausee: true,
       }),
     });
 

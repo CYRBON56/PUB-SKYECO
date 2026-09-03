@@ -525,6 +525,18 @@
     }
   });
 
+  // Statut du brouillon (site_valide, etc.) — reflété ici à chaque fois qu'un
+  // fetch qui inclut la colonne "status" revient (verifierStatutPause() et
+  // initPilotageAds(), ci-dessous) : variable VRAIMENT globale au script,
+  // contrairement à "draftInfo" qui n'existe qu'en local à l'intérieur de
+  // initPilotageAds() (03/09 : bloquerSiEssaiExpire() référençait par erreur
+  // ce "draftInfo" local depuis la portée globale du script, où il n'existe
+  // pas du tout — "ReferenceError: draftInfo is not defined" à chaque appel,
+  // qui interrompait silencieusement (promesse non gérée, aucun message
+  // affiché) l'enregistrement des mots-clés/zone/annonce/horaires pour TOUTE
+  // vitrine où cette fonction était appelée).
+  let statutDraftActuel = null;
+
   // Essai gratuit terminé sans passage à un forfait payant : l'artisan
   // garde son tableau de bord et sa vitrine accessibles en lecture (la
   // diffusion Google Ads continue tant qu'il reste du budget), mais ne peut
@@ -532,7 +544,7 @@
   // début de chaque action de sauvegarde (zone, mots-clés, annonce,
   // horaires...). Renvoie true si bloqué (l'appelant doit alors arrêter).
   function bloquerSiEssaiExpire() {
-    if (draftInfo.status !== 'essai_expire') return false;
+    if (statutDraftActuel !== 'essai_expire') return false;
     if (confirm("Votre essai gratuit est terminé — passez à une formule payante pour continuer à modifier votre vitrine.\n\nVoir les formules maintenant ?")) {
       window.location.href = '/choisir-forfait.html?id=' + draftId;
     }
@@ -807,6 +819,7 @@
       });
       const rows = await resp.json();
       const statut = rows[0]?.status;
+      statutDraftActuel = statut;
 
       if (statut === 'en_pause') {
         document.getElementById('banniereePause').style.display = 'flex';
@@ -1372,6 +1385,7 @@
       });
       const rows = await resp.json();
       draftInfo = rows[0] || {};
+      if (draftInfo.status) statutDraftActuel = draftInfo.status;
     } catch (e) { /* on garde draftInfo vide — repli générique dans rafraichirEstimationVolume */ }
 
     initZoneCiblee(draftInfo.zone || '', draftInfo.rayon_ciblage_km || '');

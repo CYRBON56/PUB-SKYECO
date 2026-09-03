@@ -591,12 +591,10 @@
       construireQuestionsGenerales(metiersActuels, draft.questions_generales_texte || {});
       tvaTauxActuel = draft.tva_taux || 20;
 
-      // Case "Je veux proposer une estimation chiffrée automatique" — coché
-      // uniquement si l'artisan l'a explicitement activé (ou s'il a déjà des
-      // produits enregistrés depuis avant l'introduction de cette case, pour
-      // ne rien masquer d'existant par surprise).
-      const dejaDesProduits = Array.isArray(draft.produits_chiffrables) && draft.produits_chiffrables.length > 0;
-      const formulaireActive = draft.formulaire_estimatif_active === true || dejaDesProduits;
+      // Case "Je veux proposer une estimation chiffrée automatique" —
+      // décochée par défaut dans tous les cas, l'artisan doit la cocher
+      // lui-même pour accéder à la configuration.
+      const formulaireActive = draft.formulaire_estimatif_active === true;
       const checkFormulaire = document.getElementById('checkFormulaireEstimatif');
       const contenuFormulaire = document.getElementById('formulaireEstimatifContenu');
       checkFormulaire.checked = formulaireActive;

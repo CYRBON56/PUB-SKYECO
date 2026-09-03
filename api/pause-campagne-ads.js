@@ -4,6 +4,14 @@
 // payé — distinct de pause-subscription.js qui suspend la FACTURATION.
 // L'artisan peut relancer la diffusion à tout moment avec la même action.
 //
+// Bug corrigé le 03/09 (jamais détecté avant faute de campagne réelle en
+// trafic) : ce fichier appelait une action Windsor.ai "update_campaign_status"
+// qui n'existe pas — la vraie liste d'actions Google Ads de Windsor.ai
+// n'expose que "pause_campaign" et "enable_campaign" (chacune sans autre
+// paramètre que campaign_id), pas d'action générique par "status". Tout
+// appel à ce endpoint échouait donc silencieusement côté serveur (erreur
+// Windsor.ai capturée par le catch, jamais un vrai pause/reprise appliqué).
+//
 // Variables d'environnement requises :
 //   WINDSOR_API_KEY
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
@@ -12,10 +20,14 @@
 const WINDSOR_BASE = 'https://connectors.windsor.ai/google_ads';
 
 async function executerAction(action, params) {
+  // Tirets retirés par sécurité, même précaution que create-google-ads-campaign.js
+  // (l'ID de compte affiché dans Google Ads contient des tirets, mais Windsor.ai
+  // attend l'identifiant sans).
+  const accountId = (process.env.GOOGLE_ADS_ACCOUNT_ID || '').replace(/[^0-9]/g, '');
   const resp = await fetch(`${WINDSOR_BASE}/actions?api_key=${process.env.WINDSOR_API_KEY}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ account: process.env.GOOGLE_ADS_ACCOUNT_ID, action, params }),
+    body: JSON.stringify({ account: accountId, action, params }),
   });
   const data = await resp.json();
   if (!resp.ok) throw new Error(`Action Windsor.ai "${action}" échouée : ${JSON.stringify(data)}`);
@@ -50,16 +62,21 @@ export default async function handler(req, res) {
       return res.status(404).json({ success: false, error: 'Aucune campagne active pour ce site.' });
     }
 
-    const nouveauStatut = action === 'pause' ? 'paused' : 'enabled';
-    await executerAction('update_campaign_status', {
+    await executerAction(action === 'pause' ? 'pause_campaign' : 'enable_campaign', {
       campaign_id: draft.google_ads_campaign_resource,
-      status: nouveauStatut,
     });
 
+    // Une pause déclenchée ICI est toujours une décision MANUELLE de Cyrille
+    // (bouton du dashboard) — on efface donc systématiquement le marqueur
+    // "pause automatique pour solde épuisé" (campagne_pausee_budget_epuise),
+    // qu'on soit en train de mettre en pause ou de reprendre : une reprise
+    // manuelle relance toujours, et une pause manuelle ne doit plus être
+    // relancée automatiquement par une future recharge (voir
+    // create-google-ads-campaign.js) — seul Cyrille pourra la relancer.
     await fetch(`${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
       method: 'PATCH',
       headers: { ...supaHeaders, Prefer: 'return=minimal' },
-      body: JSON.stringify({ campagne_diffusion_pausee: action === 'pause' }),
+      body: JSON.stringify({ campagne_diffusion_pausee: action === 'pause', campagne_pausee_budget_epuise: false }),
     });
 
     return res.status(200).json({

@@ -4,8 +4,19 @@
 // Distinct de l'abonnement mensuel (39,90€) — c'est un paiement séparé,
 // à refaire à chaque fois que l'artisan veut (re)financer sa campagne.
 //
+// Garde-fou ajouté le 03/09 : ce paiement (une fois confirmé par
+// confirm-ad-payment.js) déclenche automatiquement la création d'une VRAIE
+// campagne sur le VRAI compte Google Ads (voir create-google-ads-campaign.js)
+// — sans jamais vérifier ni le statut de la fiche ni le fait que le forfait
+// ait été réellement payé ou simulé via simuler-paiement-test.js. On bloque
+// donc ici, au tout premier point d'entrée du financement du budget pub, tant
+// que Cyrille n'a pas validé le site lui-même (site_valide) — même contrôle
+// que celui déjà en place dans create-checkout-session.js /
+// demarrer-essai-gratuit.js pour le paiement du forfait.
+//
 // Variables d'environnement requises :
 //   STRIPE_SECRET_KEY
+//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
 import Stripe from 'stripe';
 
@@ -30,6 +41,15 @@ export default async function handler(req, res) {
   const origin = req.headers.origin || `https://${req.headers.host}`;
 
   try {
+    const verifResp = await fetch(
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=site_valide`,
+      { headers: { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}` } }
+    );
+    const verifRows = await verifResp.json();
+    if (!verifRows[0]?.site_valide) {
+      return res.status(403).json({ error: "Ce site n'a pas encore été validé — demandez la validation depuis votre page." });
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       payment_method_types: ['card'],

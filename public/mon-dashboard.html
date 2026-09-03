@@ -366,7 +366,7 @@
     </div>
     <a href="#" id="btnApprovisionnerRapide" style="display:inline-flex; align-items:center; gap:8px; background:#1e6f4c; color:#fff; text-decoration:none; border-radius:10px; padding:11px 18px; font-size:0.85rem; font-weight:700; margin-bottom:24px;">💳 Approvisionner mon budget</a>
 
-    <div class="ads-souspanel">
+    <div class="ads-souspanel" id="sectionZoneCiblee">
       <h3>Où voulez-vous être visible ?</h3>
       <div id="zoneAffichage" class="zone-affichage">
         <span id="zoneValeur">—</span>
@@ -1473,6 +1473,16 @@
       edition.style.display = 'none';
       affichage.style.display = 'flex';
     });
+
+    // Lien direct "changement géographique" (03/09) : le SMS/email envoyé à
+    // Cyrille par api/alerter-changement-zone.js pointe maintenant vers
+    // mon-dashboard.html#sectionZoneCiblee — on scrolle jusqu'à la section
+    // ET on ouvre directement le mode édition, pour qu'un clic sur le lien
+    // suffise (pas besoin de chercher la section puis cliquer "Modifier").
+    if (window.location.hash === '#sectionZoneCiblee') {
+      document.getElementById('sectionZoneCiblee').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      btnModifier.click();
+    }
 
     btnEnregistrer.addEventListener('click', async () => {
       if (bloquerSiEssaiExpire()) return;

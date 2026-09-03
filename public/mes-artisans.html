@@ -71,6 +71,14 @@
   .btn-valide-on { background:#eaf4ef; border-color:#1e6f4c; color:#1e6f4c; }
   .btn-dashboard { background:#fff; border-color:#e0e5df; color:#14312a; }
   .btn-elements-admin, .btn-campagne-admin { background:#fff; border-color:#e0e5df; color:#14312a; text-decoration:none; }
+  /* 03/09 : accès direct à la section "zone/km" d'un artisan (même principe que
+     le bouton Dashboard) + lien rapide vers Google Ads pour reporter le
+     changement manuellement. */
+  .btn-zone { background:#fff; border-color:#e0e5df; color:#14312a; }
+  .btn-zone:hover { border-color:#14312a; }
+  .btn-google-ads { background:#fff; border-color:#e0e5df; color:#14312a; text-decoration:none; }
+  .btn-google-ads:hover { border-color:#4285F4; }
+  .btn-google-ads svg { vertical-align:-2px; margin-right:3px; }
   .badge-compteur-demandes { margin-left:8px; font-size:0.78rem; color:#5b6b64; }
   .btn-onglet-vue { background:#fff; border:1.5px solid #e0e5df; color:#5b6b64; border-radius:8px; padding:9px 16px; font-size:0.85rem; font-weight:700; cursor:pointer; }
   .btn-onglet-vue.actif { background:#14312a; border-color:#14312a; color:#fff; }
@@ -114,6 +122,11 @@
   const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
   const SITE_BASE = 'https://app.skyeco.fr';
+
+  // 03/09 : petit pictogramme "4 couleurs" façon Google, utilisé uniquement
+  // comme repère visuel sur le bouton de lien externe vers Google Ads — pas
+  // une reproduction du logo officiel Google Ads, juste un indice couleur.
+  const GOOGLE_ADS_ICON_SVG = `<svg width="13" height="13" viewBox="0 0 36 36" style="display:inline-block;"><path fill="#4285F4" d="M18 0a18 18 0 0118 18H18z"/><path fill="#34A853" d="M36 18a18 18 0 01-18 18V18z"/><path fill="#FBBC04" d="M18 36A18 18 0 010 18h18z"/><path fill="#EA4335" d="M0 18A18 18 0 0118 0v18z"/></svg>`;
 
   let toutesLesFiches = [];
   let vueArchives = false;
@@ -219,6 +232,8 @@
                     <a class="btn-action btn-voir" href="/apercu.html?id=${f.id}" target="_blank">👁️ Voir</a>
                     <button class="btn-action ${f.site_valide ? 'btn-valide-on' : 'btn-valide-off'}" data-id="${f.id}" data-valide="${f.site_valide ? '1' : '0'}" onclick="toggleValidation(this)">${f.site_valide ? '✓ Site validé' : '☐ Valider le site'}</button>
                     <button class="btn-action btn-dashboard" data-id="${f.id}" onclick="ouvrirDashboardAdmin(this)">🔑 Dashboard</button>
+                    <button class="btn-action btn-zone" data-id="${f.id}" onclick="ouvrirZoneAdmin(this)">📍 Zone &amp; km</button>
+                    <a class="btn-action btn-google-ads" href="https://ads.google.com/aw/campaigns" target="_blank" rel="noopener">${GOOGLE_ADS_ICON_SVG} Google Ads</a>
                     <a class="btn-action btn-elements-admin" href="${lienElements}" target="_blank">✏️ Éléments</a>
                     <a class="btn-action btn-campagne-admin" href="${SITE_BASE}/campagne.html?id=${f.id}" target="_blank">📢 Campagne</a>
                     <button class="btn-action ${f.archive ? 'btn-desarchiver' : 'btn-archiver'}" data-id="${f.id}" data-archive="${f.archive ? '1' : '0'}" onclick="toggleArchive(this)">${f.archive ? '↩️ Désarchiver' : '📦 Archiver'}</button>
@@ -366,6 +381,44 @@
       if (data.success) {
         sessionStorage.setItem('skyeco_admin_internal_pw', motDePasseInterne);
         window.open(`${SITE_BASE}/mon-dashboard.html?id=${draftId}&admin_token=${encodeURIComponent(data.token)}`, '_blank');
+      } else {
+        sessionStorage.removeItem('skyeco_admin_internal_pw');
+        alert(data.error || 'Mot de passe interne incorrect.');
+      }
+    } catch (e) {
+      alert('Impossible de contacter le serveur.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  };
+
+  // 03/09 : même mécanisme que ouvrirDashboardAdmin() ci-dessus, mais ouvre
+  // directement sur la section "Où voulez-vous être visible ?" (zone/rayon
+  // km) grâce à l'ancre #sectionZoneCiblee — mon-dashboard.html scrolle
+  // jusque-là et ouvre le mode édition automatiquement quand ce hash est
+  // présent (même logique que le lien envoyé par SMS/email dans
+  // api/alerter-changement-zone.js).
+  window.ouvrirZoneAdmin = async function(btn) {
+    const draftId = btn.dataset.id;
+    let motDePasseInterne = sessionStorage.getItem('skyeco_admin_internal_pw');
+    if (!motDePasseInterne) {
+      motDePasseInterne = prompt('Mot de passe interne (admin) :');
+      if (!motDePasseInterne) return;
+    }
+    btn.disabled = true;
+    const originalText = btn.textContent;
+    btn.textContent = 'Ouverture…';
+    try {
+      const res = await fetch('/api/dashboard-admin-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, motDePasseInterne })
+      });
+      const data = await res.json();
+      if (data.success) {
+        sessionStorage.setItem('skyeco_admin_internal_pw', motDePasseInterne);
+        window.open(`${SITE_BASE}/mon-dashboard.html?id=${draftId}&admin_token=${encodeURIComponent(data.token)}#sectionZoneCiblee`, '_blank');
       } else {
         sessionStorage.removeItem('skyeco_admin_internal_pw');
         alert(data.error || 'Mot de passe interne incorrect.');

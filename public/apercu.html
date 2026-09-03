@@ -966,7 +966,33 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
       '<div class="success-icon">✅</div>'+
       '<div class="question" style="text-align:center;">Merci '+(state.prenom||'')+' !</div>'+
       priceBlock+
+      (leadId ? '<button type="button" class="btn" id="btnEnvoyerPhotos" style="width:100%; margin-top:10px; background:#fff; border:1.5px solid #1e6f4c; color:#14312a;">📷 Envoyer mes photos par SMS</button><div id="photosFeedback" style="text-align:center; font-size:13px; margin-top:8px;"></div>' : '')+
       '<p class="disclaimer">'+disclaimer+'</p>';
+
+    const btnPhotos = document.getElementById('btnEnvoyerPhotos');
+    if(btnPhotos){
+      btnPhotos.addEventListener('click', async () => {
+        const feedback = document.getElementById('photosFeedback');
+        btnPhotos.disabled = true;
+        btnPhotos.textContent = 'Envoi en cours…';
+        try {
+          const r = await fetch('/api/envoyer-sms-photos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ leadId, telephone: state.telephone })
+          });
+          const d = await r.json();
+          feedback.textContent = d.success
+            ? '✓ SMS envoyé — ouvrez le lien reçu depuis votre téléphone.'
+            : (d.error || "Impossible d'envoyer le SMS pour le moment.");
+        } catch(e) {
+          feedback.textContent = 'Impossible de contacter le serveur.';
+        } finally {
+          btnPhotos.disabled = false;
+          btnPhotos.textContent = '📷 Envoyer mes photos par SMS';
+        }
+      });
+    }
   }
 
   renderProgress();

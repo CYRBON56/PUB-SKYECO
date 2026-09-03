@@ -1,22 +1,55 @@
 // /api/verifier-soldes-bas.js
 // Tâche planifiée (Vercel Cron) qui parcourt TOUS les sites avec une campagne
 // active et un budget en cours, calcule leur solde restant réel via
-// Windsor.ai, et envoie un SMS d'alerte si le solde est à 50€ ou moins —
-// sans dépendre d'une visite du dashboard par l'artisan ou par toi.
+// Windsor.ai, et :
+//   1. met en pause AUTOMATIQUEMENT (sur Google Ads, via Windsor.ai) la
+//      diffusion du site dont le solde tombe à 0€ ou moins — et UNIQUEMENT
+//      celui-là, jamais les autres sites/clients (chacun a sa propre
+//      campagne sur le même compte Google Ads partagé, voir
+//      create-google-ads-campaign.js) ;
+//   2. envoie un SMS d'alerte (comme avant) dès que le solde passe à 50€ ou
+//      moins, tant qu'il n'est pas encore à 0.
+// Conçu pour tenir à l'échelle de centaines de clients sans intervention
+// manuelle — sans dépendre d'une visite du dashboard par l'artisan ou par
+// toi. La diffusion reprend automatiquement à la prochaine recharge de
+// budget (voir create-google-ads-campaign.js, appelé par
+// confirm-ad-payment.js) — SAUF si Cyrille avait entre-temps mis le site en
+// pause lui-même pour une autre raison (pause-campagne-ads.js), auquel cas
+// seule une reprise manuelle de sa part relance la diffusion.
 //
 // Configuration requise dans vercel.json :
 //   { "crons": [{ "path": "/api/verifier-soldes-bas", "schedule": "0 8 * * *" }] }
-//   (tous les jours à 8h — ajuste l'heure si besoin)
+//   Fréquence à resserrer si le volume de clients augmente (ex. toutes les
+//   30 min : "*/30 * * * *") — nécessite un plan Vercel Pro pour un cron
+//   plus fréquent qu'une fois par jour (le plan Hobby limite à 1x/jour).
+//   Entre deux passages du cron, un site à 0€ continue de fait à consommer
+//   du vrai budget Google Ads réel jusqu'au prochain passage — plus la
+//   fréquence est resserrée, plus le dépassement possible est petit.
 //
 // Variables d'environnement requises :
 //   WINDSOR_API_KEY
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 //   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER
 //   CRON_SECRET (protège l'endpoint contre les appels non autorisés)
+//   GOOGLE_ADS_ACCOUNT_ID
 
 const TAUX_COMMISSION = 0.50; // doit rester synchronisé avec get-campaign-spend.js
 const FACTEUR_CONSOMMATION = 1 / (1 - TAUX_COMMISSION);
 const SEUIL_ALERTE_SOLDE = 50; // €
+
+const WINDSOR_BASE = 'https://connectors.windsor.ai/google_ads';
+
+async function executerActionGoogleAds(action, params) {
+  const accountId = (process.env.GOOGLE_ADS_ACCOUNT_ID || '').replace(/[^0-9]/g, '');
+  const resp = await fetch(`${WINDSOR_BASE}/actions?api_key=${process.env.WINDSOR_API_KEY}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ account: accountId, action, params }),
+  });
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(`Action Windsor.ai "${action}" échouée : ${JSON.stringify(data)}`);
+  return data;
+}
 
 // Twilio exige un numero au format E.164 (+33...) pour le parametre "To" des
 // SMS envoyes via l'API Messages (contrairement a Twilio Verify, deja converti
@@ -64,10 +97,12 @@ export default async function handler(req, res) {
   };
 
   try {
-    // Tous les sites avec une campagne active, un budget en cours, et dont
-    // l'alerte n'a pas déjà été envoyée pour ce cycle.
+    // Tous les sites avec une campagne active et un budget en cours — on ne
+    // filtre plus sur "alerte pas encore envoyée" ici : il faut re-vérifier
+    // CHAQUE site à CHAQUE passage pour détecter le moment où son solde
+    // franchit 0€, même après que l'alerte à 50€ a déjà été envoyée.
     const draftsResp = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?google_ads_campaign_resource=not.is.null&tarif_prix=gt.0&alerte_solde_bas_envoyee=eq.false&select=id,entreprise,telephone,twilio_phone_number,google_ads_campaign_resource,tarif_prix,derniere_recharge_le`,
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?google_ads_campaign_resource=not.is.null&tarif_prix=gt.0&select=id,entreprise,telephone,twilio_phone_number,google_ads_campaign_resource,tarif_prix,derniere_recharge_le,alerte_solde_bas_envoyee,campagne_pausee_budget_epuise`,
       { headers: supaHeaders }
     );
     if (!draftsResp.ok) throw new Error('Impossible de lire les sites à vérifier.');
@@ -97,7 +132,25 @@ export default async function handler(req, res) {
         const consommationAjustee = coutReelEuros * FACTEUR_CONSOMMATION;
         const budgetRestant = +Math.max(0, draft.tarif_prix - consommationAjustee).toFixed(2);
 
-        if (budgetRestant <= SEUIL_ALERTE_SOLDE) {
+        if (budgetRestant <= 0) {
+          // Solde épuisé : on met en pause CE site précisément, sans toucher
+          // aux autres — sauf s'il l'est déjà (pause déjà appliquée par un
+          // passage précédent du cron, ou par Cyrille lui-même).
+          if (!draft.campagne_pausee_budget_epuise) {
+            await executerActionGoogleAds('pause_campaign', { campaign_id: draft.google_ads_campaign_resource });
+
+            const texteEpuise = `Bonjour, votre budget publicitaire Skyeco Ads est épuisé — votre campagne Google Ads a été mise en pause automatiquement. Rechargez depuis votre tableau de bord pour relancer la diffusion.`;
+            await envoyerSMS(draft.telephone, texteEpuise, draft.twilio_phone_number);
+
+            await fetch(`${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft.id}`, {
+              method: 'PATCH',
+              headers: { ...supaHeaders, Prefer: 'return=minimal' },
+              body: JSON.stringify({ campagne_diffusion_pausee: true, campagne_pausee_budget_epuise: true }),
+            });
+
+            resultats.push({ entreprise: draft.entreprise, budgetRestant, misEnPause: true });
+          }
+        } else if (budgetRestant <= SEUIL_ALERTE_SOLDE && !draft.alerte_solde_bas_envoyee) {
           const texteAlerte = `Bonjour, il vous reste environ ${budgetRestant} € de budget publicitaire Skyeco Ads. Pensez à recharger pour continuer à recevoir des demandes.`;
           await envoyerSMS(draft.telephone, texteAlerte, draft.twilio_phone_number);
 
@@ -117,7 +170,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       sitesVerifies: drafts.length,
-      alertesEnvoyees: resultats.length,
+      actionsPrises: resultats.length, // alertes SMS à 50€ + mises en pause automatiques à 0€
       details: resultats,
     });
   } catch (err) {

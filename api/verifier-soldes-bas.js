@@ -17,14 +17,13 @@
 // pause lui-même pour une autre raison (pause-campagne-ads.js), auquel cas
 // seule une reprise manuelle de sa part relance la diffusion.
 //
-// Configuration requise dans vercel.json :
-//   { "crons": [{ "path": "/api/verifier-soldes-bas", "schedule": "0 8 * * *" }] }
-//   Fréquence à resserrer si le volume de clients augmente (ex. toutes les
-//   30 min : "*/30 * * * *") — nécessite un plan Vercel Pro pour un cron
-//   plus fréquent qu'une fois par jour (le plan Hobby limite à 1x/jour).
+// Configuration requise dans vercel.json (03/09 : resserré à 15 min — plan
+// Vercel Pro actif, confirmé par Cyrille — au lieu d'1x/jour) :
+//   { "crons": [{ "path": "/api/verifier-soldes-bas", "schedule": "*/15 * * * *" }] }
 //   Entre deux passages du cron, un site à 0€ continue de fait à consommer
-//   du vrai budget Google Ads réel jusqu'au prochain passage — plus la
-//   fréquence est resserrée, plus le dépassement possible est petit.
+//   du vrai budget Google Ads réel jusqu'au prochain passage (max 15 min de
+//   dépassement possible désormais, sauf si le dashboard du site est ouvert
+//   entre-temps — voir get-campaign-spend.js, qui coupe immédiatement).
 //
 // Variables d'environnement requises :
 //   WINDSOR_API_KEY

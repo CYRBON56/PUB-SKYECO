@@ -35,7 +35,16 @@ export default async function handler(req, res) {
     const draft = rows[0];
 
     if (!draft?.stripe_subscription_id) {
-      return res.status(404).json({ success: false, error: 'Aucun abonnement trouvé pour ce site.' });
+      // Compte en essai gratuit (pas d'abonnement Stripe réel) — on reprend
+      // directement en base, sans passer par Stripe. Ajouté le 03/09 :
+      // auparavant, un essai gratuit qui se mettait en pause ne pouvait
+      // ensuite plus jamais être repris ("Aucun abonnement trouvé").
+      await fetch(`${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
+        method: 'PATCH',
+        headers: { ...supaHeaders, Prefer: 'return=minimal' },
+        body: JSON.stringify({ subscription_status: 'active', status: 'essai' }),
+      });
+      return res.status(200).json({ success: true, message: 'Diffusion reprise.' });
     }
 
     await stripe.subscriptions.update(draft.stripe_subscription_id, {

@@ -1,77 +1,18 @@
-// /api/confirm-payment.js
-// Vérifie côté serveur qu'une session Stripe d'ABONNEMENT a bien été activée,
-// puis passe le brouillon correspondant en statut "published" dans Supabase,
-// avec le suivi de l'abonnement (id, statut) pour la suite (renouvellement,
-// annulation — voir le webhook Stripe à ajouter en V2 pour ça).
+// /api/confirm-ad-payment.js
+// Vérifie que le paiement du budget publicitaire a bien été effectué, met à
+// jour le budget du site, PUIS déclenche create-google-ads-campaign.js — qui
+// crée la campagne la toute première fois (paused, en attente de validation
+// par Cyrille), ou simplement met à jour son budget et la relance si elle
+// avait été mise en pause automatiquement pour solde épuisé lors d'une
+// recharge suivante (03/09 — voir le commentaire d'en-tête de ce fichier).
 //
-// Provisionne aussi un NUMÉRO TWILIO DÉDIÉ à cet artisan — un numéro par
-// client, pas un numéro partagé, pour isoler la réputation d'envoi SMS de
-// chaque artisan (si l'un d'eux génère des plaintes/désabonnements en masse,
-// ça n'affecte pas les autres clients).
-//
-// ⚠️ Note réglementaire : la location de numéros FRANÇAIS pour du SMS
-// commercial peut nécessiter un dossier de conformité ("regulatory bundle")
-// côté Twilio — à vérifier. Ce code tente l'achat automatique ; s'il échoue
-// pour raison réglementaire, le site reste fonctionnel sur le numéro partagé
-// (TWILIO_FROM_NUMBER) en repli, sans bloquer la publication.
-//
-// Variables d'environnement requises (à définir dans Vercel, jamais dans le code) :
+// Variables d'environnement requises :
 //   STRIPE_SECRET_KEY
 //   SUPABASE_SERVICE_ROLE_KEY
-//   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN
 
 import Stripe from 'stripe';
-import { createClient } from '@supabase/supabase-js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const supabaseAdmin = createClient(
-  'https://wklddwumirkdjkbxvzyj.supabase.co',
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
-async function provisionnerNumeroTwilio() {
-  const sid = process.env.TWILIO_ACCOUNT_SID;
-  const token = process.env.TWILIO_AUTH_TOKEN;
-  const auth = 'Basic ' + Buffer.from(`${sid}:${token}`).toString('base64');
-
-  try {
-    // 1. Cherche un numéro français disponible.
-    const rechercheResp = await fetch(
-      `https://api.twilio.com/2010-04-01/Accounts/${sid}/AvailablePhoneNumbers/FR/Local.json?SmsEnabled=true&PageSize=1`,
-      { headers: { Authorization: auth } }
-    );
-    const rechercheData = await rechercheResp.json();
-    const numeroDisponible = rechercheData?.available_phone_numbers?.[0]?.phone_number;
-
-    if (!numeroDisponible) {
-      console.warn('Aucun numéro français disponible chez Twilio pour le moment.');
-      return null;
-    }
-
-    // 2. Achète ce numéro.
-    const achatResp = await fetch(
-      `https://api.twilio.com/2010-04-01/Accounts/${sid}/IncomingPhoneNumbers.json`,
-      {
-        method: 'POST',
-        headers: { Authorization: auth, 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ PhoneNumber: numeroDisponible }),
-      }
-    );
-    const achatData = await achatResp.json();
-
-    if (!achatResp.ok) {
-      // Échec probable pour raison réglementaire (bundle de conformité manquant) —
-      // on ne bloque pas la publication du site pour autant.
-      console.warn('Achat du numéro Twilio échoué (probablement réglementaire) :', JSON.stringify(achatData));
-      return null;
-    }
-
-    return achatData.phone_number;
-  } catch (err) {
-    console.error('Erreur provisionnement numéro Twilio :', err);
-    return null;
-  }
-}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -83,54 +24,73 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'sessionId ou draftId manquant' });
   }
 
+  const supaHeaders = {
+    apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+    'Content-Type': 'application/json',
+  };
+
   try {
-    const session = await stripe.checkout.sessions.retrieve(sessionId, {
-      expand: ['subscription'],
-    });
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
 
     if (session.payment_status !== 'paid') {
       return res.status(402).json({ error: 'Paiement non confirmé.' });
     }
-    if (session.metadata?.draft_id !== draftId) {
-      return res.status(400).json({ error: "Cette session ne correspond pas à cet aperçu." });
-    }
-    if (session.mode !== 'subscription' || !session.subscription) {
-      return res.status(400).json({ error: "Cette session n'est pas un abonnement valide." });
+    if (session.metadata?.draft_id !== draftId || session.metadata?.type !== 'ad_budget') {
+      return res.status(400).json({ error: "Cette session ne correspond pas à cette campagne." });
     }
 
-    const subscription = session.subscription;
+    const budget = parseFloat(session.metadata.budget);
 
-    // Ne provisionne un numéro que si ce site n'en a pas déjà un (évite d'en
-    // racheter un à chaque renouvellement de session).
-    const { data: draftExistant } = await supabaseAdmin
-      .from('skyeco_pro_vitrine_drafts')
-      .select('twilio_phone_number')
-      .eq('id', draftId)
-      .single();
+    // 1. Met à jour le budget publicitaire du site.
+    const updateResp = await fetch(
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`,
+      {
+        method: 'PATCH',
+        headers: { ...supaHeaders, Prefer: 'return=minimal' },
+        body: JSON.stringify({
+          tarif_actif: true,
+          tarif_prix: budget,
+          derniere_recharge_le: new Date().toISOString(),
+          alerte_solde_bas_envoyee: false, // nouveau cycle de budget, l'alerte pourra repartir
+        }),
+      }
+    );
+    if (!updateResp.ok) {
+      const errData = await updateResp.json().catch(() => ({}));
+      console.error('Erreur mise à jour budget :', JSON.stringify(errData));
+      return res.status(500).json({ error: 'Budget payé mais non enregistré — contactez le support.' });
+    }
 
-    const numeroDedie = draftExistant?.twilio_phone_number || await provisionnerNumeroTwilio();
-
-    const { error } = await supabaseAdmin
-      .from('skyeco_pro_vitrine_drafts')
-      .update({
-        status: 'published',
-        stripe_subscription_id: subscription.id,
-        subscription_status: subscription.status, // 'active', 'trialing', etc.
-        forfait: parseInt(session.metadata?.plan || '1', 10),
-        twilio_phone_number: numeroDedie, // null si le provisionnement a échoué — repli sur le numéro partagé
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', draftId);
-
-    if (error) throw error;
+    // 2. Déclenche la création de la campagne Google Ads (appel interne serveur-à-serveur).
+    const origin = req.headers.origin || `https://${req.headers.host}`;
+    let campagne = null;
+    try {
+      const campagneResp = await fetch(`${origin}/api/create-google-ads-campaign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draft_id: draftId }),
+      });
+      const campagneData = await campagneResp.json();
+      if (campagneResp.ok) {
+        campagne = campagneData;
+      } else {
+        console.error('Campagne Google Ads non créée automatiquement :', JSON.stringify(campagneData));
+      }
+    } catch (campagneErr) {
+      console.error('Erreur appel création campagne :', campagneErr);
+    }
 
     return res.status(200).json({
       success: true,
-      subscriptionStatus: subscription.status,
-      numeroDedieProvisionne: !!numeroDedie,
+      budgetActif: budget,
+      campagneCreee: !!campagne?.success,
+      campagneMessage: campagne?.success
+        ? "Votre campagne a été créée en pause — elle sera vérifiée avant diffusion."
+        : "Budget enregistré, mais la campagne n'a pas pu être créée automatiquement. Notre équipe s'en occupe.",
     });
   } catch (err) {
-    console.error('Erreur confirmation paiement :', err);
+    console.error('Erreur confirm-ad-payment :', err);
     return res.status(500).json({ error: err.message });
   }
 }

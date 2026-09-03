@@ -1230,6 +1230,14 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     // détaillé" (voir construireRecap, renderResultat).
     const modeRMS = draftInfo && draftInfo.mode_calcul_resine_rms === true;
     const recap = estimation.chiffrable ? (modeRMS ? construireRecapResineRMS(estimation) : construireRecap(estimation)) : null;
+    // Phrase de calcul façon devis (voir construirePhraseEstimation /
+    // calculerEstimationResineRMS) — transmise à api/notify-nouvelle-demande.js
+    // pour que le SMS ET l'email envoyés au prospect contiennent le montant
+    // chiffré lui-même, pas seulement un accusé de réception générique. Même
+    // logique que ce que fait déjà salesflow-ecosky pour RMS EcoSky.
+    const estimationTexte = estimation.chiffrable
+      ? (modeRMS ? estimation.texte : construirePhraseEstimation(estimation))
+      : null;
 
     let error = null;
     let leadId = null;
@@ -1240,7 +1248,7 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
         body: JSON.stringify({
           draftId, nom, prenom, telephone, telephoneVerifie, email,
           reponses: { ...reste, estimation_indicative: estimation.chiffrable ? estimation.montantTTC : null },
-          recap
+          recap, estimationTexte
         })
       });
       const data = await resp.json().catch(() => ({}));

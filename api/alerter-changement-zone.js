@@ -9,9 +9,24 @@
 // Variables d'environnement requises :
 //   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER
 //   RESEND_API_KEY, ADMIN_EMAIL, ADMIN_PHONE
+//   DASHBOARD_SESSION_SECRET (03/09 : pour générer un lien d'accès direct)
+
+import crypto from 'crypto';
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'infos@ecosky.fr';
 const ADMIN_PHONE = process.env.ADMIN_PHONE || '';
+
+// Même logique que signerToken() dans api/dashboard-admin-token.js : un jeton
+// admin court (10 min, largement suffisant pour cliquer le lien depuis le
+// SMS/email et arriver sur le dashboard) signé avec le même secret, pour que
+// le lien envoyé à Cyrille l'authentifie directement au lieu de le renvoyer
+// vers la page de connexion.
+function signerTokenAdmin(draftId) {
+  const exp = Math.floor(Date.now() / 1000) + 60 * 10;
+  const payload = `${draftId}.admin.${exp}`;
+  const sig = crypto.createHmac('sha256', process.env.DASHBOARD_SESSION_SECRET).update(payload).digest('hex');
+  return Buffer.from(`${payload}.${sig}`).toString('base64url');
+}
 
 function toE164(rawPhone) {
   const digits = String(rawPhone || '').replace(/\D/g, '');
@@ -63,7 +78,21 @@ export default async function handler(req, res) {
     return res.status(400).json({ success: false, error: 'draftId manquant' });
   }
 
-  const lien = `https://www.skyeco.fr/mon-dashboard.html?id=${draftId}`;
+  // Lien direct vers la section "Où voulez-vous être visible ?" du dashboard
+  // (id="sectionZoneCiblee" dans mon-dashboard.html, qui scrolle jusque-là et
+  // ouvre directement le mode édition quand ce hash est présent). Le jeton
+  // admin_token évite un aller-retour par la page de connexion — si le
+  // secret n'est pas configuré, on retombe sur le lien générique plutôt que
+  // de faire échouer toute l'alerte.
+  let lien = `https://www.skyeco.fr/mon-dashboard.html?id=${draftId}#sectionZoneCiblee`;
+  if (process.env.DASHBOARD_SESSION_SECRET) {
+    try {
+      const token = signerTokenAdmin(draftId);
+      lien = `https://www.skyeco.fr/mon-dashboard.html?id=${draftId}&admin_token=${token}#sectionZoneCiblee`;
+    } catch (e) {
+      console.error('Échec génération admin_token alerte-zone :', e);
+    }
+  }
   const precisionRayon = rayon ? ` (rayon ${rayon} km)` : '';
   const texte = `📍 ${entreprise || 'Un artisan'} a changé sa zone de ciblage : "${zone}"${precisionRayon} — pense à mettre à jour le ciblage géographique dans Google Ads. ${lien}`;
 

@@ -62,7 +62,7 @@ export default async function handler(req, res) {
 
   try {
     const draftResp = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=google_ads_campaign_resource`,
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=google_ads_campaign_resource,google_ads_ad_group_resource,google_ads_ad_resource`,
       { headers: supaHeaders }
     );
     const rows = await draftResp.json();
@@ -72,9 +72,24 @@ export default async function handler(req, res) {
       return res.status(404).json({ success: false, error: 'Aucune campagne active pour ce site.' });
     }
 
-    await executerAction(action === 'pause' ? 'pause_campaign' : 'enable_campaign', {
-      campaign_id: draft.google_ads_campaign_resource,
-    });
+    // Bug corrigé le 03/09 (racine de "je ne vois pas l'annonce dans Google") :
+    // create-google-ads-campaign.js crée la campagne, le groupe d'annonces ET
+    // l'annonce elle-même chacun en pause (3 niveaux INDÉPENDANTS dans Google
+    // Ads) — mais ce bouton ne touchait jusqu'ici QUE le niveau campagne.
+    // Résultat : même "relancée", la campagne restait invisible car son
+    // groupe d'annonces et son annonce restaient en pause. On bascule
+    // maintenant les 3 niveaux ensemble. google_ads_ad_resource peut être
+    // absent (campagnes créées avant ce correctif) — on l'ignore alors sans
+    // faire échouer les 2 autres niveaux.
+    const suffixe = action === 'pause' ? 'pause' : 'enable';
+    await executerAction(`${suffixe}_campaign`, { campaign_id: draft.google_ads_campaign_resource });
+    if (draft.google_ads_ad_group_resource) {
+      await executerAction(`${suffixe}_ad_group`, { ad_group_id: draft.google_ads_ad_group_resource });
+    }
+    if (draft.google_ads_ad_resource && draft.google_ads_ad_resource.includes('~')) {
+      const [adGroupIdPourAnnonce, adId] = draft.google_ads_ad_resource.split('~');
+      await executerAction(`${suffixe}_ad`, { ad_group_id: adGroupIdPourAnnonce, ad_id: adId });
+    }
 
     // Une pause déclenchée ICI est toujours une décision MANUELLE de Cyrille
     // (bouton du dashboard) — on efface donc systématiquement le marqueur

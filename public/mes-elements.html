@@ -358,6 +358,18 @@
 
         <label>Assurance décennale — numéro de police</label>
         <input type="text" id="assuranceNumero" placeholder="Numéro de contrat">
+
+        <div class="row2">
+          <div>
+            <label>Acompte demandé à la commande</label>
+            <input type="number" id="acomptePourcentage" min="0" max="100" placeholder="Ex : 30" style="margin-top:0;">
+          </div>
+          <div>
+            <label>Délai d'intervention habituel</label>
+            <input type="text" id="delaiIntervention" placeholder="Ex : 2 à 4 semaines" style="margin-top:0;">
+          </div>
+        </div>
+        <p class="hint">Ces deux informations apparaîtront sur le PDF d'estimation envoyé à vos prospects.</p>
       </div>
     </div>
   </div>
@@ -583,6 +595,8 @@
       document.getElementById('rcsVille').value = draft.rcs_ville || '';
       document.getElementById('assuranceAssureur').value = draft.assurance_decennale_assureur || '';
       document.getElementById('assuranceNumero').value = draft.assurance_decennale_numero || '';
+      document.getElementById('acomptePourcentage').value = draft.acompte_pourcentage != null ? draft.acompte_pourcentage : '';
+      document.getElementById('delaiIntervention').value = draft.delai_intervention || '';
       document.getElementById('siteExistant').value = draft.site_web_existant || '';
 
       metiersActuels = Array.isArray(draft.metier) ? draft.metier : (draft.metier ? [draft.metier] : []);
@@ -659,8 +673,22 @@
   // envoyé avec succès (donc bien présent dans le stockage) reste perdu si
   // la personne quitte la page via "Voir l'avancement" ou ferme l'onglet
   // avant d'avoir cliqué sur le bouton d'enregistrement global.
+  let essaiExpireAlerteMontree = false; // n'affiche l'avertissement qu'une fois par session, pas à chaque frappe
   async function sauvegarderChampsImmediat(champs) {
     if (!draftId) return;
+    // Essai gratuit terminé sans passage à un forfait payant — même
+    // raisonnement que côté mon-dashboard.html (bloquerSiEssaiExpire) :
+    // plus aucune modification n'est enregistrée tant que l'artisan n'a pas
+    // choisi une formule, mais la vitrine et le dashboard restent lisibles.
+    if (draftStatutActuel === 'essai_expire') {
+      if (!essaiExpireAlerteMontree) {
+        essaiExpireAlerteMontree = true;
+        if (confirm("Votre essai gratuit est terminé — passez à une formule payante pour continuer à modifier votre vitrine.\n\nVoir les formules maintenant ?")) {
+          window.location.href = '/choisir-forfait.html?id=' + draftId;
+        }
+      }
+      return;
+    }
     demarrerSauvegarde();
     try {
       await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
@@ -691,8 +719,11 @@
     rcsVille: 'rcs_ville',
     assuranceAssureur: 'assurance_decennale_assureur',
     assuranceNumero: 'assurance_decennale_numero',
+    acomptePourcentage: 'acompte_pourcentage',
+    delaiIntervention: 'delai_intervention',
     siteExistant: 'site_web_existant',
   };
+  const CHAMPS_NUMERIQUES = new Set(['tva_taux', 'acompte_pourcentage']);
   const minuteursAutoSave = {};
   Object.entries(CHAMPS_AUTO_SAVE).forEach(([idChamp, colonne]) => {
     const el = document.getElementById(idChamp);
@@ -701,7 +732,7 @@
     el.addEventListener(evenement, () => {
       clearTimeout(minuteursAutoSave[idChamp]);
       minuteursAutoSave[idChamp] = setTimeout(() => {
-        const valeur = colonne === 'tva_taux' ? parseFloat(el.value) : el.value.trim();
+        const valeur = CHAMPS_NUMERIQUES.has(colonne) ? (el.value === '' ? null : parseFloat(el.value)) : el.value.trim();
         sauvegarderChampsImmediat({ [colonne]: valeur });
       }, 900);
     });
@@ -1188,6 +1219,12 @@
 
   // --- Enregistrement final ---
   document.getElementById('btnSubmit').addEventListener('click', async () => {
+    if (draftStatutActuel === 'essai_expire') {
+      if (confirm("Votre essai gratuit est terminé — passez à une formule payante pour continuer à modifier votre vitrine.\n\nVoir les formules maintenant ?")) {
+        window.location.href = '/choisir-forfait.html?id=' + draftId;
+      }
+      return;
+    }
     const btn = document.getElementById('btnSubmit');
     const msg = document.getElementById('saveMsg');
     btn.disabled = true;
@@ -1207,6 +1244,8 @@
       rcs_ville: document.getElementById('rcsVille').value.trim(),
       assurance_decennale_assureur: document.getElementById('assuranceAssureur').value.trim(),
       assurance_decennale_numero: document.getElementById('assuranceNumero').value.trim(),
+      acompte_pourcentage: document.getElementById('acomptePourcentage').value === '' ? null : parseFloat(document.getElementById('acomptePourcentage').value),
+      delai_intervention: document.getElementById('delaiIntervention').value.trim(),
       site_web_existant: document.getElementById('siteExistant').value.trim(),
       logo_url: logoUrl,
       photos: photosUrls,

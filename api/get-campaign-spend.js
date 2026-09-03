@@ -2,16 +2,35 @@
 // Interroge la vraie dépense/clics Google Ads via l'API Windsor.ai, et calcule
 // la consommation ajustée du solde artisan (chaque € Google = 2€ du solde,
 // puisque la commission de service est de 50%). Envoie un SMS d'alerte à
-// l'artisan la première fois que son solde restant passe à 50€ ou moins.
+// l'artisan la première fois que son solde restant passe à 50€ ou moins, et
+// met en pause automatiquement SA campagne (uniquement la sienne) dès que le
+// solde atteint 0€ — même garde-fou que le cron verifier-soldes-bas.js, mais
+// déclenché ici immédiatement dès que quelqu'un ouvre ce dashboard précis
+// (03/09), en complément du passage quotidien du cron.
 //
 // Variables d'environnement requises :
 //   WINDSOR_API_KEY
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 //   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER
+//   GOOGLE_ADS_ACCOUNT_ID
 
 const TAUX_COMMISSION = 0.50; // doit rester synchronisé avec les autres fichiers
 const FACTEUR_CONSOMMATION = 1 / (1 - TAUX_COMMISSION);
 const SEUIL_ALERTE_SOLDE = 50; // €
+
+const WINDSOR_BASE = 'https://connectors.windsor.ai/google_ads';
+
+async function executerActionGoogleAds(action, params) {
+  const accountId = (process.env.GOOGLE_ADS_ACCOUNT_ID || '').replace(/[^0-9]/g, '');
+  const resp = await fetch(`${WINDSOR_BASE}/actions?api_key=${process.env.WINDSOR_API_KEY}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ account: accountId, action, params }),
+  });
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(`Action Windsor.ai "${action}" échouée : ${JSON.stringify(data)}`);
+  return data;
+}
 
 // Twilio exige un numero au format E.164 (+33...) pour le parametre "To" des
 // SMS envoyes via l'API Messages (contrairement a Twilio Verify, deja converti
@@ -63,7 +82,7 @@ export default async function handler(req, res) {
 
   try {
     const draftResp = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}&select=entreprise,telephone,twilio_phone_number,google_ads_campaign_resource,tarif_prix,derniere_recharge_le,alerte_solde_bas_envoyee,campagne_diffusion_pausee`,
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}&select=entreprise,telephone,twilio_phone_number,google_ads_campaign_resource,tarif_prix,derniere_recharge_le,alerte_solde_bas_envoyee,campagne_diffusion_pausee,campagne_pausee_budget_epuise`,
       { headers: supaHeaders }
     );
     const draftRows = await draftResp.json();
@@ -96,10 +115,29 @@ export default async function handler(req, res) {
     const budgetRestant = +Math.max(0, budgetPaye - consommationAjustee).toFixed(2);
     const pourcentageConsomme = budgetPaye > 0 ? Math.min(100, Math.round((consommationAjustee / budgetPaye) * 100)) : 0;
 
-    // Alerte solde bas — envoyée une seule fois par cycle de recharge, dès
-    // que le seuil est franchi. Remise à zéro par confirm-ad-payment.js à
-    // chaque nouvelle recharge.
-    if (budgetRestant <= SEUIL_ALERTE_SOLDE && budgetPaye > 0 && !draft.alerte_solde_bas_envoyee) {
+    let diffusionPausee = !!draft.campagne_diffusion_pausee;
+
+    if (budgetRestant <= 0 && budgetPaye > 0 && !draft.campagne_pausee_budget_epuise) {
+      // Solde épuisé — on met en pause CETTE campagne précisément (même
+      // garde-fou que verifier-soldes-bas.js) : les autres sites du compte
+      // ne sont pas concernés, ils ont chacun leur propre campagne.
+      try {
+        await executerActionGoogleAds('pause_campaign', { campaign_id: draft.google_ads_campaign_resource });
+        const texteEpuise = `Bonjour, votre budget publicitaire Skyeco Ads est épuisé — votre campagne Google Ads a été mise en pause automatiquement. Rechargez depuis votre tableau de bord pour relancer la diffusion.`;
+        await envoyerSMS(draft.telephone, texteEpuise, draft.twilio_phone_number);
+        await fetch(`${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}`, {
+          method: 'PATCH',
+          headers: { ...supaHeaders, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+          body: JSON.stringify({ campagne_diffusion_pausee: true, campagne_pausee_budget_epuise: true }),
+        });
+        diffusionPausee = true;
+      } catch (pauseErr) {
+        console.error('Erreur mise en pause automatique (solde épuisé) :', pauseErr);
+      }
+    } else if (budgetRestant <= SEUIL_ALERTE_SOLDE && budgetPaye > 0 && !draft.alerte_solde_bas_envoyee) {
+      // Alerte solde bas — envoyée une seule fois par cycle de recharge, dès
+      // que le seuil est franchi. Remise à zéro par confirm-ad-payment.js à
+      // chaque nouvelle recharge.
       const texteAlerte = `Bonjour, il vous reste environ ${budgetRestant} € de budget publicitaire Skyeco Ads. Pensez à recharger pour continuer à recevoir des demandes.`;
       await envoyerSMS(draft.telephone, texteAlerte, draft.twilio_phone_number);
       await fetch(`${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}`, {
@@ -118,7 +156,7 @@ export default async function handler(req, res) {
       budgetPaye,
       budgetRestant,
       pourcentageConsomme,
-      diffusionPausee: !!draft.campagne_diffusion_pausee,
+      diffusionPausee,
     });
   } catch (err) {
     console.error('Erreur get-campaign-spend (Windsor.ai) :', err);

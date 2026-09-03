@@ -15,9 +15,10 @@
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 //   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER
 //   CRON_SECRET
-//   SITE_BASE_URL (ex: https://app.skyeco.fr)
+//   SITE_BASE_URL (ex: https://www.skyeco.fr)
+//   WINDSOR_API_KEY, GOOGLE_ADS_ACCOUNT_ID (coupure de la diffusion Google Ads à l'expiration)
 
-const SITE_BASE_URL = process.env.SITE_BASE_URL || 'https://app.skyeco.fr';
+const SITE_BASE_URL = process.env.SITE_BASE_URL || 'https://www.skyeco.fr';
 
 // Même fonction que dans verifier-pauses-a-programmer.js — Twilio exige le
 // format E.164 (+33...) pour l'API Messages, les numéros en base sont au
@@ -72,7 +73,10 @@ export default async function handler(req, res) {
       const finEssai = new Date(draft.essai_gratuit_fin).getTime();
 
       try {
-        // 1. Essai déjà terminé -> on bloque l'accès.
+        // 1. Essai déjà terminé -> on bloque la modification (pas l'accès en
+        // lecture au dashboard, ni la vitrine, ni la diffusion Google Ads,
+        // qui continue tant qu'il reste du budget — voir les blocages de
+        // sauvegarde dans mon-dashboard.html / mes-elements.html).
         if (finEssai <= maintenant) {
           await fetch(`${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft.id}`, {
             method: 'PATCH',

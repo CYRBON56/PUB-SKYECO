@@ -117,6 +117,11 @@
 
   async function connecterEtRediriger(token) {
     sessionStorage.setItem('skyeco_dashboard_token_' + draftId, token);
+    // Jeton de compte (voir dashboard-login.js) : valable pour TOUTES les
+    // vitrines de cet artisan, pas seulement celle-ci — stocké aussi sous
+    // une clé générique pour que le sélecteur de site du tableau de bord
+    // puisse changer de vitrine sans redemander une connexion.
+    sessionStorage.setItem('skyeco_dashboard_token', token);
     // Un artisan qui vient de démarrer son essai gratuit et n'a encore
     // jamais déposé ses éléments (elements_deposes_le vide) est envoyé
     // construire sa vitrine plutôt que sur un tableau de bord vide — pour

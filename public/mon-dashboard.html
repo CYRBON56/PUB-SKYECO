@@ -912,7 +912,8 @@
     const ligneCellule = document.querySelector(`[data-lead="${leadId}"]`);
     if (ligneCellule) { ligneCellule.disabled = true; ligneCellule.textContent = 'Envoi…'; }
     try {
-      // 1. Upload du PDF (identique à avant).
+      // 1. Upload du PDF (le bucket Storage, lui, autorise bien l'écriture
+      // avec la clé publique — rien à changer ici).
       const chemin = `devis-artisan/${draftId}/${leadId}-${Date.now()}.pdf`;
       const uploadResp = await fetch(
         `${SUPABASE_URL}/storage/v1/object/${DEVIS_BUCKET}/${chemin}?apikey=${encodeURIComponent(SUPABASE_ANON_KEY)}`,
@@ -925,22 +926,14 @@
       if (!uploadResp.ok) throw new Error("Échec de l'envoi du fichier : " + (await uploadResp.text().catch(() => '')));
       const pdfUrl = `${SUPABASE_URL}/storage/v1/object/public/${DEVIS_BUCKET}/${chemin}`;
 
-      // 2. Lecture + écriture directes sur Supabase, avec la même clé
-      // publique déjà utilisée pour tout le reste de cette page (03/09 —
-      // remplace l'ancien passage par api/envoyer-devis.js côté serveur,
-      // qui dépendait de SUPABASE_SERVICE_ROLE_KEY sur Vercel : cette
-      // variable posait un problème de configuration jamais résolu malgré
-      // plusieurs vérifications, bloquant systématiquement l'envoi avec
-      // "Demande introuvable" / erreur de connexion à la base).
+      // 2. Lecture seule ici (autorisée avec la clé publique) — juste pour
+      // vérifier que la demande existe et récupérer le téléphone/prénom
+      // avant de tout transmettre au serveur.
       const leadResp = await fetch(
         `${SUPABASE_URL}/rest/v1/skyeco_pro_leads?id=eq.${leadId}&select=id,prenom,telephone,devis_statut`,
         { headers: { apikey: SUPABASE_ANON_KEY } }
       );
       const leadRows = await leadResp.json();
-      // Vérification ajoutée (03/09) — sans elle, une vraie erreur Supabase
-      // (ex: colonne manquante) était auparavant lue comme "leadRows[0]"
-      // undefined et affichée à tort comme "Demande introuvable", masquant
-      // le vrai problème pendant toute la session de débogage précédente.
       if (!leadResp.ok) throw new Error(leadRows.message || 'Erreur Supabase lors de la recherche du lead.');
       const lead = leadRows[0];
       if (!lead) throw new Error(`Demande introuvable (id ${leadId}).`);
@@ -949,27 +942,18 @@
 
       const devisToken = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
 
-      const patchResp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_leads?id=eq.${leadId}`, {
-        method: 'PATCH',
-        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-        body: JSON.stringify({
-          devis_pdf_url: pdfUrl,
-          devis_statut: 'envoye',
-          devis_token: devisToken,
-          devis_envoye_le: new Date().toISOString(),
-        }),
-      });
-      if (!patchResp.ok) throw new Error("Échec de l'enregistrement du devis : " + (await patchResp.text().catch(() => '')));
-
-      // 3. Le SMS seul reste côté serveur (identifiants Twilio jamais
-      // exposés au navigateur) — endpoint allégé, ne fait plus que ça.
-      const smsResp = await fetch('/api/envoyer-devis', {
+      // 3. L'ÉCRITURE (enregistrement du devis) et le SMS se font tous les
+      // deux côté serveur (03/09 — la table skyeco_pro_leads est
+      // volontairement verrouillée en écriture pour la clé publique,
+      // confirmé par l'erreur Postgres 42501 ; seule la clé service_role,
+      // jamais exposée au navigateur, peut écrire ici).
+      const resp = await fetch('/api/envoyer-devis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, telephone: lead.telephone, prenom: lead.prenom, devisToken }),
+        body: JSON.stringify({ draftId, leadId, telephone: lead.telephone, prenom: lead.prenom, devisToken, pdfUrl }),
       });
-      const smsData = await smsResp.json();
-      if (!smsResp.ok || !smsData.success) throw new Error(smsData.error || "Le SMS n'a pas pu être envoyé, mais le devis est bien enregistré.");
+      const data = await resp.json();
+      if (!resp.ok || !data.success) throw new Error(data.error || "Le devis n'a pas pu être envoyé.");
 
       await chargerDemandes();
     } catch (e) {
@@ -1000,17 +984,10 @@
       const smsResp = await fetch('/api/relancer-devis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, telephone: lead.telephone, prenom: lead.prenom, devisToken: lead.devis_token }),
+        body: JSON.stringify({ draftId, leadId, telephone: lead.telephone, prenom: lead.prenom, devisToken: lead.devis_token, nbRelancesActuel: lead.devis_nb_relances || 0 }),
       });
       const smsData = await smsResp.json();
       if (!smsResp.ok || !smsData.success) throw new Error(smsData.error || "La relance n'a pas pu être envoyée.");
-
-      const patchResp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_leads?id=eq.${leadId}`, {
-        method: 'PATCH',
-        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-        body: JSON.stringify({ devis_statut: 'relance', devis_nb_relances: (lead.devis_nb_relances || 0) + 1 }),
-      });
-      if (!patchResp.ok) throw new Error("Échec de la mise à jour du statut : " + (await patchResp.text().catch(() => '')));
 
       await chargerDemandes();
     } catch (e) {

@@ -73,6 +73,19 @@
   .trust-footer .legal-line { color:#14312a; }
   .btn-footer-callback { background:white; border:1.5px solid var(--brand,#1e6f4c); color:#14312a; padding:8px 16px; font-size:12.5px; font-weight:700; border-radius:10px; cursor:pointer; }
 
+  /* ---- Vérification SMS du téléphone (étape identité) — même look & feel
+     que estimation.html (SalesFlow), couleurs pilotées par --brand pour
+     rester cohérentes avec la charte de chaque artisan. ---- */
+  .btn-secondaire-sms {
+    background:var(--brand-tint,#eaf4ef); color:var(--brand,#1e6f4c); border:1.5px solid var(--brand,#1e6f4c);
+    padding:10px 18px; border-radius:10px; font-size:0.9rem; font-weight:700; cursor:pointer; margin-bottom:10px;
+  }
+  .btn-secondaire-sms:disabled { opacity:.5; cursor:not-allowed; }
+  .btn-secondaire-sms:hover:not(:disabled) { background:var(--brand,#1e6f4c); color:#fff; }
+  .sms-status-ok { color:var(--brand,#1e6f4c); font-weight:600; }
+  .sms-status-error { color:#991b1b; }
+  .sms-status-loading { color:#5b6b64; }
+
   /* Bandeau "aperçu" — visible uniquement tant que le mini-site n'est pas publié */
   .preview-banner {
     position:fixed; top:0; left:0; right:0; z-index:100;
@@ -623,14 +636,22 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
       html+='<label class="field-label">Nom</label><input type="text" id="inputNom" value="'+(state.nom||'')+'" />'+
         '<label class="field-label">Prénom</label><input type="text" id="inputPrenom" value="'+(state.prenom||'')+'" />'+
         '<label class="field-label">Téléphone</label><input type="tel" id="inputTel" value="'+(state.telephone||'')+'" placeholder="06 XX XX XX XX" />'+
-        '<div id="smsStatusApercu" style="font-size:13px; margin:6px 0 4px;"></div>'+
-        (state.telephoneVerifie
-          ? '<div style="font-size:13px; color:#1e6f4c; font-weight:600; margin-bottom:10px;">✓ Numéro vérifié</div>'
-          : '<button type="button" id="btnEnvoyerCodeApercu" style="background:#eaf4ef;color:#1e6f4c;border:1.5px solid #1e6f4c;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:10px;" disabled>Vérifier mon numéro par SMS</button>'+
-            '<div id="smsCodeRowApercu" style="display:none; gap:8px; margin-bottom:10px;">'+
-              '<input type="text" id="smsCodeApercu" inputmode="numeric" maxlength="6" placeholder="Code reçu" style="flex:1; letter-spacing:.3em; text-align:center; border:1.5px solid #d8e3de; border-radius:8px; padding:10px;" />'+
-              '<button type="button" id="btnVerifierCodeApercu" style="background:#eaf4ef;color:#1e6f4c;border:1.5px solid #1e6f4c;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">Valider</button>'+
-            '</div>')+
+        '<div id="smsVerifBlock" style="margin: -2px 0 16px;">'+
+          '<p style="font-size:0.8rem; color:#5b6b64; margin-bottom:10px; line-height:1.4;">Cette vérification nous permet de nous assurer qu\'un vrai numéro est associé à votre demande, pour éviter les robots et vous garantir une réponse de notre part.</p>'+
+          '<button type="button" id="btnEnvoyerCodeApercu" class="btn-secondaire-sms" style="'+(state.telephoneVerifie?'display:none;':'')+'" disabled>Vérifier mon numéro par SMS</button>'+
+          '<div id="smsCodeRowApercu" style="display:none; margin-top:12px;">'+
+            '<label for="smsCodeApercu" style="display:block; font-weight:600; font-size:0.85rem; margin-bottom:6px;">Code reçu par SMS</label>'+
+            '<div style="display:flex; gap:8px;">'+
+              '<input type="text" id="smsCodeApercu" inputmode="numeric" maxlength="6" placeholder="123456" style="flex:1; margin-bottom:0; letter-spacing:0.2em; text-align:center;" />'+
+              '<button type="button" id="btnVerifierCodeApercu" class="btn-secondaire-sms" style="margin-bottom:0;">Valider</button>'+
+            '</div>'+
+            '<div id="smsRenvoyerApercu" style="margin-top:8px; font-size:0.8rem; color:#5b6b64;">'+
+              '<span id="smsCountdownApercu"></span>'+
+              '<a href="#" id="lienRenvoyerCodeApercu" style="display:none; color:var(--brand,#1e6f4c);">Renvoyer le code</a>'+
+            '</div>'+
+          '</div>'+
+          '<div id="smsStatusApercu" style="margin-top:8px; font-size:0.83rem;">'+(state.telephoneVerifie ? '<span class="sms-status-ok">✓ Numéro vérifié.</span>' : '')+'</div>'+
+        '</div>'+
         '<label class="field-label">Email</label><input type="email" id="inputEmail" value="'+(state.email||'')+'" />'+
         '<label style="display:flex; align-items:flex-start; gap:8px; margin-top:14px; font-size:12.5px; color:#5b6b64; line-height:1.5; cursor:pointer;">'+
           '<input type="checkbox" id="checkRgpd" style="margin-top:2px; flex-shrink:0;" '+(state.rgpdAccepte?'checked':'')+' />'+
@@ -717,67 +738,117 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
       [nom,prenom,email].forEach(el=>{ el.addEventListener('input',()=>{ state.nom=nom.value; state.prenom=prenom.value; state.email=email.value; document.getElementById('btnNext').disabled=!canProceed(s); }); });
       document.getElementById('checkRgpd').addEventListener('change', (e)=>{ state.rgpdAccepte = e.target.checked; document.getElementById('btnNext').disabled=!canProceed(s); });
       document.getElementById('checkMarketing').addEventListener('change', (e)=>{ state.marketingAccepte = e.target.checked; });
-      tel.addEventListener('input',()=>{
+
+      // Vérification SMS — même comportement (statut coloré, décompte 30s
+      // avant renvoi) que sur estimation.html (SalesFlow) ; voir ce fichier
+      // pour l'original porté ici tel quel, adapté aux ids "...Apercu".
+      const btnEnvoyerCode = document.getElementById('btnEnvoyerCodeApercu');
+      const btnVerifierCode = document.getElementById('btnVerifierCodeApercu');
+      const smsCodeZone = document.getElementById('smsCodeRowApercu');
+      const smsCodeInput = document.getElementById('smsCodeApercu');
+      const smsStatusBox = document.getElementById('smsStatusApercu');
+      const smsCountdownEl = document.getElementById('smsCountdownApercu');
+      const smsLienRenvoyer = document.getElementById('lienRenvoyerCodeApercu');
+
+      function smsSetStatus(msg, type){
+        smsStatusBox.textContent = msg;
+        smsStatusBox.className = type ? 'sms-status-'+type : '';
+      }
+      function smsStartCountdown(seconds){
+        let remaining = seconds;
+        smsLienRenvoyer.style.display = 'none';
+        smsCountdownEl.textContent = 'Renvoi possible dans '+remaining+'s';
+        clearInterval(state._smsCountdownTimer);
+        state._smsCountdownTimer = setInterval(()=>{
+          remaining -= 1;
+          if(remaining<=0){
+            clearInterval(state._smsCountdownTimer);
+            smsCountdownEl.textContent = '';
+            smsLienRenvoyer.style.display = 'inline';
+          } else {
+            smsCountdownEl.textContent = 'Renvoi possible dans '+remaining+'s';
+          }
+        }, 1000);
+      }
+      function smsShowVerifiedUI(){
+        btnEnvoyerCode.style.display = 'none';
+        smsCodeZone.style.display = 'none';
+        smsSetStatus('✓ Numéro vérifié.', 'ok');
+      }
+      async function smsEnvoyerCode(){
+        const telephoneVal = tel.value.trim();
+        const digits = telephoneVal.replace(/\D/g,'');
+        if(digits.length !== 10){
+          smsSetStatus('Merci de saisir un numéro de téléphone valide d\'abord.', 'error');
+          return;
+        }
+        btnEnvoyerCode.disabled = true;
+        smsSetStatus('Envoi du code en cours…', 'loading');
+        try{
+          const res = await fetch('/api/verify-send-code', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ telephone: telephoneVal })
+          });
+          const data = await res.json();
+          if(!data.success) throw new Error(data.error || "Erreur lors de l'envoi du code.");
+          smsCodeZone.style.display = 'block';
+          smsSetStatus('Code envoyé par SMS. Il peut prendre quelques secondes à arriver.', 'ok');
+          smsStartCountdown(30);
+        } catch(err){
+          smsSetStatus(err.message, 'error');
+        } finally {
+          btnEnvoyerCode.disabled = digits.length !== 10;
+        }
+      }
+      async function smsVerifierCode(){
+        const telephoneVal = tel.value.trim();
+        const code = smsCodeInput.value.trim();
+        if(!code){
+          smsSetStatus('Merci de saisir le code reçu.', 'error');
+          return;
+        }
+        btnVerifierCode.disabled = true;
+        smsSetStatus('Vérification en cours…', 'loading');
+        try{
+          const res = await fetch('/api/verify-check-code', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ telephone: telephoneVal, code })
+          });
+          const data = await res.json();
+          if(!data.success || !data.verified) throw new Error(data.error || 'Code invalide.');
+          state.telephoneVerifie = true;
+          state.telephoneVerifieNumero = telephoneVal;
+          smsShowVerifiedUI();
+          document.getElementById('btnNext').disabled = !canProceed(s);
+        } catch(err){
+          state.telephoneVerifie = false;
+          smsSetStatus(err.message, 'error');
+        } finally {
+          btnVerifierCode.disabled = false;
+        }
+      }
+
+      btnEnvoyerCode.addEventListener('click', smsEnvoyerCode);
+      btnVerifierCode.addEventListener('click', smsVerifierCode);
+      smsLienRenvoyer.addEventListener('click', (e)=>{ e.preventDefault(); smsEnvoyerCode(); });
+
+      btnEnvoyerCode.disabled = tel.value.trim().replace(/\D/g,'').length !== 10;
+      if(state.telephoneVerifie && state.telephoneVerifieNumero === tel.value.trim()){
+        smsShowVerifiedUI();
+      }
+
+      tel.addEventListener('input', ()=>{
         state.telephone = tel.value;
-        state.telephoneVerifie = false;
-        const btn = document.getElementById('btnEnvoyerCodeApercu');
-        if(!btn){ renderStep(); return; }
-        const digits = tel.value.replace(/\D/g,'');
-        btn.disabled = digits.length !== 10;
+        btnEnvoyerCode.disabled = tel.value.trim().replace(/\D/g,'').length !== 10;
+        if(state.telephoneVerifie && state.telephoneVerifieNumero !== tel.value.trim()){
+          state.telephoneVerifie = false;
+          btnEnvoyerCode.style.display = 'inline-block';
+          smsCodeZone.style.display = 'none';
+          smsSetStatus('Numéro modifié — merci de le revérifier.', 'error');
+        }
         document.getElementById('btnNext').disabled = !canProceed(s);
       });
-      const btnEnvoyer = document.getElementById('btnEnvoyerCodeApercu');
-      if(btnEnvoyer){
-        btnEnvoyer.disabled = !(state.telephone && state.telephone.replace(/\D/g,'').length===10);
-        btnEnvoyer.addEventListener('click', async ()=>{
-          const statusEl = document.getElementById('smsStatusApercu');
-          btnEnvoyer.disabled = true;
-          statusEl.textContent = 'Envoi du code…';
-          statusEl.style.color = '#8a9490';
-          try{
-            const res = await fetch('/api/verify-send-code', {
-              method:'POST', headers:{'Content-Type':'application/json'},
-              body: JSON.stringify({ telephone: state.telephone })
-            });
-            const data = await res.json();
-            if(!data.success) throw new Error(data.error || "Erreur lors de l'envoi.");
-            document.getElementById('smsCodeRowApercu').style.display = 'flex';
-            statusEl.textContent = 'Code envoyé par SMS.';
-            statusEl.style.color = '#1e6f4c';
-          } catch(err){
-            statusEl.textContent = err.message;
-            statusEl.style.color = '#c0392b';
-          } finally {
-            btnEnvoyer.disabled = false;
-          }
-        });
-      }
-      const btnVerifier = document.getElementById('btnVerifierCodeApercu');
-      if(btnVerifier){
-        btnVerifier.addEventListener('click', async ()=>{
-          const statusEl = document.getElementById('smsStatusApercu');
-          const codeInput = document.getElementById('smsCodeApercu');
-          btnVerifier.disabled = true;
-          statusEl.textContent = 'Vérification…';
-          statusEl.style.color = '#8a9490';
-          try{
-            const res = await fetch('/api/verify-check-code', {
-              method:'POST', headers:{'Content-Type':'application/json'},
-              body: JSON.stringify({ telephone: state.telephone, code: codeInput.value.trim() })
-            });
-            const data = await res.json();
-            if(!data.success || !data.verified) throw new Error(data.error || 'Code invalide.');
-            state.telephoneVerifie = true;
-            renderStep();
-          } catch(err){
-            statusEl.textContent = err.message;
-            statusEl.style.color = '#c0392b';
-          } finally {
-            btnVerifier.disabled = false;
-            document.getElementById('btnNext').disabled = !canProceed(s);
-          }
-        });
-      }
+
       nom.focus();
     } else if(s.type==='textarea'){
       const ta=document.getElementById('inputTextarea');

@@ -1,8 +1,11 @@
 // /api/dashboard-login.js
-// Connecte un artisan à son tableau de bord (mon-dashboard.html) avec son
-// email (identifiant) et son mot de passe. Renvoie un jeton de session signé
-// que le navigateur conserve (sessionStorage) et présente à
-// dashboard-verify-session.js à chaque chargement du dashboard.
+// Connecte un artisan à son COMPTE Skyeco Pro avec son email (identifiant)
+// et son mot de passe. Un même compte (email) peut regrouper PLUSIEURS
+// vitrines/sites — par exemple un artisan avec plusieurs activités
+// différentes. Le jeton renvoyé est donc lié au COMPTE (email), pas à un
+// site précis : il donne accès à TOUTES les vitrines de cet artisan. La
+// liste de ces vitrines est renvoyée pour alimenter un sélecteur de site
+// dans le tableau de bord.
 //
 // Variables d'environnement requises :
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
@@ -23,9 +26,10 @@ function verifierMotDePasse(motDePasse, stocke) {
   }
 }
 
-function signerToken(draftId, role, dureeSecondes) {
+function signerTokenCompte(email, dureeSecondes) {
   const exp = Math.floor(Date.now() / 1000) + dureeSecondes;
-  const payload = `${draftId}.${role}.${exp}`;
+  const emailB64 = Buffer.from(email.trim().toLowerCase()).toString('base64url');
+  const payload = `${emailB64}.artisan.${exp}`;
   const sig = crypto.createHmac('sha256', process.env.DASHBOARD_SESSION_SECRET).update(payload).digest('hex');
   return Buffer.from(`${payload}.${sig}`).toString('base64url');
 }
@@ -46,25 +50,28 @@ export default async function handler(req, res) {
   };
 
   try {
-    // Un même email peut correspondre à plusieurs brouillons de test — on ne
-    // veut que celui qui a réellement un compte dashboard créé (le plus
-    // récent s'il y en a plusieurs), jamais un brouillon sans mot de passe
-    // pris au hasard par une requête non triée.
+    // Un même email peut correspondre à plusieurs vitrines (compte avec
+    // plusieurs sites, ou anciens brouillons de test) — on récupère tout ce
+    // qui a un mot de passe et on vérifie sur l'ensemble, au lieu de ne
+    // regarder que la ligne la plus récente comme avant (ce qui rendait les
+    // vitrines plus anciennes du même artisan inaccessibles).
     const resp = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?email=ilike.${encodeURIComponent(email.trim())}&dashboard_password_hash=not.is.null&order=dashboard_compte_cree_le.desc&limit=1&select=id,dashboard_password_hash`,
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?email=ilike.${encodeURIComponent(email.trim())}&dashboard_password_hash=not.is.null&order=dashboard_compte_cree_le.asc&select=id,entreprise,zone,metier,status,dashboard_password_hash`,
       { headers: supaHeaders }
     );
     const rows = await resp.json();
-    const draft = rows[0];
 
     // Message volontairement générique (identifiant OU mot de passe) pour ne
     // pas laisser deviner si un email existe en base.
-    if (!draft || !draft.dashboard_password_hash || !verifierMotDePasse(motDePasse, draft.dashboard_password_hash)) {
+    const motDePasseValide = rows.some((r) => verifierMotDePasse(motDePasse, r.dashboard_password_hash));
+    if (rows.length === 0 || !motDePasseValide) {
       return res.status(401).json({ success: false, error: 'Identifiant ou mot de passe incorrect.' });
     }
 
-    const token = signerToken(draft.id, 'artisan', 60 * 60 * 24 * 30); // 30 jours
-    return res.status(200).json({ success: true, draftId: draft.id, token });
+    const token = signerTokenCompte(email, 60 * 60 * 24 * 30); // 30 jours
+    const sites = rows.map((r) => ({ id: r.id, entreprise: r.entreprise, zone: r.zone, metier: r.metier, status: r.status }));
+
+    return res.status(200).json({ success: true, draftId: sites[0].id, token, sites });
   } catch (err) {
     console.error('Erreur dashboard-login :', err);
     return res.status(500).json({ success: false, error: 'Connexion impossible pour le moment.' });

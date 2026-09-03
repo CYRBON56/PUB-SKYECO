@@ -6,16 +6,33 @@
 // Variables d'environnement requises :
 //   WINDSOR_API_KEY
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-//   GOOGLE_ADS_ACCOUNT_ID = "7849903984" — le compte ECOSKY by RMS réellement
-//   utilisé pour les annonces (784-990-3984 dans l'interface Google Ads),
-//   SANS tirets ici (retirés automatiquement de toute façon, voir plus bas).
+//   GOOGLE_ADS_ACCOUNT_ID = "7849903984" (ou "784-990-3984") — le compte
+//   ECOSKY by RMS réellement utilisé pour les annonces.
 //   Confirmé le 30/08 : 735-335-0497 est un AUTRE compte Google Ads
 //   (personnel de Cyrille, suspendu) — ce n'est pas celui-ci. Ne pas
 //   remplacer 7849903984 par 7353350497 malgré ce qui a pu être dit plus
 //   tôt dans cette conversation.
+//
+// BUG CORRIGÉ le 03/09 (1ère campagne réelle jamais créée en live, jamais
+// détecté avant faute de trafic/paiement réel) : ce fichier retirait les
+// tirets avant d'envoyer l'ID de compte à Windsor.ai ("7849903984"). Erreur
+// réelle obtenue : "Account 7849903984 is not available. The configured
+// accounts are: 784-990-3984." — Windsor.ai attend en réalité le format
+// AVEC tirets, exactement comme affiché dans Google Ads. On reformate donc
+// systématiquement l'ID en XXX-XXX-XXXX au lieu de retirer les tirets.
 
 const WINDSOR_BASE = 'https://connectors.windsor.ai/google_ads';
 const TAUX_COMMISSION = 0.50; // doit rester synchronisé avec les autres fichiers
+
+// Windsor.ai attend l'identifiant de compte Google Ads AVEC tirets
+// (format XXX-XXX-XXXX, identique à l'interface Google Ads) — voir le
+// commentaire d'en-tête du 03/09. Fonctionne que la variable d'env soit
+// stockée avec ou sans tirets.
+function formaterCompteGoogleAds(id) {
+  const chiffres = String(id || '').replace(/[^0-9]/g, '');
+  if (chiffres.length !== 10) return String(id || '').trim();
+  return `${chiffres.slice(0, 3)}-${chiffres.slice(3, 6)}-${chiffres.slice(6)}`;
+}
 
 const KEYWORDS_BY_METIER = {
   paysagiste: ['paysagiste prix', 'aménagement extérieur paysagiste', 'devis paysagiste'],
@@ -29,10 +46,7 @@ const KEYWORDS_BY_METIER = {
 };
 
 async function executerAction(action, params) {
-  // Tirets retirés par sécurité (Google Ads affiche l'ID avec des tirets,
-  // "735-335-0497", mais les identifiants de compte doivent être transmis
-  // sans — voir le commentaire d'en-tête, erreur de permission du 30/08).
-  const accountId = (process.env.GOOGLE_ADS_ACCOUNT_ID || '').replace(/[^0-9]/g, '');
+  const accountId = formaterCompteGoogleAds(process.env.GOOGLE_ADS_ACCOUNT_ID);
   const resp = await fetch(`${WINDSOR_BASE}/actions?api_key=${process.env.WINDSOR_API_KEY}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

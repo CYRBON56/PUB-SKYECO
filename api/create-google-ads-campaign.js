@@ -61,7 +61,7 @@ export default async function handler(req, res) {
 
   try {
     const draftResp = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}&select=entreprise,metier,zone,tarif_prix,mots_cles_choisis,annonce_titres,annonce_descriptions`,
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}&select=entreprise,metier,zone,tarif_prix,mots_cles_choisis,annonce_titres,annonce_descriptions,google_ads_campaign_resource,google_ads_ad_group_resource,campagne_pausee_budget_epuise`,
       { headers: supaHeaders }
     );
     const draftRows = await draftResp.json();
@@ -73,6 +73,38 @@ export default async function handler(req, res) {
 
     const budgetNetEuros = draft.tarif_prix * (1 - TAUX_COMMISSION);
     const budgetJournalierMicros = Math.round((budgetNetEuros / 30) * 1_000_000);
+
+    // 03/09 : une campagne existe déjà pour ce site (recharge, pas premier
+    // paiement) — on ne recrée JAMAIS une deuxième campagne en double.
+    // On met juste à jour le budget journalier, et on ne réactive la
+    // diffusion que si elle avait été mise en pause AUTOMATIQUEMENT pour
+    // solde épuisé (campagne_pausee_budget_epuise) — jamais si Cyrille
+    // l'avait mise en pause lui-même pour une autre raison (voir
+    // pause-campagne-ads.js), auquel cas seul lui peut la relancer.
+    if (draft.google_ads_campaign_resource) {
+      await executerAction('set_campaign_budget', {
+        campaign_id: draft.google_ads_campaign_resource,
+        budget_type: 'daily',
+        amount_micros: budgetJournalierMicros,
+      });
+
+      if (draft.campagne_pausee_budget_epuise) {
+        await executerAction('enable_campaign', { campaign_id: draft.google_ads_campaign_resource });
+        await fetch(`${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}`, {
+          method: 'PATCH',
+          headers: { ...supaHeaders, Prefer: 'return=minimal' },
+          body: JSON.stringify({ campagne_diffusion_pausee: false, campagne_pausee_budget_epuise: false }),
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        campaignId: draft.google_ads_campaign_resource,
+        adGroupId: draft.google_ads_ad_group_resource,
+        misAJour: true,
+        relanceeAutomatiquement: !!draft.campagne_pausee_budget_epuise,
+      });
+    }
 
     // Priorité aux mots-clés choisis par l'artisan (via l'IA de suggestion
     // dans campagne.html) — sinon on retombe sur la liste fixe par métier.

@@ -2,6 +2,6 @@
   "crons": [
     { "path": "/api/verifier-essais-a-programmer", "schedule": "0 9 * * *" },
     { "path": "/api/verifier-pauses-a-programmer", "schedule": "0 9 * * *" },
-    { "path": "/api/verifier-soldes-bas", "schedule": "0 8 * * *" }
+    { "path": "/api/verifier-soldes-bas", "schedule": "*/15 * * * *" }
   ]
 }

@@ -288,7 +288,9 @@
       <img class="logo-entreprise" id="logoEntreprise" alt="Logo">
       <h1>Mon tableau de bord</h1>
     </div>
-    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+      <select id="selecteurSite" style="display:none; border:1.5px solid #1e6f4c; border-radius:10px; padding:9px 12px; font-weight:700; font-size:0.85rem; color:#14312a; background:#fff; cursor:pointer;"></select>
+      <button type="button" id="btnAjouterVitrine" style="display:none; background:#fff; color:#1e6f4c; border:1.5px dashed #1e6f4c; border-radius:10px; padding:9px 14px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap;">+ Nouvelle vitrine</button>
       <a class="btn-elements" id="btnMesRdv" href="#" style="background:#fff; color:#1e6f4c; border:1.5px solid #1e6f4c;">📅 Mes rendez-vous</a>
       <a class="btn-elements" id="btnElements" href="#">✏️ Modifier mes éléments</a>
     </div>
@@ -308,6 +310,17 @@
       <p style="font-size:0.85rem; color:#5b6b64; margin-top:4px;">Une fois vos mots-clés et votre annonce prêts, mettez votre vitrine en ligne pour commencer à recevoir des demandes.</p>
     </div>
     <a id="btnMettreEnLigne" href="#" style="background:#1e6f4c; color:#fff; border:none; border-radius:10px; padding:10px 18px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap; text-decoration:none; display:inline-block;">Mettre en ligne</a>
+  </div>
+
+  <!-- Vue d'ensemble multi-vitrines : visible seulement si le compte a
+       plusieurs sites (voir chargerApercuCampagnes). Chaque tuile = une
+       vitrine/campagne, avec ses clics du mois ; cliquer dessus ouvre le
+       tableau de bord détaillé (mots-clés, annonce, budget) de CETTE
+       vitrine — le reste de la page (ci-dessous) reste le détail du site
+       actuellement sélectionné. -->
+  <div id="apercuCampagnes" style="display:none; margin-bottom:22px;">
+    <p style="font-size:0.78rem; font-weight:800; text-transform:uppercase; letter-spacing:0.03em; color:#5b6b64; margin-bottom:10px;">Vos vitrines</p>
+    <div id="apercuCampagnesTuiles" style="display:flex; gap:12px; flex-wrap:wrap;"></div>
   </div>
 
   <div class="stats-row" id="statsRow">
@@ -535,6 +548,10 @@
   let motsClesSelectionActuelle = [];
   let leadsData = [];
   let nomEntreprise = '';
+  // Jeton de la session en cours (compte, pas un site précis — voir
+  // dashboard-login.js) : conservé pour pouvoir rafraîchir "Mes clients"
+  // (toutes vitrines confondues) après une action, sans le redemander.
+  let sessionTokenActuel = null;
 
   if (!draftId) {
     document.body.innerHTML = '<div class="loading">Lien invalide — identifiant du site manquant.</div>';
@@ -549,7 +566,14 @@
   // l'artisan). Dans les deux cas, la validité est revérifiée côté serveur.
   async function verifierAccesPuisCharger() {
     const adminToken = params.get('admin_token');
-    const token = adminToken || sessionStorage.getItem('skyeco_dashboard_token_' + draftId);
+    // Un jeton "compte" (voir dashboard-login.js) est valable pour TOUTES
+    // les vitrines d'un même artisan : si le navigateur n'a pas encore de
+    // jeton propre à CE draftId (ex : on vient de passer d'un site à
+    // l'autre via le sélecteur), on retombe sur le jeton générique du
+    // compte plutôt que de redemander une connexion.
+    const token = adminToken
+      || sessionStorage.getItem('skyeco_dashboard_token_' + draftId)
+      || sessionStorage.getItem('skyeco_dashboard_token');
 
     if (!token) {
       window.location.href = '/acces-dashboard.html?id=' + draftId;
@@ -565,9 +589,17 @@
       const data = await res.json();
       if (!data.valid) {
         sessionStorage.removeItem('skyeco_dashboard_token_' + draftId);
+        sessionStorage.removeItem('skyeco_dashboard_token');
         window.location.href = '/acces-dashboard.html?id=' + draftId;
         return;
       }
+      // On garde les deux clés à jour pour que le prochain chargement
+      // (celui-ci ou un autre site du même compte) retrouve le jeton.
+      if (!adminToken) {
+        sessionStorage.setItem('skyeco_dashboard_token_' + draftId, token);
+        sessionStorage.setItem('skyeco_dashboard_token', token);
+      }
+      window.skyecoRoleSession = data.role;
     } catch (e) {
       document.getElementById('verifAccesOverlay').textContent = 'Impossible de vérifier votre accès pour le moment.';
       return;
@@ -576,14 +608,125 @@
     document.getElementById('verifAccesOverlay').remove();
     document.getElementById('btnElements').href = '/mes-elements.html?id=' + draftId;
     document.getElementById('btnMesRdv').href = '/mes-rdv.html?id=' + draftId;
+    sessionTokenActuel = adminToken ? null : token;
     chargerLogo();
     chargerStats();
     chargerSolde();
-    chargerDemandes();
+    chargerDemandes(sessionTokenActuel);
     initPilotageAds();
     verifierStatutPause();
     chargerZones();
     initPanelTabs();
+    if (!adminToken) {
+      chargerSitesCompte(token);
+      chargerApercuCampagnes(token);
+    }
+  }
+
+  // Sélecteur de site : un même artisan (même email) peut posséder
+  // plusieurs vitrines. On les liste et on affiche un sélecteur seulement
+  // s'il y en a plus d'une — sinon rien ne change à l'écran.
+  async function chargerSitesCompte(token) {
+    try {
+      const res = await fetch('/api/mes-sites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token })
+      });
+      const data = await res.json();
+      if (!data.success || !Array.isArray(data.sites)) return;
+
+      const btnAjouter = document.getElementById('btnAjouterVitrine');
+      btnAjouter.style.display = 'inline-block';
+      btnAjouter.onclick = () => creerNouvelleVitrine(token);
+
+      if (data.sites.length <= 1) return;
+
+      const select = document.getElementById('selecteurSite');
+      select.innerHTML = data.sites.map(s =>
+        `<option value="${s.id}" ${s.id === draftId ? 'selected' : ''}>${(s.entreprise || 'Vitrine sans nom')}</option>`
+      ).join('');
+      select.style.display = 'inline-block';
+      select.addEventListener('change', () => {
+        window.location.href = '/mon-dashboard.html?id=' + select.value;
+      });
+    } catch (e) {
+      // Non bloquant : le tableau de bord du site courant reste utilisable
+      // même si la liste des autres sites n'a pas pu être chargée.
+    }
+  }
+
+  // Vue d'ensemble "Vos vitrines" : une tuile par vitrine du compte, avec
+  // ses clics du mois — cliquer dessus ouvre le tableau de bord détaillé de
+  // CETTE vitrine (mots-clés, annonce, budget), comme si on "rentrait"
+  // dedans. N'affiche rien s'il n'y a qu'une seule vitrine (rien ne change
+  // à l'écran pour un artisan mono-produit).
+  async function chargerApercuCampagnes(token) {
+    try {
+      const res = await fetch('/api/mes-sites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token })
+      });
+      const data = await res.json();
+      if (!data.success || !Array.isArray(data.sites) || data.sites.length <= 1) return;
+
+      const zone = document.getElementById('apercuCampagnes');
+      const tuiles = document.getElementById('apercuCampagnesTuiles');
+      zone.style.display = 'block';
+
+      // Chargement des clics/statut de chaque vitrine en parallèle — même
+      // endpoint que le panneau "Pilotage Google Ads" du site actuellement
+      // ouvert, mais appelé ici pour chacune des vitrines du compte.
+      const details = await Promise.all(data.sites.map(async (s) => {
+        try {
+          const r = await fetch('/api/get-campaign-spend', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ draft_id: s.id })
+          });
+          const d = await r.json();
+          return { ...s, clics: d.success && d.campagneExiste ? d.clics : null, pausee: d.diffusionPausee || false };
+        } catch (e) {
+          return { ...s, clics: null, pausee: false };
+        }
+      }));
+
+      tuiles.innerHTML = details.map((s) => {
+        const estActuelle = s.id === draftId;
+        const statutLabel = s.status === 'en_pause' ? '⏸️ En pause' : (s.pausee ? '⏸️ Diffusion en pause' : (s.status === 'essai' ? '🎁 Essai gratuit' : '● En ligne'));
+        const statutCouleur = (s.status === 'en_pause' || s.pausee) ? '#e8622c' : (s.status === 'essai' ? '#5b6b64' : '#1e6f4c');
+        return `
+          <a href="/mon-dashboard.html?id=${s.id}" style="text-decoration:none; display:block; min-width:180px; flex:1; max-width:260px; background:#fff; border:1.5px solid ${estActuelle ? '#1e6f4c' : '#e4e9e6'}; border-radius:14px; padding:14px 16px; box-shadow:${estActuelle ? '0 4px 14px rgba(30,111,76,0.14)' : 'none'};">
+            <div style="font-weight:800; color:#14312a; font-size:0.92rem; margin-bottom:6px;">${s.entreprise || 'Vitrine sans nom'}</div>
+            <div style="font-size:1.4rem; font-weight:800; color:#14312a;">${s.clics === null ? '—' : s.clics}<span style="font-size:0.75rem; font-weight:600; color:#5b6b64;"> clics ce mois-ci</span></div>
+            <div style="font-size:0.78rem; font-weight:700; color:${statutCouleur}; margin-top:6px;">${statutLabel}</div>
+          </a>
+        `;
+      }).join('');
+    } catch (e) {
+      // Non bloquant : le reste du tableau de bord reste utilisable.
+    }
+  }
+
+  async function creerNouvelleVitrine(token) {
+    const nom = prompt("Nom de cette nouvelle vitrine (par exemple votre autre activité) :", '');
+    if (nom === null) return; // annulé
+    try {
+      const res = await fetch('/api/creer-vitrine-supplementaire', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftIdSource: draftId, token, nomVitrine: nom })
+      });
+      const data = await res.json();
+      if (!data.success) {
+        alert(data.error || "Impossible de créer la nouvelle vitrine pour le moment.");
+        return;
+      }
+      window.location.href = '/mes-elements.html?id=' + data.draftId;
+    } catch (e) {
+      alert('Impossible de contacter le serveur.');
+    }
   }
 
   function initPanelTabs() {
@@ -825,7 +968,12 @@
     }
   });
 
-  async function chargerDemandes() {
+  // Un artisan avec plusieurs vitrines gère TOUS ses clients au même
+  // endroit, quel que soit le produit/site d'où vient la demande (voir
+  // discussion 03/09 : "il s'en fout, ça reste un client") — token permet
+  // de retrouver les autres sites du compte ; sans token (accès admin
+  // depuis mes-artisans.html) on reste sur le site courant uniquement.
+  async function chargerDemandes(token) {
     const content = document.getElementById('listeContent');
     try {
       const draftResp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise`, {
@@ -834,7 +982,26 @@
       const draftRows = await draftResp.json();
       nomEntreprise = draftRows[0]?.entreprise || 'Mon entreprise';
 
-      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_leads?draft_id=eq.${draftId}&select=*&order=created_at.desc`, {
+      let idsRecherches = [draftId];
+      const nomsParSite = { [draftId]: nomEntreprise };
+      if (token) {
+        try {
+          const sitesResp = await fetch('/api/mes-sites', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token })
+          });
+          const sitesData = await sitesResp.json();
+          if (sitesData.success && Array.isArray(sitesData.sites) && sitesData.sites.length) {
+            idsRecherches = sitesData.sites.map(s => s.id);
+            sitesData.sites.forEach(s => { nomsParSite[s.id] = s.entreprise || 'Vitrine sans nom'; });
+          }
+        } catch (e) { /* on retombe sur le site courant seul */ }
+      }
+      const plusieursSites = idsRecherches.length > 1;
+
+      const filtreIds = idsRecherches.map(id => `"${id}"`).join(',');
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_leads?draft_id=in.(${filtreIds})&select=*&order=created_at.desc`, {
         headers: { apikey: SUPABASE_ANON_KEY }
       });
       leadsData = await resp.json();
@@ -847,12 +1014,13 @@
       content.innerHTML = `
         <table>
           <thead>
-            <tr><th>Date</th><th>Nom</th><th>Adresse</th><th>Téléphone</th><th>Email</th><th>Statut</th><th>Devis</th></tr>
+            <tr><th>Date</th>${plusieursSites ? '<th>Vitrine</th>' : ''}<th>Nom</th><th>Adresse</th><th>Téléphone</th><th>Email</th><th>Statut</th><th>Devis</th></tr>
           </thead>
           <tbody>
             ${leadsData.map(l => `
               <tr>
                 <td>${new Date(l.created_at).toLocaleDateString('fr-FR')}</td>
+                ${plusieursSites ? `<td>${nomsParSite[l.draft_id] || '—'}</td>` : ''}
                 <td>${(l.prenom || '') + ' ' + (l.nom || '')}</td>
                 <td>${extraireAdresse(l.reponses)}</td>
                 <td>${l.telephone || '—'}</td>
@@ -865,10 +1033,10 @@
         </table>
       `;
       content.querySelectorAll('[data-action="envoyer-devis"]').forEach(btn => {
-        btn.addEventListener('click', () => declencherUploadDevis(btn.dataset.lead));
+        btn.addEventListener('click', () => declencherUploadDevis(btn.dataset.lead, btn.dataset.site));
       });
       content.querySelectorAll('[data-action="relancer-devis"]').forEach(btn => {
-        btn.addEventListener('click', () => relancerDevis(btn.dataset.lead, btn));
+        btn.addEventListener('click', () => relancerDevis(btn.dataset.lead, btn.dataset.site, btn));
       });
     } catch (e) {
       content.innerHTML = '<div class="empty-msg">Impossible de charger les demandes pour le moment.</div>';
@@ -886,12 +1054,12 @@
     const lienVoir = l.devis_pdf_url ? `<a class="btn-devis voir" href="${l.devis_pdf_url}" target="_blank" rel="noopener">Voir</a>` : '';
 
     if (statut === 'aucun') {
-      return `<div class="devis-actions"><button type="button" class="btn-devis envoyer" data-action="envoyer-devis" data-lead="${l.id}">📄 Envoyer un devis</button></div>`;
+      return `<div class="devis-actions"><button type="button" class="btn-devis envoyer" data-action="envoyer-devis" data-lead="${l.id}" data-site="${l.draft_id}">📄 Envoyer un devis</button></div>`;
     }
     if (statut === 'signe') {
       return `<div class="devis-actions">${badges.signe}${lienVoir}</div>`;
     }
-    return `<div class="devis-actions">${badges[statut] || ''}${lienVoir}<button type="button" class="btn-devis relancer" data-action="relancer-devis" data-lead="${l.id}">🔁 Relancer</button></div>`;
+    return `<div class="devis-actions">${badges[statut] || ''}${lienVoir}<button type="button" class="btn-devis relancer" data-action="relancer-devis" data-lead="${l.id}" data-site="${l.draft_id}">🔁 Relancer</button></div>`;
   }
 
   function obtenirInputDevis() {
@@ -907,7 +1075,7 @@
     return input;
   }
 
-  function declencherUploadDevis(leadId) {
+  function declencherUploadDevis(leadId, siteId) {
     const input = obtenirInputDevis();
     input.onchange = async () => {
       const fichier = input.files[0];
@@ -917,18 +1085,25 @@
         alert('Merci de choisir un fichier PDF.');
         return;
       }
-      await uploaderEtEnvoyerDevis(leadId, fichier);
+      await uploaderEtEnvoyerDevis(leadId, fichier, siteId);
     };
     input.click();
   }
 
-  async function uploaderEtEnvoyerDevis(leadId, fichier) {
+  // siteId = la vitrine PROPRIÉTAIRE de la demande (l.draft_id), pas
+  // forcément le site actuellement affiché sur la page — indispensable
+  // depuis que "Mes clients" regroupe les demandes de toutes les vitrines
+  // du compte : le SMS doit partir avec le bon nom d'entreprise et le bon
+  // numéro Twilio (ceux DE CETTE vitrine-là), sinon un client d'un site
+  // recevrait un devis au nom d'un autre.
+  async function uploaderEtEnvoyerDevis(leadId, fichier, siteId) {
+    const siteConcerne = siteId || draftId;
     const ligneCellule = document.querySelector(`[data-lead="${leadId}"]`);
     if (ligneCellule) { ligneCellule.disabled = true; ligneCellule.textContent = 'Envoi…'; }
     try {
       // 1. Upload du PDF (le bucket Storage, lui, autorise bien l'écriture
       // avec la clé publique — rien à changer ici).
-      const chemin = `devis-artisan/${draftId}/${leadId}-${Date.now()}.pdf`;
+      const chemin = `devis-artisan/${siteConcerne}/${leadId}-${Date.now()}.pdf`;
       const uploadResp = await fetch(
         `${SUPABASE_URL}/storage/v1/object/${DEVIS_BUCKET}/${chemin}?apikey=${encodeURIComponent(SUPABASE_ANON_KEY)}`,
         {
@@ -964,19 +1139,22 @@
       const resp = await fetch('/api/envoyer-devis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, leadId, telephone: lead.telephone, prenom: lead.prenom, devisToken, pdfUrl }),
+        body: JSON.stringify({ draftId: siteConcerne, leadId, telephone: lead.telephone, prenom: lead.prenom, devisToken, pdfUrl }),
       });
       const data = await resp.json();
       if (!resp.ok || !data.success) throw new Error(data.error || "Le devis n'a pas pu être envoyé.");
 
-      await chargerDemandes();
+      await chargerDemandes(sessionTokenActuel);
     } catch (e) {
       alert(e.message || "Une erreur est survenue lors de l'envoi du devis.");
-      await chargerDemandes();
+      await chargerDemandes(sessionTokenActuel);
     }
   }
 
-  async function relancerDevis(leadId, btn) {
+  // siteId : voir le commentaire sur uploaderEtEnvoyerDevis ci-dessus, même
+  // raisonnement (bon nom d'entreprise / bon numéro Twilio pour le SMS).
+  async function relancerDevis(leadId, siteId, btn) {
+    const siteConcerne = siteId || draftId;
     if (!confirm('Renvoyer un SMS de relance pour ce devis ?')) return;
     btn.disabled = true;
     btn.textContent = 'Envoi…';
@@ -998,12 +1176,12 @@
       const smsResp = await fetch('/api/relancer-devis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, leadId, telephone: lead.telephone, prenom: lead.prenom, devisToken: lead.devis_token, nbRelancesActuel: lead.devis_nb_relances || 0 }),
+        body: JSON.stringify({ draftId: siteConcerne, leadId, telephone: lead.telephone, prenom: lead.prenom, devisToken: lead.devis_token, nbRelancesActuel: lead.devis_nb_relances || 0 }),
       });
       const smsData = await smsResp.json();
       if (!smsResp.ok || !smsData.success) throw new Error(smsData.error || "La relance n'a pas pu être envoyée.");
 
-      await chargerDemandes();
+      await chargerDemandes(sessionTokenActuel);
     } catch (e) {
       alert(e.message || 'Une erreur est survenue.');
       btn.disabled = false;

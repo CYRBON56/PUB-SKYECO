@@ -447,7 +447,7 @@
     paysagiste_concepteur: ["Un plan pensé pour durer.", "Votre extérieur, conçu sur-mesure.", "Un projet paysager pensé avant d'être réalisé."],
     arboriste: ["Des arbres bien tenus, en toute sécurité.", "Vos arbres, entre de bonnes mains.", "L'entretien de vos arbres, sans risque."],
     espaces_verts: ["Des espaces verts toujours soignés.", "Un entretien fiable, saison après saison.", "Vos espaces verts, pris en charge du début à la fin."],
-    autre: ["Un projet sur-mesure, pensé pour vous.", "Votre projet, réalisé avec sérieux.", "Un artisan de confiance, près de chez vous."],
+    autre: ["Un projet sur-mesure, pensé pour vous.", "Votre projet, réalisé avec sérieux.", "Un artisan de confiance, près de chez vous.", "Créé en 2007, fêtera bientôt ses 20 ans d'existence."],
   };
 
   // --- Accordéon ---
@@ -818,11 +818,6 @@
         resultBox.textContent = 'Décrivez brièvement votre activité et vos prix pour obtenir des suggestions.';
         return;
       }
-      if (!metiers.length) {
-        resultBox.style.display = 'block';
-        resultBox.textContent = "Aucun métier n'est renseigné sur ce profil — impossible de savoir quoi analyser.";
-        return;
-      }
 
       btnAnalyser.disabled = true;
       const texteOriginal = btnAnalyser.textContent;
@@ -847,6 +842,15 @@
           });
           rendreProduits();
           enregistrerProduitsSupabase();
+          // Le profil n'avait aucun métier renseigné — l'IA en a déduit un
+          // depuis la description, on l'enregistre sur le profil pour ne
+          // plus jamais le redemander.
+          if (!metiers.length && data.metierDeduit) {
+            metiers.push(data.metierDeduit);
+            metiersActuels = metiers;
+            sauvegarderChampsImmediat({ metier: metiers });
+            construireOptionsTitre(metiersActuels, titreChoisi);
+          }
           resultBox.innerHTML = `✓ ${data.produits.length} produit(s) identifié(s) et ajouté(s) ci-dessous — vérifiez et complétez les prix avant d'enregistrer.`;
         } else {
           resultBox.textContent = data.error || "L'analyse n'a pas pu aboutir — ajoutez vos produits manuellement.";

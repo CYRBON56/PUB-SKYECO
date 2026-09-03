@@ -937,6 +937,11 @@
         { headers: { apikey: SUPABASE_ANON_KEY } }
       );
       const leadRows = await leadResp.json();
+      // Vérification ajoutée (03/09) — sans elle, une vraie erreur Supabase
+      // (ex: colonne manquante) était auparavant lue comme "leadRows[0]"
+      // undefined et affichée à tort comme "Demande introuvable", masquant
+      // le vrai problème pendant toute la session de débogage précédente.
+      if (!leadResp.ok) throw new Error(leadRows.message || 'Erreur Supabase lors de la recherche du lead.');
       const lead = leadRows[0];
       if (!lead) throw new Error(`Demande introuvable (id ${leadId}).`);
       if (!lead.telephone) throw new Error("Ce prospect n'a pas de numéro de téléphone enregistré.");
@@ -985,6 +990,7 @@
         { headers: { apikey: SUPABASE_ANON_KEY } }
       );
       const leadRows = await leadResp.json();
+      if (!leadResp.ok) throw new Error(leadRows.message || 'Erreur Supabase lors de la recherche du lead.');
       const lead = leadRows[0];
       if (!lead) throw new Error(`Demande introuvable (id ${leadId}).`);
       if (!lead.devis_token || lead.devis_statut === 'aucun') throw new Error("Aucun devis n'a encore été envoyé pour ce prospect.");

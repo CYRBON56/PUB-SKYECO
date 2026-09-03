@@ -237,6 +237,13 @@
           <div class="upload-status" id="statusVideo">Ou colle un lien YouTube/Vimeo ci-dessous</div>
         </div>
         <input type="url" id="videoLien" placeholder="https://youtube.com/..." style="margin-top:10px;">
+
+        <label style="margin-top:18px;">Position du formulaire</label>
+        <select id="selectPositionFormulaire">
+          <option value="gauche">À gauche (photo/vidéo à droite)</option>
+          <option value="droite">À droite (photo/vidéo à gauche)</option>
+        </select>
+        <p class="hint">Choisis le côté où le formulaire de demande d'estimation s'affiche sur ta vitrine — l'autre côté affiche ta photo ou ta vidéo.</p>
       </div>
     </div>
   </div>
@@ -650,6 +657,15 @@
       checkCalculResineRMS.checked = draft.mode_calcul_resine_rms === true;
       checkCalculResineRMS.addEventListener('change', () => {
         sauvegarderChampsImmediat({ mode_calcul_resine_rms: checkCalculResineRMS.checked });
+      });
+
+      // Position du formulaire (gauche/droite) — voir public/apercu.html,
+      // .split-layout.formulaire-droite. "gauche" par défaut si jamais
+      // renseigné (comportement actuel inchangé).
+      const selectPosition = document.getElementById('selectPositionFormulaire');
+      selectPosition.value = draft.formulaire_position === 'droite' ? 'droite' : 'gauche';
+      selectPosition.addEventListener('change', () => {
+        sauvegarderChampsImmediat({ formulaire_position: selectPosition.value });
       });
 
       try {

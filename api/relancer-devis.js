@@ -1,13 +1,12 @@
 // /api/relancer-devis.js
-// Réécrit le 03/09 : ne s'occupe plus QUE de l'envoi du SMS de relance —
-// même raisonnement que api/envoyer-devis.js (voir son en-tête). La
-// lecture/écriture du lead se fait depuis mon-dashboard.html (clé publique).
+// Réécrit le 03/09 (deuxième version) : même raisonnement que
+// api/envoyer-devis.js — l'écriture sur skyeco_pro_leads requiert la clé
+// service_role (RLS verrouillée), la lecture reste faite côté client avec
+// la clé publique.
 //
 // Variables d'environnement requises :
-//   SUPABASE_URL, SUPABASE_ANON_KEY (lecture seule, publique)
+//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 //   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER
-
-const SITE_BASE_URL = 'https://www.skyeco.fr';
 
 function toE164(rawPhone) {
   const digits = String(rawPhone || '').replace(/\D/g, '');
@@ -34,24 +33,30 @@ async function envoyerSMS(to, body, fromOverride) {
   }
 }
 
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+const SITE_BASE_URL = 'https://www.skyeco.fr';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Méthode non autorisée' });
   }
 
-  const { draftId, telephone, prenom, devisToken } = req.body || {};
-  if (!draftId || !telephone || !devisToken) {
-    return res.status(400).json({ error: 'draftId, telephone ou devisToken manquant' });
+  const { draftId, leadId, telephone, prenom, devisToken, nbRelancesActuel } = req.body || {};
+  if (!draftId || !leadId || !telephone || !devisToken) {
+    return res.status(400).json({ error: 'Paramètres manquants' });
   }
 
-  const SUPABASE_URL = process.env.SUPABASE_URL || 'https://wklddwumirkdjkbxvzyj.supabase.co';
+  const SUPABASE_URL = process.env.SUPABASE_URL;
+  const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!SUPABASE_URL || !SERVICE_KEY) {
+    console.error('relancer-devis : variable manquante —', { SUPABASE_URL_present: !!SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY_present: !!SERVICE_KEY });
+    return res.status(500).json({ error: "Configuration serveur incomplète — contactez le support." });
+  }
+  const supaHeaders = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' };
 
   try {
     const draftResp = await fetch(
       `${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,twilio_phone_number`,
-      { headers: { apikey: SUPABASE_ANON_KEY } }
+      { headers: supaHeaders }
     );
     const draftRows = draftResp.ok ? await draftResp.json() : [];
     const draft = draftRows[0] || {};
@@ -61,6 +66,17 @@ export default async function handler(req, res) {
     const prenomLead = (prenom || '').trim();
     const texte = `Bonjour${prenomLead ? ' ' + prenomLead : ''}, petit rappel : ${nomEntreprise} attend votre retour sur le devis envoyé. Vous pouvez le consulter et le signer ici : ${lien}`;
     await envoyerSMS(telephone, texte, draft.twilio_phone_number);
+
+    const patchResp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_leads?id=eq.${leadId}`, {
+      method: 'PATCH',
+      headers: { ...supaHeaders, Prefer: 'return=minimal' },
+      body: JSON.stringify({ devis_statut: 'relance', devis_nb_relances: (nbRelancesActuel || 0) + 1 }),
+    });
+    if (!patchResp.ok) {
+      const errData = await patchResp.text().catch(() => '');
+      console.error('relancer-devis : échec PATCH —', patchResp.status, errData);
+      throw new Error(`Échec de la mise à jour du statut : ${errData}`);
+    }
 
     return res.status(200).json({ success: true });
   } catch (err) {

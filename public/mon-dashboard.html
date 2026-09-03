@@ -511,6 +511,20 @@
       e.returnValue = '';
     }
   });
+
+  // Essai gratuit terminé sans passage à un forfait payant : l'artisan
+  // garde son tableau de bord et sa vitrine accessibles en lecture (la
+  // diffusion Google Ads continue tant qu'il reste du budget), mais ne peut
+  // plus RIEN modifier tant qu'il n'a pas choisi une formule — appelé au
+  // début de chaque action de sauvegarde (zone, mots-clés, annonce,
+  // horaires...). Renvoie true si bloqué (l'appelant doit alors arrêter).
+  function bloquerSiEssaiExpire() {
+    if (draftInfo.status !== 'essai_expire') return false;
+    if (confirm("Votre essai gratuit est terminé — passez à une formule payante pour continuer à modifier votre vitrine.\n\nVoir les formules maintenant ?")) {
+      window.location.href = '/choisir-forfait.html?id=' + draftId;
+    }
+    return true;
+  }
   // Partagé entre initMotsCles() et initAnnonce() : reflète en permanence,
   // en mémoire, les mots-clés actuellement cochés à l'écran (triés par
   // volume décroissant) — utilisé par le bouton "Régénérer depuis mes
@@ -1175,7 +1189,7 @@
     }
 
     try {
-      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,metier,zone,departement,rayon_ciblage_km,mots_cles_choisis,annonce_titres,annonce_descriptions`, {
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,metier,zone,departement,rayon_ciblage_km,mots_cles_choisis,annonce_titres,annonce_descriptions,status`, {
         headers: { apikey: SUPABASE_ANON_KEY }
       });
       const rows = await resp.json();
@@ -1269,6 +1283,7 @@
     });
 
     btnEnregistrer.addEventListener('click', async () => {
+      if (bloquerSiEssaiExpire()) return;
       const nouvelleZone = input.value.trim();
       const nouveauRayon = rayonInput.value ? parseInt(rayonInput.value, 10) : null;
       if (!nouvelleZone) return;
@@ -1381,6 +1396,7 @@
 
     let sauvegardeTimer = null;
     async function sauvegarderAnnonce() {
+      if (bloquerSiEssaiExpire()) return;
       const titres = [champs.titre1.value.trim(), champs.titre2.value.trim(), champs.titre3.value.trim()].filter(t => t);
       const descriptions = [champs.desc1.value.trim(), champs.desc2.value.trim()].filter(d => d);
       demarrerSauvegarde();
@@ -1544,6 +1560,7 @@
       // genererAnnoncePropos() dans campagne.html, qui prend simplement
       // motsClesActuels[0]). Un mot-clé sans donnée de volume connue est
       // classé après ceux qui en ont une.
+      if (bloquerSiEssaiExpire()) return;
       const motsClesActifs = [...selection.entries()]
         .filter(([, coche]) => coche)
         .map(([texte]) => texte)
@@ -1732,6 +1749,7 @@
   }
 
   document.getElementById('btnHorairesPointe').addEventListener('click', async () => {
+    if (bloquerSiEssaiExpire()) return;
     const btn = document.getElementById('btnHorairesPointe');
     const note = document.getElementById('horairesNote');
     btn.disabled = true;
@@ -1759,6 +1777,7 @@
   });
 
   document.getElementById('btnHorairesToute').addEventListener('click', async () => {
+    if (bloquerSiEssaiExpire()) return;
     const btn = document.getElementById('btnHorairesToute');
     const note = document.getElementById('horairesNote');
     btn.disabled = true;

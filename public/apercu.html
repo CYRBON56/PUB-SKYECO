@@ -578,7 +578,20 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
   const state = { step:0 };
   const cardEl = document.getElementById('card');
   const progressEl = document.getElementById('progress');
-  function getSteps(){ return template.getSteps(state); }
+  function getSteps(){
+    const steps = template.getSteps(state);
+    // Surcharges de texte des questions générales par métier — configurées
+    // par l'artisan dans mes-elements.html (jsonb {clé: nouveau texte}).
+    // Ne change jamais la clé/le type/les options, seulement le libellé
+    // affiché au prospect.
+    const surcharges = draftInfo && draftInfo.questions_generales_texte;
+    if (surcharges && typeof surcharges === 'object') {
+      steps.forEach(s => {
+        if (surcharges[s.key]) s.question = surcharges[s.key];
+      });
+    }
+    return steps;
+  }
   function renderProgress(){
     const steps = getSteps(); progressEl.innerHTML='';
     const total = steps.length+1;

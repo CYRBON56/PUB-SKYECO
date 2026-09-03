@@ -144,7 +144,12 @@ export default async function handler(req, res) {
       console.error('Erreur insertion lead :', JSON.stringify(errData));
       return res.status(500).json({ error: "Votre demande n'a pas pu être enregistrée." });
     }
-
+    // Bug pré-existant corrigé (02/09) : la réponse de l'insertion n'était
+    // jamais lue, donc leadId n'était jamais réellement transmis au client
+    // malgré Prefer:return=representation déjà posé — apercu.html s'appuie
+    // dessus (ex: bouton "Envoyer mes photos par SMS").
+    const insertData = await insertResp.json().catch(() => []);
+    const leadId = insertData[0]?.id || null;
     // 3. Double notification — en parallèle, on continue même si l'un des envois échoue.
     const prenomAffiche = prenom || 'Bonjour';
     const nomEntreprise = draft.entreprise || 'votre artisan';
@@ -176,6 +181,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
+      leadId,
       notifications: {
         smsProspect: smsProspect.status === 'fulfilled' ? smsProspect.value : { success: false },
         emailProspect: emailProspect.status === 'fulfilled' ? emailProspect.value : { success: false },

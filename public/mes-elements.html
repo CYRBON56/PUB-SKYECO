@@ -264,6 +264,24 @@
     </div>
   </div>
 
+  <div class="section" data-section="questions">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">❓</span>
+        <div>
+          <h2>Questions posées à vos prospects</h2>
+          <p class="sub">Le texte des questions générales — modifie-le pour qu'il te ressemble, la structure du formulaire ne change pas.</p>
+        </div>
+      </div>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="section-body">
+      <div class="section-body-inner" id="questionsGeneralesListe">
+        <div class="hint">Renseigne d'abord ton métier dans "Formulaire estimatif" pour voir tes questions.</div>
+      </div>
+    </div>
+  </div>
+
   <div class="section" data-section="coordonnees">
     <div class="section-header">
       <div class="section-title">
@@ -450,6 +468,37 @@
     autre: ["Un projet sur-mesure, pensé pour vous.", "Votre projet, réalisé avec sérieux.", "Un artisan de confiance, près de chez vous.", "Créé en 2007, fêtera bientôt ses 20 ans d'existence."],
   };
 
+  // Questions générales posées à CHAQUE prospect selon le métier de
+  // l'artisan (texte par défaut ci-dessous) — doit rester synchronisé avec
+  // METIER_TEMPLATES dans apercu.html. Seul le TEXTE est modifiable ici
+  // (voir initQuestionsGenerales) ; la clé/le type/les choix restent fixes,
+  // gérés côté apercu.html.
+  const QUESTIONS_GENERALES_PAR_METIER = {
+    paysagiste: [{ cle: 'type_projet', texte: 'Quel est le type de projet ?' }],
+    piscine: [
+      { cle: 'type_piscine', texte: 'Quel type de piscine ?' },
+      { cle: 'etat_terrain', texte: 'Dans quel état est le terrain actuellement ?' },
+    ],
+    tonte: [
+      { cle: 'frequence', texte: 'Souhaitez-vous une intervention ponctuelle ou régulière ?' },
+      { cle: 'etat_actuel', texte: 'Dans quel état est le terrain actuellement ?' },
+    ],
+    terrasse: [
+      { cle: 'materiau', texte: 'Quel matériau préférez-vous ?' },
+      { cle: 'support_actuel', texte: 'Quel est le support actuel ?' },
+    ],
+    paysagiste_concepteur: [{ cle: 'prestation', texte: 'Quel type de prestation recherchez-vous ?' }],
+    arboriste: [
+      { cle: 'intervention', texte: "Quel type d'intervention ?" },
+      { cle: 'nb_arbres', texte: "Combien d'arbres sont concernés ?" },
+    ],
+    espaces_verts: [
+      { cle: 'type_site', texte: "De quel type de site s'agit-il ?" },
+      { cle: 'frequence', texte: "Quelle fréquence d'entretien souhaitez-vous ?" },
+    ],
+    autre: [],
+  };
+
   // --- Accordéon ---
   document.querySelectorAll('.section-header').forEach(header => {
     header.addEventListener('click', () => {
@@ -530,6 +579,7 @@
       metiersActuels = Array.isArray(draft.metier) ? draft.metier : (draft.metier ? [draft.metier] : []);
       zoneActuelle = draft.zone || null;
       construireOptionsTitre(metiersActuels, draft.titre_hero_choisi || '');
+      construireQuestionsGenerales(metiersActuels, draft.questions_generales_texte || {});
       tvaTauxActuel = draft.tva_taux || 20;
       try {
         initProduitsChiffrables(metiersActuels, draft.produits_chiffrables || []);
@@ -850,6 +900,7 @@
             metiersActuels = metiers;
             sauvegarderChampsImmediat({ metier: metiers });
             construireOptionsTitre(metiersActuels, titreChoisi);
+            construireQuestionsGenerales(metiersActuels, {});
           }
           resultBox.innerHTML = `✓ ${data.produits.length} produit(s) identifié(s) et ajouté(s) ci-dessous — vérifiez et complétez les prix avant d'enregistrer.<br>
             <a href="https://calendly.com/c-bon-ecosky/devis-skyeco-pro-appel-telephonique" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:6px; margin-top:12px; background:#1e6f4c; color:#fff; text-decoration:none; border-radius:8px; padding:10px 16px; font-size:0.85rem; font-weight:700;">📅 Prendre RDV pour le valider avec un technicien</a>`;
@@ -909,6 +960,45 @@
     inputPerso.addEventListener('input', () => { titreChoisi = inputPerso.value.trim(); });
     inputPerso.addEventListener('change', () => {
       sauvegarderChampsImmediat({ titre_hero_choisi: titreChoisi || null });
+    });
+  }
+
+  // Texte des questions générales posées à chaque prospect (métier
+  // courant) — la structure/clé/type reste fixe (gérée dans apercu.html),
+  // seul le libellé affiché est modifiable ici. Stocké en base sous forme
+  // {clé: nouveau texte} ; une clé absente du jsonb = texte par défaut
+  // toujours utilisé côté apercu.html.
+  let questionsGeneralesTexteActuel = {};
+  const minuteursQuestionsGenerales = {};
+  function construireQuestionsGenerales(metiers, texteExistant) {
+    const metierPrincipal = (metiers && metiers[0]) || 'autre';
+    const questions = QUESTIONS_GENERALES_PAR_METIER[metierPrincipal] || [];
+    const container = document.getElementById('questionsGeneralesListe');
+    questionsGeneralesTexteActuel = texteExistant && typeof texteExistant === 'object' ? { ...texteExistant } : {};
+
+    if (!questions.length) {
+      container.innerHTML = '<p class="hint">Aucune question générale spécifique pour ce métier.</p>';
+      return;
+    }
+
+    container.innerHTML = questions.map(q => `
+      <label>${q.texte}</label>
+      <input type="text" class="question-generale-input" data-cle="${q.cle}" data-defaut="${q.texte.replace(/"/g, '&quot;')}"
+        value="${(questionsGeneralesTexteActuel[q.cle] || '').replace(/"/g, '&quot;')}"
+        placeholder="${q.texte.replace(/"/g, '&quot;')}">
+    `).join('');
+
+    container.querySelectorAll('.question-generale-input').forEach(input => {
+      input.addEventListener('input', () => {
+        const cle = input.dataset.cle;
+        clearTimeout(minuteursQuestionsGenerales[cle]);
+        minuteursQuestionsGenerales[cle] = setTimeout(() => {
+          const valeur = input.value.trim();
+          if (valeur) questionsGeneralesTexteActuel[cle] = valeur;
+          else delete questionsGeneralesTexteActuel[cle]; // vide = revient au texte par défaut
+          sauvegarderChampsImmediat({ questions_generales_texte: questionsGeneralesTexteActuel });
+        }, 700);
+      });
     });
   }
 

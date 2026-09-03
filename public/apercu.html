@@ -827,16 +827,48 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
       }
     });
   }
-  // Calcul de prix automatique désactivé (01/09) : chaque demande passe
-  // désormais systématiquement par le chemin "non chiffrable" de
-  // renderResultat() — le prospect décrit son projet dans le champ texte
-  // libre "details_projet" (déjà présent dans pushQuantiteEtSuite) et est
-  // orienté vers la prise de rendez-vous téléphonique avec un technicien,
-  // qui construit le vrai chiffrage avec lui. On garde la fonction (plutôt
-  // que de la supprimer) pour ne pas casser les appels existants à
-  // calculerEstimation() ailleurs dans ce fichier.
+  // Calcul de prix automatique réactivé (02/09) — utilise le produit repéré
+  // par la classification IA (state.produitChoisi, voir wireStepEvents) et
+  // la quantité saisie par le prospect (state.quantite), à partir des
+  // produits chiffrables configurés par l'artisan lui-même dans
+  // mes-elements.html (prix, unité, minimum).
   function calculerEstimation(){
-    return { chiffrable:false };
+    const produit = state.produitChoisi;
+    if(!produit) return { chiffrable:false };
+
+    const prix = Number(produit.prix);
+    if(!prix || prix <= 0) return { chiffrable:false }; // prix non renseigné par l'artisan pour ce produit
+
+    let montantHT;
+    if(produit.unite === 'forfait'){
+      montantHT = prix;
+    } else {
+      const quantite = Number(state.quantite);
+      if(!quantite || quantite <= 0) return { chiffrable:false };
+      montantHT = quantite * prix;
+    }
+    if(produit.minimum && montantHT < Number(produit.minimum)){
+      montantHT = Number(produit.minimum);
+    }
+
+    const montantTTC = Math.round(montantHT * (1 + tvaTaux / 100));
+    // Remise volume générique (même paliers que la grille RMS EcoSky) —
+    // s'applique à tous les artisans Skyeco Pro : <5000€=5%, 5000-10000€=10%,
+    // ≥10000€=15%. Incite le prospect à contacter un technicien pour la
+    // faire valider, jamais appliquée automatiquement sur la facture finale.
+    let remisePourcent = 0;
+    if (montantTTC >= 10000) remisePourcent = 15;
+    else if (montantTTC >= 5000) remisePourcent = 10;
+    else if (montantTTC >= 1000) remisePourcent = 5;
+    const montantApresRemise = remisePourcent > 0 ? Math.round(montantTTC * (1 - remisePourcent / 100)) : montantTTC;
+
+    return {
+      chiffrable: true,
+      produit,
+      montantTTC,
+      remisePourcent,
+      montantApresRemise,
+    };
   }
 
   async function enregistrerDemande(){
@@ -913,10 +945,12 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
           '<div class="result-price">'+estimation.montantTTC+' € TTC</div>'+
           '<div class="result-note">TVA à '+tvaTaux+'% incluse.</div>'+
         '</div>'+
-        '<div style="background:var(--brand-tint,#eaf4ef); border:1.5px solid var(--brand,#1e6f4c); border-radius:10px; padding:12px 14px; margin-top:10px; font-size:13px; color:#14312a; text-align:center;">'+
-          '🎁 <strong>Remise de '+estimation.remisePourcent+'% possible selon le projet</strong><br/>'+
-          'Soit <strong>'+estimation.montantApresRemise+' €</strong> au lieu de '+estimation.montantTTC+' € — à confirmer avec l\'artisan.'+
-        '</div>';
+        (estimation.remisePourcent > 0 ?
+          '<div style="background:var(--brand-tint,#eaf4ef); border:1.5px solid var(--brand,#1e6f4c); border-radius:10px; padding:12px 14px; margin-top:10px; font-size:13px; color:#14312a; text-align:center;">'+
+            '🎁 <strong>Remise de '+estimation.remisePourcent+'% possible selon le projet</strong><br/>'+
+            'Soit <strong>'+estimation.montantApresRemise+' €</strong> au lieu de '+estimation.montantTTC+' € — contactez un technicien pour voir si vous pouvez en bénéficier.'+
+          '</div>' : '')+
+        '<a class="btn btn-primary" style="display:block; width:100%; text-align:center; text-decoration:none; margin-top:10px; box-sizing:border-box;" href="/prendre-rdv.html?id='+encodeURIComponent(draftId)+'" target="_blank" rel="noopener">📅 Prendre rendez-vous à un horaire précis — pour connaître précisément ce qui est réellement inclus'+(estimation.remisePourcent > 0 ? ' et voir si vous pouvez bénéficier de la remise' : '')+'</a>';
       disclaimer = 'Cette estimation reste indicative et devra être confirmée par l\'artisan lors d\'un appel téléphonique. Vous recevrez ce récapitulatif par email.';
     } else {
       // Projet non chiffrable automatiquement (aucun produit configuré par

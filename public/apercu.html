@@ -338,6 +338,75 @@ function pushQuantiteEtSuite(s, state){
   s.push({ key:"localisation", question:"Où se situe le projet ?", type:"location" });
 }
 
+// ---------------------------------------------------------------------------
+// Mode spécial "Calcul résine RMS EcoSky" (colonne mode_calcul_resine_rms,
+// case à cocher dans mes-elements.html) — cas particulier codé en dur,
+// réservé à la vitrine Skyeco Pro de RMS EcoSky elle-même. Remplace tout le
+// parcours générique ci-dessus (métier + produits_chiffrables + IA) par le
+// même parcours de questions que salesflow-ecosky/public/estimation.html,
+// pour un résultat identique à celui déjà en place sur le site SalesFlow de
+// RMS EcoSky. Voir calculerEstimationResineRMS (dans runWizard) pour le
+// calcul de prix, porté depuis salesflow-ecosky/api/submit-estimation.js.
+// Note : l'étape "coloris EcoSky'Gum" (sélecteur multi-couleurs) de
+// estimation.html n'est PAS reprise ici — apercu.html ne supporte pas ce
+// type d'étape ("multi-color") pour le moment.
+function getStepsResineRMS(state){
+  const s = [];
+  s.push({ key:"usage", question:"Quel est le type de projet ?", type:"choice",
+    options: [["pieton","Terrasse, tour de piscine ou allée piétonne"], ["carrossable","Parking ou allée pour véhicule (carrossable)"]] });
+
+  s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
+
+  if(state.usage === "pieton"){
+    s.push({ key:"support_pieton", question:"Quel est le support actuel ?", type:"choice",
+      options: [["dalle_beton","Dalle béton existante"], ["carrelage","Carrelage existant"], ["pave","Pavé autobloquant existant"], ["terrain_nu","Terrain nu, rien n'existe"]] });
+
+    if(state.support_pieton === "dalle_beton"){
+      s.push({ key:"etat_dalle", question:"Dans quel état est la dalle ?", type:"choice",
+        options: [["bon_etat","Bon état"], ["a_reprendre","Fissurée / nécessite réparation"]] });
+    }
+    if(state.support_pieton === "carrelage"){
+      s.push({ key:"enlevement_carrelage", question:"Qui retire les carreaux existants avant notre intervention ?", type:"choice",
+        options: [["client","Je m'en charge moi-même"], ["rms","RMS ECOSKY s'en charge"]] });
+    }
+  }
+
+  if(state.usage === "carrossable"){
+    s.push({ key:"etat_terrain_carrossable", question:"Dans quel état est le terrain actuellement ?", type:"choice",
+      options: [["terre_nue","Terre nue, rien n'est fait"], ["deja_prepare","Terrain déjà préparé / stabilisé"]] });
+    s.push({ key:"bordure", question:"Souhaitez-vous une bordure autour de la zone ?", type:"choice",
+      options: [["oui","Oui"], ["non","Non"]] });
+    if(state.bordure === "oui"){
+      s.push({ key:"bordure_metres", question:"Longueur de bordure souhaitée, en mètres linéaires ?", type:"number", placeholder:"Ex : 12" });
+    }
+    s.push({ key:"couleur_granulat", question:"Quelle couleur de granulat souhaitez-vous ?", type:"choice",
+      options: [["beige_jaune","Beige / Sable — RAL 1011 (inclus dans le prix de base)"], ["autre","Une autre couleur (+50€ HT/m²)"]] });
+  }
+
+  s.push({ key:"surface", question:"Quelle surface représente le projet, en m² environ ?", type:"number", placeholder:"Ex : 25" });
+  s.push({ key:"age_batiment", question:"Le bâtiment concerné a-t-il plus de 2 ans ?", type:"choice",
+    options: [["plus_2_ans","Oui, plus de 2 ans (TVA 10%)"], ["moins_2_ans","Non, moins de 2 ans (TVA 20%)"]] });
+  s.push({ key:"delai", question:"Sous quel délai souhaitez-vous réaliser ce projet ?", type:"choice",
+    options: Object.entries(DELAI_LABELS).map(([val,label])=>[val,label]) });
+  s.push({ key:"localisation", question:"Où se situe le projet ?", type:"location" });
+
+  return s;
+}
+
+// Libellés d'affichage pour le récapitulatif du mode "Calcul résine RMS
+// EcoSky" (voir construireRecapResineRMS dans runWizard) — reprennent les
+// libellés des options ci-dessus.
+const RESINE_RMS_LABELS = {
+  usage: { pieton:"Terrasse, tour de piscine ou allée piétonne", carrossable:"Parking ou allée pour véhicule (carrossable)" },
+  support_pieton: { dalle_beton:"Dalle béton existante", carrelage:"Carrelage existant", pave:"Pavé autobloquant existant", terrain_nu:"Terrain nu, rien n'existe" },
+  etat_dalle: { bon_etat:"Bon état", a_reprendre:"Fissurée / à reprendre" },
+  enlevement_carrelage: { client:"Retrait des carreaux par vos soins", rms:"Retrait des carreaux par RMS ECOSKY" },
+  etat_terrain_carrossable: { terre_nue:"Terre nue, rien n'est fait", deja_prepare:"Terrain déjà préparé / stabilisé" },
+  bordure: { oui:"Oui", non:"Non" },
+  couleur_granulat: { beige_jaune:"Beige / Sable — RAL 1011 (inclus)", autre:"Autre couleur (+50€ HT/m²)" },
+  age_batiment: { plus_2_ans:"Plus de 2 ans (TVA 10%)", moins_2_ans:"Moins de 2 ans (TVA 20%)" },
+};
+
 const FALLBACK_IMAGES = {
   paysagiste: [
     "https://images.unsplash.com/photo-1558904541-efa843a96f01?w=1200",
@@ -596,7 +665,13 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
   const cardEl = document.getElementById('card');
   const progressEl = document.getElementById('progress');
   function getSteps(){
-    const steps = template.getSteps(state);
+    // Mode "Calcul résine RMS EcoSky" (voir getStepsResineRMS) : remplace
+    // entièrement le parcours du métier par le parcours codé en dur de
+    // salesflow-ecosky, activé uniquement via la case dédiée dans
+    // mes-elements.html (mode_calcul_resine_rms).
+    const steps = (draftInfo && draftInfo.mode_calcul_resine_rms === true)
+      ? getStepsResineRMS(state)
+      : template.getSteps(state);
     // Surcharges de texte des questions générales par métier — configurées
     // par l'artisan dans mes-elements.html (jsonb {clé: nouveau texte}).
     // Ne change jamais la clé/le type/les options, seulement le libellé
@@ -921,6 +996,12 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
   // produits chiffrables configurés par l'artisan lui-même dans
   // mes-elements.html (prix, unité, minimum).
   function calculerEstimation(){
+    // Mode "Calcul résine RMS EcoSky" : calcul entièrement différent, voir
+    // calculerEstimationResineRMS ci-dessous (port exact de
+    // salesflow-ecosky/api/submit-estimation.js).
+    if(draftInfo && draftInfo.mode_calcul_resine_rms === true){
+      return calculerEstimationResineRMS();
+    }
     const produit = state.produitChoisi;
     if(!produit) return { chiffrable:false };
 
@@ -1010,6 +1091,128 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     return 'Estimation indicative : forfait de '+estimation.montantHT+'€ HT, soit environ '+estimation.montantTTC+'€ TTC (TVA '+tvaTaux+'%) — '+note+'.';
   }
 
+  // Port exact de computeEstimation() dans salesflow-ecosky/api/submit-estimation.js
+  // — mêmes règles de prix (115€/150€/180€ HT/m² selon support et état,
+  // +50€/m² couleur hors standard, bordure à 45€ HT/ml, TVA 10%/20% selon
+  // l'âge du bâtiment, remise 5/10/15% selon montant) et même phrase de
+  // résultat, pour que ce mode donne un résultat identique à celui déjà en
+  // place sur le site SalesFlow de RMS EcoSky. Voir getStepsResineRMS pour
+  // les questions correspondantes.
+  function calculerEstimationResineRMS(){
+    const surface = parseFloat(state.surface);
+    const usage = state.usage;
+    const batimentAncien = state.age_batiment === "plus_2_ans";
+    const tauxTVA = batimentAncien ? 0.10 : 0.20;
+
+    if(!surface || surface < 10){
+      return {
+        chiffrable: false,
+        texte: "RMS ECOSKY n'intervient pas pour des surfaces inférieures à 10 m². N'hésitez pas à nous recontacter si votre projet évolue.",
+      };
+    }
+
+    let prixM2 = null;
+    let note = "";
+    let chiffrable = true;
+
+    if(usage === "pieton"){
+      const support = state.support_pieton;
+      if(support === "dalle_beton"){
+        prixM2 = 115;
+        note = state.etat_dalle === "a_reprendre"
+          ? "une plus-value sera à prévoir pour la réparation de la dalle, montant à valider par un technicien"
+          : "sous réserve de la qualité réelle de la dalle, à confirmer";
+      } else if(support === "carrelage"){
+        if(state.enlevement_carrelage === "client"){
+          prixM2 = 115;
+          note = "prix applicable une fois les carreaux existants retirés par vos soins";
+        } else {
+          chiffrable = false;
+        }
+      } else if(support === "pave"){
+        prixM2 = 115;
+        note = "prix de départ : le tarif définitif dépend de l'état des pavés existants et sera validé par un technicien";
+      } else {
+        chiffrable = false;
+      }
+    } else if(usage === "carrossable"){
+      if(state.etat_terrain_carrossable === "terre_nue"){
+        prixM2 = 180;
+        note = "comprend terrassement, évacuation, pose d'un concassé, profilage et compactage";
+      } else if(state.etat_terrain_carrossable === "deja_prepare"){
+        prixM2 = 150;
+        note = "terrain déjà préparé, tarif à valider avec un technicien";
+      }
+      if(prixM2 && state.couleur_granulat === "autre"){
+        prixM2 += 50;
+        note += " — plus-value couleur incluse (hors granulat quartz beige/jaune standard)";
+      }
+    }
+
+    if(!chiffrable || !prixM2){
+      return {
+        chiffrable: false,
+        texte: "Ce type de projet nécessite une évaluation par un technicien pour être chiffré de façon fiable — nous vous recontactons rapidement.",
+      };
+    }
+
+    const montantHT = Math.round(prixM2 * surface);
+
+    let bordureHT = 0;
+    let bordureTexte = "";
+    if(usage === "carrossable" && state.bordure === "oui" && state.bordure_metres){
+      const metres = parseFloat(state.bordure_metres);
+      if(metres > 0){
+        bordureHT = Math.round(45 * metres);
+        bordureTexte = ' + '+bordureHT+'€ HT de bordure ('+metres+'m linéaires à 45€ HT/m)';
+      }
+    }
+
+    const totalHT = montantHT + bordureHT;
+    const montantTTC = Math.round(totalHT * (1 + tauxTVA));
+
+    let remisePourcent = 5;
+    if(montantTTC >= 10000) remisePourcent = 15;
+    else if(montantTTC >= 5000) remisePourcent = 10;
+    const remiseMontant = Math.round(montantTTC * (remisePourcent / 100));
+    const montantApresRemise = montantTTC - remiseMontant;
+
+    return {
+      chiffrable: true,
+      prixM2,
+      montantHT: totalHT,
+      montantTTC,
+      remisePourcent,
+      remiseMontant,
+      montantApresRemise,
+      tauxTVA: batimentAncien ? "10%" : "20%",
+      texte: 'Estimation indicative : '+prixM2+'€ HT/m² × '+surface+'m² = '+montantHT+'€ HT'+bordureTexte+', soit environ '+montantTTC+'€ TTC (TVA '+(batimentAncien ? "10%" : "20%")+') — '+note+'.',
+    };
+  }
+
+  // Récapitulatif du mode "Calcul résine RMS EcoSky" — pendant de
+  // construireRecap() ci-dessus, mais basé sur les champs du parcours
+  // salesflow-ecosky (state.usage, state.support_pieton…) plutôt que sur un
+  // "produit" générique.
+  function construireRecapResineRMS(estimation){
+    const recap = [];
+    if(state.usage) recap.push({ label:'Type de projet', valeur: RESINE_RMS_LABELS.usage[state.usage] || state.usage });
+    if(state.support_pieton) recap.push({ label:'Support actuel', valeur: RESINE_RMS_LABELS.support_pieton[state.support_pieton] || state.support_pieton });
+    if(state.etat_dalle) recap.push({ label:'État de la dalle', valeur: RESINE_RMS_LABELS.etat_dalle[state.etat_dalle] || state.etat_dalle });
+    if(state.enlevement_carrelage) recap.push({ label:'Retrait des carreaux', valeur: RESINE_RMS_LABELS.enlevement_carrelage[state.enlevement_carrelage] || state.enlevement_carrelage });
+    if(state.etat_terrain_carrossable) recap.push({ label:'État du terrain', valeur: RESINE_RMS_LABELS.etat_terrain_carrossable[state.etat_terrain_carrossable] || state.etat_terrain_carrossable });
+    if(state.bordure) recap.push({ label:'Bordure souhaitée', valeur: RESINE_RMS_LABELS.bordure[state.bordure] || state.bordure });
+    if(state.bordure === 'oui' && state.bordure_metres) recap.push({ label:'Longueur de bordure', valeur: state.bordure_metres + ' ml' });
+    if(state.couleur_granulat) recap.push({ label:'Couleur de granulat', valeur: RESINE_RMS_LABELS.couleur_granulat[state.couleur_granulat] || state.couleur_granulat });
+    if(state.surface) recap.push({ label:'Surface', valeur: state.surface + ' m²' });
+    if(state.age_batiment) recap.push({ label:'Bâtiment', valeur: RESINE_RMS_LABELS.age_batiment[state.age_batiment] || state.age_batiment });
+    if(state.delai && DELAI_LABELS[state.delai]) recap.push({ label:'Délai souhaité', valeur: DELAI_LABELS[state.delai] });
+    const localisation = [state.ville, state.code_postal].filter(Boolean).join(' ');
+    if(localisation) recap.push({ label:'Localisation', valeur: localisation });
+    if(estimation && estimation.chiffrable) recap.push({ label:'Montant estimé', valeur: estimation.montantTTC + ' € TTC' });
+    return recap;
+  }
+
   async function enregistrerDemande(){
     cardEl.innerHTML = '<div class="question" style="text-align:center;">Enregistrement de votre demande…</div>';
     document.getElementById('progress').style.display = 'none';
@@ -1025,7 +1228,8 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     // montant sec — voir sa gestion du champ optionnel "recap". Même
     // fonction que celle utilisée pour l'affichage prospect en mode "devis
     // détaillé" (voir construireRecap, renderResultat).
-    const recap = estimation.chiffrable ? construireRecap(estimation) : null;
+    const modeRMS = draftInfo && draftInfo.mode_calcul_resine_rms === true;
+    const recap = estimation.chiffrable ? (modeRMS ? construireRecapResineRMS(estimation) : construireRecap(estimation)) : null;
 
     let error = null;
     let leadId = null;
@@ -1068,8 +1272,42 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     // mes-elements.html (case "Présenter le résultat façon devis détaillé",
     // colonne mode_devis_detaille). Désactivé par défaut : sans cette case
     // cochée, le comportement reste le montant unique ci-dessous, inchangé.
-    const modeDevisDetaille = estimation.chiffrable && draftInfo && draftInfo.mode_devis_detaille === true;
-    if(modeDevisDetaille){
+    const modeRMS = draftInfo && draftInfo.mode_calcul_resine_rms === true;
+    const modeDevisDetaille = !modeRMS && estimation.chiffrable && draftInfo && draftInfo.mode_devis_detaille === true;
+    if(modeRMS && estimation.chiffrable){
+      // Résultat du mode "Calcul résine RMS EcoSky" — même présentation que
+      // le mode "devis détaillé" générique ci-dessous, mais avec la phrase
+      // et les champs propres au parcours salesflow-ecosky (voir
+      // calculerEstimationResineRMS / construireRecapResineRMS).
+      const detailsRecap = construireRecapResineRMS(estimation).filter(l => l.label !== 'Montant estimé');
+      priceBlock =
+        '<div class="result-box">'+
+          '<div class="result-note">Estimation indicative</div>'+
+          '<div style="font-weight:800; font-size:26px; color:#14312a; margin:4px 0;">'+estimation.montantTTC+' € TTC</div>'+
+          '<div class="result-note">'+estimation.texte+'</div>'+
+        '</div>'+
+        (estimation.remisePourcent > 0 ?
+          '<div style="background:var(--brand-tint,#eaf4ef); border:1.5px solid var(--brand,#1e6f4c); border-radius:10px; padding:12px 14px; margin-top:10px; font-size:13px; color:#14312a; text-align:center;">'+
+            '🎁 <strong>Remise de '+estimation.remisePourcent+'% possible selon le projet</strong><br/>'+
+            'Soit <strong>'+estimation.montantApresRemise+' €</strong> au lieu de '+estimation.montantTTC+' € — contactez un technicien pour voir si vous pouvez en bénéficier.'+
+          '</div>' : '')+
+        (detailsRecap.length ?
+          '<div class="result-box" style="text-align:left; margin-top:10px;">'+
+            '<div class="result-note" style="font-weight:700; color:#14312a; margin-bottom:6px;">Détails de votre demande</div>'+
+            detailsRecap.map(l=>'<div class="result-note">'+l.label+' : <strong style="color:#14312a;">'+l.valeur+'</strong></div>').join('')+
+          '</div>' : '')+
+        '<a class="btn btn-primary" style="display:block; width:100%; text-align:center; text-decoration:none; margin-top:10px; box-sizing:border-box;" href="/prendre-rdv.html?id='+encodeURIComponent(draftId)+'" target="_blank" rel="noopener">📅 Prendre rendez-vous à un horaire précis — pour connaître précisément ce qui est réellement inclus'+(estimation.remisePourcent > 0 ? ' et voir si vous pouvez bénéficier de la remise' : '')+'</a>';
+      disclaimer = 'Cette estimation reste indicative et sans valeur contractuelle — elle devra être confirmée par l\'artisan lors d\'un appel téléphonique. Vous recevrez ce récapitulatif par email.';
+    } else if(modeRMS){
+      // Cas non chiffrable en mode RMS (surface < 10m², terrain nu, carrelage
+      // à retirer par RMS…) : on affiche le message exact de
+      // salesflow-ecosky plutôt que le message générique, toujours routé
+      // vers la prise de rendez-vous, jamais bloqué.
+      priceBlock =
+        '<div class="result-box"><div class="result-note">'+estimation.texte+'</div></div>'+
+        '<a class="btn btn-primary" style="display:block; width:100%; text-align:center; text-decoration:none; margin-top:10px; box-sizing:border-box;" href="/prendre-rdv.html?id='+encodeURIComponent(draftId)+'" target="_blank" rel="noopener">📅 Prendre rendez-vous</a>';
+      disclaimer = 'Vous recevrez une confirmation de votre demande par email.';
+    } else if(modeDevisDetaille){
       // Style calqué sur ce que fait déjà RMS EcoSky sur SalesFlow (une
       // phrase de calcul façon devis sous le montant), plutôt qu'un tableau —
       // voir construirePhraseEstimation. Les à-côtés (délai, localisation,

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Envoyer mes photos — Skyeco Pro</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f7f5f0; color:#2a3d35; padding:32px 20px 60px; line-height:1.6; }
+  .wrap { max-width:480px; margin:0 auto; }
+  h1 { font-size:1.4rem; margin-bottom:10px; }
+  .sub { font-size:0.92rem; color:#5f6f66; margin-bottom:24px; }
+  .upload-box {
+    border:1.5px dashed #d8d2c2; border-radius:14px; padding:28px; text-align:center; cursor:pointer;
+    background:#fdfcf9; transition:all 0.2s; margin-bottom:18px;
+  }
+  .upload-box.has-file { border-style:solid; border-color:#1e6f4c; background:#eaf4ef; }
+  .upload-box input[type=file] { display:none; }
+  .upload-label { font-size:1rem; font-weight:700; color:#1e6f4c; }
+  .upload-status { font-size:0.82rem; color:#8a9891; margin-top:8px; }
+  .photos-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(90px,1fr)); gap:10px; margin-bottom:20px; }
+  .photo-thumb { position:relative; aspect-ratio:1; border-radius:10px; overflow:hidden; background:#f0eee6; }
+  .photo-thumb img { width:100%; height:100%; object-fit:cover; }
+  button.btn { width:100%; background:#1e6f4c; color:#fff; border:none; border-radius:12px; padding:16px; font-size:1rem; font-weight:700; cursor:pointer; }
+  button.btn:disabled { opacity:0.5; cursor:default; }
+  .msg-ok { text-align:center; padding:40px 20px; }
+  .msg-ok .icon { font-size:2.6rem; margin-bottom:10px; }
+  .msg-err { text-align:center; padding:40px 20px; color:#b5482a; }
+</style>
+</head>
+<body>
+  <div class="wrap" id="wrap">
+    <div style="text-align:center; padding:60px 0; color:#8a9891;">Chargement…</div>
+  </div>
+
+<script>
+  const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+  const BUCKET = 'skyeco-pro-media';
+  const params = new URLSearchParams(window.location.search);
+  const leadId = params.get('lead');
+  const token = params.get('token');
+  const wrap = document.getElementById('wrap');
+  let photosUrls = [];
+
+  async function init() {
+    if (!leadId || !token) {
+      wrap.innerHTML = '<div class="msg-err">Lien invalide.</div>';
+      return;
+    }
+    try {
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_leads?id=eq.${leadId}&select=photos,photos_token`, {
+        headers: { apikey: SUPABASE_ANON_KEY }
+      });
+      const rows = await resp.json();
+      const lead = rows[0];
+      if (!lead || lead.photos_token !== token) {
+        wrap.innerHTML = '<div class="msg-err">Ce lien est invalide ou a expiré.</div>';
+        return;
+      }
+      photosUrls = Array.isArray(lead.photos) ? lead.photos : [];
+      render();
+    } catch (e) {
+      wrap.innerHTML = '<div class="msg-err">Impossible de charger la page pour le moment.</div>';
+    }
+  }
+
+  function render() {
+    wrap.innerHTML = `
+      <h1>📷 Envoyez vos photos</h1>
+      <p class="sub">Prenez ou choisissez des photos de votre projet — elles seront transmises directement à l'artisan avec votre demande.</p>
+      <div class="upload-box ${photosUrls.length ? 'has-file' : ''}" id="boxPhotos">
+        <input type="file" id="inputPhotos" accept="image/*" capture="environment" multiple>
+        <div class="upload-label">📁 Prendre ou choisir des photos</div>
+        <div class="upload-status" id="statusPhotos">${photosUrls.length ? photosUrls.length + ' photo(s) déjà envoyée(s)' : 'Aucune photo pour le moment'}</div>
+      </div>
+      <div class="photos-grid" id="photosGrid"></div>
+      <button type="button" class="btn" id="btnTerminer">✓ Terminé</button>
+    `;
+    rafraichirGrid();
+    document.getElementById('boxPhotos').addEventListener('click', () => document.getElementById('inputPhotos').click());
+    document.getElementById('inputPhotos').addEventListener('change', uploaderPhotos);
+    document.getElementById('btnTerminer').addEventListener('click', () => {
+      wrap.innerHTML = `
+        <div class="msg-ok">
+          <div class="icon">✅</div>
+          <div style="font-weight:700; font-size:1.1rem; margin-bottom:8px;">Merci !</div>
+          <div style="color:#5f6f66;">Vos photos ont bien été transmises. Vous pouvez fermer cette page.</div>
+        </div>
+      `;
+    });
+  }
+
+  function rafraichirGrid() {
+    document.getElementById('photosGrid').innerHTML = photosUrls.map(url => `
+      <div class="photo-thumb"><img src="${url}" alt=""></div>
+    `).join('');
+  }
+
+  async function uploaderPhotos(e) {
+    const files = Array.from(e.target.files);
+    const statusEl = document.getElementById('statusPhotos');
+    statusEl.textContent = `Envoi de ${files.length} photo(s)…`;
+    for (const file of files) {
+      try {
+        const ext = file.name.split('.').pop();
+        const nomFichier = `photos-prospect/${leadId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const resp = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${nomFichier}?apikey=${encodeURIComponent(SUPABASE_ANON_KEY)}`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${SUPABASE_ANON_KEY}`, apikey: SUPABASE_ANON_KEY, 'Content-Type': file.type || 'application/octet-stream' },
+          body: file,
+        });
+        if (!resp.ok) throw new Error();
+        photosUrls.push(`${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${nomFichier}`);
+      } catch (err) { /* on continue les autres photos même si une échoue */ }
+    }
+    statusEl.textContent = `${photosUrls.length} photo(s) envoyée(s)`;
+    document.getElementById('boxPhotos').classList.add('has-file');
+    rafraichirGrid();
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_leads?id=eq.${leadId}`, {
+        method: 'PATCH',
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify({ photos: photosUrls }),
+      });
+    } catch (e) { /* silencieux — les photos restent visibles à l'écran même si la sauvegarde échoue, l'artisan pourra redemander si besoin */ }
+  }
+
+  init();
+</script>
+</body>
+</html>

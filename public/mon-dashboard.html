@@ -384,6 +384,20 @@
       <div class="estim-note">Ce texte décrit votre secteur d'intervention pour vos clients. Le ciblage réel de vos annonces se pose actuellement à la main dans Google Ads (le connecteur utilisé ne le permet pas encore automatiquement).</div>
     </div>
 
+    <div class="ads-souspanel" id="sectionBudgetJournalier">
+      <h3>Combien investir par jour ?</h3>
+      <div id="budgetJournalierAffichage" class="zone-affichage">
+        <span id="budgetJournalierValeur">—</span>
+        <button type="button" id="btnModifierBudgetJournalier" class="btn-modifier-zone">✏️ Modifier</button>
+      </div>
+      <div id="budgetJournalierEdition" class="zone-edition" style="display:none;">
+        <input type="number" id="budgetJournalierInput" min="1" step="0.5" placeholder="Ex : 20">
+        <button type="button" id="btnEnregistrerBudgetJournalier">Enregistrer</button>
+        <button type="button" id="btnAnnulerBudgetJournalier" class="btn-annuler-zone">Annuler</button>
+      </div>
+      <div class="estim-note">Montant maximum que Google Ads peut dépenser par jour sur votre campagne (en €). Par défaut, calculé automatiquement à partir de votre budget mensuel payé — vous pouvez le régler vous-même ici. Un montant journalier élevé épuise simplement votre solde plus vite (la diffusion se met alors en pause automatiquement, voir ci-dessus).</div>
+    </div>
+
     <div class="ads-souspanel">
       <h3>✨ Quels mots-clés pour votre annonce ?</h3>
       <div class="motscles-hint">Décrivez votre métier et ce que vous voulez mettre en avant (prestations, produits, ce qui attire vos clients) — l'IA vous propose des mots-clés à cocher. Cette sélection sert de base à votre annonce et à l'estimation de clics ci-dessous.</div>
@@ -1380,7 +1394,7 @@
     }
 
     try {
-      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,metier,zone,departement,rayon_ciblage_km,mots_cles_choisis,annonce_titres,annonce_descriptions,status`, {
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,metier,zone,departement,rayon_ciblage_km,mots_cles_choisis,annonce_titres,annonce_descriptions,status,budget_journalier_manuel,tarif_prix`, {
         headers: { apikey: SUPABASE_ANON_KEY }
       });
       const rows = await resp.json();
@@ -1389,6 +1403,7 @@
     } catch (e) { /* on garde draftInfo vide — repli générique dans rafraichirEstimationVolume */ }
 
     initZoneCiblee(draftInfo.zone || '', draftInfo.rayon_ciblage_km || '');
+    initBudgetJournalier(draftInfo.budget_journalier_manuel || null, draftInfo.tarif_prix || null);
     const motsClesApi = initMotsCles(draftInfo, rafraichirEstimationVolume);
     initAnnonce(draftInfo);
 
@@ -1514,6 +1529,78 @@
         }).catch(() => {});
       } catch (e) {
         alert("Impossible d'enregistrer la zone pour le moment.");
+      } finally {
+        terminerSauvegarde();
+        btnEnregistrer.disabled = false;
+        btnEnregistrer.textContent = 'Enregistrer';
+      }
+    });
+  }
+
+  // Montant journalier (€/jour) réellement envoyé à Google Ads — demandé le
+  // 03/09 pour pouvoir le régler soi-même depuis le tableau de bord au lieu
+  // du seul calcul automatique (budget mensuel payé / 30) posé à la création
+  // (voir create-google-ads-campaign.js) ou à chaque recharge. Même schéma
+  // affichage/édition que initZoneCiblee ci-dessus.
+  function initBudgetJournalier(budgetManuelActuel, tarifMensuelPaye) {
+    let budgetManuel = budgetManuelActuel;
+    const TAUX_COMMISSION = 0.50; // doit rester synchronisé avec create-google-ads-campaign.js
+    const budgetAutoEstime = tarifMensuelPaye
+      ? +((tarifMensuelPaye * (1 - TAUX_COMMISSION)) / 30).toFixed(2)
+      : null;
+
+    const affichage = document.getElementById('budgetJournalierAffichage');
+    const edition = document.getElementById('budgetJournalierEdition');
+    const valeurEl = document.getElementById('budgetJournalierValeur');
+    const input = document.getElementById('budgetJournalierInput');
+    const btnModifier = document.getElementById('btnModifierBudgetJournalier');
+    const btnEnregistrer = document.getElementById('btnEnregistrerBudgetJournalier');
+    const btnAnnuler = document.getElementById('btnAnnulerBudgetJournalier');
+
+    function rafraichirAffichage() {
+      if (budgetManuel) {
+        valeurEl.textContent = `${budgetManuel} €/jour`;
+      } else if (budgetAutoEstime) {
+        valeurEl.textContent = `≈ ${budgetAutoEstime} €/jour (calculé automatiquement à partir de votre budget mensuel)`;
+      } else {
+        valeurEl.textContent = 'Non défini pour le moment';
+      }
+    }
+    rafraichirAffichage();
+
+    btnModifier.addEventListener('click', () => {
+      input.value = budgetManuel || budgetAutoEstime || '';
+      affichage.style.display = 'none';
+      edition.style.display = 'flex';
+      input.focus();
+    });
+
+    btnAnnuler.addEventListener('click', () => {
+      edition.style.display = 'none';
+      affichage.style.display = 'flex';
+    });
+
+    btnEnregistrer.addEventListener('click', async () => {
+      if (bloquerSiEssaiExpire()) return;
+      const nouveauMontant = parseFloat(input.value);
+      if (!nouveauMontant || nouveauMontant <= 0) return;
+      btnEnregistrer.disabled = true;
+      btnEnregistrer.textContent = '…';
+      demarrerSauvegarde();
+      try {
+        const resp = await fetch('/api/definir-budget-journalier', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId, budgetJournalier: nouveauMontant }),
+        });
+        const data = await resp.json();
+        if (!resp.ok || !data.success) throw new Error(data.error || '');
+        budgetManuel = nouveauMontant;
+        rafraichirAffichage();
+        edition.style.display = 'none';
+        affichage.style.display = 'flex';
+      } catch (e) {
+        alert("Impossible d'enregistrer le montant journalier pour le moment — vérifiez qu'une campagne est bien active.");
       } finally {
         terminerSauvegarde();
         btnEnregistrer.disabled = false;

@@ -57,6 +57,30 @@ async function executerAction(action, params) {
   return data;
 }
 
+// Bug corrigé le 03/09 (détecté sur la 1ère fois que l'automatisation
+// atteignait cette étape en conditions réelles, RESINE MARBRE SOL/RMS) :
+// l'API Windsor.ai ne renvoie PAS un champ structuré "campaign_id" / "id" —
+// elle renvoie un texte de confirmation dans data.result, du type "Search
+// campaign '...' (id 24207666876) created successfully...". Le code
+// cherchait campagne.campaign_id / campagne.id, toujours undefined, ce qui
+// envoyait un campaign_id "undefined" à l'étape suivante (create_ad_group),
+// rejetée par Windsor.ai avec "campaign_id: Field required" — la campagne,
+// elle, avait bien été créée (orpheline, jamais rattachée au dashboard).
+// Cette fonction extrait l'id numérique (ou "ad_group_id~ad_id") du texte de
+// confirmation, avec repli sur d'éventuels champs structurés si l'API change.
+function extraireId(data) {
+  if (data && typeof data === 'object') {
+    if (data.campaign_id) return String(data.campaign_id);
+    if (data.ad_group_id) return String(data.ad_group_id);
+    if (data.id) return String(data.id);
+    if (typeof data.result === 'string') {
+      const m = data.result.match(/\(id[:\s]+([0-9]+(?:~[0-9]+)?)\)/i);
+      if (m) return m[1];
+    }
+  }
+  return null;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Méthode non autorisée' });
@@ -153,7 +177,10 @@ export default async function handler(req, res) {
       bidding_strategy: 'manual_cpc',
       status: 'paused',
     });
-    const campaignId = campagne.campaign_id || campagne.id;
+    const campaignId = extraireId(campagne);
+    if (!campaignId) {
+      throw new Error(`Impossible d'extraire l'id de la campagne créée : ${JSON.stringify(campagne)}`);
+    }
 
     // 2. Créer le groupe d'annonces.
     const adGroup = await executerAction('create_ad_group', {
@@ -161,7 +188,10 @@ export default async function handler(req, res) {
       name: 'Estimation',
       status: 'paused',
     });
-    const adGroupId = adGroup.ad_group_id || adGroup.id;
+    const adGroupId = extraireId(adGroup);
+    if (!adGroupId) {
+      throw new Error(`Impossible d'extraire l'id du groupe d'annonces créé (campagne ${campaignId} déjà créée dans Google Ads) : ${JSON.stringify(adGroup)}`);
+    }
 
     // 3. Ajouter les mots-clés (phrase match, plus sûr que broad pour du BTP local).
     await executerAction('push_keywords', {

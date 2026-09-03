@@ -16,6 +16,12 @@
 
 const UNITES_VALIDES = ['m2', 'ml', 'm3', 'forfait'];
 const TYPES_VALIDES = ['nombre', 'texte', 'case'];
+// Vocabulaire fermé des métiers connus du reste du système (titres suggérés,
+// modèles de vitrine dans apercu.html, mots-clés Google Ads...) — quand
+// l'artisan n'a renseigné aucun métier sur son profil, l'IA doit choisir
+// celle qui correspond le mieux à sa description plutôt qu'en inventer une
+// nouvelle qui casserait ces autres fonctionnalités.
+const METIERS_CONNUS = ['paysagiste', 'piscine', 'tonte', 'terrasse', 'paysagiste_concepteur', 'arboriste', 'espaces_verts', 'resine', 'autre'];
 
 const SYSTEM_PROMPT = `Tu aides un artisan du BTP ou du paysagisme en France (résine/revêtements de sol, clôtures, terrassement, assainissement, paysagisme, piscine, élagage, etc.) à structurer ce qu'il facture, pour construire un formulaire de devis en ligne.
 
@@ -65,12 +71,16 @@ export default async function handler(req, res) {
   if (!description || typeof description !== 'string' || !description.trim()) {
     return res.status(400).json({ success: false, error: 'Merci de décrire votre activité.' });
   }
-  if (!Array.isArray(metiers) || metiers.length === 0) {
-    return res.status(400).json({ success: false, error: 'Aucun métier fourni.' });
-  }
+  // Un profil sans métier renseigné (case pas cochée à l'inscription) n'est
+  // plus bloqué (02/09) : l'IA choisit elle-même le métier le plus adapté
+  // parmi la liste connue du système, à partir de cette même description.
+  const metiersAutorises = Array.isArray(metiers) && metiers.length ? metiers : METIERS_CONNUS;
+  const metierAInferer = !Array.isArray(metiers) || metiers.length === 0;
 
   const contexte = [
-    `Métiers renseignés sur le profil de l'artisan (utilise EXACTEMENT une de ces clés pour "metier") : ${metiers.join(', ')}`,
+    metierAInferer
+      ? `Aucun métier n'est renseigné sur le profil de l'artisan — déduis toi-même celui qui correspond le mieux à sa description, EXACTEMENT une des clés suivantes pour "metier" sur chaque produit : ${metiersAutorises.join(', ')}`
+      : `Métiers renseignés sur le profil de l'artisan (utilise EXACTEMENT une de ces clés pour "metier") : ${metiersAutorises.join(', ')}`,
     `Description donnée par l'artisan : ${description.trim().substring(0, 2000)}`,
   ].join('\n');
 
@@ -107,13 +117,13 @@ export default async function handler(req, res) {
     }
     if (!Array.isArray(brut)) throw new Error('Format de réponse IA invalide.');
 
-    const metiersConnus = new Set(metiers);
+    const metiersConnus = new Set(metiersAutorises);
 
     const produits = brut
       .filter(p => p && typeof p.nom === 'string' && p.nom.trim())
       .map((p, i) => {
         const nom = p.nom.trim().substring(0, 80);
-        const metier = metiersConnus.has(p.metier) ? p.metier : metiers[0];
+        const metier = metiersConnus.has(p.metier) ? p.metier : metiersAutorises[0];
         const unite = UNITES_VALIDES.includes(p.unite) ? p.unite : 'forfait';
         const prix = typeof p.prix === 'number' && isFinite(p.prix) ? p.prix : null;
         const minimum = typeof p.minimum === 'number' && isFinite(p.minimum) ? p.minimum : null;
@@ -137,7 +147,18 @@ export default async function handler(req, res) {
 
     if (!produits.length) throw new Error("L'IA n'a identifié aucun produit exploitable.");
 
-    return res.status(200).json({ success: true, produits });
+    // Si le profil n'avait aucun métier renseigné, on renvoie celui déduit
+    // (le plus fréquent parmi les produits identifiés) pour que
+    // mes-elements.html puisse l'enregistrer sur le profil — sinon ce
+    // blocage reviendrait à chaque nouvelle analyse.
+    let metierDeduit = null;
+    if (metierAInferer) {
+      const comptage = {};
+      produits.forEach(p => { comptage[p.metier] = (comptage[p.metier] || 0) + 1; });
+      metierDeduit = Object.entries(comptage).sort((a, b) => b[1] - a[1])[0][0];
+    }
+
+    return res.status(200).json({ success: true, produits, metierDeduit });
   } catch (err) {
     console.error('Erreur analyser-produits-chiffrables :', err);
     return res.status(500).json({ success: false, error: "Impossible d'analyser votre activité pour le moment — vous pouvez ajouter vos produits manuellement." });

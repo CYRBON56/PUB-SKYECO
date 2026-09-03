@@ -12,6 +12,13 @@
 // appel à ce endpoint échouait donc silencieusement côté serveur (erreur
 // Windsor.ai capturée par le catch, jamais un vrai pause/reprise appliqué).
 //
+// 2e bug corrigé le 03/09 (même jour, détecté sur la 1ère campagne réelle
+// créée en live) : l'ID de compte Google Ads était envoyé à Windsor.ai SANS
+// tirets ("7849903984"), alors que Windsor.ai attend le format AVEC tirets
+// ("784-990-3984", identique à l'affichage Google Ads) — erreur réelle :
+// "Account 7849903984 is not available. The configured accounts are:
+// 784-990-3984." Voir create-google-ads-campaign.js pour le même correctif.
+//
 // Variables d'environnement requises :
 //   WINDSOR_API_KEY
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
@@ -19,11 +26,14 @@
 
 const WINDSOR_BASE = 'https://connectors.windsor.ai/google_ads';
 
+function formaterCompteGoogleAds(id) {
+  const chiffres = String(id || '').replace(/[^0-9]/g, '');
+  if (chiffres.length !== 10) return String(id || '').trim();
+  return `${chiffres.slice(0, 3)}-${chiffres.slice(3, 6)}-${chiffres.slice(6)}`;
+}
+
 async function executerAction(action, params) {
-  // Tirets retirés par sécurité, même précaution que create-google-ads-campaign.js
-  // (l'ID de compte affiché dans Google Ads contient des tirets, mais Windsor.ai
-  // attend l'identifiant sans).
-  const accountId = (process.env.GOOGLE_ADS_ACCOUNT_ID || '').replace(/[^0-9]/g, '');
+  const accountId = formaterCompteGoogleAds(process.env.GOOGLE_ADS_ACCOUNT_ID);
   const resp = await fetch(`${WINDSOR_BASE}/actions?api_key=${process.env.WINDSOR_API_KEY}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

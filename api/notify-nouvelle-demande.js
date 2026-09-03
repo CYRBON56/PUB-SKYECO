@@ -98,7 +98,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Méthode non autorisée' });
   }
 
-  const { draftId, nom, prenom, telephone, telephoneVerifie, email, reponses, recap } = req.body || {};
+  const { draftId, nom, prenom, telephone, telephoneVerifie, email, reponses, recap, estimationTexte } = req.body || {};
   if (!draftId) {
     return res.status(400).json({ error: 'draftId manquant' });
   }
@@ -155,17 +155,24 @@ export default async function handler(req, res) {
     const nomEntreprise = draft.entreprise || 'votre artisan';
     const numeroExpediteur = draft.twilio_phone_number || null; // repli automatique sur TWILIO_FROM_NUMBER si absent
     const recapHtml = construireRecapHtml(recap); // vide si pas de recap (projet non chiffrable, ou appelant plus ancien)
+    // Quand le projet a pu être chiffré (voir apercu.html, calculerEstimation),
+    // le SMS ET l'email au prospect contiennent directement le montant —
+    // pas seulement un accusé de réception générique. Sans estimation
+    // (projet non chiffrable, ou appelant plus ancien sans ce champ), le
+    // message générique habituel reste inchangé.
+    const smsProspectBody = estimationTexte
+      ? `${prenomAffiche}, voici votre estimation ${nomEntreprise} : ${estimationTexte} Un conseiller vous recontacte sous 24h pour la confirmer.`
+      : `${prenomAffiche}, votre demande d'estimation aupres de ${nomEntreprise} est bien recue. Un conseiller vous recontacte sous 24h.`;
+    const estimationTexteHtml = estimationTexte
+      ? `<p style="font-size:15px; font-weight:600; color:#14312a;">${echapperHtml(estimationTexte)}</p>`
+      : '';
 
     const [smsProspect, emailProspect, smsArtisan, emailArtisan] = await Promise.allSettled([
-      envoyerSMS(
-        telephone,
-        `${prenomAffiche}, votre demande d'estimation aupres de ${nomEntreprise} est bien recue. Un conseiller vous recontacte sous 24h.`,
-        numeroExpediteur
-      ),
+      envoyerSMS(telephone, smsProspectBody, numeroExpediteur),
       envoyerEmail(
         email,
         `Votre estimation ${nomEntreprise} est en cours`,
-        `<p>Bonjour ${prenomAffiche},</p><p>Votre demande d'estimation auprès de <strong>${nomEntreprise}</strong> a bien été enregistrée.</p>${recapHtml}<p>Un conseiller vous recontacte sous 24h pour affiner votre projet.</p>`
+        `<p>Bonjour ${prenomAffiche},</p><p>Votre demande d'estimation auprès de <strong>${nomEntreprise}</strong> a bien été enregistrée.</p>${estimationTexteHtml}${recapHtml}<p>Un conseiller vous recontacte sous 24h pour affiner votre projet.</p>`
       ),
       envoyerSMS(
         draft.telephone,

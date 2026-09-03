@@ -19,6 +19,19 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const TAUX_TVA = 0.20;
 const FORFAITS = {
   3: { nom: 'Skyeco Pro — Vitrine + Dashboard + Relances & devis signés', centimesHT: 7990 },
+  // Tarif de la 3e vitrine (et suivantes) d'un même compte (03/09) : un
+  // artisan qui gère déjà 2 vitrines paie 99,90€ HT/mois pour toute
+  // vitrine supplémentaire, au lieu de 79,90€ — mais garde la même remise
+  // fixe de lancement (40€ HT/mois pendant 12 mois, le même COUPON_REMISE_ID
+  // ci-dessous, réutilisé tel quel car le montant de la remise est
+  // identique : 79,90-39,90 = 99,90-59,90 = 40€ HT) donc démarre à 59,90€ HT
+  // pendant 12 mois. Le rang de la vitrine (1ère/2e vs 3e+) est déterminé
+  // côté page (choisir-forfait.html, comptage des vitrines du compte par
+  // email) et transmis ici via "plan" — jamais recalculé côté serveur ici,
+  // mais la commission de 50% sur le budget pub (TAUX_COMMISSION,
+  // api/estimate-reach.js et api/create-google-ads-campaign.js) ne dépend
+  // pas du forfait choisi et reste donc inchangée quel que soit le plan.
+  5: { nom: 'Skyeco Pro — Vitrine supplémentaire (3e vitrine et suivantes)', centimesHT: 9990 },
 };
 
 // Remise de lancement 1ère année (31/08) : offre permanente pour tout

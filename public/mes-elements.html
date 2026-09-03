@@ -432,6 +432,22 @@
 
         <div id="produitsListe"></div>
         <button type="button" class="btn-ajouter-produit" id="btnAjouterProduit">+ Ajouter un produit manuellement</button>
+
+        <div style="display:flex; align-items:flex-start; gap:10px; background:#f5f8f6; border:1.5px solid #d8e3de; border-radius:12px; padding:14px 16px; margin-top:18px;">
+          <input type="checkbox" id="checkModeDevisDetaille" style="width:auto; margin-top:3px; accent-color:#1e6f4c;">
+          <label for="checkModeDevisDetaille" style="margin:0; font-weight:700; color:#14312a; cursor:pointer;">
+            Présenter le résultat façon devis détaillé
+            <span style="display:block; font-weight:400; font-size:0.82rem; color:#5b6b64; margin-top:3px;">Quand un projet est reconnu (prestation, quantité, prix unitaire, sous-total…), le prospect voit un récapitulatif complet plutôt qu'un montant unique — avec les points à vérifier sur place (ceux affichés en rouge ci-dessus) et le délai souhaité, sous une mention claire "estimation indicative, sans valeur contractuelle". Décoché, vos prospects continuent de voir le montant simple actuel.</span>
+          </label>
+        </div>
+
+        <div style="display:flex; align-items:flex-start; gap:10px; background:#fff4ec; border:1.5px solid #f0c9a8; border-radius:12px; padding:14px 16px; margin-top:12px;">
+          <input type="checkbox" id="checkCalculResineRMS" style="width:auto; margin-top:3px; accent-color:#c9601f;">
+          <label for="checkCalculResineRMS" style="margin:0; font-weight:700; color:#14312a; cursor:pointer;">
+            Calcul résine RMS EcoSky (support, état, âge du bâtiment, bordures)
+            <span style="display:block; font-weight:400; font-size:0.82rem; color:#5b6b64; margin-top:3px;">Réservé à RMS EcoSky — remplace tout ce qui précède par le même parcours de questions et le même calcul de prix que sur salesflow-ecosky (usage piéton/carrossable, support existant, état, âge du bâtiment pour la TVA, bordures, couleur de granulat). Un cas particulier codé en dur, pas une option générale à activer pour un autre artisan.</span>
+          </label>
+        </div>
         </div>
       </div>
     </div>
@@ -616,6 +632,24 @@
       checkFormulaire.addEventListener('change', () => {
         contenuFormulaire.style.display = checkFormulaire.checked ? 'block' : 'none';
         sauvegarderChampsImmediat({ formulaire_estimatif_active: checkFormulaire.checked });
+      });
+
+      // Case "Présenter le résultat façon devis détaillé" — décochée par
+      // défaut (ne change rien au comportement existant tant que l'artisan
+      // ne l'active pas lui-même). Voir public/apercu.html, renderResultat.
+      const checkDevisDetaille = document.getElementById('checkModeDevisDetaille');
+      checkDevisDetaille.checked = draft.mode_devis_detaille === true;
+      checkDevisDetaille.addEventListener('change', () => {
+        sauvegarderChampsImmediat({ mode_devis_detaille: checkDevisDetaille.checked });
+      });
+
+      // Case "Calcul résine RMS EcoSky" — cas particulier codé en dur pour
+      // RMS EcoSky uniquement, décochée par défaut. Voir public/apercu.html,
+      // getStepsResineRMS / calculerEstimationResineRMS.
+      const checkCalculResineRMS = document.getElementById('checkCalculResineRMS');
+      checkCalculResineRMS.checked = draft.mode_calcul_resine_rms === true;
+      checkCalculResineRMS.addEventListener('change', () => {
+        sauvegarderChampsImmediat({ mode_calcul_resine_rms: checkCalculResineRMS.checked });
       });
 
       try {

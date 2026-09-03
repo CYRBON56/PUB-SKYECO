@@ -276,7 +276,7 @@
 
   async function verifierEtCharger() {
     try {
-      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=id,status,site_valide`, {
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=id,status,site_valide,email`, {
         headers: { apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc' }
       });
       const rows = await resp.json();
@@ -285,6 +285,25 @@
       if (!draft) {
         document.body.innerHTML = '<div class="loading">Site introuvable.</div>';
         return;
+      }
+
+      // Rang de cette vitrine parmi toutes celles du même compte (03/09) —
+      // détermine si c'est la 1ère/2e vitrine (tarif normal) ou la 3e+
+      // (tarif "vitrine supplémentaire", voir renderPlans ci-dessous).
+      // Compte TOUTES les vitrines de l'email, dans l'ordre de création
+      // (peu importe leur statut actuel) : simple et prévisible pour
+      // l'artisan, cohérent avec "3e vitrine que je crée".
+      let rangVitrine = 1;
+      if (draft.email) {
+        try {
+          const respRang = await fetch(
+            `https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?email=ilike.${encodeURIComponent(draft.email)}&select=id,created_at&order=created_at.asc`,
+            { headers: { apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc' } }
+          );
+          const soeurs = await respRang.json();
+          const index = soeurs.findIndex(s => s.id === draftId);
+          if (index >= 0) rangVitrine = index + 1;
+        } catch (e) { /* en cas de doute, on garde le tarif normal (rang 1) */ }
       }
 
       // Verrou remis (02/09) : impossible de choisir une formule (payante
@@ -339,7 +358,7 @@
       }
 
       document.getElementById('vitrineFrame').src = '/apercu.html?id=' + draftId;
-      renderPlans(draft.status);
+      renderPlans(draft.status, rangVitrine);
     } catch (e) {
       document.body.innerHTML = '<div class="loading">Impossible de charger la page pour le moment.</div>';
     }
@@ -373,16 +392,28 @@
     }
   ];
 
+  // Tarif de la 3e vitrine (et suivantes) d'un même compte (03/09, voir
+  // api/create-checkout-session.js pour le détail du calcul de la remise) —
+  // mêmes prestations que le forfait normal, prix différent uniquement.
+  const FORFAIT_VITRINE_SUPPLEMENTAIRE = {
+    id: 5, nom: 'Skyeco Pro', prix: '99,90', prixPromo: '59,90', dureePromoMois: 12, recommande: false,
+    features: FORFAITS[0].features,
+    aVenir: []
+  };
+
   // Un artisan qui a déjà consommé son essai gratuit (statut 'essai' en
   // cours, ou 'essai_expire') ne doit plus revoir le bouton d'essai — sinon
   // il pourrait recommencer indéfiniment sans jamais payer. Dans ce cas
   // c'est le bouton de paiement classique qui s'affiche à la place. Pour
   // tout le monde d'autre (premier passage), seul le bouton d'essai gratuit
   // est visible — le paiement direct n'est plus proposé en premier choix.
-  function renderPlans(statutActuel) {
+  function renderPlans(statutActuel, rangVitrine) {
     const dejaEssaye = statutActuel === 'essai' || statutActuel === 'essai_expire';
+    // À partir de la 3e vitrine du compte, tarif "vitrine supplémentaire"
+    // (03/09) — sinon le forfait normal, inchangé.
+    const forfaitsAffiches = (rangVitrine >= 3) ? [FORFAIT_VITRINE_SUPPLEMENTAIRE] : FORFAITS;
     const grid = document.getElementById('plansGrid');
-    grid.innerHTML = FORFAITS.map(f => `
+    grid.innerHTML = forfaitsAffiches.map(f => `
       <div class="plan-card ${f.recommande ? 'recommande' : ''}">
         ${f.recommande ? '<div class="plan-badge">Recommandé</div>' : ''}
         ${f.prixPromo ? `

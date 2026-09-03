@@ -344,7 +344,7 @@
       </div>
       <div style="background:#f8f9fa; border:1px solid #e8eaed; border-radius:12px; padding:16px;">
         <div style="font-size:1.6rem; font-weight:800; color:#14312a;" id="metricCout">—</div>
-        <div style="font-size:0.78rem; color:#5f6368;">Coût dépensé ce mois-ci</div>
+        <div style="font-size:0.78rem; color:#5f6368;">Consommé sur votre solde</div>
       </div>
       <div style="background:#f8f9fa; border:1px solid #e8eaed; border-radius:12px; padding:16px;">
         <div style="font-size:1.6rem; font-weight:800; color:#34A853;" id="metricConversions">—</div>
@@ -751,7 +751,7 @@
       const metricClics = document.getElementById('metricClics');
       if (metricClics) metricClics.textContent = data.clics ?? '0';
       const metricCout = document.getElementById('metricCout');
-      if (metricCout) metricCout.textContent = (data.coutReelGoogleEuros ?? '0') + ' €';
+      if (metricCout) metricCout.textContent = (data.consommationAjustee ?? '0') + ' €';
 
       const alerte = data.pourcentageConsomme >= 90 ? 'alerte' : '';
       const statutBadge = data.diffusionPausee
@@ -912,6 +912,7 @@
     const ligneCellule = document.querySelector(`[data-lead="${leadId}"]`);
     if (ligneCellule) { ligneCellule.disabled = true; ligneCellule.textContent = 'Envoi…'; }
     try {
+      // 1. Upload du PDF (identique à avant).
       const chemin = `devis-artisan/${draftId}/${leadId}-${Date.now()}.pdf`;
       const uploadResp = await fetch(
         `${SUPABASE_URL}/storage/v1/object/${DEVIS_BUCKET}/${chemin}?apikey=${encodeURIComponent(SUPABASE_ANON_KEY)}`,
@@ -924,13 +925,46 @@
       if (!uploadResp.ok) throw new Error("Échec de l'envoi du fichier : " + (await uploadResp.text().catch(() => '')));
       const pdfUrl = `${SUPABASE_URL}/storage/v1/object/public/${DEVIS_BUCKET}/${chemin}`;
 
-      const resp = await fetch('/api/envoyer-devis', {
+      // 2. Lecture + écriture directes sur Supabase, avec la même clé
+      // publique déjà utilisée pour tout le reste de cette page (03/09 —
+      // remplace l'ancien passage par api/envoyer-devis.js côté serveur,
+      // qui dépendait de SUPABASE_SERVICE_ROLE_KEY sur Vercel : cette
+      // variable posait un problème de configuration jamais résolu malgré
+      // plusieurs vérifications, bloquant systématiquement l'envoi avec
+      // "Demande introuvable" / erreur de connexion à la base).
+      const leadResp = await fetch(
+        `${SUPABASE_URL}/rest/v1/skyeco_pro_leads?id=eq.${leadId}&select=id,prenom,telephone,devis_statut`,
+        { headers: { apikey: SUPABASE_ANON_KEY } }
+      );
+      const leadRows = await leadResp.json();
+      const lead = leadRows[0];
+      if (!lead) throw new Error(`Demande introuvable (id ${leadId}).`);
+      if (!lead.telephone) throw new Error("Ce prospect n'a pas de numéro de téléphone enregistré.");
+      if (lead.devis_statut === 'signe') throw new Error('Ce devis a déjà été signé — impossible de le remplacer depuis cet écran.');
+
+      const devisToken = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+
+      const patchResp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_leads?id=eq.${leadId}`, {
+        method: 'PATCH',
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify({
+          devis_pdf_url: pdfUrl,
+          devis_statut: 'envoye',
+          devis_token: devisToken,
+          devis_envoye_le: new Date().toISOString(),
+        }),
+      });
+      if (!patchResp.ok) throw new Error("Échec de l'enregistrement du devis : " + (await patchResp.text().catch(() => '')));
+
+      // 3. Le SMS seul reste côté serveur (identifiants Twilio jamais
+      // exposés au navigateur) — endpoint allégé, ne fait plus que ça.
+      const smsResp = await fetch('/api/envoyer-devis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ leadId, pdfUrl }),
+        body: JSON.stringify({ draftId, telephone: lead.telephone, prenom: lead.prenom, devisToken }),
       });
-      const data = await resp.json();
-      if (!resp.ok || !data.success) throw new Error(data.error || "Le devis n'a pas pu être envoyé.");
+      const smsData = await smsResp.json();
+      if (!smsResp.ok || !smsData.success) throw new Error(smsData.error || "Le SMS n'a pas pu être envoyé, mais le devis est bien enregistré.");
 
       await chargerDemandes();
     } catch (e) {
@@ -944,13 +978,34 @@
     btn.disabled = true;
     btn.textContent = 'Envoi…';
     try {
-      const resp = await fetch('/api/relancer-devis', {
+      // Lecture + écriture directes sur Supabase (clé publique, même
+      // raisonnement que uploaderEtEnvoyerDevis — voir son commentaire).
+      const leadResp = await fetch(
+        `${SUPABASE_URL}/rest/v1/skyeco_pro_leads?id=eq.${leadId}&select=id,prenom,telephone,devis_statut,devis_token,devis_nb_relances`,
+        { headers: { apikey: SUPABASE_ANON_KEY } }
+      );
+      const leadRows = await leadResp.json();
+      const lead = leadRows[0];
+      if (!lead) throw new Error(`Demande introuvable (id ${leadId}).`);
+      if (!lead.devis_token || lead.devis_statut === 'aucun') throw new Error("Aucun devis n'a encore été envoyé pour ce prospect.");
+      if (lead.devis_statut === 'signe') throw new Error('Ce devis est déjà signé — inutile de relancer.');
+      if (!lead.telephone) throw new Error("Ce prospect n'a pas de numéro de téléphone enregistré.");
+
+      const smsResp = await fetch('/api/relancer-devis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ leadId }),
+        body: JSON.stringify({ draftId, telephone: lead.telephone, prenom: lead.prenom, devisToken: lead.devis_token }),
       });
-      const data = await resp.json();
-      if (!resp.ok || !data.success) throw new Error(data.error || "La relance n'a pas pu être envoyée.");
+      const smsData = await smsResp.json();
+      if (!smsResp.ok || !smsData.success) throw new Error(smsData.error || "La relance n'a pas pu être envoyée.");
+
+      const patchResp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_leads?id=eq.${leadId}`, {
+        method: 'PATCH',
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify({ devis_statut: 'relance', devis_nb_relances: (lead.devis_nb_relances || 0) + 1 }),
+      });
+      if (!patchResp.ok) throw new Error("Échec de la mise à jour du statut : " + (await patchResp.text().catch(() => '')));
+
       await chargerDemandes();
     } catch (e) {
       alert(e.message || 'Une erreur est survenue.');
@@ -1249,6 +1304,14 @@
         rafraichirAffichage();
         edition.style.display = 'none';
         affichage.style.display = 'flex';
+        // Alerte Cyrille — le ciblage géographique Google Ads ne se met pas
+        // à jour automatiquement (voir create-google-ads-campaign.js), il
+        // doit le reporter manuellement à chaque changement de zone/rayon.
+        fetch('/api/alerter-changement-zone', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId, entreprise: draftInfo.entreprise, zone: nouvelleZone, rayon: nouveauRayon }),
+        }).catch(() => {});
       } catch (e) {
         alert("Impossible d'enregistrer la zone pour le moment.");
       } finally {

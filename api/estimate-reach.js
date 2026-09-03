@@ -187,11 +187,24 @@ export default async function handler(req, res) {
   const motsClesChoisis = Array.isArray(motsCles)
     ? motsCles.filter(m => typeof m === 'string' && m.trim()).map(m => m.trim().substring(0, 80)).slice(0, 25)
     : [];
+  // Repli par métier : si "metier" contient une ou plusieurs valeurs mais
+  // qu'AUCUNE n'existe dans KEYWORDS_BY_METIER (ex : "portail", ou tout
+  // nouveau métier vendu via Skyeco Pro à un autre artisan, pas encore ajouté
+  // à cette liste), le flatMap ci-dessous renvoyait un tableau VIDE plutôt
+  // que de retomber sur KEYWORDS_BY_METIER.autre — résultat : keyword_seeds
+  // envoyé à Windsor.ai était une chaîne vide, l'appel échouait (ou ne
+  // renvoyait rien d'exploitable), et aucune estimation de clics ne
+  // s'affichait, y compris au tout premier chargement du tableau de bord
+  // (avant même que l'artisan ait choisi ses mots-clés). Corrigé le 03/09 :
+  // on ne retombe sur la liste vide que si aucun métier n'est fourni du
+  // tout ; dès qu'un ou plusieurs métiers sont fournis mais non reconnus, on
+  // utilise la liste générique "autre" plutôt qu'un tableau vide.
+  const motsClesGeneriquesParMetier = metiersListe.length
+    ? [...new Set(metiersListe.flatMap(m => KEYWORDS_BY_METIER[m] || []))]
+    : [];
   const keywords = motsClesChoisis.length
     ? [...new Set(motsClesChoisis)]
-    : (metiersListe.length
-        ? [...new Set(metiersListe.flatMap(m => KEYWORDS_BY_METIER[m] || []))]
-        : KEYWORDS_BY_METIER.autre);
+    : (motsClesGeneriquesParMetier.length ? motsClesGeneriquesParMetier : KEYWORDS_BY_METIER.autre);
   const budgetNum = parseFloat(budget);
 
   // Formule "abonnement" : facturé séparément, hors de ce calcul — commission

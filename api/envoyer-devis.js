@@ -1,18 +1,19 @@
 // /api/envoyer-devis.js
-// Réécrit le 03/09 : ne s'occupe plus QUE de l'envoi du SMS (les
-// identifiants Twilio ne doivent jamais être exposés au navigateur). La
-// lecture/écriture du lead se fait désormais directement depuis
-// mon-dashboard.html (clé publique anon, RLS déjà ouverte en lecture) —
-// voir uploaderEtEnvoyerDevis(). Ce changement évite complètement la clé
-// SUPABASE_SERVICE_ROLE_KEY, qui posait un problème de configuration sur
-// Vercel jamais résolu malgré plusieurs vérifications ("Demande
-// introuvable" / erreur PGRST125 persistantes).
+// Réécrit le 03/09 (deuxième version) : l'écriture (PATCH) sur
+// skyeco_pro_leads REQUIERT la clé service_role — la table est verrouillée
+// en écriture pour la clé publique (confirmé par l'erreur Postgres 42501
+// "permission denied", policy RLS volontaire). Le vrai bug qui bloquait tout
+// depuis le début était en fait les colonnes devis_* manquantes sur la
+// table (erreur 42703), pas la configuration de SUPABASE_SERVICE_ROLE_KEY —
+// une fois les colonnes créées, cette approche fonctionne normalement.
+//
+// La LECTURE (trouver le lead, vérifier son téléphone) reste faite côté
+// client avec la clé publique (autorisée en lecture) pour rester rapide ;
+// ce endpoint ne fait que l'écriture + le SMS.
 //
 // Variables d'environnement requises :
-//   SUPABASE_URL, SUPABASE_ANON_KEY (lecture seule, publique)
+//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 //   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER
-
-const SITE_BASE_URL = 'https://www.skyeco.fr';
 
 function toE164(rawPhone) {
   const digits = String(rawPhone || '').replace(/\D/g, '');
@@ -39,24 +40,48 @@ async function envoyerSMS(to, body, fromOverride) {
   }
 }
 
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+const SITE_BASE_URL = 'https://www.skyeco.fr';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Méthode non autorisée' });
   }
 
-  const { draftId, telephone, prenom, devisToken } = req.body || {};
-  if (!draftId || !telephone || !devisToken) {
-    return res.status(400).json({ error: 'draftId, telephone ou devisToken manquant' });
+  const { draftId, leadId, telephone, prenom, devisToken, pdfUrl } = req.body || {};
+  if (!draftId || !leadId || !telephone || !devisToken || !pdfUrl) {
+    return res.status(400).json({ error: 'Paramètres manquants' });
   }
 
-  const SUPABASE_URL = process.env.SUPABASE_URL || 'https://wklddwumirkdjkbxvzyj.supabase.co';
+  const SUPABASE_URL = process.env.SUPABASE_URL;
+  const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!SUPABASE_URL || !SERVICE_KEY) {
+    console.error('envoyer-devis : variable manquante —', { SUPABASE_URL_present: !!SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY_present: !!SERVICE_KEY });
+    return res.status(500).json({ error: "Configuration serveur incomplète — contactez le support." });
+  }
+  const supaHeaders = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' };
 
   try {
+    // 1. Écriture du devis (nécessite la clé service_role).
+    const patchResp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_leads?id=eq.${leadId}`, {
+      method: 'PATCH',
+      headers: { ...supaHeaders, Prefer: 'return=minimal' },
+      body: JSON.stringify({
+        devis_pdf_url: pdfUrl,
+        devis_statut: 'envoye',
+        devis_token: devisToken,
+        devis_envoye_le: new Date().toISOString(),
+      }),
+    });
+    if (!patchResp.ok) {
+      const errData = await patchResp.text().catch(() => '');
+      console.error('envoyer-devis : échec PATCH —', patchResp.status, errData);
+      throw new Error(`Échec de l'enregistrement du devis : ${errData}`);
+    }
+
+    // 2. SMS avec le lien de signature.
     const draftResp = await fetch(
       `${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,twilio_phone_number`,
-      { headers: { apikey: SUPABASE_ANON_KEY } }
+      { headers: supaHeaders }
     );
     const draftRows = draftResp.ok ? await draftResp.json() : [];
     const draft = draftRows[0] || {};
@@ -70,6 +95,6 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true, lien });
   } catch (err) {
     console.error('Erreur envoyer-devis :', err);
-    return res.status(500).json({ error: err.message || "Le SMS n'a pas pu être envoyé." });
+    return res.status(500).json({ error: err.message || "Le devis n'a pas pu être envoyé." });
   }
 }

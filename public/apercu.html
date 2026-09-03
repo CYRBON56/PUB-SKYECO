@@ -297,6 +297,10 @@ const METIER_TEMPLATES = {
 // directement ces questions et on garde délai/localisation, utiles dans tous
 // les cas — le prospect sera de toute façon orienté vers la prise de
 // rendez-vous avec un technicien (voir renderResultat).
+// Libellés partagés entre la question "délai" (ci-dessous) et son affichage
+// dans le récapitulatif façon devis (voir renderResultat / construireRecap).
+const DELAI_LABELS = { urgent:'Le plus vite possible', '1_3_mois':'Dans 1 à 3 mois', plus_tard:'Plus tard' };
+
 function pushQuantiteEtSuite(s, state){
   s.push({ key:"details_projet", question:"Décrivez votre projet en quelques mots", type:"textarea",
     placeholder:"Ex : nature des travaux, contraintes particulières, délais souhaités…", optional:true, dictable:true });
@@ -330,7 +334,7 @@ function pushQuantiteEtSuite(s, state){
   }
 
   s.push({ key:"delai", question:"Sous quel délai souhaitez-vous réaliser ce projet ?", type:"choice",
-    options:[["urgent","Le plus vite possible"],["1_3_mois","Dans 1 à 3 mois"],["plus_tard","Plus tard"]] });
+    options: Object.entries(DELAI_LABELS).map(([val,label])=>[val,label]) });
   s.push({ key:"localisation", question:"Où se situe le projet ?", type:"location" });
 }
 
@@ -923,14 +927,15 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     const prix = Number(produit.prix);
     if(!prix || prix <= 0) return { chiffrable:false }; // prix non renseigné par l'artisan pour ce produit
 
+    const quantite = produit.unite === 'forfait' ? null : Number(state.quantite);
     let montantHT;
     if(produit.unite === 'forfait'){
       montantHT = prix;
     } else {
-      const quantite = Number(state.quantite);
       if(!quantite || quantite <= 0) return { chiffrable:false };
       montantHT = quantite * prix;
     }
+    const montantHTAvantMinimum = montantHT;
     if(produit.minimum && montantHT < Number(produit.minimum)){
       montantHT = Number(produit.minimum);
     }
@@ -949,10 +954,60 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     return {
       chiffrable: true,
       produit,
+      quantite,
+      prixUnitaire: prix,
+      minimumApplique: montantHTAvantMinimum < montantHT,
+      montantHT: Math.round(montantHT),
       montantTTC,
       remisePourcent,
       montantApresRemise,
     };
+  }
+  // Récapitulatif détaillé d'une estimation chiffrable — utilisé à la fois
+  // pour l'email envoyé à l'artisan (voir enregistrerDemande) et pour
+  // l'affichage prospect en mode "devis détaillé" (voir renderResultat,
+  // activé par l'artisan dans mes-elements.html : mode_devis_detaille).
+  function construireRecap(estimation){
+    const unitesLabels = { m2:'m²', ml:'ml', m3:'m³', forfait:'forfait' };
+    const recap = [{ label:'Prestation', valeur: estimation.produit.nom }];
+    if(estimation.produit.unite !== 'forfait' && state.quantite){
+      recap.push({ label:'Quantité', valeur: state.quantite + ' ' + (unitesLabels[estimation.produit.unite] || '') });
+      recap.push({ label:'Prix unitaire', valeur: estimation.prixUnitaire + ' €/' + (unitesLabels[estimation.produit.unite] || '') });
+    }
+    recap.push({ label: estimation.minimumApplique ? 'Montant HT (minimum de facturation)' : 'Montant HT', valeur: estimation.montantHT + ' € HT' });
+    if(Array.isArray(state.questionsDynamiques)){
+      state.questionsDynamiques.forEach(q=>{
+        const val = state['dyn_' + q.id];
+        if(val === undefined || val === null || val === '') return;
+        recap.push({ label: q.label, valeur: q.type === 'case' ? (val ? 'Oui' : 'Non') : val });
+      });
+    }
+    if(state.delai && DELAI_LABELS[state.delai]){
+      recap.push({ label:'Délai souhaité', valeur: DELAI_LABELS[state.delai] });
+    }
+    const localisation = [state.ville, state.code_postal].filter(Boolean).join(' ');
+    if(localisation){
+      recap.push({ label:'Localisation', valeur: localisation });
+    }
+    recap.push({ label:'Montant estimé', valeur: estimation.montantTTC + ' € TTC' });
+    return recap;
+  }
+  // Phrase de calcul façon devis, sur le modèle de ce que fait déjà
+  // RMS EcoSky sur son propre site SalesFlow (api/submit-estimation.js) :
+  // "115€ HT/m² × 20m² = 2300€ HT, soit environ 2530€ TTC (TVA 10%) — [note]."
+  // Ici généralisée à n'importe quel produit/unité/artisan Skyeco Pro — la
+  // "note" reprend les limites que l'artisan a lui-même signalées pour ce
+  // produit (mes-elements.html) au lieu d'un texte codé en dur par métier.
+  function construirePhraseEstimation(estimation){
+    const unitesLabels = { m2:'m²', ml:'ml', m3:'m³' };
+    const produit = estimation.produit;
+    const limites = Array.isArray(produit.limites) ? produit.limites : [];
+    const note = limites.length ? limites.join(' ; ') : 'le prix définitif sera confirmé par un technicien lors du rendez-vous';
+    if(produit.unite !== 'forfait' && estimation.quantite){
+      const unite = unitesLabels[produit.unite] || produit.unite;
+      return 'Estimation indicative : '+estimation.prixUnitaire+'€ HT/'+unite+' × '+estimation.quantite+unite+' = '+estimation.montantHT+'€ HT, soit environ '+estimation.montantTTC+'€ TTC (TVA '+tvaTaux+'%) — '+note+'.';
+    }
+    return 'Estimation indicative : forfait de '+estimation.montantHT+'€ HT, soit environ '+estimation.montantTTC+'€ TTC (TVA '+tvaTaux+'%) — '+note+'.';
   }
 
   async function enregistrerDemande(){
@@ -967,23 +1022,10 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
 
     // Récapitulatif détaillé (cas chiffrable uniquement) envoyé à
     // api/notify-nouvelle-demande.js pour un email complet, pas juste un
-    // montant sec — voir sa gestion du champ optionnel "recap".
-    let recap = null;
-    if(estimation.chiffrable){
-      const unitesLabels = { m2:'m²', ml:'ml', m3:'m³', forfait:'forfait' };
-      recap = [{ label:'Prestation', valeur: estimation.produit.nom }];
-      if(estimation.produit.unite !== 'forfait' && state.quantite){
-        recap.push({ label:'Quantité', valeur: state.quantite + ' ' + (unitesLabels[estimation.produit.unite] || '') });
-      }
-      if(Array.isArray(state.questionsDynamiques)){
-        state.questionsDynamiques.forEach(q=>{
-          const val = state['dyn_' + q.id];
-          if(val === undefined || val === null || val === '') return;
-          recap.push({ label: q.label, valeur: q.type === 'case' ? (val ? 'Oui' : 'Non') : val });
-        });
-      }
-      recap.push({ label:'Montant estimé', valeur: estimation.montantTTC + ' € TTC' });
-    }
+    // montant sec — voir sa gestion du champ optionnel "recap". Même
+    // fonction que celle utilisée pour l'affichage prospect en mode "devis
+    // détaillé" (voir construireRecap, renderResultat).
+    const recap = estimation.chiffrable ? construireRecap(estimation) : null;
 
     let error = null;
     let leadId = null;
@@ -1022,7 +1064,38 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
 
   function renderResultat(estimation, leadId){
     let priceBlock, disclaimer;
-    if(estimation.chiffrable){
+    // Mode "devis détaillé" — activé par l'artisan lui-même dans
+    // mes-elements.html (case "Présenter le résultat façon devis détaillé",
+    // colonne mode_devis_detaille). Désactivé par défaut : sans cette case
+    // cochée, le comportement reste le montant unique ci-dessous, inchangé.
+    const modeDevisDetaille = estimation.chiffrable && draftInfo && draftInfo.mode_devis_detaille === true;
+    if(modeDevisDetaille){
+      // Style calqué sur ce que fait déjà RMS EcoSky sur SalesFlow (une
+      // phrase de calcul façon devis sous le montant), plutôt qu'un tableau —
+      // voir construirePhraseEstimation. Les à-côtés (délai, localisation,
+      // réponses aux questions du produit) restent visibles en dessous, sous
+      // une forme compacte plutôt qu'en tableau détaillé.
+      const detailsRecap = construireRecap(estimation).filter(l =>
+        !['Prestation','Quantité','Prix unitaire','Montant HT','Montant estimé'].includes(l.label));
+      priceBlock =
+        '<div class="result-box">'+
+          '<div class="result-note">Estimation indicative</div>'+
+          '<div style="font-weight:800; font-size:26px; color:#14312a; margin:4px 0;">'+estimation.montantTTC+' € TTC</div>'+
+          '<div class="result-note">'+construirePhraseEstimation(estimation)+'</div>'+
+        '</div>'+
+        (estimation.remisePourcent > 0 ?
+          '<div style="background:var(--brand-tint,#eaf4ef); border:1.5px solid var(--brand,#1e6f4c); border-radius:10px; padding:12px 14px; margin-top:10px; font-size:13px; color:#14312a; text-align:center;">'+
+            '🎁 <strong>Remise de '+estimation.remisePourcent+'% possible selon le projet</strong><br/>'+
+            'Soit <strong>'+estimation.montantApresRemise+' €</strong> au lieu de '+estimation.montantTTC+' € — contactez un technicien pour voir si vous pouvez en bénéficier.'+
+          '</div>' : '')+
+        (detailsRecap.length ?
+          '<div class="result-box" style="text-align:left; margin-top:10px;">'+
+            '<div class="result-note" style="font-weight:700; color:#14312a; margin-bottom:6px;">Détails de votre demande</div>'+
+            detailsRecap.map(l=>'<div class="result-note">'+l.label+' : <strong style="color:#14312a;">'+l.valeur+'</strong></div>').join('')+
+          '</div>' : '')+
+        '<a class="btn btn-primary" style="display:block; width:100%; text-align:center; text-decoration:none; margin-top:10px; box-sizing:border-box;" href="/prendre-rdv.html?id='+encodeURIComponent(draftId)+'" target="_blank" rel="noopener">📅 Prendre rendez-vous à un horaire précis — pour connaître précisément ce qui est réellement inclus'+(estimation.remisePourcent > 0 ? ' et voir si vous pouvez bénéficier de la remise' : '')+'</a>';
+      disclaimer = 'Cette estimation reste indicative et sans valeur contractuelle — elle devra être confirmée par l\'artisan lors d\'un appel téléphonique. Vous recevrez ce récapitulatif par email.';
+    } else if(estimation.chiffrable){
       priceBlock =
         '<div class="result-box">'+
           '<div class="result-note">Estimation indicative</div>'+

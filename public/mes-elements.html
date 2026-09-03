@@ -395,6 +395,14 @@
     </div>
     <div class="section-body">
       <div class="section-body-inner">
+        <div style="display:flex; align-items:flex-start; gap:10px; background:#f5f8f6; border:1.5px solid #d8e3de; border-radius:12px; padding:14px 16px; margin-bottom:18px;">
+          <input type="checkbox" id="checkFormulaireEstimatif" style="width:auto; margin-top:3px; accent-color:#1e6f4c;">
+          <label for="checkFormulaireEstimatif" style="margin:0; font-weight:700; color:#14312a; cursor:pointer;">
+            Je veux proposer une estimation chiffrée automatique
+            <span style="display:block; font-weight:400; font-size:0.82rem; color:#5b6b64; margin-top:3px;">Tant que ce n'est pas coché, vos prospects passent directement par un formulaire simple qui les envoie prendre rendez-vous avec un technicien — sans configuration à faire de votre côté.</span>
+          </label>
+        </div>
+        <div id="formulaireEstimatifContenu" style="display:none;">
         <div style="background:#fff4ec; border:1.5px solid #f0c9a8; border-radius:12px; padding:14px 16px; margin-bottom:16px;">
           <strong style="color:#c9601f;">⚡ Pourquoi c'est important :</strong>
           <span style="color:#5b4636;"> quand un prospect décrit son projet et qu'il correspond à l'un de vos produits, il reçoit tout de suite une estimation chiffrée — c'est ce qui le convainc de passer à l'étape suivante et de prendre rendez-vous avec un technicien. Sans cette section, il est simplement invité à prendre rendez-vous sans avoir rien vu de chiffré, ce qui convertit beaucoup moins.</span>
@@ -412,6 +420,7 @@
 
         <div id="produitsListe"></div>
         <button type="button" class="btn-ajouter-produit" id="btnAjouterProduit">+ Ajouter un produit manuellement</button>
+        </div>
       </div>
     </div>
   </div>
@@ -581,6 +590,22 @@
       construireOptionsTitre(metiersActuels, draft.titre_hero_choisi || '');
       construireQuestionsGenerales(metiersActuels, draft.questions_generales_texte || {});
       tvaTauxActuel = draft.tva_taux || 20;
+
+      // Case "Je veux proposer une estimation chiffrée automatique" — coché
+      // uniquement si l'artisan l'a explicitement activé (ou s'il a déjà des
+      // produits enregistrés depuis avant l'introduction de cette case, pour
+      // ne rien masquer d'existant par surprise).
+      const dejaDesProduits = Array.isArray(draft.produits_chiffrables) && draft.produits_chiffrables.length > 0;
+      const formulaireActive = draft.formulaire_estimatif_active === true || dejaDesProduits;
+      const checkFormulaire = document.getElementById('checkFormulaireEstimatif');
+      const contenuFormulaire = document.getElementById('formulaireEstimatifContenu');
+      checkFormulaire.checked = formulaireActive;
+      contenuFormulaire.style.display = formulaireActive ? 'block' : 'none';
+      checkFormulaire.addEventListener('change', () => {
+        contenuFormulaire.style.display = checkFormulaire.checked ? 'block' : 'none';
+        sauvegarderChampsImmediat({ formulaire_estimatif_active: checkFormulaire.checked });
+      });
+
       try {
         initProduitsChiffrables(metiersActuels, draft.produits_chiffrables || []);
       } catch (erreurProduits) {

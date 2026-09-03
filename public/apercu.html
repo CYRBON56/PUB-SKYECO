@@ -15,6 +15,12 @@
   .image-panel-title { position:absolute; top:50%; left:32px; right:32px; transform:translateY(-50%); z-index:2; color:#fff; font-size:clamp(1.6rem,3vw,2.4rem); font-weight:700; line-height:1.25; text-align:center; text-shadow:0 2px 12px rgba(0,0,0,0.35); }
   @media (max-width:800px){ .image-panel-title{ font-size:1.3rem; left:20px; right:20px; } }
   .form-panel { flex:1 1 55%; position:relative; display:flex; align-items:stretch; justify-content:center; padding:20px 24px; overflow:hidden; order:1; }
+  /* Position du formulaire (gauche/droite) — configurée par l'artisan dans
+     mes-elements.html (colonne formulaire_position), posée en JS sur
+     .split-layout (voir init). Par défaut ("gauche"), le formulaire reste à
+     gauche et la photo/vidéo à droite (ordres ci-dessus, inchangés). */
+  .split-layout.formulaire-droite .image-panel { order:1; }
+  .split-layout.formulaire-droite .form-panel { order:2; }
   .form-bg-overlay { position:absolute; inset:0; z-index:-1; background:rgba(246,244,239,0.55); }
   .form-bg-carousel { position:absolute; inset:0; z-index:-2; overflow:hidden; }
   .form-bg-carousel img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 1.2s ease-in-out; }
@@ -474,6 +480,13 @@ async function init(){
   document.documentElement.style.setProperty('--brand', brandColor);
   document.documentElement.style.setProperty('--brand-tint', brandColor + '1A');
   document.documentElement.style.setProperty('--brand-dark', '#14312a');
+
+  // Position du formulaire (gauche/droite), configurée par l'artisan dans
+  // mes-elements.html — voir la classe .formulaire-droite ci-dessus. Sans
+  // valeur (anciens brouillons), reste à gauche comme aujourd'hui.
+  if (draft.formulaire_position === 'droite') {
+    document.querySelector('.split-layout').classList.add('formulaire-droite');
+  }
 
   document.getElementById('heroTitle').innerHTML = (draft.titre_hero_choisi || template.heroTitre) +
     '<span style="display:block; margin-top:14px; font-size:0.45em; font-weight:600; opacity:0.9;">' + draft.entreprise + '</span>';

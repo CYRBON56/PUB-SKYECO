@@ -851,7 +851,8 @@
             sauvegarderChampsImmediat({ metier: metiers });
             construireOptionsTitre(metiersActuels, titreChoisi);
           }
-          resultBox.innerHTML = `✓ ${data.produits.length} produit(s) identifié(s) et ajouté(s) ci-dessous — vérifiez et complétez les prix avant d'enregistrer.`;
+          resultBox.innerHTML = `✓ ${data.produits.length} produit(s) identifié(s) et ajouté(s) ci-dessous — vérifiez et complétez les prix avant d'enregistrer.<br>
+            <a href="https://calendly.com/c-bon-ecosky/devis-skyeco-pro-appel-telephonique" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:6px; margin-top:12px; background:#1e6f4c; color:#fff; text-decoration:none; border-radius:8px; padding:10px 16px; font-size:0.85rem; font-weight:700;">📅 Prendre RDV pour le valider avec un technicien</a>`;
         } else {
           resultBox.textContent = data.error || "L'analyse n'a pas pu aboutir — ajoutez vos produits manuellement.";
         }

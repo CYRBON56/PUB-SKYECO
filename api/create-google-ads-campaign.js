@@ -86,7 +86,14 @@ export default async function handler(req, res) {
     }
 
     const budgetNetEuros = draft.tarif_prix * (1 - TAUX_COMMISSION);
-    const budgetJournalierMicros = Math.round((budgetNetEuros / 30) * 1_000_000);
+    // Bug corrigé le 03/09 (détecté sur la 1ère création réelle en live,
+    // PORTALECO) : Google Ads exige un montant multiple de l'unité minimale
+    // (10 000 micros = 0,01 €) — erreur réelle obtenue : "A money amount was
+    // not a multiple of a minimum unit." On arrondit donc d'abord au centime
+    // le plus proche, puis on convertit en micros (au lieu d'arrondir
+    // directement des micros bruts, qui ne tombe quasiment jamais sur un
+    // multiple de 10 000).
+    const budgetJournalierMicros = Math.round((budgetNetEuros / 30) * 100) * 10_000;
 
     // 03/09 : une campagne existe déjà pour ce site (recharge, pas premier
     // paiement) — on ne recrée JAMAIS une deuxième campagne en double.

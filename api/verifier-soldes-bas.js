@@ -38,8 +38,18 @@ const SEUIL_ALERTE_SOLDE = 50; // €
 
 const WINDSOR_BASE = 'https://connectors.windsor.ai/google_ads';
 
+// Windsor.ai attend l'identifiant de compte Google Ads AVEC tirets (format
+// XXX-XXX-XXXX) — bug corrigé le 03/09, voir create-google-ads-campaign.js :
+// erreur réelle "Account 7849903984 is not available. The configured
+// accounts are: 784-990-3984."
+function formaterCompteGoogleAds(id) {
+  const chiffres = String(id || '').replace(/[^0-9]/g, '');
+  if (chiffres.length !== 10) return String(id || '').trim();
+  return `${chiffres.slice(0, 3)}-${chiffres.slice(3, 6)}-${chiffres.slice(6)}`;
+}
+
 async function executerActionGoogleAds(action, params) {
-  const accountId = (process.env.GOOGLE_ADS_ACCOUNT_ID || '').replace(/[^0-9]/g, '');
+  const accountId = formaterCompteGoogleAds(process.env.GOOGLE_ADS_ACCOUNT_ID);
   const resp = await fetch(`${WINDSOR_BASE}/actions?api_key=${process.env.WINDSOR_API_KEY}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

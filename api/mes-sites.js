@@ -4,6 +4,14 @@
 // dans mon-dashboard.html pour un artisan qui possède plusieurs vitrines
 // (ex : plusieurs activités différentes).
 //
+// Par défaut, exclut les vitrines archivées (colonne `archive`, ajoutée pour
+// mes-artisans.html) — passer inclureArchives:true dans le corps de la
+// requête pour les récupérer aussi (utilisé par le panneau "Vitrines
+// archivées" de mon-dashboard.html, 04/09). tarif_actif et
+// google_ads_campaign_resource sont renvoyés pour que le tableau de bord
+// sache si une vitrine peut être supprimée définitivement (jamais payée, pas
+// de campagne créée) ou doit seulement être archivée.
+//
 // Variables d'environnement requises :
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 //   DASHBOARD_SESSION_SECRET
@@ -36,7 +44,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Méthode non autorisée' });
   }
-  const { token } = req.body || {};
+  const { token, inclureArchives } = req.body || {};
   if (!token) {
     return res.status(400).json({ success: false, error: 'token manquant' });
   }
@@ -47,8 +55,9 @@ export default async function handler(req, res) {
   }
 
   try {
+    const filtreArchive = inclureArchives ? '' : '&archive=not.is.true';
     const resp = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?email=ilike.${encodeURIComponent(email)}&dashboard_password_hash=not.is.null&order=dashboard_compte_cree_le.asc&select=id,entreprise,zone,metier,status`,
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?email=ilike.${encodeURIComponent(email)}&dashboard_password_hash=not.is.null${filtreArchive}&order=dashboard_compte_cree_le.asc&select=id,entreprise,zone,metier,status,archive,tarif_actif,google_ads_campaign_resource`,
       {
         headers: {
           apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,

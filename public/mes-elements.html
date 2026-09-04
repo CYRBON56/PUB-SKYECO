@@ -455,6 +455,14 @@
             <span style="display:block; font-weight:400; font-size:0.82rem; color:#5b6b64; margin-top:3px;">Réservé à RMS EcoSky — remplace tout ce qui précède par le même parcours de questions et le même calcul de prix que sur salesflow-ecosky (usage piéton/carrossable, support existant, état, âge du bâtiment pour la TVA, bordures, couleur de granulat). Un cas particulier codé en dur, pas une option générale à activer pour un autre artisan.</span>
           </label>
         </div>
+
+        <div style="display:flex; align-items:flex-start; gap:10px; background:#fff4ec; border:1.5px solid #f0c9a8; border-radius:12px; padding:14px 16px; margin-top:12px;">
+          <input type="checkbox" id="checkCalculPortails" style="width:auto; margin-top:3px; accent-color:#c9601f;">
+          <label for="checkCalculPortails" style="margin:0; font-weight:700; color:#14312a; cursor:pointer;">
+            Configurateur portails (coulissant / battant, remplissage, options)
+            <span style="display:block; font-weight:400; font-size:0.82rem; color:#5b6b64; margin-top:3px;">Réservé à PORTALECO — remplace tout ce qui précède par un parcours dédié aux portails (type, remplissage, lames, largeur, hauteur, couleur, digicode, visiophone/interphone, batterie, bouton poussoir). Un cas particulier codé en dur, pas une option générale à activer pour un autre artisan. Tant que la grille de prix (PORTAILS_TARIFS dans apercu.html) n'est pas remplie, l'estimation reste "non chiffrable" et redirige vers une prise de rendez-vous — aucun prix erroné n'est affiché.</span>
+          </label>
+        </div>
         </div>
       </div>
     </div>
@@ -657,6 +665,15 @@
       checkCalculResineRMS.checked = draft.mode_calcul_resine_rms === true;
       checkCalculResineRMS.addEventListener('change', () => {
         sauvegarderChampsImmediat({ mode_calcul_resine_rms: checkCalculResineRMS.checked });
+      });
+
+      // Case "Configurateur portails" — cas particulier codé en dur pour
+      // PORTALECO uniquement, décochée par défaut. Voir public/apercu.html,
+      // getStepsPortails / calculerEstimationPortails.
+      const checkCalculPortails = document.getElementById('checkCalculPortails');
+      checkCalculPortails.checked = draft.mode_calcul_portails === true;
+      checkCalculPortails.addEventListener('change', () => {
+        sauvegarderChampsImmediat({ mode_calcul_portails: checkCalculPortails.checked });
       });
 
       // Position du formulaire (gauche/droite) — voir public/apercu.html,

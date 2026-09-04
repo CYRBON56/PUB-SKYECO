@@ -1081,11 +1081,21 @@
   // Lien vidéo (YouTube/Vimeo) saisi directement, sans upload — même logique
   // d'enregistrement immédiat que le reste, pour ne rien perdre en quittant
   // la page avant le bouton final.
+  //
+  // Correction 04/09 : la condition "&& !videoUrl" bloquait silencieusement
+  // toute modification du lien dès qu'une vidéo existait déjà (fichier
+  // uploadé, ou lien déjà enregistré au chargement de la page, ligne 745) —
+  // impossible de corriger ou remplacer le lien sans que rien ne se passe,
+  // sans le moindre message d'erreur. On enregistre maintenant à chaque
+  // changement, on garde `videoUrl` synchronisé (pour rester cohérent avec
+  // l'upload de fichier), et on affiche une confirmation comme pour les
+  // autres envois.
   document.getElementById('videoLien').addEventListener('change', () => {
     const lien = document.getElementById('videoLien').value.trim();
-    if (lien && !videoUrl) {
-      sauvegarderChampsImmediat({ video_url: lien });
-    }
+    videoUrl = lien || null;
+    document.getElementById('boxVideo').classList.remove('has-file');
+    document.getElementById('statusVideo').textContent = lien ? 'Lien vidéo enregistré ✓' : 'Ou colle un lien YouTube/Vimeo ci-dessous';
+    sauvegarderChampsImmediat({ video_url: videoUrl });
   });
 
   // --- Extraction best-effort des mentions légales depuis un site existant ---

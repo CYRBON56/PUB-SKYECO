@@ -238,6 +238,21 @@
         </div>
         <input type="url" id="videoLien" placeholder="https://youtube.com/..." style="margin-top:10px;">
 
+        <label style="margin-top:18px;">Catalogue téléchargeable (optionnel)</label>
+        <p class="hint">Un petit bouton apparaît sur ta vitrine (ex : "Catalogue réalisations — Pas encore prêt ? Téléchargez-le") — les visiteurs peuvent le télécharger même sans remplir le formulaire de devis.</p>
+        <input type="text" id="catalogueTitre" placeholder="Titre du catalogue — Ex : Catalogue réalisations" style="margin-bottom:10px;">
+        <div class="upload-box" id="boxCatalogueImage">
+          <input type="file" id="inputCatalogueImage" accept="image/*">
+          <img id="catalogueImagePreview" class="logo-preview-img" alt="Couverture du catalogue">
+          <div class="upload-label">📁 Image de couverture (optionnel)</div>
+          <div class="upload-status" id="statusCatalogueImage">Aucune image</div>
+        </div>
+        <div class="upload-box" id="boxCatalogueFichier">
+          <input type="file" id="inputCatalogueFichier" accept=".pdf,application/pdf">
+          <div class="upload-label">📁 Fichier du catalogue (PDF)</div>
+          <div class="upload-status" id="statusCatalogueFichier">Aucun fichier</div>
+        </div>
+
         <label style="margin-top:18px;">Position du formulaire</label>
         <select id="selectPositionFormulaire">
           <option value="gauche">À gauche (photo/vidéo à droite)</option>
@@ -496,6 +511,8 @@
   let logoUrl = null;
   let photosUrls = [];
   let videoUrl = null;
+  let catalogueImageUrl = null;
+  let catalogueFichierUrl = null;
   let metiersActuels = [];
   let produitsActuels = new Map(); // id -> { metier, nom, unite, prix, minimum, questions: Map(id -> {label,type,unite,coche}) }
   let titreChoisi = '';
@@ -779,6 +796,20 @@
         document.getElementById('logoPreview').style.display = 'block';
       }
       if (draft.video_url) { videoUrl = draft.video_url; document.getElementById('videoLien').value = draft.video_url.startsWith('http') ? draft.video_url : ''; }
+
+      if (draft.catalogue_titre) document.getElementById('catalogueTitre').value = draft.catalogue_titre;
+      if (draft.catalogue_image_url) {
+        catalogueImageUrl = draft.catalogue_image_url;
+        document.getElementById('statusCatalogueImage').textContent = 'Image déjà enregistrée ✓';
+        document.getElementById('boxCatalogueImage').classList.add('has-file');
+        document.getElementById('catalogueImagePreview').src = draft.catalogue_image_url;
+        document.getElementById('catalogueImagePreview').style.display = 'block';
+      }
+      if (draft.catalogue_fichier_url) {
+        catalogueFichierUrl = draft.catalogue_fichier_url;
+        document.getElementById('statusCatalogueFichier').textContent = 'Catalogue déjà envoyé ✓';
+        document.getElementById('boxCatalogueFichier').classList.add('has-file');
+      }
     } catch (e) { console.error('Erreur chargerDraftExistant :', e); /* on part d'un formulaire vide plutôt que de bloquer la page */ }
     calculerProgression();
   }
@@ -1316,6 +1347,45 @@
       sauvegarderChampsImmediat({ video_url: videoUrl });
     } catch (err) {
       document.getElementById('statusVideo').textContent = 'Erreur : ' + err.message;
+    }
+  });
+
+  // Catalogue téléchargeable (titre + image de couverture + PDF) — voir
+  // public/apercu.html, le bloc #catalogueBadge, qui n'apparaît sur la
+  // vitrine que si catalogue_fichier_url est renseigné.
+  document.getElementById('catalogueTitre').addEventListener('change', () => {
+    sauvegarderChampsImmediat({ catalogue_titre: document.getElementById('catalogueTitre').value.trim() });
+  });
+
+  document.getElementById('boxCatalogueImage').addEventListener('click', () => document.getElementById('inputCatalogueImage').click());
+  document.getElementById('inputCatalogueImage').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    document.getElementById('statusCatalogueImage').textContent = 'Envoi en cours…';
+    try {
+      catalogueImageUrl = await uploaderFichier(file, 'catalogue-image');
+      document.getElementById('statusCatalogueImage').textContent = 'Image envoyée ✓';
+      document.getElementById('boxCatalogueImage').classList.add('has-file');
+      document.getElementById('catalogueImagePreview').src = catalogueImageUrl;
+      document.getElementById('catalogueImagePreview').style.display = 'block';
+      sauvegarderChampsImmediat({ catalogue_image_url: catalogueImageUrl });
+    } catch (err) {
+      document.getElementById('statusCatalogueImage').textContent = 'Erreur : ' + err.message;
+    }
+  });
+
+  document.getElementById('boxCatalogueFichier').addEventListener('click', () => document.getElementById('inputCatalogueFichier').click());
+  document.getElementById('inputCatalogueFichier').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    document.getElementById('statusCatalogueFichier').textContent = 'Envoi en cours…';
+    try {
+      catalogueFichierUrl = await uploaderFichier(file, 'catalogue-fichier');
+      document.getElementById('statusCatalogueFichier').textContent = 'Catalogue envoyé ✓';
+      document.getElementById('boxCatalogueFichier').classList.add('has-file');
+      sauvegarderChampsImmediat({ catalogue_fichier_url: catalogueFichierUrl });
+    } catch (err) {
+      document.getElementById('statusCatalogueFichier').textContent = 'Erreur : ' + err.message;
     }
   });
 

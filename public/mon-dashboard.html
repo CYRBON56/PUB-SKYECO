@@ -205,8 +205,12 @@
 
   .coaching-panel { background:#f6faf7; border:1.5px solid #d7e8dd; border-radius:14px; padding:18px 20px; margin-top:20px !important; }
   .coaching-panel-header { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
-  .coaching-panel-header h3 { margin-bottom:0; }
+  .coaching-panel-header h3 { margin-bottom:0; flex:1; }
   .coaching-logo { flex-shrink:0; border-radius:11px; }
+  .btn-toggle-coach { flex-shrink:0; background:#fff; color:#5b6b64; border:1.5px solid #d8e3de; border-radius:8px; padding:8px 14px; font-size:0.78rem; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .btn-toggle-coach:hover { background:#f2f4f1; }
+  .btn-toggle-coach.coach-est-en-pause { background:#1e6f4c; color:#fff; border-color:#1e6f4c; }
+  .coaching-ia-pause { font-size:0.85rem; line-height:1.5; color:#5b6b64; background:#fff; border:1.5px dashed #d8e3de; border-radius:10px; padding:14px 16px; }
   .coaching-liste { list-style:none; display:flex; flex-direction:column; gap:10px; }
   .coaching-liste li { font-size:0.85rem; line-height:1.5; color:#294038; padding-left:24px; position:relative; }
   .coaching-liste li::before { content:'✓'; position:absolute; left:0; top:0; color:#1e6f4c; font-weight:800; }
@@ -588,6 +592,10 @@
           <path d="M88 96 v-9 c0-1.6 1.3-2.4 2.4-2.4 c0.5-2.6 1-4.6 1-6 c0-1.7 1.2-2.6 2.3-2.2 c1 .4 1.5 1.6 1.3 2.8 l-0.7 3.4 h4.6 c1.3 0 2.3 1.1 2 2.4 l-1.4 7.4 c-0.3 1.5-1.6 2.6-3.1 2.6 h-6.4 c-1.1 0-2-.9-2-2 Z" fill="#e8622c"/>
         </svg>
         <h3>Coach IA Ads</h3>
+        <button type="button" id="btnToggleCoach" class="btn-toggle-coach">⏸️ Mettre en pause</button>
+      </div>
+      <div id="coachingIaPause" class="coaching-ia-pause" style="display:none;">
+        Le coach IA est en pause — il n'analyse plus votre campagne et ne peut plus agir dessus. Réactivez-le à tout moment pour reprendre ses recommandations.
       </div>
       <div id="coachingIaZone">
         <div class="loading" id="coachingIaLoading" style="padding:16px 0;">Analyse de votre campagne…</div>
@@ -595,7 +603,7 @@
         <div id="coachingIaReponse" class="coaching-ia-reponse" style="display:none;"></div>
         <ul id="coachingListe" class="coaching-liste" style="display:none;"></ul>
       </div>
-      <div class="coaching-chat">
+      <div class="coaching-chat" id="coachingChatBloc">
         <div id="coachingChatHistorique" class="coaching-chat-historique"></div>
         <form id="coachingChatForm" class="coaching-chat-form">
           <input type="text" id="coachingChatInput" placeholder="Posez une question au coach (ex : pourquoi j'ai peu de clics ?)" autocomplete="off" />
@@ -2614,15 +2622,86 @@
   // rappelée après chaque rechargement des données de campagne.
   let coachingChatInitialise = false;
   let coachingChatEnCours = false;
+  let coachEstEnPause = false; // reflète coach_ia_pause en base, mis à jour à chaque chargement/bascule
+  let coachingDernieresDonnees = null; // derniers motsCles/heuresDePointe/termesRecherche/appareils, pour recharger après réactivation
+
+  // (04/09) Bouton "Mettre en pause" / "Réactiver" — demandé par Cyrille :
+  // l'artisan doit pouvoir couper le coach IA à tout moment (il peut agir
+  // seul sur la campagne, voir plus haut) sans toucher à la diffusion de
+  // la campagne elle-même (bouton pause diffusion, ailleurs dans ce
+  // panneau Ads). Tant qu'il est en pause, /api/coach-ads ne fait plus
+  // aucun appel à Claude pour ce site (ni analyse, ni chat, ni action).
+  function metAJourBoutonToggleCoach() {
+    const bouton = document.getElementById('btnToggleCoach');
+    if (!bouton) return;
+    bouton.textContent = coachEstEnPause ? '▶️ Réactiver le coach' : '⏸️ Mettre en pause';
+    bouton.classList.toggle('coach-est-en-pause', coachEstEnPause);
+  }
+
+  function afficherEtatPauseCoach() {
+    const zone = document.getElementById('coachingIaZone');
+    const chatBloc = document.getElementById('coachingChatBloc');
+    const pauseMsg = document.getElementById('coachingIaPause');
+    zone.style.display = 'none';
+    chatBloc.style.display = 'none';
+    pauseMsg.style.display = 'block';
+    metAJourBoutonToggleCoach();
+  }
+
+  function afficherEtatActifCoach() {
+    const zone = document.getElementById('coachingIaZone');
+    const chatBloc = document.getElementById('coachingChatBloc');
+    const pauseMsg = document.getElementById('coachingIaPause');
+    zone.style.display = 'block';
+    chatBloc.style.display = 'block';
+    pauseMsg.style.display = 'none';
+    metAJourBoutonToggleCoach();
+  }
+
+  document.getElementById('btnToggleCoach').addEventListener('click', async () => {
+    const bouton = document.getElementById('btnToggleCoach');
+    const nouvelEtat = !coachEstEnPause;
+    bouton.disabled = true;
+    try {
+      const res = await fetch('/api/coach-toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, pause: nouvelEtat })
+      });
+      const data = await res.json();
+      if (data.success) {
+        coachEstEnPause = nouvelEtat;
+        if (coachEstEnPause) {
+          afficherEtatPauseCoach();
+        } else if (coachingDernieresDonnees) {
+          // Réactivation : relance une analyse fraîche.
+          await chargerCoachIA(...coachingDernieresDonnees);
+        } else {
+          afficherEtatActifCoach();
+        }
+      }
+    } catch (e) { /* silencieux — l'artisan peut réessayer */ }
+    bouton.disabled = false;
+  });
 
   async function chargerCoachIA(motsCles, heuresDePointe, termesRecherche, appareils) {
+    coachingDernieresDonnees = [motsCles, heuresDePointe, termesRecherche, appareils];
     const panel = document.getElementById('coachingPanel');
+    const zone = document.getElementById('coachingIaZone');
+    const chatBloc = document.getElementById('coachingChatBloc');
+    const pauseMsg = document.getElementById('coachingIaPause');
     const loading = document.getElementById('coachingIaLoading');
     const actionsZone = document.getElementById('coachingIaActions');
     const reponseZone = document.getElementById('coachingIaReponse');
     const listeSecours = document.getElementById('coachingListe');
 
     panel.style.display = 'block';
+    // Pendant le chargement : zone de résultats visible avec le spinner,
+    // chat et message de pause masqués (on ne sait pas encore lequel
+    // afficher tant que la réponse n'est pas arrivée).
+    zone.style.display = 'block';
+    chatBloc.style.display = 'none';
+    pauseMsg.style.display = 'none';
     loading.style.display = 'block';
     actionsZone.style.display = 'none';
     reponseZone.style.display = 'none';
@@ -2643,6 +2722,13 @@
         return;
       }
 
+      coachEstEnPause = !!data.coachEnPause;
+      if (coachEstEnPause) {
+        afficherEtatPauseCoach();
+        return;
+      }
+      afficherEtatActifCoach();
+
       if (data.actionsAppliquees > 0) {
         actionsZone.style.display = 'flex';
         actionsZone.innerHTML = `<div class="coaching-ia-action">✓ ${data.actionsAppliquees} action${data.actionsAppliquees > 1 ? 's' : ''} appliquée${data.actionsAppliquees > 1 ? 's' : ''} automatiquement par le coach — détails ci-dessous.</div>`;
@@ -2658,6 +2744,7 @@
       }
     } catch (e) {
       loading.style.display = 'none';
+      afficherEtatActifCoach();
       // Le coach IA n'a pas répondu (réseau, clé API...) : on affiche quand
       // même des conseils utiles à partir des données déjà chargées.
       afficherCoaching(motsCles, heuresDePointe, termesRecherche, appareils);

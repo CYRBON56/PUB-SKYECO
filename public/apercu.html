@@ -477,12 +477,28 @@ const RESINE_RMS_LABELS = {
 // chiffrable:false de calculerEstimationPortails(). Aucun changement de code
 // n'est nécessaire quand un prix est modifié dans mes-elements.html.
 //
-// Largeur/hauteur : même liste de valeurs pour coulissant et battant pour
-// l'instant (simplification volontaire) — si les gammes diffèrent vraiment
-// selon le type de portail, on pourra faire dépendre les options de
-// state.type_portail plus tard.
+// Refait le 04/09 sur dictée de Cyrille — reprend la nomenclature réelle du
+// fournisseur (portails AUTOPORTANTS, sans rail au sol) : trois modèles —
+// SWING GATE (battant), ONESLIDE (coulissant 1 vantail), TWINSLIDE
+// (coulissant 2 vantaux) — plus le détail remplissage/lames/largeur/hauteur/
+// couleur/angle d'ouverture/ouverture extérieure/côté alimentation. Les
+// anciennes étapes "fourniture seule / installation complète" et "options"
+// (digicode, visiophone…) sont conservées à la demande explicite de Cyrille
+// (04/09) — elles s'ajoutent à cette nouvelle liste, elles ne la remplacent pas.
+//
+// Largeur/hauteur/angle : même liste de valeurs pour les trois modèles pour
+// l'instant (simplification volontaire, comme avant) — si les gammes
+// diffèrent vraiment selon le modèle, on pourra faire dépendre les options
+// de state.type_portail plus tard.
+//
+// Couleurs RAL — ATTENTION (04/09) : liste transcrite depuis une dictée
+// vocale, donc à vérifier avec la capture d'écran que Cyrille doit envoyer.
+// Incertains en particulier : RAL 5017 (bleu), RAL 7021 (gris noir),
+// RAL 8025 (brun pâle), et les deux codes RAL 2100/2900 ("noir sablé" /
+// "gris sablé") qui ne sont pas des codes RAL classiques standards — probable
+// nomenclature propre au fournisseur pour une finition sablée/texturée.
 const PORTAILS_TARIFS = {
-  prixBaseHT: { coulissant: 0, battant: 0 }, // À REMPLIR — 0 = configurateur non actif
+  prixBaseHT: { swing_gate: 0, oneslide: 0, twinslide: 0 }, // À REMPLIR — 0 = configurateur non actif pour ce modèle
   // Ajouté le 04/09 à la demande de Cyrille : la plupart de ses clients
   // veulent une installation clé en main (terrassement, béton, évacuation de
   // terre, raccordement électrique, capteurs — "il n'y a rien à faire pour
@@ -492,34 +508,78 @@ const PORTAILS_TARIFS = {
   // demande "installation complète" reste non chiffrable plutôt que
   // d'afficher un montant qui oublierait tout le gros œuvre.
   installation: { fourniture_seule: 0, installation_complete: 0 },
-  remplissage: { lames_pleines: 0, lames_bandeau: 0, lames_horizontales: 0, motif_decoratif: 0 },
+  remplissage: { clairline: 0, decoline: 0, lameline: 0, laserline_vertical: 0 },
   lames: { lames_120: 0, lames_200: 0 },
-  largeur: { '3000': 0, '3500': 0, '4000': 0, '4500': 0 },
-  hauteur: { '1200': 0, '1400': 0, '1600': 0, '1800': 0, '2000': 0 },
-  couleur: { ral7016: 0, ral9010: 0, autre_ral: 0 },
+  largeur: { '3000': 0, '3500': 0 },
+  hauteur: { '1226': 0, '1466': 0, '1585': 0, '1705': 0 },
+  couleur: {
+    ral7016: 0, ral9010: 0, // inclus dans le prix de base
+    ral1015: 0, ral3001: 0, ral3004: 0, ral5017: 0, ral6005: 0, ral6009: 0, ral6021: 0,
+    ral7006: 0, ral7021: 0, ral7022: 0, ral7039: 0, ral8014: 0, ral8019: 0, ral8025: 0,
+    ral9005: 0, ral9007: 0, ral2100: 0, ral2900: 0, autre_ral: 0,
+  },
+  angle_ouverture: { '90': 0, '60': 0 },
+  ouverture_exterieure: { oui: 0, non: 0 },
   options: { digicode_ext: 0, digicode_int: 0, visiophone: 0, interphone: 0, batterie: 0, bouton_poussoir: 0, ligne_electrique: 0 },
 };
 
 const PORTAILS_LABELS = {
-  type_portail: { coulissant: "Portail coulissant", battant: "Portail battant (2 vantaux)" },
+  type_portail: {
+    swing_gate: "SWING GATE — Portail battant autoportant",
+    oneslide: "ONESLIDE — Portail coulissant autoportant 1 vantail",
+    twinslide: "TWINSLIDE — Portail coulissant autoportant 2 vantaux",
+  },
   installation: {
     fourniture_seule: "Fourniture du portail seul (pose non comprise)",
     installation_complete: "Installation complète clé en main (terrassement, béton, évacuation, raccordement électrique, capteurs)",
   },
   remplissage: {
-    lames_pleines: "Lames pleines (occultant total)",
-    lames_bandeau: "Lames avec bandeau ajouré en partie haute",
-    lames_horizontales: "Lames horizontales fines",
-    motif_decoratif: "Motif décoratif ajouré",
+    clairline: "CLAIRLINE",
+    decoline: "DECOLINE",
+    lameline: "LAMELINE",
+    laserline_vertical: "LASERLINE verticale (motif découpé au laser)",
   },
   lames: { lames_120: "Lames 120", lames_200: "Lames 200" },
-  couleur: { ral7016: "RAL 7016 — Gris anthracite", ral9010: "RAL 9010 — Blanc", autre_ral: "Autre couleur RAL" },
-  cote_refoulement: { gauche: "Gauche", droite: "Droite" },
+  couleur: {
+    ral7016: "RAL 7016 — Gris anthracite (inclus)",
+    ral9010: "RAL 9010 — Blanc (inclus)",
+    ral1015: "RAL 1015 — Ivoire clair",
+    ral3001: "RAL 3001 — Rouge",
+    ral3004: "RAL 3004 — Rouge Bordeaux",
+    ral5017: "RAL 5017 — Bleu",
+    ral6005: "RAL 6005 — Vert mousse",
+    ral6009: "RAL 6009 — Vert sapin",
+    ral6021: "RAL 6021 — Vert pâle",
+    ral7006: "RAL 7006 — Beige gris",
+    ral7021: "RAL 7021 — Gris noir",
+    ral7022: "RAL 7022 — Gris terre d'ombre",
+    ral7039: "RAL 7039 — Gris quartz",
+    ral8014: "RAL 8014 — Brun sépia",
+    ral8019: "RAL 8019 — Brun gris",
+    ral8025: "RAL 8025 — Brun pâle",
+    ral9005: "RAL 9005 — Noir",
+    ral9007: "RAL 9007 — Gris aluminium",
+    ral2100: "RAL 2100 — Noir sablé",
+    ral2900: "RAL 2900 — Gris sablé",
+    autre_ral: "Autre coloris",
+  },
+  angle_ouverture: { '90': "90°", '60': "60°" },
+  ouverture_exterieure: { oui: "Oui", non: "Non" },
+  cote_alimentation: { gauche: "Gauche", droite: "Droite" },
 };
 const PORTAILS_OPTIONS_LABELS = {
   digicode_ext: "Digicode extérieur", digicode_int: "Digicode intérieur", visiophone: "Visiophone",
   interphone: "Interphone", batterie: "Batterie de secours", bouton_poussoir: "Bouton poussoir",
   ligne_electrique: "Tirage d'une ligne électrique jusqu'au portail",
+};
+// Motifs disponibles pour le remplissage LASERLINE verticale (découpe laser)
+// — captures d'écran transmises par Cyrille le 04/09. Un plexiglas est
+// systématiquement posé à l'intérieur de la découpe (voir la note du step
+// motif_laserline ci-dessous), donc aucun supplément de prix par motif —
+// seul le remplissage laserline_vertical lui-même est tarifé.
+const MOTIF_LASERLINE_LABELS = {
+  cacao: "CACAO", contemporain: "CONTEMPORAIN", feuille: "FEUILLE", nina: "NINA",
+  oxygen: "OXYGEN", rio1: "RIO1", rio2: "RIO2",
 };
 
 // Fusionne les tarifs saisis par Cyrille dans mes-elements.html
@@ -538,8 +598,10 @@ function tarifsPortailsActuels(draftInfo){
 
 function getStepsPortails(state){
   const s = [];
-  s.push({ key:"type_portail", question:"Quel type de portail souhaitez-vous ?", type:"choice",
-    options: [["coulissant","Portail coulissant"],["battant","Portail battant (2 vantaux)"]] });
+  s.push({ key:"type_portail", question:"Quel modèle de portail autoportant souhaitez-vous ?", type:"choice",
+    note: "Portails autoportants — aucun rail au sol, la structure porte le portail elle-même.",
+    prixCategorie: "prixBaseHT",
+    options: [["swing_gate","SWING GATE — Portail battant"],["oneslide","ONESLIDE — Portail coulissant 1 vantail"],["twinslide","TWINSLIDE — Portail coulissant 2 vantaux"]] });
   // Ajouté le 04/09 (Cyrille) : distingue la simple fourniture du portail
   // d'une installation complète (terrassement, béton, évacuation de terre,
   // raccordement électrique, capteurs) — un poste de coût majeur, à part du
@@ -548,18 +610,36 @@ function getStepsPortails(state){
     options: [["fourniture_seule","Fourniture du portail seul (pose non comprise)"],
       ["installation_complete","Installation complète clé en main — terrassement, béton, évacuation de terre, raccordement électrique, capteurs"]] });
   s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
-  s.push({ key:"remplissage", question:"Quel style de remplissage souhaitez-vous ?", type:"choice",
-    options: [["lames_pleines","Lames pleines (occultant total)"],["lames_bandeau","Lames avec bandeau ajouré en partie haute"],
-      ["lames_horizontales","Lames horizontales fines"],["motif_decoratif","Motif décoratif ajouré"]] });
+  s.push({ key:"remplissage", question:"Quel remplissage souhaitez-vous ?", type:"choice",
+    prixCategorie: "remplissage",
+    options: [["clairline","CLAIRLINE"],["decoline","DECOLINE"],["lameline","LAMELINE"],["laserline_vertical","LASERLINE verticale (motif découpé au laser)"]] });
+  // Motif du remplissage laser — uniquement si LASERLINE verticale a été
+  // choisie. Le plexiglas posé derrière la découpe est une info technique
+  // importante (tenue du remplissage), d'où la note.
+  if(state.remplissage === "laserline_vertical"){
+    s.push({ key:"motif_laserline", question:"Quel motif laser souhaitez-vous ?", type:"choice",
+      note: "Un plexiglas sera installé à l'intérieur de la découpe laser.",
+      options: Object.entries(MOTIF_LASERLINE_LABELS).map(([val,label])=>[val,label]) });
+  }
   s.push({ key:"lames", question:"Quel type de lames ?", type:"choice",
-    options: [["lames_120","Lames 120 (standard)"],["lames_200","Lames 200 (plus larges)"]] });
+    prixCategorie: "lames",
+    options: [["lames_120","Lames 120"],["lames_200","Lames 200"]] });
   s.push({ key:"largeur", question:"Quelle largeur de passage souhaitez-vous ?", type:"choice",
-    options: [["3000","3,00 m"],["3500","3,50 m"],["4000","4,00 m"],["4500","4,50 m"]] });
+    prixCategorie: "largeur",
+    options: [["3000","3,00 m"],["3500","3,50 m"]] });
   s.push({ key:"hauteur", question:"Quelle hauteur souhaitez-vous ?", type:"choice",
-    options: [["1200","1,20 m"],["1400","1,40 m"],["1600","1,60 m"],["1800","1,80 m"],["2000","2,00 m"]] });
+    prixCategorie: "hauteur",
+    options: [["1226","1,226 m"],["1466","1,466 m"],["1585","1,585 m"],["1705","1,705 m"]] });
   s.push({ key:"couleur", question:"Quelle couleur pour votre portail ?", type:"choice",
-    options: [["ral7016","RAL 7016 — Gris anthracite"],["ral9010","RAL 9010 — Blanc"],["autre_ral","Une autre couleur RAL"]] });
-  s.push({ key:"cote_refoulement", question:"De quel côté souhaitez-vous le refoulement (vue de l'intérieur) ?", type:"choice",
+    prixCategorie: "couleur",
+    options: Object.entries(PORTAILS_LABELS.couleur).map(([val,label])=>[val,label]) });
+  s.push({ key:"angle_ouverture", question:"Quel angle d'ouverture souhaitez-vous ?", type:"choice",
+    prixCategorie: "angle_ouverture",
+    options: [["90","90°"],["60","60°"]] });
+  s.push({ key:"ouverture_exterieure", question:"Souhaitez-vous une ouverture possible depuis l'extérieur ?", type:"choice",
+    prixCategorie: "ouverture_exterieure",
+    options: [["oui","Oui"],["non","Non"]] });
+  s.push({ key:"cote_alimentation", question:"De quel côté se trouve l'alimentation électrique (vue de l'intérieur) ?", type:"choice",
     options: [["gauche","Gauche"],["droite","Droite"]] });
   s.push({ key:"options_portail", question:"Souhaitez-vous ajouter des options ?", type:"options_multi", optional:true,
     options: [["digicode_ext","Digicode extérieur"],["digicode_int","Digicode intérieur"],["visiophone","Visiophone"],
@@ -922,9 +1002,24 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     const s=steps[state.step];
     let html = '<div class="step-label">Étape '+(state.step+1)+' sur '+steps.length+'</div>';
     html += '<div class="question">'+s.question+'</div>';
+    // Note informative optionnelle sous la question (ex : précision sur le
+    // plexiglas posé derrière un motif laser découpé) — ajouté 04/09 pour le
+    // parcours "portails", réutilisable par tout step qui en a besoin.
+    if(s.note) html += '<div style="font-size:12.5px; color:#5b6b64; margin:-8px 0 14px; line-height:1.5;">'+s.note+'</div>';
     if(s.type==='choice'){
+      // Suffixe de prix par option (ex : "+314€ HT") quand le step précise
+      // une prixCategorie — même mécanique que options_multi ci-dessous,
+      // lue depuis tarifsPortailsActuels(draftInfo) (grille remplie par
+      // Cyrille dans mes-elements.html). Uniquement utilisé par le parcours
+      // "portails" pour l'instant.
+      const tarifsCategorie = s.prixCategorie ? (tarifsPortailsActuels(draftInfo)[s.prixCategorie] || {}) : null;
       html+='<div class="options">';
-      s.options.forEach(([val,label])=>{ const sel=state[s.key]===val?' selected':''; html+='<div class="option'+sel+'" data-val="'+val+'">'+label+'</div>'; });
+      s.options.forEach(([val,label])=>{
+        const sel=state[s.key]===val?' selected':'';
+        const prix = tarifsCategorie ? (tarifsCategorie[val] || 0) : 0;
+        const suffixe = prix > 0 ? ' <span style="font-weight:400; opacity:0.7;">(+'+prix+'€ HT)</span>' : '';
+        html+='<div class="option'+sel+'" data-val="'+val+'">'+label+suffixe+'</div>';
+      });
       html+='</div>';
     } else if(s.type==='number'){
       html+='<input type="number" id="inputNum" placeholder="'+s.placeholder+'" value="'+(state[s.key]||'')+'" min="1" />';
@@ -1499,6 +1594,8 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     ajouter(tarifs.largeur, state.largeur);
     ajouter(tarifs.hauteur, state.hauteur);
     ajouter(tarifs.couleur, state.couleur);
+    ajouter(tarifs.angle_ouverture, state.angle_ouverture);
+    ajouter(tarifs.ouverture_exterieure, state.ouverture_exterieure);
     const optionsChoisies = state.options_portail || {};
     Object.keys(optionsChoisies).forEach(cle => { if(optionsChoisies[cle]) ajouter(tarifs.options, cle); });
 
@@ -1528,14 +1625,18 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
   // getStepsPortails (state.type_portail, state.remplissage…).
   function construireRecapPortails(estimation){
     const recap = [];
-    if(state.type_portail) recap.push({ label:'Type de portail', valeur: PORTAILS_LABELS.type_portail[state.type_portail] || state.type_portail });
+    recap.push({ label:'Structure', valeur:'Portail autoportant (aucun rail au sol)' });
+    if(state.type_portail) recap.push({ label:'Modèle', valeur: PORTAILS_LABELS.type_portail[state.type_portail] || state.type_portail });
     if(state.installation) recap.push({ label:'Installation', valeur: PORTAILS_LABELS.installation[state.installation] || state.installation });
     if(state.remplissage) recap.push({ label:'Remplissage', valeur: PORTAILS_LABELS.remplissage[state.remplissage] || state.remplissage });
+    if(state.remplissage === 'laserline_vertical' && state.motif_laserline) recap.push({ label:'Motif laser', valeur: MOTIF_LASERLINE_LABELS[state.motif_laserline] || state.motif_laserline });
     if(state.lames) recap.push({ label:'Lames', valeur: PORTAILS_LABELS.lames[state.lames] || state.lames });
     if(state.largeur) recap.push({ label:'Largeur', valeur: (parseInt(state.largeur,10)/1000).toString().replace('.', ',') + ' m' });
     if(state.hauteur) recap.push({ label:'Hauteur', valeur: (parseInt(state.hauteur,10)/1000).toString().replace('.', ',') + ' m' });
     if(state.couleur) recap.push({ label:'Couleur', valeur: PORTAILS_LABELS.couleur[state.couleur] || state.couleur });
-    if(state.cote_refoulement) recap.push({ label:'Côté refoulement', valeur: PORTAILS_LABELS.cote_refoulement[state.cote_refoulement] || state.cote_refoulement });
+    if(state.angle_ouverture) recap.push({ label:"Angle d'ouverture", valeur: PORTAILS_LABELS.angle_ouverture[state.angle_ouverture] || state.angle_ouverture });
+    if(state.ouverture_exterieure) recap.push({ label:'Ouverture depuis l\'extérieur', valeur: PORTAILS_LABELS.ouverture_exterieure[state.ouverture_exterieure] || state.ouverture_exterieure });
+    if(state.cote_alimentation) recap.push({ label:'Côté alimentation', valeur: PORTAILS_LABELS.cote_alimentation[state.cote_alimentation] || state.cote_alimentation });
     const optionsChoisies = state.options_portail || {};
     const optionsLibelles = Object.keys(optionsChoisies).filter(cle => optionsChoisies[cle]).map(cle => PORTAILS_OPTIONS_LABELS[cle] || cle);
     if(optionsLibelles.length) recap.push({ label:'Options', valeur: optionsLibelles.join(', ') });

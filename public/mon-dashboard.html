@@ -792,6 +792,34 @@
     }
   }
 
+  // (04/09, corrigé le même jour) Quand on archive/supprime la vitrine
+  // ACTUELLEMENT OUVERTE, on ne peut plus rester sur cette page (son id
+  // n'existe/n'est plus visible) — mais rediriger vers "/mon-dashboard.html"
+  // SANS ?id= déclenchait justement l'erreur "Lien invalide — identifiant du
+  // site manquant" (cette page exige toujours un id dans l'URL, voir plus
+  // haut). Cyrille est tombé dessus en archivant/supprimant la vitrine qu'il
+  // avait sous les yeux. Corrigé en redirigeant vers une AUTRE vitrine du
+  // même compte quand il en reste une, ou en affichant un message clair (au
+  // lieu de planter) s'il n'en reste plus aucune.
+  async function redirigerApresActionSurSiteActuel(token) {
+    try {
+      const res = await fetch('/api/mes-sites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      });
+      const data = await res.json();
+      const autre = data.success && Array.isArray(data.sites) ? data.sites.find(s => s.id !== draftId) : null;
+      if (autre) {
+        window.location.href = '/mon-dashboard.html?id=' + autre.id;
+      } else {
+        document.body.innerHTML = '<div class="loading">C\'est fait. Vous n\'avez plus aucune autre vitrine active pour le moment — utilisez "+ Ajouter une vitrine" depuis votre lien d\'accès habituel pour en créer une nouvelle.</div>';
+      }
+    } catch (e) {
+      window.location.href = '/mon-dashboard.html?id=' + draftId;
+    }
+  }
+
   // (04/09) Archiver/supprimer une de ses propres vitrines — demandé par
   // Cyrille ("y a-t-il un bouton pour archiver et supprimer une vitrine"),
   // qui n'existait jusqu'ici que côté admin interne (mes-artisans.html, pour
@@ -817,9 +845,9 @@
         return;
       }
       if (id === draftId) {
-        // On archive la vitrine actuellement ouverte : plus rien à afficher
-        // ici, retour à la liste (qui filtrera automatiquement les archivées).
-        window.location.href = '/mon-dashboard.html';
+        // On archive la vitrine actuellement ouverte : on ne peut plus rester
+        // ici (voir redirigerApresActionSurSiteActuel plus haut).
+        await redirigerApresActionSurSiteActuel(sessionTokenActuel);
         return;
       }
       chargerApercuCampagnes(sessionTokenActuel);
@@ -848,7 +876,10 @@
         return;
       }
       if (id === draftId) {
-        window.location.href = '/mon-dashboard.html';
+        // On supprime la vitrine actuellement ouverte : sa ligne n'existe
+        // plus, on ne peut plus rester ici (voir
+        // redirigerApresActionSurSiteActuel plus haut).
+        await redirigerApresActionSurSiteActuel(sessionTokenActuel);
         return;
       }
       chargerApercuCampagnes(sessionTokenActuel);

@@ -1,17 +1,19 @@
 // /api/suggerer-mots-cles.js
 // Suggestions de mots-clés Google Ads générées par IA (Claude) à partir
-// d'une description libre de son métier ET/OU de l'adresse de son site web
-// actuel (le serveur va lire son contenu — voir extraireTexteSite ci-dessous).
-// Utilisé par mon-dashboard.html (section "✨ Quels mots-clés pour votre
-// annonce ?") avant la création de la campagne : l'artisan coche ceux qu'il
-// veut garder plutôt que de subir une liste figée.
+// d'une description libre de son métier ET/OU de l'adresse d'un site web
+// (le sien, celui d'un concurrent, ou celui de toute entreprise dont
+// l'artisan aime la façon de se présenter — le serveur va lire son contenu,
+// voir extraireTexteSite ci-dessous). Utilisé par mon-dashboard.html
+// (section "✨ Quels mots-clés pour votre annonce ?") avant la création de
+// la campagne : l'artisan coche ceux qu'il veut garder plutôt que de subir
+// une liste figée.
 //
 // Variable d'environnement requise :
 //   ANTHROPIC_API_KEY (déjà utilisée par chat-skyeco.js)
 
 const SYSTEM_PROMPT = `Tu es un expert en Google Ads pour des artisans du BTP et du paysagisme en France (paysagistes, poseurs de piscine, élagueurs, entretien d'espaces verts, terrassement, résine/revêtements de sol, etc.).
 
-Un artisan te décrit son métier et ce qu'il veut mettre en avant pour attirer des prospects — parfois via une description écrite, parfois via le contenu extrait de son site web actuel, parfois les deux. Ta tâche : proposer une liste de 10 à 15 mots-clés Google Ads pertinents.
+Un artisan te décrit son métier et ce qu'il veut mettre en avant pour attirer des prospects — parfois via une description écrite, parfois via le contenu extrait d'un site web (le sien, ou celui d'un concurrent / d'une entreprise qu'il trouve bien faite, pris comme source d'inspiration pour les mots-clés), parfois les deux. Le site fourni n'est donc pas forcément le sien : base-toi sur les prestations et l'activité qu'il décrit, sans jamais supposer que le site appartient à l'artisan. Ta tâche : proposer une liste de 10 à 15 mots-clés Google Ads pertinents.
 
 Règles :
 - Mots-clés courts (2 à 5 mots), réalistes, à forte intention commerciale — ce que tape quelqu'un qui cherche activement un devis ou un prix, pas des mots-clés génériques ou informatifs.
@@ -99,7 +101,7 @@ export default async function handler(req, res) {
 
   const contexte = [
     descriptionTrim ? `Description donnée par l'artisan : ${descriptionTrim.substring(0, 800)}` : null,
-    contenuSite ? `Contenu extrait du site web actuel de l'artisan (${siteUrlTrim}) :\n${contenuSite}` : null,
+    contenuSite ? `Contenu extrait du site (${siteUrlTrim}) fourni comme source d'inspiration pour les mots-clés — pas forcément le site de l'artisan lui-même, peut être un concurrent ou une entreprise qu'il apprécie :\n${contenuSite}` : null,
     (siteUrlTrim && erreurSite && descriptionTrim) ? `Note : le site ${siteUrlTrim} n'a pas pu être lu (${erreurSite}) — base-toi uniquement sur la description ci-dessus.` : null,
     metier ? `Métier renseigné sur son profil : ${Array.isArray(metier) ? metier.join(', ') : metier}` : null,
     zone ? `Zone d'intervention : ${zone}` : null,

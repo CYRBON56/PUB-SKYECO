@@ -302,6 +302,60 @@
   .loading, .empty-msg { text-align:center; padding:50px 20px; color:#8a9891; font-size:0.92rem; }
   .empty-msg .empty-icone { display:block; font-size:2.1rem; margin-bottom:10px; }
 
+  .calendrier-titre::before { content:'📅' !important; }
+  .calendrier-legende { display:flex; gap:8px; flex-wrap:wrap; }
+  .legende-item {
+    display:inline-flex; align-items:center; gap:6px; font-size:0.76rem; color:#3a4a43;
+    background:#fafbfa; border:1px solid #eef1f0; border-radius:999px; padding:6px 12px 6px 9px;
+  }
+  .legende-item .pastille { width:9px; height:9px; border-radius:50%; display:inline-block; flex-shrink:0; }
+  .calendrier-note { color:#8a9891; font-size:0.82rem; margin:-6px 0 18px; }
+
+  .jours-scroll {
+    display:flex; gap:14px; overflow-x:auto; padding:4px 4px 10px; -webkit-overflow-scrolling:touch;
+  }
+  .jours-scroll::-webkit-scrollbar { height:8px; }
+  .jours-scroll::-webkit-scrollbar-thumb { background:#d7dedb; border-radius:8px; }
+  .jours-scroll::-webkit-scrollbar-track { background:transparent; }
+
+  .jour-carte {
+    flex:0 0 178px; background:#fff; border:1.5px solid #eef1f0; border-radius:14px; padding:14px;
+    box-shadow:0 4px 16px rgba(20,49,42,0.05); transition:box-shadow 0.15s, border-color 0.15s;
+  }
+  .jour-carte:hover { box-shadow:0 8px 24px rgba(20,49,42,0.09); }
+  .jour-carte.aujourdhui { border-color:#1e6f4c; }
+  .jour-entete { text-align:center; margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid #eef1f0; }
+  .jour-jour { font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:#8a9891; }
+  .jour-numero { font-size:1.5rem; font-weight:800; color:#14312a; line-height:1.15; }
+  .jour-mois { font-size:0.68rem; color:#8a9891; text-transform:capitalize; }
+  .jour-badge-auj {
+    display:inline-block; margin-top:5px; font-size:0.58rem; font-weight:700; color:#fff;
+    background:#1e6f4c; border-radius:999px; padding:2px 9px;
+  }
+  .bloquer-jour {
+    width:100%; padding:7px 0; margin-bottom:9px; border:1.5px dashed #eef1f0; background:transparent;
+    color:#8a9891; border-radius:8px; font-size:0.68rem; font-weight:700; cursor:pointer;
+    transition:border-color 0.15s, color 0.15s; font-family:inherit;
+  }
+  .bloquer-jour:hover { border-color:#c0392b; color:#c0392b; }
+  .creneau {
+    width:100%; padding:8px 10px; margin-bottom:6px; border-radius:9px; font-size:0.8rem; text-align:left;
+    border:1.5px solid #eef1f0; background:#fff; cursor:pointer; font-family:inherit;
+    transition:border-color 0.15s, background 0.15s, transform 0.1s;
+  }
+  .creneau .heure { font-weight:700; }
+  .creneau.libre:hover { border-color:#1e6f4c; background:#f5f8f6; transform:translateY(-1px); }
+  .creneau.confirme { background:#eaf5ef; border-color:#1e6f4c; color:#1e6f4c; cursor:default; }
+  .creneau.confirme .client { display:block; font-size:0.7rem; font-weight:500; margin-top:2px; color:#14312a; opacity:0.8; }
+  .creneau.indisponible { background:#f2f4f1; border-color:#c7cdc9; color:#8a9891; text-decoration:line-through; }
+  .creneau.indisponible:hover { text-decoration:none; border-color:#c0392b; color:#c0392b; }
+  .calendrier-toast {
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(10px); z-index:3000;
+    background:#14312a; color:#fff; padding:11px 20px; border-radius:10px; font-size:0.85rem; font-weight:600;
+    opacity:0; transition:opacity 0.2s, transform 0.2s; pointer-events:none; box-shadow:0 8px 24px rgba(0,0,0,0.18);
+  }
+  .calendrier-toast.visible { opacity:1; transform:translateX(-50%) translateY(0); }
+
   .verif-acces-overlay {
     position:fixed; inset:0; z-index:2000; background:#f5f8f6;
     display:flex; align-items:center; justify-content:center;
@@ -371,7 +425,7 @@
       <select id="selecteurSite" style="display:none; border:1.5px solid #1e6f4c; border-radius:10px; padding:9px 12px; font-weight:700; font-size:0.85rem; color:#14312a; background:#fff; cursor:pointer;"></select>
       <button type="button" id="btnAjouterVitrine" title="Chaque vitrine est un site et un forfait séparés, facturés indépendamment" style="display:none; background:#fff; color:#1e6f4c; border:1.5px dashed #1e6f4c; border-radius:10px; padding:9px 14px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap;">+ Nouvelle vitrine</button>
       <button type="button" id="btnVoirArchives" style="display:none; background:none; border:none; color:#8a9891; font-size:0.78rem; font-weight:700; cursor:pointer; text-decoration:underline; padding:0 4px; white-space:nowrap;">📦 Vitrines archivées</button>
-      <a class="btn-elements" id="btnMesRdv" href="#" style="background:#fff; color:#1e6f4c; border:1.5px solid #1e6f4c;">📅 Mes rendez-vous</a>
+      <button type="button" class="btn-elements" id="btnMesRdv" style="background:#fff; color:#1e6f4c; border:1.5px solid #1e6f4c;">📅 Mes rendez-vous</button>
       <a class="btn-elements" id="btnElements" href="#">✏️ Modifier mes éléments</a>
     </div>
   </div>
@@ -431,6 +485,10 @@
     <button type="button" class="panel-tab" id="tabClients" data-tab="clients">
       <span class="panel-tab-icone">👥</span>
       <span class="panel-tab-texte">Gérer les clients<span class="panel-tab-sous">Demandes, devis, signatures</span></span>
+    </button>
+    <button type="button" class="panel-tab" id="tabCalendrier" data-tab="calendrier">
+      <span class="panel-tab-icone">📅</span>
+      <span class="panel-tab-texte">Mon calendrier<span class="panel-tab-sous">Rendez-vous, disponibilités</span></span>
     </button>
   </div>
 
@@ -681,7 +739,24 @@
     <div id="listeContent"><div class="loading">Chargement des demandes…</div></div>
   </div>
   </div>
+
+  <div id="panelCalendrier" style="display:none;">
+  <div class="liste-panel calendrier-panel">
+    <div class="liste-header">
+      <h3 class="calendrier-titre">Mon calendrier</h3>
+      <div class="calendrier-legende">
+        <span class="legende-item"><span class="pastille" style="background:#fff;border:1.5px solid #eef1f0"></span>Libre</span>
+        <span class="legende-item"><span class="pastille" style="background:#eaf5ef;border:1.5px solid #1e6f4c"></span>RDV confirmé</span>
+        <span class="legende-item"><span class="pastille" style="background:#f2f4f1;border:1.5px solid #c7cdc9"></span>Bloqué par vous</span>
+      </div>
+    </div>
+    <p class="calendrier-note">Cliquez sur un créneau libre pour le bloquer, ou sur un créneau bloqué pour le libérer — un RDV déjà confirmé ne peut pas être annulé ici.</p>
+    <div id="calendrierContent"><div class="loading">Chargement de votre calendrier…</div></div>
+  </div>
+  </div>
 </div>
+
+<div id="calendrierToast" class="calendrier-toast"></div>
 
 <script>
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
@@ -746,6 +821,13 @@
   // dashboard-login.js) : conservé pour pouvoir rafraîchir "Mes clients"
   // (toutes vitrines confondues) après une action, sans le redemander.
   let sessionTokenActuel = null;
+  // Jeton "brut" de CE site (draftId), quel que soit son rôle (admin ou
+  // artisan) — contrairement à sessionTokenActuel ci-dessus, jamais mis à
+  // null en mode admin (mes-artisans.html). Les API du calendrier
+  // (mes-rdv/bloquer-creneau/debloquer-creneau, corrigées le 04/09)
+  // acceptent les deux rôles, donc l'onglet "Mon calendrier" utilise
+  // toujours celui-ci plutôt que sessionTokenActuel.
+  let tokenCalendrierActuel = null;
 
   if (!draftId) {
     document.body.innerHTML = '<div class="loading">Lien invalide — identifiant du site manquant.</div>';
@@ -801,8 +883,8 @@
 
     document.getElementById('verifAccesOverlay').remove();
     document.getElementById('btnElements').href = '/mes-elements.html?id=' + draftId;
-    document.getElementById('btnMesRdv').href = '/mes-rdv.html?id=' + draftId;
     sessionTokenActuel = adminToken ? null : token;
+    tokenCalendrierActuel = token;
     chargerLogo();
     chargerStats();
     chargerSolde();
@@ -1111,17 +1193,189 @@
     }
   }
 
+  let calendrierDejaCharge = false;
+
+  function activerOnglet(cible) {
+    document.querySelectorAll('.panel-tab').forEach(b => b.classList.remove('active'));
+    const btnCible = document.querySelector(`.panel-tab[data-tab="${cible}"]`);
+    if (btnCible) btnCible.classList.add('active');
+    document.getElementById('panelAds').style.display = cible === 'ads' ? '' : 'none';
+    document.getElementById('panelClients').style.display = cible === 'clients' ? '' : 'none';
+    document.getElementById('panelCalendrier').style.display = cible === 'calendrier' ? '' : 'none';
+    if (cible === 'calendrier' && !calendrierDejaCharge) {
+      calendrierDejaCharge = true;
+      chargerCalendrier();
+    }
+  }
+
   function initPanelTabs() {
-    const onglets = { ads: document.getElementById('panelAds'), clients: document.getElementById('panelClients') };
     document.querySelectorAll('.panel-tab').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.panel-tab').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const cible = btn.dataset.tab;
-        onglets.ads.style.display = cible === 'ads' ? '' : 'none';
-        onglets.clients.style.display = cible === 'clients' ? '' : 'none';
-      });
+      btn.addEventListener('click', () => activerOnglet(btn.dataset.tab));
     });
+    document.getElementById('btnMesRdv').addEventListener('click', () => {
+      activerOnglet('calendrier');
+      document.getElementById('panelTabs').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
+  // --- Onglet "Mon calendrier" : mêmes API que public/mes-rdv.html
+  // (mes-rdv, bloquer-creneau, debloquer-creneau), directement intégrées ici
+  // pour éviter de renvoyer l'artisan vers une page séparée. Utilise
+  // tokenCalendrierActuel (jamais null, même en accès admin via
+  // mes-artisans.html) plutôt que sessionTokenActuel.
+  let calendrierToastTimer;
+  function toastCalendrier(msg) {
+    const el = document.getElementById('calendrierToast');
+    el.textContent = msg;
+    el.classList.add('visible');
+    clearTimeout(calendrierToastTimer);
+    calendrierToastTimer = setTimeout(() => el.classList.remove('visible'), 2500);
+  }
+
+  function estAujourdHuiParis(dateStr) {
+    const auj = new Intl.DateTimeFormat('fr-CA', { timeZone: 'Europe/Paris' }).format(new Date());
+    return dateStr === auj;
+  }
+
+  function formatJourCalendrier(dateStr) {
+    const d = new Date(dateStr + 'T12:00:00Z');
+    return {
+      jour: new Intl.DateTimeFormat('fr-FR', { weekday: 'short', timeZone: 'Europe/Paris' }).format(d),
+      num: new Intl.DateTimeFormat('fr-FR', { day: 'numeric', timeZone: 'Europe/Paris' }).format(d),
+      mois: new Intl.DateTimeFormat('fr-FR', { month: 'short', timeZone: 'Europe/Paris' }).format(d),
+      aujourdHui: estAujourdHuiParis(dateStr),
+    };
+  }
+
+  async function chargerCalendrier() {
+    const contenu = document.getElementById('calendrierContent');
+    if (!tokenCalendrierActuel) {
+      contenu.innerHTML = '<div class="empty-msg"><span class="empty-icone">⚠️</span>Session invalide — rechargez la page.</div>';
+      return;
+    }
+    contenu.innerHTML = '<div class="loading">Chargement de votre calendrier…</div>';
+    try {
+      const rep = await fetch('/api/mes-rdv', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, jours: 30 }),
+      });
+      if (rep.status === 401) {
+        contenu.innerHTML = '<div class="empty-msg"><span class="empty-icone">⚠️</span>Session expirée — rechargez la page.</div>';
+        return;
+      }
+      const data = await rep.json();
+      afficherJoursCalendrier(data.jours || []);
+    } catch (e) {
+      contenu.innerHTML = '<div class="empty-msg"><span class="empty-icone">⚠️</span>Impossible de charger votre calendrier pour le moment.</div>';
+    }
+  }
+
+  function afficherJoursCalendrier(jours) {
+    const contenu = document.getElementById('calendrierContent');
+    if (!jours.length) {
+      contenu.innerHTML = '<div class="empty-msg"><span class="empty-icone">📅</span>Aucun créneau à afficher pour le moment.</div>';
+      return;
+    }
+
+    contenu.className = 'jours-scroll';
+    contenu.innerHTML = '';
+
+    jours.forEach((jour) => {
+      const infos = formatJourCalendrier(jour.date);
+      const carte = document.createElement('div');
+      carte.className = 'jour-carte' + (infos.aujourdHui ? ' aujourdhui' : '');
+
+      const entete = document.createElement('div');
+      entete.className = 'jour-entete';
+      entete.innerHTML =
+        '<div class="jour-jour">' + infos.jour + '</div>' +
+        '<div class="jour-numero">' + infos.num + '</div>' +
+        '<div class="jour-mois">' + infos.mois + '</div>' +
+        (infos.aujourdHui ? '<span class="jour-badge-auj">Aujourd\'hui</span>' : '');
+      carte.appendChild(entete);
+
+      const libres = jour.creneaux.filter((c) => c.statut === 'libre');
+      if (libres.length > 0) {
+        const btnJour = document.createElement('button');
+        btnJour.type = 'button';
+        btnJour.className = 'bloquer-jour';
+        btnJour.textContent = '🚫 Bloquer la journée';
+        btnJour.addEventListener('click', () => bloquerJourneeCalendrier(libres));
+        carte.appendChild(btnJour);
+      }
+
+      jour.creneaux.forEach((c) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'creneau ' + c.statut;
+
+        if (c.statut === 'libre') {
+          btn.innerHTML = '<span class="heure">' + String(c.heure).padStart(2, '0') + 'h00</span>';
+          btn.addEventListener('click', () => bloquerCreneauCalendrier(c.iso));
+        } else if (c.statut === 'indisponible') {
+          btn.innerHTML = '<span class="heure">' + String(c.heure).padStart(2, '0') + 'h00</span> — bloqué';
+          btn.addEventListener('click', () => debloquerCreneauCalendrier(c.iso));
+        } else {
+          btn.innerHTML = '<span class="heure">✓ ' + String(c.heure).padStart(2, '0') + 'h00</span>'
+            + '<span class="client">' + (c.client_nom || 'Client') + (c.client_telephone ? ' · ' + c.client_telephone : '') + '</span>';
+        }
+
+        carte.appendChild(btn);
+      });
+
+      contenu.appendChild(carte);
+    });
+  }
+
+  async function bloquerCreneauCalendrier(iso) {
+    try {
+      const rep = await fetch('/api/bloquer-creneau', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, date_heure: iso }),
+      });
+      if (rep.status === 401) { toastCalendrier('Session expirée — rechargez la page.'); return; }
+      const data = await rep.json();
+      const r = data.resultats && data.resultats[0];
+      toastCalendrier(r && r.ok ? 'Créneau bloqué.' : 'Ce créneau vient d\'être pris ou est déjà bloqué.');
+      chargerCalendrier();
+    } catch (e) {
+      toastCalendrier('Erreur, réessayez.');
+    }
+  }
+
+  async function debloquerCreneauCalendrier(iso) {
+    try {
+      const rep = await fetch('/api/debloquer-creneau', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, date_heure: iso }),
+      });
+      if (rep.status === 401) { toastCalendrier('Session expirée — rechargez la page.'); return; }
+      toastCalendrier(rep.ok ? 'Créneau libéré.' : 'Impossible de libérer ce créneau.');
+      chargerCalendrier();
+    } catch (e) {
+      toastCalendrier('Erreur, réessayez.');
+    }
+  }
+
+  async function bloquerJourneeCalendrier(libres) {
+    if (!confirm('Bloquer les ' + libres.length + ' créneaux libres de cette journée ?')) return;
+    try {
+      const debut = libres[0].iso;
+      const fin = libres[libres.length - 1].iso;
+      const rep = await fetch('/api/bloquer-creneau', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, date_heure_debut: debut, date_heure_fin: fin }),
+      });
+      if (rep.status === 401) { toastCalendrier('Session expirée — rechargez la page.'); return; }
+      toastCalendrier('Journée bloquée.');
+      chargerCalendrier();
+    } catch (e) {
+      toastCalendrier('Erreur, réessayez.');
+    }
   }
 
   async function chargerZones() {

@@ -16,6 +16,18 @@
   }
   .lien-retour:hover { color:#14312a; }
 
+  .banniere-demo {
+    display:flex; align-items:center; justify-content:center; gap:10px; text-align:center;
+    background:linear-gradient(120deg, #f0a878, #e8622c 55%, #c74f20); color:#fff;
+    border-radius:16px; padding:14px 20px; margin-bottom:18px; box-shadow:0 10px 26px rgba(199,79,32,0.28);
+  }
+  .banniere-demo .picto { font-size:1.4rem; line-height:1; }
+  .banniere-demo strong {
+    font-size:1.15rem; font-weight:800; letter-spacing:0.03em; text-transform:uppercase;
+  }
+  .banniere-demo span.sous-texte { display:block; font-size:0.76rem; font-weight:600; opacity:0.92; margin-top:2px; }
+  @media (max-width:520px){ .banniere-demo strong{ font-size:0.98rem; } }
+
   .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:10px; }
   h1 { font-size:1.3rem; }
   .demo-badge { background:#eaf4ef; color:#1e6f4c; font-size:0.72rem; font-weight:700; padding:5px 12px; border-radius:999px; white-space:nowrap; }
@@ -120,6 +132,32 @@
   .ga-heures-note { font-size:0.74rem; color:#8a9891; margin-top:8px; }
   .ga-heures-note strong { color:#e8622c; }
 
+  .coaching-panel-header-demo { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+  .coaching-panel-header-demo h3 { margin-bottom:0; }
+  .coaching-logo-demo { flex-shrink:0; border-radius:11px; }
+  .coaching-ia-action-demo {
+    display:inline-flex; align-items:center; gap:6px; background:#eaf4ef; color:#1e6f4c;
+    font-size:0.8rem; font-weight:700; padding:8px 13px; border-radius:10px; margin-bottom:12px;
+  }
+  .coaching-ia-reponse-demo {
+    background:#f9faf9; border:1.5px solid #eef1f0; border-radius:10px; padding:14px 16px;
+    font-size:0.85rem; color:#3a4a44; line-height:1.6; margin-bottom:14px; white-space:pre-line;
+  }
+  .coaching-chat-demo { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+  .coaching-bulle-demo {
+    max-width:82%; padding:10px 13px; border-radius:12px; font-size:0.82rem; line-height:1.5;
+  }
+  .coaching-bulle-demo.artisan {
+    align-self:flex-end; background:#e8622c; color:#fff; border-bottom-right-radius:3px;
+  }
+  .coaching-bulle-demo.coach {
+    align-self:flex-start; background:#f2f4f1; color:#14312a; border-bottom-left-radius:3px;
+  }
+  .btn-toggle-coach-demo {
+    background:#f2f4f1; color:#14312a; border:1.5px solid #d7dedb; border-radius:999px; padding:7px 14px;
+    font-size:0.76rem; font-weight:700; cursor:default; white-space:nowrap; margin-left:auto;
+  }
+
   .liste-panel { background:#fff; border-radius:14px; padding:20px; margin-bottom:16px; }
   .liste-panel h3 { font-size:0.9rem; margin-bottom:14px; }
   table { width:100%; border-collapse:collapse; font-size:0.8rem; }
@@ -204,6 +242,11 @@
 
 <div class="wrap">
   <a href="#" id="lienRetour" class="lien-retour" style="display:none;">← Retour à ma vitrine</a>
+
+  <div class="banniere-demo">
+    <span class="picto">🧭</span>
+    <span><strong>Tableau de bord DEMO</strong><span class="sous-texte" id="sousTexteBanniere">Données fictives — pour vous montrer à quoi ressemblera votre espace</span></span>
+  </div>
 
   <div class="header">
     <h1>Mon tableau de bord</h1>
@@ -336,6 +379,50 @@
       </div>
       <div class="ga-heures-note">Vos clics sont les plus nombreux vers <strong>10h-12h</strong> et <strong>19h</strong> — les créneaux les plus rentables pour ce métier.</div>
     </div>
+
+    <div class="ads-souspanel explicable" data-explain-title="🤖 Coach IA Ads" data-explain="Un assistant qui surveille votre campagne en continu, vous explique ce qui se passe en langage simple, et peut ajuster automatiquement mots-clés, enchères ou budget pour améliorer vos résultats. Vous pouvez le mettre en pause à tout moment.">
+      <div class="coaching-panel-header-demo">
+        <svg class="coaching-logo-demo" width="40" height="40" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="coachBgDemo" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#f0a878"/>
+              <stop offset="55%" stop-color="#e8622c"/>
+              <stop offset="100%" stop-color="#c74f20"/>
+            </linearGradient>
+            <linearGradient id="coachVisorDemo" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#1c3d5a"/>
+              <stop offset="100%" stop-color="#14304a"/>
+            </linearGradient>
+          </defs>
+          <rect x="3" y="3" width="114" height="114" rx="30" fill="url(#coachBgDemo)"/>
+          <path d="M97 22 l2.2 5.2 5.2 2.2 -5.2 2.2 -2.2 5.2 -2.2 -5.2 -5.2 -2.2 5.2 -2.2 Z" fill="#ffe29a"/>
+          <circle cx="22" cy="88" r="3.2" fill="#ffe29a"/>
+          <circle cx="18" cy="30" r="2" fill="#ffe29a" opacity="0.85"/>
+          <line x1="60" y1="20" x2="60" y2="30" stroke="#14304a" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="60" cy="16" r="5.5" fill="#ffe29a" stroke="#14304a" stroke-width="2.5"/>
+          <rect x="26" y="30" width="68" height="58" rx="24" fill="#f9f5ee"/>
+          <circle cx="24" cy="58" r="8" fill="#14304a"/>
+          <circle cx="96" cy="58" r="8" fill="#14304a"/>
+          <path d="M24 50 a36 36 0 0 1 72 0" fill="none" stroke="#14304a" stroke-width="4" stroke-linecap="round"/>
+          <rect x="38" y="50" width="44" height="18" rx="9" fill="url(#coachVisorDemo)"/>
+          <circle cx="52" cy="59" r="4.4" fill="#f9f5ee"/>
+          <circle cx="68" cy="59" r="4.4" fill="#f9f5ee"/>
+          <path d="M46 74 q14 12 28 0" fill="none" stroke="#14304a" stroke-width="4.5" stroke-linecap="round"/>
+          <circle cx="40" cy="70" r="4" fill="#e8622c" opacity="0.35"/>
+          <circle cx="80" cy="70" r="4" fill="#e8622c" opacity="0.35"/>
+          <circle cx="92" cy="90" r="16" fill="#f9f5ee" stroke="#c74f20" stroke-width="2.5"/>
+          <path d="M88 96 v-9 c0-1.6 1.3-2.4 2.4-2.4 c0.5-2.6 1-4.6 1-6 c0-1.7 1.2-2.6 2.3-2.2 c1 .4 1.5 1.6 1.3 2.8 l-0.7 3.4 h4.6 c1.3 0 2.3 1.1 2 2.4 l-1.4 7.4 c-0.3 1.5-1.6 2.6-3.1 2.6 h-6.4 c-1.1 0-2-.9-2-2 Z" fill="#e8622c"/>
+        </svg>
+        <h3>Coach IA Ads</h3>
+        <button type="button" class="btn-toggle-coach-demo">⏸️ Mettre en pause</button>
+      </div>
+      <div class="coaching-ia-action-demo">✓ 1 action appliquée automatiquement par le coach — détails ci-dessous.</div>
+      <div class="coaching-ia-reponse-demo">Votre budget quotidien est presque toujours consommé avant midi : vous perdez probablement des clics l'après-midi. J'ai augmenté l'enchère maximale sur « devis paysagiste » de 1,50 € à 1,80 € pour capter plus de clics sur ce mot-clé qui convertit bien chez vous.</div>
+      <div class="coaching-chat-demo">
+        <div class="coaching-bulle-demo artisan">Pourquoi mon budget part si vite le matin ?</div>
+        <div class="coaching-bulle-demo coach">C'est le créneau 10h-12h : c'est là que vos clients cherchent le plus. C'est un bon signe — c'est votre créneau le plus rentable, je le laisse actif en priorité.</div>
+      </div>
+    </div>
   </div>
 
   <div class="liste-panel explicable" data-explain-title="📋 Demandes d'estimation" data-explain="Chaque demande reçue apparaît ici avec son statut et son canal d'entrée — nouveau, rappel demandé, rendez-vous pris, devis envoyé, ou signé — mis à jour automatiquement, sans rien à faire de votre côté.">
@@ -459,6 +546,7 @@
     document.getElementById('btnVoirVitrineDemo').style.display = 'inline-flex';
     document.getElementById('hintClic').style.display = 'inline-flex';
     document.getElementById('badgeHaut').textContent = 'Aperçu de votre futur tableau de bord';
+    document.getElementById('sousTexteBanniere').textContent = 'Données fictives sur 6 mois — voici à quoi ressemblera votre vrai tableau de bord';
     document.getElementById('ctaFunnel').style.display = 'block';
 
     // Clic sur "Créer votre formulaire vitrine" : si un compte existe déjà

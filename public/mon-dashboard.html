@@ -210,6 +210,22 @@
   .coaching-liste li strong { color:#14312a; }
   .coaching-liste li.alerte::before { content:'⚠'; color:#e8622c; }
 
+  .coaching-ia-reponse { font-size:0.85rem; line-height:1.6; color:#294038; white-space:pre-wrap; }
+  .coaching-ia-actions { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+  .coaching-ia-action { font-size:0.78rem; font-weight:700; color:#1e6f4c; background:#e9f5ee; border:1px solid #c9e6d5; border-radius:8px; padding:8px 12px; }
+  .coaching-chat { margin-top:18px; border-top:1.5px solid #e2ede6; padding-top:14px; }
+  .coaching-chat-historique { display:flex; flex-direction:column; gap:10px; margin-bottom:12px; max-height:320px; overflow-y:auto; }
+  .coaching-chat-historique:empty { display:none; }
+  .coaching-bulle { font-size:0.83rem; line-height:1.5; padding:9px 13px; border-radius:12px; max-width:88%; white-space:pre-wrap; }
+  .coaching-bulle-artisan { align-self:flex-end; background:#1e6f4c; color:#fff; border-bottom-right-radius:3px; }
+  .coaching-bulle-coach { align-self:flex-start; background:#fff; color:#294038; border:1.5px solid #e2ede6; border-bottom-left-radius:3px; }
+  .coaching-bulle-erreur { align-self:flex-start; background:#fdecea; color:#b3261e; border:1.5px solid #f6c9c4; }
+  .coaching-chat-form { display:flex; gap:8px; }
+  .coaching-chat-form input { flex:1; border:1.5px solid #d8e3de; border-radius:8px; padding:10px 12px; font-size:0.85rem; font-family:inherit; }
+  .coaching-chat-form input:disabled { background:#f2f4f1; color:#8a9891; }
+  .coaching-chat-form button { background:#1e6f4c; color:#fff; border:none; border-radius:8px; padding:10px 18px; font-size:0.82rem; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .coaching-chat-form button:disabled { background:#a9c4b7; cursor:default; }
+
   .liste-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
   .liste-header h3 { font-size:0.95rem; }
   .btn-pdf { background:#eef1f0; border:none; border-radius:8px; padding:9px 16px; font-size:0.82rem; font-weight:700; color:#14312a; cursor:pointer; }
@@ -536,8 +552,20 @@
     </div>
 
     <div class="ads-souspanel coaching-panel" id="coachingPanel" style="display:none;">
-      <h3>💡 Conseils pour améliorer vos conversions</h3>
-      <ul id="coachingListe" class="coaching-liste"></ul>
+      <h3>🤖 Coach IA Ads</h3>
+      <div id="coachingIaZone">
+        <div class="loading" id="coachingIaLoading" style="padding:16px 0;">Analyse de votre campagne…</div>
+        <div id="coachingIaActions" class="coaching-ia-actions" style="display:none;"></div>
+        <div id="coachingIaReponse" class="coaching-ia-reponse" style="display:none;"></div>
+        <ul id="coachingListe" class="coaching-liste" style="display:none;"></ul>
+      </div>
+      <div class="coaching-chat">
+        <div id="coachingChatHistorique" class="coaching-chat-historique"></div>
+        <form id="coachingChatForm" class="coaching-chat-form">
+          <input type="text" id="coachingChatInput" placeholder="Posez une question au coach (ex : pourquoi j'ai peu de clics ?)" autocomplete="off" />
+          <button type="submit" id="coachingChatBtn">Envoyer</button>
+        </form>
+      </div>
     </div>
 
     <div class="empty-msg" id="adsSectionVide" style="display:none; padding:12px 0;">Pas encore de campagne active — approvisionnez votre budget pour démarrer.</div>
@@ -1683,7 +1711,7 @@
       afficherTermesRecherche(data.termesRecherche || []);
       afficherHeures(data.clicsParHeure || [], data.heuresDePointe || []);
       afficherAppareils(data.appareils || []);
-      afficherCoaching(data.motsCles || [], data.heuresDePointe || [], data.termesRecherche || [], data.appareils || []);
+      chargerCoachIA(data.motsCles || [], data.heuresDePointe || [], data.termesRecherche || [], data.appareils || []);
     } catch (e) {
       const vide = document.getElementById('adsSectionVide');
       vide.textContent = 'Impossible de charger le détail de la campagne pour le moment.';
@@ -2380,7 +2408,7 @@
             afficherTermesRecherche(data.termesRecherche || []);
             afficherHeures(data.clicsParHeure || [], data.heuresDePointe || []);
             afficherAppareils(data.appareils || []);
-            afficherCoaching(data.motsCles || [], data.heuresDePointe || [], data.termesRecherche || [], data.appareils || []);
+            chargerCoachIA(data.motsCles || [], data.heuresDePointe || [], data.termesRecherche || [], data.appareils || []);
           }
         } catch (e) { /* silencieux */ }
       });
@@ -2540,6 +2568,127 @@
     }
   });
 
+  // (04/09) Coach IA Ads : appelle /api/coach-ads, qui fait analyser la
+  // vraie campagne Google Ads par Claude et peut agir directement dessus
+  // (exclure un mot-clé, ajuster budget/plafond CPC, pause/relance) plutôt
+  // que de se limiter à des conseils. Remplace l'ancien panneau 100%
+  // règles JS (afficherCoaching, conservé juste en dessous comme filet de
+  // secours si l'appel réseau échoue). Le chat libre est initialisé une
+  // seule fois (coachingChatInitialise) puisque cette fonction peut être
+  // rappelée après chaque rechargement des données de campagne.
+  let coachingChatInitialise = false;
+  let coachingChatEnCours = false;
+
+  async function chargerCoachIA(motsCles, heuresDePointe, termesRecherche, appareils) {
+    const panel = document.getElementById('coachingPanel');
+    const loading = document.getElementById('coachingIaLoading');
+    const actionsZone = document.getElementById('coachingIaActions');
+    const reponseZone = document.getElementById('coachingIaReponse');
+    const listeSecours = document.getElementById('coachingListe');
+
+    panel.style.display = 'block';
+    loading.style.display = 'block';
+    actionsZone.style.display = 'none';
+    reponseZone.style.display = 'none';
+    listeSecours.style.display = 'none';
+    initCoachingChat();
+
+    try {
+      const res = await fetch('/api/coach-ads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId })
+      });
+      const data = await res.json();
+      loading.style.display = 'none';
+
+      if (!data.success || data.campagneExiste === false) {
+        panel.style.display = 'none';
+        return;
+      }
+
+      if (data.actionsAppliquees > 0) {
+        actionsZone.style.display = 'flex';
+        actionsZone.innerHTML = `<div class="coaching-ia-action">✓ ${data.actionsAppliquees} action${data.actionsAppliquees > 1 ? 's' : ''} appliquée${data.actionsAppliquees > 1 ? 's' : ''} automatiquement par le coach — détails ci-dessous.</div>`;
+      }
+
+      if (data.reponse) {
+        reponseZone.style.display = 'block';
+        reponseZone.textContent = data.reponse;
+      } else {
+        // Pas de recommandation cette fois (rare) : on retombe sur les
+        // conseils par règles pour ne jamais laisser le panneau vide.
+        afficherCoaching(motsCles, heuresDePointe, termesRecherche, appareils);
+      }
+    } catch (e) {
+      loading.style.display = 'none';
+      // Le coach IA n'a pas répondu (réseau, clé API...) : on affiche quand
+      // même des conseils utiles à partir des données déjà chargées.
+      afficherCoaching(motsCles, heuresDePointe, termesRecherche, appareils);
+    }
+  }
+
+  function initCoachingChat() {
+    if (coachingChatInitialise) return;
+    coachingChatInitialise = true;
+    const form = document.getElementById('coachingChatForm');
+    const input = document.getElementById('coachingChatInput');
+    const btn = document.getElementById('coachingChatBtn');
+    const historique = document.getElementById('coachingChatHistorique');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (coachingChatEnCours) return;
+      const message = input.value.trim();
+      if (!message) return;
+
+      const bulleArtisan = document.createElement('div');
+      bulleArtisan.className = 'coaching-bulle coaching-bulle-artisan';
+      bulleArtisan.textContent = message;
+      historique.appendChild(bulleArtisan);
+      historique.scrollTop = historique.scrollHeight;
+
+      input.value = '';
+      input.disabled = true;
+      btn.disabled = true;
+      btn.textContent = '…';
+      coachingChatEnCours = true;
+
+      try {
+        const res = await fetch('/api/coach-ads', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId, message })
+        });
+        const data = await res.json();
+        const bulleCoach = document.createElement('div');
+        if (data.success && data.reponse) {
+          bulleCoach.className = 'coaching-bulle coaching-bulle-coach';
+          bulleCoach.textContent = data.reponse;
+        } else {
+          bulleCoach.className = 'coaching-bulle coaching-bulle-erreur';
+          bulleCoach.textContent = "Le coach n'a pas pu répondre pour le moment — réessayez dans un instant.";
+        }
+        historique.appendChild(bulleCoach);
+      } catch (e) {
+        const bulleErreur = document.createElement('div');
+        bulleErreur.className = 'coaching-bulle coaching-bulle-erreur';
+        bulleErreur.textContent = "Le coach n'a pas pu répondre pour le moment — réessayez dans un instant.";
+        historique.appendChild(bulleErreur);
+      }
+
+      historique.scrollTop = historique.scrollHeight;
+      input.disabled = false;
+      btn.disabled = false;
+      btn.textContent = 'Envoyer';
+      input.focus();
+      coachingChatEnCours = false;
+    });
+  }
+
+  // Filet de secours 100% règles JS (aucun appel réseau) — utilisé
+  // uniquement si le coach IA (chargerCoachIA ci-dessus) est indisponible,
+  // pour ne jamais laisser l'artisan sans aucun conseil.
   function afficherCoaching(motsCles, heuresDePointe, termesRecherche, appareils) {
     const panel = document.getElementById('coachingPanel');
     const liste = document.getElementById('coachingListe');
@@ -2610,6 +2759,7 @@
     }
 
     liste.innerHTML = conseils.map(c => `<li${c.alerte ? ' class="alerte"' : ''}>${c.texte}</li>`).join('');
+    liste.style.display = 'flex';
     panel.style.display = 'block';
   }
 

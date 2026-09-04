@@ -68,6 +68,18 @@ async function executerAction(action, params) {
 // elle, avait bien été créée (orpheline, jamais rattachée au dashboard).
 // Cette fonction extrait l'id numérique (ou "ad_group_id~ad_id") du texte de
 // confirmation, avec repli sur d'éventuels champs structurés si l'API change.
+// Corrigé le 04/09 (RMS EcoSky : Google Ads a refusé une annonce, policy
+// "SYMBOLS"/PROHIBITED sur le caractère "(") — les parenthèses sont
+// interdites dans les titres et descriptions Google Ads. Beaucoup de noms
+// d'entreprise saisis en contiennent (ex : "RESINE MARBRE SOL (ECOSKY)
+// (RMS)"), utilisés ici en repli si l'artisan n'a jamais personnalisé son
+// annonce — on les retire systématiquement avant l'envoi à Windsor.ai. Même
+// correctif dans appliquer-annonce-ads.js et mon-dashboard.html
+// (genererAnnoncePropos, texte par défaut proposé à l'artisan).
+function nettoyerSymbolesInterdits(texte) {
+  return String(texte || '').replace(/[()]/g, '').replace(/\s{2,}/g, ' ').trim();
+}
+
 function extraireId(data) {
   if (data && typeof data === 'object') {
     if (data.campaign_id) return String(data.campaign_id);
@@ -205,17 +217,17 @@ export default async function handler(req, res) {
     // annonce_descriptions, 31/08), sinon repli sur les textes génériques
     // d'origine si l'artisan n'a jamais ouvert cet aperçu.
     const titresValides = Array.isArray(draft.annonce_titres)
-      ? draft.annonce_titres.filter(t => typeof t === 'string' && t.trim()).map(t => t.trim().substring(0, 30)).slice(0, 3)
+      ? draft.annonce_titres.filter(t => typeof t === 'string' && t.trim()).map(t => nettoyerSymbolesInterdits(t).substring(0, 30)).slice(0, 3)
       : [];
     const descriptionsValides = Array.isArray(draft.annonce_descriptions)
-      ? draft.annonce_descriptions.filter(d => typeof d === 'string' && d.trim()).map(d => d.trim().substring(0, 90)).slice(0, 2)
+      ? draft.annonce_descriptions.filter(d => typeof d === 'string' && d.trim()).map(d => nettoyerSymbolesInterdits(d).substring(0, 90)).slice(0, 2)
       : [];
 
     const urlVitrine = `https://app.skyeco.fr/apercu.html?id=${draft_id}`;
     const annonce = await executerAction('create_responsive_search_ad', {
       ad_group_id: adGroupId,
       headlines: titresValides.length ? titresValides : [
-        `${draft.entreprise || 'Devis gratuit'}`,
+        nettoyerSymbolesInterdits(draft.entreprise || 'Devis gratuit').substring(0, 30),
         'Estimation gratuite en ligne',
         'Devis sous 24h',
       ],

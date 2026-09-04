@@ -290,7 +290,7 @@
     </div>
     <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
       <select id="selecteurSite" style="display:none; border:1.5px solid #1e6f4c; border-radius:10px; padding:9px 12px; font-weight:700; font-size:0.85rem; color:#14312a; background:#fff; cursor:pointer;"></select>
-      <button type="button" id="btnAjouterVitrine" style="display:none; background:#fff; color:#1e6f4c; border:1.5px dashed #1e6f4c; border-radius:10px; padding:9px 14px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap;">+ Nouvelle vitrine</button>
+      <button type="button" id="btnAjouterVitrine" title="Chaque vitrine est un site et un forfait séparés, facturés indépendamment" style="display:none; background:#fff; color:#1e6f4c; border:1.5px dashed #1e6f4c; border-radius:10px; padding:9px 14px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap;">+ Nouvelle vitrine</button>
       <a class="btn-elements" id="btnMesRdv" href="#" style="background:#fff; color:#1e6f4c; border:1.5px solid #1e6f4c;">📅 Mes rendez-vous</a>
       <a class="btn-elements" id="btnElements" href="#">✏️ Modifier mes éléments</a>
     </div>
@@ -763,7 +763,16 @@
     }
   }
 
+  // Corrigé le 04/09 (Cyrille : "j'aurais voulu qu'il me dise directement
+  // que c'est un autre forfait") — rien ne prévenait avant de créer une
+  // vitrine supplémentaire qu'elle serait facturée à part (voir le
+  // commentaire d'en-tête de creer-vitrine-supplementaire.js : chaque
+  // vitrine a TOUJOURS son propre forfait/abonnement, dès la 2e, pas
+  // seulement à partir de la 3e). On le dit maintenant explicitement AVANT
+  // de demander le nom, pour que ce soit une décision informée plutôt qu'une
+  // surprise découverte plus tard sur la facture.
   async function creerNouvelleVitrine(token) {
+    if (!confirm("Créer une nouvelle vitrine ? Il s'agit d'un site à part entière, avec son propre forfait et son propre budget publicitaire — facturés indépendamment de celui-ci. Vous choisirez son forfait juste après.")) return;
     const nom = prompt("Nom de cette nouvelle vitrine (par exemple votre autre activité) :", '');
     if (nom === null) return; // annulé
     try {

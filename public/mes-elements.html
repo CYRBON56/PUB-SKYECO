@@ -185,7 +185,7 @@
 <div class="wrap">
   <a href="#" id="lienRetourDashboard" class="btn-dashboard-hero" style="display:none;"><span class="icon">📊</span> Accéder à mon tableau de bord</a>
   <div class="eyebrow">Construction de votre vitrine</div>
-  <h1>Construire votre formulaire vitrine</h1>
+  <h1 id="titreConstruction">Construire votre formulaire vitrine</h1>
   <p class="intro">
     Suite à notre échange, dépose ici ce qui nous permettra de construire ta vraie vitrine — à ton rythme, section par section.
   </p>
@@ -652,6 +652,12 @@
       lienRetour.style.display = 'flex';
 
       document.getElementById('entreprise').value = draft.entreprise || '';
+      // Titre personnalisé avec le nom de l'entreprise qui vient de
+      // s'inscrire (demande du 04/09) — dès qu'on connaît son nom, on
+      // remplace le titre générique par défaut.
+      if (draft.entreprise) {
+        document.getElementById('titreConstruction').textContent = `Construisons votre formulaire vitrine, ${draft.entreprise}`;
+      }
       document.getElementById('telephone').value = draft.telephone || '';
       document.getElementById('email').value = draft.email || '';
       document.getElementById('adresseRue').value = draft.adresse_rue || '';

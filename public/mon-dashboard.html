@@ -1618,6 +1618,18 @@
   // le tableau de bord (mêmes colonnes annonce_titres / annonce_descriptions
   // que le panneau équivalent de campagne.html, pour rester synchronisés
   // quel que soit l'endroit où l'artisan modifie son annonce).
+  // Corrigé le 04/09 (RMS EcoSky : annonce refusée par Google Ads, policy
+  // "SYMBOLS"/PROHIBITED sur le caractère "(") — les parenthèses sont
+  // interdites dans les titres/descriptions Google Ads. Beaucoup de noms
+  // d'entreprise saisis en contiennent (ex : "RESINE MARBRE SOL (ECOSKY)
+  // (RMS)") — on les retire avant de générer le texte par défaut, pour ne
+  // pas proposer d'emblée un texte que Google refusera. Filet de sécurité
+  // supplémentaire côté serveur dans create-google-ads-campaign.js et
+  // appliquer-annonce-ads.js (au cas où le texte est modifié à la main).
+  function nettoyerSymbolesInterdits(texte) {
+    return String(texte || '').replace(/[()]/g, '').replace(/\s{2,}/g, ' ').trim();
+  }
+
   function genererAnnoncePropos(draftInfo) {
     const motsClesChoisis = Array.isArray(draftInfo.mots_cles_choisis) ? draftInfo.mots_cles_choisis : [];
     const premierMotCle = motsClesChoisis[0] || '';
@@ -1626,13 +1638,13 @@
       : '';
     return {
       titres: [
-        (draftInfo.entreprise || 'Devis gratuit').substring(0, 30),
-        (motCleTitre || 'Estimation gratuite en ligne').substring(0, 30),
+        nettoyerSymbolesInterdits(draftInfo.entreprise || 'Devis gratuit').substring(0, 30),
+        nettoyerSymbolesInterdits(motCleTitre || 'Estimation gratuite en ligne').substring(0, 30),
         'Devis sous 24h',
       ],
       descriptions: [
         'Obtenez votre estimation en 2 minutes, sans engagement.',
-        (draftInfo.zone ? `Artisan local à ${draftInfo.zone} — réponse rapide garantie.` : 'Artisan local — réponse rapide garantie.').substring(0, 90),
+        nettoyerSymbolesInterdits(draftInfo.zone ? `Artisan local à ${draftInfo.zone} — réponse rapide garantie.` : 'Artisan local — réponse rapide garantie.').substring(0, 90),
       ],
     };
   }

@@ -104,7 +104,7 @@
 
   <div class="panel">
     <h2>Importer une liste</h2>
-    <p class="hint">Fichier .xlsx avec les colonnes : Nom entreprise, Métier, Ville, Département, Téléphone, Email, Adresse. Les lignes sans email ET sans téléphone sont ignorées. Un email déjà présent est mis à jour, jamais dupliqué.</p>
+    <p class="hint">Fichier .xlsx avec les colonnes : Nom entreprise, Métier, Ville, Département, Téléphone, Email, Adresse. Les lignes sans email ET sans téléphone sont ignorées. Un email déjà présent est mis à jour, jamais dupliqué (le téléphone, lui, n'est pas utilisé pour dédoublonner : plusieurs entreprises peuvent partager un même numéro).</p>
     <div class="row">
       <input type="file" id="fileImport" accept=".xlsx,.xls">
       <button class="btn btn-primary" id="btnImport">Importer</button>
@@ -318,7 +318,10 @@
         statusEl.textContent = 'Import en cours… ' + fait + ' / ' + total;
       }
       for(const c of chunksPhone){
-        const { error } = await supabaseClient.from('prospects_paysagiste').upsert(c, { onConflict:'telephone' });
+        // Pas de dédoublonnage par téléphone : plusieurs entreprises différentes
+        // peuvent légitimement partager un même numéro (secrétariat commun,
+        // siège de réseau...) — seul l'email est un identifiant unique fiable.
+        const { error } = await supabaseClient.from('prospects_paysagiste').insert(c);
         if(error) throw error;
         fait += c.length;
         statusEl.textContent = 'Import en cours… ' + fait + ' / ' + total;
@@ -346,8 +349,12 @@
 
     if(!telephone && !email){ statusEl.textContent = 'Renseignez au moins un téléphone ou un email.'; statusEl.style.color = '#c0392b'; return; }
 
-    const { error } = await supabaseClient.from('prospects_paysagiste')
-      .upsert([{ nom_entreprise:nom, metier, ville, departement, telephone, email, adresse }], email ? { onConflict:'email' } : { onConflict:'telephone' });
+    // Dédoublonnage par email uniquement (un téléphone peut être partagé par
+    // plusieurs entreprises — pas un identifiant unique fiable).
+    const contact = { nom_entreprise:nom, metier, ville, departement, telephone, email, adresse };
+    const { error } = email
+      ? await supabaseClient.from('prospects_paysagiste').upsert([contact], { onConflict:'email' })
+      : await supabaseClient.from('prospects_paysagiste').insert([contact]);
 
     if(error){ statusEl.textContent = 'Erreur : ' + error.message; statusEl.style.color = '#c0392b'; return; }
     statusEl.textContent = '✓ Contact ajouté.';

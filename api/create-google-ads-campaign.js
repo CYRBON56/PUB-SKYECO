@@ -57,6 +57,40 @@ async function executerAction(action, params) {
   return data;
 }
 
+// Le domaine réellement affiché dans l'annonce Google Ads est TOUJOURS celui
+// de final_url (app.skyeco.fr) — Google ne permet pas de le remplacer par
+// celui de l'artisan (voir échange du 04/09 avec Cyrille). Ce qu'on peut en
+// revanche personnaliser, ce sont les deux segments de "chemin" affichés
+// après ce domaine (path1/path2, ex. skyeco.fr/menuiserie-dupont) : on y met
+// le nom de domaine du site existant de l'artisan s'il en a renseigné un
+// (site_web_existant), sinon le nom de son entreprise, et sa zone
+// d'intervention en second segment.
+function extraireDomaine(urlBrute) {
+  if (!urlBrute) return '';
+  return String(urlBrute).trim()
+    .replace(/^https?:\/\//i, '')
+    .replace(/^www\./i, '')
+    .split('/')[0]
+    .split('?')[0];
+}
+
+function slugifierPourAnnonce(texte, maxLength) {
+  return String(texte || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // retire les accents
+    .toLowerCase()
+    .replace(/\.[a-z]{2,}$/i, '') // retire une extension de domaine finale (.fr, .com...)
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .substring(0, maxLength);
+}
+
+function construirePathsAnnonce(draft) {
+  const domaine = extraireDomaine(draft.site_web_existant);
+  const path1 = slugifierPourAnnonce(domaine || draft.entreprise, 15) || null;
+  const path2 = path1 ? (slugifierPourAnnonce(draft.zone, 15) || null) : null;
+  return { path1, path2 };
+}
+
 // Bug corrigé le 03/09 (détecté sur la 1ère fois que l'automatisation
 // atteignait cette étape en conditions réelles, RESINE MARBRE SOL/RMS) :
 // l'API Windsor.ai ne renvoie PAS un champ structuré "campaign_id" / "id" —
@@ -111,7 +145,7 @@ export default async function handler(req, res) {
 
   try {
     const draftResp = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}&select=entreprise,metier,zone,tarif_prix,mots_cles_choisis,annonce_titres,annonce_descriptions,google_ads_campaign_resource,google_ads_ad_group_resource,campagne_pausee_budget_epuise`,
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}&select=entreprise,metier,zone,tarif_prix,mots_cles_choisis,annonce_titres,annonce_descriptions,google_ads_campaign_resource,google_ads_ad_group_resource,campagne_pausee_budget_epuise,site_web_existant`,
       { headers: supaHeaders }
     );
     const draftRows = await draftResp.json();
@@ -224,6 +258,11 @@ export default async function handler(req, res) {
       : [];
 
     const urlVitrine = `https://app.skyeco.fr/apercu.html?id=${draft_id}`;
+    // path1/path2 : le domaine affiché reste app.skyeco.fr (imposé par
+    // Google Ads, voir construirePathsAnnonce ci-dessus), mais ces deux
+    // segments permettent d'afficher quelque chose qui identifie l'artisan
+    // juste après — ex. app.skyeco.fr/menuiserie-dupont/brech.
+    const { path1, path2 } = construirePathsAnnonce(draft);
     const annonce = await executerAction('create_responsive_search_ad', {
       ad_group_id: adGroupId,
       headlines: titresValides.length ? titresValides : [
@@ -236,6 +275,8 @@ export default async function handler(req, res) {
         'Artisan local — réponse rapide garantie.',
       ],
       final_url: urlVitrine,
+      ...(path1 ? { path1 } : {}),
+      ...(path2 ? { path2 } : {}),
       status: 'paused',
     });
     // Bug corrigé le 03/09 : l'id de l'annonce créée (format Windsor.ai

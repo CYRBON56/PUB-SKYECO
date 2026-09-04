@@ -14,6 +14,18 @@
   .image-panel::before { content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(20,49,42,0.55) 0%, rgba(20,49,42,0.15) 35%, rgba(20,49,42,0.55) 100%); z-index:1; pointer-events:none; }
   .image-panel-title { position:absolute; top:50%; left:32px; right:32px; transform:translateY(-50%); z-index:2; color:#fff; font-size:clamp(1.6rem,3vw,2.4rem); font-weight:700; line-height:1.25; text-align:center; text-shadow:0 2px 12px rgba(0,0,0,0.35); }
   @media (max-width:800px){ .image-panel-title{ font-size:1.3rem; left:20px; right:20px; } }
+
+  /* Aperçu au survol d'une option du formulaire (ex : "OneSlide" dans le
+     parcours portails) — affiche l'image du choix par-dessus la vidéo/le
+     carrousel habituel du panneau visuel, le temps du survol. Générique :
+     posé par JS pour toute étape à choix qui définit s.images (voir
+     getStepsPortails > type_portail). Masqué sur mobile (panneau trop petit
+     pour être lisible pendant qu'on remplit le formulaire en dessous). */
+  .image-panel .hover-preview { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity .25s ease-in-out; z-index:3; pointer-events:none; }
+  .image-panel .hover-preview.active { opacity:1; }
+  .image-panel .hover-preview-label { position:absolute; left:0; right:0; bottom:0; z-index:4; background:linear-gradient(0deg, rgba(20,49,42,0.88) 0%, rgba(20,49,42,0) 100%); color:#fff; font-weight:700; font-size:15px; padding:22px 20px 14px; text-align:center; opacity:0; transition:opacity .25s ease-in-out; pointer-events:none; }
+  .image-panel .hover-preview-label.active { opacity:1; }
+  @media (max-width:800px){ .hover-preview, .hover-preview-label{ display:none !important; } }
   .form-panel { flex:1 1 55%; position:relative; display:flex; align-items:stretch; justify-content:center; padding:20px 24px; overflow:hidden; order:1; }
   /* Position du formulaire (gauche/droite) — configurée par l'artisan dans
      mes-elements.html (colonne formulaire_position), posée en JS sur
@@ -601,6 +613,13 @@ function getStepsPortails(state){
   s.push({ key:"type_portail", question:"Quel modèle de portail autoportant souhaitez-vous ?", type:"choice",
     note: "Portails autoportants — aucun rail au sol, la structure porte le portail elle-même.",
     prixCategorie: "prixBaseHT",
+    // Photo affichée dans le panneau visuel quand le prospect survole
+    // l'option — voir showApercuHoverPreview / wireStepEvents.
+    images: {
+      swing_gate: "/images/portails/swinggate.jpg",
+      oneslide: "/images/portails/oneslide.jpg",
+      twinslide: "/images/portails/twinslide.jpg",
+    },
     options: [["swing_gate","SWING GATE — Portail battant"],["oneslide","ONESLIDE — Portail coulissant 1 vantail"],["twinslide","TWINSLIDE — Portail coulissant 2 vantaux"]] });
   // Ajouté le 04/09 (Cyrille) : distingue la simple fourniture du portail
   // d'une installation complète (terrassement, béton, évacuation de terre,
@@ -823,6 +842,28 @@ async function init(){
     }
   }
 
+  // Aperçu au survol des options du formulaire (ex : passer la souris sur
+  // "OneSlide" affiche sa photo ici) — un seul <img>/label réutilisé pour
+  // toute la vitrine, par-dessus la vidéo/le carrousel ci-dessus. Voir
+  // wireStepEvents (s.type==='choice') pour la pose des écouteurs, et
+  // s.images dans getStepsPortails pour la liste des images disponibles.
+  const hoverPreviewImg = document.createElement('img');
+  hoverPreviewImg.className = 'hover-preview';
+  const hoverPreviewLabel = document.createElement('div');
+  hoverPreviewLabel.className = 'hover-preview-label';
+  container.appendChild(hoverPreviewImg);
+  container.appendChild(hoverPreviewLabel);
+  window.showApercuHoverPreview = function(src, label){
+    hoverPreviewImg.src = src;
+    hoverPreviewLabel.textContent = label || '';
+    hoverPreviewImg.classList.add('active');
+    hoverPreviewLabel.classList.add('active');
+  };
+  window.hideApercuHoverPreview = function(){
+    hoverPreviewImg.classList.remove('active');
+    hoverPreviewLabel.classList.remove('active');
+  };
+
   document.getElementById('loadingState').style.display = 'none';
   document.getElementById('appRoot').style.display = 'block';
   if(draft.status === 'preview'){
@@ -1018,7 +1059,9 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
         const sel=state[s.key]===val?' selected':'';
         const prix = tarifsCategorie ? (tarifsCategorie[val] || 0) : 0;
         const suffixe = prix > 0 ? ' <span style="font-weight:400; opacity:0.7;">(+'+prix+'€ HT)</span>' : '';
-        html+='<div class="option'+sel+'" data-val="'+val+'">'+label+suffixe+'</div>';
+        // data-label : le libellé "propre" (sans le suffixe prix), utilisé
+        // pour la légende de l'aperçu au survol (voir s.images / wireStepEvents).
+        html+='<div class="option'+sel+'" data-val="'+val+'" data-label="'+String(label).replace(/"/g,'&quot;')+'">'+label+suffixe+'</div>';
       });
       html+='</div>';
     } else if(s.type==='number'){
@@ -1149,7 +1192,16 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
   }
   function wireStepEvents(s, steps){
     if(s.type==='choice'){
-      cardEl.querySelectorAll('.option').forEach(el=>{ el.addEventListener('click',()=>{ state[s.key]=el.dataset.val; renderProgress(); renderStep(); }); });
+      cardEl.querySelectorAll('.option').forEach(el=>{
+        el.addEventListener('click',()=>{ state[s.key]=el.dataset.val; renderProgress(); renderStep(); });
+        // Aperçu au survol — uniquement quand l'étape définit une image pour
+        // cette option (voir s.images, ex : type_portail). Ne fait rien sur
+        // les étapes qui n'en ont pas encore (remplissage, couleur…).
+        if(s.images && s.images[el.dataset.val] && window.showApercuHoverPreview){
+          el.addEventListener('mouseenter', ()=> window.showApercuHoverPreview(s.images[el.dataset.val], el.dataset.label));
+          el.addEventListener('mouseleave', ()=> window.hideApercuHoverPreview());
+        }
+      });
     } else if(s.type==='number'){
       const input=document.getElementById('inputNum');
       input.addEventListener('input',()=>{ state[s.key]=input.value; document.getElementById('btnNext').disabled=!canProceed(s); });

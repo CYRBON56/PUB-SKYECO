@@ -101,7 +101,8 @@
       <h1>Mes artisans</h1>
       <p class="sub">Chaque artisan a sa propre fiche — envoie-lui son lien personnel pour qu'il dépose ses éléments.</p>
     </div>
-    <div>
+    <div style="display:flex; gap:10px;">
+      <button type="button" id="btnMesRdvAdmin" class="btn-action" style="display:inline-block;">📅 Mes rendez-vous</button>
       <a href="/prospects-paysagiste.html" class="btn-action" style="text-decoration:none; display:inline-block;">📧 Prospection artisans</a>
     </div>
   </div>
@@ -357,6 +358,49 @@
     document.getElementById('ongletArchives').classList.add('actif');
     document.getElementById('ongletActifs').classList.remove('actif');
     afficherVueActuelle();
+  });
+
+  // Bouton "Mes rendez-vous" (04/09) : ce sont les demandes de RDV que TOI
+  // reçois (un artisan qui souhaite qu'on construise sa vitrine ensemble au
+  // téléphone — bouton ajouté dans mes-elements.html), pas ceux de tel ou
+  // tel artisan. Réutilise le module de RDV interne + le calendrier déjà
+  // intégré à mon-dashboard.html, mais pointé sur TON identité dédiée
+  // ("Skyeco Pro", créée le 04/09 dans skyeco_pro_vitrine_drafts, archivée
+  // pour ne pas apparaître dans la liste ci-dessous) — même mécanisme
+  // d'accès admin que ouvrirDashboardAdmin() ci-dessous, et #calendrier pour
+  // atterrir directement sur l'onglet calendrier plutôt que sur Google Ads.
+  const DRAFT_ID_SKYECO_PRO = '4fbdb122-9fca-4636-b80c-d9e4abc2542b';
+  document.getElementById('btnMesRdvAdmin').addEventListener('click', async function() {
+    const btn = this;
+    const draftId = DRAFT_ID_SKYECO_PRO;
+    let motDePasseInterne = sessionStorage.getItem('skyeco_admin_internal_pw');
+    if (!motDePasseInterne) {
+      motDePasseInterne = prompt('Mot de passe interne (admin) :');
+      if (!motDePasseInterne) return;
+    }
+    btn.disabled = true;
+    const originalText = btn.textContent;
+    btn.textContent = 'Ouverture…';
+    try {
+      const res = await fetch('/api/dashboard-admin-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, motDePasseInterne })
+      });
+      const data = await res.json();
+      if (data.success) {
+        sessionStorage.setItem('skyeco_admin_internal_pw', motDePasseInterne);
+        window.open(`${SITE_BASE}/mon-dashboard.html?id=${draftId}&admin_token=${encodeURIComponent(data.token)}#calendrier`, '_blank');
+      } else {
+        sessionStorage.removeItem('skyeco_admin_internal_pw');
+        alert(data.error || 'Mot de passe interne incorrect.');
+      }
+    } catch (e) {
+      alert('Impossible de contacter le serveur.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
   });
 
   // Ouvre le dashboard d'un artisan sans connaître son mot de passe — sur

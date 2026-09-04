@@ -537,14 +537,30 @@
   // la structure d'origine — à garder synchronisée si de nouvelles options
   // y sont ajoutées un jour). "champs" liste les clés de prix de chaque
   // catégorie avec leur libellé affiché ici.
+  // Refait le 04/09 (dictée de Cyrille) — reprend la nomenclature réelle du
+  // fournisseur (portails autoportants, sans rail au sol) — voir le même
+  // commentaire détaillé dans public/apercu.html (PORTAILS_TARIFS) pour le
+  // détail des choix de transcription des couleurs RAL, à vérifier avec la
+  // capture d'écran que Cyrille doit envoyer.
   const PORTAILS_TARIFS_CATEGORIES = [
-    { cle: 'prixBaseHT', titre: 'Prix de base du portail (fourniture)', champs: { coulissant: 'Portail coulissant', battant: 'Portail battant (2 vantaux)' } },
+    { cle: 'prixBaseHT', titre: 'Prix de base du portail (fourniture)', champs: { swing_gate: 'SWING GATE — Portail battant', oneslide: 'ONESLIDE — Portail coulissant 1 vantail', twinslide: 'TWINSLIDE — Portail coulissant 2 vantaux' } },
     { cle: 'installation', titre: 'Installation (supplément)', champs: { fourniture_seule: 'Fourniture seule (pose non comprise)', installation_complete: 'Installation complète : terrassement, béton, évacuation de terre, raccordement électrique, capteurs' } },
-    { cle: 'remplissage', titre: 'Remplissage (supplément)', champs: { lames_pleines: 'Lames pleines (occultant total)', lames_bandeau: 'Lames avec bandeau ajouré en partie haute', lames_horizontales: 'Lames horizontales fines', motif_decoratif: 'Motif décoratif ajouré' } },
+    { cle: 'remplissage', titre: 'Remplissage (supplément)', champs: { clairline: 'CLAIRLINE', decoline: 'DECOLINE', lameline: 'LAMELINE', laserline_vertical: 'LASERLINE verticale' } },
     { cle: 'lames', titre: 'Lames (supplément)', champs: { lames_120: 'Lames 120', lames_200: 'Lames 200' } },
-    { cle: 'largeur', titre: 'Largeur (supplément)', champs: { '3000': '3,00 m', '3500': '3,50 m', '4000': '4,00 m', '4500': '4,50 m' } },
-    { cle: 'hauteur', titre: 'Hauteur (supplément)', champs: { '1200': '1,20 m', '1400': '1,40 m', '1600': '1,60 m', '1800': '1,80 m', '2000': '2,00 m' } },
-    { cle: 'couleur', titre: 'Couleur (supplément)', champs: { ral7016: 'RAL 7016 — Gris anthracite', ral9010: 'RAL 9010 — Blanc', autre_ral: 'Autre couleur RAL' } },
+    { cle: 'largeur', titre: 'Largeur (supplément)', champs: { '3000': '3,00 m', '3500': '3,50 m' } },
+    { cle: 'hauteur', titre: 'Hauteur (supplément)', champs: { '1226': '1,226 m', '1466': '1,466 m', '1585': '1,585 m', '1705': '1,705 m' } },
+    { cle: 'couleur', titre: 'Couleur (supplément)', champs: {
+      ral7016: 'RAL 7016 — Gris anthracite (inclus)', ral9010: 'RAL 9010 — Blanc (inclus)',
+      ral1015: 'RAL 1015 — Ivoire clair', ral3001: 'RAL 3001 — Rouge', ral3004: 'RAL 3004 — Rouge Bordeaux',
+      ral5017: 'RAL 5017 — Bleu', ral6005: 'RAL 6005 — Vert mousse', ral6009: 'RAL 6009 — Vert sapin',
+      ral6021: 'RAL 6021 — Vert pâle', ral7006: 'RAL 7006 — Beige gris', ral7021: 'RAL 7021 — Gris noir',
+      ral7022: "RAL 7022 — Gris terre d'ombre", ral7039: 'RAL 7039 — Gris quartz', ral8014: 'RAL 8014 — Brun sépia',
+      ral8019: 'RAL 8019 — Brun gris', ral8025: 'RAL 8025 — Brun pâle', ral9005: 'RAL 9005 — Noir',
+      ral9007: 'RAL 9007 — Gris aluminium', ral2100: 'RAL 2100 — Noir sablé', ral2900: 'RAL 2900 — Gris sablé',
+      autre_ral: 'Autre coloris',
+    } },
+    { cle: 'angle_ouverture', titre: "Angle d'ouverture (supplément)", champs: { '90': '90°', '60': '60°' } },
+    { cle: 'ouverture_exterieure', titre: 'Ouverture depuis l\'extérieur (supplément)', champs: { oui: 'Oui', non: 'Non' } },
     { cle: 'options', titre: 'Options (supplément)', champs: { digicode_ext: 'Digicode extérieur', digicode_int: 'Digicode intérieur', visiophone: 'Visiophone', interphone: 'Interphone', batterie: 'Batterie de secours', bouton_poussoir: 'Bouton poussoir', ligne_electrique: "Tirage d'une ligne électrique jusqu'au portail" } },
   ];
 

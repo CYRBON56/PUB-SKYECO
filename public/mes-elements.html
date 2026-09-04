@@ -191,7 +191,11 @@
   </p>
   <p class="reassurance">🌿 Rien n'est chronométré, et chaque section s'enregistre à part.</p>
 
-  <a class="btn-avancement" id="btnAvancement" href="#" target="_blank" rel="noopener">📊 Voir l'avancement de mon site</a>
+  <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+    <a class="btn-avancement" id="btnAvancement" href="#" target="_blank" rel="noopener" style="margin-bottom:0;">📊 Voir l'avancement de mon site</a>
+    <button type="button" class="btn-avancement" id="btnDemanderAide" style="margin-bottom:0; border-color:#e8622c; color:#c9601f; cursor:pointer;">🆘 Besoin d'aide pour remplir mes éléments</button>
+  </div>
+  <p id="statusDemanderAide" style="display:none; font-size:0.84rem; font-weight:600; color:#1e6f4c; margin-bottom:20px;">✓ Demande envoyée — Cyrille vous recontacte rapidement.</p>
 
   <div class="progress-wrap">
     <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
@@ -602,6 +606,32 @@
   } else {
     document.getElementById('btnAvancement').href = '/apercu.html?id=' + draftId;
     chargerDraftExistant();
+
+    // Bouton "🆘 Besoin d'aide pour remplir mes éléments" — envoie une
+    // demande à Cyrille (SMS+email, voir api/demander-aide-elements.js).
+    // Cliquable autant de fois que nécessaire, pas d'état "déjà demandé".
+    document.getElementById('btnDemanderAide').addEventListener('click', async () => {
+      const btn = document.getElementById('btnDemanderAide');
+      const status = document.getElementById('statusDemanderAide');
+      const texteOriginal = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Envoi en cours…';
+      try {
+        const resp = await fetch('/api/demander-aide-elements', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId }),
+        });
+        if (!resp.ok) throw new Error();
+        status.style.display = 'block';
+        btn.textContent = '✓ Demande envoyée';
+        setTimeout(() => { btn.disabled = false; btn.textContent = texteOriginal; }, 4000);
+      } catch (e) {
+        btn.textContent = texteOriginal;
+        btn.disabled = false;
+        alert("Impossible d'envoyer la demande pour le moment — réessayez, ou contactez-nous directement.");
+      }
+    });
   }
 
   async function chargerDraftExistant() {

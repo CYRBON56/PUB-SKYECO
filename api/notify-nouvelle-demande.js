@@ -13,8 +13,21 @@
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 //   RESEND_API_KEY
 //   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER
+//   ADMIN_PHONE (déjà configuré sur Vercel — utilisé aussi par
+//   demander-aide-elements.js — sert d'alerte de secours ci-dessous)
 
 const RESEND_FROM = 'Skyeco Pro <notifications@ecoskybyrms.fr>';
+// Filet de sécurité (04/09) : un incident du 31/08 au 04/09 (clé Resend
+// invalidée côté Vercel) a fait échouer TOUS les envois d'email de cet
+// endpoint pendant plusieurs jours sans que personne ne le remarque — les
+// SMS continuaient de partir normalement, donc rien ne semblait cassé côté
+// artisan/prospect, et l'erreur ne vivait que dans les logs Vercel
+// (jamais consultés en temps normal). Pour ne plus dépendre d'y penser :
+// dès qu'un envoi (SMS ou email, prospect ou artisan) échoue réellement
+// (pas juste "skipped" faute de coordonnées), un SMS d'alerte part vers
+// Cyrille (ADMIN_PHONE) — canal Twilio, indépendant de Resend, donc qui
+// continue de fonctionner même quand c'est Resend qui casse.
+const ADMIN_PHONE = process.env.ADMIN_PHONE || '';
 
 // Twilio exige un numero au format E.164 (+33...) pour le parametre "To" des
 // SMS envoyes via l'API Messages (contrairement a Twilio Verify, deja converti
@@ -91,6 +104,31 @@ async function envoyerEmail(to, subject, html) {
     return { success: false, error: data.message };
   }
   return { success: true, id: data.id };
+}
+
+// Un résultat Promise.allSettled compte comme un échec RÉEL seulement s'il a
+// explicitement échoué (rejeté, ou { success:false }) — pas s'il a juste été
+// "skipped" faute de numéro/email (ça, c'est normal, pas une panne).
+function estEchecReel(resultatSettled) {
+  if (resultatSettled.status === 'rejected') return true;
+  const v = resultatSettled.value;
+  return !!v && v.success === false;
+}
+
+// Best-effort, ne doit jamais faire planter la requête principale : si même
+// ce SMS d'alerte échoue (Twilio down en plus de Resend, cas extrême), on se
+// contente de logger, la réponse au navigateur part quand même normalement.
+async function alerterAdminSiEchecs(echecs, contexte) {
+  if (!echecs.length || !ADMIN_PHONE) return;
+  try {
+    const texte = `⚠️ Skyeco Pro — échec d'envoi (${echecs.join(', ')}) pour la demande de ${contexte.prenomAffiche} ${contexte.nom || ''} sur "${contexte.nomEntreprise}". Vérifie RESEND_API_KEY / Twilio sur Vercel (projet pub-skyeco-23ue).`;
+    const resultat = await envoyerSMS(ADMIN_PHONE, texte);
+    if (resultat && resultat.success === false) {
+      console.error('Alerte admin (échec notif) elle-même non délivrée :', JSON.stringify(resultat));
+    }
+  } catch (err) {
+    console.error('Erreur envoi alerte admin (échec notif) :', err);
+  }
 }
 
 export default async function handler(req, res) {
@@ -185,6 +223,17 @@ export default async function handler(req, res) {
         `<p>Bonjour,</p><p>Vous avez reçu une nouvelle demande de la part de <strong>${prenomAffiche} ${nom || ''}</strong>.</p><p>Téléphone : ${telephone || 'non fourni'}<br>Email : ${email || 'non fourni'}</p>${recapHtml}<p>Pensez à le rappeler rapidement pour transformer cette demande en client.</p>`
       ),
     ]);
+
+    // Filet de sécurité (voir commentaire sur alerterAdminSiEchecs) : un
+    // résumé des vrais échecs (pas les "skipped") déclenche une alerte SMS
+    // à Cyrille, en plus de la réponse normale au navigateur — jamais
+    // bloquant, jamais visible du prospect/artisan.
+    const echecs = [];
+    if (estEchecReel(smsProspect)) echecs.push('SMS prospect');
+    if (estEchecReel(emailProspect)) echecs.push('email prospect');
+    if (estEchecReel(smsArtisan)) echecs.push('SMS artisan');
+    if (estEchecReel(emailArtisan)) echecs.push('email artisan');
+    await alerterAdminSiEchecs(echecs, { prenomAffiche, nom, nomEntreprise });
 
     return res.status(200).json({
       success: true,

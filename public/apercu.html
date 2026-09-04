@@ -135,6 +135,13 @@
           <h1 id="mainTitle"></h1>
           <div style="font-size:20px; font-weight:800; color:var(--brand,#1e6f4c); margin:2px 0 10px; line-height:1.2;" id="delaiBadge"></div>
           <p class="sub" style="margin-bottom:0;" id="introText"></p>
+          <div id="catalogueBadge" style="display:none; align-items:center; gap:10px; margin-top:12px; padding:8px 12px; background:#fff; border:1.5px solid #d8e3de; border-radius:10px; cursor:pointer; max-width:fit-content;">
+            <img id="catalogueBadgeImg" alt="" style="display:none; width:34px; height:34px; border-radius:6px; object-fit:cover; flex-shrink:0;">
+            <span style="font-size:13px; line-height:1.35;">
+              <strong id="catalogueBadgeTitre" style="color:#14312a;"></strong><br>
+              <span style="font-weight:400; color:#5b6b64;">Pas encore prêt ? Téléchargez-le →</span>
+            </span>
+          </div>
         </div>
         <div style="display:flex; gap:14px; flex-wrap:wrap; margin-bottom:14px; font-size:12.5px; color:#4a5a54;" id="miniBadges"></div>
         <div class="middle-scroll">
@@ -627,6 +634,25 @@ async function init(){
   document.getElementById('delaiBadge').textContent = template.delaiBadge;
   document.getElementById('introText').textContent = draft.description || template.intro;
   document.getElementById('miniBadges').innerHTML = ['✅ Sans engagement','⏱️ Réponse sous 24h','🔒 Données confidentielles'].map(b=>'<span>'+b+'</span>').join('');
+
+  // Bouton catalogue — optionnel, configuré par l'artisan dans
+  // mes-elements.html (titre + image de couverture + fichier PDF, voir
+  // catalogue_titre / catalogue_image_url / catalogue_fichier_url). Ne
+  // s'affiche que si un fichier catalogue a bien été envoyé ; reste discret
+  // (petit encart sous le texte d'intro) mais visible en permanence pendant
+  // que le prospect remplit le formulaire, pour lui rappeler qu'il peut le
+  // télécharger s'il n'est pas encore prêt à demander un devis.
+  if (draft.catalogue_fichier_url) {
+    const catalogueBadge = document.getElementById('catalogueBadge');
+    document.getElementById('catalogueBadgeTitre').textContent = draft.catalogue_titre || 'Catalogue';
+    if (draft.catalogue_image_url) {
+      const catalogueImg = document.getElementById('catalogueBadgeImg');
+      catalogueImg.src = draft.catalogue_image_url;
+      catalogueImg.style.display = 'block';
+    }
+    catalogueBadge.style.display = 'flex';
+    catalogueBadge.addEventListener('click', () => window.open(draft.catalogue_fichier_url, '_blank'));
+  }
 
   // Mentions légales complètes — n'affiche que ce qui a réellement été renseigné,
   // pour ne jamais montrer de champ vide même si l'artisan n'a pas tout complété.

@@ -1,49 +1,43 @@
-// /api/create-google-ads-campaign.js
-// Crée une campagne Google Ads complète (campagne + budget, groupe d'annonces,
-// mots-clés, annonce responsive search) via l'API Windsor.ai, qui gère
-// elle-même l'authentification OAuth Google Ads en interne.
+// /api/appliquer-annonce-ads.js
+// Pousse RÉELLEMENT dans Google Ads (via Windsor.ai) le texte d'annonce
+// (titres/descriptions) actuellement enregistré dans Supabase pour ce site.
+//
+// Jusqu'ici (avant le 04/09), modifier ce texte dans mon-dashboard.html
+// (panneau "🔎 Votre annonce Google Ads") ne faisait qu'enregistrer dans
+// Supabase (colonnes annonce_titres/annonce_descriptions), SANS jamais
+// toucher à l'annonce réellement diffusée : create-google-ads-campaign.js
+// n'utilise ces colonnes qu'à la toute première création de campagne — sa
+// branche "recharge" (campagne déjà existante, voir ce fichier) ne touche
+// jamais l'annonce. Demandé par Cyrille le 04/09 après avoir remarqué que
+// modifier l'annonce dans le dashboard ne se répercutait pas dans Google Ads
+// pour sa campagne RMS EcoSky déjà en ligne.
+//
+// Windsor.ai n'expose PAS d'action pour MODIFIER une annonce responsive
+// search existante (voir list_actions du connecteur google_ads) — seulement
+// "create_responsive_search_ad" pour en créer une, et pause_ad/enable_ad
+// pour activer/désactiver. On applique donc le changement en créant une
+// NOUVELLE annonce avec le texte à jour dans le même groupe d'annonces, puis
+// en mettant l'ancienne en pause (Google Ads autorise plusieurs annonces par
+// groupe — l'historique de perf de l'ancienne reste consultable, juste plus
+// diffusée). La nouvelle annonce reprend le même statut (activée/en pause)
+// que la diffusion actuelle, pour ne jamais relancer par surprise une
+// diffusion volontairement mise en pause par Cyrille (pause-campagne-ads.js).
 //
 // Variables d'environnement requises :
 //   WINDSOR_API_KEY
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-//   GOOGLE_ADS_ACCOUNT_ID = "7849903984" (ou "784-990-3984") — le compte
-//   ECOSKY by RMS réellement utilisé pour les annonces.
-//   Confirmé le 30/08 : 735-335-0497 est un AUTRE compte Google Ads
-//   (personnel de Cyrille, suspendu) — ce n'est pas celui-ci. Ne pas
-//   remplacer 7849903984 par 7353350497 malgré ce qui a pu être dit plus
-//   tôt dans cette conversation.
-//
-// BUG CORRIGÉ le 03/09 (1ère campagne réelle jamais créée en live, jamais
-// détecté avant faute de trafic/paiement réel) : ce fichier retirait les
-// tirets avant d'envoyer l'ID de compte à Windsor.ai ("7849903984"). Erreur
-// réelle obtenue : "Account 7849903984 is not available. The configured
-// accounts are: 784-990-3984." — Windsor.ai attend en réalité le format
-// AVEC tirets, exactement comme affiché dans Google Ads. On reformate donc
-// systématiquement l'ID en XXX-XXX-XXXX au lieu de retirer les tirets.
+//   GOOGLE_ADS_ACCOUNT_ID
 
 const WINDSOR_BASE = 'https://connectors.windsor.ai/google_ads';
-const TAUX_COMMISSION = 0.50; // doit rester synchronisé avec les autres fichiers
 
 // Windsor.ai attend l'identifiant de compte Google Ads AVEC tirets
-// (format XXX-XXX-XXXX, identique à l'interface Google Ads) — voir le
-// commentaire d'en-tête du 03/09. Fonctionne que la variable d'env soit
-// stockée avec ou sans tirets.
+// (format XXX-XXX-XXXX) — même correctif que les autres fichiers api/*.js
+// touchant Google Ads (03/09).
 function formaterCompteGoogleAds(id) {
   const chiffres = String(id || '').replace(/[^0-9]/g, '');
   if (chiffres.length !== 10) return String(id || '').trim();
   return `${chiffres.slice(0, 3)}-${chiffres.slice(3, 6)}-${chiffres.slice(6)}`;
 }
-
-const KEYWORDS_BY_METIER = {
-  paysagiste: ['paysagiste prix', 'aménagement extérieur paysagiste', 'devis paysagiste'],
-  piscine: ['pose piscine prix', 'installation piscine devis', 'plage piscine prix'],
-  tonte: ['tonte pelouse prix', 'entretien jardin prix', 'tonte gazon devis'],
-  terrasse: ['terrasse bois prix', 'terrasse composite prix', 'pose terrasse devis'],
-  paysagiste_concepteur: ['paysagiste concepteur prix', 'conception jardin paysagiste', 'plan aménagement extérieur'],
-  arboriste: ['élagage prix', 'abattage arbre prix', 'arboriste élagueur devis'],
-  espaces_verts: ['entretien espaces verts prix', 'entretien jardin copropriété', 'entreprise espaces verts devis'],
-  autre: ['devis travaux extérieur', 'artisan paysagiste devis'],
-};
 
 async function executerAction(action, params) {
   const accountId = formaterCompteGoogleAds(process.env.GOOGLE_ADS_ACCOUNT_ID);
@@ -57,32 +51,22 @@ async function executerAction(action, params) {
   return data;
 }
 
-// Bug corrigé le 03/09 (détecté sur la 1ère fois que l'automatisation
-// atteignait cette étape en conditions réelles, RESINE MARBRE SOL/RMS) :
-// l'API Windsor.ai ne renvoie PAS un champ structuré "campaign_id" / "id" —
-// elle renvoie un texte de confirmation dans data.result, du type "Search
-// campaign '...' (id 24207666876) created successfully...". Le code
-// cherchait campagne.campaign_id / campagne.id, toujours undefined, ce qui
-// envoyait un campaign_id "undefined" à l'étape suivante (create_ad_group),
-// rejetée par Windsor.ai avec "campaign_id: Field required" — la campagne,
-// elle, avait bien été créée (orpheline, jamais rattachée au dashboard).
-// Cette fonction extrait l'id numérique (ou "ad_group_id~ad_id") du texte de
-// confirmation, avec repli sur d'éventuels champs structurés si l'API change.
-// Corrigé le 04/09 (RMS EcoSky : Google Ads a refusé une annonce, policy
-// "SYMBOLS"/PROHIBITED sur le caractère "(") — les parenthèses sont
-// interdites dans les titres et descriptions Google Ads. Beaucoup de noms
-// d'entreprise saisis en contiennent (ex : "RESINE MARBRE SOL (ECOSKY)
-// (RMS)"), utilisés ici en repli si l'artisan n'a jamais personnalisé son
-// annonce — on les retire systématiquement avant l'envoi à Windsor.ai. Même
-// correctif dans appliquer-annonce-ads.js et mon-dashboard.html
-// (genererAnnoncePropos, texte par défaut proposé à l'artisan).
+// Corrigé le 04/09 (RMS EcoSky : "Action Windsor.ai create_responsive_search_ad
+// échouée" — Google Ads a refusé l'annonce, policy "SYMBOLS"/PROHIBITED sur
+// le caractère "(") — les parenthèses sont interdites dans les titres et
+// descriptions Google Ads. Filet de sécurité : on les retire toujours avant
+// l'envoi, même si mon-dashboard.html les retire déjà de son texte par
+// défaut (genererAnnoncePropos), au cas où l'artisan les aurait tapées à la
+// main dans un champ.
 function nettoyerSymbolesInterdits(texte) {
   return String(texte || '').replace(/[()]/g, '').replace(/\s{2,}/g, ' ').trim();
 }
 
+// Windsor.ai renvoie un texte de confirmation dans data.result ("... (id
+// <ad_group_id>~<ad_id>) created successfully..."), pas un champ structuré —
+// même correctif que create-google-ads-campaign.js/pause-campagne-ads.js (03/09).
 function extraireId(data) {
   if (data && typeof data === 'object') {
-    if (data.campaign_id) return String(data.campaign_id);
     if (data.ad_group_id) return String(data.ad_group_id);
     if (data.id) return String(data.id);
     if (typeof data.result === 'string') {
@@ -95,12 +79,12 @@ function extraireId(data) {
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Méthode non autorisée' });
+    return res.status(405).json({ success: false, error: 'Méthode non autorisée' });
   }
 
-  const { draft_id } = req.body || {};
-  if (!draft_id) {
-    return res.status(400).json({ error: 'draft_id manquant' });
+  const { draftId } = req.body || {};
+  if (!draftId) {
+    return res.status(400).json({ success: false, error: 'draftId requis.' });
   }
 
   const supaHeaders = {
@@ -111,168 +95,68 @@ export default async function handler(req, res) {
 
   try {
     const draftResp = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}&select=entreprise,metier,zone,tarif_prix,mots_cles_choisis,annonce_titres,annonce_descriptions,google_ads_campaign_resource,google_ads_ad_group_resource,campagne_pausee_budget_epuise`,
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=google_ads_ad_group_resource,google_ads_ad_resource,annonce_titres,annonce_descriptions,campagne_diffusion_pausee`,
       { headers: supaHeaders }
     );
-    const draftRows = await draftResp.json();
-    const draft = draftRows[0];
-    if (!draft) return res.status(404).json({ error: 'Site introuvable.' });
-    if (!draft.tarif_prix || draft.tarif_prix <= 0) {
-      return res.status(400).json({ error: 'Aucun budget publicitaire payé pour ce site.' });
+    const rows = await draftResp.json();
+    const draft = rows[0];
+    if (!draft?.google_ads_ad_group_resource) {
+      return res.status(404).json({ success: false, error: 'Aucune campagne Google Ads active pour ce site — le premier lancement utilisera directement ce texte.' });
     }
 
-    const budgetNetEuros = draft.tarif_prix * (1 - TAUX_COMMISSION);
-    // Bug corrigé le 03/09 (détecté sur la 1ère création réelle en live,
-    // PORTALECO) : Google Ads exige un montant multiple de l'unité minimale
-    // (10 000 micros = 0,01 €) — erreur réelle obtenue : "A money amount was
-    // not a multiple of a minimum unit." On arrondit donc d'abord au centime
-    // le plus proche, puis on convertit en micros (au lieu d'arrondir
-    // directement des micros bruts, qui ne tombe quasiment jamais sur un
-    // multiple de 10 000).
-    const budgetJournalierMicros = Math.round((budgetNetEuros / 30) * 100) * 10_000;
-
-    // 03/09 : une campagne existe déjà pour ce site (recharge, pas premier
-    // paiement) — on ne recrée JAMAIS une deuxième campagne en double.
-    // On met juste à jour le budget journalier, et on ne réactive la
-    // diffusion que si elle avait été mise en pause AUTOMATIQUEMENT pour
-    // solde épuisé (campagne_pausee_budget_epuise) — jamais si Cyrille
-    // l'avait mise en pause lui-même pour une autre raison (voir
-    // pause-campagne-ads.js), auquel cas seul lui peut la relancer.
-    if (draft.google_ads_campaign_resource) {
-      await executerAction('set_campaign_budget', {
-        campaign_id: draft.google_ads_campaign_resource,
-        budget_type: 'daily',
-        amount_micros: budgetJournalierMicros,
-      });
-
-      if (draft.campagne_pausee_budget_epuise) {
-        await executerAction('enable_campaign', { campaign_id: draft.google_ads_campaign_resource });
-        await fetch(`${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}`, {
-          method: 'PATCH',
-          headers: { ...supaHeaders, Prefer: 'return=minimal' },
-          body: JSON.stringify({ campagne_diffusion_pausee: false, campagne_pausee_budget_epuise: false }),
-        });
-      }
-
-      return res.status(200).json({
-        success: true,
-        campaignId: draft.google_ads_campaign_resource,
-        adGroupId: draft.google_ads_ad_group_resource,
-        misAJour: true,
-        relanceeAutomatiquement: !!draft.campagne_pausee_budget_epuise,
-      });
-    }
-
-    // Priorité aux mots-clés choisis par l'artisan (via l'IA de suggestion
-    // dans campagne.html) — sinon on retombe sur la liste fixe par métier.
-    const motsClesChoisis = Array.isArray(draft.mots_cles_choisis)
-      ? draft.mots_cles_choisis
-          .filter(m => typeof m === 'string' && m.trim())
-          .map(m => m.trim().substring(0, 80))
-          .slice(0, 25)
-      : [];
-
-    const metiersListe = Array.isArray(draft.metier) ? draft.metier : (draft.metier ? [draft.metier] : []);
-    const keywords = motsClesChoisis.length
-      ? [...new Set(motsClesChoisis)]
-      : (metiersListe.length
-          ? [...new Set(metiersListe.flatMap(m => KEYWORDS_BY_METIER[m] || []))]
-          : KEYWORDS_BY_METIER.autre);
-
-    const nomCampagne = `Skyeco Pro — ${draft.entreprise || draft_id}`.substring(0, 254);
-
-    // 1. Créer la campagne (paused par défaut, sécurité).
-    const campagne = await executerAction('create_campaign', {
-      name: nomCampagne,
-      budget_amount_micros: budgetJournalierMicros,
-      channel_type: 'search',
-      bidding_strategy: 'manual_cpc',
-      status: 'paused',
-    });
-    const campaignId = extraireId(campagne);
-    if (!campaignId) {
-      throw new Error(`Impossible d'extraire l'id de la campagne créée : ${JSON.stringify(campagne)}`);
-    }
-
-    // 2. Créer le groupe d'annonces.
-    const adGroup = await executerAction('create_ad_group', {
-      campaign_id: campaignId,
-      name: 'Estimation',
-      status: 'paused',
-    });
-    const adGroupId = extraireId(adGroup);
-    if (!adGroupId) {
-      throw new Error(`Impossible d'extraire l'id du groupe d'annonces créé (campagne ${campaignId} déjà créée dans Google Ads) : ${JSON.stringify(adGroup)}`);
-    }
-
-    // 3. Ajouter les mots-clés (phrase match, plus sûr que broad pour du BTP local).
-    await executerAction('push_keywords', {
-      ad_group_id: adGroupId,
-      keywords: keywords.map(k => ({ text: k, match_type: 'PHRASE' })),
-      status: 'enabled',
-    });
-
-    // 4. Créer l'annonce elle-même — textes choisis/modifiés par l'artisan
-    // dans l'aperçu d'annonce de campagne.html (colonnes annonce_titres /
-    // annonce_descriptions, 31/08), sinon repli sur les textes génériques
-    // d'origine si l'artisan n'a jamais ouvert cet aperçu.
-    const titresValides = Array.isArray(draft.annonce_titres)
+    const titres = Array.isArray(draft.annonce_titres)
       ? draft.annonce_titres.filter(t => typeof t === 'string' && t.trim()).map(t => nettoyerSymbolesInterdits(t).substring(0, 30)).slice(0, 3)
       : [];
-    const descriptionsValides = Array.isArray(draft.annonce_descriptions)
+    const descriptions = Array.isArray(draft.annonce_descriptions)
       ? draft.annonce_descriptions.filter(d => typeof d === 'string' && d.trim()).map(d => nettoyerSymbolesInterdits(d).substring(0, 90)).slice(0, 2)
       : [];
+    if (titres.length < 3 || descriptions.length < 2) {
+      return res.status(400).json({ success: false, error: '3 titres et 2 descriptions sont requis pour créer une annonce Google Ads valide.' });
+    }
 
-    const urlVitrine = `https://app.skyeco.fr/apercu.html?id=${draft_id}`;
-    const annonce = await executerAction('create_responsive_search_ad', {
-      ad_group_id: adGroupId,
-      headlines: titresValides.length ? titresValides : [
-        nettoyerSymbolesInterdits(draft.entreprise || 'Devis gratuit').substring(0, 30),
-        'Estimation gratuite en ligne',
-        'Devis sous 24h',
-      ],
-      descriptions: descriptionsValides.length ? descriptionsValides : [
-        'Obtenez votre estimation en 2 minutes, sans engagement.',
-        'Artisan local — réponse rapide garantie.',
-      ],
+    const urlVitrine = `https://app.skyeco.fr/apercu.html?id=${draftId}`;
+    // Reprend le statut actuel de la diffusion : si Cyrille a mis la
+    // campagne en pause lui-même, la nouvelle annonce démarre en pause aussi
+    // — jamais de relance par surprise juste en changeant un texte.
+    const statutNouvelleAnnonce = draft.campagne_diffusion_pausee ? 'paused' : 'enabled';
+
+    const nouvelleAnnonce = await executerAction('create_responsive_search_ad', {
+      ad_group_id: draft.google_ads_ad_group_resource,
+      headlines: titres,
+      descriptions,
       final_url: urlVitrine,
-      status: 'paused',
+      status: statutNouvelleAnnonce,
     });
-    // Bug corrigé le 03/09 : l'id de l'annonce créée (format Windsor.ai
-    // "<ad_group_id>~<ad_id>", voir extraireId) n'était jusqu'ici jamais
-    // capturé ni enregistré — impossible ensuite de la réactiver
-    // individuellement (action enable_ad, distincte de enable_campaign et
-    // enable_ad_group) une fois la campagne validée. Voir aussi
-    // pause-campagne-ads.js, qui l'utilise désormais.
-    const adResource = extraireId(annonce);
+    const nouvelAdResource = extraireId(nouvelleAnnonce);
+    if (!nouvelAdResource) {
+      throw new Error(`Impossible d'extraire l'id de la nouvelle annonce créée : ${JSON.stringify(nouvelleAnnonce)}`);
+    }
 
-    // Bug corrigé le 03/09 (racine de "je ne vois pas l'annonce dans Google") :
-    // la campagne est créée en PAUSE dans Google Ads (ci-dessus, sécurité —
-    // en attente de validation avant diffusion réelle), mais rien ne posait
-    // jusqu'ici campagne_diffusion_pausee=true côté Supabase. Or c'est CE
-    // champ, pas le vrai statut Google Ads, que lit le tableau de bord
-    // (get-campaign-spend.js) pour son badge "🟢 Active"/"⏸️ En pause" — la
-    // campagne restait donc indéfiniment en pause dans Google Ads tout en
-    // s'affichant "Active" sur le dashboard, sans qu'aucun bouton ne signale
-    // qu'il fallait cliquer sur "Relancer la diffusion" pour l'activer
-    // réellement. On pose maintenant ce champ à true à la création, pour que
-    // le dashboard affiche bien "En pause" et propose ce bouton — qui appelle
-    // déjà correctement enable_campaign (voir pause-campagne-ads.js).
-    await fetch(`${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}`, {
+    // Met en pause l'ancienne annonce, si elle existe — jamais deux annonces
+    // actives en même temps dans ce groupe, pour ne pas diffuser une version
+    // obsolète du texte en parallèle de la nouvelle.
+    if (draft.google_ads_ad_resource && draft.google_ads_ad_resource.includes('~')) {
+      const [ancienAdGroupId, ancienAdId] = draft.google_ads_ad_resource.split('~');
+      try {
+        await executerAction('pause_ad', { ad_group_id: ancienAdGroupId, ad_id: ancienAdId });
+      } catch (e) {
+        // Non bloquant : la nouvelle annonce est déjà créée avec le bon
+        // statut même si la mise en pause de l'ancienne échoue (ex : déjà
+        // supprimée côté Google Ads) — on continue plutôt que d'échouer
+        // toute l'opération pour cette seule étape de nettoyage.
+        console.error("Avertissement : impossible de mettre en pause l'ancienne annonce :", e.message);
+      }
+    }
+
+    await fetch(`${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
       method: 'PATCH',
       headers: { ...supaHeaders, Prefer: 'return=minimal' },
-      body: JSON.stringify({
-        google_ads_campaign_resource: String(campaignId),
-        google_ads_ad_group_resource: String(adGroupId),
-        google_ads_ad_resource: adResource ? String(adResource) : null,
-        google_ads_cree_le: new Date().toISOString(),
-        campagne_diffusion_pausee: true,
-      }),
+      body: JSON.stringify({ google_ads_ad_resource: String(nouvelAdResource) }),
     });
 
-    return res.status(200).json({ success: true, campaignId, adGroupId });
+    return res.status(200).json({ success: true, message: 'Nouvelle annonce appliquée dans Google Ads.', adResource: nouvelAdResource });
   } catch (err) {
-    console.error('Erreur create-google-ads-campaign (Windsor.ai) :', err);
-    return res.status(500).json({ error: err.message });
+    console.error('Erreur appliquer-annonce-ads (Windsor.ai) :', err);
+    return res.status(500).json({ success: false, error: err.message });
   }
 }

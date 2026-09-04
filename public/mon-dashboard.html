@@ -426,6 +426,8 @@
       <h3>✨ Quels mots-clés pour votre annonce ?</h3>
       <div class="motscles-hint">Décrivez votre métier et ce que vous voulez mettre en avant (prestations, produits, ce qui attire vos clients) — l'IA vous propose des mots-clés à cocher. Cette sélection sert de base à votre annonce et à l'estimation de clics ci-dessous.</div>
       <textarea class="motscles-textarea" id="motsClesDescription" placeholder="Ex : je pose des terrasses en bois et composite, je fais aussi des clôtures. Je veux surtout attirer des clients pour la pose de terrasse."></textarea>
+      <div class="motscles-hint" style="margin-top:10px;">Ou indiquez l'adresse de votre site actuel — l'IA lira son contenu pour proposer des mots-clés (vous pouvez aussi combiner les deux).</div>
+      <input type="url" id="motsClesSiteUrl" placeholder="https://monsite.fr" style="width:100%; box-sizing:border-box; margin-top:4px; margin-bottom:10px; padding:10px 12px; border:1.5px solid #d8e3de; border-radius:8px; font-size:0.9rem; font-family:inherit;">
       <button type="button" class="btn-suggerer" id="btnSuggererMotsCles">✨ Suggérer des mots-clés</button>
       <div class="motscles-liste" id="motsClesListe"></div>
       <div class="motscles-ajout" id="motsClesAjout" style="display:none;">
@@ -1620,7 +1622,7 @@
     }
 
     try {
-      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,metier,zone,departement,rayon_ciblage_km,mots_cles_choisis,annonce_titres,annonce_descriptions,status,budget_journalier_manuel,plafond_cpc_manuel,tarif_prix,google_ads_ad_group_resource`, {
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,metier,zone,departement,rayon_ciblage_km,mots_cles_choisis,annonce_titres,annonce_descriptions,status,budget_journalier_manuel,plafond_cpc_manuel,tarif_prix,google_ads_ad_group_resource,site_web_existant`, {
         headers: { apikey: SUPABASE_ANON_KEY }
       });
       const rows = await resp.json();
@@ -2121,6 +2123,10 @@
   // l'estimation de clics ci-dessus (onSelectionChange rafraîchit le curseur).
   function initMotsCles(draftInfo, onSelectionChange) {
     const descriptionEl = document.getElementById('motsClesDescription');
+    const siteUrlEl = document.getElementById('motsClesSiteUrl');
+    // Pré-rempli avec le site déjà renseigné dans "Mes éléments" (site_web_existant)
+    // s'il y en a un — l'artisan n'a rien à retaper, juste à cliquer sur le bouton.
+    if (draftInfo.site_web_existant) siteUrlEl.value = draftInfo.site_web_existant;
     const btnSuggerer = document.getElementById('btnSuggererMotsCles');
     const listeEl = document.getElementById('motsClesListe');
     const ajoutEl = document.getElementById('motsClesAjout');
@@ -2266,25 +2272,26 @@
 
     btnSuggerer.addEventListener('click', async () => {
       const description = descriptionEl.value.trim();
-      if (!description) {
-        noteEl.textContent = 'Décrivez brièvement votre activité pour obtenir des suggestions.';
+      const siteUrl = siteUrlEl.value.trim();
+      if (!description && !siteUrl) {
+        noteEl.textContent = 'Décrivez brièvement votre activité ou indiquez l\'adresse de votre site pour obtenir des suggestions.';
         return;
       }
       btnSuggerer.disabled = true;
-      btnSuggerer.textContent = 'Génération en cours…';
+      btnSuggerer.textContent = siteUrl ? 'Lecture du site en cours…' : 'Génération en cours…';
       noteEl.textContent = '';
       try {
         const res = await fetch('/api/suggerer-mots-cles', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ description, metier: draftMetier, zone: draftZone })
+          body: JSON.stringify({ description, siteUrl, metier: draftMetier, zone: draftZone })
         });
         const data = await res.json();
         if (data.success) {
           data.motsCles.forEach(m => { if (!selection.has(m)) selection.set(m, true); });
           rendreListe();
           ajoutEl.style.display = 'flex';
-          noteEl.textContent = 'Décochez ceux que vous ne voulez pas utiliser, ou ajoutez les vôtres.';
+          noteEl.textContent = data.avertissement || 'Décochez ceux que vous ne voulez pas utiliser, ou ajoutez les vôtres.';
           sauvegarderEtRafraichir();
         } else {
           noteEl.textContent = data.error || 'Impossible de générer des suggestions pour le moment.';

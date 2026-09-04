@@ -62,6 +62,38 @@ function nettoyerSymbolesInterdits(texte) {
   return String(texte || '').replace(/[()]/g, '').replace(/\s{2,}/g, ' ').trim();
 }
 
+// Le domaine réellement affiché dans l'annonce Google Ads est TOUJOURS celui
+// de final_url (app.skyeco.fr) — Google ne permet pas de le remplacer par
+// celui de l'artisan (voir échange du 04/09 avec Cyrille). Ce qu'on peut en
+// revanche personnaliser, ce sont les deux segments de "chemin" affichés
+// après ce domaine (path1/path2, ex. skyeco.fr/menuiserie-dupont) — même
+// logique que create-google-ads-campaign.js.
+function extraireDomaine(urlBrute) {
+  if (!urlBrute) return '';
+  return String(urlBrute).trim()
+    .replace(/^https?:\/\//i, '')
+    .replace(/^www\./i, '')
+    .split('/')[0]
+    .split('?')[0];
+}
+
+function slugifierPourAnnonce(texte, maxLength) {
+  return String(texte || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // retire les accents
+    .toLowerCase()
+    .replace(/\.[a-z]{2,}$/i, '') // retire une extension de domaine finale (.fr, .com...)
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .substring(0, maxLength);
+}
+
+function construirePathsAnnonce(draft) {
+  const domaine = extraireDomaine(draft.site_web_existant);
+  const path1 = slugifierPourAnnonce(domaine || draft.entreprise, 15) || null;
+  const path2 = path1 ? (slugifierPourAnnonce(draft.zone, 15) || null) : null;
+  return { path1, path2 };
+}
+
 // Windsor.ai renvoie un texte de confirmation dans data.result ("... (id
 // <ad_group_id>~<ad_id>) created successfully..."), pas un champ structuré —
 // même correctif que create-google-ads-campaign.js/pause-campagne-ads.js (03/09).
@@ -95,7 +127,7 @@ export default async function handler(req, res) {
 
   try {
     const draftResp = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=google_ads_ad_group_resource,google_ads_ad_resource,annonce_titres,annonce_descriptions,campagne_diffusion_pausee`,
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=google_ads_ad_group_resource,google_ads_ad_resource,annonce_titres,annonce_descriptions,campagne_diffusion_pausee,entreprise,zone,site_web_existant`,
       { headers: supaHeaders }
     );
     const rows = await draftResp.json();
@@ -119,12 +151,15 @@ export default async function handler(req, res) {
     // campagne en pause lui-même, la nouvelle annonce démarre en pause aussi
     // — jamais de relance par surprise juste en changeant un texte.
     const statutNouvelleAnnonce = draft.campagne_diffusion_pausee ? 'paused' : 'enabled';
+    const { path1, path2 } = construirePathsAnnonce(draft);
 
     const nouvelleAnnonce = await executerAction('create_responsive_search_ad', {
       ad_group_id: draft.google_ads_ad_group_resource,
       headlines: titres,
       descriptions,
       final_url: urlVitrine,
+      ...(path1 ? { path1 } : {}),
+      ...(path2 ? { path2 } : {}),
       status: statutNouvelleAnnonce,
     });
     const nouvelAdResource = extraireId(nouvelleAnnonce);

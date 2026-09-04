@@ -893,6 +893,14 @@
     verifierStatutPause();
     chargerZones();
     initPanelTabs();
+    // Lien direct vers l'onglet calendrier (ex : bouton "Mes rendez-vous" de
+    // mes-artisans.html, mon-dashboard.html#calendrier) — même principe que
+    // #sectionZoneCiblee un peu plus haut : un seul clic ouvre directement
+    // le bon onglet, sans devoir cliquer dessus une fois la page chargée.
+    if (window.location.hash === '#calendrier') {
+      activerOnglet('calendrier');
+      document.getElementById('panelTabs').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
     if (!adminToken) {
       chargerSitesCompte(token);
       chargerApercuCampagnes(token);

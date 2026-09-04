@@ -418,7 +418,7 @@
 
     <div class="ads-souspanel">
       <h3>🔎 Votre annonce Google Ads</h3>
-      <div class="annonce-hint">Voici à quoi ressemblera votre annonce sur Google. Modifiez les textes si besoin — c'est cette version qui sera utilisée au lancement ou à la prochaine recharge de budget.</div>
+      <div class="annonce-hint">Voici à quoi ressemblera votre annonce sur Google. Modifiez les textes si besoin — ils sont enregistrés automatiquement au fil de la frappe.</div>
       <div class="annonce-preview">
         <div><span class="badge-annonce">Annonce</span><span class="domaine-annonce" id="previewDomaine">app.skyeco.fr</span></div>
         <div class="titre-annonce" id="previewTitre">—</div>
@@ -446,6 +446,9 @@
         <textarea id="annonceDesc2" maxlength="90"></textarea>
       </div>
       <div class="annonce-sauvegarde-note" id="annonceSauvegardeNote"></div>
+      <button type="button" id="btnAppliquerAnnonceAds" style="display:none; margin-top:6px; background:#1e6f4c; color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:0.85rem; font-weight:700; cursor:pointer;">🚀 Appliquer ce texte dans Google Ads</button>
+      <div class="annonce-hint" id="annonceAppliquerHint" style="display:none; margin-top:8px; margin-bottom:0;">Ces textes sont enregistrés ici, mais votre annonce déjà en ligne dans Google Ads garde son texte actuel tant que vous ne cliquez pas sur ce bouton.</div>
+      <div class="annonce-sauvegarde-note" id="annonceAppliqueeNote"></div>
     </div>
 
     <div class="ads-souspanel">
@@ -1394,7 +1397,7 @@
     }
 
     try {
-      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,metier,zone,departement,rayon_ciblage_km,mots_cles_choisis,annonce_titres,annonce_descriptions,status,budget_journalier_manuel,tarif_prix`, {
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,metier,zone,departement,rayon_ciblage_km,mots_cles_choisis,annonce_titres,annonce_descriptions,status,budget_journalier_manuel,tarif_prix,google_ads_ad_group_resource`, {
         headers: { apikey: SUPABASE_ANON_KEY }
       });
       const rows = await resp.json();
@@ -1652,6 +1655,19 @@
     const previewTitre = document.getElementById('previewTitre');
     const previewDesc = document.getElementById('previewDesc');
     const sauvegardeNote = document.getElementById('annonceSauvegardeNote');
+    const btnAppliquer = document.getElementById('btnAppliquerAnnonceAds');
+    const appliquerHint = document.getElementById('annonceAppliquerHint');
+    const appliqueeNote = document.getElementById('annonceAppliqueeNote');
+
+    // Le bouton "Appliquer dans Google Ads" n'a de sens que si une campagne
+    // existe déjà pour ce site (sinon il n'y a encore aucune annonce en ligne
+    // à mettre à jour — le premier lancement utilisera directement le texte
+    // saisi ici, via create-google-ads-campaign.js).
+    const campagneDejaCreee = !!draftInfo.google_ads_ad_group_resource;
+    if (campagneDejaCreee) {
+      btnAppliquer.style.display = 'inline-block';
+      appliquerHint.style.display = 'block';
+    }
 
     // Domaine réellement affiché dans l'annonce Google, dérivé de l'hôte
     // courant plutôt que codé en dur — reste juste automatiquement le jour
@@ -1708,11 +1724,52 @@
         majApercu();
         majCompteur(cle);
         sauvegardeNote.textContent = 'Enregistrement…';
+        appliqueeNote.textContent = '';
         clearTimeout(sauvegardeTimer);
         sauvegardeTimer = setTimeout(sauvegarderAnnonce, 600);
       });
       majCompteur(cle);
     });
+
+    // Pousse réellement le texte actuel dans Google Ads (nouvelle annonce +
+    // mise en pause de l'ancienne côté Google, voir appliquer-annonce-ads.js)
+    // — jusqu'ici, modifier ces champs n'enregistrait que dans Supabase sans
+    // jamais toucher à l'annonce déjà diffusée. Demandé par Cyrille le 04/09.
+    if (campagneDejaCreee) {
+      btnAppliquer.addEventListener('click', async () => {
+        if (bloquerSiEssaiExpire()) return;
+        const titresRenseignes = [champs.titre1.value, champs.titre2.value, champs.titre3.value].filter(t => t.trim()).length;
+        const descriptionsRenseignees = [champs.desc1.value, champs.desc2.value].filter(d => d.trim()).length;
+        if (titresRenseignes < 3 || descriptionsRenseignees < 2) {
+          appliqueeNote.textContent = 'Renseignez les 3 titres et les 2 descriptions avant d\'appliquer.';
+          return;
+        }
+        btnAppliquer.disabled = true;
+        btnAppliquer.textContent = 'Un instant…';
+        appliqueeNote.textContent = '';
+        try {
+          // On s'assure d'abord que Supabase a bien la dernière version
+          // saisie (au cas où l'artisan clique juste après avoir tapé, avant
+          // le délai de 600ms de la sauvegarde automatique).
+          clearTimeout(sauvegardeTimer);
+          await sauvegarderAnnonce();
+          const res = await fetch('/api/appliquer-annonce-ads', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ draftId }),
+          });
+          const data = await res.json();
+          appliqueeNote.textContent = data.success
+            ? '✓ Nouvelle annonce appliquée dans Google Ads.'
+            : (data.error || 'Une erreur est survenue.');
+        } catch (e) {
+          appliqueeNote.textContent = 'Impossible de contacter le serveur.';
+        } finally {
+          btnAppliquer.disabled = false;
+          btnAppliquer.textContent = '🚀 Appliquer ce texte dans Google Ads';
+        }
+      });
+    }
 
     majApercu();
 

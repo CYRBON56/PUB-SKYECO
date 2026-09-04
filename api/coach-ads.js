@@ -87,12 +87,19 @@ function plafonnerValeur(actuelle, proposee, bornes) {
 
 async function chargerContexteCampagne(supaHeaders, draftId) {
   const draftResp = await fetch(
-    `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,google_ads_campaign_resource,google_ads_ad_group_resource,google_ads_ad_resource,tarif_prix,derniere_recharge_le,budget_journalier_manuel,plafond_cpc_manuel,campagne_diffusion_pausee`,
+    `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,google_ads_campaign_resource,google_ads_ad_group_resource,google_ads_ad_resource,tarif_prix,derniere_recharge_le,budget_journalier_manuel,plafond_cpc_manuel,campagne_diffusion_pausee,coach_ia_pause`,
     { headers: supaHeaders }
   );
   const rows = await draftResp.json();
   const draft = rows[0];
   if (!draft?.google_ads_campaign_resource) return { draft, campagneExiste: false };
+
+  // Le coach est mis en pause par l'artisan lui-même (api/coach-toggle.js) :
+  // on ne fait alors AUCUN appel à Claude ni à Windsor.ai (ni analyse
+  // automatique, ni chat, ni action) — on s'arrête ici, avant même
+  // d'interroger les données de campagne, pour ne pas gaspiller d'appels
+  // inutiles.
+  if (draft.coach_ia_pause) return { draft, campagneExiste: true, coachEnPause: true };
 
   const dateDepart = draft.derniere_recharge_le
     ? new Date(draft.derniere_recharge_le).toISOString().slice(0, 10)
@@ -248,10 +255,16 @@ export default async function handler(req, res) {
   };
 
   try {
-    const { draft, campagneExiste, resume } = await chargerContexteCampagne(supaHeaders, draftId);
+    const { draft, campagneExiste, coachEnPause, resume } = await chargerContexteCampagne(supaHeaders, draftId);
 
     if (!campagneExiste) {
       return res.status(200).json({ success: true, campagneExiste: false, reponse: null, recommandations: [], actionsAppliquees: [] });
+    }
+
+    // Coach mis en pause par l'artisan : aucun appel Claude/Windsor.ai,
+    // qu'il s'agisse de l'analyse automatique ou d'un message de chat.
+    if (coachEnPause) {
+      return res.status(200).json({ success: true, campagneExiste: true, coachEnPause: true, reponse: null, actionsAppliquees: 0 });
     }
 
     // Historique récent (pour la continuité du chat) — les 20 derniers échanges.

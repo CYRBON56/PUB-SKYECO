@@ -1,432 +1,178 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mes rendez-vous — Skyeco Pro</title>
-<style>
-  :root {
-    --brand: #1e6f4c; /* remplacé dynamiquement par la couleur de l'artisan */
-    --bg: #f5f8f6;
-    --card: #ffffff;
-    --text: #14312a;
-    --muted: #8a9891;
-    --border: #eef1f0;
-    --confirme-bg: #eaf5ef;
-    --confirme-border: #1e6f4c;
-    --bloque-bg: #f2f4f1;
-    --bloque-border: #c7cdc9;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    position: relative;
-    overflow-x: hidden;
-  }
+// api/mes-rdv.js
+//
+// POST /api/mes-rdv   body: { draftId, token, jours? }
+//
+// Renvoie, pour L'ARTISAN CONNECTÉ (identifié via son jeton de session — le
+// même que mon-dashboard.html, vérifié ici avec la même logique que
+// dashboard-verify-session.js), tous ses créneaux des `jours` prochains jours
+// (30 par défaut) avec leur état :
+//   'libre'         -> disponible, aucune ligne en base
+//   'confirme'      -> RDV client (nom/téléphone/email inclus)
+//   'indisponible'  -> bloqué manuellement par l'artisan
+//
+// En POST (et pas GET) volontairement : le jeton de session ne doit pas se
+// retrouver dans une query string (logs serveur, historique navigateur),
+// même logique que dashboard-verify-session.js.
+//
+// Variables d'environnement requises : SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
+// DASHBOARD_SESSION_SECRET
 
-  /* Feuilles décoratives en arrière-plan — même signature visuelle que
-     mon-dashboard.html, en plus discret pour ne pas distraire du calendrier. */
-  .leaf-bg { position: fixed; z-index: 0; pointer-events: none; }
-  .leaf-bg svg { display: block; filter: blur(0.5px); }
+import crypto from 'crypto';
+import { createClient } from '@supabase/supabase-js';
 
-  .wrap { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; padding: 28px 20px 70px; }
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
-  .lien-retour {
-    display: inline-flex; align-items: center; gap: 6px;
-    color: var(--muted); text-decoration: none; font-size: 0.85rem; font-weight: 600;
-    margin-bottom: 18px; transition: color 0.15s;
-  }
-  .lien-retour:hover { color: var(--brand); }
+const FUSEAU = 'Europe/Paris';
+const HEURE_OUVERTURE = 9;
+const HEURE_FERMETURE = 20;
+const JOURS_FERMES = [0];
+const JOURS_MAX = 60;
 
-  .header-card {
-    background: #fff; border-radius: 18px; padding: 22px 26px;
-    box-shadow: 0 6px 24px rgba(20,49,42,0.08);
-    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
-    margin-bottom: 22px;
-  }
-  .header-titre { display: flex; align-items: center; gap: 14px; }
-  .logo-entreprise {
-    display: none; width: 52px; height: 52px; border-radius: 12px; object-fit: contain;
-    background: #fff; padding: 5px; box-shadow: 0 4px 14px rgba(20,49,42,0.10); border: 1px solid #eef2ef;
-    flex-shrink: 0;
-  }
-  h1 { font-size: 1.45rem; margin: 0 0 2px; }
-  .sous-titre { color: var(--muted); margin: 0; font-size: 0.86rem; }
-  .badge-periode {
-    background: var(--brand); color: #fff; font-size: 0.76rem; font-weight: 700;
-    padding: 9px 18px; border-radius: 999px; white-space: nowrap;
-  }
+// --- Vérification de session : identique à api/dashboard-verify-session.js
+// (corrigé le 04/09 — cet endpoint datait d'avant le passage aux comptes
+// multi-vitrines du 03/09 et ne reconnaissait que l'ancien jeton "lié au
+// site" ; il refusait donc TOUJOURS le jeton actuel, lié à l'email du
+// compte, empêchant tout artisan connecté normalement d'utiliser son
+// calendrier. Accepte maintenant aussi bien le jeton admin (mes-artisans.html,
+// sujet = draftId) que le jeton artisan (sujet = email, vérifié contre le
+// draftId demandé).
+async function verifierToken(token, draftIdAttendu) {
+  try {
+    const decode = Buffer.from(token, 'base64url').toString('utf8');
+    const parties = decode.split('.');
+    if (parties.length !== 4) return false;
+    const [sujet, role, expStr, sig] = parties;
+    const exp = parseInt(expStr, 10);
+    if (!exp || Date.now() / 1000 > exp) return false;
 
-  .legende { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 22px; }
-  .legende-item {
-    display: inline-flex; align-items: center; gap: 7px; font-size: 0.8rem; color: var(--text);
-    background: #fff; border: 1px solid var(--border); border-radius: 999px; padding: 7px 14px 7px 10px;
-    box-shadow: 0 2px 8px rgba(20,49,42,0.05);
-  }
-  .pastille { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+    const payload = `${sujet}.${role}.${expStr}`;
+    const attendu = crypto.createHmac('sha256', process.env.DASHBOARD_SESSION_SECRET).update(payload).digest('hex');
+    const sigBuf = Buffer.from(sig, 'hex');
+    const attenduBuf = Buffer.from(attendu, 'hex');
+    if (sigBuf.length !== attenduBuf.length || !crypto.timingSafeEqual(sigBuf, attenduBuf)) return false;
 
-  .jours-scroll {
-    display: flex; gap: 14px; overflow-x: auto; padding: 4px 4px 14px;
-    -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity;
-  }
-  .jours-scroll::-webkit-scrollbar { height: 8px; }
-  .jours-scroll::-webkit-scrollbar-thumb { background: #d7dedb; border-radius: 8px; }
-  .jours-scroll::-webkit-scrollbar-track { background: transparent; }
-
-  .jour-carte {
-    flex: 0 0 192px; scroll-snap-align: start;
-    background: var(--card); border: 1.5px solid var(--border); border-radius: 16px;
-    padding: 16px; box-shadow: 0 4px 18px rgba(20,49,42,0.06);
-    transition: box-shadow 0.15s, border-color 0.15s;
-  }
-  .jour-carte:hover { box-shadow: 0 8px 28px rgba(20,49,42,0.10); }
-  .jour-carte.aujourdhui { border-color: var(--brand); }
-
-  .jour-entete { text-align: center; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
-  .jour-jour { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
-  .jour-numero { font-size: 1.65rem; font-weight: 800; color: var(--text); line-height: 1.15; }
-  .jour-mois { font-size: 0.7rem; color: var(--muted); text-transform: capitalize; }
-  .jour-badge-auj {
-    display: inline-block; margin-top: 5px; font-size: 0.6rem; font-weight: 700; color: #fff;
-    background: var(--brand); border-radius: 999px; padding: 2px 9px;
-  }
-
-  .bloquer-jour {
-    width: 100%; padding: 7px 0; margin-bottom: 10px; border: 1.5px dashed var(--border);
-    background: transparent; color: var(--muted); border-radius: 8px; font-size: 0.7rem; font-weight: 700;
-    cursor: pointer; transition: border-color 0.15s, color 0.15s; font-family: inherit;
-  }
-  .bloquer-jour:hover { border-color: #c0392b; color: #c0392b; }
-
-  .creneau {
-    width: 100%; padding: 9px 11px; margin-bottom: 7px; border-radius: 10px;
-    font-size: 0.82rem; text-align: left; border: 1.5px solid var(--border);
-    background: #fff; cursor: pointer; transition: border-color 0.15s, background 0.15s, transform 0.1s;
-    font-family: inherit;
-  }
-  .creneau .heure { font-weight: 700; }
-  .creneau.libre:hover { border-color: var(--brand); background: var(--bg); transform: translateY(-1px); }
-  .creneau.confirme {
-    background: var(--confirme-bg); border-color: var(--confirme-border); color: var(--confirme-border); cursor: default;
-  }
-  .creneau.confirme .client { display: block; font-size: 0.72rem; font-weight: 500; margin-top: 3px; color: var(--text); opacity: 0.8; }
-  .creneau.indisponible {
-    background: var(--bloque-bg); border-color: var(--bloque-border); color: var(--muted); text-decoration: line-through;
-  }
-  .creneau.indisponible:hover { text-decoration: none; border-color: #c0392b; color: #c0392b; }
-
-  .etat-info {
-    background: #fff; border-radius: 16px; padding: 46px 20px; text-align: center;
-    color: var(--muted); box-shadow: 0 4px 18px rgba(20,49,42,0.06);
-  }
-  .etat-info .icone { font-size: 2rem; margin-bottom: 10px; }
-  .etat-info .points::after { content: '…'; animation: points 1.2s steps(4, end) infinite; }
-  @keyframes points { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75%, 100% { content: '...'; } }
-
-  .toast {
-    position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(10px);
-    background: var(--text); color: #fff; padding: 11px 20px; border-radius: 10px;
-    font-size: 0.85rem; font-weight: 600; opacity: 0; transition: opacity 0.2s, transform 0.2s; pointer-events: none;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
-  }
-  .toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-  @media (max-width: 520px) {
-    .wrap { padding: 18px 14px 60px; }
-    .header-card { padding: 18px; }
-    .jour-carte { flex-basis: 168px; }
-  }
-</style>
-</head>
-<body>
-
-<div class="leaf-bg" style="top:-70px; right:-90px; opacity:0.30;">
-  <svg width="300" height="300" viewBox="0 0 360 360">
-    <defs>
-      <radialGradient id="leafGradA" cx="35%" cy="30%" r="75%">
-        <stop offset="0%" stop-color="#4a9d6e"/>
-        <stop offset="55%" stop-color="#1e6f4c"/>
-        <stop offset="100%" stop-color="#0f4a30"/>
-      </radialGradient>
-      <filter id="leafShadowA" x="-50%" y="-50%" width="200%" height="200%">
-        <feDropShadow dx="8" dy="14" stdDeviation="16" flood-color="#0a3320" flood-opacity="0.3"/>
-      </filter>
-    </defs>
-    <path filter="url(#leafShadowA)" fill="url(#leafGradA)" d="M180,30 C260,50 320,120 300,210 C280,300 190,330 130,290 C70,250 50,160 90,100 C115,63 145,40 180,30 Z"/>
-    <path d="M180,50 C180,140 200,220 260,270" stroke="#0a3320" stroke-width="4" fill="none" opacity="0.35" stroke-linecap="round"/>
-  </svg>
-</div>
-<div class="leaf-bg" style="bottom:-110px; left:-110px; opacity:0.22;">
-  <svg width="360" height="360" viewBox="0 0 420 420">
-    <defs>
-      <radialGradient id="leafGradB" cx="40%" cy="35%" r="70%">
-        <stop offset="0%" stop-color="#f3a878"/>
-        <stop offset="55%" stop-color="#e8622c"/>
-        <stop offset="100%" stop-color="#b8481c"/>
-      </radialGradient>
-      <filter id="leafShadowB" x="-50%" y="-50%" width="200%" height="200%">
-        <feDropShadow dx="-6" dy="12" stdDeviation="18" flood-color="#7a2e10" flood-opacity="0.25"/>
-      </filter>
-    </defs>
-    <path filter="url(#leafShadowB)" fill="url(#leafGradB)" d="M210,40 C300,70 370,150 350,240 C330,330 230,370 150,330 C70,290 40,190 80,120 C110,70 160,45 210,40 Z"/>
-    <path d="M210,60 C205,160 220,260 300,320" stroke="#7a2e10" stroke-width="5" fill="none" opacity="0.3" stroke-linecap="round"/>
-  </svg>
-</div>
-
-<div class="wrap">
-  <a href="#" id="lien-retour" class="lien-retour">← Retour au tableau de bord</a>
-
-  <div class="header-card">
-    <div class="header-titre">
-      <img class="logo-entreprise" id="logoEntreprise" alt="Logo">
-      <div>
-        <h1>Mon calendrier</h1>
-        <p class="sous-titre" id="sousTitre">Cliquez sur un créneau libre pour le bloquer, ou sur un créneau bloqué pour le libérer.</p>
-      </div>
-    </div>
-    <span class="badge-periode">📅 30 prochains jours</span>
-  </div>
-
-  <div class="legende">
-    <span class="legende-item"><span class="pastille" style="background:#fff;border:1.5px solid var(--border)"></span>Libre</span>
-    <span class="legende-item"><span class="pastille" style="background:var(--confirme-bg);border:1.5px solid var(--confirme-border)"></span>RDV confirmé</span>
-    <span class="legende-item"><span class="pastille" style="background:var(--bloque-bg);border:1.5px solid var(--bloque-border)"></span>Bloqué par vous</span>
-  </div>
-
-  <div id="zone-jours" class="etat-info"><div class="icone">📅</div><p class="points">Chargement de votre calendrier</p></div>
-</div>
-
-<div id="toast" class="toast"></div>
-
-<script>
-(function () {
-  // Même schéma de session que mon-dashboard.html : draftId dans l'URL
-  // (?id=...), jeton signé dans sessionStorage sous
-  // 'skyeco_dashboard_token_<draftId>', vérifié via /api/dashboard-verify-session.
-  const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
-
-  const params = new URLSearchParams(window.location.search);
-  const draftId = params.get('id');
-
-  const zoneJours = document.getElementById('zone-jours');
-  const toastEl = document.getElementById('toast');
-  let toastTimer;
-  let token = null;
-
-  const lienRetour = document.getElementById('lien-retour');
-  if (draftId) {
-    lienRetour.href = '/mon-dashboard.html?id=' + encodeURIComponent(draftId);
-  } else {
-    lienRetour.style.display = 'none';
-  }
-
-  if (!draftId) {
-    zoneJours.className = 'etat-info';
-    zoneJours.innerHTML = '<div class="icone">⚠️</div><p>Lien invalide : identifiant manquant.</p>';
-    return;
-  }
-
-  // Habillage aux couleurs et au logo de l'artisan (lecture publique, même
-  // principe que public/prendre-rdv.html) — purement cosmétique, ne bloque
-  // jamais l'affichage du calendrier si indisponible.
-  async function chargerBranding() {
-    try {
+    if (role === 'admin') {
+      return sujet === draftIdAttendu;
+    }
+    if (role === 'artisan') {
+      let email;
+      try { email = Buffer.from(sujet, 'base64url').toString('utf8'); } catch (e) { return false; }
+      if (!email) return false;
       const resp = await fetch(
-        `${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,couleur,logo_url`,
-        { headers: { apikey: SUPABASE_ANON_KEY } }
+        `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftIdAttendu}&select=email`,
+        { headers: { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}` } }
       );
       const rows = await resp.json();
       const draft = rows[0];
-      if (!draft) return;
-      if (draft.couleur) document.documentElement.style.setProperty('--brand', draft.couleur);
-      if (draft.entreprise) {
-        document.getElementById('sousTitre').textContent = 'Le calendrier de ' + draft.entreprise;
-      }
-      if (draft.logo_url) {
-        const img = document.getElementById('logoEntreprise');
-        img.src = draft.logo_url;
-        img.style.display = 'block';
-      }
-    } catch (e) { /* purement cosmétique, tant pis */ }
-  }
-
-  function toast(msg) {
-    toastEl.textContent = msg;
-    toastEl.classList.add('visible');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toastEl.classList.remove('visible'), 2500);
-  }
-
-  function estAujourdHui(dateStr) {
-    const auj = new Intl.DateTimeFormat('fr-CA', { timeZone: 'Europe/Paris' }).format(new Date()); // AAAA-MM-JJ
-    return dateStr === auj;
-  }
-
-  function formatJourInfos(dateStr) {
-    const d = new Date(dateStr + 'T12:00:00Z');
-    return {
-      jour: new Intl.DateTimeFormat('fr-FR', { weekday: 'short', timeZone: 'Europe/Paris' }).format(d),
-      num: new Intl.DateTimeFormat('fr-FR', { day: 'numeric', timeZone: 'Europe/Paris' }).format(d),
-      mois: new Intl.DateTimeFormat('fr-FR', { month: 'short', timeZone: 'Europe/Paris' }).format(d),
-      aujourdHui: estAujourdHui(dateStr),
-    };
-  }
-
-  async function verifierSession() {
-    token = sessionStorage.getItem('skyeco_dashboard_token_' + draftId);
-    if (!token) {
-      window.location.href = '/acces-dashboard.html?id=' + draftId;
-      return false;
+      return !!(draft && draft.email && draft.email.toLowerCase() === email.toLowerCase());
     }
-    const res = await fetch('/api/dashboard-verify-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ draftId, token }),
-    });
-    const data = await res.json();
-    if (!data.valid) {
-      sessionStorage.removeItem('skyeco_dashboard_token_' + draftId);
-      window.location.href = '/acces-dashboard.html?id=' + draftId;
-      return false;
-    }
-    return true;
+    return false;
+  } catch (e) {
+    return false;
+  }
+}
+
+function decalageMinutes(dateUTC, fuseau) {
+  const dtf = new Intl.DateTimeFormat('en-US', {
+    timeZone: fuseau, hour12: false,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  });
+  const p = dtf.formatToParts(dateUTC).reduce((acc, x) => { acc[x.type] = x.value; return acc; }, {});
+  const heure = p.hour === '24' ? '00' : p.hour;
+  const asUTC = Date.UTC(+p.year, +p.month - 1, +p.day, +heure, +p.minute, +p.second);
+  return (asUTC - dateUTC.getTime()) / 60000;
+}
+
+function parisVersUTC(annee, mois0, jour, heure) {
+  const guess = new Date(Date.UTC(annee, mois0, jour, heure, 0, 0));
+  const decal = decalageMinutes(guess, FUSEAU);
+  return new Date(guess.getTime() - decal * 60000);
+}
+
+function maintenantAParis() {
+  const now = new Date();
+  const dtf = new Intl.DateTimeFormat('en-US', {
+    timeZone: FUSEAU, hour12: false,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  });
+  const p = dtf.formatToParts(now).reduce((acc, x) => { acc[x.type] = x.value; return acc; }, {});
+  return { annee: +p.year, mois0: +p.month - 1, jour: +p.day };
+}
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'methode_non_autorisee' });
   }
 
-  async function charger() {
-    zoneJours.className = 'etat-info';
-    zoneJours.innerHTML = '<div class="icone">📅</div><p class="points">Chargement de votre calendrier</p>';
-    try {
-      const rep = await fetch('/api/mes-rdv', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, token, jours: 30 }),
+  const { draftId, token } = req.body || {};
+  if (!draftId || !token) {
+    return res.status(401).json({ error: 'non_authentifie' });
+  }
+  if (!(await verifierToken(token, draftId))) {
+    return res.status(401).json({ error: 'session_invalide' });
+  }
+
+  let jours = parseInt(req.body?.jours, 10);
+  if (!Number.isFinite(jours) || jours <= 0) jours = 30;
+  jours = Math.min(jours, JOURS_MAX);
+
+  const { annee, mois0, jour } = maintenantAParis();
+
+  const slots = [];
+  for (let d = 0; d < jours; d++) {
+    const dateBase = new Date(Date.UTC(annee, mois0, jour + d));
+    if (JOURS_FERMES.includes(dateBase.getUTCDay())) continue;
+    for (let h = HEURE_OUVERTURE; h < HEURE_FERMETURE; h++) {
+      const dateUTC = parisVersUTC(annee, mois0, jour + d, h);
+      slots.push({
+        iso: dateUTC.toISOString(),
+        dateJour: dateUTC.toISOString().slice(0, 10),
+        heure: h,
+        timestampMs: dateUTC.getTime(),
       });
-      if (rep.status === 401) {
-        window.location.href = '/acces-dashboard.html?id=' + draftId;
-        return;
-      }
-      const data = await rep.json();
-      afficherJours(data.jours || []);
-    } catch (e) {
-      zoneJours.className = 'etat-info';
-      zoneJours.innerHTML = '<div class="icone">⚠️</div><p>Impossible de charger votre calendrier pour le moment.</p>';
     }
   }
 
-  function afficherJours(jours) {
-    if (!jours.length) {
-      zoneJours.className = 'etat-info';
-      zoneJours.innerHTML = '<div class="icone">📅</div><p>Aucun créneau à afficher pour le moment.</p>';
-      return;
-    }
+  if (slots.length === 0) {
+    return res.status(200).json({ jours: [] });
+  }
 
-    zoneJours.className = 'jours-scroll';
-    zoneJours.innerHTML = '';
+  const { data: lignes, error } = await supabase
+    .from('rendez_vous_artisans')
+    .select('date_heure, statut, client_nom, client_telephone, client_email, client_message')
+    .eq('draft_id', draftId)
+    .neq('statut', 'annule')
+    .gte('date_heure', slots[0].iso)
+    .lte('date_heure', slots[slots.length - 1].iso);
 
-    jours.forEach((jour) => {
-      const infos = formatJourInfos(jour.date);
-      const carte = document.createElement('div');
-      carte.className = 'jour-carte' + (infos.aujourdHui ? ' aujourdhui' : '');
+  if (error) {
+    console.error('mes-rdv: erreur Supabase', error);
+    return res.status(500).json({ error: 'erreur_serveur' });
+  }
 
-      const entete = document.createElement('div');
-      entete.className = 'jour-entete';
-      entete.innerHTML =
-        '<div class="jour-jour">' + infos.jour + '</div>' +
-        '<div class="jour-numero">' + infos.num + '</div>' +
-        '<div class="jour-mois">' + infos.mois + '</div>' +
-        (infos.aujourdHui ? '<span class="jour-badge-auj">Aujourd\'hui</span>' : '');
-      carte.appendChild(entete);
+  const parTimestamp = new Map((lignes || []).map((l) => [new Date(l.date_heure).getTime(), l]));
 
-      const libres = jour.creneaux.filter((c) => c.statut === 'libre');
-      if (libres.length > 0) {
-        const btnJour = document.createElement('button');
-        btnJour.className = 'bloquer-jour';
-        btnJour.textContent = '🚫 Bloquer la journée';
-        btnJour.addEventListener('click', () => bloquerJournee(libres));
-        carte.appendChild(btnJour);
-      }
-
-      jour.creneaux.forEach((c) => {
-        const btn = document.createElement('button');
-        btn.className = 'creneau ' + c.statut;
-
-        if (c.statut === 'libre') {
-          btn.innerHTML = '<span class="heure">' + String(c.heure).padStart(2, '0') + 'h00</span>';
-          btn.addEventListener('click', () => bloquer(c.iso));
-        } else if (c.statut === 'indisponible') {
-          btn.innerHTML = '<span class="heure">' + String(c.heure).padStart(2, '0') + 'h00</span> — bloqué';
-          btn.addEventListener('click', () => debloquer(c.iso));
-        } else {
-          btn.innerHTML = '<span class="heure">✓ ' + String(c.heure).padStart(2, '0') + 'h00</span>'
-            + '<span class="client">' + (c.client_nom || 'Client') + (c.client_telephone ? ' · ' + c.client_telephone : '') + '</span>';
-        }
-
-        carte.appendChild(btn);
+  const parJour = {};
+  for (const s of slots) {
+    const ligne = parTimestamp.get(s.timestampMs);
+    if (!parJour[s.dateJour]) parJour[s.dateJour] = [];
+    if (!ligne) {
+      parJour[s.dateJour].push({ heure: s.heure, iso: s.iso, statut: 'libre' });
+    } else if (ligne.statut === 'indisponible') {
+      parJour[s.dateJour].push({ heure: s.heure, iso: s.iso, statut: 'indisponible' });
+    } else {
+      parJour[s.dateJour].push({
+        heure: s.heure, iso: s.iso, statut: 'confirme',
+        client_nom: ligne.client_nom, client_telephone: ligne.client_telephone,
+        client_email: ligne.client_email, client_message: ligne.client_message,
       });
-
-      zoneJours.appendChild(carte);
-    });
-  }
-
-  async function bloquer(iso) {
-    try {
-      const rep = await fetch('/api/bloquer-creneau', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, token, date_heure: iso }),
-      });
-      if (rep.status === 401) { window.location.href = '/acces-dashboard.html?id=' + draftId; return; }
-      const data = await rep.json();
-      const r = data.resultats && data.resultats[0];
-      toast(r && r.ok ? 'Créneau bloqué.' : 'Ce créneau vient d\'être pris ou est déjà bloqué.');
-      charger();
-    } catch (e) {
-      toast('Erreur, réessayez.');
     }
   }
 
-  async function debloquer(iso) {
-    try {
-      const rep = await fetch('/api/debloquer-creneau', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, token, date_heure: iso }),
-      });
-      if (rep.status === 401) { window.location.href = '/acces-dashboard.html?id=' + draftId; return; }
-      toast(rep.ok ? 'Créneau libéré.' : 'Impossible de libérer ce créneau.');
-      charger();
-    } catch (e) {
-      toast('Erreur, réessayez.');
-    }
-  }
-
-  async function bloquerJournee(libres) {
-    if (!confirm('Bloquer les ' + libres.length + ' créneaux libres de cette journée ?')) return;
-    try {
-      const debut = libres[0].iso;
-      const fin = libres[libres.length - 1].iso;
-      const rep = await fetch('/api/bloquer-creneau', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, token, date_heure_debut: debut, date_heure_fin: fin }),
-      });
-      if (rep.status === 401) { window.location.href = '/acces-dashboard.html?id=' + draftId; return; }
-      toast('Journée bloquée.');
-      charger();
-    } catch (e) {
-      toast('Erreur, réessayez.');
-    }
-  }
-
-  chargerBranding();
-  (async () => {
-    if (await verifierSession()) charger();
-  })();
-})();
-</script>
-</body>
-</html>
+  const joursTries = Object.keys(parJour).sort().map((date) => ({ date, creneaux: parJour[date] }));
+  return res.status(200).json({ jours: joursTries });
+}

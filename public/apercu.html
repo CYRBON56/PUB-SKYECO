@@ -822,12 +822,32 @@ async function init(){
   // que l'artisan ait fourni une vidéo ou seulement des photos.
   const mediaContainer = document.getElementById('heroImageMedia');
   if(draft.video_url){
-    const video = document.createElement('video');
-    video.src = draft.video_url;
-    video.autoplay = true; video.muted = true; video.loop = true; video.playsInline = true;
-    video.className = 'active';
-    video.style.cssText = 'position:absolute; inset:0; width:100%; height:100%; object-fit:cover;';
-    mediaContainer.insertBefore(video, mediaContainer.firstChild);
+    // Un lien YouTube/Vimeo collé dans "mes éléments" (page de destination,
+    // pas un fichier vidéo) ne peut pas être lu par une balise <video> —
+    // corrigé le 04/09 : on détecte ces liens et on les affiche via
+    // l'iframe d'intégration officielle du site, en fond muet/en boucle
+    // pour rester cohérent avec un fichier uploadé directement. Un vrai
+    // fichier vidéo (uploadé, donc hébergé sur Supabase) continue de passer
+    // par <video>, sans changement.
+    const embedYoutube = draft.video_url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+    const embedVimeo = !embedYoutube ? draft.video_url.match(/vimeo\.com\/(?:video\/)?(\d+)/) : null;
+    if(embedYoutube || embedVimeo){
+      const iframe = document.createElement('iframe');
+      iframe.src = embedYoutube
+        ? 'https://www.youtube-nocookie.com/embed/' + embedYoutube[1] + '?autoplay=1&mute=1&loop=1&playlist=' + embedYoutube[1] + '&controls=0&showinfo=0&modestbranding=1&playsinline=1&rel=0'
+        : 'https://player.vimeo.com/video/' + embedVimeo[1] + '?autoplay=1&muted=1&loop=1&background=1';
+      iframe.setAttribute('frameborder', '0');
+      iframe.setAttribute('allow', 'autoplay; fullscreen');
+      iframe.style.cssText = 'position:absolute; inset:0; width:100%; height:100%; border:0; pointer-events:none;';
+      mediaContainer.insertBefore(iframe, mediaContainer.firstChild);
+    } else {
+      const video = document.createElement('video');
+      video.src = draft.video_url;
+      video.autoplay = true; video.muted = true; video.loop = true; video.playsInline = true;
+      video.className = 'active';
+      video.style.cssText = 'position:absolute; inset:0; width:100%; height:100%; object-fit:cover;';
+      mediaContainer.insertBefore(video, mediaContainer.firstChild);
+    }
   } else {
     const metiersListeApercu = Array.isArray(draft.metier) ? draft.metier : (draft.metier ? [draft.metier] : []);
     const imagesFallback = metiersListeApercu.length

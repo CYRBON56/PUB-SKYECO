@@ -19,11 +19,23 @@
 const WINDSOR_BASE = 'https://connectors.windsor.ai/google_ads';
 const ACTIONS_VALIDES = ['add', 'exclude', 'remove'];
 
+// Corrigé le 04/09 : ce fichier envoyait l'ID de compte Google Ads tel quel
+// (sans tirets), contrairement à tous les autres fichiers api/*.js touchant
+// Google Ads depuis le correctif du 03/09 — Windsor.ai attend le format AVEC
+// tirets ("784-990-3984"). Passé inaperçu jusqu'ici faute d'avoir exercé ce
+// fichier en conditions réelles ; même correctif que create-google-ads-campaign.js.
+function formaterCompteGoogleAds(id) {
+  const chiffres = String(id || '').replace(/[^0-9]/g, '');
+  if (chiffres.length !== 10) return String(id || '').trim();
+  return `${chiffres.slice(0, 3)}-${chiffres.slice(3, 6)}-${chiffres.slice(6)}`;
+}
+
 async function executerAction(action, params) {
+  const accountId = formaterCompteGoogleAds(process.env.GOOGLE_ADS_ACCOUNT_ID);
   const resp = await fetch(`${WINDSOR_BASE}/actions?api_key=${process.env.WINDSOR_API_KEY}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ account: process.env.GOOGLE_ADS_ACCOUNT_ID, action, params }),
+    body: JSON.stringify({ account: accountId, action, params }),
   });
   const data = await resp.json();
   if (!resp.ok) throw new Error(`Action Windsor.ai "${action}" échouée : ${JSON.stringify(data)}`);

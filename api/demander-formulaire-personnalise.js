@@ -62,10 +62,11 @@ export default async function handler(req, res) {
     return res.status(405).json({ success: false, error: 'Méthode non autorisée' });
   }
 
-  const { draftId } = req.body || {};
+  const { draftId, description } = req.body || {};
   if (!draftId) {
     return res.status(400).json({ success: false, error: 'draftId manquant' });
   }
+  const descriptionTrim = typeof description === 'string' ? description.trim() : '';
 
   const supaHeaders = {
     apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
@@ -88,7 +89,7 @@ export default async function handler(req, res) {
 
     const coordonnees = [telephone, email].filter(Boolean).join(' — ');
     const lienDashboard = `https://www.skyeco.fr/mon-dashboard.html?id=${draftId}`;
-    const texte = `🔔 ${nomAffiche} a coché "Formulaire personnalisé" (mes-elements.html) — aucun parcours sur mesure codé pour l'instant, sa vitrine reste sur le formulaire basique en attendant.${coordonnees ? ' Contact : ' + coordonnees + '.' : ''} Dashboard : ${lienDashboard}`;
+    const texte = `🔔 ${nomAffiche} a coché "Formulaire personnalisé" (mes-elements.html) — aucun parcours sur mesure codé pour l'instant, sa vitrine reste sur le formulaire basique en attendant.${coordonnees ? ' Contact : ' + coordonnees + '.' : ''}${descriptionTrim ? ' Besoin décrit : "' + descriptionTrim + '".' : ''} Dashboard : ${lienDashboard}`;
 
     const resultats = await Promise.allSettled([
       envoyerSMS(ADMIN_PHONE, texte),

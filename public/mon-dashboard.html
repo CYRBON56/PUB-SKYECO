@@ -18,21 +18,40 @@
   .leaf-bg { position:fixed; z-index:0; pointer-events:none; }
   .leaf-bg svg { display:block; filter:blur(0.5px); }
   .wrap { position:relative; z-index:1; max-width:980px; margin:0 auto; }
-  .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
-  .header-titre { display:flex; align-items:center; gap:14px; }
+  .header {
+    display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:16px;
+    background:#fff; border-radius:18px; padding:20px 26px; box-shadow:0 8px 26px rgba(20,49,42,0.09);
+  }
+  .header-titre { display:flex; align-items:center; gap:16px; }
   .logo-entreprise {
-    display:none; width:48px; height:48px; border-radius:12px; object-fit:contain;
+    display:none; width:52px; height:52px; border-radius:13px; object-fit:contain;
     background:#fff; padding:5px; box-shadow:0 4px 14px rgba(20,49,42,0.10); border:1px solid #eef2ef;
   }
-  h1 { font-size:1.5rem; }
-  .btn-fonds { background:#e8622c; color:#fff; text-decoration:none; padding:12px 22px; border-radius:10px; font-weight:700; font-size:0.92rem; }
-  .btn-fonds:hover { filter:brightness(1.05); }
-  .btn-elements { background:#1e6f4c; color:#fff; text-decoration:none; padding:12px 22px; border-radius:10px; font-weight:700; font-size:0.92rem; }
-  .btn-elements:hover { filter:brightness(1.08); }
+  h1 { font-size:1.6rem; font-weight:800; letter-spacing:-0.01em; }
+  .btn-fonds {
+    display:inline-flex; align-items:center; gap:8px; background:linear-gradient(120deg, #f0a878, #e8622c 60%, #c74f20);
+    color:#fff; text-decoration:none; padding:12px 22px; border-radius:11px; font-weight:700; font-size:0.92rem;
+    box-shadow:0 6px 16px rgba(199,79,32,0.28); transition:transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  }
+  .btn-fonds:hover { transform:translateY(-1px); filter:brightness(1.05); box-shadow:0 9px 20px rgba(199,79,32,0.34); }
+  .btn-elements {
+    display:inline-flex; align-items:center; gap:8px; background:#1e6f4c; color:#fff; text-decoration:none;
+    padding:12px 22px; border-radius:11px; font-weight:700; font-size:0.92rem;
+    box-shadow:0 6px 16px rgba(30,111,76,0.24); transition:transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  }
+  .btn-elements:hover { transform:translateY(-1px); filter:brightness(1.08); box-shadow:0 9px 20px rgba(30,111,76,0.3); }
 
   .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:28px; }
-  .stat-card { background:#fff; border-radius:14px; padding:20px; box-shadow:0 4px 20px rgba(20,49,42,0.08); }
-  .stat-value { font-size:1.9rem; font-weight:800; }
+  .stat-card {
+    background:#fff; border-radius:16px; padding:22px 20px; box-shadow:0 6px 22px rgba(20,49,42,0.08);
+    position:relative; overflow:hidden; transition:transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .stat-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:4px;
+    background:linear-gradient(90deg, #f0a878, #e8622c 55%, #c74f20);
+  }
+  .stat-card:hover { transform:translateY(-3px); box-shadow:0 12px 28px rgba(20,49,42,0.13); }
+  .stat-value { font-size:2.05rem; font-weight:800; }
   .stat-label { font-size:0.78rem; color:#8a9891; margin-top:2px; }
 
   .solde-box { background:#fff; border:2px solid #1e6f4c; border-radius:14px; padding:22px; margin-bottom:28px; }
@@ -62,7 +81,7 @@
   .solde-stats strong { color:#14312a; font-size:1.05rem; }
   .solde-detail { font-size:0.76rem; color:#8a9891; line-height:1.6; }
 
-  .liste-panel { background:#fff; border-radius:14px; padding:22px; }
+  .liste-panel { background:#fff; border-radius:16px; padding:24px; box-shadow:0 6px 22px rgba(20,49,42,0.08); }
 
   .panel-tabs { display:flex; gap:14px; margin-bottom:24px; flex-wrap:wrap; }
   .panel-tab {
@@ -70,9 +89,13 @@
     background:#fff; border:2px solid #e6e2d6; border-radius:16px; padding:18px 20px;
     cursor:pointer; box-shadow:0 4px 16px rgba(20,49,42,0.06); transition:border-color 0.2s, transform 0.15s;
   }
-  .panel-tab:hover { transform:translateY(-1px); }
-  .panel-tab.active { border-color:#1e6f4c; background:#f2f8f5; }
-  .panel-tab-icone { font-size:1.7rem; flex-shrink:0; }
+  .panel-tab:hover { transform:translateY(-1px); box-shadow:0 8px 20px rgba(20,49,42,0.09); }
+  .panel-tab.active { border-color:#1e6f4c; background:#f2f8f5; box-shadow:0 8px 22px rgba(30,111,76,0.14); }
+  .panel-tab-icone {
+    font-size:1.7rem; flex-shrink:0; width:44px; height:44px; border-radius:12px; background:#f2f4f1;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .panel-tab.active .panel-tab-icone { background:#e3f0e8; }
   .panel-tab-texte { font-size:1rem; font-weight:800; color:#14312a; display:flex; flex-direction:column; gap:2px; }
   .panel-tab-sous { font-size:0.76rem; font-weight:400; color:#5b6b64; }
 
@@ -244,18 +267,40 @@
   .coaching-chat-form button { background:#1e6f4c; color:#fff; border:none; border-radius:8px; padding:10px 18px; font-size:0.82rem; font-weight:700; cursor:pointer; white-space:nowrap; }
   .coaching-chat-form button:disabled { background:#a9c4b7; cursor:default; }
 
-  .liste-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
-  .liste-header h3 { font-size:0.95rem; }
-  .btn-pdf { background:#eef1f0; border:none; border-radius:8px; padding:9px 16px; font-size:0.82rem; font-weight:700; color:#14312a; cursor:pointer; }
-  .btn-pdf:hover { background:#e2e8e5; }
+  .liste-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px; }
+  .liste-header h3 { font-size:1.05rem; display:flex; align-items:center; gap:9px; }
+  .liste-header h3::before { content:'👥'; font-size:1.1rem; }
+  .btn-pdf {
+    background:#fff; border:1.5px solid #1e6f4c; border-radius:10px; padding:10px 18px; font-size:0.82rem;
+    font-weight:700; color:#1e6f4c; cursor:pointer; transition:background 0.15s ease, transform 0.15s ease;
+  }
+  .btn-pdf:hover { background:#eaf4ef; transform:translateY(-1px); }
 
   table { width:100%; border-collapse:collapse; font-size:0.85rem; }
   th { text-align:left; padding:10px 8px; color:#8a9891; font-weight:700; font-size:0.72rem; text-transform:uppercase; border-bottom:1.5px solid #eef1f0; }
   td { padding:10px 8px; border-bottom:1px solid #eef1f0; }
   tr:last-child td { border-bottom:none; }
-  .statut-badge { font-size:0.7rem; font-weight:700; padding:3px 9px; border-radius:999px; background:#eaf4ef; color:#1e6f4c; }
+  .statut-badge { font-size:0.7rem; font-weight:700; padding:4px 11px; border-radius:999px; background:#eaf4ef; color:#1e6f4c; display:inline-flex; align-items:center; gap:5px; white-space:nowrap; }
 
-  .loading, .empty-msg { text-align:center; padding:40px; color:#8a9891; }
+  .table-scroll { overflow-x:auto; margin:0 -4px; padding:0 4px; }
+  table.table-clients { border-collapse:separate; border-spacing:0; min-width:640px; }
+  table.table-clients th { background:#fafbfa; padding:12px 12px; letter-spacing:0.03em; }
+  table.table-clients th:first-child { border-top-left-radius:10px; }
+  table.table-clients th:last-child { border-top-right-radius:10px; }
+  table.table-clients td { padding:14px 12px; vertical-align:middle; }
+  table.table-clients tbody tr { transition:background 0.12s ease; }
+  table.table-clients tbody tr:hover { background:#f7faf8; }
+  .client-identite { display:flex; align-items:center; gap:10px; }
+  .client-avatar {
+    flex-shrink:0; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg, #f0a878, #e8622c); color:#fff; font-size:0.72rem; font-weight:800;
+  }
+  .client-nom { font-weight:700; color:#14312a; white-space:nowrap; }
+  .client-contact { display:block; color:#3a4a43; text-decoration:none; font-size:0.82rem; white-space:nowrap; }
+  .client-contact:hover { text-decoration:underline; color:#1e6f4c; }
+
+  .loading, .empty-msg { text-align:center; padding:50px 20px; color:#8a9891; font-size:0.92rem; }
+  .empty-msg .empty-icone { display:block; font-size:2.1rem; margin-bottom:10px; }
 
   .verif-acces-overlay {
     position:fixed; inset:0; z-index:2000; background:#f5f8f6;
@@ -1345,30 +1390,40 @@
       leadsData = await resp.json();
 
       if (!leadsData.length) {
-        content.innerHTML = '<div class="empty-msg">Aucune demande reçue pour l\'instant.</div>';
+        content.innerHTML = '<div class="empty-msg"><span class="empty-icone">📭</span>Aucune demande reçue pour l\'instant.</div>';
         return;
       }
 
       content.innerHTML = `
-        <table>
+        <div class="table-scroll">
+        <table class="table-clients">
           <thead>
-            <tr><th>Date</th>${plusieursSites ? '<th>Vitrine</th>' : ''}<th>Nom</th><th>Adresse</th><th>Téléphone</th><th>Email</th><th>Statut</th><th>Devis</th></tr>
+            <tr><th>Date</th>${plusieursSites ? '<th>Vitrine</th>' : ''}<th>Client</th><th>Adresse</th><th>Contact</th><th>Statut</th><th>Devis</th></tr>
           </thead>
           <tbody>
             ${leadsData.map(l => `
               <tr>
                 <td>${new Date(l.created_at).toLocaleDateString('fr-FR')}</td>
                 ${plusieursSites ? `<td>${nomsParSite[l.draft_id] || '—'}</td>` : ''}
-                <td>${(l.prenom || '') + ' ' + (l.nom || '')}</td>
+                <td>
+                  <div class="client-identite">
+                    <span class="client-avatar">${initialesClient(l.prenom, l.nom)}</span>
+                    <span class="client-nom">${(l.prenom || '') + ' ' + (l.nom || '')}</span>
+                  </div>
+                </td>
                 <td>${extraireAdresse(l.reponses)}</td>
-                <td>${l.telephone || '—'}</td>
-                <td>${l.email || '—'}</td>
-                <td><span class="statut-badge">${l.statut || 'nouveau'}</span></td>
+                <td>
+                  ${l.telephone ? `<a class="client-contact" href="tel:${l.telephone}">📞 ${l.telephone}</a>` : ''}
+                  ${l.email ? `<a class="client-contact" href="mailto:${l.email}">✉️ ${l.email}</a>` : ''}
+                  ${(!l.telephone && !l.email) ? '—' : ''}
+                </td>
+                <td>${labelStatutLead(l.statut)}</td>
                 <td>${celluleDevis(l)}</td>
               </tr>
             `).join('')}
           </tbody>
         </table>
+        </div>
       `;
       content.querySelectorAll('[data-action="envoyer-devis"]').forEach(btn => {
         btn.addEventListener('click', () => declencherUploadDevis(btn.dataset.lead, btn.dataset.site));
@@ -1377,8 +1432,22 @@
         btn.addEventListener('click', () => relancerDevis(btn.dataset.lead, btn.dataset.site, btn));
       });
     } catch (e) {
-      content.innerHTML = '<div class="empty-msg">Impossible de charger les demandes pour le moment.</div>';
+      content.innerHTML = '<div class="empty-msg"><span class="empty-icone">⚠️</span>Impossible de charger les demandes pour le moment.</div>';
     }
+  }
+
+  // Initiales affichées dans le petit avatar rond de "Mes clients" —
+  // simple aide visuelle, pas de vraie photo (ajouté 04/09, demande de
+  // rendre ce tableau plus "ultra design").
+  function initialesClient(prenom, nom) {
+    const p = (prenom || '').trim().charAt(0);
+    const n = (nom || '').trim().charAt(0);
+    return (p + n).toUpperCase() || '?';
+  }
+
+  function labelStatutLead(statut) {
+    const infos = { nouveau: '🆕 Nouveau' }[statut] || (statut || 'Nouveau');
+    return `<span class="statut-badge">${infos}</span>`;
   }
 
   function celluleDevis(l) {

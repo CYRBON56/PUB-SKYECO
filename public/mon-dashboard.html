@@ -204,6 +204,9 @@
   .btn-annuler-zone { background:#f2f4f1; color:#14312a; }
 
   .coaching-panel { background:#f6faf7; border:1.5px solid #d7e8dd; border-radius:14px; padding:18px 20px; margin-top:20px !important; }
+  .coaching-panel-header { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+  .coaching-panel-header h3 { margin-bottom:0; }
+  .coaching-logo { flex-shrink:0; border-radius:11px; }
   .coaching-liste { list-style:none; display:flex; flex-direction:column; gap:10px; }
   .coaching-liste li { font-size:0.85rem; line-height:1.5; color:#294038; padding-left:24px; position:relative; }
   .coaching-liste li::before { content:'✓'; position:absolute; left:0; top:0; color:#1e6f4c; font-weight:800; }
@@ -552,7 +555,40 @@
     </div>
 
     <div class="ads-souspanel coaching-panel" id="coachingPanel" style="display:none;">
-      <h3>🤖 Coach IA Ads</h3>
+      <div class="coaching-panel-header">
+        <svg class="coaching-logo" width="40" height="40" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="coachBg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#f0a878"/>
+              <stop offset="55%" stop-color="#e8622c"/>
+              <stop offset="100%" stop-color="#c74f20"/>
+            </linearGradient>
+            <linearGradient id="coachVisor" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#1c3d5a"/>
+              <stop offset="100%" stop-color="#14304a"/>
+            </linearGradient>
+          </defs>
+          <rect x="3" y="3" width="114" height="114" rx="30" fill="url(#coachBg)"/>
+          <path d="M97 22 l2.2 5.2 5.2 2.2 -5.2 2.2 -2.2 5.2 -2.2 -5.2 -5.2 -2.2 5.2 -2.2 Z" fill="#ffe29a"/>
+          <circle cx="22" cy="88" r="3.2" fill="#ffe29a"/>
+          <circle cx="18" cy="30" r="2" fill="#ffe29a" opacity="0.85"/>
+          <line x1="60" y1="20" x2="60" y2="30" stroke="#14304a" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="60" cy="16" r="5.5" fill="#ffe29a" stroke="#14304a" stroke-width="2.5"/>
+          <rect x="26" y="30" width="68" height="58" rx="24" fill="#f9f5ee"/>
+          <circle cx="24" cy="58" r="8" fill="#14304a"/>
+          <circle cx="96" cy="58" r="8" fill="#14304a"/>
+          <path d="M24 50 a36 36 0 0 1 72 0" fill="none" stroke="#14304a" stroke-width="4" stroke-linecap="round"/>
+          <rect x="38" y="50" width="44" height="18" rx="9" fill="url(#coachVisor)"/>
+          <circle cx="52" cy="59" r="4.4" fill="#f9f5ee"/>
+          <circle cx="68" cy="59" r="4.4" fill="#f9f5ee"/>
+          <path d="M46 74 q14 12 28 0" fill="none" stroke="#14304a" stroke-width="4.5" stroke-linecap="round"/>
+          <circle cx="40" cy="70" r="4" fill="#e8622c" opacity="0.35"/>
+          <circle cx="80" cy="70" r="4" fill="#e8622c" opacity="0.35"/>
+          <circle cx="92" cy="90" r="16" fill="#f9f5ee" stroke="#c74f20" stroke-width="2.5"/>
+          <path d="M88 96 v-9 c0-1.6 1.3-2.4 2.4-2.4 c0.5-2.6 1-4.6 1-6 c0-1.7 1.2-2.6 2.3-2.2 c1 .4 1.5 1.6 1.3 2.8 l-0.7 3.4 h4.6 c1.3 0 2.3 1.1 2 2.4 l-1.4 7.4 c-0.3 1.5-1.6 2.6-3.1 2.6 h-6.4 c-1.1 0-2-.9-2-2 Z" fill="#e8622c"/>
+        </svg>
+        <h3>Coach IA Ads</h3>
+      </div>
       <div id="coachingIaZone">
         <div class="loading" id="coachingIaLoading" style="padding:16px 0;">Analyse de votre campagne…</div>
         <div id="coachingIaActions" class="coaching-ia-actions" style="display:none;"></div>

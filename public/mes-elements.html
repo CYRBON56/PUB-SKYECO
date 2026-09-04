@@ -455,6 +455,14 @@
             <span style="display:block; font-weight:400; font-size:0.82rem; color:#5b6b64; margin-top:3px;">Remplace tout ce qui précède par un parcours de questions et un calcul de prix construits sur mesure pour CETTE vitrine (ex : RMS EcoSky ou PORTALECO) — visible uniquement ici, jamais partagé avec les autres vitrines. Un formulaire personnalisé se construit avec Claude, pas depuis cette page : cette case ne fait qu'activer/désactiver celui déjà codé pour cette vitrine.</span>
           </label>
         </div>
+
+        <div id="tarifsPortailsSection" style="display:none; margin-top:14px;">
+          <div style="background:#fff4ec; border:1.5px solid #f0c9a8; border-radius:12px; padding:16px 18px;">
+            <strong style="color:#14312a;">🔧 Tarifs du configurateur Portails</strong>
+            <p class="hint" style="margin-top:6px;">Ces prix (en € HT) alimentent directement le configurateur de la vitrine — chaque champ se sauvegarde tout seul dès que vous en sortez, aucun ré-upload de fichier n'est nécessaire. Laissez à 0 un poste que vous ne facturez pas encore : tant que le prix de base (coulissant/battant) est à 0, le configurateur oriente le prospect vers un devis manuel plutôt que d'afficher un prix.</p>
+            <div id="tarifsPortailsGrille"></div>
+          </div>
+        </div>
         </div>
       </div>
     </div>
@@ -578,6 +586,76 @@
   document.body.addEventListener('input', calculerProgression);
   document.body.addEventListener('change', calculerProgression);
 
+  // Grille de saisie des tarifs du configurateur Portails (voir
+  // public/apercu.html, PORTAILS_TARIFS et calculerEstimationPortails, pour
+  // la structure d'origine — à garder synchronisée si de nouvelles options
+  // y sont ajoutées un jour). "champs" liste les clés de prix de chaque
+  // catégorie avec leur libellé affiché ici.
+  const PORTAILS_TARIFS_CATEGORIES = [
+    { cle: 'prixBaseHT', titre: 'Prix de base du portail (fourniture)', champs: { coulissant: 'Portail coulissant', battant: 'Portail battant (2 vantaux)' } },
+    { cle: 'installation', titre: 'Installation (supplément)', champs: { fourniture_seule: 'Fourniture seule (pose non comprise)', installation_complete: 'Installation complète : terrassement, béton, évacuation de terre, raccordement électrique, capteurs' } },
+    { cle: 'remplissage', titre: 'Remplissage (supplément)', champs: { lames_pleines: 'Lames pleines (occultant total)', lames_bandeau: 'Lames avec bandeau ajouré en partie haute', lames_horizontales: 'Lames horizontales fines', motif_decoratif: 'Motif décoratif ajouré' } },
+    { cle: 'lames', titre: 'Lames (supplément)', champs: { lames_120: 'Lames 120', lames_200: 'Lames 200' } },
+    { cle: 'largeur', titre: 'Largeur (supplément)', champs: { '3000': '3,00 m', '3500': '3,50 m', '4000': '4,00 m', '4500': '4,50 m' } },
+    { cle: 'hauteur', titre: 'Hauteur (supplément)', champs: { '1200': '1,20 m', '1400': '1,40 m', '1600': '1,60 m', '1800': '1,80 m', '2000': '2,00 m' } },
+    { cle: 'couleur', titre: 'Couleur (supplément)', champs: { ral7016: 'RAL 7016 — Gris anthracite', ral9010: 'RAL 9010 — Blanc', autre_ral: 'Autre couleur RAL' } },
+    { cle: 'options', titre: 'Options (supplément)', champs: { digicode_ext: 'Digicode extérieur', digicode_int: 'Digicode intérieur', visiophone: 'Visiophone', interphone: 'Interphone', batterie: 'Batterie de secours', bouton_poussoir: 'Bouton poussoir', ligne_electrique: "Tirage d'une ligne électrique jusqu'au portail" } },
+  ];
+
+  function construireGrilleTarifsPortails(valeursActuelles) {
+    const conteneur = document.getElementById('tarifsPortailsGrille');
+    conteneur.innerHTML = '';
+    PORTAILS_TARIFS_CATEGORIES.forEach(cat => {
+      const bloc = document.createElement('div');
+      bloc.style.marginTop = '14px';
+      const titre = document.createElement('div');
+      titre.style.cssText = 'font-weight:600; color:#14312a; margin-bottom:6px; font-size:0.88rem;';
+      titre.textContent = cat.titre;
+      bloc.appendChild(titre);
+      const grille = document.createElement('div');
+      grille.style.cssText = 'display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:10px;';
+      Object.entries(cat.champs).forEach(([cle, label]) => {
+        const champWrap = document.createElement('div');
+        const lbl = document.createElement('label');
+        lbl.style.cssText = 'font-weight:400; font-size:0.8rem; color:#2a4a3c; display:block; margin-bottom:2px;';
+        lbl.textContent = label;
+        const wrapInput = document.createElement('div');
+        wrapInput.style.cssText = 'position:relative;';
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.min = '0';
+        input.step = '1';
+        input.placeholder = '0';
+        input.style.cssText = 'margin-top:0; padding-right:44px;';
+        input.dataset.cat = cat.cle;
+        input.dataset.cle = cle;
+        const val = valeursActuelles && valeursActuelles[cat.cle] ? valeursActuelles[cat.cle][cle] : null;
+        input.value = (val != null && val !== 0) ? val : '';
+        input.addEventListener('change', sauvegarderTarifsPortails);
+        const suffixe = document.createElement('span');
+        suffixe.textContent = '€ HT';
+        suffixe.style.cssText = 'position:absolute; right:12px; top:50%; transform:translateY(-50%); font-size:0.78rem; color:#8a978f; pointer-events:none;';
+        wrapInput.appendChild(input);
+        wrapInput.appendChild(suffixe);
+        champWrap.appendChild(lbl);
+        champWrap.appendChild(wrapInput);
+        grille.appendChild(champWrap);
+      });
+      bloc.appendChild(grille);
+      conteneur.appendChild(bloc);
+    });
+  }
+
+  function sauvegarderTarifsPortails() {
+    const tarifs = {};
+    PORTAILS_TARIFS_CATEGORIES.forEach(cat => { tarifs[cat.cle] = {}; });
+    document.querySelectorAll('#tarifsPortailsGrille input[data-cat]').forEach(input => {
+      const v = input.value === '' ? 0 : parseFloat(input.value);
+      tarifs[input.dataset.cat][input.dataset.cle] = isFinite(v) ? v : 0;
+    });
+    sauvegarderChampsImmediat({ portails_tarifs: tarifs });
+  }
+
   if (!draftId) {
     document.body.innerHTML = '<div style="text-align:center; margin-top:100px;">Lien invalide — identifiant du site manquant.</div>';
   } else {
@@ -659,6 +737,18 @@
       checkFormulairePersonnalise.addEventListener('change', () => {
         sauvegarderChampsImmediat({ formulaire_personnalise: checkFormulairePersonnalise.checked });
       });
+
+      // Grille de tarifs du configurateur Portails — visible uniquement pour
+      // la vitrine dont le formulaire personnalisé est celui des portails
+      // (formulaire_personnalise_cle === 'portails', posé directement en
+      // base par Claude, jamais depuis cette page). Les valeurs saisies sont
+      // stockées dans la colonne JSON portails_tarifs et lues directement par
+      // public/apercu.html (calculerEstimationPortails / tarifsPortailsActuels)
+      // — un changement de prix ici n'exige donc aucun nouveau déploiement.
+      if (draft.formulaire_personnalise_cle === 'portails') {
+        document.getElementById('tarifsPortailsSection').style.display = 'block';
+        construireGrilleTarifsPortails(draft.portails_tarifs || {});
+      }
 
       // Position du formulaire (gauche/droite) — voir public/apercu.html,
       // .split-layout.formulaire-droite. "gauche" par défaut si jamais

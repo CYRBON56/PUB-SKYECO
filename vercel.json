@@ -3,5 +3,10 @@
     { "path": "/api/verifier-essais-a-programmer", "schedule": "0 9 * * *" },
     { "path": "/api/verifier-pauses-a-programmer", "schedule": "0 9 * * *" },
     { "path": "/api/verifier-soldes-bas", "schedule": "*/15 * * * *" }
+  ],
+  "rewrites": [
+    { "source": "/l", "destination": "/api/lien" },
+    { "source": "/o", "destination": "/api/ouverture" },
+    { "source": "/d", "destination": "/api/desabonnement" }
   ]
 }

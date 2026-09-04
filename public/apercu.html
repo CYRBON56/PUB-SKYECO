@@ -640,6 +640,14 @@ function getStepsPortails(state){
   s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
   s.push({ key:"remplissage", question:"Quel remplissage souhaitez-vous ?", type:"choice",
     prixCategorie: "remplissage",
+    // Illustrations recadrées depuis le catalogue Portaleco source (page
+    // "Nos designs") — voir showApercuHoverPreview.
+    images: {
+      clairline: "/images/portails/remplissage-clairline.jpg",
+      decoline: "/images/portails/remplissage-decoline.jpg",
+      lameline: "/images/portails/remplissage-lameline.jpg",
+      laserline_vertical: "/images/portails/remplissage-laserline.jpg",
+    },
     options: [["clairline","CLAIRLINE"],["decoline","DECOLINE"],["lameline","LAMELINE"],["laserline_vertical","LASERLINE verticale (motif découpé au laser)"]] });
   // Motif du remplissage laser — uniquement si LASERLINE verticale a été
   // choisie. Le plexiglas posé derrière la découpe est une info technique

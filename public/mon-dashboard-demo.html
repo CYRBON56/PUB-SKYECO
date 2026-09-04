@@ -36,8 +36,10 @@
   .btn-voir-vitrine-demo {
     display:inline-flex; align-items:center; gap:6px; background:#fff; border:1.5px solid #1e6f4c; color:#1e6f4c;
     font-size:0.82rem; font-weight:700; text-decoration:none; padding:8px 16px; border-radius:999px; margin-bottom:20px;
+    cursor:pointer; font-family:inherit;
   }
   .btn-voir-vitrine-demo:hover { background:#eaf4ef; }
+  .btn-voir-vitrine-demo:disabled { opacity:0.75; cursor:default; }
   .hint-clic {
     display:inline-flex; align-items:center; gap:6px; background:#fdf3ee; border:1px solid #f0c4ad; color:#c74f20;
     font-size:0.78rem; font-weight:700; padding:6px 12px; border-radius:999px; margin-bottom:22px;
@@ -255,7 +257,7 @@
   <div id="introFunnel" style="display:none;" class="intro-funnel">
     Voici, avec des données fictives sur <strong>6 mois</strong>, à quoi ressemblera votre tableau de bord une fois votre vitrine en ligne.
   </div>
-  <a href="https://salesflow-ecosky.vercel.app/estimation.html" target="_blank" rel="noopener" id="btnVoirVitrineDemo" class="btn-voir-vitrine-demo" style="display:none;">👁️ Voir la vitrine d'un vrai client</a>
+  <button type="button" id="btnVoirVitrineDemo" class="btn-voir-vitrine-demo" style="display:none;">👁️ Voir la vitrine d'un vrai client</button>
   <div id="hintClic" style="display:none;" class="hint-clic">💡 Cliquez sur un encart pour voir à quoi il sert</div>
 
   <div class="stats-row">
@@ -544,6 +546,27 @@
     document.getElementById('lienRetour').style.display = 'inline-flex';
     document.getElementById('introFunnel').style.display = 'block';
     document.getElementById('btnVoirVitrineDemo').style.display = 'inline-flex';
+
+    // Aperçu de 4 secondes : on ouvre la vraie vitrine dans un nouvel onglet,
+    // puis on la referme automatiquement et on revient ici, sans que
+    // l'artisan ait à cliquer sur "Retour" lui-même (demandé le 04/09).
+    document.getElementById('btnVoirVitrineDemo').addEventListener('click', () => {
+      const btn = document.getElementById('btnVoirVitrineDemo');
+      const texteInitial = btn.textContent;
+      const fenetreVitrine = window.open('https://salesflow-ecosky.vercel.app/estimation.html', '_blank');
+      if (!fenetreVitrine) {
+        alert('Votre navigateur a bloqué l\'ouverture de la vitrine. Autorisez les fenêtres popup pour ce site puis réessayez.');
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = '👁️ Aperçu en cours… retour automatique dans 4s';
+      setTimeout(() => {
+        try { fenetreVitrine.close(); } catch (e) {}
+        window.focus();
+        btn.disabled = false;
+        btn.textContent = texteInitial;
+      }, 4000);
+    });
     document.getElementById('hintClic').style.display = 'inline-flex';
     document.getElementById('badgeHaut').textContent = 'Aperçu de votre futur tableau de bord';
     document.getElementById('sousTexteBanniere').textContent = 'Données fictives sur 6 mois — voici à quoi ressemblera votre vrai tableau de bord';

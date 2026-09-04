@@ -299,6 +299,10 @@
     </div>
     <div class="section-body">
       <div class="section-body-inner">
+        <label>Nom de l'entreprise</label>
+        <input type="text" id="entreprise" placeholder="Ex : EcoSky by RMS">
+        <p class="hint">C'est le nom affiché à toi comme artisan (tableau de bord, SMS, devis) — différent du "titre de votre vitrine" ci-dessous, qui est le gros titre vu par vos prospects sur la page publique.</p>
+
         <label>Téléphone</label>
         <input type="tel" id="telephone" placeholder="06 12 34 56 78">
 
@@ -512,7 +516,7 @@
   function calculerProgression() {
     const groupes = {
       visuel: () => !!(logoUrl || photosUrls.length),
-      coordonnees: () => !!(document.getElementById('telephone').value.trim() && document.getElementById('email').value.trim()),
+      coordonnees: () => !!(document.getElementById('entreprise').value.trim() && document.getElementById('telephone').value.trim() && document.getElementById('email').value.trim()),
       legal: () => !!document.getElementById('siret').value.trim(),
       siteweb: () => !!document.getElementById('siteExistant').value.trim(),
     };
@@ -647,6 +651,7 @@
       lienRetour.href = '/mon-dashboard.html?id=' + draftId;
       lienRetour.style.display = 'flex';
 
+      document.getElementById('entreprise').value = draft.entreprise || '';
       document.getElementById('telephone').value = draft.telephone || '';
       document.getElementById('email').value = draft.email || '';
       document.getElementById('adresseRue').value = draft.adresse_rue || '';
@@ -820,6 +825,7 @@
   // perte de connexion avant ce clic, tout était perdu. Un court délai
   // (900ms sans frappe) évite d'enregistrer à chaque lettre tapée.
   const CHAMPS_AUTO_SAVE = {
+    entreprise: 'entreprise',
     telephone: 'telephone',
     email: 'email',
     adresseRue: 'adresse_rue',
@@ -1127,6 +1133,7 @@
     const videoFinal = videoUrl || document.getElementById('videoLien').value.trim() || null;
 
     const payload = {
+      entreprise: document.getElementById('entreprise').value.trim(),
       telephone: document.getElementById('telephone').value.trim(),
       email: document.getElementById('email').value.trim(),
       adresse_rue: document.getElementById('adresseRue').value.trim(),

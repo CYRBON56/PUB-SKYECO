@@ -352,6 +352,34 @@ function pushQuantiteEtSuite(s, state){
 }
 
 // ---------------------------------------------------------------------------
+// Formulaire "basique" — demandé par Cyrille le 04/09 : au lieu du parcours à
+// étapes ci-dessus (type de projet, produits chiffrables, questions IA par
+// produit, estimation chiffrée automatique...), le parcours PAR DÉFAUT de
+// toute vitrine SANS formulaire personnalisé (voir parcoursPersonnaliseActuel)
+// se limite désormais à l'essentiel : coordonnées, adresse, description libre
+// du projet — jamais de calcul de prix automatique, toujours orienté vers la
+// prise de rendez-vous (voir le dernier "else" de renderResultat). Les
+// gabarits METIER_TEMPLATES et le système "produits chiffrables"
+// (mes-elements.html, api/analyser-produits-chiffrables.js,
+// api/classifier-projet-formulaire.js) restent en place pour le texte
+// d'accroche de la vitrine (heroTitre/eyebrow/intro) mais leur getSteps()
+// n'est plus utilisé — un futur nettoyage pourra retirer les cases
+// "estimation chiffrée automatique" / "devis détaillé" de mes-elements.html
+// si Cyrille confirme qu'elles ne servent plus à rien.
+// Clé "description_projet" (et non "details_projet" comme pushQuantiteEtSuite
+// ci-dessus) volontairement différente : évite tout déclenchement de
+// l'analyse IA classifier-projet-formulaire.js (voir wireStepEvents,
+// condition "s.key === 'details_projet'"), qui n'a plus lieu d'être ici.
+function getStepsBasique(state){
+  const s = [];
+  s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
+  s.push({ key:"adresse", question:"Votre adresse", type:"adresse" });
+  s.push({ key:"description_projet", question:"Décrivez votre projet en quelques mots", type:"textarea",
+    placeholder:"Ex : nature des travaux, contraintes particulières, délais souhaités…", optional:true, dictable:true });
+  return s;
+}
+
+// ---------------------------------------------------------------------------
 // Formulaire personnalisé "resine_rms" (activé via la case "Formulaire
 // personnalisé" dans mes-elements.html + formulaire_personnalise_cle =
 // "resine_rms" en base — voir le registre PARCOURS_PERSONNALISES dans
@@ -859,7 +887,10 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     // parcours du métier par le parcours codé en dur correspondant à
     // formulaire_personnalise_cle.
     const parcours = parcoursPersonnaliseActuel();
-    const steps = parcours ? parcours.getSteps(state) : template.getSteps(state);
+    // Formulaire "basique" (voir getStepsBasique ci-dessus) : parcours par
+    // défaut de toute vitrine sans formulaire personnalisé, à la place de
+    // l'ancien parcours à étapes par métier (template.getSteps).
+    const steps = parcours ? parcours.getSteps(state) : getStepsBasique(state);
     // Surcharges de texte des questions générales par métier — configurées
     // par l'artisan dans mes-elements.html (jsonb {clé: nouveau texte}).
     // Ne change jamais la clé/le type/les options, seulement le libellé
@@ -882,6 +913,7 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     if(s.type==='choice') return !!state[s.key];
     if(s.type==='number') return state[s.key] && parseFloat(state[s.key])>0;
     if(s.type==='location') return state.code_postal && state.code_postal.length===5;
+    if(s.type==='adresse') return !!(state.adresse_cp && state.adresse_cp.length===5 && state.adresse_ville && state.adresse_ville.trim());
     if(s.type==='identity') return state.nom && state.telephone && state.telephone.length>=8 && state.telephoneVerifie && state.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email) && state.rgpdAccepte;
     return true;
   }
@@ -899,6 +931,10 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     } else if(s.type==='location'){
       html+='<label class="field-label">Ville</label><input type="text" id="inputVille" placeholder="Ex : Brech" value="'+(state.ville||'')+'" />'+
         '<label class="field-label">Code postal</label><input type="text" id="inputCP" placeholder="Ex : 56400" value="'+(state.code_postal||'')+'" maxlength="5" />';
+    } else if(s.type==='adresse'){
+      html+='<label class="field-label">Adresse</label><input type="text" id="inputAdresseRue" placeholder="Ex : 12 rue des Fleurs" value="'+(state.adresse_rue||'')+'" />'+
+        '<label class="field-label">Code postal</label><input type="text" id="inputAdresseCp" placeholder="Ex : 56400" value="'+(state.adresse_cp||'')+'" maxlength="5" />'+
+        '<label class="field-label">Ville</label><input type="text" id="inputAdresseVille" placeholder="Ex : Brech" value="'+(state.adresse_ville||'')+'" />';
     } else if(s.type==='identity'){
       html+='<label class="field-label">Nom</label><input type="text" id="inputNom" value="'+(state.nom||'')+'" />'+
         '<label class="field-label">Prénom</label><input type="text" id="inputPrenom" value="'+(state.prenom||'')+'" />'+
@@ -965,7 +1001,18 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
         '</div>'+
         '<div style="font-size:12px; color:#8a9490; margin-top:6px;">Facultatif — cochez uniquement ce qui vous intéresse.</div>';
     }
-    const libelleNext = (s.key === 'identite') ? 'Recevoir mon estimation →' : 'Continuer';
+    // "Recevoir mon estimation" n'a de sens que quand un vrai calcul de prix
+    // suit (parcours personnalisé — resine_rms, portails...). En mode
+    // "basique" (aucun parcours, voir getStepsBasique), il n'y a jamais de
+    // prix calculé : "Continuer" pendant le parcours, "Envoyer ma demande"
+    // sur la dernière étape — la prise de rendez-vous proprement dite reste
+    // un bouton séparé sur l'écran de résultat (voir renderResultat).
+    let libelleNext;
+    if(parcoursPersonnaliseActuel()){
+      libelleNext = (s.key === 'identite') ? 'Recevoir mon estimation →' : 'Continuer';
+    } else {
+      libelleNext = (state.step === steps.length-1) ? 'Envoyer ma demande →' : 'Continuer';
+    }
     html += '<div class="nav-row"><button class="btn btn-ghost" id="btnBack"'+(state.step===0?" style='visibility:hidden'":'')+'>← Retour</button>'+
       '<button class="btn btn-primary" id="btnNext">'+libelleNext+'</button></div>';
     cardEl.innerHTML = html;
@@ -1017,6 +1064,12 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
       ville.addEventListener('input',()=>{ state.ville=ville.value; });
       cp.addEventListener('input',()=>{ state.code_postal=cp.value; document.getElementById('btnNext').disabled=!canProceed(s); });
       ville.focus();
+    } else if(s.type==='adresse'){
+      const rue=document.getElementById('inputAdresseRue'), cp=document.getElementById('inputAdresseCp'), ville=document.getElementById('inputAdresseVille');
+      rue.addEventListener('input',()=>{ state.adresse_rue=rue.value; });
+      cp.addEventListener('input',()=>{ state.adresse_cp=cp.value; document.getElementById('btnNext').disabled=!canProceed(s); });
+      ville.addEventListener('input',()=>{ state.adresse_ville=ville.value; document.getElementById('btnNext').disabled=!canProceed(s); });
+      rue.focus();
     } else if(s.type==='identity'){
       const nom=document.getElementById('inputNom'), prenom=document.getElementById('inputPrenom'), tel=document.getElementById('inputTel'), email=document.getElementById('inputEmail');
       [nom,prenom,email].forEach(el=>{ el.addEventListener('input',()=>{ state.nom=nom.value; state.prenom=prenom.value; state.email=email.value; document.getElementById('btnNext').disabled=!canProceed(s); }); });
@@ -1253,6 +1306,16 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
       remisePourcent,
       montantApresRemise,
     };
+  }
+  // Récapitulatif du formulaire "basique" (voir getStepsBasique) — aucune
+  // estimation chiffrée, juste l'adresse et la description du projet quand
+  // elles ont été renseignées (les deux sont facultatives), pour que
+  // l'artisan les ait dès l'email de notification (voir enregistrerDemande).
+  function construireRecapBasique(adresse, descriptionProjet){
+    const recap = [];
+    if(adresse) recap.push({ label:'Adresse', valeur: adresse });
+    if(descriptionProjet) recap.push({ label:'Description du projet', valeur: descriptionProjet });
+    return recap.length ? recap : null;
   }
   // Récapitulatif détaillé d'une estimation chiffrable — utilisé à la fois
   // pour l'email envoyé à l'artisan (voir enregistrerDemande) et pour
@@ -1513,18 +1576,25 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     // Sépare les champs identité (colonnes dédiées) du reste (stocké en jsonb "reponses").
     // produitChoisi est retiré de "reste" : déjà repris en détail dans "recap"
     // ci-dessous, pas besoin de le dupliquer tel quel dans reponses.
-    const { nom, prenom, telephone, telephoneVerifie, email, produitChoisi, ...reste } = state;
+    // adresse_rue/adresse_cp/adresse_ville (étape "adresse" du formulaire
+    // basique, voir getStepsBasique) sont recombinés en un seul champ
+    // "adresse" plus lisible plutôt que trois clés séparées dans reponses —
+    // reconnu tel quel par extraireAdresse() dans mon-dashboard.html.
+    const { nom, prenom, telephone, telephoneVerifie, email, produitChoisi, adresse_rue, adresse_cp, adresse_ville, ...reste } = state;
+    const adresseComplete = [adresse_rue, adresse_cp, adresse_ville].filter(Boolean).join(' ');
     const estimation = calculerEstimation();
 
-    // Récapitulatif détaillé (cas chiffrable uniquement) envoyé à
-    // api/notify-nouvelle-demande.js pour un email complet, pas juste un
-    // montant sec — voir sa gestion du champ optionnel "recap". Même
-    // fonction que celle utilisée pour l'affichage prospect en mode "devis
-    // détaillé" (voir construireRecap, renderResultat).
+    // Récapitulatif détaillé envoyé à api/notify-nouvelle-demande.js pour un
+    // email complet, pas juste un accusé de réception sec — voir sa gestion
+    // du champ optionnel "recap". Cas chiffrable (parcours personnalisé ou
+    // ancien produit chiffrable) : détail du calcul. Cas basique (aucun
+    // parcours, jamais chiffrable — voir getStepsBasique) : adresse +
+    // description du projet, pour que l'artisan ait ces infos dès l'email de
+    // notification sans avoir à ouvrir le tableau de bord.
     const parcours = parcoursPersonnaliseActuel();
     const recap = estimation.chiffrable
       ? (parcours ? parcours.recap(estimation) : construireRecap(estimation))
-      : null;
+      : (!parcours ? construireRecapBasique(adresseComplete, state.description_projet) : null);
     // Phrase de calcul façon devis (voir construirePhraseEstimation /
     // calculerEstimationResineRMS / calculerEstimationPortails) — transmise à
     // api/notify-nouvelle-demande.js pour que le SMS ET l'email envoyés au
@@ -1543,7 +1613,7 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           draftId, nom, prenom, telephone, telephoneVerifie, email,
-          reponses: { ...reste, estimation_indicative: estimation.chiffrable ? estimation.montantTTC : null },
+          reponses: { ...reste, ...(adresseComplete ? { adresse: adresseComplete } : {}), estimation_indicative: estimation.chiffrable ? estimation.montantTTC : null },
           recap, estimationTexte
         })
       });
@@ -1656,12 +1726,20 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
         '<a class="btn btn-primary" style="display:block; width:100%; text-align:center; text-decoration:none; margin-top:10px; box-sizing:border-box;" href="/prendre-rdv.html?id='+encodeURIComponent(draftId)+'" target="_blank" rel="noopener">📅 Prendre rendez-vous à un horaire précis — pour connaître précisément ce qui est réellement inclus'+(estimation.remisePourcent > 0 ? ' et voir si vous pouvez bénéficier de la remise' : '')+'</a>';
       disclaimer = 'Cette estimation reste indicative et devra être confirmée par l\'artisan lors d\'un appel téléphonique. Vous recevrez ce récapitulatif par email.';
     } else {
-      // Projet non chiffrable automatiquement (aucun produit configuré par
-      // l'artisan ne correspond) : on oriente directement vers la vraie
-      // prise de rendez-vous (calendrier natif de l'artisan), jamais bloqué.
+      // Formulaire "basique" (voir getStepsBasique) — jamais chiffrable par
+      // définition, toujours orienté vers la vraie prise de rendez-vous
+      // (calendrier natif de l'artisan). On rappelle l'adresse et la
+      // description du projet saisies, pour rassurer le prospect que sa
+      // demande a bien été comprise.
+      const adresseAffichage = [state.adresse_rue, state.adresse_cp, state.adresse_ville].filter(Boolean).join(' ');
+      const detailsBasique = construireRecapBasique(adresseAffichage, state.description_projet) || [];
       priceBlock =
-        '<div class="result-box"><div class="result-note">Ce projet nécessite l\'expertise d\'un technicien sur place pour vous donner un prix juste.</div></div>'+
-        '<a class="btn btn-primary" style="display:block; width:100%; text-align:center; text-decoration:none; margin-top:10px; box-sizing:border-box;" href="/prendre-rdv.html?id='+encodeURIComponent(draftId)+'" target="_blank" rel="noopener">📅 Prendre rendez-vous</a>';
+        '<div class="result-box"><div class="result-note">Merci ! Votre demande a bien été enregistrée — nous revenons vers vous rapidement.</div></div>'+
+        (detailsBasique.length ?
+          '<div class="result-box" style="text-align:left; margin-top:10px;">'+
+            detailsBasique.map(l=>'<div class="result-note">'+l.label+' : <strong style="color:#14312a;">'+l.valeur+'</strong></div>').join('')+
+          '</div>' : '')+
+        '<a class="btn btn-primary" style="display:block; width:100%; text-align:center; text-decoration:none; margin-top:10px; box-sizing:border-box;" href="/prendre-rdv.html?id='+encodeURIComponent(draftId)+'" target="_blank" rel="noopener">📅 Prendre rendez-vous à un horaire précis</a>';
       disclaimer = 'Vous recevrez une confirmation de votre demande par email.';
     }
 

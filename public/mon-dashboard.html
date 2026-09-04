@@ -291,9 +291,19 @@
     <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
       <select id="selecteurSite" style="display:none; border:1.5px solid #1e6f4c; border-radius:10px; padding:9px 12px; font-weight:700; font-size:0.85rem; color:#14312a; background:#fff; cursor:pointer;"></select>
       <button type="button" id="btnAjouterVitrine" title="Chaque vitrine est un site et un forfait séparés, facturés indépendamment" style="display:none; background:#fff; color:#1e6f4c; border:1.5px dashed #1e6f4c; border-radius:10px; padding:9px 14px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap;">+ Nouvelle vitrine</button>
+      <button type="button" id="btnVoirArchives" style="display:none; background:none; border:none; color:#8a9891; font-size:0.78rem; font-weight:700; cursor:pointer; text-decoration:underline; padding:0 4px; white-space:nowrap;">📦 Vitrines archivées</button>
       <a class="btn-elements" id="btnMesRdv" href="#" style="background:#fff; color:#1e6f4c; border:1.5px solid #1e6f4c;">📅 Mes rendez-vous</a>
       <a class="btn-elements" id="btnElements" href="#">✏️ Modifier mes éléments</a>
     </div>
+  </div>
+
+  <!-- (04/09) Indépendant du nombre de vitrines actives (contrairement à
+       #apercuCampagnes ci-dessous, masqué s'il n'en reste qu'une) : une
+       vitrine archivée doit rester consultable/désarchivable même si
+       l'artisan n'a plus qu'un seul site actif. -->
+  <div id="vitrinesArchiveesPanel" style="display:none; margin-bottom:22px; background:#f6faf7; border:1.5px solid #d7e8dd; border-radius:14px; padding:16px 18px;">
+    <div style="font-weight:800; font-size:0.85rem; color:#14312a; margin-bottom:10px;">Vitrines archivées</div>
+    <div id="vitrinesArchiveesContenu"><div class="loading">Chargement…</div></div>
   </div>
 
   <div id="banniereePause" style="display:none; background:#fdf1ea; border:1.5px solid #e8622c; border-radius:14px; padding:16px 20px; margin-bottom:20px; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
@@ -693,6 +703,10 @@
       const btnAjouter = document.getElementById('btnAjouterVitrine');
       btnAjouter.style.display = 'inline-block';
       btnAjouter.onclick = () => creerNouvelleVitrine(token);
+      // (04/09) Visibilité indépendante du nombre de vitrines ACTIVES —
+      // toujours affiché dès qu'on a une session artisan, pour retrouver une
+      // vitrine archivée même s'il n'en reste plus qu'une seule active.
+      document.getElementById('btnVoirArchives').style.display = 'inline-block';
 
       if (data.sites.length <= 1) return;
 
@@ -746,22 +760,166 @@
         }
       }));
 
+      // (04/09) La carte n'est plus un <a> unique : elle contient un lien
+      // interne (ouvrir le tableau de bord de cette vitrine) ET une petite
+      // rangée de boutons Archiver/Supprimer — imbriquer des <button> dans
+      // un <a> pose des soucis de clic, donc la carte elle-même est un
+      // simple conteneur, seul le bloc contenu est cliquable.
       tuiles.innerHTML = details.map((s) => {
         const estActuelle = s.id === draftId;
         const statutLabel = s.status === 'en_pause' ? '⏸️ En pause' : (s.pausee ? '⏸️ Diffusion en pause' : (s.status === 'essai' ? '🎁 Essai gratuit' : '● En ligne'));
         const statutCouleur = (s.status === 'en_pause' || s.pausee) ? '#e8622c' : (s.status === 'essai' ? '#5b6b64' : '#1e6f4c');
+        // Suppression définitive proposée seulement si la vitrine n'a
+        // strictement aucune trace d'activité réelle — même condition que
+        // /api/gerer-vitrine.js, revérifiée côté serveur de toute façon.
+        const supprimable = !s.tarif_actif && !s.google_ads_campaign_resource;
         return `
-          <a href="/mon-dashboard.html?id=${s.id}" style="text-decoration:none; display:block; min-width:180px; flex:1; max-width:260px; background:#fff; border:1.5px solid ${estActuelle ? '#1e6f4c' : '#e4e9e6'}; border-radius:14px; padding:14px 16px; box-shadow:${estActuelle ? '0 4px 14px rgba(30,111,76,0.14)' : 'none'};">
-            <div style="font-weight:800; color:#14312a; font-size:0.92rem; margin-bottom:6px;">${s.entreprise || 'Vitrine sans nom'}</div>
-            <div style="font-size:1.4rem; font-weight:800; color:#14312a;">${s.clics === null ? '—' : s.clics}<span style="font-size:0.75rem; font-weight:600; color:#5b6b64;"> clics ce mois-ci</span></div>
-            <div style="font-size:0.78rem; font-weight:700; color:${statutCouleur}; margin-top:6px;">${statutLabel}</div>
-          </a>
+          <div style="min-width:180px; flex:1; max-width:260px; background:#fff; border:1.5px solid ${estActuelle ? '#1e6f4c' : '#e4e9e6'}; border-radius:14px; padding:14px 16px; box-shadow:${estActuelle ? '0 4px 14px rgba(30,111,76,0.14)' : 'none'};">
+            <a href="/mon-dashboard.html?id=${s.id}" style="text-decoration:none; display:block;">
+              <div style="font-weight:800; color:#14312a; font-size:0.92rem; margin-bottom:6px;">${s.entreprise || 'Vitrine sans nom'}</div>
+              <div style="font-size:1.4rem; font-weight:800; color:#14312a;">${s.clics === null ? '—' : s.clics}<span style="font-size:0.75rem; font-weight:600; color:#5b6b64;"> clics ce mois-ci</span></div>
+              <div style="font-size:0.78rem; font-weight:700; color:${statutCouleur}; margin-top:6px;">${statutLabel}</div>
+            </a>
+            <div style="display:flex; gap:10px; margin-top:10px; padding-top:10px; border-top:1px solid #f0f3f1;">
+              <button type="button" class="btn-tuile-action" data-id="${s.id}" onclick="archiverVitrine(this)" style="background:none; border:none; color:#8a9891; font-size:0.72rem; font-weight:700; cursor:pointer; padding:0;">📦 Archiver</button>
+              ${supprimable ? `<button type="button" class="btn-tuile-action" data-id="${s.id}" data-nom="${(s.entreprise || 'cette vitrine').replace(/"/g, '&quot;')}" onclick="supprimerVitrine(this)" style="background:none; border:none; color:#c0392b; font-size:0.72rem; font-weight:700; cursor:pointer; padding:0;">🗑️ Supprimer</button>` : ''}
+            </div>
+          </div>
         `;
       }).join('');
     } catch (e) {
       // Non bloquant : le reste du tableau de bord reste utilisable.
     }
   }
+
+  // (04/09) Archiver/supprimer une de ses propres vitrines — demandé par
+  // Cyrille ("y a-t-il un bouton pour archiver et supprimer une vitrine"),
+  // qui n'existait jusqu'ici que côté admin interne (mes-artisans.html, pour
+  // suivre SES artisans clients, pas pour qu'un artisan gère SES vitrines).
+  // sessionTokenActuel est null en mode admin (adminToken) — dans ce cas ces
+  // boutons ne devraient normalement pas s'afficher pour l'artisan concerné,
+  // mais on vérifie quand même ici par sécurité.
+  window.archiverVitrine = async function(btn) {
+    if (!sessionTokenActuel) return;
+    const id = btn.dataset.id;
+    if (!confirm("Archiver cette vitrine ? Elle disparaîtra de votre liste mais rien n'est supprimé — vous pourrez la retrouver dans \"📦 Vitrines archivées\".")) return;
+    btn.disabled = true;
+    try {
+      const res = await fetch('/api/gerer-vitrine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId: id, token: sessionTokenActuel, action: 'archiver' }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        alert(data.error || "Impossible d'archiver cette vitrine pour le moment.");
+        btn.disabled = false;
+        return;
+      }
+      if (id === draftId) {
+        // On archive la vitrine actuellement ouverte : plus rien à afficher
+        // ici, retour à la liste (qui filtrera automatiquement les archivées).
+        window.location.href = '/mon-dashboard.html';
+        return;
+      }
+      chargerApercuCampagnes(sessionTokenActuel);
+    } catch (e) {
+      alert('Impossible de contacter le serveur.');
+      btn.disabled = false;
+    }
+  };
+
+  window.supprimerVitrine = async function(btn) {
+    if (!sessionTokenActuel) return;
+    const id = btn.dataset.id;
+    const nom = btn.dataset.nom || 'cette vitrine';
+    if (!confirm(`Supprimer définitivement "${nom}" ? Cette action est irréversible — cette vitrine n'a jamais été payée, aucune donnée ne sera perdue pour vos autres vitrines.`)) return;
+    btn.disabled = true;
+    try {
+      const res = await fetch('/api/gerer-vitrine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId: id, token: sessionTokenActuel, action: 'supprimer' }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        alert(data.error || "Impossible de supprimer cette vitrine pour le moment.");
+        btn.disabled = false;
+        return;
+      }
+      if (id === draftId) {
+        window.location.href = '/mon-dashboard.html';
+        return;
+      }
+      chargerApercuCampagnes(sessionTokenActuel);
+    } catch (e) {
+      alert('Impossible de contacter le serveur.');
+      btn.disabled = false;
+    }
+  };
+
+  // Panneau "📦 Vitrines archivées" — repli léger (pas de vraie navigation) :
+  // on relit /api/mes-sites avec inclureArchives:true et on filtre côté
+  // client sur archive===true, pour éviter un endpoint dédié juste pour ça.
+  async function chargerVitrinesArchivees() {
+    const contenu = document.getElementById('vitrinesArchiveesContenu');
+    if (!sessionTokenActuel) return;
+    contenu.innerHTML = '<div class="loading">Chargement…</div>';
+    try {
+      const res = await fetch('/api/mes-sites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: sessionTokenActuel, inclureArchives: true }),
+      });
+      const data = await res.json();
+      const archivees = (data.sites || []).filter(s => s.archive);
+      if (!archivees.length) {
+        contenu.innerHTML = '<div class="empty-msg" style="padding:6px 0;">Aucune vitrine archivée pour le moment.</div>';
+        return;
+      }
+      contenu.innerHTML = archivees.map(s => `
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px solid #e4e9e6;">
+          <span style="font-size:0.85rem; font-weight:700; color:#3a4a43;">${s.entreprise || 'Vitrine sans nom'}</span>
+          <button type="button" class="btn-tuile-action" data-id="${s.id}" onclick="desarchiverVitrine(this)" style="background:#eaf4ef; border:1px solid #1e6f4c; color:#1e6f4c; border-radius:8px; padding:5px 10px; font-size:0.75rem; font-weight:700; cursor:pointer;">↩️ Désarchiver</button>
+        </div>
+      `).join('');
+    } catch (e) {
+      contenu.innerHTML = '<div class="empty-msg" style="padding:6px 0;">Impossible de charger les vitrines archivées.</div>';
+    }
+  }
+
+  document.getElementById('btnVoirArchives').addEventListener('click', () => {
+    const panel = document.getElementById('vitrinesArchiveesPanel');
+    const ouverture = panel.style.display === 'none';
+    panel.style.display = ouverture ? 'block' : 'none';
+    if (ouverture) chargerVitrinesArchivees();
+  });
+
+  window.desarchiverVitrine = async function(btn) {
+    if (!sessionTokenActuel) return;
+    btn.disabled = true;
+    btn.textContent = '…';
+    try {
+      const res = await fetch('/api/gerer-vitrine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId: btn.dataset.id, token: sessionTokenActuel, action: 'desarchiver' }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        alert(data.error || "Impossible de désarchiver cette vitrine pour le moment.");
+        btn.disabled = false;
+        btn.textContent = '↩️ Désarchiver';
+        return;
+      }
+      chargerVitrinesArchivees();
+      chargerApercuCampagnes(sessionTokenActuel);
+    } catch (e) {
+      alert('Impossible de contacter le serveur.');
+      btn.disabled = false;
+      btn.textContent = '↩️ Désarchiver';
+    }
+  };
 
   // Corrigé le 04/09 (Cyrille : "j'aurais voulu qu'il me dise directement
   // que c'est un autre forfait") — rien ne prévenait avant de créer une

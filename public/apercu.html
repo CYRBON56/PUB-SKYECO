@@ -8,24 +8,35 @@
   * { box-sizing: border-box; }
   body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color:#14312a; }
   .split-layout { display:flex; height:100vh; overflow:hidden; }
-  .image-panel { flex:1 1 45%; position:relative; overflow:hidden; background:var(--brand-dark,#14312a); display:flex; align-items:center; justify-content:center; order:2; }
-  .image-panel img { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity .8s ease-in-out; }
-  .image-panel img.active { opacity:1; }
-  .image-panel::before { content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(20,49,42,0.55) 0%, rgba(20,49,42,0.15) 35%, rgba(20,49,42,0.55) 100%); z-index:1; pointer-events:none; }
-  .image-panel-title { position:absolute; top:50%; left:32px; right:32px; transform:translateY(-50%); z-index:2; color:#fff; font-size:clamp(1.6rem,3vw,2.4rem); font-weight:700; line-height:1.25; text-align:center; text-shadow:0 2px 12px rgba(0,0,0,0.35); }
-  @media (max-width:800px){ .image-panel-title{ font-size:1.3rem; left:20px; right:20px; } }
+  /* Panneau visuel de droite (ou de gauche, voir formulaire-droite plus bas)
+     — depuis le 04/09 coupé en deux moitiés empilées à la demande de
+     Cyrille : en haut la vidéo/le carrousel de photos habituel, en bas un
+     second panneau dédié qui affiche la photo du produit survolé dans le
+     formulaire (voir "Aperçu au survol" ci-dessous). */
+  .image-panel { flex:1 1 45%; position:relative; overflow:hidden; background:var(--brand-dark,#14312a); display:flex; flex-direction:column; order:2; }
+  .image-panel-media { position:relative; flex:1 1 50%; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+  .image-panel-media img, .image-panel-media video { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; }
+  .image-panel-media img { opacity:0; transition:opacity .8s ease-in-out; }
+  .image-panel-media img.active { opacity:1; }
+  .image-panel-media::before { content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(20,49,42,0.55) 0%, rgba(20,49,42,0.15) 35%, rgba(20,49,42,0.55) 100%); z-index:1; pointer-events:none; }
+  .image-panel-title { position:absolute; top:50%; left:32px; right:32px; transform:translateY(-50%); z-index:2; color:#fff; font-size:clamp(1.3rem,2.4vw,2rem); font-weight:700; line-height:1.25; text-align:center; text-shadow:0 2px 12px rgba(0,0,0,0.35); }
+  @media (max-width:800px){ .image-panel-title{ font-size:1.15rem; left:20px; right:20px; } }
 
   /* Aperçu au survol d'une option du formulaire (ex : "OneSlide" dans le
-     parcours portails) — affiche l'image du choix par-dessus la vidéo/le
-     carrousel habituel du panneau visuel, le temps du survol. Générique :
-     posé par JS pour toute étape à choix qui définit s.images (voir
-     getStepsPortails > type_portail). Masqué sur mobile (panneau trop petit
-     pour être lisible pendant qu'on remplit le formulaire en dessous). */
-  .image-panel .hover-preview { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity .25s ease-in-out; z-index:3; pointer-events:none; }
-  .image-panel .hover-preview.active { opacity:1; }
-  .image-panel .hover-preview-label { position:absolute; left:0; right:0; bottom:0; z-index:4; background:linear-gradient(0deg, rgba(20,49,42,0.88) 0%, rgba(20,49,42,0) 100%); color:#fff; font-weight:700; font-size:15px; padding:22px 20px 14px; text-align:center; opacity:0; transition:opacity .25s ease-in-out; pointer-events:none; }
-  .image-panel .hover-preview-label.active { opacity:1; }
-  @media (max-width:800px){ .hover-preview, .hover-preview-label{ display:none !important; } }
+     parcours portails) — occupe la moitié basse du panneau visuel, à côté
+     de la vidéo/du carrousel (moitié haute), et affiche la photo du produit
+     survolé, avec un texte d'invitation tant que rien n'est survolé.
+     Générique : posé par JS pour toute étape à choix qui définit s.images
+     (voir getStepsPortails > type_portail). Masqué sur mobile (pas la place
+     pour un second panneau pendant qu'on remplit le formulaire en dessous). */
+  .image-panel-preview { position:relative; flex:1 1 50%; overflow:hidden; background:#0f231d; border-top:1px solid rgba(255,255,255,0.1); }
+  .image-panel-preview .hover-preview-placeholder { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:20px; text-align:center; color:rgba(255,255,255,0.55); font-size:13px; line-height:1.5; transition:opacity .25s ease-in-out; }
+  .image-panel-preview .hover-preview-placeholder.dimmed { opacity:0; }
+  .image-panel-preview .hover-preview { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity .25s ease-in-out; }
+  .image-panel-preview .hover-preview.active { opacity:1; }
+  .image-panel-preview .hover-preview-label { position:absolute; left:0; right:0; bottom:0; z-index:2; background:linear-gradient(0deg, rgba(15,35,29,0.92) 0%, rgba(15,35,29,0) 100%); color:#fff; font-weight:700; font-size:14px; padding:16px 16px 10px; text-align:center; opacity:0; transition:opacity .25s ease-in-out; }
+  .image-panel-preview .hover-preview-label.active { opacity:1; }
+  @media (max-width:800px){ .image-panel-preview{ display:none; } }
   .form-panel { flex:1 1 55%; position:relative; display:flex; align-items:stretch; justify-content:center; padding:20px 24px; overflow:hidden; order:1; }
   /* Position du formulaire (gauche/droite) — configurée par l'artisan dans
      mes-elements.html (colonne formulaire_position), posée en JS sur
@@ -40,24 +51,6 @@
   @media (max-width:800px){ .split-layout{ flex-direction:column; height:100vh; overflow:hidden; } .image-panel{ flex:0 0 110px; } .form-panel{ padding:12px 16px; } }
   @media (max-width:480px){ .image-panel{ flex:0 0 64px; } .form-panel{ padding:10px 14px; } .header-block{ padding:10px 14px; margin-bottom:10px; } h1{ font-size:19px; margin:4px 0 6px; } .eyebrow{ font-size:11px; } .sub{ font-size:14px; margin-bottom:0; line-height:1.45; } .card{ padding:16px; } .question{ font-size:17px; margin-bottom:14px; line-height:1.35; } .option{ padding:14px 16px; font-size:15.5px; } .progress{ margin-bottom:12px; } input[type="text"],input[type="tel"],input[type="email"],input[type="number"]{ font-size:16px; padding:13px 14px; margin-bottom:10px; } label.field-label{ font-size:14px; } .nav-row{ flex-wrap:wrap; margin-top:16px; } button.btn{ font-size:15px; padding:13px 16px; } .btn-primary{ flex:1 1 100%; order:1; } .btn-ghost{ order:2; padding:8px 0; font-size:14px; } .trust-footer{ margin-top:10px; padding-top:10px; } .trust-badges-row{ display:none !important; } }
 
-  /* Pas de vidéo uploadée par l'artisan : le carrousel photo passe en plein
-     écran (au lieu de rester confiné aux 45% du panneau de gauche), et le
-     formulaire devient une carte flottante centrée par-dessus, avec son
-     propre fond pour rester lisible. Activé via la classe "sans-video" posée
-     sur .split-layout par le JS (voir plus bas, selon draft.video_url). */
-  .split-layout.sans-video { position:relative; display:block; }
-  .split-layout.sans-video .image-panel { position:absolute; inset:0; flex:none; width:100%; height:100%; order:0; z-index:0; }
-  .split-layout.sans-video .image-panel-title { display:none; }
-  .split-layout.sans-video .form-panel {
-    position:relative; z-index:2; order:0; flex:none;
-    max-width:480px; width:calc(100% - 32px); margin:0 auto; height:100vh;
-    padding:20px 0;
-  }
-  .split-layout.sans-video .form-panel::before {
-    content:''; position:absolute; inset:0; margin:0 -24px; background:rgba(246,244,239,0.72); backdrop-filter:blur(2px); z-index:-1;
-  }
-  @media (max-width:800px){ .split-layout.sans-video .image-panel{ flex:none; } }
-  @media (max-width:480px){ .split-layout.sans-video .image-panel{ flex:none; } }
   .wrap { max-width:480px; width:100%; height:100%; margin:0; padding:0; display:flex; flex-direction:column; }
   .middle-scroll { flex:1 1 auto; overflow-y:auto; min-height:0; padding-right:2px; }
   .header-block { margin-bottom:12px; background:rgba(255,255,255,0.7); border-radius:14px; padding:12px 16px; flex-shrink:0; }
@@ -135,7 +128,12 @@
 <div id="appRoot" style="display:none;">
   <div class="split-layout">
     <div class="image-panel" id="heroImagePanel">
-      <div class="image-panel-title" id="heroTitle"></div>
+      <div class="image-panel-media" id="heroImageMedia">
+        <div class="image-panel-title" id="heroTitle"></div>
+      </div>
+      <div class="image-panel-preview" id="heroPreviewHalf">
+        <div class="hover-preview-placeholder" id="heroPreviewPlaceholder">Survolez une option du formulaire pour voir à quoi ça ressemble</div>
+      </div>
     </div>
     <div class="form-panel">
       <div class="form-bg-carousel" id="formBgCarousel"></div>
@@ -817,25 +815,26 @@ async function init(){
     }
   })();
 
-  const container = document.getElementById('heroImagePanel');
+  // Panneau visuel coupé en deux (04/09, à la demande de Cyrille) : la
+  // moitié haute (#heroImageMedia) garde la vidéo/le carrousel de photos
+  // habituel ; la moitié basse (#heroPreviewHalf) est dédiée à l'aperçu au
+  // survol des options du formulaire (voir plus bas). Fonctionne pareil
+  // que l'artisan ait fourni une vidéo ou seulement des photos.
+  const mediaContainer = document.getElementById('heroImageMedia');
   if(draft.video_url){
     const video = document.createElement('video');
     video.src = draft.video_url;
     video.autoplay = true; video.muted = true; video.loop = true; video.playsInline = true;
     video.className = 'active';
     video.style.cssText = 'position:absolute; inset:0; width:100%; height:100%; object-fit:cover;';
-    container.insertBefore(video, container.firstChild);
+    mediaContainer.insertBefore(video, mediaContainer.firstChild);
   } else {
-    // Pas de vidéo : le carrousel passe en plein écran (voir CSS
-    // .split-layout.sans-video) plutôt que de rester confiné au panneau de
-    // gauche — plus d'impact visuel quand l'artisan n'a fourni que des photos.
-    document.querySelector('.split-layout').classList.add('sans-video');
     const metiersListeApercu = Array.isArray(draft.metier) ? draft.metier : (draft.metier ? [draft.metier] : []);
     const imagesFallback = metiersListeApercu.length
       ? [...new Set(metiersListeApercu.flatMap(m => FALLBACK_IMAGES[m] || []))]
       : FALLBACK_IMAGES.autre;
     const images = (draft.photos && draft.photos.length) ? draft.photos : (imagesFallback.length ? imagesFallback : FALLBACK_IMAGES.autre);
-    const imgs = images.map((src,i)=>{ const img=document.createElement('img'); img.src=src; if(i===0) img.className='active'; container.appendChild(img); return img; });
+    const imgs = images.map((src,i)=>{ const img=document.createElement('img'); img.src=src; if(i===0) img.className='active'; mediaContainer.insertBefore(img, mediaContainer.firstChild); return img; });
     if(imgs.length>1){
       let idx=0;
       setInterval(()=>{ imgs[idx].classList.remove('active'); idx=(idx+1)%imgs.length; imgs[idx].classList.add('active'); }, 2500);
@@ -843,25 +842,29 @@ async function init(){
   }
 
   // Aperçu au survol des options du formulaire (ex : passer la souris sur
-  // "OneSlide" affiche sa photo ici) — un seul <img>/label réutilisé pour
-  // toute la vitrine, par-dessus la vidéo/le carrousel ci-dessus. Voir
+  // "OneSlide" affiche sa photo dans la moitié basse du panneau visuel,
+  // à côté de la vidéo/du carrousel toujours visible au-dessus). Voir
   // wireStepEvents (s.type==='choice') pour la pose des écouteurs, et
   // s.images dans getStepsPortails pour la liste des images disponibles.
+  const previewHalf = document.getElementById('heroPreviewHalf');
+  const previewPlaceholder = document.getElementById('heroPreviewPlaceholder');
   const hoverPreviewImg = document.createElement('img');
   hoverPreviewImg.className = 'hover-preview';
   const hoverPreviewLabel = document.createElement('div');
   hoverPreviewLabel.className = 'hover-preview-label';
-  container.appendChild(hoverPreviewImg);
-  container.appendChild(hoverPreviewLabel);
+  previewHalf.appendChild(hoverPreviewImg);
+  previewHalf.appendChild(hoverPreviewLabel);
   window.showApercuHoverPreview = function(src, label){
     hoverPreviewImg.src = src;
     hoverPreviewLabel.textContent = label || '';
     hoverPreviewImg.classList.add('active');
     hoverPreviewLabel.classList.add('active');
+    if(previewPlaceholder) previewPlaceholder.classList.add('dimmed');
   };
   window.hideApercuHoverPreview = function(){
     hoverPreviewImg.classList.remove('active');
     hoverPreviewLabel.classList.remove('active');
+    if(previewPlaceholder) previewPlaceholder.classList.remove('dimmed');
   };
 
   document.getElementById('loadingState').style.display = 'none';

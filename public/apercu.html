@@ -413,6 +413,113 @@ const RESINE_RMS_LABELS = {
   age_batiment: { plus_2_ans:"Plus de 2 ans (TVA 10%)", moins_2_ans:"Moins de 2 ans (TVA 20%)" },
 };
 
+// ---------------------------------------------------------------------------
+// Mode spécial "Configurateur portails" (colonne mode_calcul_portails, case
+// à cocher dans mes-elements.html) — même principe que le mode "Calcul
+// résine RMS EcoSky" ci-dessus : un parcours codé en dur, réservé pour
+// l'instant à la vitrine PORTALECO. Demandé par Cyrille le 04/09 après avoir
+// envoyé des captures d'écran du configurateur d'un fournisseur (portail
+// ONESLIDE) : remplissage, lames, largeur, hauteur, couleur, digicode,
+// visiophone/interphone, batterie, bouton poussoir, chacun avec un supplément
+// de prix propre.
+//
+// Différence volontaire avec la page fournisseur : ici pas de "panier" ni de
+// prix ferme affiché en direct pendant la saisie — on reste sur le même
+// principe qu'ailleurs dans Skyeco Pro, une estimation indicative écran par
+// écran qui débouche sur une demande de devis (voir la réponse de Cyrille à
+// la question posée avant de coder ceci).
+//
+// IMPORTANT — prix non renseignés au 04/09 : tous les montants de
+// PORTAILS_TARIFS ci-dessous valent 0 (placeholders). Tant que
+// prixBaseHT.coulissant / prixBaseHT.battant ne sont pas remplis par
+// Cyrille, calculerEstimationPortails() renvoie chiffrable:false — aucun
+// prix erroné ne peut donc être affiché à un prospect réel avant que la
+// grille tarifaire soit complétée ici. Une fois les vrais tarifs saisis,
+// aucun autre changement de code n'est nécessaire.
+//
+// Largeur/hauteur : même liste de valeurs pour coulissant et battant pour
+// l'instant (simplification volontaire) — si les gammes diffèrent vraiment
+// selon le type de portail, on pourra faire dépendre les options de
+// state.type_portail plus tard.
+const PORTAILS_TARIFS = {
+  prixBaseHT: { coulissant: 0, battant: 0 }, // À REMPLIR — 0 = configurateur non actif
+  // Ajouté le 04/09 à la demande de Cyrille : la plupart de ses clients
+  // veulent une installation clé en main (terrassement, béton, évacuation de
+  // terre, raccordement électrique, capteurs — "il n'y a rien à faire pour
+  // le client"), pas juste la fourniture du portail. installation_complete
+  // DOIT être rempli en même temps que prixBaseHT — voir la vérification
+  // dédiée dans calculerEstimationPortails() : tant qu'il vaut 0, une
+  // demande "installation complète" reste non chiffrable plutôt que
+  // d'afficher un montant qui oublierait tout le gros œuvre.
+  installation: { fourniture_seule: 0, installation_complete: 0 },
+  remplissage: { lames_pleines: 0, lames_bandeau: 0, lames_horizontales: 0, motif_decoratif: 0 },
+  lames: { lames_120: 0, lames_200: 0 },
+  largeur: { '3000': 0, '3500': 0, '4000': 0, '4500': 0 },
+  hauteur: { '1200': 0, '1400': 0, '1600': 0, '1800': 0, '2000': 0 },
+  couleur: { ral7016: 0, ral9010: 0, autre_ral: 0 },
+  options: { digicode_ext: 0, digicode_int: 0, visiophone: 0, interphone: 0, batterie: 0, bouton_poussoir: 0, ligne_electrique: 0 },
+};
+
+const PORTAILS_LABELS = {
+  type_portail: { coulissant: "Portail coulissant", battant: "Portail battant (2 vantaux)" },
+  installation: {
+    fourniture_seule: "Fourniture du portail seul (pose non comprise)",
+    installation_complete: "Installation complète clé en main (terrassement, béton, évacuation, raccordement électrique, capteurs)",
+  },
+  remplissage: {
+    lames_pleines: "Lames pleines (occultant total)",
+    lames_bandeau: "Lames avec bandeau ajouré en partie haute",
+    lames_horizontales: "Lames horizontales fines",
+    motif_decoratif: "Motif décoratif ajouré",
+  },
+  lames: { lames_120: "Lames 120", lames_200: "Lames 200" },
+  couleur: { ral7016: "RAL 7016 — Gris anthracite", ral9010: "RAL 9010 — Blanc", autre_ral: "Autre couleur RAL" },
+  cote_refoulement: { gauche: "Gauche", droite: "Droite" },
+};
+const PORTAILS_OPTIONS_LABELS = {
+  digicode_ext: "Digicode extérieur", digicode_int: "Digicode intérieur", visiophone: "Visiophone",
+  interphone: "Interphone", batterie: "Batterie de secours", bouton_poussoir: "Bouton poussoir",
+  ligne_electrique: "Tirage d'une ligne électrique jusqu'au portail",
+};
+
+function getStepsPortails(state){
+  const s = [];
+  s.push({ key:"type_portail", question:"Quel type de portail souhaitez-vous ?", type:"choice",
+    options: [["coulissant","Portail coulissant"],["battant","Portail battant (2 vantaux)"]] });
+  // Ajouté le 04/09 (Cyrille) : distingue la simple fourniture du portail
+  // d'une installation complète (terrassement, béton, évacuation de terre,
+  // raccordement électrique, capteurs) — un poste de coût majeur, à part du
+  // prix du portail lui-même. Voir PORTAILS_TARIFS.installation.
+  s.push({ key:"installation", question:"Souhaitez-vous la fourniture seule ou l'installation complète ?", type:"choice",
+    options: [["fourniture_seule","Fourniture du portail seul (pose non comprise)"],
+      ["installation_complete","Installation complète clé en main — terrassement, béton, évacuation de terre, raccordement électrique, capteurs"]] });
+  s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
+  s.push({ key:"remplissage", question:"Quel style de remplissage souhaitez-vous ?", type:"choice",
+    options: [["lames_pleines","Lames pleines (occultant total)"],["lames_bandeau","Lames avec bandeau ajouré en partie haute"],
+      ["lames_horizontales","Lames horizontales fines"],["motif_decoratif","Motif décoratif ajouré"]] });
+  s.push({ key:"lames", question:"Quel type de lames ?", type:"choice",
+    options: [["lames_120","Lames 120 (standard)"],["lames_200","Lames 200 (plus larges)"]] });
+  s.push({ key:"largeur", question:"Quelle largeur de passage souhaitez-vous ?", type:"choice",
+    options: [["3000","3,00 m"],["3500","3,50 m"],["4000","4,00 m"],["4500","4,50 m"]] });
+  s.push({ key:"hauteur", question:"Quelle hauteur souhaitez-vous ?", type:"choice",
+    options: [["1200","1,20 m"],["1400","1,40 m"],["1600","1,60 m"],["1800","1,80 m"],["2000","2,00 m"]] });
+  s.push({ key:"couleur", question:"Quelle couleur pour votre portail ?", type:"choice",
+    options: [["ral7016","RAL 7016 — Gris anthracite"],["ral9010","RAL 9010 — Blanc"],["autre_ral","Une autre couleur RAL"]] });
+  s.push({ key:"cote_refoulement", question:"De quel côté souhaitez-vous le refoulement (vue de l'intérieur) ?", type:"choice",
+    options: [["gauche","Gauche"],["droite","Droite"]] });
+  s.push({ key:"options_portail", question:"Souhaitez-vous ajouter des options ?", type:"options_multi", optional:true,
+    options: [["digicode_ext","Digicode extérieur"],["digicode_int","Digicode intérieur"],["visiophone","Visiophone"],
+      ["interphone","Interphone"],["batterie","Batterie de secours (fonctionnement en cas de coupure)"],
+      ["bouton_poussoir","Bouton poussoir (ouverture sans télécommande)"],
+      ["ligne_electrique","Tirage d'une ligne électrique jusqu'au portail"]] });
+  s.push({ key:"details_projet", question:"Décrivez votre projet en quelques mots", type:"textarea",
+    placeholder:"Ex : accès existant, portail à remplacer, contraintes particulières…", optional:true, dictable:true });
+  s.push({ key:"delai", question:"Sous quel délai souhaitez-vous réaliser ce projet ?", type:"choice",
+    options: Object.entries(DELAI_LABELS).map(([val,label])=>[val,label]) });
+  s.push({ key:"localisation", question:"Où se situe le projet ?", type:"location" });
+  return s;
+}
+
 const FALLBACK_IMAGES = {
   paysagiste: [
     "https://images.unsplash.com/photo-1558904541-efa843a96f01?w=1200",
@@ -684,7 +791,9 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     // mes-elements.html (mode_calcul_resine_rms).
     const steps = (draftInfo && draftInfo.mode_calcul_resine_rms === true)
       ? getStepsResineRMS(state)
-      : template.getSteps(state);
+      : (draftInfo && draftInfo.mode_calcul_portails === true)
+        ? getStepsPortails(state)
+        : template.getSteps(state);
     // Surcharges de texte des questions générales par métier — configurées
     // par l'artisan dans mes-elements.html (jsonb {clé: nouveau texte}).
     // Ne change jamais la clé/le type/les options, seulement le libellé
@@ -772,6 +881,23 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
         '<div class="option'+(state[s.key]===false?' selected':'')+'" data-val="non">Non</div>'+
         '</div>'+
         '<div style="font-size:12px; color:#8a9490; margin-top:6px;">Facultatif — passez si vous préférez.</div>';
+    } else if(s.type==='options_multi'){
+      // Plusieurs cases à cocher indépendantes (0 à N sélectionnées), chacune
+      // avec son propre supplément — voir PORTAILS_TARIFS.options. Contrairement
+      // aux autres types d'étape, cocher une case ne fait pas ré-afficher tout
+      // l'écran (comme un champ texte), pour ne pas perdre le focus/scroll.
+      const choixActuels = state[s.key] || {};
+      html+='<div class="options" style="gap:8px;">'+
+        s.options.map(([val,label])=>{
+          const coche = choixActuels[val] === true;
+          const prix = (PORTAILS_TARIFS.options && PORTAILS_TARIFS.options[val]) || 0;
+          const suffixe = prix > 0 ? ' <span style="font-weight:400; color:#5b6b64;">(+'+prix+'€ HT)</span>' : '';
+          return '<label style="display:flex; align-items:center; gap:10px; border:1.5px solid #d8e3de; border-radius:10px; padding:13px 16px; font-size:14.5px; cursor:pointer;">'+
+            '<input type="checkbox" data-val="'+val+'" style="width:auto; flex-shrink:0;" '+(coche?'checked':'')+' />'+
+            '<span>'+label+suffixe+'</span></label>';
+        }).join('')+
+        '</div>'+
+        '<div style="font-size:12px; color:#8a9490; margin-top:6px;">Facultatif — cochez uniquement ce qui vous intéresse.</div>';
     }
     const libelleNext = (s.key === 'identite') ? 'Recevoir mon estimation →' : 'Continuer';
     html += '<div class="nav-row"><button class="btn btn-ghost" id="btnBack"'+(state.step===0?" style='visibility:hidden'":'')+'>← Retour</button>'+
@@ -953,6 +1079,11 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
       input.focus();
     } else if(s.type==='case_perso'){
       cardEl.querySelectorAll('.option').forEach(el=>{ el.addEventListener('click',()=>{ state[s.key]=(el.dataset.val==='oui'); renderProgress(); renderStep(); }); });
+    } else if(s.type==='options_multi'){
+      if(!state[s.key]) state[s.key] = {};
+      cardEl.querySelectorAll('input[type=checkbox][data-val]').forEach(cb=>{
+        cb.addEventListener('change', ()=>{ state[s.key][cb.dataset.val] = cb.checked; });
+      });
     }
     document.getElementById('btnBack').addEventListener('click',()=>{ if(state.step>0){ state.step-=1; renderProgress(); renderStep(); } });
     document.getElementById('btnNext').addEventListener('click', async ()=>{
@@ -1014,6 +1145,9 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     // salesflow-ecosky/api/submit-estimation.js).
     if(draftInfo && draftInfo.mode_calcul_resine_rms === true){
       return calculerEstimationResineRMS();
+    }
+    if(draftInfo && draftInfo.mode_calcul_portails === true){
+      return calculerEstimationPortails();
     }
     const produit = state.produitChoisi;
     if(!produit) return { chiffrable:false };
@@ -1203,6 +1337,88 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     };
   }
 
+  // Calcul du mode "Configurateur portails" — additionne le prix de base du
+  // type de portail (PORTAILS_TARIFS.prixBaseHT) et chaque supplément choisi
+  // (remplissage, lames, largeur, hauteur, couleur, options cochées). Tant
+  // que le prix de base du type choisi vaut 0 (grille non encore remplie par
+  // Cyrille, voir le commentaire au-dessus de PORTAILS_TARIFS), renvoie
+  // chiffrable:false — jamais de montant à 0€ ou faux affiché au prospect.
+  function calculerEstimationPortails(){
+    const type = state.type_portail;
+    const prixBase = PORTAILS_TARIFS.prixBaseHT[type] || 0;
+    if(!prixBase){
+      return {
+        chiffrable: false,
+        texte: "Ce type de portail nécessite un chiffrage personnalisé — un technicien vous recontacte rapidement avec un prix précis.",
+      };
+    }
+    // Même garde-fou que prixBaseHT ci-dessus, appliquée spécifiquement à
+    // l'installation complète (terrassement, béton, évacuation, électricité,
+    // capteurs) : tant que son prix n'est pas rempli, on ne calcule PAS un
+    // montant qui "oublierait" tout le gros œuvre — on route vers un
+    // technicien comme pour un prix de base manquant.
+    if(state.installation === 'installation_complete' && !PORTAILS_TARIFS.installation.installation_complete){
+      return {
+        chiffrable: false,
+        texte: "L'installation complète (terrassement, raccordement électrique…) nécessite un chiffrage personnalisé — un technicien vous recontacte rapidement avec un prix précis.",
+      };
+    }
+
+    let totalHT = prixBase;
+    function ajouter(table, cle){ if(table && cle && table[cle]) totalHT += table[cle]; }
+    ajouter(PORTAILS_TARIFS.installation, state.installation);
+    ajouter(PORTAILS_TARIFS.remplissage, state.remplissage);
+    ajouter(PORTAILS_TARIFS.lames, state.lames);
+    ajouter(PORTAILS_TARIFS.largeur, state.largeur);
+    ajouter(PORTAILS_TARIFS.hauteur, state.hauteur);
+    ajouter(PORTAILS_TARIFS.couleur, state.couleur);
+    const optionsChoisies = state.options_portail || {};
+    Object.keys(optionsChoisies).forEach(cle => { if(optionsChoisies[cle]) ajouter(PORTAILS_TARIFS.options, cle); });
+
+    totalHT = Math.round(totalHT);
+    const montantTTC = Math.round(totalHT * (1 + tvaTaux / 100));
+
+    // Même barème de remise indicative que le reste de Skyeco Pro (voir
+    // calculerEstimation) — toujours à valider par un technicien.
+    let remisePourcent = 0;
+    if(montantTTC >= 10000) remisePourcent = 15;
+    else if(montantTTC >= 5000) remisePourcent = 10;
+    else if(montantTTC >= 1000) remisePourcent = 5;
+    const montantApresRemise = remisePourcent > 0 ? Math.round(montantTTC * (1 - remisePourcent / 100)) : montantTTC;
+
+    return {
+      chiffrable: true,
+      montantHT: totalHT,
+      montantTTC,
+      remisePourcent,
+      montantApresRemise,
+      texte: 'Estimation indicative : '+totalHT+'€ HT, soit environ '+montantTTC+'€ TTC (TVA '+tvaTaux+'%) — le prix définitif sera confirmé par un technicien lors du rendez-vous (pose, accès chantier et alimentation électrique à valider sur place).',
+    };
+  }
+
+  // Récapitulatif du mode "Configurateur portails" — pendant de
+  // construireRecapResineRMS() ci-dessus, basé sur les champs du parcours
+  // getStepsPortails (state.type_portail, state.remplissage…).
+  function construireRecapPortails(estimation){
+    const recap = [];
+    if(state.type_portail) recap.push({ label:'Type de portail', valeur: PORTAILS_LABELS.type_portail[state.type_portail] || state.type_portail });
+    if(state.installation) recap.push({ label:'Installation', valeur: PORTAILS_LABELS.installation[state.installation] || state.installation });
+    if(state.remplissage) recap.push({ label:'Remplissage', valeur: PORTAILS_LABELS.remplissage[state.remplissage] || state.remplissage });
+    if(state.lames) recap.push({ label:'Lames', valeur: PORTAILS_LABELS.lames[state.lames] || state.lames });
+    if(state.largeur) recap.push({ label:'Largeur', valeur: (parseInt(state.largeur,10)/1000).toString().replace('.', ',') + ' m' });
+    if(state.hauteur) recap.push({ label:'Hauteur', valeur: (parseInt(state.hauteur,10)/1000).toString().replace('.', ',') + ' m' });
+    if(state.couleur) recap.push({ label:'Couleur', valeur: PORTAILS_LABELS.couleur[state.couleur] || state.couleur });
+    if(state.cote_refoulement) recap.push({ label:'Côté refoulement', valeur: PORTAILS_LABELS.cote_refoulement[state.cote_refoulement] || state.cote_refoulement });
+    const optionsChoisies = state.options_portail || {};
+    const optionsLibelles = Object.keys(optionsChoisies).filter(cle => optionsChoisies[cle]).map(cle => PORTAILS_OPTIONS_LABELS[cle] || cle);
+    if(optionsLibelles.length) recap.push({ label:'Options', valeur: optionsLibelles.join(', ') });
+    if(state.delai && DELAI_LABELS[state.delai]) recap.push({ label:'Délai souhaité', valeur: DELAI_LABELS[state.delai] });
+    const localisation = [state.ville, state.code_postal].filter(Boolean).join(' ');
+    if(localisation) recap.push({ label:'Localisation', valeur: localisation });
+    if(estimation && estimation.chiffrable) recap.push({ label:'Montant estimé', valeur: estimation.montantTTC + ' € TTC' });
+    return recap;
+  }
+
   // Récapitulatif du mode "Calcul résine RMS EcoSky" — pendant de
   // construireRecap() ci-dessus, mais basé sur les champs du parcours
   // salesflow-ecosky (state.usage, state.support_pieton…) plutôt que sur un
@@ -1242,14 +1458,18 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     // fonction que celle utilisée pour l'affichage prospect en mode "devis
     // détaillé" (voir construireRecap, renderResultat).
     const modeRMS = draftInfo && draftInfo.mode_calcul_resine_rms === true;
-    const recap = estimation.chiffrable ? (modeRMS ? construireRecapResineRMS(estimation) : construireRecap(estimation)) : null;
+    const modePortails = draftInfo && draftInfo.mode_calcul_portails === true;
+    const recap = estimation.chiffrable
+      ? (modeRMS ? construireRecapResineRMS(estimation) : (modePortails ? construireRecapPortails(estimation) : construireRecap(estimation)))
+      : null;
     // Phrase de calcul façon devis (voir construirePhraseEstimation /
-    // calculerEstimationResineRMS) — transmise à api/notify-nouvelle-demande.js
-    // pour que le SMS ET l'email envoyés au prospect contiennent le montant
-    // chiffré lui-même, pas seulement un accusé de réception générique. Même
-    // logique que ce que fait déjà salesflow-ecosky pour RMS EcoSky.
+    // calculerEstimationResineRMS / calculerEstimationPortails) — transmise à
+    // api/notify-nouvelle-demande.js pour que le SMS ET l'email envoyés au
+    // prospect contiennent le montant chiffré lui-même, pas seulement un
+    // accusé de réception générique. Même logique que ce que fait déjà
+    // salesflow-ecosky pour RMS EcoSky.
     const estimationTexte = estimation.chiffrable
-      ? (modeRMS ? estimation.texte : construirePhraseEstimation(estimation))
+      ? ((modeRMS || modePortails) ? estimation.texte : construirePhraseEstimation(estimation))
       : null;
 
     let error = null;
@@ -1294,13 +1514,19 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     // colonne mode_devis_detaille). Désactivé par défaut : sans cette case
     // cochée, le comportement reste le montant unique ci-dessous, inchangé.
     const modeRMS = draftInfo && draftInfo.mode_calcul_resine_rms === true;
-    const modeDevisDetaille = !modeRMS && estimation.chiffrable && draftInfo && draftInfo.mode_devis_detaille === true;
-    if(modeRMS && estimation.chiffrable){
-      // Résultat du mode "Calcul résine RMS EcoSky" — même présentation que
-      // le mode "devis détaillé" générique ci-dessous, mais avec la phrase
-      // et les champs propres au parcours salesflow-ecosky (voir
-      // calculerEstimationResineRMS / construireRecapResineRMS).
-      const detailsRecap = construireRecapResineRMS(estimation).filter(l => l.label !== 'Montant estimé');
+    const modePortails = draftInfo && draftInfo.mode_calcul_portails === true;
+    // Les deux modes codés en dur (résine RMS EcoSky, configurateur
+    // portails) partagent la même présentation de résultat — seul le
+    // constructeur de récapitulatif diffère (voir construireRecapResineRMS /
+    // construireRecapPortails).
+    const recapBuilderModeSpecial = modeRMS ? construireRecapResineRMS : (modePortails ? construireRecapPortails : null);
+    const modeDevisDetaille = !modeRMS && !modePortails && estimation.chiffrable && draftInfo && draftInfo.mode_devis_detaille === true;
+    if((modeRMS || modePortails) && estimation.chiffrable){
+      // Résultat des modes "Calcul résine RMS EcoSky" / "Configurateur
+      // portails" — même présentation que le mode "devis détaillé" générique
+      // ci-dessous, mais avec la phrase et les champs propres à chaque
+      // parcours codé en dur (voir recapBuilderModeSpecial ci-dessus).
+      const detailsRecap = recapBuilderModeSpecial(estimation).filter(l => l.label !== 'Montant estimé');
       priceBlock =
         '<div class="result-box">'+
           '<div class="result-note">Estimation indicative</div>'+
@@ -1319,11 +1545,12 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
           '</div>' : '')+
         '<a class="btn btn-primary" style="display:block; width:100%; text-align:center; text-decoration:none; margin-top:10px; box-sizing:border-box;" href="/prendre-rdv.html?id='+encodeURIComponent(draftId)+'" target="_blank" rel="noopener">📅 Prendre rendez-vous à un horaire précis — pour connaître précisément ce qui est réellement inclus'+(estimation.remisePourcent > 0 ? ' et voir si vous pouvez bénéficier de la remise' : '')+'</a>';
       disclaimer = 'Cette estimation reste indicative et sans valeur contractuelle — elle devra être confirmée par l\'artisan lors d\'un appel téléphonique. Vous recevrez ce récapitulatif par email.';
-    } else if(modeRMS){
-      // Cas non chiffrable en mode RMS (surface < 10m², terrain nu, carrelage
-      // à retirer par RMS…) : on affiche le message exact de
-      // salesflow-ecosky plutôt que le message générique, toujours routé
-      // vers la prise de rendez-vous, jamais bloqué.
+    } else if(modeRMS || modePortails){
+      // Cas non chiffrable dans un de ces deux modes (ex : surface < 10m²
+      // côté résine, type de portail sans prix de base configuré côté
+      // portails…) : on affiche le message propre à ce mode (estimation.texte)
+      // plutôt que le message générique, toujours routé vers la prise de
+      // rendez-vous, jamais bloqué.
       priceBlock =
         '<div class="result-box"><div class="result-note">'+estimation.texte+'</div></div>'+
         '<a class="btn btn-primary" style="display:block; width:100%; text-align:center; text-decoration:none; margin-top:10px; box-sizing:border-box;" href="/prendre-rdv.html?id='+encodeURIComponent(draftId)+'" target="_blank" rel="noopener">📅 Prendre rendez-vous</a>';

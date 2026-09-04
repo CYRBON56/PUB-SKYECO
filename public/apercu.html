@@ -684,6 +684,15 @@ function getStepsPortails(state){
       ["ligne_electrique","Tirage d'une ligne électrique jusqu'au portail"]] });
   s.push({ key:"details_projet", question:"Décrivez votre projet en quelques mots", type:"textarea",
     placeholder:"Ex : accès existant, portail à remplacer, contraintes particulières…", optional:true, dictable:true });
+  // Ajouté le 04/09 (Cyrille) : manquait dans ce parcours — sans cette
+  // réponse, l'estimation retombait toujours sur le taux de TVA par défaut
+  // configuré par l'artisan, au lieu du taux réellement applicable au
+  // client (10% rénovation d'un bâtiment de plus de 2 ans, 20% sinon).
+  // Même question, mêmes libellés que le parcours "resine_rms" (voir
+  // getStepsResineRMS ci-dessus) — voir calculerEstimationPortails.
+  s.push({ key:"age_batiment", question:"Le bâtiment concerné a-t-il plus de 2 ans ?", type:"choice",
+    note: "Détermine le taux de TVA applicable à votre projet.",
+    options: [["plus_2_ans","Oui, plus de 2 ans (TVA 10%)"], ["moins_2_ans","Non, moins de 2 ans (TVA 20%)"]] });
   s.push({ key:"delai", question:"Sous quel délai souhaitez-vous réaliser ce projet ?", type:"choice",
     options: Object.entries(DELAI_LABELS).map(([val,label])=>[val,label]) });
   s.push({ key:"localisation", question:"Où se situe le projet ?", type:"location" });
@@ -1706,7 +1715,13 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     Object.keys(optionsChoisies).forEach(cle => { if(optionsChoisies[cle]) ajouter(tarifs.options, cle); });
 
     totalHT = Math.round(totalHT);
-    const montantTTC = Math.round(totalHT * (1 + tvaTaux / 100));
+    // Taux de TVA réellement applicable au client (10% rénovation d'un
+    // bâtiment de plus de 2 ans, 20% sinon — voir l'étape age_batiment
+    // ajoutée le 04/09), plutôt que le taux par défaut configuré par
+    // l'artisan (tvaTaux) — celui-ci ne sert plus que de filet de sécurité
+    // si jamais cette étape n'a pas de réponse.
+    const tauxTVAApplicable = state.age_batiment === 'plus_2_ans' ? 10 : (state.age_batiment === 'moins_2_ans' ? 20 : tvaTaux);
+    const montantTTC = Math.round(totalHT * (1 + tauxTVAApplicable / 100));
 
     // Même barème de remise indicative que le reste de Skyeco Pro (voir
     // calculerEstimation) — toujours à valider par un technicien.
@@ -1722,7 +1737,7 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
       montantTTC,
       remisePourcent,
       montantApresRemise,
-      texte: 'Estimation indicative : '+totalHT+'€ HT, soit environ '+montantTTC+'€ TTC (TVA '+tvaTaux+'%) — le prix définitif sera confirmé par un technicien lors du rendez-vous (pose, accès chantier et alimentation électrique à valider sur place).',
+      texte: 'Estimation indicative : '+totalHT+'€ HT, soit environ '+montantTTC+'€ TTC (TVA '+tauxTVAApplicable+'%) — le prix définitif sera confirmé par un technicien lors du rendez-vous (pose, accès chantier et alimentation électrique à valider sur place).',
     };
   }
 
@@ -1746,6 +1761,7 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     const optionsChoisies = state.options_portail || {};
     const optionsLibelles = Object.keys(optionsChoisies).filter(cle => optionsChoisies[cle]).map(cle => PORTAILS_OPTIONS_LABELS[cle] || cle);
     if(optionsLibelles.length) recap.push({ label:'Options', valeur: optionsLibelles.join(', ') });
+    if(state.age_batiment) recap.push({ label:'Bâtiment', valeur: RESINE_RMS_LABELS.age_batiment[state.age_batiment] || state.age_batiment });
     if(state.delai && DELAI_LABELS[state.delai]) recap.push({ label:'Délai souhaité', valeur: DELAI_LABELS[state.delai] });
     const localisation = [state.ville, state.code_postal].filter(Boolean).join(' ');
     if(localisation) recap.push({ label:'Localisation', valeur: localisation });

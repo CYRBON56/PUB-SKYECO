@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prospection paysagistes — Skyeco Pro</title>
+<title>Prospection artisans — Skyeco Pro</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -29,6 +29,8 @@
   .logo{ font-family:'Big Shoulders Display',sans-serif; font-weight:900; font-size:18px; display:flex; align-items:center; gap:8px; }
   .logo .dot{ width:8px; height:8px; background:var(--orange); display:inline-block; }
   header .sub{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--blue-light); margin-top:4px; }
+  header a.back{ color:var(--blue-light); font-size:12px; text-decoration:none; margin-top:6px; display:inline-block; }
+  header a.back:hover{ color:#fff; }
 
   .wrap{ max-width:1200px; margin:0 auto; padding:24px 20px 60px; }
   .panel{ background:var(--white); border:1px solid var(--paper-line); padding:20px; margin-bottom:20px; }
@@ -36,7 +38,7 @@
   .panel .hint{ font-size:13px; color:var(--concrete); margin-bottom:14px; }
 
   .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-  input[type=text], input[type=tel], input[type=email], input[type=file], input[type=number], textarea{
+  input[type=text], input[type=tel], input[type=email], input[type=file], input[type=number], input[type=url], textarea, select{
     border:1.5px solid var(--paper-line); padding:10px 12px; font-size:13.5px; font-family:inherit; color:var(--navy); background:var(--paper);
   }
   textarea{ width:100%; min-height:90px; resize:vertical; }
@@ -52,9 +54,11 @@
   .btn-danger{ background:#fff; border-color:#c0392b; color:#c0392b; }
   .btn-danger:hover{ background:#fdecec; }
 
-  .filters{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
-  .filter-btn{ background:#fff; border:1.5px solid var(--paper-line); padding:7px 13px; font-size:12.5px; font-weight:600; cursor:pointer; }
-  .filter-btn.active{ border-color:var(--orange); background:#FDF3EF; color:var(--orange-dark); }
+  .stats{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+  .stat{ background:var(--paper); border:1px solid var(--paper-line); padding:10px 14px; min-width:110px; cursor:pointer; }
+  .stat.active{ border-color:var(--orange); background:#FDF3EF; }
+  .stat .n{ font-family:'Big Shoulders Display',sans-serif; font-weight:900; font-size:20px; color:var(--navy); }
+  .stat .l{ font-size:11px; color:var(--concrete); }
 
   .sel-row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:12px; font-size:13px; color:var(--concrete); }
 
@@ -62,15 +66,21 @@
   th{ text-align:left; font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--concrete); padding:8px 10px; border-bottom:2px solid var(--paper-line); white-space:nowrap; }
   td{ padding:9px 10px; border-bottom:1px solid var(--paper-line); vertical-align:middle; }
   tr:hover td{ background:var(--paper); }
-  .tag{ display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:10px; padding:2px 7px; border:1px solid var(--paper-line); }
-  .tag.en_attente{ border-color:var(--orange); color:var(--orange-dark); }
-  .tag.envoye_email, .tag.envoye_sms{ border-color:var(--blue); color:var(--blue); }
-  .tag.clique_actif{ border-color:var(--ok); color:var(--ok); }
-  .tag.clique_stop{ border-color:#c0392b; color:#c0392b; }
+  .tag{ display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:10px; padding:2px 7px; border:1px solid var(--paper-line); margin-right:3px; }
+  .tag.ok{ border-color:var(--ok); color:var(--ok); }
+  .tag.warn{ border-color:var(--orange); color:var(--orange-dark); }
+  .tag.stop{ border-color:#c0392b; color:#c0392b; }
+  .tag.muted{ border-color:var(--paper-line); color:var(--concrete); }
 
-  .table-wrap{ overflow-x:auto; max-height:600px; overflow-y:auto; }
+  .table-wrap{ overflow-x:auto; }
   .loading, .empty{ text-align:center; padding:40px; color:var(--concrete); font-size:13.5px; }
   .status-msg{ font-size:12.5px; margin-top:8px; }
+  .pager{ display:flex; align-items:center; gap:10px; margin-top:14px; font-size:12.5px; color:var(--concrete); }
+
+  .placeholders{ font-size:11.5px; color:var(--concrete); margin-top:6px; }
+  .placeholders code{ background:var(--paper); border:1px solid var(--paper-line); padding:1px 5px; font-family:'IBM Plex Mono',monospace; }
+
+  .result-box{ margin-top:12px; padding:12px 14px; background:var(--paper); border:1px solid var(--paper-line); font-size:13px; display:none; }
 </style>
 </head>
 <body>
@@ -86,14 +96,15 @@
 
 <header>
   <div class="logo"><span class="dot"></span>SKYECO&nbsp;PRO</div>
-  <div class="sub">PROSPECTION PAYSAGISTES</div>
+  <div class="sub">PROSPECTION ARTISANS — VENDRE L'ABONNEMENT</div>
+  <a class="back" href="/mes-artisans.html">&larr; Retour au tableau de bord</a>
 </header>
 
 <div class="wrap">
 
   <div class="panel">
     <h2>Importer une liste</h2>
-    <p class="hint">Fichier .xlsx avec les colonnes : Nom entreprise, Ville, Département, Téléphone, Email, Adresse. Les numéros déjà importés sont mis à jour, pas dupliqués.</p>
+    <p class="hint">Fichier .xlsx avec les colonnes : Nom entreprise, Métier, Ville, Département, Téléphone, Email, Adresse. Les lignes sans email ET sans téléphone sont ignorées. Un email déjà présent est mis à jour, jamais dupliqué.</p>
     <div class="row">
       <input type="file" id="fileImport" accept=".xlsx,.xls">
       <button class="btn btn-primary" id="btnImport">Importer</button>
@@ -106,6 +117,7 @@
     <p class="hint">Pour ajouter un prospect à la main, sans passer par un fichier.</p>
     <div class="row">
       <div class="field"><label>Nom entreprise</label><input type="text" id="addNom"></div>
+      <div class="field"><label>Métier</label><input type="text" id="addMetier" placeholder="ex. paysagiste, maçon, électricien"></div>
       <div class="field"><label>Ville</label><input type="text" id="addVille"></div>
       <div class="field"><label>Département</label><input type="text" id="addDept"></div>
       <div class="field"><label>Téléphone</label><input type="tel" id="addTel"></div>
@@ -117,40 +129,40 @@
   </div>
 
   <div class="panel">
-    <h2>Message de la campagne</h2>
-    <p class="hint">Utilisé pour l'envoi groupé ci-dessous. {{nom_entreprise}} et {{ville}} sont remplacés automatiquement (email uniquement).</p>
+    <h2>Envoyer le prochain lot</h2>
+    <p class="hint">Envoi progressif : chaque clic envoie uniquement le prochain lot de contacts jamais encore contactés (jamais toute la base d'un coup). Relancez plus tard pour continuer là où ça s'est arrêté.</p>
     <div class="row" style="margin-bottom:10px;">
-      <div class="field"><label>Sujet de l'email</label><input type="text" id="emailSubject" value="Ne perdez plus une demande de chantier paysager"></div>
+      <div class="field" style="max-width:140px;"><label>Taille du lot</label><input type="number" id="batchSize" value="30" min="1" max="500"></div>
+      <div class="field" style="max-width:220px;"><label>Métier (optionnel)</label><input type="text" id="batchMetier" placeholder="laisser vide = tous"></div>
+      <div class="field"><label>Sujet de l'email</label><input type="text" id="batchSubject" value="Un outil gratuit pour gérer vos annonces Google/Meta en une page"></div>
     </div>
-    <label style="font-size:11px; font-weight:700; color:var(--concrete);">Message SMS</label>
-    <textarea id="smsMessage" style="margin-top:4px; margin-bottom:10px;">Bonjour, je propose un outil gratuit pour ne plus perdre de demandes de chantier. Découvrez Skyeco Pro : https://skyeco.fr/skyeco-pro-landing-paysagiste.html — Répondez STOP pour ne plus recevoir de message.</textarea>
-    <label style="font-size:11px; font-weight:700; color:var(--concrete);">Contenu de l'email (HTML simple)</label>
-    <textarea id="emailHtml" style="margin-top:4px;">Bonjour,&lt;br&gt;&lt;br&gt;Je dirige EcoSky by RMS, une entreprise de revêtements de sol résine en Bretagne. J'ai développé un outil pour ne plus perdre une seule demande de chantier — Skyeco Pro.&lt;br&gt;&lt;br&gt;Ça peut être utile pour {{nom_entreprise}} à {{ville}} aussi.&lt;br&gt;&lt;br&gt;Découvrez-le ici : &lt;a href="https://skyeco.fr/skyeco-pro-landing-paysagiste.html"&gt;https://skyeco.fr/skyeco-pro-landing-paysagiste.html&lt;/a&gt;&lt;br&gt;&lt;br&gt;Cyrille Bon</textarea>
+    <div class="row" style="margin-bottom:10px;">
+      <div class="field"><label>Lien de destination du bouton (optionnel — vidéo de démo, page d'inscription…)</label><input type="url" id="batchVideoUrl" placeholder="https://…"></div>
+    </div>
+    <label style="font-size:11px; font-weight:700; color:var(--concrete);">Contenu de l'email (HTML)</label>
+    <textarea id="batchHtml" style="margin-top:4px;">Bonjour,&lt;br&gt;&lt;br&gt;Je dirige EcoSky by RMS, une entreprise du BTP en Bretagne. J'ai développé Skyeco Pro : un outil gratuit (juste un forfait de fonctionnement) pour gérer vos annonces Google et Meta Ads depuis une seule page, sans avoir besoin d'une agence marketing.&lt;br&gt;&lt;br&gt;4 ou 5 boutons essentiels, tout est géré, avec un support si besoin.&lt;br&gt;&lt;br&gt;Ça peut être utile pour {{nom_entreprise}} à {{ville}} aussi.&lt;br&gt;&lt;br&gt;&lt;a href="{{lien_cta}}" style="display:inline-block;background:#E8622C;color:#fff;padding:12px 22px;text-decoration:none;font-weight:700;"&gt;Voir Skyeco Pro&lt;/a&gt;&lt;br&gt;&lt;br&gt;Cyrille Bon</textarea>
+    <div class="placeholders">Disponibles dans le texte : <code>{{nom_entreprise}}</code> <code>{{ville}}</code> <code>{{metier}}</code> — et <code>{{lien_cta}}</code> obligatoire, à mettre sur le bouton/lien d'action (lien de tracking, redirige vers le champ "lien de destination" ci-dessus, ou vers la page d'inscription si vide).</div>
+    <div style="margin-top:14px;"><button class="btn btn-primary" id="btnSendBatch">Envoyer ce lot</button></div>
+    <div class="status-msg" id="batchStatus"></div>
+    <div class="result-box" id="batchResult"></div>
   </div>
 
   <div class="panel">
     <h2>Prospects</h2>
-    <p class="hint">Sélectionnez les prospects à contacter, puis envoyez le SMS ou l'email avec le lien vers Skyeco Pro.</p>
+    <p class="hint">Vue d'ensemble et recherche. Cliquez une statistique pour filtrer.</p>
 
-    <div class="filters" id="filters"></div>
+    <div class="stats" id="stats"></div>
 
     <div class="sel-row">
-      <span id="selCount">0 sélectionné(s)</span>
-      <input type="number" id="selectNInput" placeholder="N" style="width:70px;">
-      <button class="btn btn-ghost" id="btnSelectN">Sélectionner les N premiers</button>
-      <button class="btn btn-ghost" id="btnSelectAll">Tout sélectionner</button>
-      <button class="btn btn-ghost" id="btnSelectNone">Tout désélectionner</button>
+      <input type="text" id="searchNom" placeholder="Rechercher une entreprise ou une ville…" style="min-width:260px;">
+      <input type="text" id="searchMetier" placeholder="Filtrer par métier…" style="min-width:180px;">
+      <button class="btn btn-ghost" id="btnSearch">Rechercher</button>
     </div>
-    <div class="sel-row">
-      <button class="btn btn-primary" id="btnSendSms">Envoyer le SMS</button>
-      <button class="btn btn-primary" id="btnSendEmail">Envoyer par email</button>
-      <button class="btn btn-danger" id="btnDeleteSelection">Supprimer la sélection</button>
-    </div>
-    <div class="status-msg" id="bulkStatus"></div>
 
     <div class="table-wrap">
       <div id="tableContainer"><div class="loading">CHARGEMENT…</div></div>
     </div>
+    <div class="pager" id="pager"></div>
   </div>
 
 </div>
@@ -160,18 +172,23 @@
   const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const PAGE_SIZE = 100;
+  const IMPORT_CHUNK = 500;
 
-  const STATUTS = [
-    ['en_attente', 'En attente'],
-    ['envoye_email', 'Envoyé (email)'],
-    ['envoye_sms', 'Envoyé (SMS)'],
-    ['clique_actif', 'Cliqué, actif'],
-    ['clique_stop', 'Cliqué puis Stop']
+  const FILTRES = [
+    ['tous', 'Tous', {}],
+    ['a_contacter', 'À contacter', { email_envoye: false, opt_out: false, bounced: false }],
+    ['envoyes', 'Envoyés', { email_envoye: true }],
+    ['ouverts', 'Ouverts', { email_ouvert: true }],
+    ['cliques', 'Cliqués', { lien_clique: true }],
+    ['desabonnes', 'Désabonnés', { opt_out: true }],
+    ['obsoletes', 'Obsolètes', { bounced: true }],
   ];
 
   // ---------- Portail mot de passe ----------
   const gate = document.getElementById('gate');
-  if (sessionStorage.getItem('skyeco_prospection_ok') === '1') {
+  let internalPassword = sessionStorage.getItem('skyeco_prospection_pwd') || '';
+  if (sessionStorage.getItem('skyeco_prospection_ok') === '1' && internalPassword) {
     gate.style.display = 'none';
   }
   document.getElementById('gateBtn').addEventListener('click', submitGate);
@@ -186,8 +203,10 @@
       const data = await res.json();
       if(data.success){
         sessionStorage.setItem('skyeco_prospection_ok', '1');
+        sessionStorage.setItem('skyeco_prospection_pwd', pwd);
+        internalPassword = pwd;
         gate.style.display = 'none';
-        loadProspects();
+        init();
       } else {
         errEl.textContent = data.error || 'Mot de passe incorrect.';
         errEl.style.display = 'block';
@@ -199,9 +218,11 @@
   }
 
   // ---------- État ----------
-  let allProspects = [];
   let currentFilter = 'tous';
-  let selectedIds = new Set();
+  let currentPage = 0;
+  let searchNom = '';
+  let searchMetier = '';
+  let totalRows = 0;
 
   function normPhone(raw){
     if(!raw) return null;
@@ -209,6 +230,12 @@
     if(digits.startsWith('33') && digits.length===11) return '0'+digits.slice(2);
     if(digits.startsWith('0') && digits.length===10) return digits;
     return digits.length>=9 ? digits : null;
+  }
+
+  function chunk(arr, size){
+    const out = [];
+    for(let i=0;i<arr.length;i+=size) out.push(arr.slice(i, i+size));
+    return out;
   }
 
   // ---------- Import XLSX ----------
@@ -236,6 +263,7 @@
 
     const parsed = rows.map(r => ({
       nom_entreprise: String(findCol(r,'nom entreprise','entreprise','nom')).trim(),
+      metier: String(findCol(r,'métier','metier','activité','activite','profession')).trim() || null,
       ville: String(findCol(r,'ville')).trim(),
       departement: String(findCol(r,'département','departement')).trim(),
       telephone: normPhone(findCol(r,'téléphone','telephone','tel','mobile')),
@@ -245,26 +273,32 @@
 
     if(!parsed.length){ statusEl.textContent = 'Aucune ligne exploitable trouvée (il faut au moins un téléphone ou un email).'; statusEl.style.color = '#c0392b'; return; }
 
-    statusEl.textContent = 'Import de ' + parsed.length + ' contacts…';
-
-    const withPhone = parsed.filter(r => r.telephone);
-    const withoutPhone = parsed.filter(r => !r.telephone);
+    const withEmail = parsed.filter(r => r.email);
+    const withoutEmail = parsed.filter(r => !r.email && r.telephone);
+    const chunksEmail = chunk(withEmail, IMPORT_CHUNK);
+    const chunksPhone = chunk(withoutEmail, IMPORT_CHUNK);
+    let fait = 0;
+    const total = parsed.length;
 
     try{
-      if(withPhone.length){
-        const { error } = await supabaseClient.from('prospects_paysagiste').upsert(withPhone, { onConflict:'telephone' });
+      for(const c of chunksEmail){
+        const { error } = await supabaseClient.from('prospects_paysagiste').upsert(c, { onConflict:'email' });
         if(error) throw error;
+        fait += c.length;
+        statusEl.textContent = 'Import en cours… ' + fait + ' / ' + total;
       }
-      if(withoutPhone.length){
-        const { error } = await supabaseClient.from('prospects_paysagiste').insert(withoutPhone);
+      for(const c of chunksPhone){
+        const { error } = await supabaseClient.from('prospects_paysagiste').upsert(c, { onConflict:'telephone' });
         if(error) throw error;
+        fait += c.length;
+        statusEl.textContent = 'Import en cours… ' + fait + ' / ' + total;
       }
-      statusEl.textContent = '✓ ' + parsed.length + ' contacts importés/mis à jour.';
+      statusEl.textContent = '✓ ' + total + ' contacts importés/mis à jour (' + withEmail.length + ' avec email, ' + withoutEmail.length + ' avec téléphone seul).';
       statusEl.style.color = 'var(--ok)';
       fileInput.value = '';
-      loadProspects();
+      refreshAll();
     } catch(err){
-      statusEl.textContent = 'Erreur : ' + err.message;
+      statusEl.textContent = 'Erreur après ' + fait + '/' + total + ' contacts : ' + err.message;
       statusEl.style.color = '#c0392b';
     }
   });
@@ -273,6 +307,7 @@
   document.getElementById('btnAdd').addEventListener('click', async ()=>{
     const statusEl = document.getElementById('addStatus');
     const nom = document.getElementById('addNom').value.trim();
+    const metier = document.getElementById('addMetier').value.trim() || null;
     const ville = document.getElementById('addVille').value.trim();
     const departement = document.getElementById('addDept').value.trim();
     const telephone = normPhone(document.getElementById('addTel').value);
@@ -282,178 +317,159 @@
     if(!telephone && !email){ statusEl.textContent = 'Renseignez au moins un téléphone ou un email.'; statusEl.style.color = '#c0392b'; return; }
 
     const { error } = await supabaseClient.from('prospects_paysagiste')
-      .upsert([{ nom_entreprise:nom, ville, departement, telephone, email, adresse }], telephone ? { onConflict:'telephone' } : {});
+      .upsert([{ nom_entreprise:nom, metier, ville, departement, telephone, email, adresse }], email ? { onConflict:'email' } : { onConflict:'telephone' });
 
     if(error){ statusEl.textContent = 'Erreur : ' + error.message; statusEl.style.color = '#c0392b'; return; }
     statusEl.textContent = '✓ Contact ajouté.';
     statusEl.style.color = 'var(--ok)';
-    ['addNom','addVille','addDept','addTel','addEmail','addAdresse'].forEach(id => document.getElementById(id).value = '');
-    loadProspects();
+    ['addNom','addMetier','addVille','addDept','addTel','addEmail','addAdresse'].forEach(id => document.getElementById(id).value = '');
+    refreshAll();
   });
 
-  // ---------- Chargement + rendu ----------
-  async function loadProspects(){
-    document.getElementById('tableContainer').innerHTML = '<div class="loading">CHARGEMENT…</div>';
-    const { data, error } = await supabaseClient.from('prospects_paysagiste').select('*').order('created_at', { ascending:false });
-    if(error){ document.getElementById('tableContainer').innerHTML = '<div class="empty">Erreur de chargement.</div>'; return; }
-    allProspects = data || [];
-    renderFilters();
-    renderTable();
-  }
+  // ---------- Envoi du prochain lot ----------
+  document.getElementById('btnSendBatch').addEventListener('click', async () => {
+    const statusEl = document.getElementById('batchStatus');
+    const resultBox = document.getElementById('batchResult');
+    const btn = document.getElementById('btnSendBatch');
+    const batchSize = document.getElementById('batchSize').value;
+    const metier = document.getElementById('batchMetier').value.trim();
+    const subject = document.getElementById('batchSubject').value.trim();
+    const html = document.getElementById('batchHtml').value.trim();
+    const videoUrl = document.getElementById('batchVideoUrl').value.trim();
 
-  function renderFilters(){
-    const counts = { tous: allProspects.length };
-    STATUTS.forEach(([val]) => { counts[val] = allProspects.filter(p => p.statut === val).length; });
-    const options = [...STATUTS, ['tous','Tous']];
-    document.getElementById('filters').innerHTML = options.map(([val,label]) =>
-      `<button type="button" class="filter-btn${val===currentFilter?' active':''}" data-filter="${val}">${label} (${counts[val]||0})</button>`
-    ).join('');
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-      btn.addEventListener('click', () => { currentFilter = btn.dataset.filter; renderFilters(); renderTable(); });
+    if(!subject || !html){ statusEl.textContent = 'Sujet ou contenu email vide.'; statusEl.style.color = '#c0392b'; return; }
+    if(!html.includes('{{lien_cta}}')){ statusEl.textContent = 'Le contenu doit contenir {{lien_cta}} pour le bouton/lien d\'action.'; statusEl.style.color = '#c0392b'; return; }
+
+    btn.disabled = true;
+    statusEl.textContent = 'Envoi du lot en cours…';
+    statusEl.style.color = 'var(--concrete)';
+    resultBox.style.display = 'none';
+
+    try{
+      const res = await fetch('/api/prospection-send-batch', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ motDePasseInterne: internalPassword, batchSize, metier: metier || undefined, subject, html, videoUrl: videoUrl || undefined })
+      });
+      const data = await res.json();
+      if(!data.success) throw new Error(data.error || 'Erreur inconnue.');
+
+      statusEl.textContent = '';
+      resultBox.style.display = 'block';
+      resultBox.innerHTML =
+        '✓ ' + data.envoyes + ' email(s) envoyé(s)' +
+        (data.echoues ? ', ' + data.echoues + ' échec(s)' : '') +
+        (data.marquesObsoletes ? ', ' + data.marquesObsoletes + ' adresse(s) marquée(s) obsolète(s)' : '') +
+        '.<br>' +
+        (data.quotaAtteint ? '⚠️ Quota journalier Resend atteint — le reste du lot n\'a pas pu être envoyé, réessayez demain.<br>' : '') +
+        (data.restants != null ? (data.restants + ' contact(s) restant(s) pour ce filtre.') : '') +
+        (data.message ? data.message : '');
+      refreshAll();
+    } catch(err){
+      statusEl.textContent = 'Erreur : ' + err.message;
+      statusEl.style.color = '#c0392b';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  // ---------- Statistiques ----------
+  async function loadStats(){
+    const statsEl = document.getElementById('stats');
+    statsEl.innerHTML = FILTRES.map(([key,label]) => `<div class="stat${key===currentFilter?' active':''}" data-filter="${key}"><div class="n">…</div><div class="l">${label}</div></div>`).join('');
+    document.querySelectorAll('.stat').forEach(el => el.addEventListener('click', () => {
+      currentFilter = el.dataset.filter; currentPage = 0; loadStats(); loadTable();
+    }));
+
+    const counts = await Promise.all(FILTRES.map(async ([key,,eqFilters]) => {
+      let q = supabaseClient.from('prospects_paysagiste').select('id', { count:'exact', head:true });
+      Object.entries(eqFilters).forEach(([col,val]) => { q = q.eq(col, val); });
+      const { count } = await q;
+      return [key, count || 0];
+    }));
+    const map = Object.fromEntries(counts);
+    document.querySelectorAll('.stat').forEach(el => {
+      el.querySelector('.n').textContent = map[el.dataset.filter] ?? '0';
     });
   }
 
-  function getFiltered(){
-    return currentFilter === 'tous' ? allProspects : allProspects.filter(p => p.statut === currentFilter);
+  // ---------- Chargement + rendu table (paginée) ----------
+  async function loadTable(){
+    document.getElementById('tableContainer').innerHTML = '<div class="loading">CHARGEMENT…</div>';
+    const [, , eqFilters] = FILTRES.find(f => f[0] === currentFilter);
+
+    let q = supabaseClient.from('prospects_paysagiste')
+      .select('id,nom_entreprise,metier,ville,departement,telephone,email,email_envoye,email_ouvert,lien_clique,opt_out,bounced', { count:'exact' })
+      .order('created_at', { ascending:false })
+      .range(currentPage*PAGE_SIZE, currentPage*PAGE_SIZE + PAGE_SIZE - 1);
+    Object.entries(eqFilters).forEach(([col,val]) => { q = q.eq(col, val); });
+    if(searchNom) q = q.or(`nom_entreprise.ilike.%${searchNom}%,ville.ilike.%${searchNom}%`);
+    if(searchMetier) q = q.ilike('metier', `%${searchMetier}%`);
+
+    const { data, error, count } = await q;
+    if(error){ document.getElementById('tableContainer').innerHTML = '<div class="empty">Erreur de chargement : ' + error.message + '</div>'; return; }
+    totalRows = count || 0;
+    renderTable(data || []);
+    renderPager();
   }
 
-  function renderTable(){
-    const filtered = getFiltered();
-    updateSelCount();
-    if(!filtered.length){ document.getElementById('tableContainer').innerHTML = '<div class="empty">Aucun prospect pour ce filtre.</div>'; return; }
+  function badge(p){
+    if(p.opt_out) return '<span class="tag stop">Désabonné</span>';
+    if(p.bounced) return '<span class="tag muted">Obsolète</span>';
+    let out = '';
+    out += p.email_envoye ? '<span class="tag ok">Envoyé</span>' : '<span class="tag warn">À contacter</span>';
+    if(p.email_ouvert) out += '<span class="tag ok">Ouvert</span>';
+    if(p.lien_clique) out += '<span class="tag ok">Cliqué</span>';
+    return out;
+  }
 
+  function renderTable(rows){
+    if(!rows.length){ document.getElementById('tableContainer').innerHTML = '<div class="empty">Aucun prospect pour ce filtre.</div>'; return; }
     let html = '<table><thead><tr>' +
-      '<th><input type="checkbox" id="checkAllVisible"></th>' +
-      '<th>Entreprise</th><th>Ville</th><th>Dép.</th><th>Téléphone</th><th>Email</th><th>Statut</th>' +
+      '<th>Entreprise</th><th>Métier</th><th>Ville</th><th>Dép.</th><th>Téléphone</th><th>Email</th><th>Statut</th>' +
       '</tr></thead><tbody>';
-
-    filtered.forEach(p => {
-      const checked = selectedIds.has(p.id) ? 'checked' : '';
-      const statutLabel = (STATUTS.find(s=>s[0]===p.statut)||[p.statut,p.statut])[1];
+    rows.forEach(p => {
       html += `<tr>
-        <td><input type="checkbox" class="rowCheck" data-id="${p.id}" ${checked}></td>
         <td>${p.nom_entreprise || '—'}</td>
+        <td>${p.metier || '—'}</td>
         <td>${p.ville || '—'}</td>
         <td>${p.departement || '—'}</td>
         <td>${p.telephone || '—'}</td>
         <td>${p.email || '—'}</td>
-        <td><span class="tag ${p.statut}">${statutLabel}</span></td>
+        <td>${badge(p)}</td>
       </tr>`;
     });
     html += '</tbody></table>';
     document.getElementById('tableContainer').innerHTML = html;
-
-    document.querySelectorAll('.rowCheck').forEach(cb => {
-      cb.addEventListener('change', () => {
-        if(cb.checked) selectedIds.add(cb.dataset.id); else selectedIds.delete(cb.dataset.id);
-        updateSelCount();
-      });
-    });
-    document.getElementById('checkAllVisible').addEventListener('change', (e) => {
-      filtered.forEach(p => { if(e.target.checked) selectedIds.add(p.id); else selectedIds.delete(p.id); });
-      renderTable();
-    });
   }
 
-  function updateSelCount(){
-    document.getElementById('selCount').textContent = selectedIds.size + ' sélectionné(s)';
+  function renderPager(){
+    const pagerEl = document.getElementById('pager');
+    const start = totalRows ? currentPage*PAGE_SIZE + 1 : 0;
+    const end = Math.min(totalRows, currentPage*PAGE_SIZE + PAGE_SIZE);
+    pagerEl.innerHTML = `
+      <button class="btn btn-ghost" id="btnPrevPage" ${currentPage===0?'disabled':''}>&larr; Précédent</button>
+      <span>${start}–${end} sur ${totalRows}</span>
+      <button class="btn btn-ghost" id="btnNextPage" ${end>=totalRows?'disabled':''}>Suivant &rarr;</button>
+    `;
+    const prev = document.getElementById('btnPrevPage');
+    const next = document.getElementById('btnNextPage');
+    if(prev) prev.addEventListener('click', () => { if(currentPage>0){ currentPage--; loadTable(); } });
+    if(next) next.addEventListener('click', () => { if((currentPage+1)*PAGE_SIZE < totalRows){ currentPage++; loadTable(); } });
   }
 
-  document.getElementById('btnSelectAll').addEventListener('click', () => { getFiltered().forEach(p => selectedIds.add(p.id)); renderTable(); });
-  document.getElementById('btnSelectNone').addEventListener('click', () => { selectedIds.clear(); renderTable(); });
-  document.getElementById('btnSelectN').addEventListener('click', () => {
-    const n = parseInt(document.getElementById('selectNInput').value, 10);
-    if(!n || n<1) return;
-    selectedIds.clear();
-    getFiltered().slice(0, n).forEach(p => selectedIds.add(p.id));
-    renderTable();
+  document.getElementById('btnSearch').addEventListener('click', () => {
+    searchNom = document.getElementById('searchNom').value.trim();
+    searchMetier = document.getElementById('searchMetier').value.trim();
+    currentPage = 0;
+    loadTable();
   });
+  document.getElementById('searchNom').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('btnSearch').click(); });
+  document.getElementById('searchMetier').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('btnSearch').click(); });
 
-  // ---------- Suppression ----------
-  document.getElementById('btnDeleteSelection').addEventListener('click', async () => {
-    if(!selectedIds.size) return;
-    if(!confirm('Supprimer définitivement ' + selectedIds.size + ' prospect(s) ?')) return;
-    const ids = Array.from(selectedIds);
-    const { error } = await supabaseClient.from('prospects_paysagiste').delete().in('id', ids);
-    if(error){ alert('Erreur : ' + error.message); return; }
-    selectedIds.clear();
-    loadProspects();
-  });
+  function refreshAll(){ loadStats(); loadTable(); }
+  function init(){ refreshAll(); }
 
-  // ---------- Envoi SMS groupé ----------
-  document.getElementById('btnSendSms').addEventListener('click', async () => {
-    const statusEl = document.getElementById('bulkStatus');
-    if(!selectedIds.size){ statusEl.textContent = 'Sélectionnez au moins un prospect.'; statusEl.style.color = '#c0392b'; return; }
-    const message = document.getElementById('smsMessage').value.trim();
-    if(!message){ statusEl.textContent = 'Message SMS vide.'; statusEl.style.color = '#c0392b'; return; }
-
-    const prospects = allProspects.filter(p => selectedIds.has(p.id) && p.telephone);
-    if(!prospects.length){ statusEl.textContent = 'Aucun des prospects sélectionnés n\'a de téléphone.'; statusEl.style.color = '#c0392b'; return; }
-
-    statusEl.textContent = 'Envoi en cours à ' + prospects.length + ' prospect(s)…';
-    statusEl.style.color = 'var(--concrete)';
-
-    try{
-      const res = await fetch('/api/send-campaign-sms', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ prospects: prospects.map(p=>({id:p.id, telephone:p.telephone})), message })
-      });
-      const data = await res.json();
-      if(!data.success) throw new Error(data.error || 'Erreur inconnue.');
-
-      if(data.sent.length){
-        await supabaseClient.from('prospects_paysagiste')
-          .update({ statut:'envoye_sms', last_contact_at: new Date().toISOString() })
-          .in('id', data.sent);
-      }
-      statusEl.textContent = '✓ ' + data.sent.length + ' SMS envoyé(s)' + (data.failed.length ? ', ' + data.failed.length + ' échec(s)' : '') + '.';
-      statusEl.style.color = 'var(--ok)';
-      selectedIds.clear();
-      loadProspects();
-    } catch(err){
-      statusEl.textContent = 'Erreur : ' + err.message;
-      statusEl.style.color = '#c0392b';
-    }
-  });
-
-  // ---------- Envoi email groupé ----------
-  document.getElementById('btnSendEmail').addEventListener('click', async () => {
-    const statusEl = document.getElementById('bulkStatus');
-    if(!selectedIds.size){ statusEl.textContent = 'Sélectionnez au moins un prospect.'; statusEl.style.color = '#c0392b'; return; }
-    const subject = document.getElementById('emailSubject').value.trim();
-    const html = document.getElementById('emailHtml').value.trim();
-    if(!subject || !html){ statusEl.textContent = 'Sujet ou contenu email vide.'; statusEl.style.color = '#c0392b'; return; }
-
-    const prospects = allProspects.filter(p => selectedIds.has(p.id) && p.email);
-    if(!prospects.length){ statusEl.textContent = 'Aucun des prospects sélectionnés n\'a d\'email.'; statusEl.style.color = '#c0392b'; return; }
-
-    statusEl.textContent = 'Envoi en cours à ' + prospects.length + ' prospect(s)…';
-    statusEl.style.color = 'var(--concrete)';
-
-    try{
-      const res = await fetch('/api/send-campaign-email', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ prospects: prospects.map(p=>({id:p.id, email:p.email, nom_entreprise:p.nom_entreprise, ville:p.ville})), subject, html })
-      });
-      const data = await res.json();
-      if(!data.success) throw new Error(data.error || 'Erreur inconnue.');
-
-      if(data.sent.length){
-        await supabaseClient.from('prospects_paysagiste')
-          .update({ statut:'envoye_email', last_contact_at: new Date().toISOString() })
-          .in('id', data.sent);
-      }
-      statusEl.textContent = '✓ ' + data.sent.length + ' email(s) envoyé(s)' + (data.failed.length ? ', ' + data.failed.length + ' échec(s)' : '') + '.';
-      statusEl.style.color = 'var(--ok)';
-      selectedIds.clear();
-      loadProspects();
-    } catch(err){
-      statusEl.textContent = 'Erreur : ' + err.message;
-      statusEl.style.color = '#c0392b';
-    }
-  });
-
-  if (sessionStorage.getItem('skyeco_prospection_ok') === '1') loadProspects();
+  if (sessionStorage.getItem('skyeco_prospection_ok') === '1' && internalPassword) init();
 })();
 </script>
 

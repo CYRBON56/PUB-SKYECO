@@ -191,7 +191,7 @@
   </p>
   <p class="reassurance">🌿 Rien n'est chronométré, et chaque section s'enregistre à part.</p>
 
-  <a class="btn-avancement" id="btnAvancement" href="#">📊 Voir l'avancement de mon site</a>
+  <a class="btn-avancement" id="btnAvancement" href="#" target="_blank" rel="noopener">📊 Voir l'avancement de mon site</a>
 
   <div class="progress-wrap">
     <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
@@ -467,7 +467,8 @@
           <input type="checkbox" id="checkFormulairePersonnalise" style="width:auto; margin-top:3px; accent-color:#c9601f;">
           <label for="checkFormulairePersonnalise" style="margin:0; font-weight:700; color:#14312a; cursor:pointer;">
             Formulaire personnalisé
-            <span style="display:block; font-weight:400; font-size:0.82rem; color:#5b6b64; margin-top:3px;">Remplace tout ce qui précède par un parcours de questions et un calcul de prix construits sur mesure pour CETTE vitrine (ex : RMS EcoSky ou PORTALECO) — visible uniquement ici, jamais partagé avec les autres vitrines. Un formulaire personnalisé se construit avec Claude, pas depuis cette page : cette case ne fait qu'activer/désactiver celui déjà codé pour cette vitrine.</span>
+            <span style="display:block; font-weight:400; font-size:0.82rem; color:#5b6b64; margin-top:3px;">Remplace le formulaire basique (nom, prénom, email, téléphone, adresse, description du projet) par un parcours de questions et un calcul de prix construits sur mesure pour CETTE vitrine (ex : RMS EcoSky ou PORTALECO) — visible uniquement ici, jamais partagé avec les autres vitrines. Un formulaire personnalisé se construit avec Claude, pas depuis cette page : cocher cette case envoie une demande à Cyrille si rien n'est encore construit pour cette vitrine — en attendant, la vitrine continue d'afficher le formulaire basique.</span>
+            <span id="statusFormulairePersonnalise" style="display:none; margin-top:6px; font-size:0.82rem; font-weight:700; color:#1e6f4c;">✓ Demande envoyée — vous serez recontacté pour construire votre formulaire sur mesure.</span>
           </label>
         </div>
 
@@ -748,11 +749,31 @@
       // Case "Formulaire personnalisé" — active/désactive le parcours sur
       // mesure déjà codé pour CETTE vitrine (voir formulaire_personnalise_cle
       // en base + le registre PARCOURS_PERSONNALISES dans public/apercu.html,
-      // runWizard). Décochée par défaut.
+      // runWizard). Décochée par défaut. Si l'artisan la coche alors qu'aucun
+      // parcours n'est encore codé pour lui (formulaire_personnalise_cle
+      // vide — cas de tout artisan autre que Cyrille lui-même pour l'instant),
+      // ça envoie une demande de RDV à Cyrille (voir
+      // api/demander-formulaire-personnalise.js) plutôt que de ne rien faire
+      // silencieusement — sa vitrine reste sur le formulaire basique en
+      // attendant (comportement automatique côté apercu.html, rien à faire
+      // ici). Ne se redéclenche pas au rechargement de la page : seul un
+      // "change" (case cochée par l'artisan) déclenche l'envoi, jamais le
+      // simple fait que draft.formulaire_personnalise soit déjà à true.
       const checkFormulairePersonnalise = document.getElementById('checkFormulairePersonnalise');
+      const statusFormulairePersonnalise = document.getElementById('statusFormulairePersonnalise');
       checkFormulairePersonnalise.checked = draft.formulaire_personnalise === true;
       checkFormulairePersonnalise.addEventListener('change', () => {
         sauvegarderChampsImmediat({ formulaire_personnalise: checkFormulairePersonnalise.checked });
+        if (checkFormulairePersonnalise.checked && !draft.formulaire_personnalise_cle) {
+          fetch('/api/demander-formulaire-personnalise', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ draftId }),
+          }).catch(() => {});
+          statusFormulairePersonnalise.style.display = 'block';
+        } else {
+          statusFormulairePersonnalise.style.display = 'none';
+        }
       });
 
       // Grille de tarifs du configurateur Portails — visible uniquement pour
@@ -1480,28 +1501,33 @@
       });
       if (!resp.ok) throw new Error();
 
-      // Un artisan déjà publié qui vient corriger ses éléments (depuis le lien
-      // "Modifier mes éléments" du dashboard) doit revenir à son dashboard —
-      // seul un tout premier passage (status encore "preview") continue vers
-      // l'aperçu de sa vraie vitrine (apercu.html), qui enchaîne lui-même
-      // vers la démo du tableau de bord puis le choix de formule — l'artisan
-      // doit voir son site avant de décider quoi que ce soit.
-      // Un compte déjà créé (voir mon-dashboard-demo.html — la création se
-      // fait maintenant AVANT d'arriver ici) va directement au vrai tableau
-      // de bord, quel que soit le statut du brouillon. Sinon, comportement
-      // historique conservé pour les liens plus anciens.
-      const versDashboard = compteDejaExistant || draftStatutActuel === 'published' || draftStatutActuel === 'en_pause' || draftStatutActuel === 'essai';
+      // Un tout premier passage (status encore "preview", pas de compte créé)
+      // continue vers l'aperçu de sa vraie vitrine (apercu.html), qui
+      // enchaîne lui-même vers la démo du tableau de bord puis le choix de
+      // formule — l'artisan doit voir son site avant de décider quoi que ce
+      // soit. Dans tous les autres cas (compte déjà créé, artisan qui vient
+      // corriger ses éléments), on reste sur cette page après l'enregistrement
+      // plutôt que de renvoyer automatiquement au tableau de bord (04/09,
+      // demande de Cyrille) — l'artisan peut enchaîner d'autres modifications
+      // sans avoir à revenir ici à chaque fois ; le lien "Retour au tableau
+      // de bord" en haut de page reste disponible s'il veut y aller.
+      const versApercuPremierPassage = !compteDejaExistant && draftStatutActuel !== 'published' && draftStatutActuel !== 'en_pause' && draftStatutActuel !== 'essai';
       msg.className = 'save-msg ok';
-      msg.textContent = versDashboard
-        ? '✓ Tes éléments ont bien été enregistrés. On te ramène à ton tableau de bord…'
-        : '✓ Tes éléments ont bien été enregistrés. On t\'emmène voir ta vitrine…';
+      msg.textContent = versApercuPremierPassage
+        ? '✓ Tes éléments ont bien été enregistrés. On t\'emmène voir ta vitrine…'
+        : '✓ Tes éléments ont bien été enregistrés.';
       msg.style.display = 'block';
       btn.textContent = 'Enregistré ✓';
-      setTimeout(() => {
-        window.location.href = versDashboard
-          ? '/mon-dashboard.html?id=' + draftId
-          : '/apercu.html?id=' + draftId;
-      }, 1500);
+      if (versApercuPremierPassage) {
+        setTimeout(() => {
+          window.location.href = '/apercu.html?id=' + draftId;
+        }, 1500);
+      } else {
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.textContent = 'Enregistrer mes éléments';
+        }, 1500);
+      }
     } catch (e) {
       msg.className = 'save-msg err';
       msg.textContent = "Une erreur est survenue — réessaie ou contacte-nous directement.";

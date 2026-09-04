@@ -191,11 +191,7 @@
   </p>
   <p class="reassurance">🌿 Rien n'est chronométré, et chaque section s'enregistre à part.</p>
 
-  <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
-    <a class="btn-avancement" id="btnAvancement" href="#" target="_blank" rel="noopener" style="margin-bottom:0;">📊 Voir l'avancement de mon site</a>
-    <button type="button" class="btn-avancement" id="btnDemanderAide" style="margin-bottom:0; border-color:#e8622c; color:#c9601f; cursor:pointer;">🆘 Besoin d'aide pour remplir mes éléments</button>
-  </div>
-  <p id="statusDemanderAide" style="display:none; font-size:0.84rem; font-weight:600; color:#1e6f4c; margin-bottom:20px;">✓ Demande envoyée — Cyrille vous recontacte rapidement.</p>
+  <a class="btn-avancement" id="btnAvancement" href="#" target="_blank" rel="noopener">📊 Voir l'avancement de mon site</a>
 
   <div class="progress-wrap">
     <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
@@ -611,32 +607,6 @@
   } else {
     document.getElementById('btnAvancement').href = '/apercu.html?id=' + draftId;
     chargerDraftExistant();
-
-    // Bouton "🆘 Besoin d'aide pour remplir mes éléments" — envoie une
-    // demande à Cyrille (SMS+email, voir api/demander-aide-elements.js).
-    // Cliquable autant de fois que nécessaire, pas d'état "déjà demandé".
-    document.getElementById('btnDemanderAide').addEventListener('click', async () => {
-      const btn = document.getElementById('btnDemanderAide');
-      const status = document.getElementById('statusDemanderAide');
-      const texteOriginal = btn.textContent;
-      btn.disabled = true;
-      btn.textContent = 'Envoi en cours…';
-      try {
-        const resp = await fetch('/api/demander-aide-elements', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ draftId }),
-        });
-        if (!resp.ok) throw new Error();
-        status.style.display = 'block';
-        btn.textContent = '✓ Demande envoyée';
-        setTimeout(() => { btn.disabled = false; btn.textContent = texteOriginal; }, 4000);
-      } catch (e) {
-        btn.textContent = texteOriginal;
-        btn.disabled = false;
-        alert("Impossible d'envoyer la demande pour le moment — réessayez, ou contactez-nous directement.");
-      }
-    });
   }
 
   async function chargerDraftExistant() {
@@ -1212,6 +1182,166 @@
       btn.textContent = 'Enregistrer mes éléments';
     }
   });
+</script>
+<!--
+  Widget de chat Skyeco Pro — à coller juste avant </body> sur les pages
+  où on veut le chat. Inclut la saisie vocale (micro) et la lecture des
+  réponses à voix haute, via les API natives du navigateur (aucun service
+  externe, gratuit) — fonctionne sur Chrome/Edge, pas sur Safari/Firefox
+  pour la reconnaissance vocale (support partiel/absent côté navigateur).
+  Ajouté le 04/09 sur cette page (mes-elements.html) — remplace le bouton
+  "besoin d'aide" ponctuel envisagé un temps : l'artisan pose directement
+  ses questions à l'assistant plutôt que d'attendre un rappel.
+-->
+<div id="skyecoChatBubble" style="position:fixed; bottom:22px; right:22px; z-index:999; background:linear-gradient(135deg, #f0a878 0%, #e8622c 55%, #c74f20 100%); color:#fff; display:flex; align-items:center; gap:9px; padding:14px 22px 14px 18px; border-radius:999px; font-size:15px; font-weight:700; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; cursor:pointer; box-shadow:0 8px 26px rgba(232,98,44,0.4); transition:transform 0.15s ease, box-shadow 0.15s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 32px rgba(232,98,44,0.5)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 8px 26px rgba(232,98,44,0.4)';">
+  <span style="font-size:19px; line-height:1;">💬</span><span>Besoin d'aide ?</span>
+</div>
+
+<div id="skyecoChatWindow" style="display:none; position:fixed; bottom:92px; right:22px; z-index:999; width:340px; max-width:calc(100vw - 32px); height:460px; max-height:70vh; background:#fff; border-radius:16px; box-shadow:0 10px 40px rgba(0,0,0,0.25); flex-direction:column; overflow:hidden; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <div style="background:#14312a; color:#fff; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <div style="font-weight:700; font-size:0.92rem;">Skyeco Pro</div>
+      <div style="font-size:0.72rem; opacity:0.75;">Réponse en quelques secondes</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <label style="display:flex; align-items:center; gap:4px; font-size:0.68rem; opacity:0.85; cursor:pointer;">
+        <input type="checkbox" id="skyecoChatLireVoix" style="width:auto; margin:0;"> 🔊 Lire les réponses
+      </label>
+      <button id="skyecoChatClose" style="background:none; border:none; color:#fff; font-size:20px; cursor:pointer; line-height:1;">×</button>
+    </div>
+  </div>
+  <div id="skyecoChatMessages" style="flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:10px; background:#f7f5f0;"></div>
+  <div style="padding:10px; border-top:1px solid #eef1ec; display:flex; gap:8px; background:#fff;">
+    <input type="text" id="skyecoChatInput" placeholder="Pose ta question ou parle…" style="flex:1; border:1.5px solid #e0e5df; border-radius:10px; padding:9px 12px; font-size:0.86rem;">
+    <button id="skyecoChatMic" title="Parler au lieu d'écrire" style="background:#f2f4f1; color:#14312a; border:none; border-radius:10px; padding:9px 12px; font-weight:700; cursor:pointer; font-size:0.9rem;">🎤</button>
+    <button id="skyecoChatSend" style="background:#1e6f4c; color:#fff; border:none; border-radius:10px; padding:9px 14px; font-weight:700; cursor:pointer; font-size:0.86rem;">→</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  const bubble = document.getElementById('skyecoChatBubble');
+  const chatWindow = document.getElementById('skyecoChatWindow');
+  const closeBtn = document.getElementById('skyecoChatClose');
+  const messagesEl = document.getElementById('skyecoChatMessages');
+  const input = document.getElementById('skyecoChatInput');
+  const sendBtn = document.getElementById('skyecoChatSend');
+  const micBtn = document.getElementById('skyecoChatMic');
+  const lireVoixCheckbox = document.getElementById('skyecoChatLireVoix');
+
+  let historique = [];
+  let dejaOuvert = false;
+
+  function ajouterMessage(role, texte) {
+    const bulle = document.createElement('div');
+    bulle.style.cssText = role === 'user'
+      ? 'align-self:flex-end; background:#1e6f4c; color:#fff; padding:9px 13px; border-radius:14px 14px 3px 14px; font-size:0.85rem; max-width:80%; line-height:1.45;'
+      : 'align-self:flex-start; background:#fff; color:#14312a; padding:9px 13px; border-radius:14px 14px 14px 3px; font-size:0.85rem; max-width:85%; line-height:1.45; box-shadow:0 1px 3px rgba(0,0,0,0.08);';
+    bulle.textContent = texte;
+    messagesEl.appendChild(bulle);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function ouvrirChat() {
+    chatWindow.style.display = 'flex';
+    if (!dejaOuvert) {
+      dejaOuvert = true;
+      ajouterMessage('assistant', "Bonjour ! Je suis là pour répondre à tes questions sur Skyeco Pro — les formules, comment ça marche, la publicité... Qu'est-ce que tu veux savoir ?");
+    }
+  }
+
+  bubble.addEventListener('click', () => {
+    const estOuvert = chatWindow.style.display === 'flex';
+    if (estOuvert) { chatWindow.style.display = 'none'; } else { ouvrirChat(); }
+  });
+  closeBtn.addEventListener('click', () => { chatWindow.style.display = 'none'; });
+
+  // Le chat reste fermé à l'arrivée sur la page — seule la bulle (avatar)
+  // est visible ; il ne s'ouvre que si l'artisan clique dessus.
+
+  // --- Saisie vocale (reconnaissance de la parole) ---
+  const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognitionAPI) {
+    micBtn.style.display = 'none'; // navigateur non compatible (Safari/Firefox) — on masque simplement le micro
+  } else {
+    const recognition = new SpeechRecognitionAPI();
+    recognition.lang = 'fr-FR';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    let enEcoute = false;
+
+    recognition.addEventListener('result', (e) => {
+      const texte = e.results[0][0].transcript;
+      input.value = texte;
+      envoyerMessage();
+    });
+    recognition.addEventListener('end', () => {
+      enEcoute = false;
+      micBtn.textContent = '🎤';
+      micBtn.style.background = '#f2f4f1';
+    });
+    recognition.addEventListener('error', () => {
+      enEcoute = false;
+      micBtn.textContent = '🎤';
+      micBtn.style.background = '#f2f4f1';
+    });
+
+    micBtn.addEventListener('click', () => {
+      if (enEcoute) { recognition.stop(); return; }
+      enEcoute = true;
+      micBtn.textContent = '🔴';
+      micBtn.style.background = '#fdeceb';
+      recognition.start();
+    });
+  }
+
+  // --- Lecture à voix haute des réponses (synthèse vocale) ---
+  function lireAVoixHaute(texte) {
+    if (!lireVoixCheckbox.checked || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel(); // interrompt une lecture précédente si besoin
+    const utterance = new SpeechSynthesisUtterance(texte);
+    utterance.lang = 'fr-FR';
+    window.speechSynthesis.speak(utterance);
+  }
+
+  async function envoyerMessage() {
+    const texte = input.value.trim();
+    if (!texte) return;
+    ajouterMessage('user', texte);
+    historique.push({ role: 'user', content: texte });
+    input.value = '';
+    sendBtn.disabled = true;
+
+    const bulleAttente = document.createElement('div');
+    bulleAttente.id = 'skyecoChatWaiting';
+    bulleAttente.style.cssText = 'align-self:flex-start; color:#8a9891; font-size:0.8rem; padding:4px 8px;';
+    bulleAttente.textContent = '…';
+    messagesEl.appendChild(bulleAttente);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+
+    try {
+      const res = await fetch('/api/chat-skyeco', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: historique })
+      });
+      const data = await res.json();
+      document.getElementById('skyecoChatWaiting')?.remove();
+      const reponse = data.success ? data.reponse : "Désolé, je n'ai pas pu répondre — réessaie dans un instant.";
+      ajouterMessage('assistant', reponse);
+      historique.push({ role: 'assistant', content: reponse });
+      lireAVoixHaute(reponse);
+    } catch (e) {
+      document.getElementById('skyecoChatWaiting')?.remove();
+      ajouterMessage('assistant', 'Connexion impossible pour le moment — réessaie.');
+    } finally {
+      sendBtn.disabled = false;
+    }
+  }
+
+  sendBtn.addEventListener('click', envoyerMessage);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') envoyerMessage(); });
+})();
 </script>
 </body>
 </html>

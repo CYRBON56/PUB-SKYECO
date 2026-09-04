@@ -24,8 +24,15 @@
   .image-panel-media img { opacity:0; transition:opacity .8s ease-in-out; }
   .image-panel-media img.active { opacity:1; }
   .image-panel-media::before { content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(20,49,42,0.55) 0%, rgba(20,49,42,0.15) 35%, rgba(20,49,42,0.55) 100%); z-index:1; pointer-events:none; }
-  .image-panel-title { position:absolute; top:50%; left:32px; right:32px; transform:translateY(-50%); z-index:2; color:#fff; font-size:clamp(1.3rem,2.4vw,2rem); font-weight:700; line-height:1.25; text-align:center; text-shadow:0 2px 12px rgba(0,0,0,0.35); }
-  @media (max-width:800px){ .image-panel-title{ font-size:1.15rem; left:20px; right:20px; } }
+  /* Titre accroche — corrigé le 04/09 (Cyrille) : positionné directement
+     dans .image-panel (pas dans .image-panel-media) pour que "top:50%" se
+     cale sur le milieu de TOUT le panneau, donc pile sur la ligne de
+     séparation entre la vidéo (en haut) et l'aperçu au survol (en bas),
+     plutôt que centré seulement dans la moitié vidéo. Un fond semi-
+     transparent garde le texte lisible quel que soit ce qu'il y a
+     derrière (photo claire ou fond sombre de l'aperçu). */
+  .image-panel-title { position:absolute; top:50%; left:32px; right:32px; transform:translateY(-50%); z-index:5; color:#fff; font-size:clamp(1.2rem,2.2vw,1.8rem); font-weight:700; line-height:1.25; text-align:center; text-shadow:0 2px 12px rgba(0,0,0,0.35); background:rgba(15,35,29,0.72); backdrop-filter:blur(4px); padding:16px 20px; border-radius:14px; pointer-events:none; }
+  @media (max-width:800px){ .image-panel-title{ font-size:1.05rem; left:20px; right:20px; padding:10px 14px; } }
 
   /* Aperçu au survol d'une option du formulaire (ex : "OneSlide" dans le
      parcours portails) — occupe la moitié basse du panneau visuel, à côté
@@ -133,9 +140,8 @@
 <div id="appRoot" style="display:none;">
   <div class="split-layout">
     <div class="image-panel" id="heroImagePanel">
-      <div class="image-panel-media" id="heroImageMedia">
-        <div class="image-panel-title" id="heroTitle"></div>
-      </div>
+      <div class="image-panel-media" id="heroImageMedia"></div>
+      <div class="image-panel-title" id="heroTitle"></div>
       <div class="image-panel-preview" id="heroPreviewHalf">
         <div class="hover-preview-placeholder" id="heroPreviewPlaceholder">Survolez une option du formulaire pour voir à quoi ça ressemble</div>
       </div>
@@ -827,22 +833,34 @@ async function init(){
   // que l'artisan ait fourni une vidéo ou seulement des photos.
   const mediaContainer = document.getElementById('heroImageMedia');
   if(draft.video_url){
-    // Un lien YouTube/Vimeo collé dans "mes éléments" (page de destination,
-    // pas un fichier vidéo) ne peut pas être lu par une balise <video> —
-    // corrigé le 04/09 : on détecte ces liens et on les affiche via
-    // l'iframe d'intégration officielle du site, en fond muet/en boucle
+    // Un lien YouTube/Vimeo/Facebook collé dans "mes éléments" (page de
+    // destination, pas un fichier vidéo) ne peut pas être lu par une balise
+    // <video> — corrigé le 04/09 : on détecte ces liens et on les affiche
+    // via l'iframe d'intégration officielle du site, en fond muet/en boucle
     // pour rester cohérent avec un fichier uploadé directement. Un vrai
     // fichier vidéo (uploadé, donc hébergé sur Supabase) continue de passer
     // par <video>, sans changement.
     const embedYoutube = draft.video_url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
     const embedVimeo = !embedYoutube ? draft.video_url.match(/vimeo\.com\/(?:video\/)?(\d+)/) : null;
-    if(embedYoutube || embedVimeo){
+    // Facebook n'expose pas d'identifiant simple à extraire (lien de
+    // partage type facebook.com/share/v/...) : son plugin d'intégration
+    // officiel accepte directement l'URL complète en paramètre "href".
+    // Limite connue : contrairement à YouTube/Vimeo, ce plugin ne propose
+    // pas de vraie boucle automatique — la vidéo se relance simplement en
+    // muet, sans repartir toute seule à la fin. La vidéo doit aussi être
+    // partagée publiquement sur Facebook, sinon le plugin affiche une erreur.
+    const embedFacebook = (!embedYoutube && !embedVimeo && /(?:^|\.)facebook\.com\/|fb\.watch\//.test(draft.video_url)) ? draft.video_url : null;
+    if(embedYoutube || embedVimeo || embedFacebook){
       const iframe = document.createElement('iframe');
-      iframe.src = embedYoutube
-        ? 'https://www.youtube-nocookie.com/embed/' + embedYoutube[1] + '?autoplay=1&mute=1&loop=1&playlist=' + embedYoutube[1] + '&controls=0&showinfo=0&modestbranding=1&playsinline=1&rel=0'
-        : 'https://player.vimeo.com/video/' + embedVimeo[1] + '?autoplay=1&muted=1&loop=1&background=1';
+      if(embedYoutube){
+        iframe.src = 'https://www.youtube-nocookie.com/embed/' + embedYoutube[1] + '?autoplay=1&mute=1&loop=1&playlist=' + embedYoutube[1] + '&controls=0&showinfo=0&modestbranding=1&playsinline=1&rel=0';
+      } else if(embedVimeo){
+        iframe.src = 'https://player.vimeo.com/video/' + embedVimeo[1] + '?autoplay=1&muted=1&loop=1&background=1';
+      } else {
+        iframe.src = 'https://www.facebook.com/plugins/video.php?href=' + encodeURIComponent(embedFacebook) + '&show_text=false&autoplay=true&mute=1';
+      }
       iframe.setAttribute('frameborder', '0');
-      iframe.setAttribute('allow', 'autoplay; fullscreen');
+      iframe.setAttribute('allow', 'autoplay; fullscreen; encrypted-media; picture-in-picture');
       iframe.style.cssText = 'position:absolute; inset:0; width:100%; height:100%; border:0; pointer-events:none;';
       mediaContainer.insertBefore(iframe, mediaContainer.firstChild);
     } else {

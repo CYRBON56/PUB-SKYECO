@@ -431,13 +431,16 @@ const RESINE_RMS_LABELS = {
 // écran qui débouche sur une demande de devis (voir la réponse de Cyrille à
 // la question posée avant de coder ceci).
 //
-// IMPORTANT — prix non renseignés au 04/09 : tous les montants de
-// PORTAILS_TARIFS ci-dessous valent 0 (placeholders). Tant que
-// prixBaseHT.coulissant / prixBaseHT.battant ne sont pas remplis par
-// Cyrille, calculerEstimationPortails() renvoie chiffrable:false — aucun
-// prix erroné ne peut donc être affiché à un prospect réel avant que la
-// grille tarifaire soit complétée ici. Une fois les vrais tarifs saisis,
-// aucun autre changement de code n'est nécessaire.
+// IMPORTANT — 04/09 : les vrais prix ne sont plus modifiés ici dans le code.
+// Cyrille les saisit lui-même dans mes-elements.html (section "🔧 Tarifs du
+// configurateur Portails", visible pour la vitrine dont
+// formulaire_personnalise_cle === 'portails') — chaque champ s'enregistre
+// directement dans la colonne JSON portails_tarifs de la base, lue ici via
+// tarifsPortailsActuels(draftInfo). PORTAILS_TARIFS ci-dessous ne sert donc
+// plus que de valeurs par défaut (0) — un poste absent ou non encore rempli
+// en base retombe automatiquement sur 0 ici, ce qui déclenche le garde-fou
+// chiffrable:false de calculerEstimationPortails(). Aucun changement de code
+// n'est nécessaire quand un prix est modifié dans mes-elements.html.
 //
 // Largeur/hauteur : même liste de valeurs pour coulissant et battant pour
 // l'instant (simplification volontaire) — si les gammes diffèrent vraiment
@@ -483,6 +486,20 @@ const PORTAILS_OPTIONS_LABELS = {
   interphone: "Interphone", batterie: "Batterie de secours", bouton_poussoir: "Bouton poussoir",
   ligne_electrique: "Tirage d'une ligne électrique jusqu'au portail",
 };
+
+// Fusionne les tarifs saisis par Cyrille dans mes-elements.html
+// (draftInfo.portails_tarifs, colonne JSON) par-dessus les valeurs par
+// défaut de PORTAILS_TARIFS (toutes à 0) — une catégorie ou une clé absente
+// du JSON en base (ex : nouvelle option ajoutée au code mais pas encore
+// remplie) retombe simplement sur 0, sans jamais planter.
+function tarifsPortailsActuels(draftInfo){
+  const enregistres = (draftInfo && draftInfo.portails_tarifs) || {};
+  const resultat = {};
+  Object.keys(PORTAILS_TARIFS).forEach(cat => {
+    resultat[cat] = Object.assign({}, PORTAILS_TARIFS[cat], enregistres[cat]);
+  });
+  return resultat;
+}
 
 function getStepsPortails(state){
   const s = [];
@@ -913,7 +930,7 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
       html+='<div class="options" style="gap:8px;">'+
         s.options.map(([val,label])=>{
           const coche = choixActuels[val] === true;
-          const prix = (PORTAILS_TARIFS.options && PORTAILS_TARIFS.options[val]) || 0;
+          const prix = (tarifsPortailsActuels(draftInfo).options || {})[val] || 0;
           const suffixe = prix > 0 ? ' <span style="font-weight:400; color:#5b6b64;">(+'+prix+'€ HT)</span>' : '';
           return '<label style="display:flex; align-items:center; gap:10px; border:1.5px solid #d8e3de; border-radius:10px; padding:13px 16px; font-size:14.5px; cursor:pointer;">'+
             '<input type="checkbox" data-val="'+val+'" style="width:auto; flex-shrink:0;" '+(coche?'checked':'')+' />'+
@@ -1364,8 +1381,9 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
   // Cyrille, voir le commentaire au-dessus de PORTAILS_TARIFS), renvoie
   // chiffrable:false — jamais de montant à 0€ ou faux affiché au prospect.
   function calculerEstimationPortails(){
+    const tarifs = tarifsPortailsActuels(draftInfo);
     const type = state.type_portail;
-    const prixBase = PORTAILS_TARIFS.prixBaseHT[type] || 0;
+    const prixBase = tarifs.prixBaseHT[type] || 0;
     if(!prixBase){
       return {
         chiffrable: false,
@@ -1377,7 +1395,7 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     // capteurs) : tant que son prix n'est pas rempli, on ne calcule PAS un
     // montant qui "oublierait" tout le gros œuvre — on route vers un
     // technicien comme pour un prix de base manquant.
-    if(state.installation === 'installation_complete' && !PORTAILS_TARIFS.installation.installation_complete){
+    if(state.installation === 'installation_complete' && !tarifs.installation.installation_complete){
       return {
         chiffrable: false,
         texte: "L'installation complète (terrassement, raccordement électrique…) nécessite un chiffrage personnalisé — un technicien vous recontacte rapidement avec un prix précis.",
@@ -1386,14 +1404,14 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
 
     let totalHT = prixBase;
     function ajouter(table, cle){ if(table && cle && table[cle]) totalHT += table[cle]; }
-    ajouter(PORTAILS_TARIFS.installation, state.installation);
-    ajouter(PORTAILS_TARIFS.remplissage, state.remplissage);
-    ajouter(PORTAILS_TARIFS.lames, state.lames);
-    ajouter(PORTAILS_TARIFS.largeur, state.largeur);
-    ajouter(PORTAILS_TARIFS.hauteur, state.hauteur);
-    ajouter(PORTAILS_TARIFS.couleur, state.couleur);
+    ajouter(tarifs.installation, state.installation);
+    ajouter(tarifs.remplissage, state.remplissage);
+    ajouter(tarifs.lames, state.lames);
+    ajouter(tarifs.largeur, state.largeur);
+    ajouter(tarifs.hauteur, state.hauteur);
+    ajouter(tarifs.couleur, state.couleur);
     const optionsChoisies = state.options_portail || {};
-    Object.keys(optionsChoisies).forEach(cle => { if(optionsChoisies[cle]) ajouter(PORTAILS_TARIFS.options, cle); });
+    Object.keys(optionsChoisies).forEach(cle => { if(optionsChoisies[cle]) ajouter(tarifs.options, cle); });
 
     totalHT = Math.round(totalHT);
     const montantTTC = Math.round(totalHT * (1 + tvaTaux / 100));

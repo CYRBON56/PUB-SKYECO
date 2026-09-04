@@ -398,6 +398,20 @@
       <div class="estim-note">Montant maximum que Google Ads peut dépenser par jour sur votre campagne (en €). Par défaut, calculé automatiquement à partir de votre budget mensuel payé — vous pouvez le régler vous-même ici. Un montant journalier élevé épuise simplement votre solde plus vite (la diffusion se met alors en pause automatiquement, voir ci-dessus).</div>
     </div>
 
+    <div class="ads-souspanel" id="sectionPlafondCpc">
+      <h3>Combien accepter de payer par clic ?</h3>
+      <div id="plafondCpcAffichage" class="zone-affichage">
+        <span id="plafondCpcValeur">—</span>
+        <button type="button" id="btnModifierPlafondCpc" class="btn-modifier-zone">✏️ Modifier</button>
+      </div>
+      <div id="plafondCpcEdition" class="zone-edition" style="display:none;">
+        <input type="number" id="plafondCpcInput" min="0.05" step="0.05" placeholder="Ex : 1.50">
+        <button type="button" id="btnEnregistrerPlafondCpc">Enregistrer</button>
+        <button type="button" id="btnAnnulerPlafondCpc" class="btn-annuler-zone">Annuler</button>
+      </div>
+      <div class="estim-note">Prix maximum (en €) que vous acceptez de payer pour UN clic — différent du montant journalier ci-dessus, qui plafonne le total sur une journée. Sans réglage ici, Google Ads fixe lui-même son enchère pour maximiser vos clics dans votre budget.</div>
+    </div>
+
     <div class="ads-souspanel">
       <h3>✨ Quels mots-clés pour votre annonce ?</h3>
       <div class="motscles-hint">Décrivez votre métier et ce que vous voulez mettre en avant (prestations, produits, ce qui attire vos clients) — l'IA vous propose des mots-clés à cocher. Cette sélection sert de base à votre annonce et à l'estimation de clics ci-dessous.</div>
@@ -480,6 +494,12 @@
       <div class="estim-note" id="ajoutKwFeedback"></div>
     </div>
 
+    <div class="ads-souspanel" id="termesPanel" style="display:none;">
+      <h3>🔎 Ce que les internautes tapent vraiment</h3>
+      <div class="estim-note" style="margin-bottom:10px;">Différent des mots-clés ci-dessus : ce sont les recherches réelles qui ont déclenché votre annonce — un seul mot-clé peut correspondre à plusieurs formulations, parfois hors sujet.</div>
+      <div id="termesContent"><div class="loading">Chargement…</div></div>
+    </div>
+
     <div class="ads-souspanel" id="heuresPanel" style="display:none;">
       <h3>À quelle heure vos clics arrivent-ils ?</h3>
       <div class="heures-chart" id="heuresChart"></div>
@@ -496,6 +516,11 @@
       <h3>🌍 D'où viennent vos clics ?</h3>
       <div id="zonesContent"><div class="loading">Chargement…</div></div>
       <div class="estim-note" id="zonesNote"></div>
+    </div>
+
+    <div class="ads-souspanel" id="appareilsPanel" style="display:none;">
+      <h3>📱 Ordinateur, mobile ou tablette ?</h3>
+      <div id="appareilsContent"><div class="loading">Chargement…</div></div>
     </div>
 
     <div class="ads-souspanel coaching-panel" id="coachingPanel" style="display:none;">
@@ -1397,7 +1422,7 @@
     }
 
     try {
-      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,metier,zone,departement,rayon_ciblage_km,mots_cles_choisis,annonce_titres,annonce_descriptions,status,budget_journalier_manuel,tarif_prix,google_ads_ad_group_resource`, {
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,metier,zone,departement,rayon_ciblage_km,mots_cles_choisis,annonce_titres,annonce_descriptions,status,budget_journalier_manuel,plafond_cpc_manuel,tarif_prix,google_ads_ad_group_resource`, {
         headers: { apikey: SUPABASE_ANON_KEY }
       });
       const rows = await resp.json();
@@ -1407,6 +1432,7 @@
 
     initZoneCiblee(draftInfo.zone || '', draftInfo.rayon_ciblage_km || '');
     initBudgetJournalier(draftInfo.budget_journalier_manuel || null, draftInfo.tarif_prix || null);
+    initPlafondCpc(draftInfo.plafond_cpc_manuel || null);
     const motsClesApi = initMotsCles(draftInfo, rafraichirEstimationVolume);
     initAnnonce(draftInfo);
 
@@ -1450,10 +1476,14 @@
       }
 
       document.getElementById('motsClesPanel').style.display = 'block';
+      document.getElementById('termesPanel').style.display = 'block';
       document.getElementById('heuresPanel').style.display = 'block';
+      document.getElementById('appareilsPanel').style.display = 'block';
       afficherMotsCles(data.motsCles || []);
+      afficherTermesRecherche(data.termesRecherche || []);
       afficherHeures(data.clicsParHeure || [], data.heuresDePointe || []);
-      afficherCoaching(data.motsCles || [], data.heuresDePointe || []);
+      afficherAppareils(data.appareils || []);
+      afficherCoaching(data.motsCles || [], data.heuresDePointe || [], data.termesRecherche || [], data.appareils || []);
     } catch (e) {
       const vide = document.getElementById('adsSectionVide');
       vide.textContent = 'Impossible de charger le détail de la campagne pour le moment.';
@@ -1604,6 +1634,67 @@
         affichage.style.display = 'flex';
       } catch (e) {
         alert("Impossible d'enregistrer le montant journalier pour le moment — vérifiez qu'une campagne est bien active.");
+      } finally {
+        terminerSauvegarde();
+        btnEnregistrer.disabled = false;
+        btnEnregistrer.textContent = 'Enregistrer';
+      }
+    });
+  }
+
+  // (04/09) Même schéma que initBudgetJournalier ci-dessus, mais pour le
+  // plafond de CPC (prix max par clic) — demandé par Cyrille pour compléter
+  // le montant journalier : l'un plafonne le total dépensé par jour, l'autre
+  // le prix payé pour un clic pris isolément.
+  function initPlafondCpc(plafondActuel) {
+    let plafond = plafondActuel;
+
+    const affichage = document.getElementById('plafondCpcAffichage');
+    const edition = document.getElementById('plafondCpcEdition');
+    const valeurEl = document.getElementById('plafondCpcValeur');
+    const input = document.getElementById('plafondCpcInput');
+    const btnModifier = document.getElementById('btnModifierPlafondCpc');
+    const btnEnregistrer = document.getElementById('btnEnregistrerPlafondCpc');
+    const btnAnnuler = document.getElementById('btnAnnulerPlafondCpc');
+
+    function rafraichirAffichage() {
+      valeurEl.textContent = plafond ? `${plafond} € max par clic` : "Non plafonné — Google Ads règle lui-même l'enchère";
+    }
+    rafraichirAffichage();
+
+    btnModifier.addEventListener('click', () => {
+      input.value = plafond || '';
+      affichage.style.display = 'none';
+      edition.style.display = 'flex';
+      input.focus();
+    });
+
+    btnAnnuler.addEventListener('click', () => {
+      edition.style.display = 'none';
+      affichage.style.display = 'flex';
+    });
+
+    btnEnregistrer.addEventListener('click', async () => {
+      if (bloquerSiEssaiExpire()) return;
+      const nouveauMontant = parseFloat(input.value);
+      if (!nouveauMontant || nouveauMontant <= 0) return;
+      btnEnregistrer.disabled = true;
+      btnEnregistrer.textContent = '…';
+      demarrerSauvegarde();
+      try {
+        const resp = await fetch('/api/definir-plafond-cpc', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId, plafondCpc: nouveauMontant }),
+        });
+        const data = await resp.json();
+        if (!resp.ok || !data.success) throw new Error(data.error || '');
+        plafond = nouveauMontant;
+        rafraichirAffichage();
+        edition.style.display = 'none';
+        affichage.style.display = 'flex';
+      } catch (e) {
+        alert("Impossible d'enregistrer le plafond de CPC pour le moment — vérifiez qu'une campagne est bien active.");
       } finally {
         terminerSauvegarde();
         btnEnregistrer.disabled = false;
@@ -2081,12 +2172,97 @@
           const data = await res.json();
           if (data.success && data.campagneExiste) {
             afficherMotsCles(data.motsCles || []);
+            afficherTermesRecherche(data.termesRecherche || []);
             afficherHeures(data.clicsParHeure || [], data.heuresDePointe || []);
-            afficherCoaching(data.motsCles || [], data.heuresDePointe || []);
+            afficherAppareils(data.appareils || []);
+            afficherCoaching(data.motsCles || [], data.heuresDePointe || [], data.termesRecherche || [], data.appareils || []);
           }
         } catch (e) { /* silencieux */ }
       });
     }
+  }
+
+  // (04/09) Rapport des VRAIS termes de recherche (search_term_view) — même
+  // logique visuelle que le tableau des mots-clés ci-dessus, mais on exclut
+  // toujours en EXACT (et non le type choisi dans le formulaire d'ajout de
+  // mots-clés) : on veut bloquer précisément CETTE recherche-là, pas toutes
+  // les recherches qui la contiennent.
+  function afficherTermesRecherche(termes) {
+    const content = document.getElementById('termesContent');
+    if (!termes.length) {
+      content.innerHTML = '<div class="empty-msg" style="padding:12px 0;">Pas encore assez de clics pour voir les termes de recherche réels.</div>';
+      return;
+    }
+    const maxClics = Math.max(...termes.map(t => t.clics));
+    content.innerHTML = `
+      <table class="kw-table">
+        <thead><tr><th>Recherche tapée</th><th>Clics</th><th>Coût</th><th>CPC moyen</th><th></th></tr></thead>
+        <tbody>
+          ${termes.map(t => `
+            <tr>
+              <td><span class="kw-pertinence ${pertinenceClasse(t.clics, maxClics)}"></span>${t.texte}${t.statut === 'EXCLUDED' ? ' <span class="kw-negatif">(exclu)</span>' : ''}</td>
+              <td>${t.clics}</td>
+              <td>${t.coutEuros} €</td>
+              <td>${t.cpcMoyenEuros != null ? t.cpcMoyenEuros + ' €' : '—'}</td>
+              <td>${t.statut !== 'EXCLUDED' ? `<button class="btn-exclure-kw" data-texte="${t.texte.replace(/"/g, '&quot;')}" onclick="exclureTermeRecherche(this)">🚫 Exclure</button>` : '—'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  window.exclureTermeRecherche = async function(btn) {
+    const texte = btn.dataset.texte;
+    if (!confirm(`Exclure la recherche "${texte}" ? Vos annonces ne se déclencheront plus pour cette recherche précise.`)) return;
+    btn.disabled = true;
+    btn.textContent = '…';
+    try {
+      const res = await fetch('/api/manage-keywords', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, action: 'exclude', texte, matchType: 'EXACT' })
+      });
+      const data = await res.json();
+      if (data.success) {
+        btn.closest('tr').querySelector('td').insertAdjacentHTML('beforeend', ' <span class="kw-negatif">(exclu)</span>');
+        btn.replaceWith(document.createTextNode('—'));
+      } else {
+        alert(data.error || "Erreur lors de l'exclusion.");
+        btn.disabled = false;
+        btn.textContent = '🚫 Exclure';
+      }
+    } catch (e) {
+      alert('Impossible de contacter le serveur.');
+      btn.disabled = false;
+      btn.textContent = '🚫 Exclure';
+    }
+  };
+
+  // (04/09) Répartition par type d'appareil — même style de barres que le
+  // panneau "D'où viennent vos clics ?" (zone-ligne/zone-barre), lecture
+  // seule (aucun réglage par appareil n'est exposé par Windsor.ai pour
+  // Google Ads — l'artisan peut seulement s'en servir pour se rassurer ou
+  // repérer une anomalie, pas pour cibler un appareil en particulier).
+  function afficherAppareils(appareils) {
+    const content = document.getElementById('appareilsContent');
+    if (!appareils.length) {
+      content.innerHTML = '<div class="empty-msg" style="padding:12px 0;">Pas encore assez de clics pour cette répartition.</div>';
+      return;
+    }
+    const maxClics = Math.max(...appareils.map(a => a.clics));
+    const LABELS = { MOBILE: '📱 Mobile', DESKTOP: '💻 Ordinateur', TABLET: '📟 Tablette', CONNECTED_TV: '📺 TV connectée', OTHER: 'Autre' };
+    content.innerHTML = `
+      <div class="zones-liste">
+        ${appareils.map(a => `
+          <div class="zone-ligne">
+            <div class="zone-nom">${LABELS[a.type] || a.type}</div>
+            <div class="zone-barre-track"><div class="zone-barre-fill" style="width:${Math.max(4, Math.round((a.clics / maxClics) * 100))}%;"></div></div>
+            <div class="zone-clics">${a.clics} (${a.partPourcent}%)</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
   }
 
   function afficherHeures(clicsParHeure, heuresDePointe) {
@@ -2159,7 +2335,7 @@
     }
   });
 
-  function afficherCoaching(motsCles, heuresDePointe) {
+  function afficherCoaching(motsCles, heuresDePointe, termesRecherche, appareils) {
     const panel = document.getElementById('coachingPanel');
     const liste = document.getElementById('coachingListe');
     const conseils = [];
@@ -2190,6 +2366,42 @@
     if (heuresDePointe.length) {
       const heuresTxt = heuresDePointe.map(h => h + 'h').join(', ');
       conseils.push({ texte: `Vos prospects cliquent surtout vers <strong>${heuresTxt}</strong> — c'est le bon moment pour être joignable au téléphone et répondre vite aux demandes.` });
+    }
+
+    // (04/09) Termes de recherche réels coûteux et peu rentables — même
+    // logique que pour les mots-clés ci-dessus, mais sur les VRAIES
+    // recherches (peut révéler un hors-sujet qu'aucun mot-clé n'indique,
+    // ex : "location résine" alors qu'on ne fait que la pose).
+    const termesActifs = (termesRecherche || []).filter(t => t.statut !== 'EXCLUDED');
+    if (termesActifs.length) {
+      const maxClicsTermes = Math.max(...termesActifs.map(t => t.clics), 1);
+      const termesFaibles = termesActifs.filter(t => (t.clics / maxClicsTermes) < 0.15 && t.coutEuros > 0).slice(0, 3);
+      if (termesFaibles.length) {
+        const noms = termesFaibles.map(t => `<strong>${t.texte}</strong>`).join(', ');
+        conseils.push({ texte: `Ces recherches réelles coûtent du budget sans beaucoup de clics : ${noms} — regardez si elles correspondent vraiment à votre activité avant de les exclure.`, alerte: true });
+      }
+    }
+
+    // (04/09) Répartition par appareil — signal utile si un appareil
+    // concentre l'essentiel du coût avec un CPC moyen nettement plus élevé
+    // que les autres (souvent le cas sur tablette, moins bien optimisée par
+    // les enchères automatiques de Google).
+    if (appareils && appareils.length > 1) {
+      const totalClicsAppareils = appareils.reduce((s, a) => s + a.clics, 0);
+      if (totalClicsAppareils > 0) {
+        const principal = appareils.slice().sort((a, b) => b.clics - a.clics)[0];
+        const LABELS_COACHING = { MOBILE: 'mobile', DESKTOP: 'ordinateur', TABLET: 'tablette', CONNECTED_TV: 'TV connectée' };
+        conseils.push({ texte: `${principal.partPourcent}% de vos clics viennent du <strong>${LABELS_COACHING[principal.type] || principal.type}</strong> — vérifiez que votre site s'affiche bien sur cet appareil en particulier.` });
+
+        const cpcMoyens = appareils.filter(a => a.cpcMoyenEuros != null && a.clics >= 3);
+        if (cpcMoyens.length > 1) {
+          const pireCpc = cpcMoyens.slice().sort((a, b) => b.cpcMoyenEuros - a.cpcMoyenEuros)[0];
+          const meilleurCpc = cpcMoyens.slice().sort((a, b) => a.cpcMoyenEuros - b.cpcMoyenEuros)[0];
+          if (pireCpc.type !== meilleurCpc.type && pireCpc.cpcMoyenEuros > meilleurCpc.cpcMoyenEuros * 1.4) {
+            conseils.push({ texte: `Vos clics coûtent nettement plus cher sur <strong>${LABELS_COACHING[pireCpc.type] || pireCpc.type}</strong> (${pireCpc.cpcMoyenEuros} €) que sur <strong>${LABELS_COACHING[meilleurCpc.type] || meilleurCpc.type}</strong> (${meilleurCpc.cpcMoyenEuros} €) — un plafond de CPC (ci-dessus) peut aider à limiter ce déséquilibre.` });
+          }
+        }
+      }
     }
 
     liste.innerHTML = conseils.map(c => `<li${c.alerte ? ' class="alerte"' : ''}>${c.texte}</li>`).join('');

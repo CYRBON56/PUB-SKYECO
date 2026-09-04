@@ -345,9 +345,11 @@ function pushQuantiteEtSuite(s, state){
 }
 
 // ---------------------------------------------------------------------------
-// Mode spécial "Calcul résine RMS EcoSky" (colonne mode_calcul_resine_rms,
-// case à cocher dans mes-elements.html) — cas particulier codé en dur,
-// réservé à la vitrine Skyeco Pro de RMS EcoSky elle-même. Remplace tout le
+// Formulaire personnalisé "resine_rms" (activé via la case "Formulaire
+// personnalisé" dans mes-elements.html + formulaire_personnalise_cle =
+// "resine_rms" en base — voir le registre PARCOURS_PERSONNALISES dans
+// runWizard) — cas particulier codé en dur, réservé à la vitrine Skyeco Pro
+// de RMS EcoSky elle-même. Remplace tout le
 // parcours générique ci-dessus (métier + produits_chiffrables + IA) par le
 // même parcours de questions que salesflow-ecosky/public/estimation.html,
 // pour un résultat identique à celui déjà en place sur le site SalesFlow de
@@ -414,10 +416,10 @@ const RESINE_RMS_LABELS = {
 };
 
 // ---------------------------------------------------------------------------
-// Mode spécial "Configurateur portails" (colonne mode_calcul_portails, case
-// à cocher dans mes-elements.html) — même principe que le mode "Calcul
-// résine RMS EcoSky" ci-dessus : un parcours codé en dur, réservé pour
-// l'instant à la vitrine PORTALECO. Demandé par Cyrille le 04/09 après avoir
+// Formulaire personnalisé "portails" (voir PARCOURS_PERSONNALISES dans
+// runWizard) — même principe que le formulaire "resine_rms" ci-dessus : un
+// parcours codé en dur, réservé pour l'instant à la vitrine PORTALECO.
+// Demandé par Cyrille le 04/09 après avoir
 // envoyé des captures d'écran du configurateur d'un fournisseur (portail
 // ONESLIDE) : remplissage, lames, largeur, hauteur, couleur, digicode,
 // visiophone/interphone, batterie, bouton poussoir, chacun avec un supplément
@@ -784,16 +786,37 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
   const state = { step:0 };
   const cardEl = document.getElementById('card');
   const progressEl = document.getElementById('progress');
+
+  // ---------------------------------------------------------------------
+  // Formulaires personnalisés (colonnes formulaire_personnalise +
+  // formulaire_personnalise_cle) — demandé par Cyrille le 04/09 pour ne
+  // plus avoir à créer une nouvelle case à cocher ET une nouvelle colonne
+  // Supabase à chaque fois qu'un artisan a besoin d'un parcours sur mesure
+  // (jusqu'ici : mode_calcul_resine_rms pour RMS EcoSky, mode_calcul_portails
+  // pour PORTALECO — deux mécanismes séparés qui ne passaient pas à
+  // l'échelle). Désormais UNE seule case "Formulaire personnalisé" dans
+  // mes-elements.html ; laquelle des versions codées en dur s'affiche
+  // dépend de formulaire_personnalise_cle (texte, jamais exposé dans
+  // l'interface — posé directement en base par Claude au moment de coder le
+  // parcours sur mesure de CET artisan précis). Ajouter un futur parcours
+  // sur mesure pour un autre artisan ne demande donc plus de nouvelle
+  // colonne : juste une nouvelle entrée ici, et poser sa clé sur son
+  // brouillon.
+  const PARCOURS_PERSONNALISES = {
+    resine_rms: { getSteps: getStepsResineRMS, calculer: () => calculerEstimationResineRMS(), recap: (estimation) => construireRecapResineRMS(estimation) },
+    portails: { getSteps: getStepsPortails, calculer: () => calculerEstimationPortails(), recap: (estimation) => construireRecapPortails(estimation) },
+  };
+  function parcoursPersonnaliseActuel(){
+    if(!draftInfo || draftInfo.formulaire_personnalise !== true) return null;
+    return PARCOURS_PERSONNALISES[draftInfo.formulaire_personnalise_cle] || null;
+  }
+
   function getSteps(){
-    // Mode "Calcul résine RMS EcoSky" (voir getStepsResineRMS) : remplace
-    // entièrement le parcours du métier par le parcours codé en dur de
-    // salesflow-ecosky, activé uniquement via la case dédiée dans
-    // mes-elements.html (mode_calcul_resine_rms).
-    const steps = (draftInfo && draftInfo.mode_calcul_resine_rms === true)
-      ? getStepsResineRMS(state)
-      : (draftInfo && draftInfo.mode_calcul_portails === true)
-        ? getStepsPortails(state)
-        : template.getSteps(state);
+    // Formulaire personnalisé (voir ci-dessus) : remplace entièrement le
+    // parcours du métier par le parcours codé en dur correspondant à
+    // formulaire_personnalise_cle.
+    const parcours = parcoursPersonnaliseActuel();
+    const steps = parcours ? parcours.getSteps(state) : template.getSteps(state);
     // Surcharges de texte des questions générales par métier — configurées
     // par l'artisan dans mes-elements.html (jsonb {clé: nouveau texte}).
     // Ne change jamais la clé/le type/les options, seulement le libellé
@@ -1140,15 +1163,12 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
   // produits chiffrables configurés par l'artisan lui-même dans
   // mes-elements.html (prix, unité, minimum).
   function calculerEstimation(){
-    // Mode "Calcul résine RMS EcoSky" : calcul entièrement différent, voir
-    // calculerEstimationResineRMS ci-dessous (port exact de
+    // Formulaire personnalisé (voir parcoursPersonnaliseActuel ci-dessus) :
+    // calcul entièrement différent, propre au parcours codé en dur de CET
+    // artisan (ex : calculerEstimationResineRMS, port exact de
     // salesflow-ecosky/api/submit-estimation.js).
-    if(draftInfo && draftInfo.mode_calcul_resine_rms === true){
-      return calculerEstimationResineRMS();
-    }
-    if(draftInfo && draftInfo.mode_calcul_portails === true){
-      return calculerEstimationPortails();
-    }
+    const parcours = parcoursPersonnaliseActuel();
+    if(parcours) return parcours.calculer();
     const produit = state.produitChoisi;
     if(!produit) return { chiffrable:false };
 
@@ -1457,10 +1477,9 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     // montant sec — voir sa gestion du champ optionnel "recap". Même
     // fonction que celle utilisée pour l'affichage prospect en mode "devis
     // détaillé" (voir construireRecap, renderResultat).
-    const modeRMS = draftInfo && draftInfo.mode_calcul_resine_rms === true;
-    const modePortails = draftInfo && draftInfo.mode_calcul_portails === true;
+    const parcours = parcoursPersonnaliseActuel();
     const recap = estimation.chiffrable
-      ? (modeRMS ? construireRecapResineRMS(estimation) : (modePortails ? construireRecapPortails(estimation) : construireRecap(estimation)))
+      ? (parcours ? parcours.recap(estimation) : construireRecap(estimation))
       : null;
     // Phrase de calcul façon devis (voir construirePhraseEstimation /
     // calculerEstimationResineRMS / calculerEstimationPortails) — transmise à
@@ -1469,7 +1488,7 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     // accusé de réception générique. Même logique que ce que fait déjà
     // salesflow-ecosky pour RMS EcoSky.
     const estimationTexte = estimation.chiffrable
-      ? ((modeRMS || modePortails) ? estimation.texte : construirePhraseEstimation(estimation))
+      ? (parcours ? estimation.texte : construirePhraseEstimation(estimation))
       : null;
 
     let error = null;
@@ -1513,20 +1532,17 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     // mes-elements.html (case "Présenter le résultat façon devis détaillé",
     // colonne mode_devis_detaille). Désactivé par défaut : sans cette case
     // cochée, le comportement reste le montant unique ci-dessous, inchangé.
-    const modeRMS = draftInfo && draftInfo.mode_calcul_resine_rms === true;
-    const modePortails = draftInfo && draftInfo.mode_calcul_portails === true;
-    // Les deux modes codés en dur (résine RMS EcoSky, configurateur
-    // portails) partagent la même présentation de résultat — seul le
-    // constructeur de récapitulatif diffère (voir construireRecapResineRMS /
-    // construireRecapPortails).
-    const recapBuilderModeSpecial = modeRMS ? construireRecapResineRMS : (modePortails ? construireRecapPortails : null);
-    const modeDevisDetaille = !modeRMS && !modePortails && estimation.chiffrable && draftInfo && draftInfo.mode_devis_detaille === true;
-    if((modeRMS || modePortails) && estimation.chiffrable){
-      // Résultat des modes "Calcul résine RMS EcoSky" / "Configurateur
-      // portails" — même présentation que le mode "devis détaillé" générique
-      // ci-dessous, mais avec la phrase et les champs propres à chaque
-      // parcours codé en dur (voir recapBuilderModeSpecial ci-dessus).
-      const detailsRecap = recapBuilderModeSpecial(estimation).filter(l => l.label !== 'Montant estimé');
+    // Formulaire personnalisé (voir parcoursPersonnaliseActuel en haut de
+    // runWizard) : tous les parcours sur mesure partagent la même
+    // présentation de résultat — seul le constructeur de récapitulatif
+    // diffère (parcours.recap).
+    const parcours = parcoursPersonnaliseActuel();
+    const modeDevisDetaille = !parcours && estimation.chiffrable && draftInfo && draftInfo.mode_devis_detaille === true;
+    if(parcours && estimation.chiffrable){
+      // Résultat d'un formulaire personnalisé — même présentation que le
+      // mode "devis détaillé" générique ci-dessous, mais avec la phrase et
+      // les champs propres à CE parcours sur mesure (voir parcours.recap).
+      const detailsRecap = parcours.recap(estimation).filter(l => l.label !== 'Montant estimé');
       priceBlock =
         '<div class="result-box">'+
           '<div class="result-note">Estimation indicative</div>'+
@@ -1545,12 +1561,12 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
           '</div>' : '')+
         '<a class="btn btn-primary" style="display:block; width:100%; text-align:center; text-decoration:none; margin-top:10px; box-sizing:border-box;" href="/prendre-rdv.html?id='+encodeURIComponent(draftId)+'" target="_blank" rel="noopener">📅 Prendre rendez-vous à un horaire précis — pour connaître précisément ce qui est réellement inclus'+(estimation.remisePourcent > 0 ? ' et voir si vous pouvez bénéficier de la remise' : '')+'</a>';
       disclaimer = 'Cette estimation reste indicative et sans valeur contractuelle — elle devra être confirmée par l\'artisan lors d\'un appel téléphonique. Vous recevrez ce récapitulatif par email.';
-    } else if(modeRMS || modePortails){
-      // Cas non chiffrable dans un de ces deux modes (ex : surface < 10m²
-      // côté résine, type de portail sans prix de base configuré côté
-      // portails…) : on affiche le message propre à ce mode (estimation.texte)
-      // plutôt que le message générique, toujours routé vers la prise de
-      // rendez-vous, jamais bloqué.
+    } else if(parcours){
+      // Cas non chiffrable dans un formulaire personnalisé (ex : surface <
+      // 10m² côté résine, type de portail sans prix de base configuré côté
+      // portails…) : on affiche le message propre à ce parcours
+      // (estimation.texte) plutôt que le message générique, toujours routé
+      // vers la prise de rendez-vous, jamais bloqué.
       priceBlock =
         '<div class="result-box"><div class="result-note">'+estimation.texte+'</div></div>'+
         '<a class="btn btn-primary" style="display:block; width:100%; text-align:center; text-decoration:none; margin-top:10px; box-sizing:border-box;" href="/prendre-rdv.html?id='+encodeURIComponent(draftId)+'" target="_blank" rel="noopener">📅 Prendre rendez-vous</a>';

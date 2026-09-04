@@ -37,11 +37,22 @@
 
   .solde-box { background:#fff; border:2px solid #1e6f4c; border-radius:14px; padding:22px; margin-bottom:28px; }
   .btn-pause-diffusion {
-    background:#f2f4f1; color:#14312a; border:1.5px solid #d7dedb; border-radius:10px;
-    padding:9px 16px; font-size:0.82rem; font-weight:700; cursor:pointer; margin-top:14px;
+    display:inline-flex; align-items:center; gap:10px;
+    background:linear-gradient(120deg, #f0a878, #e8622c 55%, #c74f20);
+    color:#fff; border:none; border-radius:14px;
+    padding:17px 32px; font-size:1.05rem; font-weight:800; letter-spacing:0.01em;
+    cursor:pointer; margin-top:16px;
+    box-shadow:0 10px 24px rgba(199,79,32,0.32);
+    transition:transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
   }
-  .btn-pause-diffusion.actif-pause { background:#fdf1ea; border-color:#e8622c; color:#e8622c; }
-  .btn-pause-diffusion:disabled { opacity:0.5; cursor:not-allowed; }
+  .btn-pause-diffusion:hover { transform:translateY(-2px); filter:brightness(1.05); box-shadow:0 14px 30px rgba(199,79,32,0.4); }
+  .btn-pause-diffusion:active { transform:translateY(0); }
+  .btn-pause-diffusion.actif-pause {
+    background:linear-gradient(120deg, #4a9d78, #1e6f4c 60%, #14513a);
+    box-shadow:0 10px 24px rgba(30,111,76,0.32);
+  }
+  .btn-pause-diffusion.actif-pause:hover { box-shadow:0 14px 30px rgba(30,111,76,0.4); }
+  .btn-pause-diffusion:disabled { opacity:0.5; cursor:not-allowed; transform:none; box-shadow:none; filter:none; }
   .pause-note { font-size:0.76rem; color:#8a9891; margin-top:6px; }
   .solde-box h3 { font-size:0.95rem; margin-bottom:14px; }
   .solde-bar-track { background:#eef1f0; border-radius:8px; height:12px; overflow:hidden; margin-bottom:10px; }

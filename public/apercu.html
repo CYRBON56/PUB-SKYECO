@@ -58,14 +58,34 @@
   .split-layout.formulaire-droite .form-panel { order:2; }
   .form-bg-overlay { position:absolute; inset:0; z-index:-1; background:rgba(246,244,239,0.55); }
   .form-bg-carousel { position:absolute; inset:0; z-index:-2; overflow:hidden; }
-  .form-bg-carousel img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 1.2s ease-in-out; }
+  /* Flou ajouté le 04/09 (Cyrille) : ce fond photo derrière le texte du
+     formulaire est purement décoratif (le voile clair par-dessus le rend
+     déjà peu lisible), donc son cadrage exact importe peu — mais sans flou,
+     un recadrage serré (object-fit:cover, inévitable vu le format tout en
+     hauteur de ce panneau) pouvait donner l'impression que la photo "ne
+     prenait pas bien son cadre". Le flou gomme ce problème de cadrage et
+     rend le fond plus discret ; scale(1.1) évite un liseré flou/transparent
+     sur les bords, qui apparaîtrait sinon à cause du flou lui-même. */
+  .form-bg-carousel img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 1.2s ease-in-out; filter:blur(14px); transform:scale(1.1); }
   .form-bg-carousel img.active { opacity:1; }
   @media (max-width:800px){ .split-layout{ flex-direction:column; height:100vh; overflow:hidden; } .image-panel{ flex:0 0 110px; } .form-panel{ padding:12px 16px; } }
   @media (max-width:480px){ .image-panel{ flex:0 0 64px; } .form-panel{ padding:10px 14px; } .header-block{ padding:10px 14px; margin-bottom:10px; } h1{ font-size:19px; margin:4px 0 6px; } .eyebrow{ font-size:11px; } .sub{ font-size:14px; margin-bottom:0; line-height:1.45; } .card{ padding:16px; } .question{ font-size:17px; margin-bottom:14px; line-height:1.35; } .option{ padding:14px 16px; font-size:15.5px; } .progress{ margin-bottom:12px; } input[type="text"],input[type="tel"],input[type="email"],input[type="number"]{ font-size:16px; padding:13px 14px; margin-bottom:10px; } label.field-label{ font-size:14px; } .nav-row{ flex-wrap:wrap; margin-top:16px; } button.btn{ font-size:15px; padding:13px 16px; } .btn-primary{ flex:1 1 100%; order:1; } .btn-ghost{ order:2; padding:8px 0; font-size:14px; } .trust-footer{ margin-top:10px; padding-top:10px; } .trust-badges-row{ display:none !important; } }
 
   .wrap { max-width:480px; width:100%; height:100%; margin:0; padding:0; display:flex; flex-direction:column; }
   .middle-scroll { flex:1 1 auto; overflow-y:auto; min-height:0; padding-right:2px; }
-  .header-block { margin-bottom:12px; background:rgba(255,255,255,0.7); border-radius:14px; padding:12px 16px; flex-shrink:0; }
+  .header-block { margin-bottom:12px; background:rgba(255,255,255,0.7); border-radius:14px; padding:12px 16px; flex-shrink:0; transition:padding .2s ease-in-out; }
+  /* Mode compact — ajouté le 04/09 (Cyrille) : une fois la première
+     question passée, le gros bandeau d'intro (logo, accroche, texte de
+     présentation, badge catalogue) prend trop de place et oblige à faire
+     défiler pour voir toute la question suivante. Une fois lancé dans le
+     parcours (state.step > 0, voir renderStep), on masque ce qui n'est
+     utile qu'à l'arrivée et on resserre le bandeau, pour laisser un
+     maximum de place à la question + ses réponses. */
+  .header-block.compact { padding:8px 16px; margin-bottom:8px; }
+  .header-block.compact #logoArtisan, .header-block.compact .sub, .header-block.compact #catalogueBadge, .header-block.compact #delaiBadge { display:none !important; }
+  .header-block.compact h1 { font-size:16px; margin:2px 0; }
+  .header-block.compact .eyebrow { font-size:10.5px; }
+  #miniBadges.compact { display:none !important; }
   .eyebrow { font-size:12px; font-weight:700; letter-spacing:1px; color:var(--brand,#1e6f4c); text-transform:uppercase; }
   h1 { font-size:22px; margin:6px 0 8px; }
   .sub { font-size:14px; color:#5b6b64; margin:0 0 24px; line-height:1.5; }
@@ -76,6 +96,13 @@
   .step-label { font-size:12px; color:#8a9490; margin-bottom:6px; }
   .question { font-size:16px; font-weight:600; margin:0 0 16px; line-height:1.4; }
   .options { display:flex; flex-direction:column; gap:10px; }
+  /* Grille compacte — ajoutée le 04/09 (Cyrille) : certaines étapes ont
+     beaucoup d'options courtes (ex : les ~20 coloris RAL) et en liste sur
+     une seule colonne, ça oblige à faire défiler pour tout voir. Réservée
+     aux steps qui le demandent explicitement (voir s.grille dans
+     getStepsPortails) — les autres gardent la liste verticale, mieux
+     adaptée aux libellés longs. */
+  .options.grid-2col { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); }
   .option { border:1.5px solid #d8e3de; border-radius:10px; padding:13px 16px; font-size:14.5px; cursor:pointer; background:white; transition:border-color .15s, background .15s; }
   .option:hover { border-color:var(--brand,#1e6f4c); }
   .option.selected { border-color:var(--brand,#1e6f4c); background:var(--brand-tint,#eaf4ef); font-weight:600; }
@@ -655,27 +682,31 @@ function getStepsPortails(state){
   if(state.remplissage === "laserline_vertical"){
     s.push({ key:"motif_laserline", question:"Quel motif laser souhaitez-vous ?", type:"choice",
       note: "Un plexiglas sera installé à l'intérieur de la découpe laser.",
+      grille: true,
       options: Object.entries(MOTIF_LASERLINE_LABELS).map(([val,label])=>[val,label]) });
   }
   s.push({ key:"lames", question:"Quel type de lames ?", type:"choice",
-    prixCategorie: "lames",
+    prixCategorie: "lames", grille: true,
     options: [["lames_120","Lames 120"],["lames_200","Lames 200"]] });
   s.push({ key:"largeur", question:"Quelle largeur de passage souhaitez-vous ?", type:"choice",
-    prixCategorie: "largeur",
+    prixCategorie: "largeur", grille: true,
     options: [["3000","3,00 m"],["3500","3,50 m"]] });
   s.push({ key:"hauteur", question:"Quelle hauteur souhaitez-vous ?", type:"choice",
-    prixCategorie: "hauteur",
+    prixCategorie: "hauteur", grille: true,
     options: [["1226","1,226 m"],["1466","1,466 m"],["1585","1,585 m"],["1705","1,705 m"]] });
+  // grille:true ajouté le 04/09 (Cyrille) — la vingtaine de coloris RAL en
+  // liste sur une seule colonne obligeait à beaucoup faire défiler.
   s.push({ key:"couleur", question:"Quelle couleur pour votre portail ?", type:"choice",
-    prixCategorie: "couleur",
+    prixCategorie: "couleur", grille: true,
     options: Object.entries(PORTAILS_LABELS.couleur).map(([val,label])=>[val,label]) });
   s.push({ key:"angle_ouverture", question:"Quel angle d'ouverture souhaitez-vous ?", type:"choice",
-    prixCategorie: "angle_ouverture",
+    prixCategorie: "angle_ouverture", grille: true,
     options: [["90","90°"],["60","60°"]] });
   s.push({ key:"ouverture_exterieure", question:"Souhaitez-vous une ouverture possible depuis l'extérieur ?", type:"choice",
-    prixCategorie: "ouverture_exterieure",
+    prixCategorie: "ouverture_exterieure", grille: true,
     options: [["oui","Oui"],["non","Non"]] });
   s.push({ key:"cote_alimentation", question:"De quel côté se trouve l'alimentation électrique (vue de l'intérieur) ?", type:"choice",
+    grille: true,
     options: [["gauche","Gauche"],["droite","Droite"]] });
   s.push({ key:"options_portail", question:"Souhaitez-vous ajouter des options ?", type:"options_multi", optional:true,
     options: [["digicode_ext","Digicode extérieur"],["digicode_int","Digicode intérieur"],["visiophone","Visiophone"],
@@ -1104,6 +1135,13 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
   function renderStep(){
     const steps=getSteps(); if(state.step>=steps.length) state.step=steps.length-1;
     const s=steps[state.step];
+    // Mode compact du bandeau d'intro dès la 2e question (voir CSS
+    // .header-block.compact) — laisse le plus de place possible à la
+    // question courante pour limiter le défilement.
+    const headerBlockEl = document.querySelector('.header-block');
+    if(headerBlockEl) headerBlockEl.classList.toggle('compact', state.step > 0);
+    const miniBadgesEl = document.getElementById('miniBadges');
+    if(miniBadgesEl) miniBadgesEl.classList.toggle('compact', state.step > 0);
     let html = '<div class="step-label">Étape '+(state.step+1)+' sur '+steps.length+'</div>';
     html += '<div class="question">'+s.question+'</div>';
     // Note informative optionnelle sous la question (ex : précision sur le
@@ -1117,7 +1155,7 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
       // Cyrille dans mes-elements.html). Uniquement utilisé par le parcours
       // "portails" pour l'instant.
       const tarifsCategorie = s.prixCategorie ? (tarifsPortailsActuels(draftInfo)[s.prixCategorie] || {}) : null;
-      html+='<div class="options">';
+      html+='<div class="options'+(s.grille ? ' grid-2col' : '')+'">';
       s.options.forEach(([val,label])=>{
         const sel=state[s.key]===val?' selected':'';
         const prix = tarifsCategorie ? (tarifsCategorie[val] || 0) : 0;

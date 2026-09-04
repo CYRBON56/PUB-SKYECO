@@ -15,7 +15,12 @@
      formulaire (voir "Aperçu au survol" ci-dessous). */
   .image-panel { flex:1 1 45%; position:relative; overflow:hidden; background:var(--brand-dark,#14312a); display:flex; flex-direction:column; order:2; }
   .image-panel-media { position:relative; flex:1 1 50%; overflow:hidden; display:flex; align-items:center; justify-content:center; }
-  .image-panel-media img, .image-panel-media video { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; }
+  /* object-fit:contain (pas cover) — corrigé le 04/09 : depuis que ce
+     panneau ne fait plus que la moitié de la hauteur, "cover" zoomait/
+     rognait trop l'image pour remplir le cadre. "contain" affiche la photo
+     entière dans son cadre, quitte à laisser un peu de fond visible sur les
+     côtés si le format ne correspond pas exactement. */
+  .image-panel-media img, .image-panel-media video { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:contain; }
   .image-panel-media img { opacity:0; transition:opacity .8s ease-in-out; }
   .image-panel-media img.active { opacity:1; }
   .image-panel-media::before { content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(20,49,42,0.55) 0%, rgba(20,49,42,0.15) 35%, rgba(20,49,42,0.55) 100%); z-index:1; pointer-events:none; }
@@ -32,7 +37,7 @@
   .image-panel-preview { position:relative; flex:1 1 50%; overflow:hidden; background:#0f231d; border-top:1px solid rgba(255,255,255,0.1); }
   .image-panel-preview .hover-preview-placeholder { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:20px; text-align:center; color:rgba(255,255,255,0.55); font-size:13px; line-height:1.5; transition:opacity .25s ease-in-out; }
   .image-panel-preview .hover-preview-placeholder.dimmed { opacity:0; }
-  .image-panel-preview .hover-preview { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity .25s ease-in-out; }
+  .image-panel-preview .hover-preview { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; opacity:0; transition:opacity .25s ease-in-out; }
   .image-panel-preview .hover-preview.active { opacity:1; }
   .image-panel-preview .hover-preview-label { position:absolute; left:0; right:0; bottom:0; z-index:2; background:linear-gradient(0deg, rgba(15,35,29,0.92) 0%, rgba(15,35,29,0) 100%); color:#fff; font-weight:700; font-size:14px; padding:16px 16px 10px; text-align:center; opacity:0; transition:opacity .25s ease-in-out; }
   .image-panel-preview .hover-preview-label.active { opacity:1; }

@@ -422,11 +422,16 @@
 
         <div style="display:flex; align-items:flex-start; gap:10px; background:#fff4ec; border:1.5px solid #f0c9a8; border-radius:12px; padding:14px 16px;">
           <input type="checkbox" id="checkFormulairePersonnalise" style="width:auto; margin-top:3px; accent-color:#c9601f;">
-          <label for="checkFormulairePersonnalise" style="margin:0; font-weight:700; color:#14312a; cursor:pointer;">
+          <label for="checkFormulairePersonnalise" style="margin:0; font-weight:700; color:#14312a; cursor:pointer; display:block; width:100%;">
             Formulaire personnalisé
-            <span style="display:block; font-weight:400; font-size:0.82rem; color:#5b6b64; margin-top:3px;">Remplace le formulaire basique par un parcours de questions et un calcul de prix construits sur mesure pour CETTE vitrine — visible uniquement ici, jamais partagé avec les autres vitrines. Un formulaire personnalisé se construit avec Claude, pas depuis cette page : cocher cette case envoie une demande à Cyrille si rien n'est encore construit pour cette vitrine — en attendant, la vitrine continue d'afficher le formulaire basique.</span>
+            <span style="display:block; font-weight:400; font-size:0.82rem; color:#5b6b64; margin-top:3px;">Remplace le formulaire basique par un parcours de questions et un calcul de prix construits sur mesure pour CETTE vitrine — visible uniquement ici, jamais partagé avec les autres vitrines. Un formulaire personnalisé se construit avec Skyeco, pas depuis cette page : cocher cette case envoie une demande à votre conseiller si rien n'est encore construit pour cette vitrine — en attendant, la vitrine continue d'afficher le formulaire basique.</span>
             <span id="statusFormulairePersonnalise" style="display:none; margin-top:6px; font-size:0.82rem; font-weight:700; color:#1e6f4c;">✓ Demande envoyée — vous serez recontacté pour construire votre formulaire sur mesure.</span>
           </label>
+        </div>
+        <div id="formulairePersonnaliseDescriptionWrapper" style="display:none; margin-top:10px;">
+          <label for="formulairePersonnaliseDescription" style="font-weight:600; font-size:0.85rem; color:#14312a;">Décrivez le formulaire dont vous avez besoin</label>
+          <p class="hint" style="margin:2px 0 6px;">Quelles questions poser à vos prospects, comment calculer le prix (au m², au forfait, par option...) — plus c'est précis, plus vite votre conseiller pourra vous le construire.</p>
+          <textarea id="formulairePersonnaliseDescription" rows="4" placeholder="Ex : je veux demander la surface en m² et le type de pose, puis calculer un prix au m² selon le type choisi..."></textarea>
         </div>
 
         <div id="tarifsPortailsSection" style="display:none; margin-top:14px;">
@@ -691,14 +696,22 @@
       // simple fait que draft.formulaire_personnalise soit déjà à true.
       const checkFormulairePersonnalise = document.getElementById('checkFormulairePersonnalise');
       const statusFormulairePersonnalise = document.getElementById('statusFormulairePersonnalise');
+      const formulairePersonnaliseDescriptionWrapper = document.getElementById('formulairePersonnaliseDescriptionWrapper');
+      const formulairePersonnaliseDescription = document.getElementById('formulairePersonnaliseDescription');
       checkFormulairePersonnalise.checked = draft.formulaire_personnalise === true;
+      if (draft.formulaire_personnalise_description) formulairePersonnaliseDescription.value = draft.formulaire_personnalise_description;
+      formulairePersonnaliseDescriptionWrapper.style.display = checkFormulairePersonnalise.checked ? 'block' : 'none';
+      formulairePersonnaliseDescription.addEventListener('change', () => {
+        sauvegarderChampsImmediat({ formulaire_personnalise_description: formulairePersonnaliseDescription.value.trim() });
+      });
       checkFormulairePersonnalise.addEventListener('change', () => {
         sauvegarderChampsImmediat({ formulaire_personnalise: checkFormulairePersonnalise.checked });
+        formulairePersonnaliseDescriptionWrapper.style.display = checkFormulairePersonnalise.checked ? 'block' : 'none';
         if (checkFormulairePersonnalise.checked && !draft.formulaire_personnalise_cle) {
           fetch('/api/demander-formulaire-personnalise', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ draftId }),
+            body: JSON.stringify({ draftId, description: formulairePersonnaliseDescription.value.trim() }),
           }).catch(() => {});
           statusFormulairePersonnalise.style.display = 'block';
         } else {

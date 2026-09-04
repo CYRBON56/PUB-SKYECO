@@ -2,7 +2,8 @@
   "crons": [
     { "path": "/api/verifier-essais-a-programmer", "schedule": "0 9 * * *" },
     { "path": "/api/verifier-pauses-a-programmer", "schedule": "0 9 * * *" },
-    { "path": "/api/verifier-soldes-bas", "schedule": "*/15 * * * *" }
+    { "path": "/api/verifier-soldes-bas", "schedule": "*/15 * * * *" },
+    { "path": "/api/rappel-rdv", "schedule": "*/15 * * * *" }
   ],
   "rewrites": [
     { "source": "/l", "destination": "/api/lien" },

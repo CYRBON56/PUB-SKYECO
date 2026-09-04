@@ -134,13 +134,13 @@
     <div class="row" style="margin-bottom:10px;">
       <div class="field" style="max-width:140px;"><label>Taille du lot</label><input type="number" id="batchSize" value="30" min="1" max="500"></div>
       <div class="field" style="max-width:220px;"><label>Métier (optionnel)</label><input type="text" id="batchMetier" placeholder="laisser vide = tous"></div>
-      <div class="field"><label>Sujet de l'email</label><input type="text" id="batchSubject" value="Un outil gratuit pour gérer vos annonces Google/Meta en une page"></div>
+      <div class="field"><label>Sujet de l'email</label><input type="text" id="batchSubject" value="Un outil marketing pensé par un artisan, pas par une agence"></div>
     </div>
     <div class="row" style="margin-bottom:10px;">
-      <div class="field"><label>Lien de destination du bouton (optionnel — vidéo de démo, page d'inscription…)</label><input type="url" id="batchVideoUrl" placeholder="https://…"></div>
+      <div class="field"><label>Lien de destination du bouton (optionnel — laissez vide pour renvoyer vers la page d'inscription Skyeco Pro)</label><input type="url" id="batchVideoUrl" placeholder="https://…"></div>
     </div>
     <label style="font-size:11px; font-weight:700; color:var(--concrete);">Contenu de l'email (HTML)</label>
-    <textarea id="batchHtml" style="margin-top:4px;">Bonjour,&lt;br&gt;&lt;br&gt;Je dirige EcoSky by RMS, une entreprise du BTP en Bretagne. J'ai développé Skyeco Pro : un outil gratuit (juste un forfait de fonctionnement) pour gérer vos annonces Google et Meta Ads depuis une seule page, sans avoir besoin d'une agence marketing.&lt;br&gt;&lt;br&gt;4 ou 5 boutons essentiels, tout est géré, avec un support si besoin.&lt;br&gt;&lt;br&gt;Ça peut être utile pour {{nom_entreprise}} à {{ville}} aussi.&lt;br&gt;&lt;br&gt;&lt;a href="{{lien_cta}}" style="display:inline-block;background:#E8622C;color:#fff;padding:12px 22px;text-decoration:none;font-weight:700;"&gt;Voir Skyeco Pro&lt;/a&gt;&lt;br&gt;&lt;br&gt;Cyrille Bon</textarea>
+    <textarea id="batchHtml" style="margin-top:4px;">Bonjour,&lt;br&gt;&lt;br&gt;Je m'appelle Cyrille Bon, je dirige une entreprise du BTP en Bretagne (EcoSky by RMS). Comme vous, j'ai été démarché par toutes les agences possibles pour gérer mes publicités Google et Meta — sans jamais vraiment savoir ce qu'elles faisaient de mon budget.&lt;br&gt;&lt;br&gt;J'ai fini par créer mon propre outil, Skyeco Pro : gratuit, avec juste un forfait de fonctionnement. Il gère vos annonces Google Ads et Meta Ads depuis une seule page, avec le suivi de vos demandes, la gestion de vos devis et toute votre communication client au même endroit.&lt;br&gt;&lt;br&gt;4 ou 5 boutons essentiels, tout est déjà configuré, et vous avez un support si besoin — parce que c'est pensé par un artisan, pour des artisans.&lt;br&gt;&lt;br&gt;Ça peut être utile pour {{nom_entreprise}} à {{ville}} aussi.&lt;br&gt;&lt;br&gt;&lt;a href="{{lien_cta}}" style="display:inline-block;background:#E8622C;color:#fff;padding:12px 22px;text-decoration:none;font-weight:700;"&gt;Découvrir Skyeco Pro&lt;/a&gt;&lt;br&gt;&lt;br&gt;Cyrille Bon&lt;br&gt;EcoSky by RMS</textarea>
     <div class="placeholders">Disponibles dans le texte : <code>{{nom_entreprise}}</code> <code>{{ville}}</code> <code>{{metier}}</code> — et <code>{{lien_cta}}</code> obligatoire, à mettre sur le bouton/lien d'action (lien de tracking, redirige vers le champ "lien de destination" ci-dessus, ou vers la page d'inscription si vide).</div>
     <div style="margin-top:14px;"><button class="btn btn-primary" id="btnSendBatch">Envoyer ce lot</button></div>
     <div class="status-msg" id="batchStatus"></div>
@@ -226,10 +226,34 @@
 
   function normPhone(raw){
     if(!raw) return null;
+    // Les fichiers exportés depuis Excel stockent souvent le téléphone en nombre,
+    // ce qui fait sauter le "0" initial (ex: 474222028 au lieu de 0474222028).
     const digits = String(raw).replace(/\D/g,'');
     if(digits.startsWith('33') && digits.length===11) return '0'+digits.slice(2);
     if(digits.startsWith('0') && digits.length===10) return digits;
+    if(digits.length===9) return '0'+digits;
     return digits.length>=9 ? digits : null;
+  }
+
+  // Déduit un métier lisible à partir du code NAF/APE quand le fichier importé
+  // n'a pas de colonne "métier" dédiée (cas du fichier BTP/paysagistes de Cyrille).
+  const NAF_VERS_METIER = {
+    '8130Z':'Paysagiste', '7111Z':'Architecte', '8121Z':'Nettoyage',
+    '4312A':'Terrassement', '4399C':'Maçonnerie / gros œuvre', '7112B':'Ingénierie / études techniques',
+    '9609Z':'Services divers', '4776Z':'Fleuriste / commerce de plantes', '0130Z':'Pépinière / horticulture',
+    '8810C':'Aide à domicile', '6820B':'Location immobilière', '4399D':'Travaux de construction spécialisés',
+    '4339Z':'Travaux de finition', '9529Z':'Réparation biens personnels', '4321A':'Travaux d\'installation électrique',
+    '4322A':'Plomberie / chauffage', '4331Z':'Travaux de plâtrerie', '4332A':'Menuiserie',
+    '4334Z':'Peinture / vitrerie', '4120A':'Construction de maisons individuelles', '4211Z':'Travaux de voirie',
+  };
+
+  // Déduit le département à partir d'un code postal (2A/2B pour la Corse, 3 chiffres pour les DOM).
+  function departementDepuisCodePostal(cp){
+    const s = String(cp || '').replace(/\D/g,'');
+    if(s.length < 5) return '';
+    if(s.startsWith('20')) return parseInt(s.slice(2,3),10) <= 1 ? '2A' : '2B';
+    if(s.startsWith('97') || s.startsWith('98')) return s.slice(0,3);
+    return s.slice(0,2);
   }
 
   function chunk(arr, size){
@@ -261,15 +285,21 @@
       return '';
     };
 
-    const parsed = rows.map(r => ({
-      nom_entreprise: String(findCol(r,'nom entreprise','entreprise','nom')).trim(),
-      metier: String(findCol(r,'métier','metier','activité','activite','profession')).trim() || null,
-      ville: String(findCol(r,'ville')).trim(),
-      departement: String(findCol(r,'département','departement')).trim(),
-      telephone: normPhone(findCol(r,'téléphone','telephone','tel','mobile')),
-      email: String(findCol(r,'email','mail')).trim().toLowerCase() || null,
-      adresse: String(findCol(r,'adresse')).trim()
-    })).filter(r => r.telephone || r.email);
+    const parsed = rows.map(r => {
+      const metierDirect = String(findCol(r,'métier','metier','activité','activite','profession')).trim();
+      const nafCode = String(findCol(r,'naf ape','naf','ape','code naf')).trim().toUpperCase();
+      const departementDirect = String(findCol(r,'département','departement')).trim();
+      const codePostal = String(findCol(r,'code postal','cp')).trim();
+      return {
+        nom_entreprise: String(findCol(r,'nom entreprise','entreprise','nom')).trim(),
+        metier: metierDirect || NAF_VERS_METIER[nafCode] || nafCode || null,
+        ville: String(findCol(r,'ville')).trim(),
+        departement: departementDirect || departementDepuisCodePostal(codePostal),
+        telephone: normPhone(findCol(r,'téléphone','telephone','tel','mobile')),
+        email: String(findCol(r,'email','mail')).trim().toLowerCase() || null,
+        adresse: String(findCol(r,'adresse')).trim() + (codePostal ? ' ' + codePostal : ''),
+      };
+    }).filter(r => r.telephone || r.email);
 
     if(!parsed.length){ statusEl.textContent = 'Aucune ligne exploitable trouvée (il faut au moins un téléphone ou un email).'; statusEl.style.color = '#c0392b'; return; }
 

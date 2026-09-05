@@ -26,6 +26,11 @@
 
 const RESEND_FROM = 'Skyeco Pro <notifications@ecoskybyrms.fr>';
 const BASE_URL = 'https://www.skyeco.fr';
+
+// Photo de signature embarquée en pièce jointe CID (voir
+// api/prospection-send-test.js pour le détail du pourquoi).
+const PHOTO_SIGNATURE_CONTENT_ID = 'signature-cyrille';
+const PHOTO_SIGNATURE_URL = 'https://www.skyeco.fr/images/cyrille-bon-prospection.jpg';
 const BATCH_SIZE_MAX = 500; // filet de sécurité — un envoi "petit à petit" ne doit jamais dériver vers un envoi massif accidentel
 
 function genererToken() {
@@ -62,6 +67,9 @@ async function envoyerUnEmail(to, subject, html, lienDesabonnement) {
         'List-Unsubscribe': `<${lienDesabonnement}>`,
         'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
       },
+      attachments: [
+        { path: PHOTO_SIGNATURE_URL, filename: 'cyrille-bon-prospection.jpg', content_id: PHOTO_SIGNATURE_CONTENT_ID },
+      ],
     }),
   });
   if (!resp.ok) {

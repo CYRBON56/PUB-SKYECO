@@ -87,6 +87,10 @@
   .btn-dashboard:hover { border-color:#14312a; }
   .badge-compte-cree { font-size:0.68rem; color:#1e6f4c; font-weight:700; margin-left:6px; }
   .badge-compte-absent { font-size:0.68rem; color:#8a9891; margin-left:6px; }
+  .badge-en-ligne { font-size:0.68rem; color:#1e6f4c; font-weight:700; margin-left:6px; }
+  .badge-en-ligne::before { content:'●'; margin-right:3px; }
+  .btn-appeler-maintenant { background:#c0392b; color:#fff; }
+  .btn-appeler-maintenant:hover { filter:brightness(1.08); }
 
   .loading, .empty { text-align:center; padding:60px; color:#8a9891; font-size:0.92rem; }
   .feedback { font-size:0.74rem; margin-top:5px; font-weight:600; }
@@ -136,10 +140,14 @@
   let vueArchives = false;
 
   chargerFiches();
+  // 05/09 : rafraîchit périodiquement la pastille "en ligne" (présence du
+  // dashboard artisan, voir api/ping-presence.js) sans redemander tout le
+  // reste — évite de recharger le tableau entier toutes les 30s.
+  setInterval(rafraichirPresence, 30000);
 
   async function chargerFiches() {
     try {
-      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?select=id,entreprise,metier,telephone,status,site_valide,archive,created_at,dashboard_password_hash&order=created_at.desc`, {
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?select=id,entreprise,metier,telephone,status,site_valide,archive,created_at,dashboard_password_hash,dashboard_dernier_ping&order=created_at.desc`, {
         headers: { apikey: SUPABASE_ANON_KEY }
       });
       toutesLesFiches = await resp.json();
@@ -149,6 +157,32 @@
     } catch (e) {
       document.getElementById('contenu').innerHTML = '<div class="empty">Impossible de charger la liste pour le moment.</div>';
     }
+  }
+
+  // Considéré "en ligne" si un ping est arrivé il y a moins de 90s (ping
+  // toutes les 30s côté dashboard tant que l'onglet est visible).
+  function estEnLigne(fiche) {
+    if (!fiche.dashboard_dernier_ping) return false;
+    return (Date.now() - new Date(fiche.dashboard_dernier_ping).getTime()) < 90000;
+  }
+
+  async function rafraichirPresence() {
+    try {
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?select=id,dashboard_dernier_ping`, {
+        headers: { apikey: SUPABASE_ANON_KEY }
+      });
+      const lignes = await resp.json();
+      const parId = new Map(lignes.map(l => [String(l.id), l.dashboard_dernier_ping]));
+      toutesLesFiches.forEach(f => { f.dashboard_dernier_ping = parId.get(String(f.id)) || null; });
+      toutesLesFiches.forEach(f => {
+        const badge = document.getElementById('en-ligne-' + f.id);
+        const btn = document.getElementById('appeler-' + f.id);
+        if (!badge || !btn) return;
+        const enLigne = estEnLigne(f);
+        badge.style.display = enLigne ? '' : 'none';
+        btn.style.display = enLigne ? '' : 'none';
+      });
+    } catch (e) { /* silencieux */ }
   }
 
   function afficherVueActuelle() {
@@ -237,6 +271,7 @@
                     <button class="btn-action ${f.site_valide ? 'btn-valide-on' : 'btn-valide-off'}" data-id="${f.id}" data-valide="${f.site_valide ? '1' : '0'}" onclick="toggleValidation(this)">${f.site_valide ? '✓ Site validé' : '☐ Valider le site'}</button>
                     <button class="btn-action btn-dashboard" data-id="${f.id}" onclick="ouvrirDashboardAdmin(this)">🔑 Dashboard</button>
                     <button class="btn-action btn-zone" data-id="${f.id}" onclick="ouvrirZoneAdmin(this)">📍 Zone &amp; km</button>
+                    <button class="btn-action btn-appeler-maintenant" id="appeler-${f.id}" data-id="${f.id}" onclick="appelerMaintenant(this)" style="display:${estEnLigne(f) ? '' : 'none'};">📹 Appeler maintenant</button>
                     <a class="btn-action btn-google-ads" href="https://ads.google.com/aw/campaigns" target="_blank" rel="noopener">${GOOGLE_ADS_ICON_SVG} Google Ads</a>
                     <a class="btn-action btn-elements-admin" href="${lienElements}" target="_blank">✏️ Éléments</a>
                     <a class="btn-action btn-campagne-admin" href="${SITE_BASE}/campagne.html?id=${f.id}" target="_blank">📢 Campagne</a>
@@ -244,6 +279,7 @@
                   </div>
                   <div class="feedback" id="feedback-${f.id}">
                     ${f.dashboard_password_hash ? '<span class="badge-compte-cree">✓ Compte créé</span>' : '<span class="badge-compte-absent">Compte pas encore créé</span>'}
+                    <span class="badge-en-ligne" id="en-ligne-${f.id}" style="display:${estEnLigne(f) ? '' : 'none'};">En ligne</span>
                     <span class="badge-compteur-demandes" id="demandes-${f.id}"></span>
                   </div>
                 </td>
@@ -469,6 +505,36 @@
       } else {
         sessionStorage.removeItem('skyeco_admin_internal_pw');
         alert(data.error || 'Mot de passe interne incorrect.');
+      }
+    } catch (e) {
+      alert('Impossible de contacter le serveur.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  };
+
+  // 05/09 : appel vidéo immédiat vers un artisan actuellement en ligne (voir
+  // api/appeler-artisan-maintenant.js) — pas de créneau à choisir, la ligne
+  // est créée directement "en_cours" et l'artisan reçoit SMS + email avec le
+  // lien Jitsi tout de suite.
+  window.appelerMaintenant = async function(btn) {
+    const draftId = btn.dataset.id;
+    if (!confirm("Démarrer un appel vidéo avec cet artisan maintenant ?")) return;
+    btn.disabled = true;
+    const originalText = btn.textContent;
+    btn.textContent = 'Appel en cours…';
+    try {
+      const res = await fetch('/api/appeler-artisan-maintenant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        window.open(data.roomUrl, '_blank');
+      } else {
+        alert(data.error || "Impossible de démarrer l'appel pour le moment.");
       }
     } catch (e) {
       alert('Impossible de contacter le serveur.');

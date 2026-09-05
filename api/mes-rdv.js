@@ -32,25 +32,46 @@ const JOURS_FERMES = [0];
 const JOURS_MAX = 60;
 
 // --- Vérification de session : identique à api/dashboard-verify-session.js
-function verifierToken(token, draftIdAttendu) {
+// (corrigé le 04/09 — cet endpoint datait d'avant le passage aux comptes
+// multi-vitrines du 03/09 et ne reconnaissait que l'ancien jeton "lié au
+// site" ; il refusait donc TOUJOURS le jeton actuel, lié à l'email du
+// compte, empêchant tout artisan connecté normalement d'utiliser son
+// calendrier. Accepte maintenant aussi bien le jeton admin (mes-artisans.html,
+// sujet = draftId) que le jeton artisan (sujet = email, vérifié contre le
+// draftId demandé).
+async function verifierToken(token, draftIdAttendu) {
   try {
     const decode = Buffer.from(token, 'base64url').toString('utf8');
     const parties = decode.split('.');
-    if (parties.length !== 4) return null;
-    const [draftId, role, expStr, sig] = parties;
-    if (draftId !== draftIdAttendu) return null;
+    if (parties.length !== 4) return false;
+    const [sujet, role, expStr, sig] = parties;
     const exp = parseInt(expStr, 10);
-    if (!exp || Date.now() / 1000 > exp) return null;
+    if (!exp || Date.now() / 1000 > exp) return false;
 
-    const payload = `${draftId}.${role}.${expStr}`;
+    const payload = `${sujet}.${role}.${expStr}`;
     const attendu = crypto.createHmac('sha256', process.env.DASHBOARD_SESSION_SECRET).update(payload).digest('hex');
     const sigBuf = Buffer.from(sig, 'hex');
     const attenduBuf = Buffer.from(attendu, 'hex');
-    if (sigBuf.length !== attenduBuf.length || !crypto.timingSafeEqual(sigBuf, attenduBuf)) return null;
+    if (sigBuf.length !== attenduBuf.length || !crypto.timingSafeEqual(sigBuf, attenduBuf)) return false;
 
-    return { draftId, role };
+    if (role === 'admin') {
+      return sujet === draftIdAttendu;
+    }
+    if (role === 'artisan') {
+      let email;
+      try { email = Buffer.from(sujet, 'base64url').toString('utf8'); } catch (e) { return false; }
+      if (!email) return false;
+      const resp = await fetch(
+        `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftIdAttendu}&select=email`,
+        { headers: { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}` } }
+      );
+      const rows = await resp.json();
+      const draft = rows[0];
+      return !!(draft && draft.email && draft.email.toLowerCase() === email.toLowerCase());
+    }
+    return false;
   } catch (e) {
-    return null;
+    return false;
   }
 }
 
@@ -91,8 +112,7 @@ export default async function handler(req, res) {
   if (!draftId || !token) {
     return res.status(401).json({ error: 'non_authentifie' });
   }
-  const session = verifierToken(token, draftId);
-  if (!session) {
+  if (!(await verifierToken(token, draftId))) {
     return res.status(401).json({ error: 'session_invalide' });
   }
 
@@ -123,7 +143,7 @@ export default async function handler(req, res) {
 
   const { data: lignes, error } = await supabase
     .from('rendez_vous_artisans')
-    .select('date_heure, statut, client_nom, client_telephone, client_email, client_message')
+    .select('id, date_heure, statut, client_nom, client_telephone, client_email, client_message, type_rdv, appel_statut, room_name')
     .eq('draft_id', draftId)
     .neq('statut', 'annule')
     .gte('date_heure', slots[0].iso)
@@ -147,8 +167,10 @@ export default async function handler(req, res) {
     } else {
       parJour[s.dateJour].push({
         heure: s.heure, iso: s.iso, statut: 'confirme',
+        id: ligne.id,
         client_nom: ligne.client_nom, client_telephone: ligne.client_telephone,
         client_email: ligne.client_email, client_message: ligne.client_message,
+        type_rdv: ligne.type_rdv, appel_statut: ligne.appel_statut, room_name: ligne.room_name,
       });
     }
   }

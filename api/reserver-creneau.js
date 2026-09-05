@@ -14,6 +14,7 @@
 // TWILIO_FROM_NUMBER — vérifie que ces noms correspondent à ceux déjà
 // configurés sur le projet Vercel PUB-SKYECO (adapte sinon).
 
+import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 import twilio from 'twilio';
@@ -85,7 +86,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { draft_id, date_heure, client_nom, client_telephone, client_email, client_message } = req.body || {};
+    const { draft_id, date_heure, client_nom, client_telephone, client_email, client_message, type_rdv, draft_id_demandeur } = req.body || {};
 
     if (!draft_id || !date_heure || !client_nom || !client_telephone) {
       return res.status(400).json({ error: 'champs_manquants', message: 'draft_id, date_heure, client_nom et client_telephone sont requis.' });
@@ -96,19 +97,35 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'creneau_invalide', message: 'Ce créneau n\'est pas valide (hors horaires, jour fermé ou déjà passé).' });
     }
 
+    // 05/09 : type "appel_video_artisan" — un artisan demande un rendez-vous
+    // en visio avec Cyrille (voir prendre-rdv.html?type=video). On génère
+    // dès la demande le nom de la salle Jitsi (room_name) : elle est
+    // réutilisable telle quelle au moment où Cyrille "démarre l'appel"
+    // depuis son calendrier (api/demarrer-appel-video.js), pas besoin de la
+    // régénérer plus tard. Aléatoire et non devinable (sécurité par
+    // obscurité, Jitsi public n'a pas de contrôle d'accès natif).
+    const estAppelVideo = type_rdv === 'appel_video_artisan';
+    const donneesInsert = {
+      draft_id,
+      date_heure: dateUTC.toISOString(),
+      statut: 'confirme',
+      client_nom,
+      client_telephone,
+      client_email: client_email || null,
+      client_message: client_message || null,
+    };
+    if (estAppelVideo) {
+      donneesInsert.type_rdv = 'appel_video_artisan';
+      donneesInsert.draft_id_demandeur = draft_id_demandeur || null;
+      donneesInsert.room_name = 'skyeco-' + crypto.randomBytes(8).toString('hex');
+      donneesInsert.appel_statut = 'planifie';
+    }
+
     // Réservation atomique : l'index unique SQL (draft_id, date_heure) fait
     // le vrai travail anti double-booking, même en cas de requêtes simultanées.
     const { data: rdv, error: insertError } = await supabase
       .from('rendez_vous_artisans')
-      .insert({
-        draft_id,
-        date_heure: dateUTC.toISOString(),
-        statut: 'confirme',
-        client_nom,
-        client_telephone,
-        client_email: client_email || null,
-        client_message: client_message || null,
-      })
+      .insert(donneesInsert)
       .select()
       .single();
 
@@ -134,7 +151,9 @@ export default async function handler(req, res) {
     const notifs = [];
 
     if (twilioClient && artisan?.telephone && process.env.TWILIO_FROM_NUMBER) {
-      const texte = `Nouveau RDV le ${dateFr} avec ${client_nom} (${client_telephone}).`;
+      const texte = estAppelVideo
+        ? `Demande d'appel vidéo le ${dateFr} de ${client_nom} (${client_telephone})${client_message ? ' — ' + client_message : ''}. Ouvrez votre calendrier pour démarrer l'appel au moment venu.`
+        : `Nouveau RDV le ${dateFr} avec ${client_nom} (${client_telephone}).`;
       notifs.push(
         twilioClient.messages.create({
           to: toE164(artisan.telephone),
@@ -149,11 +168,17 @@ export default async function handler(req, res) {
         resend.emails.send({
           from: process.env.RESEND_FROM_EMAIL,
           to: artisan.email,
-          subject: `Nouveau RDV le ${dateFr}`,
-          html: `<p>Nouveau rendez-vous pris :</p>
-                 <p><strong>${dateFr}</strong></p>
-                 <p>Client : ${client_nom}<br>Téléphone : ${client_telephone}${client_email ? `<br>Email : ${client_email}` : ''}</p>
-                 ${client_message ? `<p>Message : ${client_message}</p>` : ''}`,
+          subject: estAppelVideo ? `Demande d'appel vidéo — ${dateFr}` : `Nouveau RDV le ${dateFr}`,
+          html: estAppelVideo
+            ? `<p>Un artisan demande un appel vidéo :</p>
+               <p><strong>${dateFr}</strong></p>
+               <p>Entreprise : ${client_nom}<br>Téléphone : ${client_telephone}${client_email ? `<br>Email : ${client_email}` : ''}</p>
+               ${client_message ? `<p>Message : ${client_message}</p>` : ''}
+               <p>Rendez-vous sur votre calendrier (onglet "Mon calendrier") pour démarrer l'appel au moment venu.</p>`
+            : `<p>Nouveau rendez-vous pris :</p>
+               <p><strong>${dateFr}</strong></p>
+               <p>Client : ${client_nom}<br>Téléphone : ${client_telephone}${client_email ? `<br>Email : ${client_email}` : ''}</p>
+               ${client_message ? `<p>Message : ${client_message}</p>` : ''}`,
         }).catch((e) => console.error('Email artisan échoué:', e.message))
       );
     }
@@ -163,11 +188,16 @@ export default async function handler(req, res) {
         resend.emails.send({
           from: process.env.RESEND_FROM_EMAIL,
           to: client_email,
-          subject: `Votre RDV confirmé — ${dateFr}`,
-          html: `<p>Bonjour ${client_nom},</p>
-                 <p>Votre rendez-vous avec <strong>${nomArtisan}</strong> est confirmé :</p>
-                 <p><strong>${dateFr}</strong></p>
-                 <p>À bientôt.</p>`,
+          subject: estAppelVideo ? `Votre demande d'appel vidéo — ${dateFr}` : `Votre RDV confirmé — ${dateFr}`,
+          html: estAppelVideo
+            ? `<p>Bonjour ${client_nom},</p>
+               <p>Votre demande d'appel vidéo avec <strong>${nomArtisan}</strong> est notée pour :</p>
+               <p><strong>${dateFr}</strong></p>
+               <p>Vous recevrez un lien pour rejoindre l'appel au moment convenu.</p>`
+            : `<p>Bonjour ${client_nom},</p>
+               <p>Votre rendez-vous avec <strong>${nomArtisan}</strong> est confirmé :</p>
+               <p><strong>${dateFr}</strong></p>
+               <p>À bientôt.</p>`,
         }).catch((e) => console.error('Email client échoué:', e.message))
       );
     }

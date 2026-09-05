@@ -10,13 +10,12 @@
 // doit pouvoir réserver).
 //
 // Variables d'environnement requises : SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
-// RESEND_API_KEY, RESEND_FROM_EMAIL, TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN,
+// RESEND_API_KEY, TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN,
 // TWILIO_FROM_NUMBER — vérifie que ces noms correspondent à ceux déjà
 // configurés sur le projet Vercel PUB-SKYECO (adapte sinon).
 
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
-import { Resend } from 'resend';
 import twilio from 'twilio';
 
 const supabase = createClient(
@@ -24,7 +23,24 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+// 05/09 : envoi via un appel fetch direct à l'API Resend, PAS le paquet npm
+// "resend" (jamais ajouté à package.json — c'est ce qui faisait planter cet
+// endpoint ENTIER avec "Cannot find module 'resend'" depuis sa création le
+// 31/08, donc TOUTE réservation de créneau, video ou non, échouait avec
+// "Une erreur est survenue"). Même approche que le reste du projet
+// (alerter-changement-zone.js, demander-aide-elements.js, etc.).
+const RESEND_FROM = 'Skyeco Pro <notifications@ecoskybyrms.fr>';
+async function envoyerEmailResend({ to, subject, html }) {
+  const resp = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ from: RESEND_FROM, to: [to], subject, html }),
+  });
+  if (!resp.ok) throw new Error(`Resend a répondu ${resp.status} : ${await resp.text()}`);
+}
 
 const twilioClient = (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN)
   ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
@@ -163,10 +179,9 @@ export default async function handler(req, res) {
       );
     }
 
-    if (resend && artisan?.email) {
+    if (process.env.RESEND_API_KEY && artisan?.email) {
       notifs.push(
-        resend.emails.send({
-          from: process.env.RESEND_FROM_EMAIL,
+        envoyerEmailResend({
           to: artisan.email,
           subject: estAppelVideo ? `Demande d'appel vidéo — ${dateFr}` : `Nouveau RDV le ${dateFr}`,
           html: estAppelVideo
@@ -183,10 +198,9 @@ export default async function handler(req, res) {
       );
     }
 
-    if (resend && client_email) {
+    if (process.env.RESEND_API_KEY && client_email) {
       notifs.push(
-        resend.emails.send({
-          from: process.env.RESEND_FROM_EMAIL,
+        envoyerEmailResend({
           to: client_email,
           subject: estAppelVideo ? `Votre demande d'appel vidéo — ${dateFr}` : `Votre RDV confirmé — ${dateFr}`,
           html: estAppelVideo

@@ -23,6 +23,14 @@ const EXEMPLE = {
   metier: 'Votre métier',
 };
 
+// Photo de signature embarquée en pièce jointe CID (pas une URL distante
+// vue par le client mail) : Resend télécharge lui-même l'image depuis
+// cette URL au moment de l'envoi et l'intègre dans l'email — le webmail du
+// destinataire ne fait plus aucune requête réseau pour l'afficher, donc les
+// blocages/soucis de cache des proxys d'images des FAI n'ont plus d'effet.
+const PHOTO_SIGNATURE_CONTENT_ID = 'signature-cyrille';
+const PHOTO_SIGNATURE_URL = 'https://www.skyeco.fr/images/cyrille-bon-prospection.jpg';
+
 function echapperHtml(v) {
   return String(v || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
@@ -69,6 +77,9 @@ export default async function handler(req, res) {
         to: [destinataire.trim()],
         subject: `[TEST] ${subject}`,
         html: htmlTest,
+        attachments: [
+          { path: PHOTO_SIGNATURE_URL, filename: 'cyrille-bon-prospection.jpg', content_id: PHOTO_SIGNATURE_CONTENT_ID },
+        ],
       }),
     });
 

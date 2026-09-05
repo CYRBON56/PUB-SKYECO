@@ -160,6 +160,11 @@
 
   const params = new URLSearchParams(window.location.search);
   const draftId = params.get('id');
+  // 05/09 : mode "demande d'appel vidéo" (un artisan connecté à son
+  // dashboard demande un rendez-vous en visio avec Cyrille) — voir
+  // mon-dashboard.html (onglet "Appel vidéo") et api/reserver-creneau.js.
+  const estAppelVideo = params.get('type') === 'video';
+  const demandeurId = params.get('demandeur');
 
   const zoneJours = document.getElementById('zone-jours');
   const formulaire = document.getElementById('formulaire');
@@ -174,7 +179,9 @@
   // l'historique du navigateur, peu fiable ici (page souvent ouverte dans
   // un nouvel onglet, sans page précédente).
   const lienRetour = document.getElementById('lien-retour');
-  if (draftId) {
+  if (estAppelVideo) {
+    lienRetour.style.display = 'none'; // ouvert dans un nouvel onglet depuis le dashboard artisan
+  } else if (draftId) {
     lienRetour.href = '/apercu.html?id=' + encodeURIComponent(draftId);
   } else {
     lienRetour.style.display = 'none';
@@ -186,6 +193,15 @@
   }
 
   async function chargerArtisan() {
+    if (estAppelVideo) {
+      document.getElementById('titre').textContent = 'Demander un appel vidéo avec Cyrille';
+      document.querySelector('.sous-titre').textContent = 'Choisissez un créneau — Cyrille vous appellera en visio au moment convenu (lundi–samedi, 9h–20h).';
+      document.querySelector('label[for="message"]').textContent = 'Décrivez brièvement votre souci (optionnel)';
+      document.getElementById('btn-confirmer').textContent = 'Demander cet appel';
+      const nomPrefill = params.get('nom');
+      if (nomPrefill) document.getElementById('nom').value = nomPrefill;
+      return;
+    }
     try {
       const { data: draft } = await supabaseClient
         .from('skyeco_pro_vitrine_drafts')
@@ -308,6 +324,8 @@
           client_telephone: telephone,
           client_email: email || undefined,
           client_message: message || undefined,
+          type_rdv: estAppelVideo ? 'appel_video_artisan' : undefined,
+          draft_id_demandeur: estAppelVideo ? (demandeurId || undefined) : undefined,
         }),
       });
       const data = await rep.json();
@@ -326,8 +344,10 @@
         throw new Error(data.message || 'Erreur serveur');
       }
 
-      messageEtat.innerHTML = '<div class="message-etat succes">Rendez-vous confirmé le ' + data.rdv.date_heure_fr + '. Vous allez recevoir une confirmation.</div>';
-      btnConfirmer.textContent = 'Rendez-vous confirmé';
+      messageEtat.innerHTML = estAppelVideo
+        ? '<div class="message-etat succes">Demande envoyée pour le ' + data.rdv.date_heure_fr + '. Vous recevrez un lien pour rejoindre l\'appel au moment convenu.</div>'
+        : '<div class="message-etat succes">Rendez-vous confirmé le ' + data.rdv.date_heure_fr + '. Vous allez recevoir une confirmation.</div>';
+      btnConfirmer.textContent = estAppelVideo ? 'Demande envoyée' : 'Rendez-vous confirmé';
       document.getElementById('nom').disabled = true;
       document.getElementById('telephone').disabled = true;
       document.getElementById('email').disabled = true;

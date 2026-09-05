@@ -29,8 +29,12 @@
   .logo{ font-family:'Big Shoulders Display',sans-serif; font-weight:900; font-size:18px; display:flex; align-items:center; gap:8px; }
   .logo .dot{ width:8px; height:8px; background:var(--orange); display:inline-block; }
   header .sub{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--blue-light); margin-top:4px; }
-  header a.back{ color:var(--blue-light); font-size:12px; text-decoration:none; margin-top:6px; display:inline-block; }
-  header a.back:hover{ color:#fff; }
+  header .btn-back{ display:inline-block; margin-top:10px; padding:8px 14px; border:1.5px solid var(--blue-light); color:#fff; font-size:12.5px; font-weight:700; text-decoration:none; }
+  header .btn-back:hover{ background:rgba(255,255,255,0.12); border-color:#fff; }
+
+  .sous-panel{ margin-top:18px; padding-top:16px; border-top:1px solid var(--paper-line); }
+  .sous-panel h3{ font-size:13.5px; font-weight:700; margin-bottom:8px; }
+  .brief-row{ display:none; margin-top:10px; gap:10px; align-items:flex-end; }
 
   .wrap{ max-width:1200px; margin:0 auto; padding:24px 20px 60px; }
   .panel{ background:var(--white); border:1px solid var(--paper-line); padding:20px; margin-bottom:20px; }
@@ -97,7 +101,7 @@
 <header>
   <div class="logo"><span class="dot"></span>SKYECO&nbsp;PRO</div>
   <div class="sub">PROSPECTION ARTISANS — VENDRE L'ABONNEMENT</div>
-  <a class="back" href="/mes-artisans.html">&larr; Retour au tableau de bord</a>
+  <a class="btn-back" href="/mes-artisans.html">&larr; Retour au tableau de bord</a>
 </header>
 
 <div class="wrap">
@@ -142,9 +146,36 @@
     <label style="font-size:11px; font-weight:700; color:var(--concrete);">Contenu de l'email (HTML)</label>
     <textarea id="batchHtml" style="margin-top:4px;">Bonjour,&lt;br&gt;&lt;br&gt;Je m'appelle Cyrille Bon, je dirige une entreprise du BTP en Bretagne (EcoSky by RMS). Comme vous, j'ai été démarché par toutes les agences possibles pour gérer mes publicités Google et Meta — sans jamais vraiment savoir ce qu'elles faisaient de mon budget.&lt;br&gt;&lt;br&gt;J'ai fini par créer mon propre outil, Skyeco Pro : gratuit, avec juste un forfait de fonctionnement. Il gère vos annonces Google Ads et Meta Ads depuis une seule page, avec le suivi de vos demandes, la gestion de vos devis et toute votre communication client au même endroit.&lt;br&gt;&lt;br&gt;4 ou 5 boutons essentiels, tout est déjà configuré, et vous avez un support si besoin — parce que c'est pensé par un artisan, pour des artisans.&lt;br&gt;&lt;br&gt;Ça peut être utile pour {{nom_entreprise}} à {{ville}} aussi.&lt;br&gt;&lt;br&gt;&lt;a href="{{lien_cta}}" style="display:inline-block;background:#E8622C;color:#fff;padding:12px 22px;text-decoration:none;font-weight:700;"&gt;Découvrir Skyeco Pro&lt;/a&gt;&lt;br&gt;&lt;br&gt;Cyrille Bon&lt;br&gt;EcoSky by RMS</textarea>
     <div class="placeholders">Disponibles dans le texte : <code>{{nom_entreprise}}</code> <code>{{ville}}</code> <code>{{metier}}</code> — et <code>{{lien_cta}}</code> obligatoire, à mettre sur le bouton/lien d'action (lien de tracking, redirige vers le champ "lien de destination" ci-dessus, ou vers la page d'inscription si vide).</div>
+
+    <div class="row" style="margin-top:14px;">
+      <button class="btn btn-ghost" type="button" id="btnApercu">👁️ Aperçu</button>
+      <button class="btn btn-ghost" type="button" id="btnGenererIA">✨ Générer / réécrire avec l'IA</button>
+    </div>
+    <div class="row brief-row" id="briefRow">
+      <div class="field" style="flex:2;">
+        <label>Instruction pour l'IA (optionnel)</label>
+        <input type="text" id="genererBrief" placeholder="ex. plus court, insiste sur le prix, ton plus direct… — laissez vide pour une nouvelle variante">
+      </div>
+      <button class="btn btn-primary" type="button" id="btnGenererConfirmer">Générer</button>
+    </div>
+    <div class="status-msg" id="genererStatus"></div>
+
     <div style="margin-top:14px;"><button class="btn btn-primary" id="btnSendBatch">Envoyer ce lot</button></div>
     <div class="status-msg" id="batchStatus"></div>
     <div class="result-box" id="batchResult"></div>
+
+    <div class="sous-panel">
+      <h3>Email de test</h3>
+      <p class="hint" style="margin-bottom:10px;">Envoie le sujet/contenu ci-dessus à UNE adresse de votre choix, avec des valeurs d'exemple — n'affecte jamais vos prospects ni les statistiques.</p>
+      <div class="row">
+        <div class="field" style="max-width:280px;">
+          <label>Adresse de test</label>
+          <input type="email" id="testEmailAddr" value="c.bon@ecosky.fr">
+        </div>
+        <button class="btn btn-ghost" type="button" id="btnEnvoyerTest" style="align-self:flex-end;">✉️ Envoyer un email test</button>
+      </div>
+      <div class="status-msg" id="testStatus"></div>
+    </div>
   </div>
 
   <div class="panel">
@@ -401,6 +432,105 @@
         (data.restants != null ? (data.restants + ' contact(s) restant(s) pour ce filtre.') : '') +
         (data.message ? data.message : '');
       refreshAll();
+    } catch(err){
+      statusEl.textContent = 'Erreur : ' + err.message;
+      statusEl.style.color = '#c0392b';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  // ---------- Aperçu de l'email (valeurs d'exemple, pas d'envoi) ----------
+  function substituerExemple(html){
+    return html
+      .replaceAll('{{nom_entreprise}}', 'Entreprise Exemple SARL')
+      .replaceAll('{{ville}}', 'Votre Ville')
+      .replaceAll('{{metier}}', 'Votre métier')
+      .replaceAll('{{lien_cta}}', '#apercu');
+  }
+
+  document.getElementById('btnApercu').addEventListener('click', () => {
+    const subject = document.getElementById('batchSubject').value.trim();
+    const html = document.getElementById('batchHtml').value.trim();
+    if(!html){ alert('Rédigez d\'abord le contenu de l\'email.'); return; }
+    const fenetre = window.open('', '_blank');
+    if(!fenetre){ alert('Le navigateur a bloqué l\'ouverture de l\'aperçu — autorisez les popups pour ce site puis réessayez.'); return; }
+    fenetre.document.write(
+      '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Aperçu — email de prospection</title>' +
+      '<style>body{font-family:Arial,Helvetica,sans-serif;background:#f4f7f9;margin:0;padding:30px;}' +
+      '.cadre{max-width:640px;margin:0 auto;background:#fff;border:1px solid #dce4e9;}' +
+      '.entete{background:#14304A;color:#fff;padding:10px 22px;font-size:11px;font-family:monospace;letter-spacing:0.03em;}' +
+      '.sujet{padding:16px 22px;border-bottom:1px solid #dce4e9;font-weight:700;font-size:15px;color:#14304A;}' +
+      '.corps{padding:22px;font-size:14px;line-height:1.6;color:#14304A;}</style></head><body>' +
+      '<div class="cadre">' +
+      '<div class="entete">APERÇU — VALEURS D\'EXEMPLE, AUCUN ENVOI RÉEL</div>' +
+      '<div class="sujet">' + (subject ? subject.replace(/</g,'&lt;') : '(sans sujet)') + '</div>' +
+      '<div class="corps">' + substituerExemple(html) + '</div>' +
+      '</div></body></html>'
+    );
+    fenetre.document.close();
+  });
+
+  // ---------- Générer / réécrire le contenu avec l'IA ----------
+  document.getElementById('btnGenererIA').addEventListener('click', () => {
+    const row = document.getElementById('briefRow');
+    row.style.display = row.style.display === 'flex' ? 'none' : 'flex';
+  });
+
+  document.getElementById('btnGenererConfirmer').addEventListener('click', async () => {
+    const statusEl = document.getElementById('genererStatus');
+    const btn = document.getElementById('btnGenererConfirmer');
+    const brief = document.getElementById('genererBrief').value.trim();
+    const texteActuel = document.getElementById('batchHtml').value.trim();
+
+    if(texteActuel && !confirm('Ceci va remplacer le sujet et le contenu actuellement rédigés (rien n\'est encore envoyé). Continuer ?')) return;
+
+    btn.disabled = true;
+    statusEl.textContent = 'Génération en cours…';
+    statusEl.style.color = 'var(--concrete)';
+    try{
+      const res = await fetch('/api/generer-email-prospection', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ motDePasseInterne: internalPassword, brief: brief || undefined, texteActuel: texteActuel || undefined })
+      });
+      const data = await res.json();
+      if(!data.success) throw new Error(data.error || 'Erreur inconnue.');
+      document.getElementById('batchSubject').value = data.subject;
+      document.getElementById('batchHtml').value = data.html;
+      statusEl.textContent = '✓ Contenu généré — relisez avant d\'envoyer un test ou un lot.';
+      statusEl.style.color = 'var(--ok)';
+    } catch(err){
+      statusEl.textContent = 'Erreur : ' + err.message;
+      statusEl.style.color = '#c0392b';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  // ---------- Email de test (une seule adresse, n'affecte jamais les prospects) ----------
+  document.getElementById('btnEnvoyerTest').addEventListener('click', async () => {
+    const statusEl = document.getElementById('testStatus');
+    const btn = document.getElementById('btnEnvoyerTest');
+    const destinataire = document.getElementById('testEmailAddr').value.trim();
+    const subject = document.getElementById('batchSubject').value.trim();
+    const html = document.getElementById('batchHtml').value.trim();
+    const videoUrl = document.getElementById('batchVideoUrl').value.trim();
+
+    if(!subject || !html){ statusEl.textContent = 'Sujet ou contenu email vide.'; statusEl.style.color = '#c0392b'; return; }
+    if(!html.includes('{{lien_cta}}')){ statusEl.textContent = 'Le contenu doit contenir {{lien_cta}}.'; statusEl.style.color = '#c0392b'; return; }
+
+    btn.disabled = true;
+    statusEl.textContent = 'Envoi du test…';
+    statusEl.style.color = 'var(--concrete)';
+    try{
+      const res = await fetch('/api/prospection-send-test', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ motDePasseInterne: internalPassword, destinataire, subject, html, videoUrl: videoUrl || undefined })
+      });
+      const data = await res.json();
+      if(!data.success) throw new Error(data.error || 'Erreur inconnue.');
+      statusEl.textContent = '✓ Email de test envoyé à ' + data.envoyeA + '.';
+      statusEl.style.color = 'var(--ok)';
     } catch(err){
       statusEl.textContent = 'Erreur : ' + err.message;
       statusEl.style.color = '#c0392b';

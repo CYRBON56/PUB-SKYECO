@@ -144,7 +144,7 @@
       <div class="field"><label>Lien de destination du bouton (optionnel — laissez vide pour renvoyer vers la page d'inscription Skyeco Pro)</label><input type="url" id="batchVideoUrl" placeholder="https://…"></div>
     </div>
     <label style="font-size:11px; font-weight:700; color:var(--concrete);">Contenu de l'email (HTML)</label>
-    <textarea id="batchHtml" style="margin-top:4px;">Bonjour,&lt;br&gt;&lt;br&gt;Je m'appelle Cyrille Bon, je dirige une entreprise du BTP en Bretagne (EcoSky by RMS). Comme vous, j'ai été démarché par toutes les agences possibles pour gérer mes publicités Google et Meta — sans jamais vraiment savoir ce qu'elles faisaient de mon budget.&lt;br&gt;&lt;br&gt;J'ai fini par créer mon propre outil, Skyeco Pro : gratuit, avec juste un forfait de fonctionnement. Il gère vos annonces Google Ads et Meta Ads depuis une seule page, avec le suivi de vos demandes, la gestion de vos devis et toute votre communication client au même endroit.&lt;br&gt;&lt;br&gt;4 ou 5 boutons essentiels, tout est déjà configuré, et vous avez un support si besoin — parce que c'est pensé par un artisan, pour des artisans.&lt;br&gt;&lt;br&gt;Ça peut être utile pour {{nom_entreprise}} à {{ville}} aussi.&lt;br&gt;&lt;br&gt;&lt;a href="{{lien_cta}}" style="display:inline-block;background:#E8622C;color:#fff;padding:12px 22px;text-decoration:none;font-weight:700;"&gt;Découvrir Skyeco Pro&lt;/a&gt;&lt;br&gt;&lt;br&gt;&lt;img src="https://www.skyeco.fr/images/cyrille-bon-prospection-v2.jpg" width="64" height="64" alt="Cyrille Bon" style="border-radius:50%;display:block;margin-bottom:8px;"&gt;Cyrille Bon&lt;br&gt;EcoSky by RMS</textarea>
+    <textarea id="batchHtml" style="margin-top:4px;">Bonjour,&lt;br&gt;&lt;br&gt;Je m'appelle Cyrille Bon, je dirige une entreprise du BTP en Bretagne (EcoSky by RMS). Comme vous, j'ai été démarché par toutes les agences possibles pour gérer mes publicités Google et Meta — sans jamais vraiment savoir ce qu'elles faisaient de mon budget.&lt;br&gt;&lt;br&gt;J'ai fini par créer mon propre outil, Skyeco Pro : gratuit, avec juste un forfait de fonctionnement. Il gère vos annonces Google Ads et Meta Ads depuis une seule page, avec le suivi de vos demandes, la gestion de vos devis et toute votre communication client au même endroit.&lt;br&gt;&lt;br&gt;4 ou 5 boutons essentiels, tout est déjà configuré, et vous avez un support si besoin — parce que c'est pensé par un artisan, pour des artisans.&lt;br&gt;&lt;br&gt;Ça peut être utile pour {{nom_entreprise}} à {{ville}} aussi.&lt;br&gt;&lt;br&gt;&lt;a href="{{lien_cta}}" style="display:inline-block;background:#E8622C;color:#fff;padding:12px 22px;text-decoration:none;font-weight:700;"&gt;Découvrir Skyeco Pro&lt;/a&gt;&lt;br&gt;&lt;br&gt;&lt;img src="cid:signature-cyrille" width="64" height="64" alt="Cyrille Bon" style="border-radius:50%;display:block;margin-bottom:8px;"&gt;Cyrille Bon&lt;br&gt;EcoSky by RMS</textarea>
     <div class="placeholders">Disponibles dans le texte : <code>{{nom_entreprise}}</code> <code>{{ville}}</code> <code>{{metier}}</code> — et <code>{{lien_cta}}</code> obligatoire, à mettre sur le bouton/lien d'action (lien de tracking, redirige vers le champ "lien de destination" ci-dessus, ou vers la page d'inscription si vide).</div>
 
     <div class="row" style="margin-top:14px;">
@@ -446,7 +446,11 @@
       .replaceAll('{{nom_entreprise}}', 'Entreprise Exemple SARL')
       .replaceAll('{{ville}}', 'Votre Ville')
       .replaceAll('{{metier}}', 'Votre métier')
-      .replaceAll('{{lien_cta}}', '#apercu');
+      .replaceAll('{{lien_cta}}', '#apercu')
+      // La vraie image est intégrée en pièce jointe (cid:) à l'envoi réel —
+      // ici, dans l'aperçu seul (pas d'envoi Resend), on affiche la photo
+      // via son URL publique pour un rendu visuel fidèle.
+      .replaceAll('cid:signature-cyrille', 'https://www.skyeco.fr/images/cyrille-bon-prospection.jpg');
   }
 
   document.getElementById('btnApercu').addEventListener('click', () => {

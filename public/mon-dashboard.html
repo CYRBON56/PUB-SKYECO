@@ -490,6 +490,10 @@
       <span class="panel-tab-icone">📅</span>
       <span class="panel-tab-texte">Mon calendrier<span class="panel-tab-sous">Rendez-vous, disponibilités</span></span>
     </button>
+    <button type="button" class="panel-tab" id="tabAppelVideo" data-tab="appelvideo" style="display:none;">
+      <span class="panel-tab-icone">📹</span>
+      <span class="panel-tab-texte">Appel vidéo<span class="panel-tab-sous">Besoin d'aide en direct</span></span>
+    </button>
   </div>
 
   <div id="panelAds">
@@ -754,6 +758,20 @@
     <div id="calendrierContent"><div class="loading">Chargement de votre calendrier…</div></div>
   </div>
   </div>
+
+  <div id="panelAppelVideo" style="display:none;">
+    <div class="liste-panel">
+      <div class="liste-header">
+        <h3 class="calendrier-titre">Appel vidéo avec Cyrille</h3>
+      </div>
+      <p class="calendrier-note">Un souci sur votre campagne ou votre vitrine ? Demandez un rendez-vous en visio — Cyrille valide le créneau puis vous appelle directement au moment convenu.</p>
+      <button type="button" id="btnDemanderAppelVideo" class="btn-action" style="background:#e8622c;color:#fff;border:none;padding:12px 20px;border-radius:10px;font-weight:700;cursor:pointer;">📅 Demander un appel vidéo</button>
+      <div id="appelVideoBanniere" style="display:none;margin-top:18px;padding:16px 18px;border-radius:12px;background:#fdeceb;border:1.5px solid #e8622c;">
+        <div style="font-weight:800;color:#c0392b;margin-bottom:6px;">🔴 Cyrille vous appelle maintenant</div>
+        <a id="lienRejoindreAppel" href="#" target="_blank" rel="noopener" style="display:inline-block;margin-top:4px;background:#1e6f4c;color:#fff;padding:10px 18px;border-radius:9px;font-weight:700;text-decoration:none;">Rejoindre l'appel</a>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div id="calendrierToast" class="calendrier-toast"></div>
@@ -829,6 +847,14 @@
   // toujours celui-ci plutôt que sessionTokenActuel.
   let tokenCalendrierActuel = null;
 
+  // Identifiant réservé de la fiche "Skyeco Pro" (Cyrille lui-même), déjà
+  // utilisé par mes-artisans.html pour son propre accès admin/calendrier —
+  // voir la section "Appel vidéo" du doc technique du projet. Sert ici à ne
+  // JAMAIS proposer à Cyrille de "s'appeler lui-même" sur son propre
+  // dashboard : l'onglet "Appel vidéo" (demande) n'a de sens que côté
+  // artisan, Cyrille gérant sa part depuis l'onglet "Mon calendrier".
+  const DRAFT_ID_SKYECO_PRO = '4fbdb122-9fca-4636-b80c-d9e4abc2542b';
+
   if (!draftId) {
     document.body.innerHTML = '<div class="loading">Lien invalide — identifiant du site manquant.</div>';
   } else {
@@ -890,6 +916,8 @@
     chargerSolde();
     chargerDemandes(sessionTokenActuel);
     initPilotageAds();
+    initAppelVideo();
+    demarrerPresence();
     verifierStatutPause();
     chargerZones();
     initPanelTabs();
@@ -1210,6 +1238,7 @@
     document.getElementById('panelAds').style.display = cible === 'ads' ? '' : 'none';
     document.getElementById('panelClients').style.display = cible === 'clients' ? '' : 'none';
     document.getElementById('panelCalendrier').style.display = cible === 'calendrier' ? '' : 'none';
+    document.getElementById('panelAppelVideo').style.display = cible === 'appelvideo' ? '' : 'none';
     if (cible === 'calendrier' && !calendrierDejaCharge) {
       calendrierDejaCharge = true;
       chargerCalendrier();
@@ -1223,6 +1252,76 @@
     document.getElementById('btnMesRdv').addEventListener('click', () => {
       activerOnglet('calendrier');
       document.getElementById('panelTabs').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
+  // --- Onglet "Appel vidéo" (05/09) : demande d'appel côté artisan --------
+  // N'a de sens que sur le dashboard d'un artisan (pas sur celui de Cyrille
+  // lui-même, DRAFT_ID_SKYECO_PRO — lui gère sa part depuis "Mon
+  // calendrier", voir afficherJoursCalendrier ci-dessous). Réutilise
+  // entièrement le système de créneaux existant (prendre-rdv.html /
+  // reserver-creneau.js), pointé sur la fiche de Cyrille, avec un type de
+  // RDV dédié qui déclenche la génération d'une salle Jitsi.
+  let dernierAppelVuId = null;
+  function initAppelVideo() {
+    if (draftId === DRAFT_ID_SKYECO_PRO) return; // pas pour le dashboard de Cyrille lui-même
+    document.getElementById('tabAppelVideo').style.display = '';
+    document.getElementById('btnDemanderAppelVideo').addEventListener('click', () => {
+      const url = '/prendre-rdv.html?id=' + encodeURIComponent(DRAFT_ID_SKYECO_PRO)
+        + '&type=video&demandeur=' + encodeURIComponent(draftId)
+        + (nomEntreprise ? '&nom=' + encodeURIComponent(nomEntreprise) : '');
+      window.open(url, '_blank');
+    });
+    verifierAppelEnCours();
+    setInterval(verifierAppelEnCours, 10000);
+  }
+
+  async function verifierAppelEnCours() {
+    if (!tokenCalendrierActuel) return;
+    try {
+      const rep = await fetch('/api/statut-appel-video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel }),
+      });
+      if (!rep.ok) return;
+      const data = await rep.json();
+      const banniere = document.getElementById('appelVideoBanniere');
+      const tab = document.getElementById('tabAppelVideo');
+      if (data.enCours && data.roomUrl) {
+        banniere.style.display = '';
+        document.getElementById('lienRejoindreAppel').href = data.roomUrl;
+        if (dernierAppelVuId !== data.rdvId) {
+          tab.querySelector('.panel-tab-icone').textContent = '🔴';
+        }
+        dernierAppelVuId = data.rdvId;
+      } else {
+        banniere.style.display = 'none';
+        tab.querySelector('.panel-tab-icone').textContent = '📹';
+      }
+    } catch (e) { /* silencieux — un échec de sondage n'est pas bloquant */ }
+  }
+
+  // --- Présence "dashboard ouvert" (05/09) : ping léger tant que cet onglet
+  // du navigateur est visible, pour afficher un statut en ligne/hors ligne
+  // dans mes-artisans.html. Aucune donnée personnelle transmise au-delà de
+  // ce que le jeton de session révèle déjà.
+  let presenceInterval = null;
+  function envoyerPingPresence() {
+    if (!tokenCalendrierActuel) return;
+    fetch('/api/ping-presence', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ draftId, token: tokenCalendrierActuel }),
+    }).catch(() => {});
+  }
+  function demarrerPresence() {
+    envoyerPingPresence();
+    presenceInterval = setInterval(() => {
+      if (document.visibilityState === 'visible') envoyerPingPresence();
+    }, 30000);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') envoyerPingPresence();
     });
   }
 
@@ -1324,6 +1423,37 @@
         } else if (c.statut === 'indisponible') {
           btn.innerHTML = '<span class="heure">' + String(c.heure).padStart(2, '0') + 'h00</span> — bloqué';
           btn.addEventListener('click', () => debloquerCreneauCalendrier(c.iso));
+        } else if (c.type_rdv === 'appel_video_artisan') {
+          // 05/09 : demande d'appel vidéo d'un artisan (voir initAppelVideo
+          // côté artisan) — affiché uniquement sur le dashboard de Cyrille
+          // lui-même (DRAFT_ID_SKYECO_PRO), puisque c'est le seul calendrier
+          // sur lequel ce type de RDV est jamais créé.
+          const dejaDemarre = c.appel_statut === 'en_cours' || c.appel_statut === 'termine';
+          btn.classList.add('appel-video');
+          btn.innerHTML = '<span class="heure">📹 ' + String(c.heure).padStart(2, '0') + 'h00</span>'
+            + '<span class="client">' + (c.client_nom || 'Artisan') + (c.client_telephone ? ' · ' + c.client_telephone : '') + '</span>'
+            + (c.client_message ? '<span class="client" style="font-style:italic;">' + c.client_message + '</span>' : '');
+          if (!dejaDemarre) {
+            const btnDemarrer = document.createElement('span');
+            btnDemarrer.textContent = '🎥 Démarrer l\'appel';
+            btnDemarrer.style.cssText = 'display:block;margin-top:6px;background:#1e6f4c;color:#fff;padding:6px 10px;border-radius:7px;font-weight:700;font-size:0.78rem;text-align:center;';
+            btnDemarrer.addEventListener('click', (ev) => { ev.stopPropagation(); demarrerAppelVideoDepuisCalendrier(c.id, btnDemarrer); });
+            btn.appendChild(btnDemarrer);
+          } else if (c.appel_statut === 'en_cours') {
+            const lien = document.createElement('a');
+            lien.textContent = '🔴 Rejoindre l\'appel';
+            lien.href = 'https://meet.jit.si/' + c.room_name;
+            lien.target = '_blank';
+            lien.rel = 'noopener';
+            lien.style.cssText = 'display:block;margin-top:6px;background:#c0392b;color:#fff;padding:6px 10px;border-radius:7px;font-weight:700;font-size:0.78rem;text-align:center;text-decoration:none;';
+            lien.addEventListener('click', (ev) => ev.stopPropagation());
+            btn.appendChild(lien);
+          } else {
+            const fait = document.createElement('span');
+            fait.textContent = '✓ Terminé';
+            fait.style.cssText = 'display:block;margin-top:6px;color:#8a9891;font-size:0.78rem;text-align:center;';
+            btn.appendChild(fait);
+          }
         } else {
           btn.innerHTML = '<span class="heure">✓ ' + String(c.heure).padStart(2, '0') + 'h00</span>'
             + '<span class="client">' + (c.client_nom || 'Client') + (c.client_telephone ? ' · ' + c.client_telephone : '') + '</span>';
@@ -1365,6 +1495,28 @@
       chargerCalendrier();
     } catch (e) {
       toastCalendrier('Erreur, réessayez.');
+    }
+  }
+
+  async function demarrerAppelVideoDepuisCalendrier(rdvId, btnEl) {
+    btnEl.textContent = 'Ouverture…';
+    try {
+      const rep = await fetch('/api/demarrer-appel-video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, rdvId }),
+      });
+      const data = await rep.json();
+      if (!rep.ok || !data.success) {
+        toastCalendrier(data.error || 'Impossible de démarrer cet appel.');
+        btnEl.textContent = '🎥 Démarrer l\'appel';
+        return;
+      }
+      window.open(data.roomUrl, '_blank');
+      chargerCalendrier();
+    } catch (e) {
+      toastCalendrier('Erreur, réessayez.');
+      btnEl.textContent = '🎥 Démarrer l\'appel';
     }
   }
 

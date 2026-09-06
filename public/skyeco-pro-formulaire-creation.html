@@ -202,7 +202,7 @@
   <span class="page-logo-text">SKY<span class="orange-accent">ECO</span> <span class="page-logo-pro">PRO</span></span>
 </div>
 
-<a class="btn-etre-rappele-fixe" href="https://calendly.com/c-bon-ecosky/devis-skyeco-pro-appel-telephonique" target="_blank" rel="noopener">📞 Être rappelé</a>
+<a class="btn-etre-rappele-fixe" href="/prendre-rdv.html?id=4fbdb122-9fca-4636-b80c-d9e4abc2542b" target="_blank" rel="noopener">📞 Être rappelé</a>
 
 <div class="split-layout">
   <img class="shared-carousel-img active" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/1-terrasse-mobilier-noir.jpg" alt="">
@@ -687,7 +687,11 @@
         departement: state.departement || null,
         status: 'preview'
       }])
-      .select()
+      // Sécurité (06/09/2026) : .select() sans argument équivaut à select=*
+      // côté REST — voir la migration verrouiller_colonnes_sensibles_vitrine_drafts,
+      // qui ferait échouer cette lecture pour anon. Seul data.id est utilisé
+      // plus bas.
+      .select('id')
       .single();
 
     if(error){

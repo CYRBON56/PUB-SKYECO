@@ -345,9 +345,11 @@ async function init(){
     return;
   }
 
+  // Sécurité (06/09/2026) : liste explicite plutôt que select('*') — voir la
+  // migration verrouiller_colonnes_sensibles_vitrine_drafts.
   const { data: draft, error } = await supabaseClient
     .from('skyeco_pro_vitrine_drafts')
-    .select('*')
+    .select('adresse_cp,adresse_rue,adresse_ville,assurance_decennale_assureur,assurance_decennale_numero,capital_social,couleur,description,email,entreprise,forme_juridique,id,logo_url,metier,photos,rcs_ville,siret,status,telephone,titre_hero_choisi,tva_taux,video_url,zone')
     .eq('id', id)
     .single();
 

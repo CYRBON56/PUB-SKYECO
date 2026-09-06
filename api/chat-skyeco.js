@@ -4,6 +4,11 @@
 //
 // Variable d'environnement requise :
 //   ANTHROPIC_API_KEY (à créer sur console.anthropic.com)
+//
+// Variables déjà présentes ailleurs, réutilisées ici pour le rate limiting :
+//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+
+import { ipDepuisRequete, verifierLimite } from './_lib/rate-limit.js';
 
 const SYSTEM_PROMPT = `Tu es l'assistant de Skyeco Pro, un service qui crée gratuitement des sites vitrines avec formulaire d'estimation pour les artisans du paysagisme et du BTP en France (paysagistes, poseurs de piscine, élagueurs, entreprises d'entretien d'espaces verts...).
 
@@ -38,6 +43,25 @@ export default async function handler(req, res) {
   const { messages } = req.body || {};
   if (!Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ error: 'messages manquant ou invalide' });
+  }
+
+  // Sécurité (06/09/2026) : ce endpoint public appelle l'API Anthropic
+  // (payante) sans aucune limite — un appel en boucle, ou avec un
+  // "messages" volumineux, pouvait faire grimper la facture sans contrôle.
+  // Limite par IP + plafond de taille/longueur de conversation, en plus du
+  // max_tokens déjà fixé sur la réponse.
+  if (messages.length > 20) {
+    return res.status(400).json({ error: 'Conversation trop longue.' });
+  }
+  const tailleTotale = messages.reduce((n, m) => n + String(m?.content || '').length, 0);
+  if (tailleTotale > 8000) {
+    return res.status(400).json({ error: 'Message trop long.' });
+  }
+
+  const ip = ipDepuisRequete(req);
+  const autorise = await verifierLimite(`chat-skyeco:ip:${ip}`, 20, 10 * 60);
+  if (!autorise) {
+    return res.status(429).json({ error: 'Trop de messages envoyés. Merci de patienter quelques minutes.' });
   }
 
   try {

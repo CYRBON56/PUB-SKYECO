@@ -1,10 +1,53 @@
 // api/prospects-send-email.js
 // Envoie un email de prospection au nom du site (draft_id) demandé.
 //
-// Requête attendue : POST  Body: { draft_id, ids: [...] }
+// Requête attendue : POST  Body: { draft_id, token, ids: [...] }
+//
+// Variables d'environnement requises (en plus de RESEND_API_KEY) :
+//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, DASHBOARD_SESSION_SECRET
+
+import crypto from 'crypto';
 
 const BASE_URL = "https://app.skyeco.fr";
 const TAILLE_LOT = 100;
+
+// Sécurité (06/09/2026) : voir api/bloquer-creneau.js — ce endpoint permettait
+// d'envoyer des emails de prospection AU NOM de n'importe quelle entreprise
+// (usurpation), à sa propre liste de prospects, sur simple présentation d'un
+// draft_id, sans aucune vérification.
+async function verifierToken(token, draftIdAttendu) {
+  try {
+    const decode = Buffer.from(token, 'base64url').toString('utf8');
+    const parties = decode.split('.');
+    if (parties.length !== 4) return false;
+    const [sujet, role, expStr, sig] = parties;
+    const exp = parseInt(expStr, 10);
+    if (!exp || Date.now() / 1000 > exp) return false;
+
+    const payload = `${sujet}.${role}.${expStr}`;
+    const attendu = crypto.createHmac('sha256', process.env.DASHBOARD_SESSION_SECRET).update(payload).digest('hex');
+    const sigBuf = Buffer.from(sig, 'hex');
+    const attenduBuf = Buffer.from(attendu, 'hex');
+    if (sigBuf.length !== attenduBuf.length || !crypto.timingSafeEqual(sigBuf, attenduBuf)) return false;
+
+    if (role === 'admin') return sujet === draftIdAttendu;
+    if (role === 'artisan') {
+      let email;
+      try { email = Buffer.from(sujet, 'base64url').toString('utf8'); } catch (e) { return false; }
+      if (!email) return false;
+      const resp = await fetch(
+        `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftIdAttendu}&select=email`,
+        { headers: { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}` } }
+      );
+      const rows = await resp.json();
+      const draft = rows[0];
+      return !!(draft && draft.email && draft.email.toLowerCase() === email.toLowerCase());
+    }
+    return false;
+  } catch (e) {
+    return false;
+  }
+}
 
 function decouperEnLots(t, taille = TAILLE_LOT) { const l = []; for (let i=0;i<t.length;i+=taille) l.push(t.slice(i,i+taille)); return l; }
 function dormir(ms) { return new Promise((r) => setTimeout(r, ms)); }
@@ -64,8 +107,13 @@ async function envoyerAvecRetry(to, entreprise, nom, token, tentativesMax = 4) {
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ success: false, error: "Méthode non autorisée." });
 
-  const { draft_id, ids } = req.body || {};
-  if (!draft_id) return res.status(400).json({ success: false, error: "Identifiant de site manquant." });
+  const { draft_id, token, ids } = req.body || {};
+  if (!draft_id || !token) {
+    return res.status(401).json({ success: false, error: "non_authentifie" });
+  }
+  if (!(await verifierToken(token, draft_id))) {
+    return res.status(401).json({ success: false, error: "session_invalide" });
+  }
   if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ success: false, error: "Aucun prospect sélectionné." });
 
   const supaHeaders = { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`, "Content-Type": "application/json" };

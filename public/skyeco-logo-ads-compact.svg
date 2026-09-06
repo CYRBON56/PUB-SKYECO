@@ -4,7 +4,7 @@
       .wordmark { font-family: 'Arial Black', Arial, sans-serif; font-weight: 900; }
     </style>
   </defs>
-  <circle cx="100" cy="110" r="92" fill="#14304A"/>
+  <circle cx="100" cy="110" r="92" fill="#14304A" stroke="#3E5C78" stroke-width="1.5"/>
   <g stroke="#2A4A68" stroke-width="1.5" opacity="0.6">
     <line x1="100" y1="22" x2="100" y2="32"/>
     <line x1="150" y1="35" x2="157" y2="43"/>
@@ -28,6 +28,6 @@
     <path d="M 0 20 L 18 14 L 10 34 Z" fill="#C74F20"/>
     <path d="M 18 14 L 66 0 L 24 4 Z" fill="#F0A878"/>
   </g>
-  <text x="222" y="102" class="wordmark" font-size="58" fill="#14304A">SKY<tspan fill="#E8622C">ECO</tspan></text>
+  <text x="222" y="102" class="wordmark" font-size="58" fill="#FFFFFF">SKY<tspan fill="#E8622C">ECO</tspan></text>
   <text x="224" y="140" class="wordmark" font-size="30" letter-spacing="4" fill="#E8622C">ADS</text>
 </svg>

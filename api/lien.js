@@ -1,17 +1,29 @@
 // api/lien.js
 // Lien de tracking court inséré dans les SMS/emails de prospection, servi
-// sur /l?p=<clic_token>[&to=<url encodée>] (voir vercel.json).
+// sur /l?p=<clic_token> (voir vercel.json).
 // - Jeton trouvé dans prospects_vitrine (un artisan qui prospecte SES
 //   clients) : redirige vers apercu.html du site concerné, comme avant.
 // - Jeton trouvé dans prospects_paysagiste (Skyeco Pro qui prospecte des
-//   artisans pour l'abonnement — 04/09) : redirige vers "to" si fourni
-//   (ex: la vidéo de démo), sinon vers la page d'inscription Skyeco Pro.
+//   artisans pour l'abonnement — 04/09) : redirige vers la destination
+//   enregistrée pour CE contact (lien_clic_destination, ex: la vidéo de
+//   démo — voir api/prospection-send-batch.js), sinon vers la page
+//   d'inscription Skyeco Pro.
+//
+// Sécurité (06/09/2026) : ce endpoint acceptait auparavant un paramètre "to"
+// dans l'URL et redirigeait vers cette valeur SANS AUCUNE VALIDATION —
+// n'importe qui muni d'un clic_token valide (envoyé à des milliers de
+// contacts, donc pas vraiment secret) pouvait forger un lien
+// /l?p=<token>&to=https://site-malveillant.example qui semblait pointer vers
+// skyeco.fr mais redirigeait ailleurs (redirection ouverte, utile pour du
+// phishing). La destination n'est plus jamais lue depuis la query string :
+// elle vient uniquement de la base, enregistrée par Cyrille au moment de
+// l'envoi.
 
 const DESTINATION_PAR_DEFAUT = "https://app.skyeco.fr/index.html";
 const DESTINATION_PROSPECTION_ARTISANS = "https://www.skyeco.fr/skyeco-pro-formulaire-creation.html";
 
 export default async function handler(req, res) {
-  const { p, to } = req.query || {};
+  const { p } = req.query || {};
   const supaHeaders = {
     apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
     Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
@@ -37,13 +49,16 @@ export default async function handler(req, res) {
         });
       } else {
         const lecturePaysagiste = await fetch(
-          `${process.env.SUPABASE_URL}/rest/v1/prospects_paysagiste?clic_token=eq.${encodeURIComponent(p)}&select=id,nb_clics`,
+          `${process.env.SUPABASE_URL}/rest/v1/prospects_paysagiste?clic_token=eq.${encodeURIComponent(p)}&select=id,nb_clics,lien_clic_destination`,
           { headers: supaHeaders }
         );
         const rowsPaysagiste = lecturePaysagiste.ok ? await lecturePaysagiste.json() : [];
         const prospectPaysagiste = rowsPaysagiste && rowsPaysagiste[0];
         if (prospectPaysagiste) {
-          destination = to ? decodeURIComponent(to) : DESTINATION_PROSPECTION_ARTISANS;
+          const destinationEnregistree = prospectPaysagiste.lien_clic_destination;
+          destination = (destinationEnregistree && /^https?:\/\//i.test(destinationEnregistree))
+            ? destinationEnregistree
+            : DESTINATION_PROSPECTION_ARTISANS;
           await fetch(`${process.env.SUPABASE_URL}/rest/v1/prospects_paysagiste?id=eq.${encodeURIComponent(prospectPaysagiste.id)}`, {
             method: "PATCH",
             headers: { ...supaHeaders, "Content-Type": "application/json", Prefer: "return=minimal" },

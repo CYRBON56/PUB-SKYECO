@@ -142,23 +142,25 @@
 
   async function demarrer() {
     try {
-      // Lecture directe (clé publique anon, même modèle que le reste du site) :
-      // on ne s'en sert que pour savoir si un mot de passe existe déjà, jamais
-      // pour authentifier — l'authentification passe toujours par les API
-      // serveur (dashboard-login / dashboard-set-password) avec le hash exact.
-      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=email,dashboard_password_hash`, {
-        headers: { apikey: SUPABASE_ANON_KEY }
+      // 06/09/2026 : passe désormais par /api/acces-dashboard-etat (service
+      // role) plutôt que de lire dashboard_password_hash en clé anonyme —
+      // cette colonne n'est plus accessible ainsi depuis le verrouillage des
+      // colonnes sensibles, ce qui faisait échouer toute la requête et
+      // affichait "Site introuvable." pour tous les artisans, à tort.
+      const resp = await fetch('/api/acces-dashboard-etat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId })
       });
-      const rows = await resp.json();
-      const draft = rows[0];
-      if (!draft) {
+      const data = await resp.json();
+      if (!data.success) {
         carte.innerHTML = '<div class="loading">Site introuvable.</div>';
         return;
       }
-      if (draft.dashboard_password_hash) {
-        afficherConnexion(draft.email);
+      if (data.aDejaMotDePasse) {
+        afficherConnexion(data.email);
       } else {
-        afficherCreation(draft.email);
+        afficherCreation(data.email);
       }
     } catch (e) {
       carte.innerHTML = '<div class="loading">Impossible de charger la page pour le moment.</div>';

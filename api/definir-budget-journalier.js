@@ -16,10 +16,49 @@
 //
 // Variables d'environnement requises :
 //   WINDSOR_API_KEY
-//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, DASHBOARD_SESSION_SECRET
 //   GOOGLE_ADS_ACCOUNT_ID
 
+import crypto from 'crypto';
+
 const WINDSOR_BASE = 'https://connectors.windsor.ai/google_ads';
+
+// Sécurité (06/09/2026) : voir api/bloquer-creneau.js — ce endpoint changeait
+// le budget journalier réel de la campagne sur simple présentation d'un
+// draftId (non secret, visible dans l'URL des annonces diffusées).
+async function verifierToken(token, draftIdAttendu) {
+  try {
+    const decode = Buffer.from(token, 'base64url').toString('utf8');
+    const parties = decode.split('.');
+    if (parties.length !== 4) return false;
+    const [sujet, role, expStr, sig] = parties;
+    const exp = parseInt(expStr, 10);
+    if (!exp || Date.now() / 1000 > exp) return false;
+
+    const payload = `${sujet}.${role}.${expStr}`;
+    const attendu = crypto.createHmac('sha256', process.env.DASHBOARD_SESSION_SECRET).update(payload).digest('hex');
+    const sigBuf = Buffer.from(sig, 'hex');
+    const attenduBuf = Buffer.from(attendu, 'hex');
+    if (sigBuf.length !== attenduBuf.length || !crypto.timingSafeEqual(sigBuf, attenduBuf)) return false;
+
+    if (role === 'admin') return sujet === draftIdAttendu;
+    if (role === 'artisan') {
+      let email;
+      try { email = Buffer.from(sujet, 'base64url').toString('utf8'); } catch (e) { return false; }
+      if (!email) return false;
+      const resp = await fetch(
+        `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftIdAttendu}&select=email`,
+        { headers: { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}` } }
+      );
+      const rows = await resp.json();
+      const draft = rows[0];
+      return !!(draft && draft.email && draft.email.toLowerCase() === email.toLowerCase());
+    }
+    return false;
+  } catch (e) {
+    return false;
+  }
+}
 
 // Windsor.ai attend l'identifiant de compte Google Ads AVEC tirets
 // (format XXX-XXX-XXXX) — même correctif que create-google-ads-campaign.js
@@ -47,10 +86,13 @@ export default async function handler(req, res) {
     return res.status(405).json({ success: false, error: 'Méthode non autorisée' });
   }
 
-  const { draftId, budgetJournalier } = req.body || {};
+  const { draftId, token, budgetJournalier } = req.body || {};
   const montant = parseFloat(budgetJournalier);
-  if (!draftId || !montant || montant <= 0) {
-    return res.status(400).json({ success: false, error: 'draftId et budgetJournalier (montant en €, > 0) requis.' });
+  if (!draftId || !token || !montant || montant <= 0) {
+    return res.status(400).json({ success: false, error: 'draftId, token et budgetJournalier (montant en €, > 0) requis.' });
+  }
+  if (!(await verifierToken(token, draftId))) {
+    return res.status(401).json({ success: false, error: 'session_invalide' });
   }
 
   const supaHeaders = {

@@ -84,6 +84,22 @@
   const draftId = params.get('id');
   const app = document.getElementById('app');
 
+  // Sécurité (06/09/2026) : cette page est accessible avec pour seule clé
+  // le draftId (non secret, publié dans les URLs Google Ads) — elle ne
+  // "connecte" personne elle-même. On récupère ici, en best-effort et sans
+  // bloquer l'affichage (l'estimation de budget et la confirmation de
+  // paiement Stripe juste après le retour de checkout.stripe.com doivent
+  // continuer à fonctionner même sans session), le jeton déjà posé par une
+  // connexion faite ailleurs (mon-dashboard.html, ou admin_token transmis
+  // par mes-artisans.html) — s'il existe, on le transmet aux actions
+  // sensibles (mise en pause/résiliation de l'abonnement) ; sinon ces
+  // actions renvoient l'artisan se connecter au lieu de s'exécuter pour
+  // n'importe qui connaissant l'identifiant du site.
+  const sessionToken = params.get('admin_token')
+    || sessionStorage.getItem('skyeco_dashboard_token_' + draftId)
+    || sessionStorage.getItem('skyeco_dashboard_token')
+    || null;
+
   if (!draftId) {
     app.innerHTML = '<div class="error-msg">Lien invalide — identifiant du site manquant.</div>';
   } else if (params.get('lance') === '1' && params.get('session_id')) {
@@ -421,6 +437,11 @@
     }
 
     document.getElementById('btnPause').addEventListener('click', async () => {
+      if (!sessionToken) {
+        alert('Merci de vous connecter à votre tableau de bord pour gérer votre abonnement.');
+        window.location.href = '/acces-dashboard.html?id=' + draftId;
+        return;
+      }
       if (!confirm("Demander la mise en pause de votre abonnement ?\n\n• Rien ne s'arrête tout de suite.\n• 2 jours avant la fin de votre période déjà payée, vous recevrez un SMS avec un lien à cliquer pour confirmer.\n• C'est seulement à ce moment-là, si vous confirmez, que la pause prend effet.")) {
         return;
       }
@@ -431,7 +452,7 @@
         const res = await fetch('/api/demander-pause', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ draftId })
+          body: JSON.stringify({ draftId, token: sessionToken })
         });
         const data = await res.json();
         if (res.ok) {
@@ -450,6 +471,11 @@
     });
 
     document.getElementById('btnResilier').addEventListener('click', async () => {
+      if (!sessionToken) {
+        alert('Merci de vous connecter à votre tableau de bord pour gérer votre abonnement.');
+        window.location.href = '/acces-dashboard.html?id=' + draftId;
+        return;
+      }
       if (!confirm("Confirmer la résiliation ? Votre vitrine restera active jusqu'à la fin de la période déjà payée, puis se désactivera automatiquement.")) {
         return;
       }
@@ -460,7 +486,7 @@
         const res = await fetch('/api/cancel-subscription', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ draftId })
+          body: JSON.stringify({ draftId, token: sessionToken })
         });
         const data = await res.json();
         if (res.ok) {
@@ -481,10 +507,14 @@
     async function chargerConsommation() {
       const section = document.getElementById('consommationSection');
       try {
+        if (!sessionToken) {
+          section.innerHTML = ''; // pas de session connue ici — panneau simplement masqué (rien de sensible affiché)
+          return;
+        }
         const res = await fetch('/api/get-campaign-spend', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ draft_id: draftId })
+          body: JSON.stringify({ draft_id: draftId, token: sessionToken })
         });
         const data = await res.json();
 

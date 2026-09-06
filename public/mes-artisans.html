@@ -138,6 +138,48 @@
 
   let toutesLesFiches = [];
   let vueArchives = false;
+  let demandesParDraftId = {};
+
+  // Mot de passe interne (admin) : demandé une seule fois par session de
+  // navigateur, conservé en sessionStorage pour les appels suivants — même
+  // mécanisme que les autres pages d'admin (voir ouvrirDashboardAdmin plus
+  // bas). Depuis le verrouillage des colonnes sensibles de
+  // skyeco_pro_vitrine_drafts (06/09), la liste elle-même passe par ce
+  // mot de passe : elle ne se chargeait plus du tout en clé anonyme
+  // (dashboard_password_hash n'est plus lisible ainsi, ce qui faisait
+  // échouer toute la requête).
+  function obtenirMotDePasseInterne(forcerNouveau) {
+    let mdp = forcerNouveau ? null : sessionStorage.getItem('skyeco_admin_internal_pw');
+    if (!mdp) {
+      mdp = prompt('Mot de passe interne (admin) :');
+      if (!mdp) return null;
+    }
+    return mdp;
+  }
+
+  async function appelerMesArtisans(action, extra, sansRelance) {
+    let mdp = obtenirMotDePasseInterne();
+    if (!mdp) return { success: false, annule: true };
+    let resp = await fetch('/api/mes-artisans', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ motDePasseInterne: mdp, action, ...extra })
+    });
+    let data = await resp.json();
+    if (resp.status === 401 && !sansRelance) {
+      sessionStorage.removeItem('skyeco_admin_internal_pw');
+      mdp = obtenirMotDePasseInterne(true);
+      if (!mdp) return { success: false, annule: true };
+      resp = await fetch('/api/mes-artisans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ motDePasseInterne: mdp, action, ...extra })
+      });
+      data = await resp.json();
+    }
+    if (data.success) sessionStorage.setItem('skyeco_admin_internal_pw', mdp);
+    return data;
+  }
 
   chargerFiches();
   // 05/09 : rafraîchit périodiquement la pastille "en ligne" (présence du
@@ -147,13 +189,14 @@
 
   async function chargerFiches() {
     try {
-      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?select=id,entreprise,metier,telephone,status,site_valide,archive,created_at,dashboard_password_hash,dashboard_dernier_ping&order=created_at.desc`, {
-        headers: { apikey: SUPABASE_ANON_KEY }
-      });
-      toutesLesFiches = await resp.json();
+      const data = await appelerMesArtisans('liste');
+      if (data.annule) { document.getElementById('contenu').innerHTML = '<div class="empty">Mot de passe requis pour consulter la liste.</div>'; return; }
+      if (!data.success) throw new Error(data.error || 'échec');
+      toutesLesFiches = data.fiches;
+      demandesParDraftId = data.demandesParDraftId || {};
       afficherStats(toutesLesFiches);
       afficherVueActuelle();
-      chargerCompteursDemandes();
+      afficherCompteursDemandes();
     } catch (e) {
       document.getElementById('contenu').innerHTML = '<div class="empty">Impossible de charger la liste pour le moment.</div>';
     }
@@ -167,11 +210,13 @@
   }
 
   async function rafraichirPresence() {
+    // Ne redemande jamais le mot de passe ici en tâche de fond — seule
+    // chargerFiches() (au chargement de la page) le demande activement.
+    if (!sessionStorage.getItem('skyeco_admin_internal_pw')) return;
     try {
-      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?select=id,dashboard_dernier_ping`, {
-        headers: { apikey: SUPABASE_ANON_KEY }
-      });
-      const lignes = await resp.json();
+      const data = await appelerMesArtisans('presence', null, true);
+      if (!data.success) return;
+      const lignes = data.presence;
       const parId = new Map(lignes.map(l => [String(l.id), l.dashboard_dernier_ping]));
       toutesLesFiches.forEach(f => { f.dashboard_dernier_ping = parId.get(String(f.id)) || null; });
       toutesLesFiches.forEach(f => {
@@ -188,24 +233,17 @@
   function afficherVueActuelle() {
     const fichesVue = toutesLesFiches.filter(f => vueArchives ? f.archive : !f.archive);
     afficherTableau(fichesVue);
+    afficherCompteursDemandes();
   }
 
-  // Nombre de demandes reçues par artisan — un seul appel groupé (pas un
-  // par artisan) pour rester léger même avec beaucoup d'inscrits ; complète
-  // le tableau une fois chargé plutôt que de bloquer son premier affichage.
-  async function chargerCompteursDemandes() {
-    try {
-      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_leads?select=draft_id`, {
-        headers: { apikey: SUPABASE_ANON_KEY }
-      });
-      const leads = await resp.json();
-      const compteurs = {};
-      leads.forEach(l => { compteurs[l.draft_id] = (compteurs[l.draft_id] || 0) + 1; });
-      Object.entries(compteurs).forEach(([draftId, n]) => {
-        const el = document.getElementById('demandes-' + draftId);
-        if (el) el.textContent = `📩 ${n} demande${n > 1 ? 's' : ''}`;
-      });
-    } catch (e) { /* silencieux — le tableau reste utilisable sans ce détail */ }
+  // Nombre de demandes reçues par artisan — déjà renvoyé groupé par
+  // /api/mes-artisans (action 'liste'), on ne fait plus ici que l'affichage
+  // une fois le tableau construit, sans nouvel appel réseau.
+  function afficherCompteursDemandes() {
+    Object.entries(demandesParDraftId).forEach(([draftId, n]) => {
+      const el = document.getElementById('demandes-' + draftId);
+      if (el) el.textContent = `📩 ${n} demande${n > 1 ? 's' : ''}`;
+    });
   }
 
   function afficherStats(fichesToutes) {
@@ -278,7 +316,7 @@
                     <button class="btn-action ${f.archive ? 'btn-desarchiver' : 'btn-archiver'}" data-id="${f.id}" data-archive="${f.archive ? '1' : '0'}" onclick="toggleArchive(this)">${f.archive ? '↩️ Désarchiver' : '📦 Archiver'}</button>
                   </div>
                   <div class="feedback" id="feedback-${f.id}">
-                    ${f.dashboard_password_hash ? '<span class="badge-compte-cree">✓ Compte créé</span>' : '<span class="badge-compte-absent">Compte pas encore créé</span>'}
+                    ${f.compte_cree ? '<span class="badge-compte-cree">✓ Compte créé</span>' : '<span class="badge-compte-absent">Compte pas encore créé</span>'}
                     <span class="badge-en-ligne" id="en-ligne-${f.id}" style="display:${estEnLigne(f) ? '' : 'none'};">En ligne</span>
                     <span class="badge-compteur-demandes" id="demandes-${f.id}"></span>
                   </div>
@@ -334,16 +372,13 @@
   // repérer d'un coup d'œil les vitrines que tu as réellement vérifiées après coup.
   window.toggleValidation = async function(btn) {
     const draftId = btn.dataset.id;
-    const nouvelEtat = btn.dataset.valide !== '1';
     const feedbackEl = document.getElementById('feedback-' + draftId);
     btn.disabled = true;
     try {
-      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
-        method: 'PATCH',
-        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-        body: JSON.stringify({ site_valide: nouvelEtat })
-      });
-      if (!resp.ok) throw new Error();
+      const data = await appelerMesArtisans('toggle_valide', { draftId });
+      if (data.annule) { btn.disabled = false; return; }
+      if (!data.success) throw new Error(data.error || 'échec');
+      const nouvelEtat = data.siteValide;
       btn.dataset.valide = nouvelEtat ? '1' : '0';
       btn.textContent = nouvelEtat ? '✓ Site validé' : '☐ Valider le site';
       btn.className = 'btn-action ' + (nouvelEtat ? 'btn-valide-on' : 'btn-valide-off');
@@ -364,15 +399,12 @@
   // moment.
   window.toggleArchive = async function(btn) {
     const draftId = btn.dataset.id;
-    const nouvelEtat = btn.dataset.archive !== '1';
     btn.disabled = true;
     try {
-      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
-        method: 'PATCH',
-        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-        body: JSON.stringify({ archive: nouvelEtat })
-      });
-      if (!resp.ok) throw new Error();
+      const data = await appelerMesArtisans('toggle_archive', { draftId });
+      if (data.annule) { btn.disabled = false; return; }
+      if (!data.success) throw new Error(data.error || 'échec');
+      const nouvelEtat = data.archive;
       const fiche = toutesLesFiches.find(f => String(f.id) === String(draftId));
       if (fiche) fiche.archive = nouvelEtat;
       afficherStats(toutesLesFiches);

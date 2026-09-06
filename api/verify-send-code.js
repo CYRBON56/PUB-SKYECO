@@ -6,6 +6,7 @@
 //   TWILIO_VERIFY_SERVICE_SID
 
 import twilio from 'twilio';
+import { ipDepuisRequete, verifierLimite } from './_lib/rate-limit.js';
 
 function toE164(rawPhone) {
   const digits = rawPhone.replace(/\D/g, '');
@@ -23,6 +24,21 @@ export default async function handler(req, res) {
   const phoneE164 = toE164(telephone || '');
   if (!phoneE164) {
     return res.status(400).json({ success: false, error: 'Numéro de téléphone invalide.' });
+  }
+
+  // Sécurité (06/09/2026) : sans limite, ce endpoint public permettait
+  // d'envoyer un nombre illimité de SMS Twilio Verify vers N'IMPORTE QUEL
+  // numéro (harcèlement d'un tiers par SMS répétés, coût Twilio pour
+  // Cyrille). Double limite : par numéro visé (protège la victime, même si
+  // l'attaquant change d'IP) et par IP appelante (freine un attaquant qui
+  // viserait beaucoup de numéros différents).
+  const ip = ipDepuisRequete(req);
+  const [autoriseParNumero, autoriseParIp] = await Promise.all([
+    verifierLimite(`verify-send-code:tel:${phoneE164}`, 3, 15 * 60),
+    verifierLimite(`verify-send-code:ip:${ip}`, 10, 15 * 60),
+  ]);
+  if (!autoriseParNumero || !autoriseParIp) {
+    return res.status(429).json({ success: false, error: 'Trop de tentatives. Merci de réessayer dans quelques minutes.' });
   }
 
   try {

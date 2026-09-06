@@ -188,6 +188,17 @@
   let filtreActif = 'tous';
   let draft = null;
 
+  // Sécurité (06/09/2026) : cette page utilisait le seul draftId comme
+  // "lien secret" — or c'est le MÊME identifiant que celui publié dans les
+  // URLs finales des annonces Google Ads du site (apercu.html?id=...),
+  // donc pas réellement secret. Elle donnait accès en lecture aux demandes
+  // reçues (coordonnées des clients) et à tous les outils de prospection
+  // (import/suppression/envoi d'email et SMS AU NOM de l'entreprise) à
+  // quiconque connaissait ce lien. On exige maintenant la même session que
+  // mon-dashboard.html (voir acces-dashboard.html), avec le mot de passe du
+  // compte artisan.
+  let sessionToken = null;
+
   function escapeHtml(str){
     if(str === null || str === undefined) return '';
     return String(str).replace(/[&<>"']/g, function(c){
@@ -214,6 +225,35 @@
       document.getElementById('accessErr').style.display = 'block';
       return;
     }
+
+    const token = params.get('admin_token')
+      || sessionStorage.getItem('skyeco_dashboard_token_' + draftId)
+      || sessionStorage.getItem('skyeco_dashboard_token');
+
+    if(!token){
+      window.location.href = '/acces-dashboard.html?id=' + draftId;
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/dashboard-verify-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token })
+      });
+      const verif = await res.json();
+      if (!verif.valid) {
+        sessionStorage.removeItem('skyeco_dashboard_token_' + draftId);
+        sessionStorage.removeItem('skyeco_dashboard_token');
+        window.location.href = '/acces-dashboard.html?id=' + draftId;
+        return;
+      }
+    } catch (e) {
+      document.getElementById('accessErr').textContent = 'Impossible de vérifier votre accès pour le moment.';
+      document.getElementById('accessErr').style.display = 'block';
+      return;
+    }
+    sessionToken = token;
 
     const { data: draftData, error: draftError } = await supabaseClient
       .from('skyeco_pro_vitrine_drafts')
@@ -254,14 +294,28 @@
 
   async function chargerLeads(){
     const container = document.getElementById('tableContainer');
-    const { data, error } = await supabaseClient
-      .from('skyeco_pro_leads')
-      .select('*')
-      .eq('draft_id', draftId)
-      .order('created_at', { ascending:false });
+    // Sécurité (06/09/2026) : lecture des demandes (coordonnées clients)
+    // désormais via un endpoint authentifié côté serveur — l'accès direct
+    // à la table skyeco_pro_leads avec la clé anon a été fermé (RLS).
+    let data, errorMsg;
+    try {
+      const resp = await fetch('/api/mes-leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token: sessionToken })
+      });
+      const json = await resp.json();
+      if (!resp.ok || !json.success) {
+        errorMsg = json.error || 'erreur';
+      } else {
+        data = json.leads;
+      }
+    } catch (e) {
+      errorMsg = 'Erreur réseau';
+    }
 
-    if(error){
-      container.innerHTML = '<p class="empty" style="color:#c0392b;">Échec du chargement : ' + escapeHtml(error.message) +
+    if(errorMsg){
+      container.innerHTML = '<p class="empty" style="color:#c0392b;">Échec du chargement : ' + escapeHtml(errorMsg) +
         '<br><button type="button" onclick="chargerLeads()" style="margin-top:10px;">Réessayer</button></p>';
       return;
     }
@@ -359,13 +413,21 @@
         const id = this.dataset.id;
         const nouveauStatut = this.value;
         this.disabled = true;
-        const { error } = await supabaseClient
-          .from('skyeco_pro_leads')
-          .update({ statut: nouveauStatut, updated_at: new Date().toISOString() })
-          .eq('id', id);
+        let erreurMsg = null;
+        try {
+          const resp = await fetch('/api/lead-statut', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ leadId: id, statut: nouveauStatut, token: sessionToken })
+          });
+          const json = await resp.json();
+          if (!resp.ok || !json.success) erreurMsg = json.error || 'erreur';
+        } catch (e) {
+          erreurMsg = 'Erreur réseau';
+        }
         this.disabled = false;
-        if(error){
-          alert("Impossible de mettre à jour le statut : " + error.message);
+        if(erreurMsg){
+          alert("Impossible de mettre à jour le statut : " + erreurMsg);
           return;
         }
         const lead = leads.find(l => l.id === id);
@@ -387,7 +449,7 @@
 
     function pCharger(){
       var container = document.getElementById('pTableContainer');
-      fetch('/api/prospects-list?draft_id=' + encodeURIComponent(draftId))
+      fetch('/api/prospects-list?draft_id=' + encodeURIComponent(draftId) + '&token=' + encodeURIComponent(sessionToken))
         .then(function(r){ return r.json(); })
         .then(function(data){
           if (data.success) { pProspects = data.prospects; pRenderAll(); }
@@ -501,7 +563,7 @@
       if (ids.length===0) { status.textContent='Sélectionnez au moins un prospect.'; status.className='p-status err'; return; }
       var self = this; self.disabled = true;
       status.textContent = 'Envoi en cours…'; status.className = 'p-status';
-      fetch('/api/prospects-send-email', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ draft_id: draftId, ids: ids }) })
+      fetch('/api/prospects-send-email', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ draft_id: draftId, token: sessionToken, ids: ids }) })
         .then(function(r){ return r.json(); }).then(function(data){
           self.disabled = false;
           if (data.success) {
@@ -519,7 +581,7 @@
       if (!confirm('Envoyer le SMS à ' + ids.length + ' prospect(s) ?')) return;
       var self = this; self.disabled = true;
       status.textContent = 'Envoi en cours…'; status.className = 'p-status';
-      fetch('/api/prospects-send-sms', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ draft_id: draftId, ids: ids }) })
+      fetch('/api/prospects-send-sms', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ draft_id: draftId, token: sessionToken, ids: ids }) })
         .then(function(r){ return r.json(); }).then(function(data){
           self.disabled = false;
           if (data.success) {
@@ -538,7 +600,7 @@
       var status = document.getElementById('pSendStatus');
       if (ids.length===0) { status.textContent='Sélectionnez au moins un prospect (le contact test ne peut pas être supprimé).'; status.className='p-status err'; return; }
       if (!confirm('Supprimer ' + ids.length + ' prospect(s) ?')) return;
-      fetch('/api/prospects-delete', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ draft_id: draftId, ids: ids }) })
+      fetch('/api/prospects-delete', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ draft_id: draftId, token: sessionToken, ids: ids }) })
         .then(function(r){ return r.json(); }).then(function(data){
           if (data.success) { status.textContent = ids.length + ' supprimé(s).'; status.className='p-status ok'; pCharger(); }
           else { status.textContent = data.error||'Suppression impossible.'; status.className='p-status err'; }
@@ -570,7 +632,7 @@
           }).filter(function(p){ return p.telephone_e164 || p.email; });
           if (toImport.length===0) { status.textContent='Aucun mobile ni email valide trouvé.'; status.className='p-status err'; return; }
           status.textContent = 'Import en cours…'; status.className = 'p-status';
-          fetch('/api/prospects-import', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ draft_id: draftId, prospects: toImport }) })
+          fetch('/api/prospects-import', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ draft_id: draftId, token: sessionToken, prospects: toImport }) })
             .then(function(r){ return r.json(); }).then(function(data){
               if (data.success) { status.textContent = data.imported + ' importé(s).'; status.className='p-status ok'; fileInput.value=''; pCharger(); }
               else { status.textContent = data.error||'Import impossible.'; status.className='p-status err'; }
@@ -593,7 +655,7 @@
       if (!e164 && !email) { status.textContent='Un numéro (06/07) ou un email est requis.'; status.className='p-status err'; return; }
       var contact = { nom: nom, ville: document.getElementById('m-ville').value.trim(), telephone: tel, telephone_e164: e164, email: email };
       status.textContent = 'Ajout en cours…'; status.className='p-status';
-      fetch('/api/prospects-import', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ draft_id: draftId, prospects: [contact] }) })
+      fetch('/api/prospects-import', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ draft_id: draftId, token: sessionToken, prospects: [contact] }) })
         .then(function(r){ return r.json(); }).then(function(data){
           if (data.success) {
             status.textContent = 'Contact ajouté.'; status.className='p-status ok';

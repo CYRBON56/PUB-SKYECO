@@ -14,10 +14,49 @@
 //
 // Variables d'environnement requises :
 //   WINDSOR_API_KEY
-//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, DASHBOARD_SESSION_SECRET
+
+import crypto from 'crypto';
 
 const WINDSOR_BASE = 'https://connectors.windsor.ai/google_ads';
 const JOURS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+
+// Sécurité (06/09/2026) : voir api/bloquer-creneau.js — ce endpoint changeait
+// les horaires de diffusion réels sur simple présentation d'un draftId (non
+// secret).
+async function verifierToken(token, draftIdAttendu) {
+  try {
+    const decode = Buffer.from(token, 'base64url').toString('utf8');
+    const parties = decode.split('.');
+    if (parties.length !== 4) return false;
+    const [sujet, role, expStr, sig] = parties;
+    const exp = parseInt(expStr, 10);
+    if (!exp || Date.now() / 1000 > exp) return false;
+
+    const payload = `${sujet}.${role}.${expStr}`;
+    const attendu = crypto.createHmac('sha256', process.env.DASHBOARD_SESSION_SECRET).update(payload).digest('hex');
+    const sigBuf = Buffer.from(sig, 'hex');
+    const attenduBuf = Buffer.from(attendu, 'hex');
+    if (sigBuf.length !== attenduBuf.length || !crypto.timingSafeEqual(sigBuf, attenduBuf)) return false;
+
+    if (role === 'admin') return sujet === draftIdAttendu;
+    if (role === 'artisan') {
+      let email;
+      try { email = Buffer.from(sujet, 'base64url').toString('utf8'); } catch (e) { return false; }
+      if (!email) return false;
+      const resp = await fetch(
+        `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftIdAttendu}&select=email`,
+        { headers: { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}` } }
+      );
+      const rows = await resp.json();
+      const draft = rows[0];
+      return !!(draft && draft.email && draft.email.toLowerCase() === email.toLowerCase());
+    }
+    return false;
+  } catch (e) {
+    return false;
+  }
+}
 
 async function executerAction(action, params) {
   const resp = await fetch(`${WINDSOR_BASE}/actions?api_key=${process.env.WINDSOR_API_KEY}`, {
@@ -75,9 +114,12 @@ export default async function handler(req, res) {
     return res.status(405).json({ success: false, error: 'Méthode non autorisée' });
   }
 
-  const { draftId, mode } = req.body || {};
-  if (!draftId || !['heures_pointe', 'toute_heure'].includes(mode)) {
-    return res.status(400).json({ success: false, error: 'draftId et mode ("heures_pointe" ou "toute_heure") requis.' });
+  const { draftId, token, mode } = req.body || {};
+  if (!draftId || !token || !['heures_pointe', 'toute_heure'].includes(mode)) {
+    return res.status(400).json({ success: false, error: 'draftId, token et mode ("heures_pointe" ou "toute_heure") requis.' });
+  }
+  if (!(await verifierToken(token, draftId))) {
+    return res.status(401).json({ success: false, error: 'session_invalide' });
   }
 
   const supaHeaders = {

@@ -999,7 +999,7 @@
           const r = await fetch('/api/get-campaign-spend', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ draft_id: s.id })
+            body: JSON.stringify({ draft_id: s.id, token: tokenCalendrierActuel })
           });
           const d = await r.json();
           return { ...s, clics: d.success && d.campagneExiste ? d.clics : null, pausee: d.diffusionPausee || false };
@@ -1546,7 +1546,7 @@
       const resp = await fetch('/api/clics-par-zone', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draft_id: draftId }),
+        body: JSON.stringify({ draft_id: draftId, token: tokenCalendrierActuel }),
       });
       const data = await resp.json();
       if (!resp.ok || !data.success || !data.campagneExiste) return; // pas de campagne active -> panneau masqué
@@ -1648,7 +1648,7 @@
       const res = await fetch('/api/reprendre-subscription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId })
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel })
       });
       const data = await res.json();
       if (data.success) {
@@ -1686,7 +1686,7 @@
       const res = await fetch('/api/get-campaign-spend', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draft_id: draftId })
+        body: JSON.stringify({ draft_id: draftId, token: tokenCalendrierActuel })
       });
       const data = await res.json();
 
@@ -1749,7 +1749,7 @@
       const res = await fetch('/api/pause-campagne-ads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, action: actionDemandee })
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: actionDemandee })
       });
       const data = await res.json();
       if (data.success) {
@@ -1779,35 +1779,42 @@
       const draftRows = await draftResp.json();
       nomEntreprise = draftRows[0]?.entreprise || 'Mon entreprise';
 
-      let idsRecherches = [draftId];
-      const nomsParSite = { [draftId]: nomEntreprise };
-      if (token) {
-        try {
-          const sitesResp = await fetch('/api/mes-sites', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token })
-          });
-          const sitesData = await sitesResp.json();
-          if (sitesData.success && Array.isArray(sitesData.sites) && sitesData.sites.length) {
-            idsRecherches = sitesData.sites.map(s => s.id);
-            sitesData.sites.forEach(s => { nomsParSite[s.id] = s.entreprise || 'Vitrine sans nom'; });
-          }
-        } catch (e) { /* on retombe sur le site courant seul */ }
-      }
-      const plusieursSites = idsRecherches.length > 1;
-
-      const filtreIds = idsRecherches.map(id => `"${id}"`).join(',');
-      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_leads?draft_id=in.(${filtreIds})&select=*&order=created_at.desc`, {
-        headers: { apikey: SUPABASE_ANON_KEY }
+      // Sécurité (06/09/2026) : les demandes ("leads" — nom, téléphone,
+      // email, adresse de chaque prospect) sont maintenant lues via un
+      // endpoint authentifié (api/mes-leads.js) plutôt que directement
+      // depuis Supabase avec la clé anonyme — voir ce fichier pour le détail
+      // de la faille corrigée (n'importe qui pouvait lire les demandes de
+      // N'IMPORTE QUELLE vitrine en connaissant juste son draft_id, qui
+      // n'est pas secret).
+      const leadsResp = await fetch('/api/mes-leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token }),
       });
-      leadsData = await resp.json();
+      const leadsPayload = await leadsResp.json();
+      if (!leadsPayload.success) throw new Error(leadsPayload.error || 'Impossible de charger les demandes.');
+
+      leadsData = leadsPayload.leads || [];
+      const sites = Array.isArray(leadsPayload.sites) && leadsPayload.sites.length ? leadsPayload.sites : [{ id: draftId, entreprise: nomEntreprise }];
+      const nomsParSite = {};
+      sites.forEach(s => { nomsParSite[s.id] = s.entreprise || (s.id === draftId ? nomEntreprise : 'Vitrine sans nom'); });
+      const plusieursSites = sites.length > 1;
 
       if (!leadsData.length) {
         content.innerHTML = '<div class="empty-msg"><span class="empty-icone">📭</span>Aucune demande reçue pour l\'instant.</div>';
         return;
       }
 
+      // Sécurité (06/09/2026) : nom, prénom, téléphone, email et "reponses"
+      // (dont l'adresse extraite par extraireAdresse) viennent tous du
+      // formulaire PUBLIC apercu.html, rempli par n'importe quel visiteur
+      // anonyme — avant ce correctif ils étaient injectés tels quels dans ce
+      // tableau via innerHTML : une "demande" contenant par exemple
+      // <img src=x onerror=...> comme prénom exécutait du JavaScript dans le
+      // navigateur de L'ARTISAN dès qu'il ouvrait "Mes clients" (XSS stockée),
+      // avec accès à son jeton de session stocké en sessionStorage. Toutes
+      // les valeurs issues d'un lead sont maintenant échappées avec
+      // escapeHtmlDash avant affichage.
       content.innerHTML = `
         <div class="table-scroll">
         <table class="table-clients">
@@ -1821,14 +1828,14 @@
                 ${plusieursSites ? `<td>${nomsParSite[l.draft_id] || '—'}</td>` : ''}
                 <td>
                   <div class="client-identite">
-                    <span class="client-avatar">${initialesClient(l.prenom, l.nom)}</span>
-                    <span class="client-nom">${(l.prenom || '') + ' ' + (l.nom || '')}</span>
+                    <span class="client-avatar">${escapeHtmlDash(initialesClient(l.prenom, l.nom))}</span>
+                    <span class="client-nom">${escapeHtmlDash((l.prenom || '') + ' ' + (l.nom || ''))}</span>
                   </div>
                 </td>
-                <td>${extraireAdresse(l.reponses)}</td>
+                <td>${escapeHtmlDash(extraireAdresse(l.reponses))}</td>
                 <td>
-                  ${l.telephone ? `<a class="client-contact" href="tel:${l.telephone}">📞 ${l.telephone}</a>` : ''}
-                  ${l.email ? `<a class="client-contact" href="mailto:${l.email}">✉️ ${l.email}</a>` : ''}
+                  ${l.telephone ? `<a class="client-contact" href="tel:${encodeURIComponent(l.telephone)}">📞 ${escapeHtmlDash(l.telephone)}</a>` : ''}
+                  ${l.email ? `<a class="client-contact" href="mailto:${encodeURIComponent(l.email)}">✉️ ${escapeHtmlDash(l.email)}</a>` : ''}
                   ${(!l.telephone && !l.email) ? '—' : ''}
                 </td>
                 <td>${labelStatutLead(l.statut)}</td>
@@ -1936,31 +1943,21 @@
       if (!uploadResp.ok) throw new Error("Échec de l'envoi du fichier : " + (await uploadResp.text().catch(() => '')));
       const pdfUrl = `${SUPABASE_URL}/storage/v1/object/public/${DEVIS_BUCKET}/${chemin}`;
 
-      // 2. Lecture seule ici (autorisée avec la clé publique) — juste pour
-      // vérifier que la demande existe et récupérer le téléphone/prénom
-      // avant de tout transmettre au serveur.
-      const leadResp = await fetch(
-        `${SUPABASE_URL}/rest/v1/skyeco_pro_leads?id=eq.${leadId}&select=id,prenom,telephone,devis_statut`,
-        { headers: { apikey: SUPABASE_ANON_KEY } }
-      );
-      const leadRows = await leadResp.json();
-      if (!leadResp.ok) throw new Error(leadRows.message || 'Erreur Supabase lors de la recherche du lead.');
-      const lead = leadRows[0];
-      if (!lead) throw new Error(`Demande introuvable (id ${leadId}).`);
-      if (!lead.telephone) throw new Error("Ce prospect n'a pas de numéro de téléphone enregistré.");
-      if (lead.devis_statut === 'signe') throw new Error('Ce devis a déjà été signé — impossible de le remplacer depuis cet écran.');
-
       const devisToken = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
 
-      // 3. L'ÉCRITURE (enregistrement du devis) et le SMS se font tous les
-      // deux côté serveur (03/09 — la table skyeco_pro_leads est
-      // volontairement verrouillée en écriture pour la clé publique,
-      // confirmé par l'erreur Postgres 42501 ; seule la clé service_role,
-      // jamais exposée au navigateur, peut écrire ici).
+      // 2. L'ÉCRITURE (enregistrement du devis) et le SMS se font tous les
+      // deux côté serveur (06/09/2026 — la table skyeco_pro_leads est
+      // désormais verrouillée en LECTURE ET écriture pour la clé publique ;
+      // l'endpoint relit lui-même le téléphone/prénom en base avec la clé
+      // service_role et vérifie la session avant d'agir — voir le
+      // commentaire en tête de api/envoyer-devis.js). On utilise
+      // tokenCalendrierActuel (et non sessionTokenActuel) car il reste
+      // renseigné même en mode admin (mes-artisans.html), comme pour
+      // "Mon calendrier".
       const resp = await fetch('/api/envoyer-devis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId: siteConcerne, leadId, telephone: lead.telephone, prenom: lead.prenom, devisToken, pdfUrl }),
+        body: JSON.stringify({ leadId, devisToken, pdfUrl, token: tokenCalendrierActuel }),
       });
       const data = await resp.json();
       if (!resp.ok || !data.success) throw new Error(data.error || "Le devis n'a pas pu être envoyé.");
@@ -1980,24 +1977,14 @@
     btn.disabled = true;
     btn.textContent = 'Envoi…';
     try {
-      // Lecture + écriture directes sur Supabase (clé publique, même
-      // raisonnement que uploaderEtEnvoyerDevis — voir son commentaire).
-      const leadResp = await fetch(
-        `${SUPABASE_URL}/rest/v1/skyeco_pro_leads?id=eq.${leadId}&select=id,prenom,telephone,devis_statut,devis_token,devis_nb_relances`,
-        { headers: { apikey: SUPABASE_ANON_KEY } }
-      );
-      const leadRows = await leadResp.json();
-      if (!leadResp.ok) throw new Error(leadRows.message || 'Erreur Supabase lors de la recherche du lead.');
-      const lead = leadRows[0];
-      if (!lead) throw new Error(`Demande introuvable (id ${leadId}).`);
-      if (!lead.devis_token || lead.devis_statut === 'aucun') throw new Error("Aucun devis n'a encore été envoyé pour ce prospect.");
-      if (lead.devis_statut === 'signe') throw new Error('Ce devis est déjà signé — inutile de relancer.');
-      if (!lead.telephone) throw new Error("Ce prospect n'a pas de numéro de téléphone enregistré.");
-
+      // Sécurité (06/09/2026) : l'endpoint relit lui-même le lead en base
+      // avec la clé service_role et vérifie la session — voir le
+      // commentaire en tête de api/relancer-devis.js (même raisonnement
+      // que uploaderEtEnvoyerDevis pour tokenCalendrierActuel).
       const smsResp = await fetch('/api/relancer-devis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId: siteConcerne, leadId, telephone: lead.telephone, prenom: lead.prenom, devisToken: lead.devis_token, nbRelancesActuel: lead.devis_nb_relances || 0 }),
+        body: JSON.stringify({ leadId, token: tokenCalendrierActuel }),
       });
       const smsData = await smsResp.json();
       if (!smsResp.ok || !smsData.success) throw new Error(smsData.error || "La relance n'a pas pu être envoyée.");
@@ -2232,7 +2219,7 @@
       const res = await fetch('/api/get-google-ads-details', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draft_id: draftId })
+        body: JSON.stringify({ draft_id: draftId, token: tokenCalendrierActuel })
       });
       const data = await res.json();
 
@@ -2390,7 +2377,7 @@
         const resp = await fetch('/api/definir-budget-journalier', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ draftId, budgetJournalier: nouveauMontant }),
+          body: JSON.stringify({ draftId, token: tokenCalendrierActuel, budgetJournalier: nouveauMontant }),
         });
         const data = await resp.json();
         if (!resp.ok || !data.success) throw new Error(data.error || '');
@@ -2451,7 +2438,7 @@
         const resp = await fetch('/api/definir-plafond-cpc', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ draftId, plafondCpc: nouveauMontant }),
+          body: JSON.stringify({ draftId, token: tokenCalendrierActuel, plafondCpc: nouveauMontant }),
         });
         const data = await resp.json();
         if (!resp.ok || !data.success) throw new Error(data.error || '');
@@ -2625,7 +2612,7 @@
           const res = await fetch('/api/appliquer-annonce-ads', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ draftId }),
+            body: JSON.stringify({ draftId, token: tokenCalendrierActuel }),
           });
           const data = await res.json();
           appliqueeNote.textContent = data.success
@@ -2928,7 +2915,7 @@
             await fetch('/api/manage-keywords', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ draftId, action: 'exclude', texte: m.texte, matchType: m.matchType }),
+              body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'exclude', texte: m.texte, matchType: m.matchType }),
             });
           } catch (e) { /* on continue avec les suivants même si un appel échoue */ }
         }
@@ -2938,7 +2925,7 @@
           const res = await fetch('/api/get-google-ads-details', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ draft_id: draftId })
+            body: JSON.stringify({ draft_id: draftId, token: tokenCalendrierActuel })
           });
           const data = await res.json();
           if (data.success && data.campagneExiste) {
@@ -2992,7 +2979,7 @@
       const res = await fetch('/api/manage-keywords', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, action: 'exclude', texte, matchType: 'EXACT' })
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'exclude', texte, matchType: 'EXACT' })
       });
       const data = await res.json();
       if (data.success) {
@@ -3064,7 +3051,7 @@
       const res = await fetch('/api/definir-horaires-diffusion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, mode: 'heures_pointe' })
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, mode: 'heures_pointe' })
       });
       const data = await res.json();
       if (data.success) {
@@ -3092,7 +3079,7 @@
       const res = await fetch('/api/definir-horaires-diffusion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, mode: 'toute_heure' })
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, mode: 'toute_heure' })
       });
       const data = await res.json();
       note.textContent = data.success
@@ -3160,7 +3147,7 @@
       const res = await fetch('/api/coach-toggle', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, pause: nouvelEtat })
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, pause: nouvelEtat })
       });
       const data = await res.json();
       if (data.success) {
@@ -3206,7 +3193,7 @@
       const res = await fetch('/api/coach-ads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId })
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel })
       });
       const data = await res.json();
       loading.style.display = 'none';
@@ -3275,7 +3262,7 @@
         const res = await fetch('/api/coach-ads', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ draftId, message })
+          body: JSON.stringify({ draftId, token: tokenCalendrierActuel, message })
         });
         const data = await res.json();
         const bulleCoach = document.createElement('div');
@@ -3389,7 +3376,7 @@
       const res = await fetch('/api/manage-keywords', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, action: 'exclude', texte })
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'exclude', texte })
       });
       const data = await res.json();
       if (data.success) {
@@ -3420,7 +3407,7 @@
       const res = await fetch('/api/manage-keywords', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, action: 'add', texte, matchType: select.value })
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'add', texte, matchType: select.value })
       });
       const data = await res.json();
       if (data.success) {

@@ -49,16 +49,25 @@
       return;
     }
     try {
-      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_leads?id=eq.${leadId}&select=photos,photos_token`, {
-        headers: { apikey: SUPABASE_ANON_KEY }
+      // Sécurité (06/09/2026) : cette page est anonyme (juste un lien avec
+      // un token), donc la lecture/écriture passe par une fonction RPC qui
+      // vérifie le photos_token EN BASE, sans exposer le reste de la
+      // demande (nom, téléphone…) via la clé anon.
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/rpc/rpc_get_lead_photos`, {
+        method: 'POST',
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p_lead_id: leadId, p_token: token })
       });
-      const rows = await resp.json();
-      const lead = rows[0];
-      if (!lead || lead.photos_token !== token) {
+      if (!resp.ok) {
         wrap.innerHTML = '<div class="msg-err">Ce lien est invalide ou a expiré.</div>';
         return;
       }
-      photosUrls = Array.isArray(lead.photos) ? lead.photos : [];
+      const photos = await resp.json();
+      if (photos === null) {
+        wrap.innerHTML = '<div class="msg-err">Ce lien est invalide ou a expiré.</div>';
+        return;
+      }
+      photosUrls = Array.isArray(photos) ? photos : [];
       render();
     } catch (e) {
       wrap.innerHTML = '<div class="msg-err">Impossible de charger la page pour le moment.</div>';
@@ -118,10 +127,10 @@
     document.getElementById('boxPhotos').classList.add('has-file');
     rafraichirGrid();
     try {
-      await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_leads?id=eq.${leadId}`, {
-        method: 'PATCH',
-        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-        body: JSON.stringify({ photos: photosUrls }),
+      await fetch(`${SUPABASE_URL}/rest/v1/rpc/rpc_set_lead_photos`, {
+        method: 'POST',
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p_lead_id: leadId, p_token: token, p_photos: photosUrls }),
       });
     } catch (e) { /* silencieux — les photos restent visibles à l'écran même si la sauvegarde échoue, l'artisan pourra redemander si besoin */ }
   }

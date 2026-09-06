@@ -768,6 +768,18 @@ const FALLBACK_IMAGES = {
   ]
 };
 
+// Sécurité (06/09/2026) : heroTitle et legalLine ci-dessous sont construits
+// avec innerHTML et incluent des champs renseignés par l'ARTISAN lui-même
+// (entreprise, titre choisi, SIRET, adresse, assurance, zone, téléphone,
+// email...) puis affichés à TOUS LES VISITEURS de la vitrine publique. Sans
+// échappement, un champ contenant du HTML/JS (saisi par erreur, ou par un
+// compte compromis/malveillant) s'exécutait dans le navigateur de chaque
+// prospect qui consulte la page (XSS stockée). Toute valeur placée dans ces
+// blocs doit passer par escapeHtml.
+function escapeHtml(valeur) {
+  return String(valeur == null ? '' : valeur).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+
 async function init(){
   const params = new URLSearchParams(window.location.search);
   const id = params.get('id');
@@ -777,7 +789,11 @@ async function init(){
   }
 
   const resp = await fetch(
-    `${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${id}&select=*`,
+    // Sécurité (06/09/2026) : liste explicite plutôt que select=* — voir la
+    // migration verrouiller_colonnes_sensibles_vitrine_drafts, qui retire à
+    // anon l'accès à des colonnes sensibles (hash de mot de passe, jetons...)
+    // qu'un select=* tenterait de lire et ferait échouer intégralement.
+    `${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${id}&select=adresse_cp,adresse_rue,adresse_ville,assurance_decennale_assureur,assurance_decennale_numero,capital_social,catalogue_fichier_url,catalogue_image_url,catalogue_titre,couleur,description,email,entreprise,forme_juridique,formulaire_personnalise,formulaire_personnalise_cle,formulaire_position,id,logo_url,metier,mode_devis_detaille,photos,portails_tarifs,produits_chiffrables,rcs_ville,siret,status,telephone,titre_hero_choisi,tva_taux,video_url,zone`,
     { headers: { apikey: SUPABASE_ANON_KEY } }
   );
   const rows = await resp.json().catch(() => []);
@@ -805,8 +821,8 @@ async function init(){
     document.querySelector('.split-layout').classList.add('formulaire-droite');
   }
 
-  document.getElementById('heroTitle').innerHTML = (draft.titre_hero_choisi || template.heroTitre) +
-    '<span style="display:block; margin-top:14px; font-size:0.45em; font-weight:600; opacity:0.9;">' + draft.entreprise + '</span>';
+  document.getElementById('heroTitle').innerHTML = escapeHtml(draft.titre_hero_choisi || template.heroTitre) +
+    '<span style="display:block; margin-top:14px; font-size:0.45em; font-weight:600; opacity:0.9;">' + escapeHtml(draft.entreprise) + '</span>';
   if (draft.logo_url) {
     const logoEl = document.getElementById('logoArtisan');
     logoEl.src = draft.logo_url;
@@ -835,7 +851,14 @@ async function init(){
       catalogueImg.style.display = 'block';
     }
     catalogueBadge.style.display = 'flex';
-    catalogueBadge.addEventListener('click', () => window.open(draft.catalogue_fichier_url, '_blank'));
+    // Sécurité (06/09/2026) : catalogue_fichier_url est une valeur enregistrée
+    // par l'artisan (mes-elements.html) — window.open() exécute un lien
+    // "javascript:" tel quel, contrairement à une simple balise <img>/<a>. On
+    // n'ouvre donc que des URL http(s), jamais un schéma arbitraire.
+    catalogueBadge.addEventListener('click', () => {
+      const url = String(draft.catalogue_fichier_url || '');
+      if (/^https?:\/\//i.test(url)) window.open(url, '_blank', 'noopener');
+    });
   }
 
   // Mentions légales complètes — n'affiche que ce qui a réellement été renseigné,
@@ -856,7 +879,7 @@ async function init(){
     [draft.telephone, draft.email].filter(Boolean).join(' — ') || null,
   ].filter(Boolean);
 
-  document.getElementById('legalLine').innerHTML = lignesLegales.join('<br/>');
+  document.getElementById('legalLine').innerHTML = lignesLegales.map(escapeHtml).join('<br/>');
 
   // Carrousel de photos en fond du formulaire — indépendant du panneau
   // gauche (qui peut afficher la vidéo à la place).
@@ -1054,7 +1077,7 @@ async function init(){
         }, 1800);
       } else {
         document.getElementById('previewBanner').innerHTML =
-          "<span>⚠️ " + (data.error || "Le paiement n'a pas pu être confirmé.") + "</span>";
+          "<span>⚠️ " + escapeHtml(data.error || "Le paiement n'a pas pu être confirmé.") + "</span>";
       }
     } catch (err) {
       document.getElementById('previewBanner').innerHTML =
@@ -2006,7 +2029,7 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
 
     cardEl.innerHTML =
       '<div class="success-icon">✅</div>'+
-      '<div class="question" style="text-align:center;">Merci '+(state.prenom||'')+' !</div>'+
+      '<div class="question" style="text-align:center;">Merci '+escapeHtml(state.prenom||'')+' !</div>'+
       priceBlock+
       (leadId ? '<button type="button" class="btn" id="btnEnvoyerPhotos" style="width:100%; margin-top:10px; background:#fff; border:1.5px solid #1e6f4c; color:#14312a;">📷 Envoyer mes photos par SMS</button><div id="photosFeedback" style="text-align:center; font-size:13px; margin-top:8px;"></div>' : '')+
       '<p class="disclaimer">'+disclaimer+'</p>';

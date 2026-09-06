@@ -1,19 +1,52 @@
 // /api/envoyer-devis.js
-// Réécrit le 03/09 (deuxième version) : l'écriture (PATCH) sur
-// skyeco_pro_leads REQUIERT la clé service_role — la table est verrouillée
-// en écriture pour la clé publique (confirmé par l'erreur Postgres 42501
-// "permission denied", policy RLS volontaire). Le vrai bug qui bloquait tout
-// depuis le début était en fait les colonnes devis_* manquantes sur la
-// table (erreur 42703), pas la configuration de SUPABASE_SERVICE_ROLE_KEY —
-// une fois les colonnes créées, cette approche fonctionne normalement.
+// Sécurité (06/09/2026) : cet endpoint faisait confiance à des valeurs
+// (telephone, prenom) fournies directement par le NAVIGATEUR — rien ne
+// vérifiait que l'appelant avait le droit d'agir sur ce lead, ni que ce
+// numéro de téléphone était bien le vrai numéro du prospect. N'importe qui
+// connaissant un leadId/draftId aurait pu faire envoyer un SMS (au nom de
+// l'artisan, via son numéro Twilio) vers N'IMPORTE QUEL numéro, avec un
+// lien de "devis" arbitraire — un vecteur de spam/abus du numéro Twilio.
 //
-// La LECTURE (trouver le lead, vérifier son téléphone) reste faite côté
-// client avec la clé publique (autorisée en lecture) pour rester rapide ;
-// ce endpoint ne fait que l'écriture + le SMS.
+// Cet endpoint vérifie maintenant un jeton de session (même schéma que
+// api/mes-leads.js) et relit lui-même le téléphone/prénom du lead en base
+// avec la clé service_role, au lieu de faire confiance au client. Le
+// prospect n'est plus lu côté client avec la clé publique (verrouillée
+// depuis la migration verrouiller_skyeco_pro_leads).
 //
 // Variables d'environnement requises :
-//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, DASHBOARD_SESSION_SECRET
 //   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER
+import crypto from 'crypto';
+
+async function verifierToken(token, draftIdAttendu) {
+  try {
+    const decode = Buffer.from(token, 'base64url').toString('utf8');
+    const parties = decode.split('.');
+    if (parties.length !== 4) return false;
+    const [sujet, role, expStr, sig] = parties;
+    const exp = parseInt(expStr, 10);
+    if (!exp || Date.now() / 1000 > exp) return false;
+    const payload = `${sujet}.${role}.${expStr}`;
+    const attendu = crypto.createHmac('sha256', process.env.DASHBOARD_SESSION_SECRET).update(payload).digest('hex');
+    const sigBuf = Buffer.from(sig, 'hex');
+    const attenduBuf = Buffer.from(attendu, 'hex');
+    if (sigBuf.length !== attenduBuf.length || !crypto.timingSafeEqual(sigBuf, attenduBuf)) return false;
+    if (role === 'admin') return sujet === draftIdAttendu;
+    if (role === 'artisan') {
+      let email;
+      try { email = Buffer.from(sujet, 'base64url').toString('utf8'); } catch (e) { return false; }
+      if (!email) return false;
+      const resp = await fetch(
+        `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftIdAttendu}&select=email`,
+        { headers: { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}` } }
+      );
+      const rows = await resp.json();
+      const draft = rows[0];
+      return !!(draft && draft.email && draft.email.toLowerCase() === email.toLowerCase());
+    }
+    return false;
+  } catch (e) { return false; }
+}
 
 function toE164(rawPhone) {
   const digits = String(rawPhone || '').replace(/\D/g, '');
@@ -47,8 +80,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Méthode non autorisée' });
   }
 
-  const { draftId, leadId, telephone, prenom, devisToken, pdfUrl } = req.body || {};
-  if (!draftId || !leadId || !telephone || !devisToken || !pdfUrl) {
+  const { leadId, devisToken, pdfUrl, token } = req.body || {};
+  if (!leadId || !devisToken || !pdfUrl || !token) {
     return res.status(400).json({ error: 'Paramètres manquants' });
   }
 
@@ -61,7 +94,23 @@ export default async function handler(req, res) {
   const supaHeaders = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' };
 
   try {
-    // 1. Écriture du devis (nécessite la clé service_role).
+    // 1. Relecture faisant autorité du lead (jamais de valeurs venant du client).
+    const leadResp = await fetch(
+      `${SUPABASE_URL}/rest/v1/skyeco_pro_leads?id=eq.${leadId}&select=id,prenom,telephone,devis_statut,draft_id`,
+      { headers: supaHeaders }
+    );
+    if (!leadResp.ok) throw new Error('Lecture Supabase impossible : ' + (await leadResp.text()));
+    const leadRows = await leadResp.json();
+    const lead = leadRows[0];
+    if (!lead) return res.status(404).json({ error: `Demande introuvable (id ${leadId}).` });
+
+    if (!(await verifierToken(token, lead.draft_id))) {
+      return res.status(401).json({ error: 'session_invalide' });
+    }
+    if (!lead.telephone) return res.status(400).json({ error: "Ce prospect n'a pas de numéro de téléphone enregistré." });
+    if (lead.devis_statut === 'signe') return res.status(400).json({ error: 'Ce devis a déjà été signé — impossible de le remplacer depuis cet écran.' });
+
+    // 2. Écriture du devis (nécessite la clé service_role).
     const patchResp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_leads?id=eq.${leadId}`, {
       method: 'PATCH',
       headers: { ...supaHeaders, Prefer: 'return=minimal' },
@@ -78,9 +127,9 @@ export default async function handler(req, res) {
       throw new Error(`Échec de l'enregistrement du devis : ${errData}`);
     }
 
-    // 2. SMS avec le lien de signature.
+    // 3. SMS avec le lien de signature.
     const draftResp = await fetch(
-      `${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,twilio_phone_number`,
+      `${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${lead.draft_id}&select=entreprise,twilio_phone_number`,
       { headers: supaHeaders }
     );
     const draftRows = draftResp.ok ? await draftResp.json() : [];
@@ -88,9 +137,9 @@ export default async function handler(req, res) {
     const nomEntreprise = draft.entreprise || 'Votre artisan';
 
     const lien = `${SITE_BASE_URL}/signer-devis.html?t=${devisToken}`;
-    const prenomLead = (prenom || '').trim();
+    const prenomLead = (lead.prenom || '').trim();
     const texte = `Bonjour${prenomLead ? ' ' + prenomLead : ''}, ${nomEntreprise} vous a envoyé votre devis. Consultez-le et signez-le en ligne ici : ${lien}`;
-    await envoyerSMS(telephone, texte, draft.twilio_phone_number);
+    await envoyerSMS(lead.telephone, texte, draft.twilio_phone_number);
 
     return res.status(200).json({ success: true, lien });
   } catch (err) {

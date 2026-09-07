@@ -335,6 +335,28 @@ const METIER_TEMPLATES = {
       return s;
     }
   },
+  // Ajouté le 07/09 : "resine" est la valeur réellement enregistrée pour un
+  // métier de revêtement de sol en résine (voir skyeco-pro-formulaire-
+  // creation-paysagiste.html, data-value="resine") — elle retombait jusqu'ici
+  // systématiquement sur le template générique "autre" faute de clé dédiée
+  // ici, alors même que des fiches réelles (dont celle de RMS ECOSKY) l'utilisent.
+  resine: {
+    heroTitre: "Un revêtement en résine<br>qui dure dans le temps.",
+    eyebrow: "Estimation détaillée",
+    titre: "Votre estimation personnalisée",
+    delaiBadge: "⏱️ Estimation en 3 minutes",
+    intro: "Répondez à quelques questions sur votre projet pour recevoir une estimation.",
+    metierKey: "resine",
+    getSteps(state){
+      const s = [{ key:"type_projet", question:"Quel est le type de projet ?", type:"choice",
+        options:[["terrasse","Terrasse"],["plage_piscine","Plage de piscine"],["allee","Allée / cheminement"],["autre_surface","Autre surface extérieure"]] }];
+      s.push({ key:"support_actuel", question:"Quel est le support actuel ?", type:"choice",
+        options:[["dalle_existante","Dalle béton existante"],["terre_nue","Terre nue, rien n'existe"],["autre_support","Autre support"]] });
+      s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
+      pushQuantiteEtSuite(s, state);
+      return s;
+    }
+  },
   autre: {
     heroTitre: "Un projet sur-mesure,<br>pensé pour vous.",
     eyebrow: "Estimation détaillée",
@@ -761,6 +783,12 @@ const FALLBACK_IMAGES = {
   espaces_verts: [
     "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1200",
     "https://images.unsplash.com/photo-1493957988430-a5f2e15f39a3?w=1200"
+  ],
+  resine: [
+    "https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/1-terrasse-mobilier-noir.jpg",
+    "https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/2-terrasse-mobilier-violet.jpg",
+    "https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/5-piscine-beige.jpg",
+    "https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/8-escalier-terrasse.jpg"
   ],
   autre: [
     "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=1200",

@@ -238,6 +238,15 @@
         </div>
         <div class="photos-grid" id="photosGrid"></div>
 
+        <div id="gammaBox" style="margin-top:14px; border:1.5px dashed #d8d2c2; border-radius:14px; padding:16px; background:#fdfcf9;">
+          <div style="display:flex; align-items:center; justify-content:between; gap:10px; margin-bottom:8px;">
+            <div style="font-size:0.86rem; font-weight:600; color:#4a8a68;">🎨 Pas encore de photos ? Génère-en une avec l'IA</div>
+          </div>
+          <textarea id="gammaPrompt" placeholder="Décris l'image que tu veux — ex : pose d'une terrasse en résine EPDM gris anthracite chez un particulier, jardin moderne, journée ensoleillée" style="min-height:56px;"></textarea>
+          <button type="button" id="btnGammaGenerer" class="btn-extraire" style="margin-top:8px;">Générer l'image</button>
+          <div id="gammaStatus" class="upload-status" style="margin-top:8px;"></div>
+        </div>
+
         <label>Vidéo de chantier ou avant/après (optionnel)</label>
         <div class="upload-box" id="boxVideo">
           <input type="file" id="inputVideo" accept="video/*">
@@ -1059,6 +1068,68 @@
       });
     });
   }
+
+  // --- Génération d'image IA via Gamma, pour compléter le carrousel ---
+  document.getElementById('btnGammaGenerer').addEventListener('click', async () => {
+    const promptEl = document.getElementById('gammaPrompt');
+    const statusEl = document.getElementById('gammaStatus');
+    const btn = document.getElementById('btnGammaGenerer');
+    const prompt = promptEl.value.trim();
+    if (!prompt) {
+      statusEl.textContent = 'Décris d\'abord l\'image que tu veux.';
+      return;
+    }
+    if (photosUrls.length >= 10) {
+      statusEl.textContent = 'Carrousel déjà plein (10 photos maximum).';
+      return;
+    }
+
+    btn.disabled = true;
+    statusEl.textContent = 'Génération en cours… (environ 20 à 40 secondes)';
+
+    try {
+      const startResp = await fetch('/api/generer-image-gamma', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'start', prompt, draftId }),
+      });
+      const startData = await startResp.json();
+      if (!startData.success) throw new Error(startData.error || 'Échec du lancement');
+
+      const generationId = startData.generationId;
+
+      // Sondage régulier jusqu'à obtenir le résultat (pas de sondage rapproché en boucle serrée)
+      const attendre = ms => new Promise(r => setTimeout(r, ms));
+      let resultat = null;
+      for (let tentative = 0; tentative < 20; tentative++) {
+        await attendre(3000);
+        const statusResp = await fetch('/api/generer-image-gamma', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'status', generationId, draftId }),
+        });
+        const statusData = await statusResp.json();
+        if (!statusData.success) throw new Error(statusData.error || 'Échec de la vérification');
+        if (statusData.status === 'completed') { resultat = statusData; break; }
+        if (statusData.status === 'failed') throw new Error(statusData.error || 'La génération a échoué');
+      }
+
+      if (!resultat) throw new Error('La génération prend trop de temps, réessaie dans un instant.');
+
+      photosUrls.push(resultat.url);
+      rafraichirGridPhotos();
+      document.getElementById('statusPhotos').textContent = `${photosUrls.length} photo(s) ajoutée(s)`;
+      document.getElementById('boxPhotos').classList.add('has-file');
+      sauvegarderChampsImmediat({ photos: photosUrls });
+
+      promptEl.value = '';
+      statusEl.textContent = 'Image ajoutée au carrousel ✓';
+    } catch (err) {
+      statusEl.textContent = 'Erreur : ' + err.message;
+    } finally {
+      btn.disabled = false;
+    }
+  });
 
   document.getElementById('boxVideo').addEventListener('click', () => document.getElementById('inputVideo').click());
   document.getElementById('inputVideo').addEventListener('change', async e => {

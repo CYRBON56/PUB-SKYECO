@@ -34,15 +34,31 @@
 
 const WINDSOR_BASE = 'https://connectors.windsor.ai/google_ads';
 
+// Corrigé le 07/09 : ce dictionnaire utilisait un vocabulaire de "métiers"
+// (paysagiste, piscine, tonte, terrasse, paysagiste_concepteur, arboriste,
+// espaces_verts) qui ne correspond à AUCUNE valeur réellement enregistrée en
+// base — voir skyeco-pro-formulaire-creation-paysagiste.html, seul
+// formulaire qui écrit encore la colonne "metier" (data-value du sélecteur :
+// paysagisme, resine, cloture, terrassement, assainissement, autre). Vérifié
+// en base (07/09) : les fiches existantes ont metier=['cloture'],
+// ['resine'], ['autre'] — jamais aucune des anciennes clés. Conséquence
+// concrète : le flatMap ci-dessous ne trouvait JAMAIS de correspondance pour
+// une fiche réelle, retombait systématiquement sur KEYWORDS_BY_METIER.autre
+// (mots-clés nationaux très génériques et très concurrentiels), et
+// affichait un CPC moyen réel bien plus élevé (ex : 74 €/clic constaté sur
+// la fiche de démonstration avec metier=['Paysagiste']) que celui des
+// mots-clés spécifiques au vrai métier de l'artisan (~1,50-3 €/clic,
+// cohérent avec le repère "≈30 clics pour 100 €" utilisé ailleurs dans le
+// produit, voir avgCpcEur=1.5 par défaut dans mon-dashboard.html). Ce n'était
+// donc pas un problème propre à la démo : toute fiche réelle en subissait
+// les effets dès qu'elle avait un métier renseigné.
 const KEYWORDS_BY_METIER = {
-  paysagiste: ['paysagiste prix', 'aménagement extérieur paysagiste', 'devis paysagiste'],
-  piscine: ['pose piscine prix', 'installation piscine devis', 'plage piscine prix'],
-  tonte: ['tonte pelouse prix', 'entretien jardin prix', 'tonte gazon devis'],
-  terrasse: ['terrasse bois prix', 'terrasse composite prix', 'pose terrasse devis'],
-  paysagiste_concepteur: ['paysagiste concepteur prix', 'conception jardin paysagiste', 'plan aménagement extérieur'],
-  arboriste: ['élagage prix', 'abattage arbre prix', 'arboriste élagueur devis'],
-  espaces_verts: ['entretien espaces verts prix', 'entretien jardin copropriété', 'entreprise espaces verts devis'],
-  autre: ['devis travaux extérieur', 'artisan paysagiste devis'] // repli de sécurité, non sélectionnable dans le formulaire
+  paysagisme: ['paysagiste prix', 'aménagement extérieur paysagiste', 'devis paysagiste'],
+  resine: ['résine de sol extérieur prix', 'terrasse résine prix', 'devis revêtement résine'],
+  cloture: ['pose clôture prix', 'portail aluminium prix', 'devis clôture portail'],
+  terrassement: ['terrassement prix m2', 'travaux terrassement devis', 'terrassement VRD prix'],
+  assainissement: ['assainissement non collectif prix', 'fosse toutes eaux prix', 'devis assainissement individuel'],
+  autre: ['devis travaux extérieur', 'artisan travaux extérieur devis'] // repli de sécurité, non sélectionnable dans le formulaire
 };
 
 // Ciblage géographique précis par département — MÊMES identifiants que

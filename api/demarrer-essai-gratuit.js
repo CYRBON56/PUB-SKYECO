@@ -1,18 +1,24 @@
-// /api/demarrer-essai-gratuit.js
-// Démarre un essai gratuit de 1 mois pour un artisan, sans paiement.
-// Pose le statut 'essai' + une date de fin (essai_gratuit_fin, J+30) sur le
-// brouillon. C'est api/verifier-essais-a-programmer.js (tâche planifiée
-// quotidienne) qui surveille ensuite cette date : SMS de rappel à J-1, puis
-// passage au statut 'essai_expire' si rien n'a été payé à l'échéance — ce
-// statut bloque l'accès au tableau de bord (voir mon-dashboard.html) et
-// renvoie automatiquement vers choisir-forfait.html pour régler.
+// /api/demarrer-essai-gratuit.js — VERSION COMPLÈTE DE REMPLACEMENT
 //
-// Colonnes Supabase requises sur skyeco_pro_vitrine_drafts (à créer si
-// absentes) :
+// Changement du 07/09 : dans le nouveau parcours, l'essai gratuit démarre
+// juste après l'inscription (depuis mon-dashboard-demo.html), AVANT même
+// que la vitrine existe. On retire donc la vérification site_valide (il est
+// impossible de valider un site qui n'a pas encore été rempli) — la
+// vérification manuelle de Cyrille (vitrine + annonce + mots-clés) se fait
+// désormais plus tard, au moment où l'artisan veut réellement lancer sa
+// campagne Google Ads (nouveau contrôle à ajouter côté
+// api/confirm-ad-payment.js).
+//
+// Ajout d'une protection idempotente : si l'essai a déjà été démarré pour
+// ce brouillon (essai_gratuit_fin déjà posé), on ne réinitialise pas le
+// compteur de 30 jours à chaque nouveau clic — on renvoie simplement la
+// date de fin déjà existante.
+//
+// Colonnes Supabase requises sur skyeco_pro_vitrine_drafts (inchangées) :
 //   essai_gratuit_debut   timestamptz
 //   essai_gratuit_fin     timestamptz
 //   essai_rappel_sms_envoye boolean default false
-//   forfait_choisi        int (déjà utilisé ailleurs si existant, sinon à créer)
+//   forfait_choisi        int
 //
 // Variables d'environnement requises : SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
@@ -32,23 +38,21 @@ export default async function handler(req, res) {
     'Content-Type': 'application/json',
   };
 
-  // Vérification serveur : impossible de démarrer l'essai tant que Cyrille
-  // n'a pas validé le site depuis mes-artisans.html — même contrôle que
-  // api/create-checkout-session.js.
   try {
-    const verifResp = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=site_valide`,
+    // Idempotence : si l'essai a déjà été démarré, on ne le réinitialise pas.
+    const draftResp = await fetch(
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=essai_gratuit_fin`,
       { headers: supaHeaders }
     );
-    const verifRows = await verifResp.json();
-    if (!verifRows[0]?.site_valide) {
-      return res.status(403).json({ success: false, error: "Ce site n'a pas encore été validé — demandez la validation depuis votre page." });
+    const draftRows = await draftResp.json();
+    const draft = draftRows[0];
+    if (!draft) {
+      return res.status(404).json({ success: false, error: 'Brouillon introuvable' });
     }
-  } catch (e) {
-    return res.status(500).json({ success: false, error: 'Impossible de vérifier le statut du site pour le moment.' });
-  }
+    if (draft.essai_gratuit_fin) {
+      return res.status(200).json({ success: true, essaiFin: draft.essai_gratuit_fin, dejaDemarre: true });
+    }
 
-  try {
     const maintenant = new Date();
     const finEssai = new Date(maintenant.getTime() + 30 * 24 * 60 * 60 * 1000);
 

@@ -97,7 +97,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ success: false, error: 'Méthode non autorisée' });
   }
 
-  const { motDePasseInterne, batchSize, metier, subject, html, videoUrl } = req.body || {};
+  const { motDePasseInterne, batchSize, metier, familleMetier, subject, html, videoUrl } = req.body || {};
 
   if (!process.env.INTERNAL_ACCESS_PASSWORD || motDePasseInterne !== process.env.INTERNAL_ACCESS_PASSWORD) {
     return res.status(401).json({ success: false, error: 'Mot de passe interne incorrect.' });
@@ -120,6 +120,7 @@ export default async function handler(req, res) {
     // 1. Sélectionne le prochain lot : jamais contacté, pas désabonné, pas marqué obsolète.
     let filtre = `email=not.is.null&opt_out=eq.false&bounced=eq.false&email_envoye=eq.false`;
     if (metier) filtre += `&metier=eq.${encodeURIComponent(metier)}`;
+    if (familleMetier) filtre += `&famille_metier=eq.${encodeURIComponent(familleMetier)}`;
     const lotResp = await fetch(
       `${process.env.SUPABASE_URL}/rest/v1/prospects_paysagiste?${filtre}&select=id,nom_entreprise,ville,metier,email,clic_token&order=created_at.asc&limit=${taille}`,
       { headers: supaHeaders }

@@ -52,8 +52,12 @@ export default async function handler(req, res) {
 
   try {
     if (action === 'liste') {
+      // est_demo=eq.false : exclut la fiche fictive créée le 07/09 pour
+      // enregistrer une vidéo de démonstration (voir mon-dashboard.html,
+      // bouton "🎬 Dashboard de démonstration") — elle ne doit pas polluer
+      // les vraies statistiques/la vraie liste d'artisans.
       const [respFiches, respLeads] = await Promise.all([
-        fetch(`${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?select=${COLONNES_LISTE}&order=created_at.desc`, { headers: supaHeaders }),
+        fetch(`${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?select=${COLONNES_LISTE}&est_demo=eq.false&order=created_at.desc`, { headers: supaHeaders }),
         fetch(`${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_leads?select=draft_id`, { headers: supaHeaders }),
       ]);
       if (!respFiches.ok) throw new Error('Lecture fiches impossible : ' + (await respFiches.text()));

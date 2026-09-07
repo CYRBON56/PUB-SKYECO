@@ -884,6 +884,12 @@
   // acceptent les deux rôles, donc l'onglet "Mon calendrier" utilise
   // toujours celui-ci plutôt que sessionTokenActuel.
   let tokenCalendrierActuel = null;
+  // Fiche de démonstration (07/09) : renseigné par chargerDemandes() dès le
+  // chargement de la page (bien avant qu'on puisse cliquer sur un onglet) —
+  // réutilisé par le calendrier pour flouter les noms/téléphones des rendez-
+  // vous fictifs, comme pour "Gérer les clients". false pour toute vraie
+  // fiche artisan.
+  let estDemoActuel = false;
 
   // Identifiant réservé de la fiche "Skyeco Pro" (Cyrille lui-même), déjà
   // utilisé par mes-artisans.html pour son propre accès admin/calendrier —
@@ -1736,8 +1742,11 @@
             btn.appendChild(fait);
           }
         } else {
+          // Fiche de démonstration (07/09) : mêmes raisons que "Gérer les
+          // clients" — nom/téléphone du client à peine visibles à l'écran.
+          const classeClientFloute = estDemoActuel ? ' client-floute-demo' : '';
           btn.innerHTML = '<span class="heure">✓ ' + String(c.heure).padStart(2, '0') + 'h00</span>'
-            + '<span class="client">' + (c.client_nom || 'Client') + (c.client_telephone ? ' · ' + c.client_telephone : '') + '</span>';
+            + '<span class="client' + classeClientFloute + '">' + (c.client_nom || 'Client') + (c.client_telephone ? ' · ' + c.client_telephone : '') + '</span>';
         }
 
         carte.appendChild(btn);
@@ -2065,7 +2074,7 @@
       // leurs coordonnées sont floutées (classe .client-floute-demo,
       // définie plus haut dans <style>). Le reste (date, statut, devis)
       // reste net pour bien montrer l'activité du compte.
-      const estDemoActuel = !!draftRows[0]?.est_demo;
+      estDemoActuel = !!draftRows[0]?.est_demo;
 
       // Sécurité (06/09/2026) : les demandes ("leads" — nom, téléphone,
       // email, adresse de chaque prospect) sont maintenant lues via un

@@ -1989,7 +1989,7 @@
           <span>Restant : <strong>${data.budgetRestant} €</strong> / ${data.budgetPaye} €</span>
         </div>
         <div class="solde-detail">
-          ${data.clics} clics réels (dépense Google : ${data.coutReelGoogleEuros} €, comptée double dans votre solde — commission de service incluse).
+          ${data.clics} clic${data.clics === 1 ? '' : 's'} reçu${data.clics === 1 ? '' : 's'} ce mois-ci.
         </div>
       `;
 

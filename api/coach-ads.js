@@ -129,11 +129,19 @@ function plafonnerValeur(actuelle, proposee, bornes) {
 
 async function chargerContexteCampagne(supaHeaders, draftId) {
   const draftResp = await fetch(
-    `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,google_ads_campaign_resource,google_ads_ad_group_resource,google_ads_ad_resource,tarif_prix,derniere_recharge_le,budget_journalier_manuel,plafond_cpc_manuel,campagne_diffusion_pausee,coach_ia_pause`,
+    `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,google_ads_campaign_resource,google_ads_ad_group_resource,google_ads_ad_resource,tarif_prix,derniere_recharge_le,budget_journalier_manuel,plafond_cpc_manuel,campagne_diffusion_pausee,coach_ia_pause,est_demo`,
     { headers: supaHeaders }
   );
   const rows = await draftResp.json();
   const draft = rows[0];
+
+  // Fiche de démonstration (07/09) : jamais de vraie campagne Google Ads
+  // liée — on ne doit surtout pas laisser l'IA tenter une action Windsor.ai
+  // sur un identifiant de campagne fictif. On court-circuite avant tout
+  // appel réel et on renvoie directement une réponse toute faite (voir
+  // handler ci-dessous, branche est_demo).
+  if (draft?.est_demo) return { draft, campagneExiste: true, estDemo: true };
+
   if (!draft?.google_ads_campaign_resource) return { draft, campagneExiste: false };
 
   // Le coach est mis en pause par l'artisan lui-même (api/coach-toggle.js) :
@@ -300,10 +308,22 @@ export default async function handler(req, res) {
   };
 
   try {
-    const { draft, campagneExiste, coachEnPause, resume } = await chargerContexteCampagne(supaHeaders, draftId);
+    const { draft, campagneExiste, coachEnPause, estDemo, resume } = await chargerContexteCampagne(supaHeaders, draftId);
 
     if (!campagneExiste) {
       return res.status(200).json({ success: true, campagneExiste: false, reponse: null, recommandations: [], actionsAppliquees: [] });
+    }
+
+    // Fiche de démonstration : réponse toute faite, réaliste, sans jamais
+    // appeler Claude ni Windsor.ai (voir chargerContexteCampagne ci-dessus).
+    if (estDemo) {
+      return res.status(200).json({
+        success: true, campagneExiste: true,
+        reponse: message
+          ? "C'est une bonne question ! Sur une fiche de démonstration comme celle-ci, je n'ai pas de vraies données à analyser — mais c'est exactement ce que je fais en vrai : j'étudie vos clics, vos mots-clés et votre budget pour vous conseiller ou agir directement."
+          : "Bonne nouvelle : vos mots-clés \"terrasse résine\" et \"tour de piscine\" convertissent bien cette semaine. J'ai exclu le mot-clé \"gratuit\" qui générait des clics sans jamais déboucher sur une demande, et j'ai augmenté votre budget journalier de 8 € à 10 € pour profiter de cette bonne dynamique — vous pouvez annuler à tout moment depuis l'onglet Google Ads.",
+        actionsAppliquees: message ? 0 : 2,
+      });
     }
 
     // Coach mis en pause par l'artisan : aucun appel Claude/Windsor.ai,

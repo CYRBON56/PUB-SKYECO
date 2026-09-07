@@ -685,11 +685,23 @@
 
   async function chargerDraftExistant() {
     try {
-      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=*`, {
+      // 07/09/2026 : select=* est cassé pour la clé anonyme depuis le
+      // verrouillage des colonnes sensibles du 06/09 (migration
+      // verrouiller_colonnes_sensibles_vitrine_drafts) — Postgres refuse
+      // TOUTE la requête (permission denied) dès qu'une seule colonne du
+      // SELECT * n'est pas lisible en anon (dashboard_password_hash,
+      // dashboard_reset_token, dashboard_reset_token_expire,
+      // pause_confirmation_token, stripe_subscription_id, validation_token).
+      // Résultat : rows[0] était toujours vide, "if (!draft) return;"
+      // sortait systématiquement, et NI les champs du formulaire NI le
+      // bouton tableau de bord ne s'affichaient jamais, pour aucun artisan.
+      // On liste donc explicitement les colonnes réellement utilisées par
+      // cette page (même logique déjà appliquée à apercu.html).
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=id,entreprise,telephone,email,adresse_rue,adresse_cp,adresse_ville,siret,forme_juridique,capital_social,rcs_ville,assurance_decennale_assureur,assurance_decennale_numero,acompte_pourcentage,delai_intervention,site_web_existant,metier,zone,titre_hero_choisi,tva_taux,formulaire_personnalise,formulaire_personnalise_description,formulaire_personnalise_cle,formulaire_position,catalogue_titre,catalogue_image_url,catalogue_fichier_url,photos,logo_url,video_url,portails_tarifs,status`, {
         headers: { apikey: SUPABASE_ANON_KEY }
       });
       const rows = await resp.json();
-      const draft = rows[0];
+      const draft = Array.isArray(rows) ? rows[0] : null;
       if (!draft) return;
 
       draftStatutActuel = draft.status || null;

@@ -948,7 +948,14 @@
     chargerLogo();
     chargerStats();
     chargerSolde();
-    chargerDemandes(sessionTokenActuel);
+    // Bug corrigé le 07/09 : "Gérer les clients" était appelé avec
+    // sessionTokenActuel, qui vaut TOUJOURS null en mode admin (voir plus
+    // haut) — /api/mes-leads recevait donc un token null, répondait 401, et
+    // la liste affichait systématiquement "Impossible de charger les
+    // demandes" dès qu'on ouvrait le dashboard d'un artisan depuis
+    // mes-artisans.html. tokenCalendrierActuel, lui, reste renseigné en mode
+    // admin (même raisonnement que pour l'envoi/relance de devis ci-dessous).
+    chargerDemandes(tokenCalendrierActuel);
     initPilotageAds();
     initAppelVideo();
     demarrerPresence();
@@ -2232,10 +2239,10 @@
       const data = await resp.json();
       if (!resp.ok || !data.success) throw new Error(data.error || "Le devis n'a pas pu être envoyé.");
 
-      await chargerDemandes(sessionTokenActuel);
+      await chargerDemandes(tokenCalendrierActuel);
     } catch (e) {
       alert(e.message || "Une erreur est survenue lors de l'envoi du devis.");
-      await chargerDemandes(sessionTokenActuel);
+      await chargerDemandes(tokenCalendrierActuel);
     }
   }
 
@@ -2259,7 +2266,7 @@
       const smsData = await smsResp.json();
       if (!smsResp.ok || !smsData.success) throw new Error(smsData.error || "La relance n'a pas pu être envoyée.");
 
-      await chargerDemandes(sessionTokenActuel);
+      await chargerDemandes(tokenCalendrierActuel);
     } catch (e) {
       alert(e.message || 'Une erreur est survenue.');
       btn.disabled = false;

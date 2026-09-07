@@ -375,26 +375,30 @@
   <button type="button" id="btnMessageAdminLu" style="background:#1e6f4c;color:#fff;border:none;padding:8px 16px;border-radius:9px;font-weight:700;cursor:pointer;font-size:0.85rem;">J'ai vu, merci</button>
 </div>
 
-<!-- 07/09 : "session guidée" (voir api/dashboard-guidage.js) — bannière +
-     curseur en direct côté artisan quand Cyrille pilote sa "prise en main". -->
-<div id="guidageBanniere" style="display:none;position:fixed;top:0;left:0;right:0;z-index:10001;background:#1e6f4c;color:#fff;text-align:center;padding:10px 16px;font-weight:700;font-size:0.9rem;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  🟢 Cyrille vous montre quelque chose en direct sur votre dashboard
-  <button type="button" id="btnGuidageArreter" style="margin-left:12px;background:rgba(255,255,255,0.2);color:#fff;border:none;padding:4px 12px;border-radius:8px;font-weight:700;font-size:0.78rem;cursor:pointer;">Arrêter</button>
-</div>
-<div id="guidageCurseur" style="display:none;position:fixed;z-index:10002;pointer-events:none;transform:translate(-4px,-4px);transition:left 0.12s linear, top 0.12s linear;">
-  <div style="width:16px;height:16px;border-radius:50%;background:#e8622c;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);"></div>
-  <div style="margin-top:2px;background:#e8622c;color:#fff;font-size:0.7rem;font-weight:700;padding:2px 7px;border-radius:6px;white-space:nowrap;">Cyrille</div>
-</div>
-<div id="guidageClic" style="display:none;position:fixed;z-index:10002;pointer-events:none;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;border:3px solid #e8622c;transition:opacity 0.5s ease-out;"></div>
-<div id="guidageConsentement" style="display:none;position:fixed;inset:0;z-index:10003;background:rgba(20,49,42,0.55);align-items:center;justify-content:center;padding:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <div style="background:#fff;border-radius:16px;padding:26px 24px;max-width:380px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.25);">
-    <div style="font-size:1.05rem;font-weight:800;color:#14312a;margin-bottom:10px;">🎥 Cyrille souhaite vous montrer quelque chose en direct</div>
-    <p style="font-size:0.88rem;color:#6b7a72;line-height:1.4;margin-bottom:18px;">Si vous acceptez, il pourra vous montrer où cliquer et quelle section regarder, en direct sur cet écran, tant que vous ne fermez pas cette page.</p>
+<!-- 07/09 : partage d'écran en direct (voir api/ecran-partage.js) — Cyrille
+     voit réellement l'écran (l'onglet dashboard) de l'artisan, en vidéo, avec
+     son accord explicite à chaque fois. Pas de contrôle à distance : lecture
+     seule, l'artisan garde la main sur son clavier/souris. -->
+
+<!-- Côté artisan : demande d'autorisation, puis bannière tant que le partage est actif. -->
+<div id="ecranPartageConsentement" style="display:none;position:fixed;inset:0;z-index:10003;background:rgba(20,49,42,0.55);align-items:center;justify-content:center;padding:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <div style="background:#fff;border-radius:16px;padding:26px 24px;max-width:400px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.25);">
+    <div style="font-size:1.05rem;font-weight:800;color:#14312a;margin-bottom:10px;">🎥 Cyrille souhaite voir votre écran en direct</div>
+    <p style="font-size:0.88rem;color:#6b7a72;line-height:1.4;margin-bottom:18px;">Pour vous aider sur votre dashboard. Si vous acceptez, votre navigateur vous demandera de choisir quoi partager — sélectionnez cet onglet. Il ne peut rien cliquer ni taper à votre place, il voit seulement votre écran.</p>
     <div style="display:flex;gap:10px;justify-content:center;">
-      <button type="button" id="btnGuidageRefuser" style="background:#f0f1ec;color:#6b7a72;border:none;padding:11px 18px;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.88rem;">Refuser</button>
-      <button type="button" id="btnGuidageAutoriser" style="background:#1e6f4c;color:#fff;border:none;padding:11px 18px;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.88rem;">Autoriser</button>
+      <button type="button" id="btnEcranPartageRefuser" style="background:#f0f1ec;color:#6b7a72;border:none;padding:11px 18px;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.88rem;">Refuser</button>
+      <button type="button" id="btnEcranPartageAutoriser" style="background:#1e6f4c;color:#fff;border:none;padding:11px 18px;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.88rem;">Autoriser</button>
     </div>
   </div>
+</div>
+<div id="ecranPartageBanniereArtisan" style="display:none;position:fixed;top:0;left:0;right:0;z-index:10001;background:#c0392b;color:#fff;text-align:center;padding:10px 16px;font-weight:700;font-size:0.9rem;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  🔴 Votre écran est partagé avec Cyrille en direct
+  <button type="button" id="btnEcranPartageArreter" style="margin-left:12px;background:rgba(255,255,255,0.25);color:#fff;border:none;padding:4px 12px;border-radius:8px;font-weight:700;font-size:0.78rem;cursor:pointer;">Arrêter le partage</button>
+</div>
+
+<!-- Côté admin (Cyrille) : badge de statut + vidéo reçue. -->
+<div id="ecranPartageVideoWrap" style="display:none;position:fixed;bottom:16px;right:16px;z-index:10001;background:#14312a;border-radius:14px;padding:10px;box-shadow:0 10px 40px rgba(0,0,0,0.35);">
+  <video id="ecranPartageVideo" autoplay playsinline style="max-width:46vw;max-height:60vh;border-radius:8px;display:block;"></video>
 </div>
 
 <!-- Feuilles décoratives en arrière-plan, effet 3D via dégradés et ombres -->
@@ -963,9 +967,9 @@
       chargerSitesCompte(token);
       chargerApercuCampagnes(token);
       initMessagesArtisan();
-      demarrerEcouteGuidage();
+      demarrerEcouteDemandePartageEcran();
     } else if (params.get('guidage') === '1') {
-      demarrerEmissionGuidage();
+      demarrerDemandePartageEcran();
     }
   }
 
@@ -1400,164 +1404,192 @@
     }, 45000);
   }
 
-  // --- "Session guidée" (07/09) : voir api/dashboard-guidage.js -------------
-  // Deux rôles possibles sur cette même fonctionnalité :
-  //  - admin (Cyrille, ouvert via "🎥 Prise en main" de mes-artisans.html,
-  //    reconnu par ?guidage=1) : émet sa position de curseur et la section
-  //    consultée toutes les ~700ms.
-  //  - artisan : sonde ce même état et, s'il est actif et récent, affiche un
-  //    curseur "Cyrille" en direct + suit automatiquement la section.
-  // Simple sondage HTTP (comme la présence / l'appel vidéo ci-dessus), pas de
-  // WebSocket — cohérent avec le reste du projet, largement suffisant ici.
-  function demarrerEmissionGuidage() {
-    let dernierX = 0.5, dernierY = 0.2, clicEnAttente = false;
-    document.addEventListener('mousemove', (e) => {
-      dernierX = e.clientX / window.innerWidth;
-      dernierY = e.clientY / window.innerHeight;
-    });
-    document.addEventListener('click', () => { clicEnAttente = true; });
+  // --- Partage d'écran en direct (07/09) : voir api/ecran-partage.js -------
+  // Vraie prise en main "vision" (pas de contrôle à distance) : Cyrille voit
+  // l'écran de l'artisan en vidéo, via WebRTC. Signalisation par simple
+  // sondage HTTP (pas de WebSocket) : chaque camp écrit son SDP (offre côté
+  // artisan, réponse côté admin) une fois la collecte ICE terminée
+  // ("non-trickle"), l'autre camp le récupère au sondage suivant — plus
+  // simple à fiabiliser qu'un échange de candidats au fil de l'eau, pour un
+  // usage support ponctuel où 1-2s de délai ne posent aucun problème.
+  // Serveur STUN public uniquement (pas de TURN) : suffisant dans la grande
+  // majorité des cas, mais une connexion peut échouer derrière certains
+  // réseaux d'entreprise très restrictifs.
+  const RTC_CONFIG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
-    const envoyer = (action) => {
-      const payload = {
-        draftId, token: tokenCalendrierActuel, action,
-        hash: window.location.hash || '',
-        curseurX: dernierX, curseurY: dernierY,
-        clic: clicEnAttente,
+  function attendreFinCollecteIce(pc) {
+    if (pc.iceGatheringState === 'complete') return Promise.resolve();
+    return new Promise((resolve) => {
+      const verifier = () => {
+        if (pc.iceGatheringState === 'complete') {
+          pc.removeEventListener('icegatheringstatechange', verifier);
+          resolve();
+        }
       };
-      clicEnAttente = false;
-      return fetch('/api/dashboard-guidage', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload), keepalive: action === 'arreter',
-      }).catch(() => {});
-    };
+      pc.addEventListener('icegatheringstatechange', verifier);
+      setTimeout(resolve, 3000); // filet de sécurité : on part avec ce qu'on a
+    });
+  }
 
-    // Petit badge de statut, visible uniquement de ce côté (Cyrille) : la
-    // session ne s'affiche jamais chez l'artisan tant qu'il n'a pas répondu.
+  // --- Côté admin (Cyrille) : ouvert via "🎥 Prise en main" (?guidage=1) ---
+  function demarrerDemandePartageEcran() {
+    const videoWrap = document.getElementById('ecranPartageVideoWrap');
+    const videoEl = document.getElementById('ecranPartageVideo');
+    let pc = null;
+    let offreDejaTraitee = false;
+
     const badge = document.createElement('div');
     badge.style.cssText = 'position:fixed;top:10px;right:10px;z-index:10001;background:#14312a;color:#fff;padding:9px 14px;border-radius:10px;font-weight:700;font-size:0.82rem;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,0.2);';
     badge.textContent = "🕓 En attente de l'autorisation de l'artisan…";
     document.body.appendChild(badge);
+
+    function nettoyer() {
+      if (pc) { pc.close(); pc = null; }
+      videoWrap.style.display = 'none';
+      videoEl.srcObject = null;
+    }
+
+    function envoyer(action, extra) {
+      return fetch('/api/ecran-partage', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action, ...extra }),
+        keepalive: action === 'terminer',
+      }).catch(() => {});
+    }
+
+    envoyer('demander');
+    window.addEventListener('beforeunload', () => envoyer('terminer'));
+
     let statutConnu = null;
-
-    envoyer('demarrer');
-    const boucle = setInterval(() => envoyer('maj'), 700);
-    window.addEventListener('hashchange', () => envoyer('maj'));
-    window.addEventListener('beforeunload', () => { clearInterval(boucle); envoyer('arreter'); });
-
-    // Sondage léger de son propre statut (a-t-il autorisé, refusé, ou n'a-t-il
-    // toujours pas ouvert son dashboard ?), juste pour afficher le badge.
     setInterval(async () => {
       try {
-        const rep = await fetch('/api/dashboard-guidage', {
+        const rep = await fetch('/api/ecran-partage', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'etat' }),
         });
         if (!rep.ok) return;
         const data = await rep.json();
-        const statut = !data.actif ? 'inactif' : data.autorise === true ? 'autorise' : data.autorise === false ? 'refuse' : 'attente';
-        if (statut === statutConnu) return;
-        statutConnu = statut;
-        if (statut === 'autorise') {
-          badge.textContent = '🟢 Session guidée en cours — il vous voit en direct';
-          badge.style.background = '#1e6f4c';
-        } else if (statut === 'refuse') {
-          badge.textContent = "🚫 L'artisan a refusé la session guidée";
-          badge.style.background = '#c0392b';
-        } else {
-          badge.textContent = "🕓 En attente de l'autorisation de l'artisan…";
-          badge.style.background = '#14312a';
+        if (!data.success) return;
+
+        if (data.statut !== statutConnu) {
+          statutConnu = data.statut;
+          if (data.statut === 'refuse') { badge.textContent = "🚫 L'artisan a refusé le partage d'écran"; badge.style.background = '#c0392b'; nettoyer(); }
+          else if (data.statut === 'demande') { badge.textContent = "🕓 En attente de l'autorisation de l'artisan…"; badge.style.background = '#14312a'; }
+          else if (data.statut === 'termine') { badge.textContent = 'Partage terminé'; badge.style.background = '#6b7a72'; nettoyer(); offreDejaTraitee = false; }
+        }
+
+        if (data.statut === 'offre_prete' && data.offreSdp && !offreDejaTraitee) {
+          offreDejaTraitee = true;
+          badge.textContent = '🟡 Connexion en cours…';
+          badge.style.background = '#e8622c';
+          pc = new RTCPeerConnection(RTC_CONFIG);
+          pc.ontrack = (e) => {
+            videoEl.srcObject = e.streams[0];
+            videoWrap.style.display = '';
+            badge.textContent = '🟢 Vous voyez son écran en direct';
+            badge.style.background = '#1e6f4c';
+          };
+          pc.onconnectionstatechange = () => {
+            if (['disconnected', 'failed', 'closed'].includes(pc.connectionState)) nettoyer();
+          };
+          await pc.setRemoteDescription({ type: 'offer', sdp: data.offreSdp });
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          await attendreFinCollecteIce(pc);
+          envoyer('reponse', { sdp: pc.localDescription.sdp });
         }
       } catch (e) { /* silencieux */ }
-    }, 2000);
+    }, 1500);
   }
 
-  // Ouvre le bon onglet/section à partir d'un hash — factorisé pour être
-  // appelé aussi bien au chargement (voir plus haut) que par une session
-  // guidée en cours (l'artisan doit suivre Cyrille en direct, pas seulement
-  // au premier chargement de la page).
-  function allerVersHash(hash) {
-    if (hash === '#calendrier') {
-      activerOnglet('calendrier');
-      document.getElementById('panelTabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else if (hash === '#sectionZoneCiblee') {
-      document.getElementById('sectionZoneCiblee')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else if (hash === '#sectionBudgetJournalier' || hash === '#sectionPlafondCpc') {
-      document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }
+  // --- Côté artisan : demande d'autorisation, puis partage effectif -------
+  function demarrerEcouteDemandePartageEcran() {
+    const modale = document.getElementById('ecranPartageConsentement');
+    const banniere = document.getElementById('ecranPartageBanniereArtisan');
+    let demandeDejaVue = false;
+    let flux = null;
+    let pc = null;
+    let reponseDejaTraitee = false;
 
-  function demarrerEcouteGuidage() {
-    let hashSuivi = null;
-    let consentementDejaDemande = false; // évite de rouvrir la modale en boucle tant qu'il n'a pas répondu
-    const banniere = document.getElementById('guidageBanniere');
-    const curseurEl = document.getElementById('guidageCurseur');
-    const clicEl = document.getElementById('guidageClic');
-    const modale = document.getElementById('guidageConsentement');
-
-    function cacherTout() {
+    function arreterPartage(previens) {
+      if (flux) { flux.getTracks().forEach(t => t.stop()); flux = null; }
+      if (pc) { pc.close(); pc = null; }
       banniere.style.display = 'none';
-      curseurEl.style.display = 'none';
+      demandeDejaVue = false;
+      reponseDejaTraitee = false;
+      if (previens) {
+        fetch('/api/ecran-partage', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'terminer' }),
+          keepalive: true,
+        }).catch(() => {});
+      }
+    }
+    window.addEventListener('beforeunload', () => { if (flux) arreterPartage(true); });
+    document.getElementById('btnEcranPartageArreter').addEventListener('click', () => arreterPartage(true));
+
+    async function autoriser() {
       modale.style.display = 'none';
-      hashSuivi = null;
-      consentementDejaDemande = false;
-      sessionEnCoursAffichee = false;
+      try {
+        flux = await navigator.mediaDevices.getDisplayMedia({ video: { displaySurface: 'browser' }, preferCurrentTab: true, audio: false });
+      } catch (e) {
+        fetch('/api/ecran-partage', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'repondre', autorise: false }),
+        }).catch(() => {});
+        alert("Impossible de partager votre écran (annulé, ou non pris en charge par ce navigateur).");
+        return;
+      }
+      flux.getVideoTracks()[0].addEventListener('ended', () => arreterPartage(true));
+
+      await fetch('/api/ecran-partage', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'repondre', autorise: true }),
+      }).catch(() => {});
+
+      pc = new RTCPeerConnection(RTC_CONFIG);
+      flux.getTracks().forEach(t => pc.addTrack(t, flux));
+      const offre = await pc.createOffer();
+      await pc.setLocalDescription(offre);
+      await attendreFinCollecteIce(pc);
+      await fetch('/api/ecran-partage', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'offre', sdp: pc.localDescription.sdp }),
+      }).catch(() => {});
+
+      banniere.style.display = '';
     }
 
-    function repondre(accepte) {
+    function refuser() {
       modale.style.display = 'none';
-      fetch('/api/dashboard-guidage', {
+      fetch('/api/ecran-partage', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'repondre', autorise: accepte }),
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'repondre', autorise: false }),
       }).catch(() => {});
-      if (!accepte) cacherTout();
     }
-    document.getElementById('btnGuidageAutoriser').addEventListener('click', () => repondre(true));
-    document.getElementById('btnGuidageRefuser').addEventListener('click', () => repondre(false));
-    document.getElementById('btnGuidageArreter').addEventListener('click', () => repondre(false));
+    document.getElementById('btnEcranPartageAutoriser').addEventListener('click', autoriser);
+    document.getElementById('btnEcranPartageRefuser').addEventListener('click', refuser);
 
     setInterval(async () => {
       try {
-        const rep = await fetch('/api/dashboard-guidage', {
+        const rep = await fetch('/api/ecran-partage', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'etat' }),
         });
         if (!rep.ok) return;
         const data = await rep.json();
-        if (!data.success || !data.actif) { cacherTout(); return; }
+        if (!data.success) return;
 
-        // Nouvelle demande : Cyrille a démarré une session, pas encore de
-        // réponse — on ne montre RIEN d'autre que la demande d'autorisation.
-        if (data.enAttenteAutorisation) {
-          if (!consentementDejaDemande) {
-            consentementDejaDemande = true;
-            modale.style.display = 'flex';
-          }
-          return;
+        if (data.statut === 'demande' && !demandeDejaVue) {
+          demandeDejaVue = true;
+          modale.style.display = 'flex';
         }
-
-        // Refusé : on ne montre jamais rien de la session (pas de bannière,
-        // pas de curseur), jusqu'à ce que Cyrille redémarre une nouvelle demande.
-        if (data.autorise === false) { cacherTout(); return; }
-
-        // Autorisé : affichage normal du curseur en direct + suivi de section.
-        modale.style.display = 'none';
-        banniere.style.display = '';
-        if (typeof data.curseurX === 'number' && typeof data.curseurY === 'number') {
-          curseurEl.style.display = '';
-          curseurEl.style.left = (data.curseurX * window.innerWidth) + 'px';
-          curseurEl.style.top = (data.curseurY * window.innerHeight) + 'px';
+        if (data.statut === 'termine' && flux) {
+          arreterPartage(false);
         }
-        if (data.clic && typeof data.clicX === 'number') {
-          clicEl.style.left = (data.clicX * window.innerWidth) + 'px';
-          clicEl.style.top = (data.clicY * window.innerHeight) + 'px';
-          clicEl.style.display = '';
-          clicEl.style.opacity = '1';
-          setTimeout(() => { clicEl.style.opacity = '0'; }, 550);
-          setTimeout(() => { clicEl.style.display = 'none'; }, 750);
-        }
-        if (data.hash && data.hash !== hashSuivi) {
-          hashSuivi = data.hash;
-          allerVersHash(data.hash);
+        if (data.statut === 'connecte' && data.reponseSdp && pc && !reponseDejaTraitee) {
+          reponseDejaTraitee = true;
+          await pc.setRemoteDescription({ type: 'answer', sdp: data.reponseSdp });
         }
       } catch (e) { /* silencieux */ }
     }, 1200);

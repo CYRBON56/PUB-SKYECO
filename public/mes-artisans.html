@@ -308,7 +308,7 @@
                     <a class="btn-action btn-voir" href="/apercu.html?id=${f.id}" target="_blank">👁️ Voir</a>
                     <button class="btn-action ${f.site_valide ? 'btn-valide-on' : 'btn-valide-off'}" data-id="${f.id}" data-valide="${f.site_valide ? '1' : '0'}" onclick="toggleValidation(this)">${f.site_valide ? '✓ Site validé' : '☐ Valider le site'}</button>
                     <button class="btn-action btn-dashboard" data-id="${f.id}" onclick="ouvrirDashboardAdmin(this)">🔑 Dashboard</button>
-                    <button class="btn-action btn-guidage" data-id="${f.id}" onclick="ouvrirSessionGuidee(this)" title="Ouvre son dashboard en direct : s'il l'a ouvert en même temps, il voit votre curseur et suit la section que vous consultez.">🎥 Prise en main</button>
+                    <button class="btn-action btn-guidage" data-id="${f.id}" onclick="ouvrirSessionGuidee(this)" title="S'il a son dashboard ouvert, lui demande l'autorisation de voir son écran en direct (vidéo réelle, lecture seule).">🎥 Voir son écran</button>
                     <button class="btn-action btn-message" data-id="${f.id}" onclick="envoyerMessageArtisan(this)" ${!f.telephone ? 'disabled title="Aucun téléphone enregistré"' : ''}>✉️ Message</button>
                     <button class="btn-action btn-zone" data-id="${f.id}" onclick="ouvrirZoneAdmin(this)">📍 Zone &amp; km</button>
                     <button class="btn-action btn-appeler-maintenant" id="appeler-${f.id}" data-id="${f.id}" onclick="appelerMaintenant(this)" style="display:${estEnLigne(f) ? '' : 'none'};">📹 Appeler maintenant</button>
@@ -510,12 +510,13 @@
     }
   };
 
-  // 07/09 : "prise en main" — même mécanisme que ouvrirDashboardAdmin(),
-  // mais avec &guidage=1 : mon-dashboard.html sait alors qu'il doit pousser
-  // en direct la position du curseur et la section consultée (voir
-  // api/dashboard-guidage.js). Si l'artisan a son dashboard ouvert au même
-  // moment, il voit tout ça en direct, sinon rien ne se passe côté artisan
-  // (aucune donnée n'est affichée s'il n'est pas en train de regarder).
+  // 07/09 : partage d'écran en direct — même mécanisme que
+  // ouvrirDashboardAdmin(), mais avec &guidage=1 : mon-dashboard.html
+  // demande alors à l'artisan (s'il a son dashboard ouvert) l'autorisation
+  // de voir son écran en direct via WebRTC (voir api/ecran-partage.js).
+  // Vraie vidéo, lecture seule — Cyrille ne peut rien cliquer/taper à sa
+  // place. Rien ne se passe côté artisan s'il n'est pas en train de
+  // regarder, ou s'il refuse.
   window.ouvrirSessionGuidee = async function(btn) {
     const draftId = btn.dataset.id;
     let motDePasseInterne = sessionStorage.getItem('skyeco_admin_internal_pw');

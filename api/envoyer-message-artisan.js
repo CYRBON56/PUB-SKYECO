@@ -1,87 +1,99 @@
-// api/envoyer-message-artisan.js
+// api/messages-artisan.js
 //
-// POST /api/envoyer-message-artisan   body: { motDePasseInterne, draftId, message }
+// POST /api/messages-artisan   body: { draftId, token, action, ... }
+//   action = 'liste'       -> { success, messages: [{ id, contenu, lu, cree_le }] } (10 derniers)
+//   action = 'marquer_lu'  -> { messageId } -> marque ce message comme lu
 //
-// Permet à Cyrille d'envoyer un message ciblé à un artisan qui a un problème
-// (demande faite le 07/09/2026) : SMS immédiat (via Twilio, comme le reste
-// du projet) ET trace posée dans son dashboard (table
-// skyeco_pro_messages_admin, lue par mon-dashboard.html via
-// api/messages-artisan.js), pour qu'il retrouve le message même s'il rate le
-// SMS. Protégé par le même mot de passe interne que api/mes-artisans.js.
+// Sondé par mon-dashboard.html pour afficher les messages que Cyrille envoie
+// depuis "mes artisans" (api/envoyer-message-artisan.js) quand un artisan a
+// un problème — SMS immédiat + trace ici au cas où le SMS soit raté. Même
+// vérification de jeton que api/ping-presence.js / api/statut-appel-video.js
+// (accepte les deux rôles, admin ou artisan).
 //
 // Variables d'environnement requises : SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
-// INTERNAL_ACCESS_PASSWORD, TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER
+// DASHBOARD_SESSION_SECRET
 
+import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
-import twilio from 'twilio';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const twilioClient = (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN)
-  ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
-  : null;
+async function verifierToken(token, draftIdAttendu) {
+  try {
+    const decode = Buffer.from(token, 'base64url').toString('utf8');
+    const parties = decode.split('.');
+    if (parties.length !== 4) return false;
+    const [sujet, role, expStr, sig] = parties;
+    const exp = parseInt(expStr, 10);
+    if (!exp || Date.now() / 1000 > exp) return false;
 
-// Même logique que le reste du projet (idempotente).
-function toE164(numero) {
-  if (!numero) return null;
-  let n = String(numero).trim().replace(/[\s.\-()]/g, '');
-  if (n.startsWith('+')) return n;
-  if (n.startsWith('0')) return '+33' + n.slice(1);
-  if (n.startsWith('33')) return '+' + n;
-  return n;
+    const payload = `${sujet}.${role}.${expStr}`;
+    const attendu = crypto.createHmac('sha256', process.env.DASHBOARD_SESSION_SECRET).update(payload).digest('hex');
+    const sigBuf = Buffer.from(sig, 'hex');
+    const attenduBuf = Buffer.from(attendu, 'hex');
+    if (sigBuf.length !== attenduBuf.length || !crypto.timingSafeEqual(sigBuf, attenduBuf)) return false;
+
+    if (role === 'admin') return sujet === draftIdAttendu;
+    if (role === 'artisan') {
+      let email;
+      try { email = Buffer.from(sujet, 'base64url').toString('utf8'); } catch (e) { return false; }
+      if (!email) return false;
+      const resp = await fetch(
+        `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftIdAttendu}&select=email`,
+        { headers: { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}` } }
+      );
+      const rows = await resp.json();
+      const draft = rows[0];
+      return !!(draft && draft.email && draft.email.toLowerCase() === email.toLowerCase());
+    }
+    return false;
+  } catch (e) {
+    return false;
+  }
 }
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, error: 'Méthode non autorisée' });
+    return res.status(405).json({ success: false, error: 'methode_non_autorisee' });
   }
 
-  const { motDePasseInterne, draftId, message } = req.body || {};
-
-  if (!process.env.INTERNAL_ACCESS_PASSWORD || motDePasseInterne !== process.env.INTERNAL_ACCESS_PASSWORD) {
-    return res.status(401).json({ success: false, error: 'Mot de passe interne incorrect.' });
+  const { draftId, token, action, messageId } = req.body || {};
+  if (!draftId || !token) {
+    return res.status(401).json({ success: false, error: 'non_authentifie' });
   }
-  if (!draftId || !message || !message.trim()) {
-    return res.status(400).json({ success: false, error: 'draftId et message sont requis.' });
+  if (!(await verifierToken(token, draftId))) {
+    return res.status(401).json({ success: false, error: 'session_invalide' });
   }
 
   try {
-    const { data: draft, error: errDraft } = await supabase
-      .from('skyeco_pro_vitrine_drafts')
-      .select('entreprise, telephone')
-      .eq('id', draftId)
-      .single();
-    if (errDraft || !draft) {
-      return res.status(404).json({ success: false, error: 'Artisan introuvable.' });
+    if (action === 'liste') {
+      const { data, error } = await supabase
+        .from('skyeco_pro_messages_admin')
+        .select('id, contenu, lu, cree_le')
+        .eq('draft_id', draftId)
+        .order('cree_le', { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      return res.status(200).json({ success: true, messages: data || [] });
     }
 
-    const contenu = message.trim();
-    let smsEnvoye = false;
-
-    if (twilioClient && draft.telephone && process.env.TWILIO_FROM_NUMBER) {
-      try {
-        await twilioClient.messages.create({
-          to: toE164(draft.telephone),
-          from: process.env.TWILIO_FROM_NUMBER,
-          body: `Skyeco Pro — message de Cyrille :\n${contenu}`,
-        });
-        smsEnvoye = true;
-      } catch (e) {
-        console.error('envoyer-message-artisan: échec envoi SMS', e.message);
-      }
+    if (action === 'marquer_lu') {
+      if (!messageId) return res.status(400).json({ success: false, error: 'messageId manquant' });
+      const { error } = await supabase
+        .from('skyeco_pro_messages_admin')
+        .update({ lu: true, lu_le: new Date().toISOString() })
+        .eq('id', messageId)
+        .eq('draft_id', draftId);
+      if (error) throw error;
+      return res.status(200).json({ success: true });
     }
 
-    const { error: errInsert } = await supabase
-      .from('skyeco_pro_messages_admin')
-      .insert({ draft_id: draftId, contenu });
-    if (errInsert) throw errInsert;
-
-    return res.status(200).json({ success: true, smsEnvoye, telephoneManquant: !draft.telephone });
+    return res.status(400).json({ success: false, error: 'action inconnue' });
   } catch (err) {
-    console.error('Erreur envoyer-message-artisan :', err);
-    return res.status(500).json({ success: false, error: "Impossible d'envoyer le message pour le moment." });
+    console.error('Erreur messages-artisan :', err);
+    return res.status(500).json({ success: false, error: "Impossible de charger les messages pour le moment." });
   }
 }

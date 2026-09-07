@@ -187,7 +187,7 @@
   </svg>
 </div>
 
-<a class="btn-etre-rappele-fixe" id="btnEtreRappeleFixe" href="#" target="_blank" rel="noopener">📞 Être rappelé</a>
+<a class="btn-etre-rappele-fixe" href="/prendre-rdv.html?id=4fbdb122-9fca-4636-b80c-d9e4abc2542b" target="_blank" rel="noopener">📞 Être rappelé</a>
 
 <div class="wrap">
   <a href="#" id="lienRetourDashboard" class="btn-dashboard-hero" style="display:none;"><span class="icon">📊</span> Accéder à mon tableau de bord</a>
@@ -196,7 +196,7 @@
   <p class="intro">
     Dépose ici ce qui nous permettra de construire ta vraie vitrine — à ton rythme, section par section.
   </p>
-  <a class="btn-rdv-construction" id="btnRdvConstruction" href="#" target="_blank" rel="noopener">📅 Envie qu'on la construise ensemble au téléphone ? Réservez un créneau</a>
+  <a class="btn-rdv-construction" href="/prendre-rdv.html?id=4fbdb122-9fca-4636-b80c-d9e4abc2542b" target="_blank" rel="noopener">📅 Envie qu'on la construise ensemble au téléphone ? Réservez un créneau</a>
   <p class="reassurance">🌿 Rien n'est chronométré, et chaque section s'enregistre à part.</p>
 
   <a class="btn-avancement" id="btnAvancement" href="#" target="_blank" rel="noopener">📊 Voir l'avancement de mon site</a>
@@ -478,45 +478,6 @@
     }
   });
 
-  // 07/09/2026 : "beforeunload" ne suffit pas à protéger contre une perte
-  // de données — de nombreux navigateurs mobiles (Safari iOS notamment)
-  // n'affichent pas cette confirmation pour un simple clic sur un lien, et
-  // quitter la page pendant qu'une photo/un logo vient tout juste d'être
-  // envoyé coupe l'enregistrement en cours de route : au retour sur la
-  // page, ce qui venait d'être ajouté a disparu. On bloque donc en plus le
-  // clic lui-même sur les liens de sortie tant qu'un enregistrement est en
-  // cours, et on ne navigue qu'une fois celui-ci terminé.
-  function attendreFinSauvegardes() {
-    return new Promise(resolve => {
-      if (sauvegardesEnCours <= 0) return resolve();
-      const depart = Date.now();
-      const intervalle = setInterval(() => {
-        if (sauvegardesEnCours <= 0 || Date.now() - depart > 8000) {
-          clearInterval(intervalle);
-          resolve();
-        }
-      }, 150);
-    });
-  }
-  function protegerNavigationPendantSauvegarde(id) {
-    const lien = document.getElementById(id);
-    if (!lien) return;
-    lien.addEventListener('click', (e) => {
-      if (sauvegardesEnCours <= 0) return; // rien en cours, laisse le clic suivre son cours normalement
-      e.preventDefault();
-      const texteInitial = lien.textContent;
-      lien.textContent = '⏳ Enregistrement en cours…';
-      attendreFinSauvegardes().then(() => {
-        lien.textContent = texteInitial;
-        const cible = lien.href;
-        if (lien.target === '_blank') window.open(cible, '_blank', 'noopener');
-        else window.location.href = cible;
-      });
-    });
-  }
-  protegerNavigationPendantSauvegarde('lienRetourDashboard');
-  protegerNavigationPendantSauvegarde('btnAvancement');
-
   let logoUrl = null;
   let photosUrls = [];
   let videoUrl = null;
@@ -673,13 +634,6 @@
     document.body.innerHTML = '<div style="text-align:center; margin-top:100px;">Lien invalide — identifiant du site manquant.</div>';
   } else {
     document.getElementById('btnAvancement').href = '/apercu.html?id=' + draftId;
-    // 07/09/2026 : ces deux liens étaient codés en dur avec l'identifiant
-    // d'un brouillon de test (4fbdb122-9fca-4636-b80c-d9e4abc2542b) au lieu
-    // du draftId de la personne qui consulte la page — tout artisan cliquant
-    // sur "Être rappelé" ou "Réservez un créneau" prenait donc en réalité
-    // rendez-vous sur le brouillon de test, jamais sur le sien.
-    document.getElementById('btnEtreRappeleFixe').href = '/prendre-rdv.html?id=' + draftId;
-    document.getElementById('btnRdvConstruction').href = '/prendre-rdv.html?id=' + draftId;
     chargerDraftExistant();
   }
 

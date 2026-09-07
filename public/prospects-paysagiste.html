@@ -138,13 +138,14 @@
     <div class="row" style="margin-bottom:10px;">
       <div class="field" style="max-width:140px;"><label>Taille du lot</label><input type="number" id="batchSize" value="30" min="1" max="500"></div>
       <div class="field" style="max-width:220px;"><label>Métier (optionnel)</label><input type="text" id="batchMetier" placeholder="laisser vide = tous"></div>
+      <div class="field" style="max-width:240px;"><label>Famille (optionnel)</label><select id="batchFamille"><option value="">Toutes les familles</option></select></div>
       <div class="field"><label>Sujet de l'email</label><input type="text" id="batchSubject" value="2 minutes pour voir comment Skyeco Ads gère vos pubs à votre place"></div>
     </div>
     <div class="row" style="margin-bottom:10px;">
       <div class="field"><label>Lien de destination du bouton (optionnel — laissez vide pour renvoyer vers la page d'inscription Skyeco Ads)</label><input type="url" id="batchVideoUrl" placeholder="https://…"></div>
     </div>
     <label style="font-size:11px; font-weight:700; color:var(--concrete);">Contenu de l'email (HTML)</label>
-    <textarea id="batchHtml" style="margin-top:4px;">&lt;img src="cid:logo-skyeco-ads" width="240" height="75" alt="Skyeco Ads" style="display:block;margin-bottom:18px;"&gt;Bonjour {{nom_entreprise}},&lt;br&gt;&lt;br&gt;Je m'appelle Cyrille, artisan comme vous — je gère RMS EcoSky, une entreprise de revêtements de sol. J'ai été démarché par des agences pub qui prenaient mon budget sans jamais vraiment le piloter, alors j'ai créé mon propre outil : &lt;strong&gt;Skyeco Ads&lt;/strong&gt;.&lt;br&gt;&lt;br&gt;J'ai fait une vidéo de 2 minutes qui montre exactement comment ça marche pour un métier comme {{metier}} :&lt;br&gt;— vos Google Ads gérées et coachées automatiquement (mots-clés, suivi quotidien, correction des campagnes qui sous-performent),&lt;br&gt;— votre propre page vitrine avec carrousel photo et formulaire d'estimation de devis,&lt;br&gt;— vos prospects suivis par email et SMS, avec relances automatiques,&lt;br&gt;— vos devis envoyés avec signature électronique, par email et SMS.&lt;br&gt;&lt;br&gt;Ce n'est pas un outil figé : c'est une communauté d'artisans qui échangent depuis plus d'un an sur le forum Skyeco pour l'améliorer ensemble.&lt;br&gt;&lt;br&gt;Le plus simple, c'est de la regarder :&lt;br&gt;&lt;br&gt;&lt;a href="{{lien_cta}}" style="display:inline-block;background:#E8622C;color:#fff;padding:12px 22px;text-decoration:none;font-weight:700;"&gt;▶ Voir la vidéo (2 min)&lt;/a&gt;&lt;br&gt;&lt;br&gt;C'est gratuit à l'installation, avec un forfait de fonctionnement simple. Ça peut être utile pour {{nom_entreprise}} à {{ville}} aussi.&lt;br&gt;&lt;br&gt;&lt;img src="cid:signature-cyrille" width="64" height="64" alt="Cyrille Bon" style="border-radius:50%;display:block;margin-bottom:8px;"&gt;Cyrille Bon&lt;br&gt;Skyeco Ads</textarea>
+    <textarea id="batchHtml" style="margin-top:4px;">&lt;img src="cid:logo-skyeco-ads" width="240" height="75" alt="Skyeco Ads" style="display:block;margin-bottom:18px;"&gt;Bonjour {{nom_entreprise}},&lt;br&gt;&lt;br&gt;Je m'appelle Cyrille, artisan comme vous — je gère RMS EcoSky, une entreprise de revêtements de sol. J'ai été démarché par des agences pub qui prenaient mon budget sans jamais vraiment le piloter, alors j'ai créé mon propre outil : &lt;strong&gt;Skyeco Ads&lt;/strong&gt;.&lt;br&gt;&lt;br&gt;J'ai fait une vidéo de 2 minutes qui montre exactement comment ça marche pour un métier comme {{metier}} :&lt;br&gt;— vos Google Ads gérées et coachées automatiquement (mots-clés, suivi quotidien, correction des campagnes qui sous-performent),&lt;br&gt;— votre propre page vitrine avec carrousel photo et formulaire d'estimation de devis,&lt;br&gt;— vos prospects suivis par email et SMS, avec relances automatiques,&lt;br&gt;— vos devis envoyés avec signature électronique, par email et SMS.&lt;br&gt;&lt;br&gt;Le plus simple, c'est de la regarder :&lt;br&gt;&lt;br&gt;&lt;a href="{{lien_cta}}" style="display:inline-block;background:#E8622C;color:#fff;padding:12px 22px;text-decoration:none;font-weight:700;"&gt;▶ Voir la vidéo (2 min)&lt;/a&gt;&lt;br&gt;&lt;br&gt;C'est gratuit à l'installation, avec un forfait de fonctionnement simple. Ça peut être utile pour {{nom_entreprise}} à {{ville}} aussi.&lt;br&gt;&lt;br&gt;&lt;img src="cid:signature-cyrille" width="64" height="64" alt="Cyrille Bon" style="border-radius:50%;display:block;margin-bottom:8px;"&gt;Cyrille Bon&lt;br&gt;Skyeco Ads</textarea>
     <div class="placeholders">Disponibles dans le texte : <code>{{nom_entreprise}}</code> <code>{{ville}}</code> <code>{{metier}}</code> — et <code>{{lien_cta}}</code> obligatoire, à mettre sur le bouton/lien d'action (lien de tracking, redirige vers le champ "lien de destination" ci-dessus, ou vers la page d'inscription si vide).</div>
 
     <div class="row" style="margin-top:14px;">
@@ -187,6 +188,7 @@
     <div class="sel-row">
       <input type="text" id="searchNom" placeholder="Rechercher une entreprise ou une ville…" style="min-width:260px;">
       <input type="text" id="searchMetier" placeholder="Filtrer par métier…" style="min-width:180px;">
+      <select id="searchFamille" style="min-width:220px;"><option value="">Toutes les familles</option></select>
       <button class="btn btn-ghost" id="btnSearch">Rechercher</button>
     </div>
 
@@ -248,11 +250,40 @@
     }
   }
 
+  // ---------- Appel de l'API admin sécurisée (remplace les accès directs anon) ----------
+  async function appelerAdmin(action, extra){
+    const resp = await fetch('/api/prospects-paysagiste-admin', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ motDePasseInterne: internalPassword, action, ...extra })
+    });
+    const data = await resp.json().catch(()=>({ success:false, error:'Réponse invalide du serveur.' }));
+    if(!data.success) throw new Error(data.error || 'Erreur serveur.');
+    return data;
+  }
+
+  // Familles de métiers (voir migration ajoute_famille_metier_prospects_paysagiste,
+  // 06/09/2026) — regroupe les ~260 métiers/codes NAF bruts de la liste importée
+  // en grandes catégories, pour prioriser l'envoi sur le cœur de cible.
+  const FAMILLES_METIER = [
+    'Paysagisme & espaces verts', 'Gros œuvre / VRD', 'Second œuvre / finitions',
+    'Architecture & ingénierie', 'Agriculture & sylviculture', 'Services aux professionnels',
+    'Services à la personne', 'Services aux entreprises', 'Commerce', 'Commerce & réparation auto',
+    'Immobilier', 'Santé / social / éducation', 'Culture / loisirs', 'Associations',
+    'Transport & logistique', 'Hôtellerie / restauration', 'Finance & assurance',
+    'Numérique / communication', 'Autres services', 'Autres / à vérifier', 'Non renseigné',
+  ];
+  ['batchFamille','searchFamille'].forEach(id => {
+    const sel = document.getElementById(id);
+    FAMILLES_METIER.forEach(f => { const o = document.createElement('option'); o.value = f; o.textContent = f; sel.appendChild(o); });
+  });
+
   // ---------- État ----------
   let currentFilter = 'tous';
   let currentPage = 0;
   let searchNom = '';
   let searchMetier = '';
+  let searchFamille = '';
   let totalRows = 0;
 
   function normPhone(raw){
@@ -343,17 +374,16 @@
 
     try{
       for(const c of chunksEmail){
-        const { error } = await supabaseClient.from('prospects_paysagiste').upsert(c, { onConflict:'email' });
-        if(error) throw error;
+        await appelerAdmin('import_lot', { contacts: c });
         fait += c.length;
         statusEl.textContent = 'Import en cours… ' + fait + ' / ' + total;
       }
       for(const c of chunksPhone){
         // Pas de dédoublonnage par téléphone : plusieurs entreprises différentes
         // peuvent légitimement partager un même numéro (secrétariat commun,
-        // siège de réseau...) — seul l'email est un identifiant unique fiable.
-        const { error } = await supabaseClient.from('prospects_paysagiste').insert(c);
-        if(error) throw error;
+        // siège de réseau...) — seul l'email est un identifiant unique fiable
+        // (et ces contacts n'en ont pas, donc pas de conflit possible).
+        await appelerAdmin('import_lot', { contacts: c });
         fait += c.length;
         statusEl.textContent = 'Import en cours… ' + fait + ' / ' + total;
       }
@@ -383,11 +413,11 @@
     // Dédoublonnage par email uniquement (un téléphone peut être partagé par
     // plusieurs entreprises — pas un identifiant unique fiable).
     const contact = { nom_entreprise:nom, metier, ville, departement, telephone, email, adresse };
-    const { error } = email
-      ? await supabaseClient.from('prospects_paysagiste').upsert([contact], { onConflict:'email' })
-      : await supabaseClient.from('prospects_paysagiste').insert([contact]);
-
-    if(error){ statusEl.textContent = 'Erreur : ' + error.message; statusEl.style.color = '#c0392b'; return; }
+    try{
+      await appelerAdmin('ajouter', { contact });
+    } catch(err){
+      statusEl.textContent = 'Erreur : ' + err.message; statusEl.style.color = '#c0392b'; return;
+    }
     statusEl.textContent = '✓ Contact ajouté.';
     statusEl.style.color = 'var(--ok)';
     ['addNom','addMetier','addVille','addDept','addTel','addEmail','addAdresse'].forEach(id => document.getElementById(id).value = '');
@@ -401,6 +431,7 @@
     const btn = document.getElementById('btnSendBatch');
     const batchSize = document.getElementById('batchSize').value;
     const metier = document.getElementById('batchMetier').value.trim();
+    const familleMetier = document.getElementById('batchFamille').value.trim();
     const subject = document.getElementById('batchSubject').value.trim();
     const html = document.getElementById('batchHtml').value.trim();
     const videoUrl = document.getElementById('batchVideoUrl').value.trim();
@@ -416,7 +447,7 @@
     try{
       const res = await fetch('/api/prospection-send-batch', {
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ motDePasseInterne: internalPassword, batchSize, metier: metier || undefined, subject, html, videoUrl: videoUrl || undefined })
+        body: JSON.stringify({ motDePasseInterne: internalPassword, batchSize, metier: metier || undefined, familleMetier: familleMetier || undefined, subject, html, videoUrl: videoUrl || undefined })
       });
       const data = await res.json();
       if(!data.success) throw new Error(data.error || 'Erreur inconnue.');
@@ -552,33 +583,30 @@
       currentFilter = el.dataset.filter; currentPage = 0; loadStats(); loadTable();
     }));
 
-    const counts = await Promise.all(FILTRES.map(async ([key,,eqFilters]) => {
-      let q = supabaseClient.from('prospects_paysagiste').select('id', { count:'exact', head:true });
-      Object.entries(eqFilters).forEach(([col,val]) => { q = q.eq(col, val); });
-      const { count } = await q;
-      return [key, count || 0];
-    }));
-    const map = Object.fromEntries(counts);
-    document.querySelectorAll('.stat').forEach(el => {
-      el.querySelector('.n').textContent = map[el.dataset.filter] ?? '0';
-    });
+    try{
+      const { compteurs } = await appelerAdmin('compteurs');
+      document.querySelectorAll('.stat').forEach(el => {
+        el.querySelector('.n').textContent = compteurs[el.dataset.filter] ?? '0';
+      });
+    } catch(err){
+      document.querySelectorAll('.stat .n').forEach(el => { el.textContent = '—'; });
+    }
   }
 
   // ---------- Chargement + rendu table (paginée) ----------
   async function loadTable(){
     document.getElementById('tableContainer').innerHTML = '<div class="loading">CHARGEMENT…</div>';
-    const [, , eqFilters] = FILTRES.find(f => f[0] === currentFilter);
 
-    let q = supabaseClient.from('prospects_paysagiste')
-      .select('id,nom_entreprise,metier,ville,departement,telephone,email,email_envoye,email_ouvert,lien_clique,opt_out,bounced', { count:'exact' })
-      .order('created_at', { ascending:false })
-      .range(currentPage*PAGE_SIZE, currentPage*PAGE_SIZE + PAGE_SIZE - 1);
-    Object.entries(eqFilters).forEach(([col,val]) => { q = q.eq(col, val); });
-    if(searchNom) q = q.or(`nom_entreprise.ilike.%${searchNom}%,ville.ilike.%${searchNom}%`);
-    if(searchMetier) q = q.ilike('metier', `%${searchMetier}%`);
-
-    const { data, error, count } = await q;
-    if(error){ document.getElementById('tableContainer').innerHTML = '<div class="empty">Erreur de chargement : ' + error.message + '</div>'; return; }
+    let data, count;
+    try{
+      const resultat = await appelerAdmin('liste', {
+        filtre: currentFilter, searchNom, searchMetier, searchFamille,
+        page: currentPage, pageSize: PAGE_SIZE,
+      });
+      data = resultat.rows; count = resultat.total;
+    } catch(err){
+      document.getElementById('tableContainer').innerHTML = '<div class="empty">Erreur de chargement : ' + err.message + '</div>'; return;
+    }
     totalRows = count || 0;
     renderTable(data || []);
     renderPager();
@@ -597,12 +625,13 @@
   function renderTable(rows){
     if(!rows.length){ document.getElementById('tableContainer').innerHTML = '<div class="empty">Aucun prospect pour ce filtre.</div>'; return; }
     let html = '<table><thead><tr>' +
-      '<th>Entreprise</th><th>Métier</th><th>Ville</th><th>Dép.</th><th>Téléphone</th><th>Email</th><th>Statut</th>' +
+      '<th>Entreprise</th><th>Métier</th><th>Famille</th><th>Ville</th><th>Dép.</th><th>Téléphone</th><th>Email</th><th>Statut</th>' +
       '</tr></thead><tbody>';
     rows.forEach(p => {
       html += `<tr>
         <td>${p.nom_entreprise || '—'}</td>
         <td>${p.metier || '—'}</td>
+        <td>${p.famille_metier || '—'}</td>
         <td>${p.ville || '—'}</td>
         <td>${p.departement || '—'}</td>
         <td>${p.telephone || '—'}</td>
@@ -632,9 +661,11 @@
   document.getElementById('btnSearch').addEventListener('click', () => {
     searchNom = document.getElementById('searchNom').value.trim();
     searchMetier = document.getElementById('searchMetier').value.trim();
+    searchFamille = document.getElementById('searchFamille').value;
     currentPage = 0;
     loadTable();
   });
+  document.getElementById('searchFamille').addEventListener('change', () => document.getElementById('btnSearch').click());
   document.getElementById('searchNom').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('btnSearch').click(); });
   document.getElementById('searchMetier').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('btnSearch').click(); });
 

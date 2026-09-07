@@ -367,6 +367,36 @@
 
 <div class="verif-acces-overlay" id="verifAccesOverlay">Vérification de votre accès…</div>
 
+<!-- 07/09 : message ponctuel de Cyrille (voir api/messages-artisan.js) — visible
+     uniquement côté artisan, en plus du SMS déjà reçu. -->
+<div id="messageAdminBanniere" style="display:none;position:fixed;left:16px;right:16px;bottom:16px;max-width:420px;margin:0 auto;z-index:10000;background:#fff;border:1.5px solid #e8622c;border-radius:14px;padding:16px 18px;box-shadow:0 8px 30px rgba(20,49,42,0.18);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <div style="font-weight:800;color:#e8622c;margin-bottom:6px;">✉️ Message de Cyrille</div>
+  <div id="messageAdminContenu" style="color:#14312a;font-size:0.92rem;line-height:1.4;margin-bottom:10px;"></div>
+  <button type="button" id="btnMessageAdminLu" style="background:#1e6f4c;color:#fff;border:none;padding:8px 16px;border-radius:9px;font-weight:700;cursor:pointer;font-size:0.85rem;">J'ai vu, merci</button>
+</div>
+
+<!-- 07/09 : "session guidée" (voir api/dashboard-guidage.js) — bannière +
+     curseur en direct côté artisan quand Cyrille pilote sa "prise en main". -->
+<div id="guidageBanniere" style="display:none;position:fixed;top:0;left:0;right:0;z-index:10001;background:#1e6f4c;color:#fff;text-align:center;padding:10px 16px;font-weight:700;font-size:0.9rem;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  🟢 Cyrille vous montre quelque chose en direct sur votre dashboard
+  <button type="button" id="btnGuidageArreter" style="margin-left:12px;background:rgba(255,255,255,0.2);color:#fff;border:none;padding:4px 12px;border-radius:8px;font-weight:700;font-size:0.78rem;cursor:pointer;">Arrêter</button>
+</div>
+<div id="guidageCurseur" style="display:none;position:fixed;z-index:10002;pointer-events:none;transform:translate(-4px,-4px);transition:left 0.12s linear, top 0.12s linear;">
+  <div style="width:16px;height:16px;border-radius:50%;background:#e8622c;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);"></div>
+  <div style="margin-top:2px;background:#e8622c;color:#fff;font-size:0.7rem;font-weight:700;padding:2px 7px;border-radius:6px;white-space:nowrap;">Cyrille</div>
+</div>
+<div id="guidageClic" style="display:none;position:fixed;z-index:10002;pointer-events:none;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;border:3px solid #e8622c;transition:opacity 0.5s ease-out;"></div>
+<div id="guidageConsentement" style="display:none;position:fixed;inset:0;z-index:10003;background:rgba(20,49,42,0.55);align-items:center;justify-content:center;padding:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <div style="background:#fff;border-radius:16px;padding:26px 24px;max-width:380px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.25);">
+    <div style="font-size:1.05rem;font-weight:800;color:#14312a;margin-bottom:10px;">🎥 Cyrille souhaite vous montrer quelque chose en direct</div>
+    <p style="font-size:0.88rem;color:#6b7a72;line-height:1.4;margin-bottom:18px;">Si vous acceptez, il pourra vous montrer où cliquer et quelle section regarder, en direct sur cet écran, tant que vous ne fermez pas cette page.</p>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button type="button" id="btnGuidageRefuser" style="background:#f0f1ec;color:#6b7a72;border:none;padding:11px 18px;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.88rem;">Refuser</button>
+      <button type="button" id="btnGuidageAutoriser" style="background:#1e6f4c;color:#fff;border:none;padding:11px 18px;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.88rem;">Autoriser</button>
+    </div>
+  </div>
+</div>
+
 <!-- Feuilles décoratives en arrière-plan, effet 3D via dégradés et ombres -->
 <div class="leaf-bg" style="top:-60px; right:-80px; opacity:0.55;">
   <svg width="360" height="360" viewBox="0 0 360 360">
@@ -932,6 +962,10 @@
     if (!adminToken) {
       chargerSitesCompte(token);
       chargerApercuCampagnes(token);
+      initMessagesArtisan();
+      demarrerEcouteGuidage();
+    } else if (params.get('guidage') === '1') {
+      demarrerEmissionGuidage();
     }
   }
 
@@ -1323,6 +1357,210 @@
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') envoyerPingPresence();
     });
+  }
+
+  // --- Message ponctuel de Cyrille (07/09) : voir api/messages-artisan.js --
+  // Uniquement côté artisan (pas sur la vue admin de Cyrille lui-même) : SMS
+  // déjà reçu, ceci n'est qu'un rappel visible dans le dashboard au cas où.
+  let dernierMessageAffiche = null;
+  async function verifierMessagesArtisan() {
+    if (!tokenCalendrierActuel) return;
+    try {
+      const rep = await fetch('/api/messages-artisan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'liste' }),
+      });
+      if (!rep.ok) return;
+      const data = await rep.json();
+      if (!data.success) return;
+      const nonLu = (data.messages || []).find(m => !m.lu);
+      const banniere = document.getElementById('messageAdminBanniere');
+      if (nonLu && dernierMessageAffiche !== nonLu.id) {
+        dernierMessageAffiche = nonLu.id;
+        document.getElementById('messageAdminContenu').textContent = nonLu.contenu;
+        banniere.style.display = '';
+        document.getElementById('btnMessageAdminLu').onclick = async () => {
+          banniere.style.display = 'none';
+          try {
+            await fetch('/api/messages-artisan', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'marquer_lu', messageId: nonLu.id }),
+            });
+          } catch (e) { /* silencieux */ }
+        };
+      }
+    } catch (e) { /* silencieux — un échec de sondage n'est pas bloquant */ }
+  }
+  function initMessagesArtisan() {
+    verifierMessagesArtisan();
+    setInterval(() => {
+      if (document.visibilityState === 'visible') verifierMessagesArtisan();
+    }, 45000);
+  }
+
+  // --- "Session guidée" (07/09) : voir api/dashboard-guidage.js -------------
+  // Deux rôles possibles sur cette même fonctionnalité :
+  //  - admin (Cyrille, ouvert via "🎥 Prise en main" de mes-artisans.html,
+  //    reconnu par ?guidage=1) : émet sa position de curseur et la section
+  //    consultée toutes les ~700ms.
+  //  - artisan : sonde ce même état et, s'il est actif et récent, affiche un
+  //    curseur "Cyrille" en direct + suit automatiquement la section.
+  // Simple sondage HTTP (comme la présence / l'appel vidéo ci-dessus), pas de
+  // WebSocket — cohérent avec le reste du projet, largement suffisant ici.
+  function demarrerEmissionGuidage() {
+    let dernierX = 0.5, dernierY = 0.2, clicEnAttente = false;
+    document.addEventListener('mousemove', (e) => {
+      dernierX = e.clientX / window.innerWidth;
+      dernierY = e.clientY / window.innerHeight;
+    });
+    document.addEventListener('click', () => { clicEnAttente = true; });
+
+    const envoyer = (action) => {
+      const payload = {
+        draftId, token: tokenCalendrierActuel, action,
+        hash: window.location.hash || '',
+        curseurX: dernierX, curseurY: dernierY,
+        clic: clicEnAttente,
+      };
+      clicEnAttente = false;
+      return fetch('/api/dashboard-guidage', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload), keepalive: action === 'arreter',
+      }).catch(() => {});
+    };
+
+    // Petit badge de statut, visible uniquement de ce côté (Cyrille) : la
+    // session ne s'affiche jamais chez l'artisan tant qu'il n'a pas répondu.
+    const badge = document.createElement('div');
+    badge.style.cssText = 'position:fixed;top:10px;right:10px;z-index:10001;background:#14312a;color:#fff;padding:9px 14px;border-radius:10px;font-weight:700;font-size:0.82rem;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,0.2);';
+    badge.textContent = "🕓 En attente de l'autorisation de l'artisan…";
+    document.body.appendChild(badge);
+    let statutConnu = null;
+
+    envoyer('demarrer');
+    const boucle = setInterval(() => envoyer('maj'), 700);
+    window.addEventListener('hashchange', () => envoyer('maj'));
+    window.addEventListener('beforeunload', () => { clearInterval(boucle); envoyer('arreter'); });
+
+    // Sondage léger de son propre statut (a-t-il autorisé, refusé, ou n'a-t-il
+    // toujours pas ouvert son dashboard ?), juste pour afficher le badge.
+    setInterval(async () => {
+      try {
+        const rep = await fetch('/api/dashboard-guidage', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'etat' }),
+        });
+        if (!rep.ok) return;
+        const data = await rep.json();
+        const statut = !data.actif ? 'inactif' : data.autorise === true ? 'autorise' : data.autorise === false ? 'refuse' : 'attente';
+        if (statut === statutConnu) return;
+        statutConnu = statut;
+        if (statut === 'autorise') {
+          badge.textContent = '🟢 Session guidée en cours — il vous voit en direct';
+          badge.style.background = '#1e6f4c';
+        } else if (statut === 'refuse') {
+          badge.textContent = "🚫 L'artisan a refusé la session guidée";
+          badge.style.background = '#c0392b';
+        } else {
+          badge.textContent = "🕓 En attente de l'autorisation de l'artisan…";
+          badge.style.background = '#14312a';
+        }
+      } catch (e) { /* silencieux */ }
+    }, 2000);
+  }
+
+  // Ouvre le bon onglet/section à partir d'un hash — factorisé pour être
+  // appelé aussi bien au chargement (voir plus haut) que par une session
+  // guidée en cours (l'artisan doit suivre Cyrille en direct, pas seulement
+  // au premier chargement de la page).
+  function allerVersHash(hash) {
+    if (hash === '#calendrier') {
+      activerOnglet('calendrier');
+      document.getElementById('panelTabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else if (hash === '#sectionZoneCiblee') {
+      document.getElementById('sectionZoneCiblee')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else if (hash === '#sectionBudgetJournalier' || hash === '#sectionPlafondCpc') {
+      document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  function demarrerEcouteGuidage() {
+    let hashSuivi = null;
+    let consentementDejaDemande = false; // évite de rouvrir la modale en boucle tant qu'il n'a pas répondu
+    const banniere = document.getElementById('guidageBanniere');
+    const curseurEl = document.getElementById('guidageCurseur');
+    const clicEl = document.getElementById('guidageClic');
+    const modale = document.getElementById('guidageConsentement');
+
+    function cacherTout() {
+      banniere.style.display = 'none';
+      curseurEl.style.display = 'none';
+      modale.style.display = 'none';
+      hashSuivi = null;
+      consentementDejaDemande = false;
+      sessionEnCoursAffichee = false;
+    }
+
+    function repondre(accepte) {
+      modale.style.display = 'none';
+      fetch('/api/dashboard-guidage', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'repondre', autorise: accepte }),
+      }).catch(() => {});
+      if (!accepte) cacherTout();
+    }
+    document.getElementById('btnGuidageAutoriser').addEventListener('click', () => repondre(true));
+    document.getElementById('btnGuidageRefuser').addEventListener('click', () => repondre(false));
+    document.getElementById('btnGuidageArreter').addEventListener('click', () => repondre(false));
+
+    setInterval(async () => {
+      try {
+        const rep = await fetch('/api/dashboard-guidage', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'etat' }),
+        });
+        if (!rep.ok) return;
+        const data = await rep.json();
+        if (!data.success || !data.actif) { cacherTout(); return; }
+
+        // Nouvelle demande : Cyrille a démarré une session, pas encore de
+        // réponse — on ne montre RIEN d'autre que la demande d'autorisation.
+        if (data.enAttenteAutorisation) {
+          if (!consentementDejaDemande) {
+            consentementDejaDemande = true;
+            modale.style.display = 'flex';
+          }
+          return;
+        }
+
+        // Refusé : on ne montre jamais rien de la session (pas de bannière,
+        // pas de curseur), jusqu'à ce que Cyrille redémarre une nouvelle demande.
+        if (data.autorise === false) { cacherTout(); return; }
+
+        // Autorisé : affichage normal du curseur en direct + suivi de section.
+        modale.style.display = 'none';
+        banniere.style.display = '';
+        if (typeof data.curseurX === 'number' && typeof data.curseurY === 'number') {
+          curseurEl.style.display = '';
+          curseurEl.style.left = (data.curseurX * window.innerWidth) + 'px';
+          curseurEl.style.top = (data.curseurY * window.innerHeight) + 'px';
+        }
+        if (data.clic && typeof data.clicX === 'number') {
+          clicEl.style.left = (data.clicX * window.innerWidth) + 'px';
+          clicEl.style.top = (data.clicY * window.innerHeight) + 'px';
+          clicEl.style.display = '';
+          clicEl.style.opacity = '1';
+          setTimeout(() => { clicEl.style.opacity = '0'; }, 550);
+          setTimeout(() => { clicEl.style.display = 'none'; }, 750);
+        }
+        if (data.hash && data.hash !== hashSuivi) {
+          hashSuivi = data.hash;
+          allerVersHash(data.hash);
+        }
+      } catch (e) { /* silencieux */ }
+    }, 1200);
   }
 
   // --- Onglet "Mon calendrier" : mêmes API que public/mes-rdv.html

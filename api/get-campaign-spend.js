@@ -134,11 +134,23 @@ export default async function handler(req, res) {
 
   try {
     const draftResp = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}&select=entreprise,telephone,twilio_phone_number,google_ads_campaign_resource,tarif_prix,derniere_recharge_le,alerte_solde_bas_envoyee,campagne_diffusion_pausee,campagne_pausee_budget_epuise`,
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}&select=entreprise,telephone,twilio_phone_number,google_ads_campaign_resource,tarif_prix,derniere_recharge_le,alerte_solde_bas_envoyee,campagne_diffusion_pausee,campagne_pausee_budget_epuise,est_demo`,
       { headers: supaHeaders }
     );
     const draftRows = await draftResp.json();
     const draft = draftRows[0];
+
+    // Fiche de démonstration (07/09) : jamais de vraie campagne Google Ads
+    // liée — chiffres fictifs mais réalistes, pour filmer le dashboard sans
+    // jamais appeler Windsor.ai/Google Ads pour cette fiche.
+    if (draft?.est_demo) {
+      return res.status(200).json({
+        success: true, campagneExiste: true,
+        clics: 87, coutReelGoogleEuros: 62.5, consommationAjustee: 125,
+        budgetPaye: 150, budgetRestant: 25, pourcentageConsomme: 83,
+        diffusionPausee: false,
+      });
+    }
 
     if (!draft?.google_ads_campaign_resource) {
       return res.status(200).json({ success: true, campagneExiste: false });

@@ -297,6 +297,10 @@
   }
   .client-nom { font-weight:700; color:#14312a; white-space:nowrap; }
   .client-contact { display:block; color:#3a4a43; text-decoration:none; font-size:0.82rem; white-space:nowrap; }
+  /* Fiche de démonstration (07/09) : identité/coordonnées à peine visibles à
+     l'écran, pour filmer sans donner l'impression de montrer de vraies
+     coordonnées client — le reste du tableau (date, statut, devis) reste net. */
+  .client-floute-demo { filter:blur(4.5px); opacity:0.65; user-select:none; pointer-events:none; }
   .client-contact:hover { text-decoration:underline; color:#1e6f4c; }
 
   .loading, .empty-msg { text-align:center; padding:50px 20px; color:#8a9891; font-size:0.92rem; }
@@ -2050,11 +2054,18 @@
   async function chargerDemandes(token) {
     const content = document.getElementById('listeContent');
     try {
-      const draftResp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise`, {
+      const draftResp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,est_demo`, {
         headers: { apikey: SUPABASE_ANON_KEY }
       });
       const draftRows = await draftResp.json();
       nomEntreprise = draftRows[0]?.entreprise || 'Mon entreprise';
+      // Fiche de démonstration (07/09, demande de Cyrille) : les clients y
+      // sont fictifs mais réalistes — pour filmer sans donner l'impression
+      // de montrer de vraies coordonnées client à l'écran, leur identité et
+      // leurs coordonnées sont floutées (classe .client-floute-demo,
+      // définie plus haut dans <style>). Le reste (date, statut, devis)
+      // reste net pour bien montrer l'activité du compte.
+      const estDemoActuel = !!draftRows[0]?.est_demo;
 
       // Sécurité (06/09/2026) : les demandes ("leads" — nom, téléphone,
       // email, adresse de chaque prospect) sont maintenant lues via un
@@ -2092,6 +2103,7 @@
       // avec accès à son jeton de session stocké en sessionStorage. Toutes
       // les valeurs issues d'un lead sont maintenant échappées avec
       // escapeHtmlDash avant affichage.
+      const classeFloute = estDemoActuel ? ' client-floute-demo' : '';
       content.innerHTML = `
         <div class="table-scroll">
         <table class="table-clients">
@@ -2104,13 +2116,13 @@
                 <td>${new Date(l.created_at).toLocaleDateString('fr-FR')}</td>
                 ${plusieursSites ? `<td>${nomsParSite[l.draft_id] || '—'}</td>` : ''}
                 <td>
-                  <div class="client-identite">
+                  <div class="client-identite${classeFloute}">
                     <span class="client-avatar">${escapeHtmlDash(initialesClient(l.prenom, l.nom))}</span>
                     <span class="client-nom">${escapeHtmlDash((l.prenom || '') + ' ' + (l.nom || ''))}</span>
                   </div>
                 </td>
-                <td>${escapeHtmlDash(extraireAdresse(l.reponses))}</td>
-                <td>
+                <td class="${classeFloute.trim()}">${escapeHtmlDash(extraireAdresse(l.reponses))}</td>
+                <td class="${classeFloute.trim()}">
                   ${l.telephone ? `<a class="client-contact" href="tel:${encodeURIComponent(l.telephone)}">📞 ${escapeHtmlDash(l.telephone)}</a>` : ''}
                   ${l.email ? `<a class="client-contact" href="mailto:${encodeURIComponent(l.email)}">✉️ ${escapeHtmlDash(l.email)}</a>` : ''}
                   ${(!l.telephone && !l.email) ? '—' : ''}

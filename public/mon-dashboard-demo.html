@@ -516,21 +516,21 @@
 
   <div id="ctaFunnel" class="cta-funnel" style="display:none;">
     <p>C'est exactement <strong>ce qui vous attend</strong> une fois votre vitrine en ligne — vos vrais clients, vos vraies demandes, à cet endroit.</p>
-    <button type="button" id="btnContinuer" class="btn-continuer">✨ Créer votre formulaire vitrine</button>
 
-    <div id="panneauCompte" style="display:none; max-width:420px; margin:20px auto 0; background:#fff; border-radius:14px; padding:22px; text-align:left; box-shadow:0 10px 30px rgba(0,0,0,0.08);">
-      <p style="margin:0 0 14px; font-size:0.9rem; color:#3a4a44; line-height:1.55;">
-        Vous allez créer votre <strong>formulaire vitrine + Google Ads</strong> — gardez bien votre mot de passe et votre identifiant (votre email ci-dessous), ils vous serviront à chaque connexion.
-      </p>
-      <label style="font-size:0.8rem; font-weight:700; color:#14312a; display:block; margin-bottom:4px;">Votre identifiant (email)</label>
-      <input type="email" id="compteEmail" readonly style="width:100%; padding:10px 12px; border:1.5px solid #e0e5df; border-radius:8px; background:#f5f8f6; margin-bottom:14px; font-size:0.9rem;">
-      <label style="font-size:0.8rem; font-weight:700; color:#14312a; display:block; margin-bottom:4px;">Choisissez un mot de passe</label>
-      <div style="position:relative; margin-bottom:6px;">
-        <input type="password" id="compteMotDePasse" placeholder="Au moins 8 caractères" style="width:100%; padding:10px 40px 10px 12px; border:1.5px solid #e0e5df; border-radius:8px; font-size:0.9rem;">
-        <button type="button" id="btnVoirMdp" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:1.1rem;">👁️</button>
+    <div style="max-width:440px; margin:20px auto 0; background:#fff; border-radius:14px; padding:24px; text-align:left; box-shadow:0 10px 30px rgba(0,0,0,0.08);">
+      <p style="margin:0 0 6px; font-size:1rem; font-weight:800; color:#14312a;">Essayez gratuitement pendant 1 mois</p>
+      <p style="margin:0 0 16px; font-size:0.86rem; color:#5b6b64; line-height:1.55;">Sans engagement, sans carte bancaire. Vous ne payez rien pour l'instant — vous créez d'abord votre formulaire vitrine.</p>
+      <div style="background:#f5f8f6; border-radius:10px; padding:14px 16px; margin-bottom:16px;">
+        <div style="font-size:0.78rem; color:#8a9891; margin-bottom:2px;">Tarif après votre mois d'essai</div>
+        <div style="font-size:1.3rem; font-weight:800; color:#14312a;">39,90 € HT<span style="font-size:0.85rem; font-weight:600; color:#8a9891;">/mois</span></div>
+        <div style="font-size:0.76rem; color:#8a9891; margin-top:2px;">pendant 12 mois, puis 79,90 € HT/mois — résiliable à tout moment</div>
       </div>
-      <div id="compteErreur" style="color:#c0392b; font-size:0.82rem; margin-bottom:10px; display:none;"></div>
-      <button type="button" id="btnCreerCompte" style="width:100%; background:#1e6f4c; color:#fff; border:none; border-radius:10px; padding:13px; font-size:0.94rem; font-weight:700; cursor:pointer; margin-top:6px;">Créer mon compte et continuer →</button>
+      <label style="display:flex; align-items:flex-start; gap:8px; font-size:0.82rem; color:#3a4a44; line-height:1.5; margin-bottom:16px; cursor:pointer;">
+        <input type="checkbox" id="cguEssaiCheckbox" style="margin-top:2px; width:16px; height:16px; flex-shrink:0; accent-color:#1e6f4c;">
+        <span>J'accepte les <a href="/cgv.html" target="_blank" style="color:#1e6f4c;">conditions générales de vente</a>.</span>
+      </label>
+      <div id="essaiErreur" style="color:#c0392b; font-size:0.82rem; margin-bottom:10px; display:none;"></div>
+      <button type="button" id="btnDemarrerEssai" style="width:100%; background:#1e6f4c; color:#fff; border:none; border-radius:10px; padding:14px; font-size:0.96rem; font-weight:700; cursor:pointer;">✨ Démarrer mon essai gratuit et créer ma vitrine</button>
     </div>
   </div>
 </div>
@@ -578,76 +578,41 @@
     document.getElementById('sousTexteBanniere').textContent = 'Données fictives sur 6 mois — voici à quoi ressemblera votre vrai tableau de bord';
     document.getElementById('ctaFunnel').style.display = 'block';
 
-    // Clic sur "Créer votre formulaire vitrine" : si un compte existe déjà
-    // pour ce brouillon (retour en arrière après coup), on saute directement
-    // à la suite ; sinon on affiche le panneau de création de compte.
-    document.getElementById('btnContinuer').addEventListener('click', async () => {
-      const btn = document.getElementById('btnContinuer');
-      btn.disabled = true;
-      try {
-        // 06/09/2026 : dashboard_password_hash n'est plus lisible en clé
-        // anonyme (verrouillage des colonnes sensibles) — passe par
-        // /api/acces-dashboard-etat (service role).
-        const resp = await fetch('/api/acces-dashboard-etat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ draftId })
-        });
-        const etat = await resp.json();
-        if (etat.success && etat.aDejaMotDePasse) {
-          window.location.href = '/mes-elements.html?id=' + encodeURIComponent(draftId);
-          return;
-        }
-        document.getElementById('compteEmail').value = (etat.success && etat.email) || '';
-        document.getElementById('panneauCompte').style.display = 'block';
-        btn.style.display = 'none';
-      } catch (e) {
-        alert('Impossible de continuer pour le moment.');
-      } finally {
-        btn.disabled = false;
-      }
-    });
-
-    document.getElementById('btnVoirMdp').addEventListener('click', () => {
-      const champ = document.getElementById('compteMotDePasse');
-      const estVisible = champ.type === 'text';
-      champ.type = estVisible ? 'password' : 'text';
-      document.getElementById('btnVoirMdp').textContent = estVisible ? '👁️' : '🙈';
-    });
-
-    document.getElementById('btnCreerCompte').addEventListener('click', async () => {
-      const btn = document.getElementById('btnCreerCompte');
-      const erreurEl = document.getElementById('compteErreur');
-      const motDePasse = document.getElementById('compteMotDePasse').value;
+    // Clic sur "Démarrer mon essai gratuit" : plus de création de compte à
+    // cette étape (déplacée au moment où l'artisan veut lancer ses annonces
+    // Google, sur campagne.html) — on démarre juste l'essai (1 mois, sans
+    // engagement, sans carte bancaire) et on l'envoie construire sa vitrine.
+    document.getElementById('btnDemarrerEssai').addEventListener('click', async () => {
+      const btn = document.getElementById('btnDemarrerEssai');
+      const erreurEl = document.getElementById('essaiErreur');
       erreurEl.style.display = 'none';
-      if (motDePasse.length < 8) {
-        erreurEl.textContent = 'Le mot de passe doit contenir au moins 8 caractères.';
+      if (!document.getElementById('cguEssaiCheckbox').checked) {
+        erreurEl.textContent = "Merci d'accepter les conditions générales de vente pour continuer.";
         erreurEl.style.display = 'block';
         return;
       }
       btn.disabled = true;
-      btn.textContent = 'Création en cours…';
+      btn.textContent = 'Démarrage de votre essai…';
       try {
-        const res = await fetch('/api/dashboard-set-password', {
+        const res = await fetch('/api/demarrer-essai-gratuit', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ draftId, motDePasse })
+          body: JSON.stringify({ draftId })
         });
         const data = await res.json();
         if (data.success) {
-          sessionStorage.setItem('skyeco_dashboard_token_' + draftId, data.token);
           window.location.href = '/mes-elements.html?id=' + encodeURIComponent(draftId);
         } else {
-          erreurEl.textContent = data.error || 'Impossible de créer le compte pour le moment.';
+          erreurEl.textContent = data.error || "Impossible de démarrer l'essai pour le moment.";
           erreurEl.style.display = 'block';
           btn.disabled = false;
-          btn.textContent = 'Créer mon compte et continuer →';
+          btn.textContent = '✨ Démarrer mon essai gratuit et créer ma vitrine';
         }
       } catch (e) {
         erreurEl.textContent = 'Impossible de contacter le serveur.';
         erreurEl.style.display = 'block';
         btn.disabled = false;
-        btn.textContent = 'Créer mon compte et continuer →';
+        btn.textContent = '✨ Démarrer mon essai gratuit et créer ma vitrine';
       }
     });
   }

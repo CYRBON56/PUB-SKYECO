@@ -48,6 +48,17 @@
   .image-panel-preview .hover-preview.active { opacity:1; }
   .image-panel-preview .hover-preview-label { position:absolute; left:0; right:0; bottom:0; z-index:2; background:linear-gradient(0deg, rgba(15,35,29,0.92) 0%, rgba(15,35,29,0) 100%); color:#fff; font-weight:700; font-size:14px; padding:16px 16px 10px; text-align:center; opacity:0; transition:opacity .25s ease-in-out; }
   .image-panel-preview .hover-preview-label.active { opacity:1; }
+  /* 07/09/2026 : par défaut, ce second panneau (aperçu au survol) n'a de
+     contenu réel que pour les parcours qui définissent des images par
+     option (aujourd'hui uniquement "portails" — voir getStepsPortails et
+     s.images). Pour tous les autres métiers, ce panneau restait vide en
+     permanence avec juste un texte d'invitation, alors que le carrousel/la
+     vidéo au-dessus n'occupait que la moitié du panneau visuel. Quand
+     aucune étape du parcours actuel ne définit d'aperçu au survol, la
+     classe "pas-de-survol" (posée en JS, voir runWizard) fait reprendre au
+     carrousel/à la vidéo tout l'espace du panneau. */
+  .image-panel.pas-de-survol .image-panel-media { flex:1 1 100%; }
+  .image-panel.pas-de-survol .image-panel-preview { display:none; }
   @media (max-width:800px){ .image-panel-preview{ display:none; } }
   .form-panel { flex:1 1 55%; position:relative; display:flex; align-items:stretch; justify-content:center; padding:20px 24px; overflow:hidden; order:1; }
   /* Position du formulaire (gauche/droite) — configurée par l'artisan dans
@@ -1169,6 +1180,17 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     }
     return steps;
   }
+
+  // 07/09/2026 : voir le commentaire CSS sur ".pas-de-survol" plus haut — si
+  // aucune étape de ce parcours ne définit d'aperçu au survol (s.images),
+  // le second panneau resterait vide en permanence ; on laisse alors le
+  // carrousel/la vidéo prendre tout le panneau visuel à la place.
+  const aDesApercusAuSurvol = getSteps().some(s => s.images && Object.keys(s.images).length);
+  if (!aDesApercusAuSurvol) {
+    const panneauVisuel = document.getElementById('heroImagePanel');
+    if (panneauVisuel) panneauVisuel.classList.add('pas-de-survol');
+  }
+
   function renderProgress(){
     const steps = getSteps(); progressEl.innerHTML='';
     const total = steps.length+1;

@@ -70,7 +70,14 @@ const KEYWORDS_BY_METIER = {
 // source tierce non confirmée, une erreur ici cible silencieusement la
 // mauvaise zone.
 const GEO_TARGET_BY_DEPARTEMENT = {
-  '56': '1006094', // Morbihan
+  // 56 corrigé le 08/09 : l'ancienne valeur (1006094) n'avait jamais été
+  // vérifiée en conditions réelles malgré l'avertissement ci-dessus — trouvé
+  // en corrigeant le bug de ciblage géographique de
+  // create-google-ads-campaign.js (voir son commentaire du 08/09). La
+  // nouvelle valeur (9040912) a elle été confirmée par l'API Google Ads
+  // elle-même en l'appliquant réellement à une campagne : réponse "targeting
+  // Morbihan,Brittany,France (9040912)".
+  '56': '9040912', // Morbihan — confirmé par l'API Google Ads le 08/09
   '35': '1006083', // Ille-et-Vilaine
   '29': '1006082', // Finistère
   '22': '1006081', // Côtes-d'Armor

@@ -55,7 +55,116 @@ const GEO_TARGET_BY_DEPARTEMENT = {
   '22': '1006081', // Côtes-d'Armor — non re-vérifié, repris tel quel
   '44': '1006095', // Loire-Atlantique — non re-vérifié, repris tel quel
 };
-const GEO_TARGET_FRANCE = '2250'; // repli si le département de l'artisan n'est pas (encore) dans la liste ci-dessus
+const GEO_TARGET_FRANCE = '2250'; // dernier repli si aucune zone n'a pu être déterminée
+
+// AJOUT le 08/09 (demande de Cyrille : un artisan du Jura, par exemple, n'a
+// aucun identifiant vérifié dans GEO_TARGET_BY_DEPARTEMENT ci-dessus — sans
+// ce qui suit, sa campagne seraît ciblée sur la France entière, beaucoup
+// trop large pour un artisan local). Plutôt que de compléter le dictionnaire
+// département par département (96 identifiants Google à trouver et vérifier
+// un par un, avec le risque de mal cibler si l'un d'eux est faux — voir
+// l'avertissement plus haut), on cible PAR RAYON autour de la ville réelle
+// de l'artisan (son champ "zone", ex. "Brech, Bretagne" ou "Lons-le-Saunier,
+// Bourgogne-Franche-Comté"), géocodée via l'API Adresse du gouvernement
+// français (api-adresse.data.gouv.fr — gratuite, sans clé, pas de compte
+// Google requis). Ça marche pour N'IMPORTE QUEL département dès le premier
+// jour, et c'est plus précis qu'un département entier (le Morbihan, par
+// exemple, fait ~80 km de large — un rayon de 30 km autour de la ville de
+// l'artisan cible bien mieux sa vraie zone de chalandise). Le dictionnaire
+// GEO_TARGET_BY_DEPARTEMENT ci-dessus et GEO_TARGET_FRANCE restent en repli,
+// utilisés uniquement si le géocodage échoue (API indisponible, zone vide ou
+// introuvable) — voir determinerCiblageGeographique ci-dessous.
+//
+// Non testé en conditions réelles à l'écriture de ce commentaire : le bac à
+// sable dans lequel ce correctif a été écrit bloque les appels réseau
+// sortants vers des domaines externes (politique de l'organisation), donc
+// ni data.geopf.fr ni api-adresse.data.gouv.fr n'ont pu être appelés en
+// direct depuis cet environnement — seulement les fonctions Vercel de
+// Cyrille, elles, ont un accès réseau normal. Format d'URL et de réponse
+// vérifiés par ailleurs (documentation officielle + exemple concret), mais
+// à confirmer une fois en production sur un vrai artisan (ou en rejouant
+// get-google-ads-details.js juste après une création) : si le ciblage
+// obtenu est bien un "radius"/proximité autour de la bonne ville, pas un
+// repli département/France.
+const RAYON_PAR_DEFAUT_KM = 30; // rayon raisonnable pour un artisan local si la zone ne précise rien
+
+// Extrait un rayon explicitement mentionné dans la zone (ex. "Brech et
+// alentours (30 km)" -> 30) — sinon le rayon par défaut ci-dessus.
+function extraireRayonKm(zoneTexte) {
+  const m = String(zoneTexte || '').match(/(\d+)\s*km/i);
+  return m ? parseInt(m[1], 10) : RAYON_PAR_DEFAUT_KM;
+}
+
+// Géocode le nom de ville/lieu contenu dans la zone d'intervention de
+// l'artisan. On retire d'abord un éventuel "et alentours (XX km)" ou ", nom
+// de région" — l'API cherche un lieu précis, pas une phrase descriptive
+// complète. Retourne null (plutôt que de faire échouer toute la création de
+// campagne) si la zone est vide, introuvable, ou si l'API est injoignable.
+//
+// Endpoints essayés dans l'ordre : l'API de géocodage de la Géoplateforme
+// IGN (data.geopf.fr/geocodage/search) EN PREMIER — c'est la suite officielle
+// de la Base Adresse Nationale depuis son transfert de data.gouv.fr à l'IGN
+// (cf. "L'API Adresse de la BAN est transférée à l'IGN") — puis
+// l'ancien domaine api-adresse.data.gouv.fr en repli, au cas où le transfert
+// ne serait pas (encore) complet pour tous les usages. Les deux renvoient le
+// même format GeoJSON (features[0].geometry.coordinates = [longitude,
+// latitude]). Gratuit, sans clé, aucun compte requis dans les deux cas.
+const GEOCODAGE_ENDPOINTS = [
+  'https://data.geopf.fr/geocodage/search',
+  'https://api-adresse.data.gouv.fr/search/',
+];
+
+async function geocoderZone(zoneTexte) {
+  if (!zoneTexte) return null;
+  const nomLieu = String(zoneTexte)
+    .replace(/et alentours.*$/i, '')
+    .split(',')[0]
+    .trim();
+  if (!nomLieu) return null;
+
+  for (const base of GEOCODAGE_ENDPOINTS) {
+    try {
+      const resp = await fetch(`${base}?q=${encodeURIComponent(nomLieu)}&type=municipality&limit=1`);
+      if (!resp.ok) continue;
+      const data = await resp.json();
+      const feature = data && Array.isArray(data.features) ? data.features[0] : null;
+      const coords = feature && feature.geometry && feature.geometry.coordinates;
+      if (!Array.isArray(coords) || coords.length !== 2) continue;
+      const [longitude, latitude] = coords;
+      return { latitude, longitude };
+    } catch (e) {
+      // Endpoint injoignable : on tente le suivant, puis on retombe sur le
+      // département/la France si aucun des deux ne répond (voir
+      // determinerCiblageGeographique).
+    }
+  }
+  return null;
+}
+
+// Détermine et retourne les paramètres à passer à set_campaign_geo_targeting
+// pour ce site : par rayon autour de sa ville réelle si le géocodage
+// réussit (cas normal, précis, valable pour n'importe quel département),
+// sinon par département vérifié (Bretagne), sinon la France entière.
+async function determinerCiblageGeographique(draft) {
+  const coordZone = await geocoderZone(draft.zone);
+  if (coordZone) {
+    return {
+      locations: [],
+      proximities: [{
+        latitude: coordZone.latitude,
+        longitude: coordZone.longitude,
+        radius: extraireRayonKm(draft.zone),
+        radius_units: 'KILOMETERS',
+      }],
+    };
+  }
+  const departementCode = draft.departement ? String(draft.departement).trim().toUpperCase() : null;
+  const geoTargetConstantId = (departementCode && GEO_TARGET_BY_DEPARTEMENT[departementCode]) || GEO_TARGET_FRANCE;
+  return {
+    locations: [{ geo_target_constant_id: geoTargetConstantId, negative: false }],
+    proximities: [],
+  };
+}
 
 // Windsor.ai attend l'identifiant de compte Google Ads AVEC tirets
 // (format XXX-XXX-XXXX, identique à l'interface Google Ads) — voir le
@@ -263,15 +372,13 @@ export default async function handler(req, res) {
 
     // 1bis. Ciblage géographique — voir le commentaire du 08/09 en haut de ce
     // fichier : sans cette étape, la campagne ne diffuse quasiment jamais.
-    // Département précis si connu (volume/diffusion réels sur la bonne
-    // zone), sinon repli sur la France entière plutôt que sur aucune zone du
-    // tout.
-    const departementCode = draft.departement ? String(draft.departement).trim().toUpperCase() : null;
-    const geoTargetConstantId = (departementCode && GEO_TARGET_BY_DEPARTEMENT[departementCode]) || GEO_TARGET_FRANCE;
+    // Par rayon autour de la ville réelle de l'artisan si elle a pu être
+    // géocodée (précis, valable pour n'importe quel département — ex. le
+    // Jura), sinon département vérifié (Bretagne) ou France entière en repli.
+    const ciblageGeo = await determinerCiblageGeographique(draft);
     await executerAction('set_campaign_geo_targeting', {
       campaign_id: campaignId,
-      locations: [{ geo_target_constant_id: geoTargetConstantId, negative: false }],
-      proximities: [],
+      ...ciblageGeo,
     });
 
     // 2. Créer le groupe d'annonces.

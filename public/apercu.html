@@ -93,7 +93,7 @@
      utile qu'à l'arrivée et on resserre le bandeau, pour laisser un
      maximum de place à la question + ses réponses. */
   .header-block.compact { padding:8px 16px; margin-bottom:8px; }
-  .header-block.compact #logoArtisan, .header-block.compact .sub, .header-block.compact #catalogueBadge, .header-block.compact #delaiBadge { display:none !important; }
+  .header-block.compact #logoArtisan, .header-block.compact .sub, .header-block.compact #delaiBadge { display:none !important; }
   .header-block.compact h1 { font-size:16px; margin:2px 0; }
   .header-block.compact .eyebrow { font-size:10.5px; }
   #miniBadges.compact { display:none !important; }
@@ -194,13 +194,6 @@
           <h1 id="mainTitle"></h1>
           <div style="font-size:20px; font-weight:800; color:var(--brand,#1e6f4c); margin:2px 0 10px; line-height:1.2;" id="delaiBadge"></div>
           <p class="sub" style="margin-bottom:0;" id="introText"></p>
-          <div id="catalogueBadge" style="display:none; align-items:center; gap:10px; margin-top:12px; padding:8px 12px; background:#fff; border:1.5px solid #d8e3de; border-radius:10px; cursor:pointer; max-width:fit-content;">
-            <img id="catalogueBadgeImg" alt="" style="display:none; width:34px; height:34px; border-radius:6px; object-fit:cover; flex-shrink:0;">
-            <span style="font-size:13px; line-height:1.35;">
-              <strong id="catalogueBadgeTitre" style="color:#14312a;"></strong><br>
-              <span style="font-weight:400; color:#5b6b64;">Pas encore prêt ? Téléchargez-le →</span>
-            </span>
-          </div>
         </div>
         <div style="display:flex; gap:14px; flex-wrap:wrap; margin-bottom:14px; font-size:12.5px; color:#4a5a54;" id="miniBadges"></div>
         <div class="middle-scroll">
@@ -832,7 +825,7 @@ async function init(){
     // migration verrouiller_colonnes_sensibles_vitrine_drafts, qui retire à
     // anon l'accès à des colonnes sensibles (hash de mot de passe, jetons...)
     // qu'un select=* tenterait de lire et ferait échouer intégralement.
-    `${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${id}&select=adresse_cp,adresse_rue,adresse_ville,assurance_decennale_assureur,assurance_decennale_numero,capital_social,catalogue_fichier_url,catalogue_image_url,catalogue_titre,couleur,description,email,entreprise,forme_juridique,formulaire_personnalise,formulaire_personnalise_cle,formulaire_position,id,logo_url,metier,mode_devis_detaille,photos,portails_tarifs,produits_chiffrables,rcs_ville,siret,status,telephone,titre_hero_choisi,tva_taux,video_url,zone`,
+    `${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${id}&select=adresse_cp,adresse_rue,adresse_ville,assurance_decennale_assureur,assurance_decennale_numero,capital_social,couleur,description,email,entreprise,forme_juridique,formulaire_personnalise,formulaire_personnalise_cle,formulaire_position,id,logo_url,metier,mode_devis_detaille,photos,portails_tarifs,produits_chiffrables,rcs_ville,siret,status,telephone,titre_hero_choisi,tva_taux,video_url,zone`,
     { headers: { apikey: SUPABASE_ANON_KEY } }
   );
   const rows = await resp.json().catch(() => []);
@@ -874,31 +867,8 @@ async function init(){
   document.getElementById('introText').textContent = draft.description || template.intro;
   document.getElementById('miniBadges').innerHTML = ['✅ Sans engagement','⏱️ Réponse sous 24h','🔒 Données confidentielles'].map(b=>'<span>'+b+'</span>').join('');
 
-  // Bouton catalogue — optionnel, configuré par l'artisan dans
-  // mes-elements.html (titre + image de couverture + fichier PDF, voir
-  // catalogue_titre / catalogue_image_url / catalogue_fichier_url). Ne
-  // s'affiche que si un fichier catalogue a bien été envoyé ; reste discret
-  // (petit encart sous le texte d'intro) mais visible en permanence pendant
-  // que le prospect remplit le formulaire, pour lui rappeler qu'il peut le
-  // télécharger s'il n'est pas encore prêt à demander un devis.
-  if (draft.catalogue_fichier_url) {
-    const catalogueBadge = document.getElementById('catalogueBadge');
-    document.getElementById('catalogueBadgeTitre').textContent = draft.catalogue_titre || 'Catalogue';
-    if (draft.catalogue_image_url) {
-      const catalogueImg = document.getElementById('catalogueBadgeImg');
-      catalogueImg.src = draft.catalogue_image_url;
-      catalogueImg.style.display = 'block';
-    }
-    catalogueBadge.style.display = 'flex';
-    // Sécurité (06/09/2026) : catalogue_fichier_url est une valeur enregistrée
-    // par l'artisan (mes-elements.html) — window.open() exécute un lien
-    // "javascript:" tel quel, contrairement à une simple balise <img>/<a>. On
-    // n'ouvre donc que des URL http(s), jamais un schéma arbitraire.
-    catalogueBadge.addEventListener('click', () => {
-      const url = String(draft.catalogue_fichier_url || '');
-      if (/^https?:\/\//i.test(url)) window.open(url, '_blank', 'noopener');
-    });
-  }
+  // 08/09/2026 : bouton catalogue retiré à la demande de Cyrille (badge,
+  // champs et logique d'affichage supprimés — voir aussi mes-elements.html).
 
   // Mentions légales complètes — n'affiche que ce qui a réellement été renseigné,
   // pour ne jamais montrer de champ vide même si l'artisan n'a pas tout complété.

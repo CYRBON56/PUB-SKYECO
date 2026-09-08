@@ -238,6 +238,18 @@
         </div>
         <div class="photos-grid" id="photosGrid"></div>
 
+        <!-- 08/09/2026 : bloc génération d'image IA (Gamma) restauré —
+             avait été effacé par erreur lors d'un remplacement complet du
+             fichier ; récupéré à partir d'une copie envoyée par Cyrille. -->
+        <div id="gammaBox" style="margin-top:14px; border:1.5px dashed #d8d2c2; border-radius:14px; padding:16px; background:#fdfcf9;">
+          <div style="display:flex; align-items:center; justify-content:between; gap:10px; margin-bottom:8px;">
+            <div style="font-size:0.86rem; font-weight:600; color:#4a8a68;">🎨 Pas encore de photos ? Génère-en une avec l'IA</div>
+          </div>
+          <textarea id="gammaPrompt" placeholder="Décris l'image que tu veux — ex : pose d'une terrasse en résine EPDM gris anthracite chez un particulier, jardin moderne, journée ensoleillée" style="min-height:56px;"></textarea>
+          <button type="button" id="btnGammaGenerer" class="btn-extraire" style="margin-top:8px;">Générer l'image</button>
+          <div id="gammaStatus" class="upload-status" style="margin-top:8px;"></div>
+        </div>
+
         <label>Vidéo de chantier ou avant/après (optionnel)</label>
         <div class="upload-box" id="boxVideo">
           <input type="file" id="inputVideo" accept="video/*">
@@ -246,20 +258,8 @@
         </div>
         <input type="url" id="videoLien" placeholder="https://youtube.com/..." style="margin-top:10px;">
 
-        <label style="margin-top:18px;">Catalogue téléchargeable (optionnel)</label>
-        <p class="hint">Un petit bouton apparaît sur ta vitrine (ex : "Catalogue réalisations — Pas encore prêt ? Téléchargez-le") — les visiteurs peuvent le télécharger même sans remplir le formulaire de devis.</p>
-        <input type="text" id="catalogueTitre" placeholder="Titre du catalogue — Ex : Catalogue réalisations" style="margin-bottom:10px;">
-        <div class="upload-box" id="boxCatalogueImage">
-          <input type="file" id="inputCatalogueImage" accept="image/*">
-          <img id="catalogueImagePreview" class="logo-preview-img" alt="Couverture du catalogue">
-          <div class="upload-label">📁 Image de couverture (optionnel)</div>
-          <div class="upload-status" id="statusCatalogueImage">Aucune image</div>
-        </div>
-        <div class="upload-box" id="boxCatalogueFichier">
-          <input type="file" id="inputCatalogueFichier" accept=".pdf,application/pdf">
-          <div class="upload-label">📁 Fichier du catalogue (PDF)</div>
-          <div class="upload-status" id="statusCatalogueFichier">Aucun fichier</div>
-        </div>
+        <!-- 08/09/2026 : bloc "Catalogue téléchargeable" retiré à la demande
+             de Cyrille — voir aussi apercu.html (#catalogueBadge, retiré). -->
 
         <label style="margin-top:18px;">Position du formulaire</label>
         <select id="selectPositionFormulaire">
@@ -520,8 +520,6 @@
   let logoUrl = null;
   let photosUrls = [];
   let videoUrl = null;
-  let catalogueImageUrl = null;
-  let catalogueFichierUrl = null;
   let metiersActuels = [];
   let titreChoisi = '';
   let draftStatutActuel = null; // status du brouillon au chargement — sert à savoir où renvoyer après enregistrement
@@ -697,7 +695,7 @@
       // bouton tableau de bord ne s'affichaient jamais, pour aucun artisan.
       // On liste donc explicitement les colonnes réellement utilisées par
       // cette page (même logique déjà appliquée à apercu.html).
-      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=id,entreprise,telephone,email,adresse_rue,adresse_cp,adresse_ville,siret,forme_juridique,capital_social,rcs_ville,assurance_decennale_assureur,assurance_decennale_numero,acompte_pourcentage,delai_intervention,site_web_existant,metier,zone,titre_hero_choisi,tva_taux,formulaire_personnalise,formulaire_personnalise_description,formulaire_personnalise_cle,formulaire_position,catalogue_titre,catalogue_image_url,catalogue_fichier_url,photos,logo_url,video_url,portails_tarifs,status`, {
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=id,entreprise,telephone,email,adresse_rue,adresse_cp,adresse_ville,siret,forme_juridique,capital_social,rcs_ville,assurance_decennale_assureur,assurance_decennale_numero,acompte_pourcentage,delai_intervention,site_web_existant,metier,zone,titre_hero_choisi,tva_taux,formulaire_personnalise,formulaire_personnalise_description,formulaire_personnalise_cle,formulaire_position,photos,logo_url,video_url,portails_tarifs,status`, {
         headers: { apikey: SUPABASE_ANON_KEY }
       });
       const rows = await resp.json();
@@ -837,20 +835,6 @@
         document.getElementById('logoPreview').style.display = 'block';
       }
       if (draft.video_url) { videoUrl = draft.video_url; document.getElementById('videoLien').value = draft.video_url.startsWith('http') ? draft.video_url : ''; }
-
-      if (draft.catalogue_titre) document.getElementById('catalogueTitre').value = draft.catalogue_titre;
-      if (draft.catalogue_image_url) {
-        catalogueImageUrl = draft.catalogue_image_url;
-        document.getElementById('statusCatalogueImage').textContent = 'Image déjà enregistrée ✓';
-        document.getElementById('boxCatalogueImage').classList.add('has-file');
-        document.getElementById('catalogueImagePreview').src = draft.catalogue_image_url;
-        document.getElementById('catalogueImagePreview').style.display = 'block';
-      }
-      if (draft.catalogue_fichier_url) {
-        catalogueFichierUrl = draft.catalogue_fichier_url;
-        document.getElementById('statusCatalogueFichier').textContent = 'Catalogue déjà envoyé ✓';
-        document.getElementById('boxCatalogueFichier').classList.add('has-file');
-      }
     } catch (e) { console.error('Erreur chargerDraftExistant :', e); /* on part d'un formulaire vide plutôt que de bloquer la page */ }
     calculerProgression();
   }
@@ -1118,6 +1102,70 @@
     });
   }
 
+  // --- Génération d'image IA via Gamma, pour compléter le carrousel ---
+  // (08/09/2026 : restauré après avoir été effacé par erreur — voir le
+  // commentaire sur #gammaBox plus haut dans le fichier.)
+  document.getElementById('btnGammaGenerer').addEventListener('click', async () => {
+    const promptEl = document.getElementById('gammaPrompt');
+    const statusEl = document.getElementById('gammaStatus');
+    const btn = document.getElementById('btnGammaGenerer');
+    const prompt = promptEl.value.trim();
+    if (!prompt) {
+      statusEl.textContent = 'Décris d\'abord l\'image que tu veux.';
+      return;
+    }
+    if (photosUrls.length >= 10) {
+      statusEl.textContent = 'Carrousel déjà plein (10 photos maximum).';
+      return;
+    }
+
+    btn.disabled = true;
+    statusEl.textContent = 'Génération en cours… (environ 20 à 40 secondes)';
+
+    try {
+      const startResp = await fetch('/api/generer-image-gamma', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'start', prompt, draftId }),
+      });
+      const startData = await startResp.json();
+      if (!startData.success) throw new Error(startData.error || 'Échec du lancement');
+
+      const generationId = startData.generationId;
+
+      // Sondage régulier jusqu'à obtenir le résultat (pas de sondage rapproché en boucle serrée)
+      const attendre = ms => new Promise(r => setTimeout(r, ms));
+      let resultat = null;
+      for (let tentative = 0; tentative < 20; tentative++) {
+        await attendre(3000);
+        const statusResp = await fetch('/api/generer-image-gamma', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'status', generationId, draftId }),
+        });
+        const statusData = await statusResp.json();
+        if (!statusData.success) throw new Error(statusData.error || 'Échec de la vérification');
+        if (statusData.status === 'completed') { resultat = statusData; break; }
+        if (statusData.status === 'failed') throw new Error(statusData.error || 'La génération a échoué');
+      }
+
+      if (!resultat) throw new Error('La génération prend trop de temps, réessaie dans un instant.');
+
+      photosUrls.push(resultat.url);
+      rafraichirGridPhotos();
+      document.getElementById('statusPhotos').textContent = `${photosUrls.length} photo(s) ajoutée(s)`;
+      document.getElementById('boxPhotos').classList.add('has-file');
+      sauvegarderChampsImmediat({ photos: photosUrls });
+
+      promptEl.value = '';
+      statusEl.textContent = 'Image ajoutée au carrousel ✓';
+    } catch (err) {
+      statusEl.textContent = 'Erreur : ' + err.message;
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
   document.getElementById('boxVideo').addEventListener('click', () => document.getElementById('inputVideo').click());
   document.getElementById('inputVideo').addEventListener('change', async e => {
     const file = e.target.files[0];
@@ -1133,44 +1181,9 @@
     }
   });
 
-  // Catalogue téléchargeable (titre + image de couverture + PDF) — voir
-  // public/apercu.html, le bloc #catalogueBadge, qui n'apparaît sur la
-  // vitrine que si catalogue_fichier_url est renseigné.
-  document.getElementById('catalogueTitre').addEventListener('change', () => {
-    sauvegarderChampsImmediat({ catalogue_titre: document.getElementById('catalogueTitre').value.trim() });
-  });
-
-  document.getElementById('boxCatalogueImage').addEventListener('click', () => document.getElementById('inputCatalogueImage').click());
-  document.getElementById('inputCatalogueImage').addEventListener('change', async e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    document.getElementById('statusCatalogueImage').textContent = 'Envoi en cours…';
-    try {
-      catalogueImageUrl = await uploaderFichier(file, 'catalogue-image');
-      document.getElementById('statusCatalogueImage').textContent = 'Image envoyée ✓';
-      document.getElementById('boxCatalogueImage').classList.add('has-file');
-      document.getElementById('catalogueImagePreview').src = catalogueImageUrl;
-      document.getElementById('catalogueImagePreview').style.display = 'block';
-      sauvegarderChampsImmediat({ catalogue_image_url: catalogueImageUrl });
-    } catch (err) {
-      document.getElementById('statusCatalogueImage').textContent = 'Erreur : ' + err.message;
-    }
-  });
-
-  document.getElementById('boxCatalogueFichier').addEventListener('click', () => document.getElementById('inputCatalogueFichier').click());
-  document.getElementById('inputCatalogueFichier').addEventListener('change', async e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    document.getElementById('statusCatalogueFichier').textContent = 'Envoi en cours…';
-    try {
-      catalogueFichierUrl = await uploaderFichier(file, 'catalogue-fichier');
-      document.getElementById('statusCatalogueFichier').textContent = 'Catalogue envoyé ✓';
-      document.getElementById('boxCatalogueFichier').classList.add('has-file');
-      sauvegarderChampsImmediat({ catalogue_fichier_url: catalogueFichierUrl });
-    } catch (err) {
-      document.getElementById('statusCatalogueFichier').textContent = 'Erreur : ' + err.message;
-    }
-  });
+  // 08/09/2026 : bloc "Catalogue téléchargeable" retiré à la demande de
+  // Cyrille (champs + upload + listeners) — voir aussi apercu.html
+  // (#catalogueBadge, retiré).
 
   // Lien vidéo (YouTube/Vimeo) saisi directement, sans upload — même logique
   // d'enregistrement immédiat que le reste, pour ne rien perdre en quittant

@@ -82,7 +82,26 @@
     Email : <a href="mailto:infos@ecosky.fr" style="color:#8a9891;">infos@ecosky.fr</a>
   </p>
 
-  <a class="retour" href="/">← Retour à l'accueil</a>
+  <!-- 09/09/2026 : le lien CGV est ouvert depuis plusieurs pages du parcours
+       (validation des éléments, essai gratuit, page de paiement...), toujours
+       dans un nouvel onglet — un "Retour à l'accueil" fixe ramenait donc
+       systématiquement sur la page d'accueil du site au lieu de la page
+       d'origine. On utilise document.referrer pour revenir exactement là
+       d'où l'artisan vient, quelle que soit cette page ; retombe sur l'accueil
+       uniquement si aucune page d'origine n'est connue (accès direct/favori). -->
+  <a class="retour" href="/" id="lienRetourCgv">← Retour</a>
 </div>
+<script>
+  (function () {
+    var lien = document.getElementById('lienRetourCgv');
+    try {
+      if (document.referrer && new URL(document.referrer).host === window.location.host) {
+        lien.href = document.referrer;
+      } else {
+        lien.textContent = '← Retour à l\'accueil';
+      }
+    } catch (e) { /* referrer illisible : on garde le lien vers l'accueil */ }
+  })();
+</script>
 </body>
 </html>

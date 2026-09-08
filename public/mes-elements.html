@@ -187,7 +187,7 @@
   </svg>
 </div>
 
-<a class="btn-etre-rappele-fixe" id="btnEtreRappeleFixe" href="#" target="_blank" rel="noopener">📞 Être rappelé</a>
+<a class="btn-etre-rappele-fixe" href="/prendre-rdv.html?id=4fbdb122-9fca-4636-b80c-d9e4abc2542b" target="_blank" rel="noopener">📞 Être rappelé</a>
 
 <div class="wrap">
   <a href="#" id="lienRetourDashboard" class="btn-dashboard-hero" style="display:none;"><span class="icon">📊</span> Accéder à mon tableau de bord</a>
@@ -196,7 +196,7 @@
   <p class="intro">
     Dépose ici ce qui nous permettra de construire ta vraie vitrine — à ton rythme, section par section.
   </p>
-  <a class="btn-rdv-construction" id="btnRdvConstruction" href="#" target="_blank" rel="noopener">📅 Envie qu'on la construise ensemble au téléphone ? Réservez un créneau</a>
+  <a class="btn-rdv-construction" href="/prendre-rdv.html?id=4fbdb122-9fca-4636-b80c-d9e4abc2542b" target="_blank" rel="noopener">📅 Envie qu'on la construise ensemble au téléphone ? Réservez un créneau</a>
   <p class="reassurance">🌿 Rien n'est chronométré, et chaque section s'enregistre à part.</p>
 
   <a class="btn-avancement" id="btnAvancement" href="#" target="_blank" rel="noopener">📊 Voir l'avancement de mon site</a>
@@ -238,9 +238,6 @@
         </div>
         <div class="photos-grid" id="photosGrid"></div>
 
-        <!-- 08/09/2026 : bloc génération d'image IA (Gamma) restauré —
-             avait été effacé par erreur lors d'un remplacement complet du
-             fichier ; récupéré à partir d'une copie envoyée par Cyrille. -->
         <div id="gammaBox" style="margin-top:14px; border:1.5px dashed #d8d2c2; border-radius:14px; padding:16px; background:#fdfcf9;">
           <div style="display:flex; align-items:center; justify-content:between; gap:10px; margin-bottom:8px;">
             <div style="font-size:0.86rem; font-weight:600; color:#4a8a68;">🎨 Pas encore de photos ? Génère-en une avec l'IA</div>
@@ -258,8 +255,20 @@
         </div>
         <input type="url" id="videoLien" placeholder="https://youtube.com/..." style="margin-top:10px;">
 
-        <!-- 08/09/2026 : bloc "Catalogue téléchargeable" retiré à la demande
-             de Cyrille — voir aussi apercu.html (#catalogueBadge, retiré). -->
+        <label style="margin-top:18px;">Catalogue téléchargeable (optionnel)</label>
+        <p class="hint">Un petit bouton apparaît sur ta vitrine (ex : "Catalogue réalisations — Pas encore prêt ? Téléchargez-le") — les visiteurs peuvent le télécharger même sans remplir le formulaire de devis.</p>
+        <input type="text" id="catalogueTitre" placeholder="Titre du catalogue — Ex : Catalogue réalisations" style="margin-bottom:10px;">
+        <div class="upload-box" id="boxCatalogueImage">
+          <input type="file" id="inputCatalogueImage" accept="image/*">
+          <img id="catalogueImagePreview" class="logo-preview-img" alt="Couverture du catalogue">
+          <div class="upload-label">📁 Image de couverture (optionnel)</div>
+          <div class="upload-status" id="statusCatalogueImage">Aucune image</div>
+        </div>
+        <div class="upload-box" id="boxCatalogueFichier">
+          <input type="file" id="inputCatalogueFichier" accept=".pdf,application/pdf">
+          <div class="upload-label">📁 Fichier du catalogue (PDF)</div>
+          <div class="upload-status" id="statusCatalogueFichier">Aucun fichier</div>
+        </div>
 
         <label style="margin-top:18px;">Position du formulaire</label>
         <select id="selectPositionFormulaire">
@@ -267,6 +276,17 @@
           <option value="droite">À droite (photo/vidéo à gauche)</option>
         </select>
         <p class="hint">Choisis le côté où le formulaire de demande d'estimation s'affiche sur ta vitrine — l'autre côté affiche ta photo ou ta vidéo.</p>
+
+        <label style="margin-top:18px;">Image derrière le formulaire</label>
+        <select id="selectFondFormulaireSource">
+          <option value="carrousel">Le carrousel de photos</option>
+          <option value="video">La vidéo</option>
+        </select>
+        <p class="hint">Ce fond est décoratif, derrière le texte du formulaire — choisis s'il reprend tes photos ou ta vidéo.</p>
+
+        <label style="margin-top:14px;">Netteté du fond <span id="valeurFlouFond" class="hint" style="display:inline;"></span></label>
+        <input type="range" id="rangeFlouFond" min="0" max="30" step="1" style="width:100%;">
+        <p class="hint">Tout à gauche = net, tout à droite = très flou. Un fond flou garde le texte du formulaire lisible.</p>
       </div>
     </div>
   </div>
@@ -478,48 +498,11 @@
     }
   });
 
-  // 07/09/2026 : "beforeunload" ne suffit pas à protéger contre une perte
-  // de données — de nombreux navigateurs mobiles (Safari iOS notamment)
-  // n'affichent pas cette confirmation pour un simple clic sur un lien, et
-  // quitter la page pendant qu'une photo/un logo vient tout juste d'être
-  // envoyé coupe l'enregistrement en cours de route : au retour sur la
-  // page, ce qui venait d'être ajouté a disparu. On bloque donc en plus le
-  // clic lui-même sur les liens de sortie tant qu'un enregistrement est en
-  // cours, et on ne navigue qu'une fois celui-ci terminé.
-  function attendreFinSauvegardes() {
-    return new Promise(resolve => {
-      if (sauvegardesEnCours <= 0) return resolve();
-      const depart = Date.now();
-      const intervalle = setInterval(() => {
-        if (sauvegardesEnCours <= 0 || Date.now() - depart > 8000) {
-          clearInterval(intervalle);
-          resolve();
-        }
-      }, 150);
-    });
-  }
-  function protegerNavigationPendantSauvegarde(id) {
-    const lien = document.getElementById(id);
-    if (!lien) return;
-    lien.addEventListener('click', (e) => {
-      if (sauvegardesEnCours <= 0) return; // rien en cours, laisse le clic suivre son cours normalement
-      e.preventDefault();
-      const texteInitial = lien.textContent;
-      lien.textContent = '⏳ Enregistrement en cours…';
-      attendreFinSauvegardes().then(() => {
-        lien.textContent = texteInitial;
-        const cible = lien.href;
-        if (lien.target === '_blank') window.open(cible, '_blank', 'noopener');
-        else window.location.href = cible;
-      });
-    });
-  }
-  protegerNavigationPendantSauvegarde('lienRetourDashboard');
-  protegerNavigationPendantSauvegarde('btnAvancement');
-
   let logoUrl = null;
   let photosUrls = [];
   let videoUrl = null;
+  let catalogueImageUrl = null;
+  let catalogueFichierUrl = null;
   let metiersActuels = [];
   let titreChoisi = '';
   let draftStatutActuel = null; // status du brouillon au chargement — sert à savoir où renvoyer après enregistrement
@@ -671,35 +654,16 @@
     document.body.innerHTML = '<div style="text-align:center; margin-top:100px;">Lien invalide — identifiant du site manquant.</div>';
   } else {
     document.getElementById('btnAvancement').href = '/apercu.html?id=' + draftId;
-    // 07/09/2026 : ces deux liens étaient codés en dur avec l'identifiant
-    // d'un brouillon de test (4fbdb122-9fca-4636-b80c-d9e4abc2542b) au lieu
-    // du draftId de la personne qui consulte la page — tout artisan cliquant
-    // sur "Être rappelé" ou "Réservez un créneau" prenait donc en réalité
-    // rendez-vous sur le brouillon de test, jamais sur le sien.
-    document.getElementById('btnEtreRappeleFixe').href = '/prendre-rdv.html?id=' + draftId;
-    document.getElementById('btnRdvConstruction').href = '/prendre-rdv.html?id=' + draftId;
     chargerDraftExistant();
   }
 
   async function chargerDraftExistant() {
     try {
-      // 07/09/2026 : select=* est cassé pour la clé anonyme depuis le
-      // verrouillage des colonnes sensibles du 06/09 (migration
-      // verrouiller_colonnes_sensibles_vitrine_drafts) — Postgres refuse
-      // TOUTE la requête (permission denied) dès qu'une seule colonne du
-      // SELECT * n'est pas lisible en anon (dashboard_password_hash,
-      // dashboard_reset_token, dashboard_reset_token_expire,
-      // pause_confirmation_token, stripe_subscription_id, validation_token).
-      // Résultat : rows[0] était toujours vide, "if (!draft) return;"
-      // sortait systématiquement, et NI les champs du formulaire NI le
-      // bouton tableau de bord ne s'affichaient jamais, pour aucun artisan.
-      // On liste donc explicitement les colonnes réellement utilisées par
-      // cette page (même logique déjà appliquée à apercu.html).
-      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=id,entreprise,telephone,email,adresse_rue,adresse_cp,adresse_ville,siret,forme_juridique,capital_social,rcs_ville,assurance_decennale_assureur,assurance_decennale_numero,acompte_pourcentage,delai_intervention,site_web_existant,metier,zone,titre_hero_choisi,tva_taux,formulaire_personnalise,formulaire_personnalise_description,formulaire_personnalise_cle,formulaire_position,photos,logo_url,video_url,portails_tarifs,status`, {
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=*`, {
         headers: { apikey: SUPABASE_ANON_KEY }
       });
       const rows = await resp.json();
-      const draft = Array.isArray(rows) ? rows[0] : null;
+      const draft = rows[0];
       if (!draft) return;
 
       draftStatutActuel = draft.status || null;
@@ -731,21 +695,8 @@
       // les deux cas un lien direct est plus utile qu'un bouton caché à
       // cause d'un statut imprévu (ex : resté "preview" après un essai
       // interrompu avant correction de la contrainte Supabase).
-      //
-      // 08/09/2026 : le choix démo/vrai tableau de bord se faisait sur
-      // compteDejaExistant (mot de passe déjà créé) — or le mot de passe
-      // n'est créé que bien plus tard dans le parcours (au moment de payer
-      // sa campagne, voir campagne.html). Résultat : un artisan qui vient
-      // de démarrer son essai gratuit et de valider les CGV (donc plus du
-      // tout en démo) se retrouvait quand même renvoyé vers
-      // mon-dashboard-demo.html tant qu'il n'avait pas encore de mot de
-      // passe. Demandé par Cyrille : dès que l'essai est démarré (ou que
-      // l'abonnement est actif), c'est le VRAI tableau de bord — la démo ne
-      // sert que pour l'explication initiale, juste après le SIRET, avant
-      // toute validation des CGV.
-      const essaiOuAbonnementDemarre = draftStatutActuel === 'essai' || draftStatutActuel === 'published' || draftStatutActuel === 'en_pause';
       const lienRetour = document.getElementById('lienRetourDashboard');
-      lienRetour.href = essaiOuAbonnementDemarre
+      lienRetour.href = compteDejaExistant
         ? '/mon-dashboard.html?id=' + draftId
         : '/mon-dashboard-demo.html?id=' + draftId;
       lienRetour.style.display = 'flex';
@@ -836,6 +787,27 @@
         sauvegarderChampsImmediat({ formulaire_position: selectPosition.value });
       });
 
+      // Fond derrière le formulaire (carrousel de photos ou vidéo) et son
+      // niveau de flou — voir public/apercu.html, initFormBgCarousel() et
+      // la variable CSS --flou-fond. Par défaut : carrousel, flou 14px
+      // (comportement identique à avant l'ajout de ce réglage).
+      const selectFondSource = document.getElementById('selectFondFormulaireSource');
+      const rangeFlou = document.getElementById('rangeFlouFond');
+      const valeurFlouEl = document.getElementById('valeurFlouFond');
+      selectFondSource.value = draft.fond_formulaire_source === 'video' ? 'video' : 'carrousel';
+      const flouInitial = (draft.fond_formulaire_flou != null) ? draft.fond_formulaire_flou : 14;
+      rangeFlou.value = flouInitial;
+      valeurFlouEl.textContent = flouInitial + 'px';
+      selectFondSource.addEventListener('change', () => {
+        sauvegarderChampsImmediat({ fond_formulaire_source: selectFondSource.value });
+      });
+      rangeFlou.addEventListener('input', () => {
+        valeurFlouEl.textContent = rangeFlou.value + 'px';
+      });
+      rangeFlou.addEventListener('change', () => {
+        sauvegarderChampsImmediat({ fond_formulaire_flou: parseInt(rangeFlou.value, 10) });
+      });
+
       if (draft.photos && draft.photos.length) {
         photosUrls = draft.photos;
         rafraichirGridPhotos();
@@ -848,6 +820,20 @@
         document.getElementById('logoPreview').style.display = 'block';
       }
       if (draft.video_url) { videoUrl = draft.video_url; document.getElementById('videoLien').value = draft.video_url.startsWith('http') ? draft.video_url : ''; }
+
+      if (draft.catalogue_titre) document.getElementById('catalogueTitre').value = draft.catalogue_titre;
+      if (draft.catalogue_image_url) {
+        catalogueImageUrl = draft.catalogue_image_url;
+        document.getElementById('statusCatalogueImage').textContent = 'Image déjà enregistrée ✓';
+        document.getElementById('boxCatalogueImage').classList.add('has-file');
+        document.getElementById('catalogueImagePreview').src = draft.catalogue_image_url;
+        document.getElementById('catalogueImagePreview').style.display = 'block';
+      }
+      if (draft.catalogue_fichier_url) {
+        catalogueFichierUrl = draft.catalogue_fichier_url;
+        document.getElementById('statusCatalogueFichier').textContent = 'Catalogue déjà envoyé ✓';
+        document.getElementById('boxCatalogueFichier').classList.add('has-file');
+      }
     } catch (e) { console.error('Erreur chargerDraftExistant :', e); /* on part d'un formulaire vide plutôt que de bloquer la page */ }
     calculerProgression();
   }
@@ -1116,8 +1102,6 @@
   }
 
   // --- Génération d'image IA via Gamma, pour compléter le carrousel ---
-  // (08/09/2026 : restauré après avoir été effacé par erreur — voir le
-  // commentaire sur #gammaBox plus haut dans le fichier.)
   document.getElementById('btnGammaGenerer').addEventListener('click', async () => {
     const promptEl = document.getElementById('gammaPrompt');
     const statusEl = document.getElementById('gammaStatus');
@@ -1194,9 +1178,44 @@
     }
   });
 
-  // 08/09/2026 : bloc "Catalogue téléchargeable" retiré à la demande de
-  // Cyrille (champs + upload + listeners) — voir aussi apercu.html
-  // (#catalogueBadge, retiré).
+  // Catalogue téléchargeable (titre + image de couverture + PDF) — voir
+  // public/apercu.html, le bloc #catalogueBadge, qui n'apparaît sur la
+  // vitrine que si catalogue_fichier_url est renseigné.
+  document.getElementById('catalogueTitre').addEventListener('change', () => {
+    sauvegarderChampsImmediat({ catalogue_titre: document.getElementById('catalogueTitre').value.trim() });
+  });
+
+  document.getElementById('boxCatalogueImage').addEventListener('click', () => document.getElementById('inputCatalogueImage').click());
+  document.getElementById('inputCatalogueImage').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    document.getElementById('statusCatalogueImage').textContent = 'Envoi en cours…';
+    try {
+      catalogueImageUrl = await uploaderFichier(file, 'catalogue-image');
+      document.getElementById('statusCatalogueImage').textContent = 'Image envoyée ✓';
+      document.getElementById('boxCatalogueImage').classList.add('has-file');
+      document.getElementById('catalogueImagePreview').src = catalogueImageUrl;
+      document.getElementById('catalogueImagePreview').style.display = 'block';
+      sauvegarderChampsImmediat({ catalogue_image_url: catalogueImageUrl });
+    } catch (err) {
+      document.getElementById('statusCatalogueImage').textContent = 'Erreur : ' + err.message;
+    }
+  });
+
+  document.getElementById('boxCatalogueFichier').addEventListener('click', () => document.getElementById('inputCatalogueFichier').click());
+  document.getElementById('inputCatalogueFichier').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    document.getElementById('statusCatalogueFichier').textContent = 'Envoi en cours…';
+    try {
+      catalogueFichierUrl = await uploaderFichier(file, 'catalogue-fichier');
+      document.getElementById('statusCatalogueFichier').textContent = 'Catalogue envoyé ✓';
+      document.getElementById('boxCatalogueFichier').classList.add('has-file');
+      sauvegarderChampsImmediat({ catalogue_fichier_url: catalogueFichierUrl });
+    } catch (err) {
+      document.getElementById('statusCatalogueFichier').textContent = 'Erreur : ' + err.message;
+    }
+  });
 
   // Lien vidéo (YouTube/Vimeo) saisi directement, sans upload — même logique
   // d'enregistrement immédiat que le reste, pour ne rien perdre en quittant

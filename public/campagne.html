@@ -77,16 +77,6 @@
   .resilier-link { display:block; text-align:center; margin-top:18px; font-size:0.82rem; color:#8a9891; text-decoration:underline; cursor:pointer; background:none; border:none; }
   .resilier-link:hover { color:#c0392b; }
 
-  /* 08/09/2026 : bouton rouge "Arrêter mon forfait", demandé par Cyrille —
-     bien visible, distinct du simple lien de résiliation textuel d'avant. */
-  .btn-arreter-forfait {
-    display:block; width:100%; text-align:center; margin-top:26px; background:#fff;
-    color:#c0392b; border:2px solid #c0392b; border-radius:12px; padding:13px;
-    font-size:0.9rem; font-weight:800; cursor:pointer;
-  }
-  .btn-arreter-forfait:hover { background:#fdeaea; }
-  .btn-arreter-forfait:disabled { opacity:0.5; cursor:not-allowed; }
-
   .loading, .error-msg { text-align:center; padding:40px 0; color:#5b6b64; }
   .error-msg { color:#c0392b; }
 
@@ -249,7 +239,7 @@
 
       <button class="btn-payer" id="btnPayer" disabled>Payer et lancer ma campagne</button>
       <button class="resilier-link" id="btnPause" type="button">Mettre en pause 1 mois (sans prélèvement)</button>
-      <button class="btn-arreter-forfait" id="btnArreterForfait" type="button">🛑 Arrêter mon forfait</button>
+      <button class="resilier-link" id="btnResilier" type="button">Résilier mon abonnement</button>
     `;
 
     const budgetInput = document.getElementById('budgetInput');
@@ -535,28 +525,23 @@
       }
     });
 
-    // 08/09/2026 : bouton rouge "Arrêter mon forfait" — remplace visuellement
-    // l'ancien lien discret "Résilier mon abonnement", avec le message
-    // demandé par Cyrille. Techniquement, il déclenche toujours la
-    // résiliation existante (/api/cancel-subscription, arrêt à la fin de la
-    // période déjà payée). Le comportement « la vitrine s'éteint dès que le
-    // budget pub tombe à 0 € puis redémarre automatiquement au
-    // réapprovisionnement » décrit dans le message est une conséquence
-    // attendue côté produit — à vérifier/implémenter côté serveur
-    // (create-ad-budget-checkout / le suivi de consommation) si ce n'est pas
-    // déjà le cas, ce fichier ne peut pas le garantir à lui seul.
-    document.getElementById('btnArreterForfait').addEventListener('click', async () => {
+    // 08/09/2026 : le bouton "Arrêter mon forfait" (rouge, avec le message
+    // détaillé) a été déplacé sur mon-dashboard.html à la demande de
+    // Cyrille — cette page (campagne.html) ne sert qu'à payer/lancer une
+    // campagne, la gestion de l'abonnement se fait depuis le tableau de
+    // bord. On garde ici le simple lien de résiliation existant.
+    document.getElementById('btnResilier').addEventListener('click', async () => {
       if (!sessionToken) {
         alert('Merci de vous connecter à votre tableau de bord pour gérer votre abonnement.');
         window.location.href = '/acces-dashboard.html?id=' + draftId;
         return;
       }
-      if (!confirm("Arrêter votre forfait Skyeco Pro ?\n\n• Votre forfait s'arrêtera à la fin du mois en cours.\n• Votre vitrine s'éteindra automatiquement lorsque votre budget publicitaire sera à 0 €.\n• Si vous réapprovisionnez votre budget avant cela, tout redémarre automatiquement — rien n'est perdu.\n\nConfirmer l'arrêt du forfait ?")) {
+      if (!confirm("Confirmer la résiliation ? Votre vitrine restera active jusqu'à la fin de la période déjà payée, puis se désactivera automatiquement.")) {
         return;
       }
-      const btn = document.getElementById('btnArreterForfait');
+      const btn = document.getElementById('btnResilier');
       btn.disabled = true;
-      btn.textContent = 'Arrêt en cours…';
+      btn.textContent = 'Résiliation en cours…';
       try {
         const res = await fetch('/api/cancel-subscription', {
           method: 'POST',
@@ -565,17 +550,17 @@
         });
         const data = await res.json();
         if (res.ok) {
-          alert(data.message || "Votre forfait s'arrêtera à la fin du mois en cours.");
-          btn.textContent = 'Forfait arrêté';
+          alert(data.message);
+          btn.textContent = 'Abonnement annulé';
         } else {
           alert(data.error || 'Une erreur est survenue.');
           btn.disabled = false;
-          btn.textContent = '🛑 Arrêter mon forfait';
+          btn.textContent = 'Résilier mon abonnement';
         }
       } catch (e) {
         alert('Impossible de contacter le serveur.');
         btn.disabled = false;
-        btn.textContent = '🛑 Arrêter mon forfait';
+        btn.textContent = 'Résilier mon abonnement';
       }
     });
 

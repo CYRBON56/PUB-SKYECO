@@ -42,6 +42,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         motDePasseInterne: process.env.SKYECO_PROSPECTION_PASSWORD,
         batchSize: TAILLE_LOT,
+        familleMetier: 'Paysagisme & espaces verts', // 08/09/2026 : restreint à cette famille — taux de désabonnement nettement plus élevé (~4,8%) hors de cette cible sur le premier envoi test
         subject: SUJET_PAR_DEFAUT,
         html: HTML_PAR_DEFAUT,
       }),

@@ -656,6 +656,15 @@
         });
         const data = await res.json();
         if (data.success) {
+          // 08/09/2026 : SMS + email de bienvenue avec le lien du tableau de
+          // bord, demandé par Cyrille — déclenché en "fire and forget" pour
+          // ne jamais retarder la redirection vers mes-elements.html, même
+          // si l'envoi échoue ou prend du temps.
+          fetch('/api/envoyer-bienvenue-essai', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ draftId })
+          }).catch(() => {});
           window.location.href = '/mes-elements.html?id=' + encodeURIComponent(draftId);
         } else {
           erreurEl.textContent = data.error || "Impossible de démarrer l'essai pour le moment.";

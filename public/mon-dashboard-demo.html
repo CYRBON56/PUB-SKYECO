@@ -235,6 +235,30 @@
     display:inline-block; background:#e8622c; color:#fff; text-decoration:none; font-weight:800;
     font-size:0.98rem; padding:14px 30px; border-radius:12px; box-shadow:0 12px 28px rgba(232,98,44,0.35);
   }
+
+  /* 08/09/2026 : CTA "essai sans paiement" mis en avant en haut de page,
+     demandé par Cyrille — visible immédiatement à l'arrivée sur la demo,
+     sans avoir à dérouler toute la page pour trouver le panneau d'essai. */
+  .cta-essai-haut {
+    display:none; background:linear-gradient(120deg, #1e6f4c, #14503a); color:#fff; border-radius:16px;
+    padding:18px 22px; margin-bottom:20px; align-items:center; justify-content:space-between; gap:16px;
+    flex-wrap:wrap; box-shadow:0 12px 28px rgba(30,111,76,0.28);
+  }
+  .cta-essai-haut .texte strong { display:block; font-size:1.05rem; font-weight:800; margin-bottom:3px; }
+  .cta-essai-haut .texte span { font-size:0.82rem; opacity:0.92; }
+  .btn-essai-haut {
+    display:inline-block; background:#fff; color:#1e6f4c; text-decoration:none; font-weight:800;
+    font-size:0.92rem; padding:13px 22px; border-radius:11px; white-space:nowrap; cursor:pointer; border:none;
+    box-shadow:0 6px 16px rgba(0,0,0,0.15);
+  }
+  .btn-essai-haut:hover { filter:brightness(0.97); }
+
+  /* 08/09/2026 : contenu détaillé du forfait dans le panneau d'essai gratuit */
+  .forfait-inclus { text-align:left; background:#f5f8f6; border-radius:10px; padding:16px 18px; margin-bottom:16px; }
+  .forfait-inclus .titre-inclus { font-size:0.82rem; font-weight:800; color:#14312a; margin-bottom:10px; }
+  .forfait-inclus ul { list-style:none; display:flex; flex-direction:column; gap:8px; }
+  .forfait-inclus li { font-size:0.82rem; color:#3a4a44; line-height:1.5; display:flex; gap:8px; align-items:flex-start; }
+  .forfait-inclus li .puce { color:#1e6f4c; font-weight:800; flex-shrink:0; }
 </style>
 </head>
 <body>
@@ -254,6 +278,15 @@
   <div class="banniere-demo">
     <span class="picto">🧭</span>
     <span><strong>Tableau de bord DEMO</strong><span class="sous-texte" id="sousTexteBanniere">Données fictives — pour vous montrer à quoi ressemblera votre espace</span></span>
+  </div>
+
+  <!-- 08/09/2026 : CTA "essai sans paiement" — bandeau vert visible dès l'arrivée -->
+  <div id="ctaEssaiHaut" class="cta-essai-haut">
+    <div class="texte">
+      <strong>✨ Essayez sans paiement pendant 1 mois</strong>
+      <span>Sans engagement, sans carte bancaire — vous créez d'abord votre vitrine, tranquillement.</span>
+    </div>
+    <button type="button" class="btn-essai-haut" id="btnEssaiHaut">Faire un essai sans paiement →</button>
   </div>
 
   <div class="header">
@@ -517,7 +550,7 @@
   <div id="ctaFunnel" class="cta-funnel" style="display:none;">
     <p>C'est exactement <strong>ce qui vous attend</strong> une fois votre vitrine en ligne — vos vrais clients, vos vraies demandes, à cet endroit.</p>
 
-    <div style="max-width:440px; margin:20px auto 0; background:#fff; border-radius:14px; padding:24px; text-align:left; box-shadow:0 10px 30px rgba(0,0,0,0.08);">
+    <div style="max-width:460px; margin:20px auto 0; background:#fff; border-radius:14px; padding:24px; text-align:left; box-shadow:0 10px 30px rgba(0,0,0,0.08);">
       <p style="margin:0 0 6px; font-size:1rem; font-weight:800; color:#14312a;">Essayez gratuitement pendant 1 mois</p>
       <p style="margin:0 0 16px; font-size:0.86rem; color:#5b6b64; line-height:1.55;">Sans engagement, sans carte bancaire. Vous ne payez rien pour l'instant — vous créez d'abord votre formulaire vitrine.</p>
       <div style="background:#f5f8f6; border-radius:10px; padding:14px 16px; margin-bottom:16px;">
@@ -525,6 +558,21 @@
         <div style="font-size:1.3rem; font-weight:800; color:#14312a;">39,90 € HT<span style="font-size:0.85rem; font-weight:600; color:#8a9891;">/mois</span></div>
         <div style="font-size:0.76rem; color:#8a9891; margin-top:2px;">pendant 12 mois, puis 79,90 € HT/mois — résiliable à tout moment</div>
       </div>
+
+      <!-- 08/09/2026 : détail complet de ce que contient le forfait, demandé par Cyrille -->
+      <div class="forfait-inclus">
+        <div class="titre-inclus">Ce qui est inclus dans votre forfait :</div>
+        <ul>
+          <li><span class="puce">✓</span><span>Votre formulaire vitrine en ligne, créé et hébergé pour vous</span></li>
+          <li><span class="puce">✓</span><span>Votre tableau de bord de suivi, comme celui que vous venez de voir</span></li>
+          <li><span class="puce">✓</span><span>La gestion automatisée de votre campagne Google Ads par un coach IA — il surveille et ajuste vos annonces pour vous</span></li>
+          <li><span class="puce">✓</span><span>Le suivi de chaque prospect, de l'annonce jusqu'au devis final</span></li>
+          <li><span class="puce">✓</span><span>L'envoi automatique de SMS et d'email à vos prospects</span></li>
+          <li><span class="puce">✓</span><span>Vos devis générés avec signature électronique, directement depuis le téléphone du client</span></li>
+          <li><span class="puce">✓</span><span>Un rendez-vous avec nous pour la mise en place de votre espace</span></li>
+        </ul>
+      </div>
+
       <label style="display:flex; align-items:flex-start; gap:8px; font-size:0.82rem; color:#3a4a44; line-height:1.5; margin-bottom:16px; cursor:pointer;">
         <input type="checkbox" id="cguEssaiCheckbox" style="margin-top:2px; width:16px; height:16px; flex-shrink:0; accent-color:#1e6f4c;">
         <span>J'accepte les <a href="/cgv.html" target="_blank" style="color:#1e6f4c;">conditions générales de vente</a>.</span>
@@ -552,6 +600,13 @@
     document.getElementById('lienRetour').style.display = 'inline-flex';
     document.getElementById('introFunnel').style.display = 'block';
     document.getElementById('btnVoirVitrineDemo').style.display = 'inline-flex';
+
+    // 08/09/2026 : bandeau "essai sans paiement" visible dès l'arrivée sur
+    // la démo — clique = défile jusqu'au panneau d'essai gratuit en bas.
+    document.getElementById('ctaEssaiHaut').style.display = 'flex';
+    document.getElementById('btnEssaiHaut').addEventListener('click', () => {
+      document.getElementById('ctaFunnel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
 
     // Aperçu de 4 secondes : on ouvre la vraie vitrine dans un nouvel onglet,
     // puis on la referme automatiquement et on revient ici, sans que

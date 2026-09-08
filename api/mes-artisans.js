@@ -31,7 +31,11 @@
 // Variables d'environnement requises : SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
 // INTERNAL_ACCESS_PASSWORD
 
-const COLONNES_LISTE = 'id,entreprise,metier,telephone,status,site_valide,archive,created_at,dashboard_password_hash,dashboard_dernier_ping';
+// 09/09/2026 : essai_gratuit_debut ajouté — permet à mes-artisans.html de
+// repérer et signaler les essais gratuits démarrés récemment (demande de
+// Cyrille : voir un nouvel essai directement dans le tableau, pas
+// seulement via le SMS ponctuel qu'il reçoit par ailleurs).
+const COLONNES_LISTE = 'id,entreprise,metier,telephone,status,site_valide,archive,created_at,essai_gratuit_debut,dashboard_password_hash,dashboard_dernier_ping';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {

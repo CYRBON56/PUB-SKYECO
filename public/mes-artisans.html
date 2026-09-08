@@ -96,6 +96,24 @@
   .feedback { font-size:0.74rem; margin-top:5px; font-weight:600; }
   .feedback.ok { color:#1e6f4c; }
   .feedback.err { color:#c0392b; }
+
+  /* 09/09/2026 : bandeau + pastille "nouvel essai gratuit" — demande de
+     Cyrille pour repérer d'un coup d'œil qui vient de démarrer un essai,
+     sans dépendre uniquement du SMS ponctuel reçu à ce moment-là. */
+  .bandeau-nouveaux-essais {
+    background:#eaf4ef; border:1.5px solid #1e6f4c; border-radius:14px;
+    padding:14px 20px; margin-bottom:20px; display:none;
+  }
+  .bandeau-nouveaux-essais .titre { font-weight:800; font-size:0.9rem; color:#14312a; margin-bottom:8px; }
+  .bandeau-nouveaux-essais ul { list-style:none; display:flex; flex-direction:column; gap:5px; }
+  .bandeau-nouveaux-essais li { font-size:0.85rem; color:#3a4a44; }
+  .bandeau-nouveaux-essais a { color:#1e6f4c; font-weight:700; text-decoration:none; }
+  .bandeau-nouveaux-essais a:hover { text-decoration:underline; }
+  .badge-nouveau-essai {
+    background:#e8622c; color:#fff; font-size:0.64rem; font-weight:800;
+    padding:2px 7px; border-radius:999px; margin-left:6px; vertical-align:2px;
+  }
+  tr.ligne-nouvel-essai td { background:#f6fbf8; }
 </style>
 </head>
 <body>
@@ -110,6 +128,11 @@
       <button type="button" id="btnMesRdvAdmin" class="btn-action" style="display:inline-block;">📅 Mes rendez-vous</button>
       <a href="/prospects-paysagiste.html" class="btn-action" style="text-decoration:none; display:inline-block;">📧 Prospection artisans</a>
     </div>
+  </div>
+
+  <div class="bandeau-nouveaux-essais" id="bandeauNouveauxEssais">
+    <div class="titre">🎉 Nouveaux essais gratuits démarrés récemment</div>
+    <ul id="listeNouveauxEssais"></ul>
   </div>
 
   <div class="stats-row" id="statsRow"></div>
@@ -196,6 +219,7 @@
       toutesLesFiches = data.fiches;
       demandesParDraftId = data.demandesParDraftId || {};
       afficherStats(toutesLesFiches);
+      afficherNouveauxEssais(toutesLesFiches);
       afficherVueActuelle();
       afficherCompteursDemandes();
     } catch (e) {
@@ -247,18 +271,44 @@
     });
   }
 
+  // 09/09/2026 : un essai est considéré "nouveau" pendant 7 jours après son
+  // démarrage — assez large pour ne rien manquer en cas d'absence de
+  // quelques jours, sans rester affiché indéfiniment. Pas de mémorisation
+  // "vu/pas vu" en base : on garde simple, la fenêtre de 7 jours suffit.
+  const FENETRE_NOUVEL_ESSAI_MS = 7 * 24 * 60 * 60 * 1000;
+  function estNouvelEssai(fiche) {
+    if (fiche.status !== 'essai' || !fiche.essai_gratuit_debut) return false;
+    return (Date.now() - new Date(fiche.essai_gratuit_debut).getTime()) < FENETRE_NOUVEL_ESSAI_MS;
+  }
+
+  function afficherNouveauxEssais(fichesToutes) {
+    const bandeau = document.getElementById('bandeauNouveauxEssais');
+    const liste = document.getElementById('listeNouveauxEssais');
+    const nouveaux = fichesToutes
+      .filter(f => !f.archive && estNouvelEssai(f))
+      .sort((a, b) => new Date(b.essai_gratuit_debut) - new Date(a.essai_gratuit_debut));
+    if (!nouveaux.length) { bandeau.style.display = 'none'; return; }
+    bandeau.style.display = 'block';
+    liste.innerHTML = nouveaux.map(f => {
+      const date = new Date(f.essai_gratuit_debut).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+      return `<li>📅 ${date} — <a href="#" onclick="event.preventDefault(); document.getElementById('recherche').value='${(f.entreprise||'').replace(/'/g, "\\'")}'; document.getElementById('recherche').dispatchEvent(new Event('input'));">${f.entreprise || 'Sans nom'}</a> vient de démarrer son essai gratuit</li>`;
+    }).join('');
+  }
+
   function afficherStats(fichesToutes) {
     const fiches = fichesToutes.filter(f => !f.archive); // les archivés ne comptent plus dans le suivi actif
     const total = fiches.length;
     const publies = fiches.filter(f => f.status === 'published').length;
     const enAttente = fiches.filter(f => f.status === 'preview').length;
     const valides = fiches.filter(f => f.site_valide).length;
+    const nouveauxEssais = fiches.filter(estNouvelEssai).length;
 
     document.getElementById('statsRow').innerHTML = `
       <div class="stat-card"><div class="valeur">${total}</div><div class="label">Artisans au total</div></div>
       <div class="stat-card accent-vert"><div class="valeur">${publies}</div><div class="label">Sites publiés</div></div>
       <div class="stat-card accent-orange"><div class="valeur">${enAttente}</div><div class="label">En attente</div></div>
       <div class="stat-card accent-vert"><div class="valeur">${valides}</div><div class="label">Vitrines validées</div></div>
+      <div class="stat-card accent-orange"><div class="valeur">${nouveauxEssais}</div><div class="label">🎉 Nouveaux essais (7j)</div></div>
     `;
   }
 
@@ -289,8 +339,9 @@
             const date = new Date(f.created_at).toLocaleDateString('fr-FR');
             const lienElements = `${SITE_BASE}/mes-elements.html?id=${f.id}`;
             const initiale = (f.entreprise || '?').trim().charAt(0).toUpperCase();
+            const nouvelEssai = estNouvelEssai(f);
             return `
-              <tr>
+              <tr class="${nouvelEssai ? 'ligne-nouvel-essai' : ''}">
                 <td>
                   <div class="entreprise-cell">
                     <div class="avatar-initiale">${initiale}</div>
@@ -300,7 +351,7 @@
                     </div>
                   </div>
                 </td>
-                <td>${STATUT_LABELS[f.status] || f.status || '—'}</td>
+                <td>${STATUT_LABELS[f.status] || f.status || '—'}${nouvelEssai ? '<span class="badge-nouveau-essai">🆕 Nouveau</span>' : ''}</td>
                 <td class="date-cell">${date}</td>
                 <td>
                   <div class="actions">

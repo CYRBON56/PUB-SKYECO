@@ -59,6 +59,14 @@
   .annonce-champ input.trop-long, .annonce-champ textarea.trop-long { border-color:#c0392b; }
   .annonce-sauvegarde-note { font-size:0.74rem; color:#8a9891; margin-top:4px; min-height:1em; }
 
+  /* 08/09/2026 : case CGV obligatoire avant de payer, demandée par Cyrille */
+  .cgv-checkbox-row {
+    display:flex; align-items:flex-start; gap:8px; font-size:0.82rem; color:#3a4a44; line-height:1.5;
+    margin-bottom:16px; cursor:pointer;
+  }
+  .cgv-checkbox-row input { width:16px; height:16px; flex-shrink:0; accent-color:#1e6f4c; margin-top:2px; }
+  .cgv-checkbox-row a { color:#1e6f4c; }
+
   .btn-payer {
     width:100%; background:#e8622c; color:#fff; border:none; border-radius:12px;
     padding:16px; font-size:1.02rem; font-weight:700; cursor:pointer;
@@ -69,8 +77,34 @@
   .resilier-link { display:block; text-align:center; margin-top:18px; font-size:0.82rem; color:#8a9891; text-decoration:underline; cursor:pointer; background:none; border:none; }
   .resilier-link:hover { color:#c0392b; }
 
+  /* 08/09/2026 : bouton rouge "Arrêter mon forfait", demandé par Cyrille —
+     bien visible, distinct du simple lien de résiliation textuel d'avant. */
+  .btn-arreter-forfait {
+    display:block; width:100%; text-align:center; margin-top:26px; background:#fff;
+    color:#c0392b; border:2px solid #c0392b; border-radius:12px; padding:13px;
+    font-size:0.9rem; font-weight:800; cursor:pointer;
+  }
+  .btn-arreter-forfait:hover { background:#fdeaea; }
+  .btn-arreter-forfait:disabled { opacity:0.5; cursor:not-allowed; }
+
   .loading, .error-msg { text-align:center; padding:40px 0; color:#5b6b64; }
   .error-msg { color:#c0392b; }
+
+  /* 08/09/2026 : page de remerciement après paiement */
+  .merci-icone { display:flex; justify-content:center; margin-bottom:14px; font-size:2.6rem; }
+  .merci-bloc { background:#f5f8f6; border-radius:12px; padding:16px 18px; margin:16px 0; font-size:0.86rem; color:#3a4a44; line-height:1.6; }
+  .merci-bloc strong { color:#14312a; }
+  .btn-rdv-merci {
+    display:block; width:100%; text-align:center; background:#1e6f4c; color:#fff; text-decoration:none;
+    border-radius:12px; padding:14px; font-size:0.95rem; font-weight:700; margin-top:6px;
+  }
+  .btn-rdv-merci:hover { filter:brightness(1.05); }
+  .btn-compte-merci {
+    display:block; width:100%; text-align:center; background:#e8622c; color:#fff; text-decoration:none;
+    border-radius:12px; padding:16px; font-size:1rem; font-weight:800; margin-top:22px;
+    box-shadow:0 10px 24px rgba(232,98,44,0.28);
+  }
+  .btn-compte-merci:hover { filter:brightness(1.05); }
 </style>
 </head>
 <body>
@@ -121,15 +155,28 @@
         app.innerHTML = `<div class="error-msg">${data.error || 'Une erreur est survenue lors de la confirmation.'}</div>`;
         return;
       }
+      // 08/09/2026 : page de remerciement complète, demandée par Cyrille —
+      // remercie l'artisan, explique qu'un conseiller va le contacter, lui
+      // propose de choisir directement son créneau de RDV, précise le délai
+      // de mise en ligne de l'annonce (vérification d'éligibilité Google
+      // Ads), puis l'invite à créer son identifiant et mot de passe pour
+      // accéder à son tableau de bord (réutilise la page/API existantes de
+      // création d'accès : acces-dashboard.html + /api/dashboard-set-password).
       app.innerHTML = `
-        <div style="display:flex; justify-content:center; margin-bottom:18px;">
-          <svg width="72" height="72" viewBox="0 0 24 24"><path fill="#4285F4" d="M12 2l4.5 7.79h-9L12 2z"/><path fill="#34A853" d="M3.5 9.79h9L7.75 22l-4.25-12.21z"/><path fill="#FBBC05" d="M16.5 9.79h4L16.25 22l-4.25-12.21h4.5z"/></svg>
-        </div>
-        <h1 style="text-align:center;">✅ Campagne lancée</h1>
-        <p class="sub">Votre budget de ${data.budgetActif} € est actif.</p>
+        <div class="merci-icone">🎉</div>
+        <h1 style="text-align:center;">Merci, votre campagne est lancée !</h1>
+        <p class="sub" style="text-align:center; margin-bottom:8px;">Votre budget de <strong>${data.budgetActif} €</strong> est actif.</p>
         <div class="estimation-box">
           <div class="detail" style="font-size:0.92rem; color:#14312a;">${data.campagneMessage}</div>
         </div>
+        <div class="merci-bloc">
+          Un <strong>conseiller Skyeco Pro</strong> va prendre contact avec vous prochainement pour faire le point sur votre mise en place. Vous pouvez aussi choisir vous-même votre créneau dès maintenant :
+        </div>
+        <a class="btn-rdv-merci" href="/prendre-rdv.html?id=${encodeURIComponent(draftId)}">📅 Choisir mon créneau de rendez-vous</a>
+        <div class="merci-bloc">
+          Après vérification de l'éligibilité de votre compte par <strong>Google Ads</strong>, votre annonce prendra effet sous <strong>24 heures</strong>.
+        </div>
+        <a class="btn-compte-merci" href="/acces-dashboard.html?id=${encodeURIComponent(draftId)}">🔑 Créer mon identifiant et mot de passe</a>
       `;
     } catch (e) {
       app.innerHTML = '<div class="error-msg">Impossible de confirmer le paiement pour le moment.</div>';
@@ -195,14 +242,28 @@
         <div class="annonce-sauvegarde-note" id="annonceSauvegardeNote"></div>
       </div>
 
+      <label class="cgv-checkbox-row">
+        <input type="checkbox" id="cgvCampagneCheckbox">
+        <span>J'accepte les <a href="/cgv.html" target="_blank">conditions générales de vente</a>.</span>
+      </label>
+
       <button class="btn-payer" id="btnPayer" disabled>Payer et lancer ma campagne</button>
       <button class="resilier-link" id="btnPause" type="button">Mettre en pause 1 mois (sans prélèvement)</button>
-      <button class="resilier-link" id="btnResilier" type="button">Résilier mon abonnement</button>
+      <button class="btn-arreter-forfait" id="btnArreterForfait" type="button">🛑 Arrêter mon forfait</button>
     `;
 
     const budgetInput = document.getElementById('budgetInput');
     const btnPayer = document.getElementById('btnPayer');
+    const cgvCheckbox = document.getElementById('cgvCampagneCheckbox');
     let debounceTimer = null;
+    let estimationOk = false;
+
+    // 08/09/2026 : le bouton Payer n'est actif que si l'estimation est
+    // valide ET si la case CGV est cochée — demandé par Cyrille.
+    function majEtatBoutonPayer() {
+      btnPayer.disabled = !estimationOk || !cgvCheckbox.checked;
+    }
+    cgvCheckbox.addEventListener('change', majEtatBoutonPayer);
 
     // Métier/zone/département/mots-clés du brouillon, récupérés une seule
     // fois (voir chargerDraftPuisInitialiser ci-dessous) pour l'estimation
@@ -229,7 +290,8 @@
         document.getElementById('clicsValue').textContent = '—';
         document.getElementById('estimationDetail').textContent = 'Montant minimum : 100 €';
         document.getElementById('breakdown').innerHTML = '';
-        btnPayer.disabled = true;
+        estimationOk = false;
+        majEtatBoutonPayer();
         return;
       }
 
@@ -250,17 +312,20 @@
             (data.avgCpcEur ? `CPC moyen estimé : ${data.avgCpcEur} €` : '') + potentiel;
           document.getElementById('breakdown').innerHTML =
             `Ce budget couvre la gestion de votre campagne et sa diffusion sur Google Ads.`;
-          btnPayer.disabled = false;
+          estimationOk = true;
+          majEtatBoutonPayer();
           btnPayer.textContent = `Payer ${budget} € et lancer ma campagne`;
         } else {
           document.getElementById('clicsValue').textContent = '—';
           document.getElementById('estimationDetail').textContent = "Estimation indisponible pour le moment.";
-          btnPayer.disabled = true;
+          estimationOk = false;
+          majEtatBoutonPayer();
         }
       } catch (e) {
         document.getElementById('clicsValue').textContent = '—';
         document.getElementById('estimationDetail').textContent = "Erreur de connexion.";
-        btnPayer.disabled = true;
+        estimationOk = false;
+        majEtatBoutonPayer();
       }
     }
 
@@ -470,18 +535,28 @@
       }
     });
 
-    document.getElementById('btnResilier').addEventListener('click', async () => {
+    // 08/09/2026 : bouton rouge "Arrêter mon forfait" — remplace visuellement
+    // l'ancien lien discret "Résilier mon abonnement", avec le message
+    // demandé par Cyrille. Techniquement, il déclenche toujours la
+    // résiliation existante (/api/cancel-subscription, arrêt à la fin de la
+    // période déjà payée). Le comportement « la vitrine s'éteint dès que le
+    // budget pub tombe à 0 € puis redémarre automatiquement au
+    // réapprovisionnement » décrit dans le message est une conséquence
+    // attendue côté produit — à vérifier/implémenter côté serveur
+    // (create-ad-budget-checkout / le suivi de consommation) si ce n'est pas
+    // déjà le cas, ce fichier ne peut pas le garantir à lui seul.
+    document.getElementById('btnArreterForfait').addEventListener('click', async () => {
       if (!sessionToken) {
         alert('Merci de vous connecter à votre tableau de bord pour gérer votre abonnement.');
         window.location.href = '/acces-dashboard.html?id=' + draftId;
         return;
       }
-      if (!confirm("Confirmer la résiliation ? Votre vitrine restera active jusqu'à la fin de la période déjà payée, puis se désactivera automatiquement.")) {
+      if (!confirm("Arrêter votre forfait Skyeco Pro ?\n\n• Votre forfait s'arrêtera à la fin du mois en cours.\n• Votre vitrine s'éteindra automatiquement lorsque votre budget publicitaire sera à 0 €.\n• Si vous réapprovisionnez votre budget avant cela, tout redémarre automatiquement — rien n'est perdu.\n\nConfirmer l'arrêt du forfait ?")) {
         return;
       }
-      const btn = document.getElementById('btnResilier');
+      const btn = document.getElementById('btnArreterForfait');
       btn.disabled = true;
-      btn.textContent = 'Résiliation en cours…';
+      btn.textContent = 'Arrêt en cours…';
       try {
         const res = await fetch('/api/cancel-subscription', {
           method: 'POST',
@@ -490,17 +565,17 @@
         });
         const data = await res.json();
         if (res.ok) {
-          alert(data.message);
-          btn.textContent = 'Abonnement annulé';
+          alert(data.message || "Votre forfait s'arrêtera à la fin du mois en cours.");
+          btn.textContent = 'Forfait arrêté';
         } else {
           alert(data.error || 'Une erreur est survenue.');
           btn.disabled = false;
-          btn.textContent = 'Résilier mon abonnement';
+          btn.textContent = '🛑 Arrêter mon forfait';
         }
       } catch (e) {
         alert('Impossible de contacter le serveur.');
         btn.disabled = false;
-        btn.textContent = 'Résilier mon abonnement';
+        btn.textContent = '🛑 Arrêter mon forfait';
       }
     });
 

@@ -1027,8 +1027,13 @@
       // simple conteneur, seul le bloc contenu est cliquable.
       tuiles.innerHTML = details.map((s) => {
         const estActuelle = s.id === draftId;
-        const statutLabel = s.status === 'en_pause' ? '⏸️ En pause' : (s.pausee ? '⏸️ Diffusion en pause' : (s.status === 'essai' ? '🎁 Essai gratuit' : '● En ligne'));
-        const statutCouleur = (s.status === 'en_pause' || s.pausee) ? '#e8622c' : (s.status === 'essai' ? '#5b6b64' : '#1e6f4c');
+        // 09/09/2026 : avant, un site en essai affichait toujours "Essai
+        // gratuit" ici, même quand sa campagne diffusait réellement (pas en
+        // pause) — impossible de savoir d'un coup d'œil si ça tournait ou
+        // pas pendant l'essai. On combine désormais les deux informations :
+        // le statut de facturation (essai) ET l'état réel de diffusion.
+        const statutLabel = s.status === 'en_pause' ? '⏸️ En pause' : (s.pausee ? '⏸️ Diffusion en pause' : (s.status === 'essai' ? '🎁 Essai gratuit — diffusion active' : '● En ligne'));
+        const statutCouleur = (s.status === 'en_pause' || s.pausee) ? '#e8622c' : '#1e6f4c';
         // Suppression définitive proposée seulement si la vitrine n'a
         // strictement aucune trace d'activité réelle — même condition que
         // /api/gerer-vitrine.js, revérifiée côté serveur de toute façon.

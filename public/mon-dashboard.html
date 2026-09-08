@@ -74,12 +74,13 @@
   .btn-pause-diffusion:disabled { opacity:0.5; cursor:not-allowed; transform:none; box-shadow:none; filter:none; }
   .pause-note { font-size:0.76rem; color:#8a9891; margin-top:6px; }
 
-  /* 08/09/2026 : bouton rouge "Arrêter mon forfait", demandé par Cyrille —
-     placé dans le tableau de bord (pas sur la page de paiement). */
+  /* 08-09/2026 : bouton rouge "Arrêter mon forfait", demandé par Cyrille —
+     placé dans l'en-tête du tableau de bord, en face du titre (déplacé
+     depuis son emplacement initial sous le solde publicitaire, le 09/09). */
   .btn-arreter-forfait {
-    display:block; width:100%; text-align:center; margin-top:16px; background:#fff;
-    color:#c0392b; border:2px solid #c0392b; border-radius:12px; padding:13px;
-    font-size:0.9rem; font-weight:800; cursor:pointer;
+    display:inline-flex; align-items:center; gap:6px; background:#fff;
+    color:#c0392b; border:1.5px solid #c0392b; border-radius:10px; padding:9px 14px;
+    font-size:0.85rem; font-weight:700; cursor:pointer; white-space:nowrap;
   }
   .btn-arreter-forfait:hover { background:#fdeaea; }
   .btn-arreter-forfait:disabled { opacity:0.5; cursor:not-allowed; }
@@ -437,6 +438,7 @@
       <button type="button" id="btnVoirArchives" style="display:none; background:none; border:none; color:#8a9891; font-size:0.78rem; font-weight:700; cursor:pointer; text-decoration:underline; padding:0 4px; white-space:nowrap;">📦 Vitrines archivées</button>
       <button type="button" class="btn-elements" id="btnMesRdv" style="background:#fff; color:#1e6f4c; border:1.5px solid #1e6f4c;">📅 Mes rendez-vous</button>
       <a class="btn-elements" id="btnElements" href="#">✏️ Modifier mes éléments</a>
+      <button class="btn-arreter-forfait" id="btnArreterForfait" type="button">🛑 Arrêter mon forfait</button>
     </div>
   </div>
 
@@ -486,10 +488,6 @@
   </div>
   <button class="btn-pause-diffusion" id="btnPauseDiffusion" style="display:none;"></button>
   <p class="pause-note">Mettre en pause n'arrête que la diffusion des annonces — votre solde publicitaire reste intact, relancez quand vous voulez.</p>
-
-  <!-- 08/09/2026 : bouton rouge "Arrêter mon forfait", demandé par Cyrille —
-       ici dans le tableau de bord (pas sur la page de paiement campagne.html). -->
-  <button class="btn-arreter-forfait" id="btnArreterForfait" type="button">🛑 Arrêter mon forfait</button>
 
   <div class="panel-tabs" id="panelTabs">
     <button type="button" class="panel-tab active" id="tabAds" data-tab="ads">

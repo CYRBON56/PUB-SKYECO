@@ -73,17 +73,6 @@
   .btn-pause-diffusion.actif-pause:hover { box-shadow:0 14px 30px rgba(30,111,76,0.4); }
   .btn-pause-diffusion:disabled { opacity:0.5; cursor:not-allowed; transform:none; box-shadow:none; filter:none; }
   .pause-note { font-size:0.76rem; color:#8a9891; margin-top:6px; }
-
-  /* 08-09/2026 : bouton rouge "Arrêter mon forfait", demandé par Cyrille —
-     placé dans l'en-tête du tableau de bord, en face du titre (déplacé
-     depuis son emplacement initial sous le solde publicitaire, le 09/09). */
-  .btn-arreter-forfait {
-    display:inline-flex; align-items:center; gap:6px; background:#fff;
-    color:#c0392b; border:1.5px solid #c0392b; border-radius:10px; padding:9px 14px;
-    font-size:0.85rem; font-weight:700; cursor:pointer; white-space:nowrap;
-  }
-  .btn-arreter-forfait:hover { background:#fdeaea; }
-  .btn-arreter-forfait:disabled { opacity:0.5; cursor:not-allowed; }
   .solde-box h3 { font-size:0.95rem; margin-bottom:14px; }
   .solde-bar-track { background:#eef1f0; border-radius:8px; height:12px; overflow:hidden; margin-bottom:10px; }
   .solde-bar-fill { background:#e8622c; height:100%; transition:width 0.4s ease; }
@@ -308,7 +297,21 @@
   }
   .client-nom { font-weight:700; color:#14312a; white-space:nowrap; }
   .client-contact { display:block; color:#3a4a43; text-decoration:none; font-size:0.82rem; white-space:nowrap; }
+  /* Fiche de démonstration (07/09) : identité/coordonnées à peine visibles à
+     l'écran, pour filmer sans donner l'impression de montrer de vraies
+     coordonnées client — le reste du tableau (date, statut, devis) reste net. */
+  .client-floute-demo { filter:blur(4.5px); opacity:0.65; user-select:none; pointer-events:none; }
   .client-contact:hover { text-decoration:underline; color:#1e6f4c; }
+  /* Ajouté 08/09 : bouton de correction du nom/contact d'une demande — utile
+     quand Cyrille saisit lui-même une demande pour un client qu'il a déjà eu
+     au téléphone (le numéro/email enregistrés sont alors les SIENS, requis
+     pour la vérification SMS, pas ceux du client — voir le commentaire sur
+     lead-modifier-contact.js). */
+  .btn-modifier-contact {
+    margin-top:4px; background:none; border:1px solid #dde5e1; border-radius:6px;
+    color:#5f6368; font-size:0.72rem; padding:2px 7px; cursor:pointer;
+  }
+  .btn-modifier-contact:hover { background:#f0f4f2; color:#1e6f4c; border-color:#c7d3cd; }
 
   .loading, .empty-msg { text-align:center; padding:50px 20px; color:#8a9891; font-size:0.92rem; }
   .empty-msg .empty-icone { display:block; font-size:2.1rem; margin-bottom:10px; }
@@ -378,6 +381,40 @@
 
 <div class="verif-acces-overlay" id="verifAccesOverlay">Vérification de votre accès…</div>
 
+<!-- 07/09 : message ponctuel de Cyrille (voir api/messages-artisan.js) — visible
+     uniquement côté artisan, en plus du SMS déjà reçu. -->
+<div id="messageAdminBanniere" style="display:none;position:fixed;left:16px;right:16px;bottom:16px;max-width:420px;margin:0 auto;z-index:10000;background:#fff;border:1.5px solid #e8622c;border-radius:14px;padding:16px 18px;box-shadow:0 8px 30px rgba(20,49,42,0.18);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <div style="font-weight:800;color:#e8622c;margin-bottom:6px;">✉️ Message de Cyrille</div>
+  <div id="messageAdminContenu" style="color:#14312a;font-size:0.92rem;line-height:1.4;margin-bottom:10px;"></div>
+  <button type="button" id="btnMessageAdminLu" style="background:#1e6f4c;color:#fff;border:none;padding:8px 16px;border-radius:9px;font-weight:700;cursor:pointer;font-size:0.85rem;">J'ai vu, merci</button>
+</div>
+
+<!-- 07/09 : partage d'écran en direct (voir api/ecran-partage.js) — Cyrille
+     voit réellement l'écran (l'onglet dashboard) de l'artisan, en vidéo, avec
+     son accord explicite à chaque fois. Pas de contrôle à distance : lecture
+     seule, l'artisan garde la main sur son clavier/souris. -->
+
+<!-- Côté artisan : demande d'autorisation, puis bannière tant que le partage est actif. -->
+<div id="ecranPartageConsentement" style="display:none;position:fixed;inset:0;z-index:10003;background:rgba(20,49,42,0.55);align-items:center;justify-content:center;padding:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <div style="background:#fff;border-radius:16px;padding:26px 24px;max-width:400px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.25);">
+    <div style="font-size:1.05rem;font-weight:800;color:#14312a;margin-bottom:10px;">🎥 Cyrille souhaite voir votre écran en direct</div>
+    <p style="font-size:0.88rem;color:#6b7a72;line-height:1.4;margin-bottom:18px;">Pour vous aider sur votre dashboard. Si vous acceptez, votre navigateur vous demandera de choisir quoi partager — sélectionnez cet onglet. Il ne peut rien cliquer ni taper à votre place, il voit seulement votre écran.</p>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button type="button" id="btnEcranPartageRefuser" style="background:#f0f1ec;color:#6b7a72;border:none;padding:11px 18px;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.88rem;">Refuser</button>
+      <button type="button" id="btnEcranPartageAutoriser" style="background:#1e6f4c;color:#fff;border:none;padding:11px 18px;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.88rem;">Autoriser</button>
+    </div>
+  </div>
+</div>
+<div id="ecranPartageBanniereArtisan" style="display:none;position:fixed;top:0;left:0;right:0;z-index:10001;background:#c0392b;color:#fff;text-align:center;padding:10px 16px;font-weight:700;font-size:0.9rem;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  🔴 Votre écran est partagé avec Cyrille en direct
+  <button type="button" id="btnEcranPartageArreter" style="margin-left:12px;background:rgba(255,255,255,0.25);color:#fff;border:none;padding:4px 12px;border-radius:8px;font-weight:700;font-size:0.78rem;cursor:pointer;">Arrêter le partage</button>
+</div>
+
+<!-- Côté admin (Cyrille) : badge de statut + vidéo reçue. -->
+<div id="ecranPartageVideoWrap" style="display:none;position:fixed;bottom:16px;right:16px;z-index:10001;background:#14312a;border-radius:14px;padding:10px;box-shadow:0 10px 40px rgba(0,0,0,0.35);">
+  <video id="ecranPartageVideo" autoplay playsinline style="max-width:46vw;max-height:60vh;border-radius:8px;display:block;"></video>
+</div>
+
 <!-- Feuilles décoratives en arrière-plan, effet 3D via dégradés et ombres -->
 <div class="leaf-bg" style="top:-60px; right:-80px; opacity:0.55;">
   <svg width="360" height="360" viewBox="0 0 360 360">
@@ -438,7 +475,6 @@
       <button type="button" id="btnVoirArchives" style="display:none; background:none; border:none; color:#8a9891; font-size:0.78rem; font-weight:700; cursor:pointer; text-decoration:underline; padding:0 4px; white-space:nowrap;">📦 Vitrines archivées</button>
       <button type="button" class="btn-elements" id="btnMesRdv" style="background:#fff; color:#1e6f4c; border:1.5px solid #1e6f4c;">📅 Mes rendez-vous</button>
       <a class="btn-elements" id="btnElements" href="#">✏️ Modifier mes éléments</a>
-      <button class="btn-arreter-forfait" id="btnArreterForfait" type="button">🛑 Arrêter mon forfait</button>
     </div>
   </div>
 
@@ -858,6 +894,12 @@
   // acceptent les deux rôles, donc l'onglet "Mon calendrier" utilise
   // toujours celui-ci plutôt que sessionTokenActuel.
   let tokenCalendrierActuel = null;
+  // Fiche de démonstration (07/09) : renseigné par chargerDemandes() dès le
+  // chargement de la page (bien avant qu'on puisse cliquer sur un onglet) —
+  // réutilisé par le calendrier pour flouter les noms/téléphones des rendez-
+  // vous fictifs, comme pour "Gérer les clients". false pour toute vraie
+  // fiche artisan.
+  let estDemoActuel = false;
 
   // Identifiant réservé de la fiche "Skyeco Pro" (Cyrille lui-même), déjà
   // utilisé par mes-artisans.html pour son propre accès admin/calendrier —
@@ -926,7 +968,14 @@
     chargerLogo();
     chargerStats();
     chargerSolde();
-    chargerDemandes(sessionTokenActuel);
+    // Bug corrigé le 07/09 : "Gérer les clients" était appelé avec
+    // sessionTokenActuel, qui vaut TOUJOURS null en mode admin (voir plus
+    // haut) — /api/mes-leads recevait donc un token null, répondait 401, et
+    // la liste affichait systématiquement "Impossible de charger les
+    // demandes" dès qu'on ouvrait le dashboard d'un artisan depuis
+    // mes-artisans.html. tokenCalendrierActuel, lui, reste renseigné en mode
+    // admin (même raisonnement que pour l'envoi/relance de devis ci-dessous).
+    chargerDemandes(tokenCalendrierActuel);
     initPilotageAds();
     initAppelVideo();
     demarrerPresence();
@@ -944,6 +993,10 @@
     if (!adminToken) {
       chargerSitesCompte(token);
       chargerApercuCampagnes(token);
+      initMessagesArtisan();
+      demarrerEcouteDemandePartageEcran();
+    } else if (params.get('guidage') === '1') {
+      demarrerDemandePartageEcran();
     }
   }
 
@@ -1011,7 +1064,7 @@
           const r = await fetch('/api/get-campaign-spend', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ draft_id: s.id })
+            body: JSON.stringify({ draft_id: s.id, token: tokenCalendrierActuel })
           });
           const d = await r.json();
           return { ...s, clics: d.success && d.campagneExiste ? d.clics : null, pausee: d.diffusionPausee || false };
@@ -1027,13 +1080,8 @@
       // simple conteneur, seul le bloc contenu est cliquable.
       tuiles.innerHTML = details.map((s) => {
         const estActuelle = s.id === draftId;
-        // 09/09/2026 : avant, un site en essai affichait toujours "Essai
-        // gratuit" ici, même quand sa campagne diffusait réellement (pas en
-        // pause) — impossible de savoir d'un coup d'œil si ça tournait ou
-        // pas pendant l'essai. On combine désormais les deux informations :
-        // le statut de facturation (essai) ET l'état réel de diffusion.
-        const statutLabel = s.status === 'en_pause' ? '⏸️ En pause' : (s.pausee ? '⏸️ Diffusion en pause' : (s.status === 'essai' ? '🎁 Essai gratuit — diffusion active' : '● En ligne'));
-        const statutCouleur = (s.status === 'en_pause' || s.pausee) ? '#e8622c' : '#1e6f4c';
+        const statutLabel = s.status === 'en_pause' ? '⏸️ En pause' : (s.pausee ? '⏸️ Diffusion en pause' : (s.status === 'essai' ? '🎁 Essai gratuit' : '● En ligne'));
+        const statutCouleur = (s.status === 'en_pause' || s.pausee) ? '#e8622c' : (s.status === 'essai' ? '#5b6b64' : '#1e6f4c');
         // Suppression définitive proposée seulement si la vitrine n'a
         // strictement aucune trace d'activité réelle — même condition que
         // /api/gerer-vitrine.js, revérifiée côté serveur de toute façon.
@@ -1260,6 +1308,18 @@
       calendrierDejaCharge = true;
       chargerCalendrier();
     }
+    // Corrigé le 08/09 (Cyrille : une demande reçue pendant que le tableau de
+    // bord était déjà ouvert n'apparaissait pas dans "Mes clients" tant qu'il
+    // ne rechargeait pas toute la page — chargerDemandes()/chargerStats() ne
+    // s'exécutaient qu'une seule fois, au chargement initial ; changer
+    // d'onglet ne faisait que montrer/cacher les panneaux, sans jamais
+    // rafraîchir leurs données). On recharge maintenant "Mes clients" à
+    // chaque fois qu'on rouvre cet onglet, pour voir les nouvelles demandes
+    // sans avoir à recharger toute la page.
+    if (cible === 'clients') {
+      chargerDemandes(tokenCalendrierActuel);
+      chargerStats();
+    }
   }
 
   function initPanelTabs() {
@@ -1340,6 +1400,238 @@
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') envoyerPingPresence();
     });
+  }
+
+  // --- Message ponctuel de Cyrille (07/09) : voir api/messages-artisan.js --
+  // Uniquement côté artisan (pas sur la vue admin de Cyrille lui-même) : SMS
+  // déjà reçu, ceci n'est qu'un rappel visible dans le dashboard au cas où.
+  let dernierMessageAffiche = null;
+  async function verifierMessagesArtisan() {
+    if (!tokenCalendrierActuel) return;
+    try {
+      const rep = await fetch('/api/messages-artisan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'liste' }),
+      });
+      if (!rep.ok) return;
+      const data = await rep.json();
+      if (!data.success) return;
+      const nonLu = (data.messages || []).find(m => !m.lu);
+      const banniere = document.getElementById('messageAdminBanniere');
+      if (nonLu && dernierMessageAffiche !== nonLu.id) {
+        dernierMessageAffiche = nonLu.id;
+        document.getElementById('messageAdminContenu').textContent = nonLu.contenu;
+        banniere.style.display = '';
+        document.getElementById('btnMessageAdminLu').onclick = async () => {
+          banniere.style.display = 'none';
+          try {
+            await fetch('/api/messages-artisan', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'marquer_lu', messageId: nonLu.id }),
+            });
+          } catch (e) { /* silencieux */ }
+        };
+      }
+    } catch (e) { /* silencieux — un échec de sondage n'est pas bloquant */ }
+  }
+  function initMessagesArtisan() {
+    verifierMessagesArtisan();
+    setInterval(() => {
+      if (document.visibilityState === 'visible') verifierMessagesArtisan();
+    }, 45000);
+  }
+
+  // --- Partage d'écran en direct (07/09) : voir api/ecran-partage.js -------
+  // Vraie prise en main "vision" (pas de contrôle à distance) : Cyrille voit
+  // l'écran de l'artisan en vidéo, via WebRTC. Signalisation par simple
+  // sondage HTTP (pas de WebSocket) : chaque camp écrit son SDP (offre côté
+  // artisan, réponse côté admin) une fois la collecte ICE terminée
+  // ("non-trickle"), l'autre camp le récupère au sondage suivant — plus
+  // simple à fiabiliser qu'un échange de candidats au fil de l'eau, pour un
+  // usage support ponctuel où 1-2s de délai ne posent aucun problème.
+  // Serveur STUN public uniquement (pas de TURN) : suffisant dans la grande
+  // majorité des cas, mais une connexion peut échouer derrière certains
+  // réseaux d'entreprise très restrictifs.
+  const RTC_CONFIG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+  function attendreFinCollecteIce(pc) {
+    if (pc.iceGatheringState === 'complete') return Promise.resolve();
+    return new Promise((resolve) => {
+      const verifier = () => {
+        if (pc.iceGatheringState === 'complete') {
+          pc.removeEventListener('icegatheringstatechange', verifier);
+          resolve();
+        }
+      };
+      pc.addEventListener('icegatheringstatechange', verifier);
+      setTimeout(resolve, 3000); // filet de sécurité : on part avec ce qu'on a
+    });
+  }
+
+  // --- Côté admin (Cyrille) : ouvert via "🎥 Prise en main" (?guidage=1) ---
+  function demarrerDemandePartageEcran() {
+    const videoWrap = document.getElementById('ecranPartageVideoWrap');
+    const videoEl = document.getElementById('ecranPartageVideo');
+    let pc = null;
+    let offreDejaTraitee = false;
+
+    const badge = document.createElement('div');
+    badge.style.cssText = 'position:fixed;top:10px;right:10px;z-index:10001;background:#14312a;color:#fff;padding:9px 14px;border-radius:10px;font-weight:700;font-size:0.82rem;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,0.2);';
+    badge.textContent = "🕓 En attente de l'autorisation de l'artisan…";
+    document.body.appendChild(badge);
+
+    function nettoyer() {
+      if (pc) { pc.close(); pc = null; }
+      videoWrap.style.display = 'none';
+      videoEl.srcObject = null;
+    }
+
+    function envoyer(action, extra) {
+      return fetch('/api/ecran-partage', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action, ...extra }),
+        keepalive: action === 'terminer',
+      }).catch(() => {});
+    }
+
+    envoyer('demander');
+    window.addEventListener('beforeunload', () => envoyer('terminer'));
+
+    let statutConnu = null;
+    setInterval(async () => {
+      try {
+        const rep = await fetch('/api/ecran-partage', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'etat' }),
+        });
+        if (!rep.ok) return;
+        const data = await rep.json();
+        if (!data.success) return;
+
+        if (data.statut !== statutConnu) {
+          statutConnu = data.statut;
+          if (data.statut === 'refuse') { badge.textContent = "🚫 L'artisan a refusé le partage d'écran"; badge.style.background = '#c0392b'; nettoyer(); }
+          else if (data.statut === 'demande') { badge.textContent = "🕓 En attente de l'autorisation de l'artisan…"; badge.style.background = '#14312a'; }
+          else if (data.statut === 'termine') { badge.textContent = 'Partage terminé'; badge.style.background = '#6b7a72'; nettoyer(); offreDejaTraitee = false; }
+        }
+
+        if (data.statut === 'offre_prete' && data.offreSdp && !offreDejaTraitee) {
+          offreDejaTraitee = true;
+          badge.textContent = '🟡 Connexion en cours…';
+          badge.style.background = '#e8622c';
+          pc = new RTCPeerConnection(RTC_CONFIG);
+          pc.ontrack = (e) => {
+            videoEl.srcObject = e.streams[0];
+            videoWrap.style.display = '';
+            badge.textContent = '🟢 Vous voyez son écran en direct';
+            badge.style.background = '#1e6f4c';
+          };
+          pc.onconnectionstatechange = () => {
+            if (['disconnected', 'failed', 'closed'].includes(pc.connectionState)) nettoyer();
+          };
+          await pc.setRemoteDescription({ type: 'offer', sdp: data.offreSdp });
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          await attendreFinCollecteIce(pc);
+          envoyer('reponse', { sdp: pc.localDescription.sdp });
+        }
+      } catch (e) { /* silencieux */ }
+    }, 1500);
+  }
+
+  // --- Côté artisan : demande d'autorisation, puis partage effectif -------
+  function demarrerEcouteDemandePartageEcran() {
+    const modale = document.getElementById('ecranPartageConsentement');
+    const banniere = document.getElementById('ecranPartageBanniereArtisan');
+    let demandeDejaVue = false;
+    let flux = null;
+    let pc = null;
+    let reponseDejaTraitee = false;
+
+    function arreterPartage(previens) {
+      if (flux) { flux.getTracks().forEach(t => t.stop()); flux = null; }
+      if (pc) { pc.close(); pc = null; }
+      banniere.style.display = 'none';
+      demandeDejaVue = false;
+      reponseDejaTraitee = false;
+      if (previens) {
+        fetch('/api/ecran-partage', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'terminer' }),
+          keepalive: true,
+        }).catch(() => {});
+      }
+    }
+    window.addEventListener('beforeunload', () => { if (flux) arreterPartage(true); });
+    document.getElementById('btnEcranPartageArreter').addEventListener('click', () => arreterPartage(true));
+
+    async function autoriser() {
+      modale.style.display = 'none';
+      try {
+        flux = await navigator.mediaDevices.getDisplayMedia({ video: { displaySurface: 'browser' }, preferCurrentTab: true, audio: false });
+      } catch (e) {
+        fetch('/api/ecran-partage', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'repondre', autorise: false }),
+        }).catch(() => {});
+        alert("Impossible de partager votre écran (annulé, ou non pris en charge par ce navigateur).");
+        return;
+      }
+      flux.getVideoTracks()[0].addEventListener('ended', () => arreterPartage(true));
+
+      await fetch('/api/ecran-partage', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'repondre', autorise: true }),
+      }).catch(() => {});
+
+      pc = new RTCPeerConnection(RTC_CONFIG);
+      flux.getTracks().forEach(t => pc.addTrack(t, flux));
+      const offre = await pc.createOffer();
+      await pc.setLocalDescription(offre);
+      await attendreFinCollecteIce(pc);
+      await fetch('/api/ecran-partage', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'offre', sdp: pc.localDescription.sdp }),
+      }).catch(() => {});
+
+      banniere.style.display = '';
+    }
+
+    function refuser() {
+      modale.style.display = 'none';
+      fetch('/api/ecran-partage', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'repondre', autorise: false }),
+      }).catch(() => {});
+    }
+    document.getElementById('btnEcranPartageAutoriser').addEventListener('click', autoriser);
+    document.getElementById('btnEcranPartageRefuser').addEventListener('click', refuser);
+
+    setInterval(async () => {
+      try {
+        const rep = await fetch('/api/ecran-partage', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'etat' }),
+        });
+        if (!rep.ok) return;
+        const data = await rep.json();
+        if (!data.success) return;
+
+        if (data.statut === 'demande' && !demandeDejaVue) {
+          demandeDejaVue = true;
+          modale.style.display = 'flex';
+        }
+        if (data.statut === 'termine' && flux) {
+          arreterPartage(false);
+        }
+        if (data.statut === 'connecte' && data.reponseSdp && pc && !reponseDejaTraitee) {
+          reponseDejaTraitee = true;
+          await pc.setRemoteDescription({ type: 'answer', sdp: data.reponseSdp });
+        }
+      } catch (e) { /* silencieux */ }
+    }, 1200);
   }
 
   // --- Onglet "Mon calendrier" : mêmes API que public/mes-rdv.html
@@ -1472,8 +1764,11 @@
             btn.appendChild(fait);
           }
         } else {
+          // Fiche de démonstration (07/09) : mêmes raisons que "Gérer les
+          // clients" — nom/téléphone du client à peine visibles à l'écran.
+          const classeClientFloute = estDemoActuel ? ' client-floute-demo' : '';
           btn.innerHTML = '<span class="heure">✓ ' + String(c.heure).padStart(2, '0') + 'h00</span>'
-            + '<span class="client">' + (c.client_nom || 'Client') + (c.client_telephone ? ' · ' + c.client_telephone : '') + '</span>';
+            + '<span class="client' + classeClientFloute + '">' + (c.client_nom || 'Client') + (c.client_telephone ? ' · ' + c.client_telephone : '') + '</span>';
         }
 
         carte.appendChild(btn);
@@ -1563,7 +1858,7 @@
       const resp = await fetch('/api/clics-par-zone', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draft_id: draftId }),
+        body: JSON.stringify({ draft_id: draftId, token: tokenCalendrierActuel }),
       });
       const data = await resp.json();
       if (!resp.ok || !data.success || !data.campagneExiste) return; // pas de campagne active -> panneau masqué
@@ -1665,7 +1960,7 @@
       const res = await fetch('/api/reprendre-subscription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId })
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel })
       });
       const data = await res.json();
       if (data.success) {
@@ -1703,7 +1998,7 @@
       const res = await fetch('/api/get-campaign-spend', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draft_id: draftId })
+        body: JSON.stringify({ draft_id: draftId, token: tokenCalendrierActuel })
       });
       const data = await res.json();
 
@@ -1736,7 +2031,7 @@
           <span>Restant : <strong>${data.budgetRestant} €</strong> / ${data.budgetPaye} €</span>
         </div>
         <div class="solde-detail">
-          ${data.clics} clics réels (dépense Google : ${data.coutReelGoogleEuros} €, comptée double dans votre solde — commission de service incluse).
+          ${data.clics} clic${data.clics === 1 ? '' : 's'} reçu${data.clics === 1 ? '' : 's'} ce mois-ci.
         </div>
       `;
 
@@ -1766,7 +2061,7 @@
       const res = await fetch('/api/pause-campagne-ads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, action: actionDemandee })
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: actionDemandee })
       });
       const data = await res.json();
       if (data.success) {
@@ -1782,48 +2077,6 @@
     }
   });
 
-  // 08/09/2026 : bouton rouge "Arrêter mon forfait", demandé par Cyrille —
-  // déclenche la résiliation existante (/api/cancel-subscription, arrêt à
-  // la fin de la période déjà payée). Le comportement « la vitrine
-  // s'éteint dès que le budget pub tombe à 0 € puis redémarre
-  // automatiquement au réapprovisionnement », décrit dans le message de
-  // confirmation ci-dessous, est le comportement attendu côté produit — à
-  // vérifier/compléter côté serveur (create-ad-budget-checkout / suivi de
-  // consommation) si ce n'est pas déjà le cas.
-  document.getElementById('btnArreterForfait').addEventListener('click', async () => {
-    if (!sessionTokenActuel) {
-      alert('Merci de vous connecter à votre tableau de bord pour gérer votre abonnement.');
-      window.location.href = '/acces-dashboard.html?id=' + draftId;
-      return;
-    }
-    if (!confirm("Arrêter votre forfait Skyeco Pro ?\n\n• Votre forfait s'arrêtera à la fin du mois en cours.\n• Votre vitrine s'éteindra automatiquement lorsque votre budget publicitaire sera à 0 €.\n• Si vous réapprovisionnez votre budget avant cela, tout redémarre automatiquement — rien n'est perdu.\n\nConfirmer l'arrêt du forfait ?")) {
-      return;
-    }
-    const btn = document.getElementById('btnArreterForfait');
-    btn.disabled = true;
-    btn.textContent = 'Arrêt en cours…';
-    try {
-      const res = await fetch('/api/cancel-subscription', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, token: sessionTokenActuel })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert(data.message || "Votre forfait s'arrêtera à la fin du mois en cours.");
-        btn.textContent = 'Forfait arrêté';
-      } else {
-        alert(data.error || 'Une erreur est survenue.');
-        btn.disabled = false;
-        btn.textContent = '🛑 Arrêter mon forfait';
-      }
-    } catch (e) {
-      alert('Impossible de contacter le serveur.');
-      btn.disabled = false;
-      btn.textContent = '🛑 Arrêter mon forfait';
-    }
-  });
-
   // Un artisan avec plusieurs vitrines gère TOUS ses clients au même
   // endroit, quel que soit le produit/site d'où vient la demande (voir
   // discussion 03/09 : "il s'en fout, ça reste un client") — token permet
@@ -1832,41 +2085,56 @@
   async function chargerDemandes(token) {
     const content = document.getElementById('listeContent');
     try {
-      const draftResp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise`, {
+      const draftResp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,est_demo`, {
         headers: { apikey: SUPABASE_ANON_KEY }
       });
       const draftRows = await draftResp.json();
       nomEntreprise = draftRows[0]?.entreprise || 'Mon entreprise';
+      // Fiche de démonstration (07/09, demande de Cyrille) : les clients y
+      // sont fictifs mais réalistes — pour filmer sans donner l'impression
+      // de montrer de vraies coordonnées client à l'écran, leur identité et
+      // leurs coordonnées sont floutées (classe .client-floute-demo,
+      // définie plus haut dans <style>). Le reste (date, statut, devis)
+      // reste net pour bien montrer l'activité du compte.
+      estDemoActuel = !!draftRows[0]?.est_demo;
 
-      let idsRecherches = [draftId];
-      const nomsParSite = { [draftId]: nomEntreprise };
-      if (token) {
-        try {
-          const sitesResp = await fetch('/api/mes-sites', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token })
-          });
-          const sitesData = await sitesResp.json();
-          if (sitesData.success && Array.isArray(sitesData.sites) && sitesData.sites.length) {
-            idsRecherches = sitesData.sites.map(s => s.id);
-            sitesData.sites.forEach(s => { nomsParSite[s.id] = s.entreprise || 'Vitrine sans nom'; });
-          }
-        } catch (e) { /* on retombe sur le site courant seul */ }
-      }
-      const plusieursSites = idsRecherches.length > 1;
-
-      const filtreIds = idsRecherches.map(id => `"${id}"`).join(',');
-      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_leads?draft_id=in.(${filtreIds})&select=*&order=created_at.desc`, {
-        headers: { apikey: SUPABASE_ANON_KEY }
+      // Sécurité (06/09/2026) : les demandes ("leads" — nom, téléphone,
+      // email, adresse de chaque prospect) sont maintenant lues via un
+      // endpoint authentifié (api/mes-leads.js) plutôt que directement
+      // depuis Supabase avec la clé anonyme — voir ce fichier pour le détail
+      // de la faille corrigée (n'importe qui pouvait lire les demandes de
+      // N'IMPORTE QUELLE vitrine en connaissant juste son draft_id, qui
+      // n'est pas secret).
+      const leadsResp = await fetch('/api/mes-leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token }),
       });
-      leadsData = await resp.json();
+      const leadsPayload = await leadsResp.json();
+      if (!leadsPayload.success) throw new Error(leadsPayload.error || 'Impossible de charger les demandes.');
+
+      leadsData = leadsPayload.leads || [];
+      const sites = Array.isArray(leadsPayload.sites) && leadsPayload.sites.length ? leadsPayload.sites : [{ id: draftId, entreprise: nomEntreprise }];
+      const nomsParSite = {};
+      sites.forEach(s => { nomsParSite[s.id] = s.entreprise || (s.id === draftId ? nomEntreprise : 'Vitrine sans nom'); });
+      const plusieursSites = sites.length > 1;
 
       if (!leadsData.length) {
         content.innerHTML = '<div class="empty-msg"><span class="empty-icone">📭</span>Aucune demande reçue pour l\'instant.</div>';
         return;
       }
 
+      // Sécurité (06/09/2026) : nom, prénom, téléphone, email et "reponses"
+      // (dont l'adresse extraite par extraireAdresse) viennent tous du
+      // formulaire PUBLIC apercu.html, rempli par n'importe quel visiteur
+      // anonyme — avant ce correctif ils étaient injectés tels quels dans ce
+      // tableau via innerHTML : une "demande" contenant par exemple
+      // <img src=x onerror=...> comme prénom exécutait du JavaScript dans le
+      // navigateur de L'ARTISAN dès qu'il ouvrait "Mes clients" (XSS stockée),
+      // avec accès à son jeton de session stocké en sessionStorage. Toutes
+      // les valeurs issues d'un lead sont maintenant échappées avec
+      // escapeHtmlDash avant affichage.
+      const classeFloute = estDemoActuel ? ' client-floute-demo' : '';
       content.innerHTML = `
         <div class="table-scroll">
         <table class="table-clients">
@@ -1879,16 +2147,17 @@
                 <td>${new Date(l.created_at).toLocaleDateString('fr-FR')}</td>
                 ${plusieursSites ? `<td>${nomsParSite[l.draft_id] || '—'}</td>` : ''}
                 <td>
-                  <div class="client-identite">
-                    <span class="client-avatar">${initialesClient(l.prenom, l.nom)}</span>
-                    <span class="client-nom">${(l.prenom || '') + ' ' + (l.nom || '')}</span>
+                  <div class="client-identite${classeFloute}">
+                    <span class="client-avatar">${escapeHtmlDash(initialesClient(l.prenom, l.nom))}</span>
+                    <span class="client-nom">${escapeHtmlDash((l.prenom || '') + ' ' + (l.nom || ''))}</span>
                   </div>
                 </td>
-                <td>${extraireAdresse(l.reponses)}</td>
-                <td>
-                  ${l.telephone ? `<a class="client-contact" href="tel:${l.telephone}">📞 ${l.telephone}</a>` : ''}
-                  ${l.email ? `<a class="client-contact" href="mailto:${l.email}">✉️ ${l.email}</a>` : ''}
+                <td class="${classeFloute.trim()}">${escapeHtmlDash(extraireAdresse(l.reponses))}</td>
+                <td class="${classeFloute.trim()}">
+                  ${l.telephone ? `<a class="client-contact" href="tel:${encodeURIComponent(l.telephone)}">📞 ${escapeHtmlDash(l.telephone)}</a>` : ''}
+                  ${l.email ? `<a class="client-contact" href="mailto:${encodeURIComponent(l.email)}">✉️ ${escapeHtmlDash(l.email)}</a>` : ''}
                   ${(!l.telephone && !l.email) ? '—' : ''}
+                  <button type="button" class="btn-modifier-contact" data-action="modifier-contact" data-lead="${l.id}" title="Corriger le nom/téléphone/email (utile si vous avez saisi cette demande vous-même pour un client)">✏️ Corriger</button>
                 </td>
                 <td>${labelStatutLead(l.statut)}</td>
                 <td>${celluleDevis(l)}</td>
@@ -1904,6 +2173,9 @@
       content.querySelectorAll('[data-action="relancer-devis"]').forEach(btn => {
         btn.addEventListener('click', () => relancerDevis(btn.dataset.lead, btn.dataset.site, btn));
       });
+      content.querySelectorAll('[data-action="modifier-contact"]').forEach(btn => {
+        btn.addEventListener('click', () => modifierContactLead(btn.dataset.lead));
+      });
     } catch (e) {
       content.innerHTML = '<div class="empty-msg"><span class="empty-icone">⚠️</span>Impossible de charger les demandes pour le moment.</div>';
     }
@@ -1916,6 +2188,47 @@
     const p = (prenom || '').trim().charAt(0);
     const n = (nom || '').trim().charAt(0);
     return (p + n).toUpperCase() || '?';
+  }
+
+  // Ajouté 08/09 (demande de Cyrille : une demande qu'il saisit lui-même
+  // pour un client déjà eu au téléphone enregistre SON propre numéro/email —
+  // seul numéro qu'il peut vérifier par SMS — au lieu de ceux du client, ce
+  // qui le laissait sans aucun moyen de recontacter le vrai client depuis le
+  // tableau de bord). Permet de corriger nom/prénom/téléphone/email
+  // directement sur une demande déjà enregistrée.
+  async function modifierContactLead(leadId) {
+    const lead = leadsData.find(l => l.id === leadId);
+    if (!lead) return;
+    const nouveauPrenom = prompt('Prénom du client :', lead.prenom || '');
+    if (nouveauPrenom === null) return; // annulé
+    const nouveauNom = prompt('Nom du client :', lead.nom || '');
+    if (nouveauNom === null) return;
+    const nouveauTel = prompt('Téléphone du client (ex : 06 12 34 56 78) :', lead.telephone || '');
+    if (nouveauTel === null) return;
+    const nouvelEmail = prompt('Email du client (laisser vide si inconnu) :', lead.email || '');
+    if (nouvelEmail === null) return;
+    try {
+      const resp = await fetch('/api/lead-modifier-contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          leadId,
+          token: tokenCalendrierActuel,
+          prenom: nouveauPrenom.trim(),
+          nom: nouveauNom.trim(),
+          telephone: nouveauTel.trim(),
+          email: nouvelEmail.trim(),
+        }),
+      });
+      const data = await resp.json();
+      if (!data.success) {
+        alert(data.error || "Impossible de mettre à jour ce contact pour le moment.");
+        return;
+      }
+      await chargerDemandes(tokenCalendrierActuel);
+    } catch (e) {
+      alert('Impossible de contacter le serveur.');
+    }
   }
 
   function labelStatutLead(statut) {
@@ -1995,39 +2308,29 @@
       if (!uploadResp.ok) throw new Error("Échec de l'envoi du fichier : " + (await uploadResp.text().catch(() => '')));
       const pdfUrl = `${SUPABASE_URL}/storage/v1/object/public/${DEVIS_BUCKET}/${chemin}`;
 
-      // 2. Lecture seule ici (autorisée avec la clé publique) — juste pour
-      // vérifier que la demande existe et récupérer le téléphone/prénom
-      // avant de tout transmettre au serveur.
-      const leadResp = await fetch(
-        `${SUPABASE_URL}/rest/v1/skyeco_pro_leads?id=eq.${leadId}&select=id,prenom,telephone,devis_statut`,
-        { headers: { apikey: SUPABASE_ANON_KEY } }
-      );
-      const leadRows = await leadResp.json();
-      if (!leadResp.ok) throw new Error(leadRows.message || 'Erreur Supabase lors de la recherche du lead.');
-      const lead = leadRows[0];
-      if (!lead) throw new Error(`Demande introuvable (id ${leadId}).`);
-      if (!lead.telephone) throw new Error("Ce prospect n'a pas de numéro de téléphone enregistré.");
-      if (lead.devis_statut === 'signe') throw new Error('Ce devis a déjà été signé — impossible de le remplacer depuis cet écran.');
-
       const devisToken = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
 
-      // 3. L'ÉCRITURE (enregistrement du devis) et le SMS se font tous les
-      // deux côté serveur (03/09 — la table skyeco_pro_leads est
-      // volontairement verrouillée en écriture pour la clé publique,
-      // confirmé par l'erreur Postgres 42501 ; seule la clé service_role,
-      // jamais exposée au navigateur, peut écrire ici).
+      // 2. L'ÉCRITURE (enregistrement du devis) et le SMS se font tous les
+      // deux côté serveur (06/09/2026 — la table skyeco_pro_leads est
+      // désormais verrouillée en LECTURE ET écriture pour la clé publique ;
+      // l'endpoint relit lui-même le téléphone/prénom en base avec la clé
+      // service_role et vérifie la session avant d'agir — voir le
+      // commentaire en tête de api/envoyer-devis.js). On utilise
+      // tokenCalendrierActuel (et non sessionTokenActuel) car il reste
+      // renseigné même en mode admin (mes-artisans.html), comme pour
+      // "Mon calendrier".
       const resp = await fetch('/api/envoyer-devis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId: siteConcerne, leadId, telephone: lead.telephone, prenom: lead.prenom, devisToken, pdfUrl }),
+        body: JSON.stringify({ leadId, devisToken, pdfUrl, token: tokenCalendrierActuel }),
       });
       const data = await resp.json();
       if (!resp.ok || !data.success) throw new Error(data.error || "Le devis n'a pas pu être envoyé.");
 
-      await chargerDemandes(sessionTokenActuel);
+      await chargerDemandes(tokenCalendrierActuel);
     } catch (e) {
       alert(e.message || "Une erreur est survenue lors de l'envoi du devis.");
-      await chargerDemandes(sessionTokenActuel);
+      await chargerDemandes(tokenCalendrierActuel);
     }
   }
 
@@ -2039,29 +2342,19 @@
     btn.disabled = true;
     btn.textContent = 'Envoi…';
     try {
-      // Lecture + écriture directes sur Supabase (clé publique, même
-      // raisonnement que uploaderEtEnvoyerDevis — voir son commentaire).
-      const leadResp = await fetch(
-        `${SUPABASE_URL}/rest/v1/skyeco_pro_leads?id=eq.${leadId}&select=id,prenom,telephone,devis_statut,devis_token,devis_nb_relances`,
-        { headers: { apikey: SUPABASE_ANON_KEY } }
-      );
-      const leadRows = await leadResp.json();
-      if (!leadResp.ok) throw new Error(leadRows.message || 'Erreur Supabase lors de la recherche du lead.');
-      const lead = leadRows[0];
-      if (!lead) throw new Error(`Demande introuvable (id ${leadId}).`);
-      if (!lead.devis_token || lead.devis_statut === 'aucun') throw new Error("Aucun devis n'a encore été envoyé pour ce prospect.");
-      if (lead.devis_statut === 'signe') throw new Error('Ce devis est déjà signé — inutile de relancer.');
-      if (!lead.telephone) throw new Error("Ce prospect n'a pas de numéro de téléphone enregistré.");
-
+      // Sécurité (06/09/2026) : l'endpoint relit lui-même le lead en base
+      // avec la clé service_role et vérifie la session — voir le
+      // commentaire en tête de api/relancer-devis.js (même raisonnement
+      // que uploaderEtEnvoyerDevis pour tokenCalendrierActuel).
       const smsResp = await fetch('/api/relancer-devis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId: siteConcerne, leadId, telephone: lead.telephone, prenom: lead.prenom, devisToken: lead.devis_token, nbRelancesActuel: lead.devis_nb_relances || 0 }),
+        body: JSON.stringify({ leadId, token: tokenCalendrierActuel }),
       });
       const smsData = await smsResp.json();
       if (!smsResp.ok || !smsData.success) throw new Error(smsData.error || "La relance n'a pas pu être envoyée.");
 
-      await chargerDemandes(sessionTokenActuel);
+      await chargerDemandes(tokenCalendrierActuel);
     } catch (e) {
       alert(e.message || 'Une erreur est survenue.');
       btn.disabled = false;
@@ -2291,7 +2584,7 @@
       const res = await fetch('/api/get-google-ads-details', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draft_id: draftId })
+        body: JSON.stringify({ draft_id: draftId, token: tokenCalendrierActuel })
       });
       const data = await res.json();
 
@@ -2449,7 +2742,7 @@
         const resp = await fetch('/api/definir-budget-journalier', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ draftId, budgetJournalier: nouveauMontant }),
+          body: JSON.stringify({ draftId, token: tokenCalendrierActuel, budgetJournalier: nouveauMontant }),
         });
         const data = await resp.json();
         if (!resp.ok || !data.success) throw new Error(data.error || '');
@@ -2510,7 +2803,7 @@
         const resp = await fetch('/api/definir-plafond-cpc', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ draftId, plafondCpc: nouveauMontant }),
+          body: JSON.stringify({ draftId, token: tokenCalendrierActuel, plafondCpc: nouveauMontant }),
         });
         const data = await resp.json();
         if (!resp.ok || !data.success) throw new Error(data.error || '');
@@ -2684,7 +2977,7 @@
           const res = await fetch('/api/appliquer-annonce-ads', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ draftId }),
+            body: JSON.stringify({ draftId, token: tokenCalendrierActuel }),
           });
           const data = await res.json();
           appliqueeNote.textContent = data.success
@@ -2987,7 +3280,7 @@
             await fetch('/api/manage-keywords', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ draftId, action: 'exclude', texte: m.texte, matchType: m.matchType }),
+              body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'exclude', texte: m.texte, matchType: m.matchType }),
             });
           } catch (e) { /* on continue avec les suivants même si un appel échoue */ }
         }
@@ -2997,7 +3290,7 @@
           const res = await fetch('/api/get-google-ads-details', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ draft_id: draftId })
+            body: JSON.stringify({ draft_id: draftId, token: tokenCalendrierActuel })
           });
           const data = await res.json();
           if (data.success && data.campagneExiste) {
@@ -3051,7 +3344,7 @@
       const res = await fetch('/api/manage-keywords', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, action: 'exclude', texte, matchType: 'EXACT' })
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'exclude', texte, matchType: 'EXACT' })
       });
       const data = await res.json();
       if (data.success) {
@@ -3123,7 +3416,7 @@
       const res = await fetch('/api/definir-horaires-diffusion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, mode: 'heures_pointe' })
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, mode: 'heures_pointe' })
       });
       const data = await res.json();
       if (data.success) {
@@ -3151,7 +3444,7 @@
       const res = await fetch('/api/definir-horaires-diffusion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, mode: 'toute_heure' })
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, mode: 'toute_heure' })
       });
       const data = await res.json();
       note.textContent = data.success
@@ -3219,7 +3512,7 @@
       const res = await fetch('/api/coach-toggle', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, pause: nouvelEtat })
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, pause: nouvelEtat })
       });
       const data = await res.json();
       if (data.success) {
@@ -3265,7 +3558,7 @@
       const res = await fetch('/api/coach-ads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId })
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel })
       });
       const data = await res.json();
       loading.style.display = 'none';
@@ -3334,7 +3627,7 @@
         const res = await fetch('/api/coach-ads', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ draftId, message })
+          body: JSON.stringify({ draftId, token: tokenCalendrierActuel, message })
         });
         const data = await res.json();
         const bulleCoach = document.createElement('div');
@@ -3448,7 +3741,7 @@
       const res = await fetch('/api/manage-keywords', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, action: 'exclude', texte })
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'exclude', texte })
       });
       const data = await res.json();
       if (data.success) {
@@ -3479,7 +3772,7 @@
       const res = await fetch('/api/manage-keywords', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, action: 'add', texte, matchType: select.value })
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'add', texte, matchType: select.value })
       });
       const data = await res.json();
       if (data.success) {

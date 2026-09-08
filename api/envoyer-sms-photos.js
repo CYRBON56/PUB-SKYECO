@@ -1,10 +1,14 @@
 // /api/envoyer-sms-photos.js
-// Appelé depuis apercu.html (bouton "Envoyer mes photos par SMS" affiché
-// après l'enregistrement d'une demande) : génère un jeton à usage unique,
-// l'attache au lead concerné, et envoie un SMS au prospect avec un lien vers
-// public/envoyer-photos.html — une page pensée pour être ouverte directement
-// depuis le téléphone (accès à l'appareil photo), dont les photos uploadées
-// se rattachent automatiquement à sa demande.
+// Appelé (1) depuis apercu.html (bouton "Envoyer mes photos par SMS" affiché
+// après l'enregistrement d'une demande), et (2) depuis mon-dashboard.html
+// (bouton "📷 Demander photos/coordonnées" — ajouté le 08/09/2026, utile
+// quand Cyrille a créé lui-même une demande avec son propre numéro pour la
+// vérification SMS et n'a donc pas les vraies coordonnées du client) :
+// génère un jeton à usage unique, l'attache au lead concerné, et envoie un
+// SMS avec un lien vers public/envoyer-photos.html — une page pensée pour
+// être ouverte directement depuis le téléphone du CLIENT (accès à
+// l'appareil photo), où il peut renseigner nom/prénom/adresse et envoyer ses
+// photos ; tout se rattache automatiquement à sa demande.
 //
 // Colonnes Supabase requises sur skyeco_pro_leads (à créer si absentes) :
 //   photos          jsonb   (tableau d'URLs, défaut '[]')
@@ -90,7 +94,7 @@ export default async function handler(req, res) {
     const lien = `https://www.skyeco.fr/envoyer-photos.html?lead=${leadId}&token=${token}`;
     await envoyerSMS(
       telephone,
-      `Envoyez vos photos ici, directement depuis votre téléphone : ${lien}`,
+      `Merci de nous transmettre vos coordonnées et quelques photos de votre projet, directement depuis votre téléphone : ${lien}`,
       numeroExpediteur
     );
 

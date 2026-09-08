@@ -73,6 +73,16 @@
   .btn-pause-diffusion.actif-pause:hover { box-shadow:0 14px 30px rgba(30,111,76,0.4); }
   .btn-pause-diffusion:disabled { opacity:0.5; cursor:not-allowed; transform:none; box-shadow:none; filter:none; }
   .pause-note { font-size:0.76rem; color:#8a9891; margin-top:6px; }
+
+  /* 08/09/2026 : bouton rouge "Arrêter mon forfait", demandé par Cyrille —
+     placé dans le tableau de bord (pas sur la page de paiement). */
+  .btn-arreter-forfait {
+    display:block; width:100%; text-align:center; margin-top:16px; background:#fff;
+    color:#c0392b; border:2px solid #c0392b; border-radius:12px; padding:13px;
+    font-size:0.9rem; font-weight:800; cursor:pointer;
+  }
+  .btn-arreter-forfait:hover { background:#fdeaea; }
+  .btn-arreter-forfait:disabled { opacity:0.5; cursor:not-allowed; }
   .solde-box h3 { font-size:0.95rem; margin-bottom:14px; }
   .solde-bar-track { background:#eef1f0; border-radius:8px; height:12px; overflow:hidden; margin-bottom:10px; }
   .solde-bar-fill { background:#e8622c; height:100%; transition:width 0.4s ease; }
@@ -476,6 +486,10 @@
   </div>
   <button class="btn-pause-diffusion" id="btnPauseDiffusion" style="display:none;"></button>
   <p class="pause-note">Mettre en pause n'arrête que la diffusion des annonces — votre solde publicitaire reste intact, relancez quand vous voulez.</p>
+
+  <!-- 08/09/2026 : bouton rouge "Arrêter mon forfait", demandé par Cyrille —
+       ici dans le tableau de bord (pas sur la page de paiement campagne.html). -->
+  <button class="btn-arreter-forfait" id="btnArreterForfait" type="button">🛑 Arrêter mon forfait</button>
 
   <div class="panel-tabs" id="panelTabs">
     <button type="button" class="panel-tab active" id="tabAds" data-tab="ads">
@@ -1762,6 +1776,48 @@
     } finally {
       btn.disabled = false;
       mettreAJourBoutonPause();
+    }
+  });
+
+  // 08/09/2026 : bouton rouge "Arrêter mon forfait", demandé par Cyrille —
+  // déclenche la résiliation existante (/api/cancel-subscription, arrêt à
+  // la fin de la période déjà payée). Le comportement « la vitrine
+  // s'éteint dès que le budget pub tombe à 0 € puis redémarre
+  // automatiquement au réapprovisionnement », décrit dans le message de
+  // confirmation ci-dessous, est le comportement attendu côté produit — à
+  // vérifier/compléter côté serveur (create-ad-budget-checkout / suivi de
+  // consommation) si ce n'est pas déjà le cas.
+  document.getElementById('btnArreterForfait').addEventListener('click', async () => {
+    if (!sessionTokenActuel) {
+      alert('Merci de vous connecter à votre tableau de bord pour gérer votre abonnement.');
+      window.location.href = '/acces-dashboard.html?id=' + draftId;
+      return;
+    }
+    if (!confirm("Arrêter votre forfait Skyeco Pro ?\n\n• Votre forfait s'arrêtera à la fin du mois en cours.\n• Votre vitrine s'éteindra automatiquement lorsque votre budget publicitaire sera à 0 €.\n• Si vous réapprovisionnez votre budget avant cela, tout redémarre automatiquement — rien n'est perdu.\n\nConfirmer l'arrêt du forfait ?")) {
+      return;
+    }
+    const btn = document.getElementById('btnArreterForfait');
+    btn.disabled = true;
+    btn.textContent = 'Arrêt en cours…';
+    try {
+      const res = await fetch('/api/cancel-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token: sessionTokenActuel })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message || "Votre forfait s'arrêtera à la fin du mois en cours.");
+        btn.textContent = 'Forfait arrêté';
+      } else {
+        alert(data.error || 'Une erreur est survenue.');
+        btn.disabled = false;
+        btn.textContent = '🛑 Arrêter mon forfait';
+      }
+    } catch (e) {
+      alert('Impossible de contacter le serveur.');
+      btn.disabled = false;
+      btn.textContent = '🛑 Arrêter mon forfait';
     }
   });
 

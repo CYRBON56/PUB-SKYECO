@@ -731,8 +731,21 @@
       // les deux cas un lien direct est plus utile qu'un bouton caché à
       // cause d'un statut imprévu (ex : resté "preview" après un essai
       // interrompu avant correction de la contrainte Supabase).
+      //
+      // 08/09/2026 : le choix démo/vrai tableau de bord se faisait sur
+      // compteDejaExistant (mot de passe déjà créé) — or le mot de passe
+      // n'est créé que bien plus tard dans le parcours (au moment de payer
+      // sa campagne, voir campagne.html). Résultat : un artisan qui vient
+      // de démarrer son essai gratuit et de valider les CGV (donc plus du
+      // tout en démo) se retrouvait quand même renvoyé vers
+      // mon-dashboard-demo.html tant qu'il n'avait pas encore de mot de
+      // passe. Demandé par Cyrille : dès que l'essai est démarré (ou que
+      // l'abonnement est actif), c'est le VRAI tableau de bord — la démo ne
+      // sert que pour l'explication initiale, juste après le SIRET, avant
+      // toute validation des CGV.
+      const essaiOuAbonnementDemarre = draftStatutActuel === 'essai' || draftStatutActuel === 'published' || draftStatutActuel === 'en_pause';
       const lienRetour = document.getElementById('lienRetourDashboard');
-      lienRetour.href = compteDejaExistant
+      lienRetour.href = essaiOuAbonnementDemarre
         ? '/mon-dashboard.html?id=' + draftId
         : '/mon-dashboard-demo.html?id=' + draftId;
       lienRetour.style.display = 'flex';

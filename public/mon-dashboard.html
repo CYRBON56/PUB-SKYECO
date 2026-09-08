@@ -312,10 +312,6 @@
     color:#5f6368; font-size:0.72rem; padding:2px 7px; cursor:pointer;
   }
   .btn-modifier-contact:hover { background:#f0f4f2; color:#1e6f4c; border-color:#c7d3cd; }
-  /* Ajouté 08/09 : même style pour le bouton "Demander photos/coordonnées"
-     (envoie un SMS avec un lien où le client saisit lui-même nom/prénom/
-     adresse et ses photos — voir envoyer-photos.html et envoyer-sms-photos.js). */
-  .btn-demander-photos { margin-top:4px; margin-left:4px; }
 
   .loading, .empty-msg { text-align:center; padding:50px 20px; color:#8a9891; font-size:0.92rem; }
   .empty-msg .empty-icone { display:block; font-size:2.1rem; margin-bottom:10px; }
@@ -2162,7 +2158,6 @@
                   ${l.email ? `<a class="client-contact" href="mailto:${encodeURIComponent(l.email)}">✉️ ${escapeHtmlDash(l.email)}</a>` : ''}
                   ${(!l.telephone && !l.email) ? '—' : ''}
                   <button type="button" class="btn-modifier-contact" data-action="modifier-contact" data-lead="${l.id}" title="Corriger le nom/téléphone/email (utile si vous avez saisi cette demande vous-même pour un client)">✏️ Corriger</button>
-                  <button type="button" class="btn-modifier-contact btn-demander-photos" data-action="demander-photos" data-lead="${l.id}" title="Envoyer un SMS au client pour qu'il renseigne lui-même son nom, prénom, adresse et vous transmette ses photos">📷 Demander photos</button>
                 </td>
                 <td>${labelStatutLead(l.statut)}</td>
                 <td>${celluleDevis(l)}</td>
@@ -2180,9 +2175,6 @@
       });
       content.querySelectorAll('[data-action="modifier-contact"]').forEach(btn => {
         btn.addEventListener('click', () => modifierContactLead(btn.dataset.lead));
-      });
-      content.querySelectorAll('[data-action="demander-photos"]').forEach(btn => {
-        btn.addEventListener('click', () => demanderPhotosLead(btn.dataset.lead));
       });
     } catch (e) {
       content.innerHTML = '<div class="empty-msg"><span class="empty-icone">⚠️</span>Impossible de charger les demandes pour le moment.</div>';
@@ -2234,30 +2226,6 @@
         return;
       }
       await chargerDemandes(tokenCalendrierActuel);
-    } catch (e) {
-      alert('Impossible de contacter le serveur.');
-    }
-  }
-
-  // Ajouté 08/09 (demande de Cyrille) : plutôt que de deviner ou de rappeler
-  // le client pour ses coordonnées, on peut lui envoyer directement un SMS
-  // avec un lien où il saisit lui-même son nom/prénom/adresse et transmet
-  // ses photos — utile en particulier pour une demande que Cyrille a créée
-  // lui-même (voir modifierContactLead ci-dessus pour le même contexte).
-  async function demanderPhotosLead(leadId) {
-    const lead = leadsData.find(l => l.id === leadId);
-    if (!lead) return;
-    const telephone = prompt('Numéro de téléphone du client (il recevra un SMS avec un lien pour renseigner ses coordonnées et ses photos) :', lead.telephone || '');
-    if (telephone === null) return; // annulé
-    if (!telephone.trim()) { alert('Numéro requis.'); return; }
-    try {
-      const resp = await fetch('/api/envoyer-sms-photos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ leadId, telephone: telephone.trim() }),
-      });
-      const data = await resp.json();
-      alert(data.success ? '✓ SMS envoyé au client.' : (data.error || "Impossible d'envoyer le SMS pour le moment."));
     } catch (e) {
       alert('Impossible de contacter le serveur.');
     }
@@ -2396,14 +2364,7 @@
 
   function extraireAdresse(reponses) {
     if (!reponses || typeof reponses !== 'object') return '—';
-    // Corrigé 08/09 : "adresse" est désormais la clé où envoyer-photos.html
-    // écrit l'adresse saisie par le client lui-même (via le bouton
-    // "📷 Demander photos") — on la privilégie toujours, sinon une demande
-    // qui avait déjà une "ville" dans reponses continuait d'afficher
-    // seulement la ville même après que le client ait donné son adresse
-    // complète.
-    if (reponses.adresse) return reponses.adresse;
-    // Sinon, cherche une clé qui ressemble à une adresse, quel que soit le métier/formulaire d'origine.
+    // Cherche une clé qui ressemble à une adresse, quel que soit le métier/formulaire d'origine.
     const cleAdresse = Object.keys(reponses).find(k => /adresse|address|localisation|ville/i.test(k));
     return cleAdresse ? reponses[cleAdresse] : '—';
   }

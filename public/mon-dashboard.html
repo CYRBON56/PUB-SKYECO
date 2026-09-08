@@ -312,15 +312,6 @@
     color:#5f6368; font-size:0.72rem; padding:2px 7px; cursor:pointer;
   }
   .btn-modifier-contact:hover { background:#f0f4f2; color:#1e6f4c; border-color:#c7d3cd; }
-  /* Ajouté 08/09 : même style pour le bouton "Demander photos/coordonnées"
-     (envoie un SMS avec un lien où le client saisit lui-même nom/prénom/
-     adresse et ses photos — voir envoyer-photos.html et envoyer-sms-photos.js). */
-  .btn-demander-photos { margin-top:4px; margin-left:4px; }
-  /* Ajouté 08/09 : bouton "Archiver" un client depuis "Demandes d'estimation"
-     (demande de Cyrille : "il faut pouvoir archiver puis supprimer les
-     clients du dashboard") — même style, retiré de la vue par défaut sans
-     rien supprimer, voir gerer-lead.js. */
-  .btn-archiver-lead { margin-top:4px; margin-left:4px; }
 
   .loading, .empty-msg { text-align:center; padding:50px 20px; color:#8a9891; font-size:0.92rem; }
   .empty-msg .empty-icone { display:block; font-size:2.1rem; margin-bottom:10px; }
@@ -795,14 +786,7 @@
   <div class="liste-panel">
     <div class="liste-header">
       <h3>Demandes d'estimation</h3>
-      <div style="display:flex; align-items:center; gap:14px;">
-        <button type="button" id="btnVoirClientsArchives" style="background:none; border:none; color:#8a9891; font-size:0.78rem; font-weight:700; cursor:pointer; text-decoration:underline; padding:0 4px; white-space:nowrap;">🗑️ Clients archivés</button>
-        <button class="btn-pdf" id="btnExportPdf">📄 Exporter en PDF</button>
-      </div>
-    </div>
-    <div id="clientsArchivesPanel" style="display:none; margin-bottom:18px; background:#f6faf7; border:1.5px solid #d7e8dd; border-radius:14px; padding:16px 18px;">
-      <div style="font-size:0.82rem; font-weight:700; color:#3a4a43; margin-bottom:10px;">Clients archivés</div>
-      <div id="clientsArchivesContenu"><div class="loading">Chargement…</div></div>
+      <button class="btn-pdf" id="btnExportPdf">📄 Exporter en PDF</button>
     </div>
     <div id="listeContent"><div class="loading">Chargement des demandes…</div></div>
   </div>
@@ -1096,8 +1080,15 @@
       // simple conteneur, seul le bloc contenu est cliquable.
       tuiles.innerHTML = details.map((s) => {
         const estActuelle = s.id === draftId;
-        const statutLabel = s.status === 'en_pause' ? '⏸️ En pause' : (s.pausee ? '⏸️ Diffusion en pause' : (s.status === 'essai' ? '🎁 Essai gratuit' : '● En ligne'));
-        const statutCouleur = (s.status === 'en_pause' || s.pausee) ? '#e8622c' : (s.status === 'essai' ? '#5b6b64' : '#1e6f4c');
+        // Statut de diffusion (actif/en pause) — toujours affiché, qu'il
+        // s'agisse d'une vitrine en essai gratuit ou déjà payante ; avant
+        // cette correction, une vitrine en essai n'affichait QUE "🎁 Essai
+        // gratuit" sans jamais dire si sa diffusion était active ou en
+        // pause (le badge essai écrasait le badge de diffusion).
+        const diffusionPausee = s.status === 'en_pause' || s.pausee;
+        const diffusionLabel = diffusionPausee ? '⏸️ Diffusion en pause' : '● Diffusion active';
+        const diffusionCouleur = diffusionPausee ? '#e8622c' : '#1e6f4c';
+        const estEssai = s.status === 'essai';
         // Suppression définitive proposée seulement si la vitrine n'a
         // strictement aucune trace d'activité réelle — même condition que
         // /api/gerer-vitrine.js, revérifiée côté serveur de toute façon.
@@ -1107,7 +1098,8 @@
             <a href="/mon-dashboard.html?id=${s.id}" style="text-decoration:none; display:block;">
               <div style="font-weight:800; color:#14312a; font-size:0.92rem; margin-bottom:6px;">${s.entreprise || 'Vitrine sans nom'}</div>
               <div style="font-size:1.4rem; font-weight:800; color:#14312a;">${s.clics === null ? '—' : s.clics}<span style="font-size:0.75rem; font-weight:600; color:#5b6b64;"> clics ce mois-ci</span></div>
-              <div style="font-size:0.78rem; font-weight:700; color:${statutCouleur}; margin-top:6px;">${statutLabel}</div>
+              <div style="font-size:0.78rem; font-weight:700; color:${diffusionCouleur}; margin-top:6px;">${diffusionLabel}</div>
+              ${estEssai ? `<div style="font-size:0.72rem; font-weight:600; color:#5b6b64; margin-top:2px;">🎁 Essai gratuit</div>` : ''}
             </a>
             <div style="display:flex; gap:10px; margin-top:10px; padding-top:10px; border-top:1px solid #f0f3f1;">
               <button type="button" class="btn-tuile-action" data-id="${s.id}" onclick="archiverVitrine(this)" style="background:none; border:none; color:#8a9891; font-size:0.72rem; font-weight:700; cursor:pointer; padding:0;">📦 Archiver</button>
@@ -2135,14 +2127,7 @@
       sites.forEach(s => { nomsParSite[s.id] = s.entreprise || (s.id === draftId ? nomEntreprise : 'Vitrine sans nom'); });
       const plusieursSites = sites.length > 1;
 
-      // Ajouté 08/09 : les clients archivés (voir gerer-lead.js) restent dans
-      // leadsData (pour modifierContactLead/demanderPhotosLead) mais sont
-      // retirés de la liste principale — consultables via le panneau
-      // "🗑️ Clients archivés" (chargerClientsArchives ci-dessous).
-      const leadsAffiches = leadsData.filter(l => !l.archive);
-      document.getElementById('btnVoirClientsArchives').style.display = leadsData.some(l => l.archive) || leadsAffiches.length ? 'inline-block' : 'none';
-
-      if (!leadsAffiches.length) {
+      if (!leadsData.length) {
         content.innerHTML = '<div class="empty-msg"><span class="empty-icone">📭</span>Aucune demande reçue pour l\'instant.</div>';
         return;
       }
@@ -2165,7 +2150,7 @@
             <tr><th>Date</th>${plusieursSites ? '<th>Vitrine</th>' : ''}<th>Client</th><th>Adresse</th><th>Contact</th><th>Statut</th><th>Devis</th></tr>
           </thead>
           <tbody>
-            ${leadsAffiches.map(l => `
+            ${leadsData.map(l => `
               <tr>
                 <td>${new Date(l.created_at).toLocaleDateString('fr-FR')}</td>
                 ${plusieursSites ? `<td>${nomsParSite[l.draft_id] || '—'}</td>` : ''}
@@ -2181,8 +2166,6 @@
                   ${l.email ? `<a class="client-contact" href="mailto:${encodeURIComponent(l.email)}">✉️ ${escapeHtmlDash(l.email)}</a>` : ''}
                   ${(!l.telephone && !l.email) ? '—' : ''}
                   <button type="button" class="btn-modifier-contact" data-action="modifier-contact" data-lead="${l.id}" title="Corriger le nom/téléphone/email (utile si vous avez saisi cette demande vous-même pour un client)">✏️ Corriger</button>
-                  <button type="button" class="btn-modifier-contact btn-demander-photos" data-action="demander-photos" data-lead="${l.id}" title="Envoyer un SMS au client pour qu'il renseigne lui-même son nom, prénom, adresse et vous transmette ses photos">📷 Demander photos</button>
-                  <button type="button" class="btn-modifier-contact btn-archiver-lead" data-action="archiver-lead" data-lead="${l.id}" title="Retirer ce client de la liste sans rien supprimer — retrouvable dans « Clients archivés »">📦 Archiver</button>
                 </td>
                 <td>${labelStatutLead(l.statut)}</td>
                 <td>${celluleDevis(l)}</td>
@@ -2201,123 +2184,10 @@
       content.querySelectorAll('[data-action="modifier-contact"]').forEach(btn => {
         btn.addEventListener('click', () => modifierContactLead(btn.dataset.lead));
       });
-      content.querySelectorAll('[data-action="demander-photos"]').forEach(btn => {
-        btn.addEventListener('click', () => demanderPhotosLead(btn.dataset.lead));
-      });
-      content.querySelectorAll('[data-action="archiver-lead"]').forEach(btn => {
-        btn.addEventListener('click', () => archiverLead(btn.dataset.lead));
-      });
     } catch (e) {
       content.innerHTML = '<div class="empty-msg"><span class="empty-icone">⚠️</span>Impossible de charger les demandes pour le moment.</div>';
     }
   }
-
-  // Ajouté 08/09 (demande de Cyrille : "il faut pouvoir archiver puis
-  // supprimer les clients du dashboard") — même logique que
-  // archiverVitrine/desarchiverVitrine/supprimerVitrine plus haut, mais pour
-  // une demande client (skyeco_pro_leads) au lieu d'une vitrine. Un client
-  // archivé disparaît de "Demandes d'estimation" sans rien supprimer, et
-  // n'est supprimable définitivement que depuis le panneau des archives (voir
-  // api/gerer-lead.js, qui refuse une suppression directe sur un client non
-  // archivé).
-  async function archiverLead(leadId) {
-    if (!confirm("Archiver ce client ? Il disparaîtra de la liste mais rien n'est supprimé — vous pourrez le retrouver dans « 🗑️ Clients archivés ».")) return;
-    try {
-      const resp = await fetch('/api/gerer-lead', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ leadId, token: tokenCalendrierActuel, action: 'archiver' }),
-      });
-      const data = await resp.json();
-      if (!data.success) {
-        alert(data.error || "Impossible d'archiver ce client pour le moment.");
-        return;
-      }
-      await chargerDemandes(tokenCalendrierActuel);
-    } catch (e) {
-      alert('Impossible de contacter le serveur.');
-    }
-  }
-
-  // Panneau "🗑️ Clients archivés" — même repli léger que
-  // chargerVitrinesArchivees (pas de vraie navigation) : on relit les leads
-  // déjà chargés en mémoire (leadsData contient TOUS les clients, archivés ou
-  // non — voir chargerDemandes) plutôt que de rappeler le serveur.
-  function chargerClientsArchives() {
-    const contenu = document.getElementById('clientsArchivesContenu');
-    const archives = leadsData.filter(l => l.archive);
-    if (!archives.length) {
-      contenu.innerHTML = '<div class="empty-msg" style="padding:6px 0;">Aucun client archivé pour le moment.</div>';
-      return;
-    }
-    contenu.innerHTML = archives.map(l => `
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px solid #e4e9e6;">
-        <span style="font-size:0.85rem; font-weight:700; color:#3a4a43;">${escapeHtmlDash((l.prenom || '') + ' ' + (l.nom || '')) || 'Client sans nom'}</span>
-        <span style="display:flex; gap:8px;">
-          <button type="button" class="btn-tuile-action" data-id="${l.id}" onclick="desarchiverLead(this)" style="background:#eaf4ef; border:1px solid #1e6f4c; color:#1e6f4c; border-radius:8px; padding:5px 10px; font-size:0.75rem; font-weight:700; cursor:pointer;">↩️ Désarchiver</button>
-          <button type="button" class="btn-tuile-action" data-id="${l.id}" onclick="supprimerLeadDefinitif(this)" style="background:none; border:1px solid #e3b3a8; color:#c0392b; border-radius:8px; padding:5px 10px; font-size:0.75rem; font-weight:700; cursor:pointer;">🗑️ Supprimer</button>
-        </span>
-      </div>
-    `).join('');
-  }
-
-  document.getElementById('btnVoirClientsArchives').addEventListener('click', () => {
-    const panel = document.getElementById('clientsArchivesPanel');
-    const ouverture = panel.style.display === 'none';
-    panel.style.display = ouverture ? 'block' : 'none';
-    if (ouverture) chargerClientsArchives();
-  });
-
-  window.desarchiverLead = async function(btn) {
-    btn.disabled = true;
-    btn.textContent = '…';
-    try {
-      const resp = await fetch('/api/gerer-lead', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ leadId: btn.dataset.id, token: tokenCalendrierActuel, action: 'desarchiver' }),
-      });
-      const data = await resp.json();
-      if (!data.success) {
-        alert(data.error || "Impossible de désarchiver ce client pour le moment.");
-        btn.disabled = false;
-        btn.textContent = '↩️ Désarchiver';
-        return;
-      }
-      await chargerDemandes(tokenCalendrierActuel);
-      chargerClientsArchives();
-    } catch (e) {
-      alert('Impossible de contacter le serveur.');
-      btn.disabled = false;
-      btn.textContent = '↩️ Désarchiver';
-    }
-  };
-
-  window.supprimerLeadDefinitif = async function(btn) {
-    if (!confirm("Supprimer définitivement ce client ? Toutes ses coordonnées, photos et son historique de devis seront perdus — cette action est irréversible.")) return;
-    btn.disabled = true;
-    btn.textContent = '…';
-    try {
-      const resp = await fetch('/api/gerer-lead', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ leadId: btn.dataset.id, token: tokenCalendrierActuel, action: 'supprimer' }),
-      });
-      const data = await resp.json();
-      if (!data.success) {
-        alert(data.error || "Impossible de supprimer ce client pour le moment.");
-        btn.disabled = false;
-        btn.textContent = '🗑️ Supprimer';
-        return;
-      }
-      await chargerDemandes(tokenCalendrierActuel);
-      chargerClientsArchives();
-    } catch (e) {
-      alert('Impossible de contacter le serveur.');
-      btn.disabled = false;
-      btn.textContent = '🗑️ Supprimer';
-    }
-  };
 
   // Initiales affichées dans le petit avatar rond de "Mes clients" —
   // simple aide visuelle, pas de vraie photo (ajouté 04/09, demande de
@@ -2364,30 +2234,6 @@
         return;
       }
       await chargerDemandes(tokenCalendrierActuel);
-    } catch (e) {
-      alert('Impossible de contacter le serveur.');
-    }
-  }
-
-  // Ajouté 08/09 (demande de Cyrille) : plutôt que de deviner ou de rappeler
-  // le client pour ses coordonnées, on peut lui envoyer directement un SMS
-  // avec un lien où il saisit lui-même son nom/prénom/adresse et transmet
-  // ses photos — utile en particulier pour une demande que Cyrille a créée
-  // lui-même (voir modifierContactLead ci-dessus pour le même contexte).
-  async function demanderPhotosLead(leadId) {
-    const lead = leadsData.find(l => l.id === leadId);
-    if (!lead) return;
-    const telephone = prompt('Numéro de téléphone du client (il recevra un SMS avec un lien pour renseigner ses coordonnées et ses photos) :', lead.telephone || '');
-    if (telephone === null) return; // annulé
-    if (!telephone.trim()) { alert('Numéro requis.'); return; }
-    try {
-      const resp = await fetch('/api/envoyer-sms-photos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ leadId, telephone: telephone.trim() }),
-      });
-      const data = await resp.json();
-      alert(data.success ? '✓ SMS envoyé au client.' : (data.error || "Impossible d'envoyer le SMS pour le moment."));
     } catch (e) {
       alert('Impossible de contacter le serveur.');
     }
@@ -2526,14 +2372,7 @@
 
   function extraireAdresse(reponses) {
     if (!reponses || typeof reponses !== 'object') return '—';
-    // Corrigé 08/09 : "adresse" est désormais la clé où envoyer-photos.html
-    // écrit l'adresse saisie par le client lui-même (via le bouton
-    // "📷 Demander photos") — on la privilégie toujours, sinon une demande
-    // qui avait déjà une "ville" dans reponses continuait d'afficher
-    // seulement la ville même après que le client ait donné son adresse
-    // complète.
-    if (reponses.adresse) return reponses.adresse;
-    // Sinon, cherche une clé qui ressemble à une adresse, quel que soit le métier/formulaire d'origine.
+    // Cherche une clé qui ressemble à une adresse, quel que soit le métier/formulaire d'origine.
     const cleAdresse = Object.keys(reponses).find(k => /adresse|address|localisation|ville/i.test(k));
     return cleAdresse ? reponses[cleAdresse] : '—';
   }

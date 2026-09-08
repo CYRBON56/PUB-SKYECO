@@ -24,6 +24,39 @@
 const WINDSOR_BASE = 'https://connectors.windsor.ai/google_ads';
 const TAUX_COMMISSION = 0.50; // doit rester synchronisé avec les autres fichiers
 
+// BUG CORRIGÉ le 08/09 (trouvé en creusant pourquoi la campagne "RESINE
+// MARBRE SOL" de Cyrille, live depuis 6 jours, n'avait reçu ni impression ni
+// clic malgré un budget actif, des mots-clés pertinents et une annonce
+// approuvée) : cette fonction créait la campagne, le groupe d'annonces, les
+// mots-clés et l'annonce, mais n'appelait JAMAIS set_campaign_geo_targeting —
+// aucune zone géographique n'était donc attachée à la campagne. Sans ciblage
+// géographique, Google Ads ne diffuse quasiment jamais une campagne Search,
+// ce qui correspond exactement à ce qui a été observé (données Google Ads en
+// direct : ENABLED/ELIGIBLE mais 0 impression/0 clic/0 dépense). Confirmé
+// avoir touché les 2 seules campagnes réelles créées jusqu'ici (les 2
+// vitrines de Cyrille lui-même — aucun autre artisan payant n'a encore de
+// campagne, donc aucun autre client n'a été impacté) ; corrigées manuellement
+// le 08/09 via l'action set_campaign_geo_targeting (ciblage Morbihan,
+// identifiant 9040912, confirmé en direct par l'API — voir ci-dessous).
+//
+// Repris de GEO_TARGET_BY_DEPARTEMENT dans estimate-reach.js (à tenir
+// synchronisé) — MAIS avec le département 56 corrigé : l'ancienne valeur
+// (1006094) n'avait jamais été vérifiée en conditions réelles (voir le
+// commentaire d'avertissement dans estimate-reach.js) ; l'identifiant
+// 9040912 a lui été confirmé le 08/09 par l'API Google Ads elle-même
+// (réponse : "targeting Morbihan,Brittany,France (9040912)") en l'appliquant
+// réellement aux 2 campagnes de Cyrille. Les autres départements du
+// dictionnaire restent non re-vérifiés par cette voie — même prudence que
+// dans estimate-reach.js si on les utilise un jour pour du ciblage réel.
+const GEO_TARGET_BY_DEPARTEMENT = {
+  '56': '9040912', // Morbihan — confirmé par l'API Google Ads le 08/09
+  '35': '1006083', // Ille-et-Vilaine — non re-vérifié, repris tel quel
+  '29': '1006082', // Finistère — non re-vérifié, repris tel quel
+  '22': '1006081', // Côtes-d'Armor — non re-vérifié, repris tel quel
+  '44': '1006095', // Loire-Atlantique — non re-vérifié, repris tel quel
+};
+const GEO_TARGET_FRANCE = '2250'; // repli si le département de l'artisan n'est pas (encore) dans la liste ci-dessus
+
 // Windsor.ai attend l'identifiant de compte Google Ads AVEC tirets
 // (format XXX-XXX-XXXX, identique à l'interface Google Ads) — voir le
 // commentaire d'en-tête du 03/09. Fonctionne que la variable d'env soit
@@ -145,7 +178,7 @@ export default async function handler(req, res) {
 
   try {
     const draftResp = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}&select=entreprise,metier,zone,tarif_prix,mots_cles_choisis,annonce_titres,annonce_descriptions,google_ads_campaign_resource,google_ads_ad_group_resource,campagne_pausee_budget_epuise,site_web_existant`,
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}&select=entreprise,metier,zone,departement,tarif_prix,mots_cles_choisis,annonce_titres,annonce_descriptions,google_ads_campaign_resource,google_ads_ad_group_resource,campagne_pausee_budget_epuise,site_web_existant`,
       { headers: supaHeaders }
     );
     const draftRows = await draftResp.json();
@@ -227,6 +260,19 @@ export default async function handler(req, res) {
     if (!campaignId) {
       throw new Error(`Impossible d'extraire l'id de la campagne créée : ${JSON.stringify(campagne)}`);
     }
+
+    // 1bis. Ciblage géographique — voir le commentaire du 08/09 en haut de ce
+    // fichier : sans cette étape, la campagne ne diffuse quasiment jamais.
+    // Département précis si connu (volume/diffusion réels sur la bonne
+    // zone), sinon repli sur la France entière plutôt que sur aucune zone du
+    // tout.
+    const departementCode = draft.departement ? String(draft.departement).trim().toUpperCase() : null;
+    const geoTargetConstantId = (departementCode && GEO_TARGET_BY_DEPARTEMENT[departementCode]) || GEO_TARGET_FRANCE;
+    await executerAction('set_campaign_geo_targeting', {
+      campaign_id: campaignId,
+      locations: [{ geo_target_constant_id: geoTargetConstantId, negative: false }],
+      proximities: [],
+    });
 
     // 2. Créer le groupe d'annonces.
     const adGroup = await executerAction('create_ad_group', {

@@ -8,39 +8,14 @@
   * { box-sizing: border-box; }
   body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color:#14312a; }
   .split-layout { display:flex; height:100vh; overflow:hidden; }
-  /* Panneau visuel de droite (ou de gauche, voir formulaire-droite plus bas)
-     — depuis le 04/09 coupé en deux moitiés empilées à la demande de
-     Cyrille : en haut la vidéo/le carrousel de photos habituel, en bas un
-     second panneau dédié qui affiche la photo du produit survolé dans le
-     formulaire (voir "Aperçu au survol" ci-dessous). */
   .image-panel { flex:1 1 45%; position:relative; overflow:hidden; background:var(--brand-dark,#14312a); display:flex; flex-direction:column; order:2; }
   .image-panel-media { position:relative; flex:1 1 50%; overflow:hidden; display:flex; align-items:center; justify-content:center; }
-  /* object-fit:contain (pas cover) — corrigé le 04/09 : depuis que ce
-     panneau ne fait plus que la moitié de la hauteur, "cover" zoomait/
-     rognait trop l'image pour remplir le cadre. "contain" affiche la photo
-     entière dans son cadre, quitte à laisser un peu de fond visible sur les
-     côtés si le format ne correspond pas exactement. */
   .image-panel-media img, .image-panel-media video { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:contain; }
   .image-panel-media img { opacity:0; transition:opacity .8s ease-in-out; }
   .image-panel-media img.active { opacity:1; }
   .image-panel-media::before { content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(20,49,42,0.55) 0%, rgba(20,49,42,0.15) 35%, rgba(20,49,42,0.55) 100%); z-index:1; pointer-events:none; }
-  /* Titre accroche — corrigé le 04/09 (Cyrille) : positionné directement
-     dans .image-panel (pas dans .image-panel-media) pour que "top:50%" se
-     cale sur le milieu de TOUT le panneau, donc pile sur la ligne de
-     séparation entre la vidéo (en haut) et l'aperçu au survol (en bas),
-     plutôt que centré seulement dans la moitié vidéo. Un fond semi-
-     transparent garde le texte lisible quel que soit ce qu'il y a
-     derrière (photo claire ou fond sombre de l'aperçu). */
   .image-panel-title { position:absolute; top:50%; left:32px; right:32px; transform:translateY(-50%); z-index:5; color:#fff; font-size:clamp(1.2rem,2.2vw,1.8rem); font-weight:700; line-height:1.25; text-align:center; text-shadow:0 2px 12px rgba(0,0,0,0.35); background:rgba(15,35,29,0.72); backdrop-filter:blur(4px); padding:16px 20px; border-radius:14px; pointer-events:none; }
   @media (max-width:800px){ .image-panel-title{ font-size:1.05rem; left:20px; right:20px; padding:10px 14px; } }
-
-  /* Aperçu au survol d'une option du formulaire (ex : "OneSlide" dans le
-     parcours portails) — occupe la moitié basse du panneau visuel, à côté
-     de la vidéo/du carrousel (moitié haute), et affiche la photo du produit
-     survolé, avec un texte d'invitation tant que rien n'est survolé.
-     Générique : posé par JS pour toute étape à choix qui définit s.images
-     (voir getStepsPortails > type_portail). Masqué sur mobile (pas la place
-     pour un second panneau pendant qu'on remplit le formulaire en dessous). */
   .image-panel-preview { position:relative; flex:1 1 50%; overflow:hidden; background:#0f231d; border-top:1px solid rgba(255,255,255,0.1); }
   .image-panel-preview .hover-preview-placeholder { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:20px; text-align:center; color:rgba(255,255,255,0.55); font-size:13px; line-height:1.5; transition:opacity .25s ease-in-out; }
   .image-panel-preview .hover-preview-placeholder.dimmed { opacity:0; }
@@ -48,50 +23,22 @@
   .image-panel-preview .hover-preview.active { opacity:1; }
   .image-panel-preview .hover-preview-label { position:absolute; left:0; right:0; bottom:0; z-index:2; background:linear-gradient(0deg, rgba(15,35,29,0.92) 0%, rgba(15,35,29,0) 100%); color:#fff; font-weight:700; font-size:14px; padding:16px 16px 10px; text-align:center; opacity:0; transition:opacity .25s ease-in-out; }
   .image-panel-preview .hover-preview-label.active { opacity:1; }
-  /* 07/09/2026 : par défaut, ce second panneau (aperçu au survol) n'a de
-     contenu réel que pour les parcours qui définissent des images par
-     option (aujourd'hui uniquement "portails" — voir getStepsPortails et
-     s.images). Pour tous les autres métiers, ce panneau restait vide en
-     permanence avec juste un texte d'invitation, alors que le carrousel/la
-     vidéo au-dessus n'occupait que la moitié du panneau visuel. Quand
-     aucune étape du parcours actuel ne définit d'aperçu au survol, la
-     classe "pas-de-survol" (posée en JS, voir runWizard) fait reprendre au
-     carrousel/à la vidéo tout l'espace du panneau. */
   .image-panel.pas-de-survol .image-panel-media { flex:1 1 100%; }
   .image-panel.pas-de-survol .image-panel-preview { display:none; }
   @media (max-width:800px){ .image-panel-preview{ display:none; } }
   .form-panel { flex:1 1 55%; position:relative; display:flex; align-items:stretch; justify-content:center; padding:20px 24px; overflow:hidden; order:1; }
-  /* Position du formulaire (gauche/droite) — configurée par l'artisan dans
-     mes-elements.html (colonne formulaire_position), posée en JS sur
-     .split-layout (voir init). Par défaut ("gauche"), le formulaire reste à
-     gauche et la photo/vidéo à droite (ordres ci-dessus, inchangés). */
   .split-layout.formulaire-droite .image-panel { order:1; }
   .split-layout.formulaire-droite .form-panel { order:2; }
   .form-bg-overlay { position:absolute; inset:0; z-index:-1; background:rgba(246,244,239,0.55); }
   .form-bg-carousel { position:absolute; inset:0; z-index:-2; overflow:hidden; }
-  /* Flou ajouté le 04/09 (Cyrille) : ce fond photo derrière le texte du
-     formulaire est purement décoratif (le voile clair par-dessus le rend
-     déjà peu lisible), donc son cadrage exact importe peu — mais sans flou,
-     un recadrage serré (object-fit:cover, inévitable vu le format tout en
-     hauteur de ce panneau) pouvait donner l'impression que la photo "ne
-     prenait pas bien son cadre". Le flou gomme ce problème de cadrage et
-     rend le fond plus discret ; scale(1.1) évite un liseré flou/transparent
-     sur les bords, qui apparaîtrait sinon à cause du flou lui-même. */
-  .form-bg-carousel img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 1.2s ease-in-out; filter:blur(14px); transform:scale(1.1); }
-  .form-bg-carousel img.active { opacity:1; }
+  .form-bg-carousel img, .form-bg-carousel video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 1.2s ease-in-out; filter:blur(var(--flou-fond,14px)); transform:scale(1.1); }
+  .form-bg-carousel img.active, .form-bg-carousel video.active { opacity:1; }
   @media (max-width:800px){ .split-layout{ flex-direction:column; height:100vh; overflow:hidden; } .image-panel{ flex:0 0 110px; } .form-panel{ padding:12px 16px; } }
   @media (max-width:480px){ .image-panel{ flex:0 0 64px; } .form-panel{ padding:10px 14px; } .header-block{ padding:10px 14px; margin-bottom:10px; } h1{ font-size:19px; margin:4px 0 6px; } .eyebrow{ font-size:11px; } .sub{ font-size:14px; margin-bottom:0; line-height:1.45; } .card{ padding:16px; } .question{ font-size:17px; margin-bottom:14px; line-height:1.35; } .option{ padding:14px 16px; font-size:15.5px; } .progress{ margin-bottom:12px; } input[type="text"],input[type="tel"],input[type="email"],input[type="number"]{ font-size:16px; padding:13px 14px; margin-bottom:10px; } label.field-label{ font-size:14px; } .nav-row{ flex-wrap:wrap; margin-top:16px; } button.btn{ font-size:15px; padding:13px 16px; } .btn-primary{ flex:1 1 100%; order:1; } .btn-ghost{ order:2; padding:8px 0; font-size:14px; } .trust-footer{ margin-top:10px; padding-top:10px; } .trust-badges-row{ display:none !important; } }
 
   .wrap { max-width:480px; width:100%; height:100%; margin:0; padding:0; display:flex; flex-direction:column; }
   .middle-scroll { flex:1 1 auto; overflow-y:auto; min-height:0; padding-right:2px; }
   .header-block { margin-bottom:12px; background:rgba(255,255,255,0.7); border-radius:14px; padding:12px 16px; flex-shrink:0; transition:padding .2s ease-in-out; }
-  /* Mode compact — ajouté le 04/09 (Cyrille) : une fois la première
-     question passée, le gros bandeau d'intro (logo, accroche, texte de
-     présentation, badge catalogue) prend trop de place et oblige à faire
-     défiler pour voir toute la question suivante. Une fois lancé dans le
-     parcours (state.step > 0, voir renderStep), on masque ce qui n'est
-     utile qu'à l'arrivée et on resserre le bandeau, pour laisser un
-     maximum de place à la question + ses réponses. */
   .header-block.compact { padding:8px 16px; margin-bottom:8px; }
   .header-block.compact #logoArtisan, .header-block.compact .sub, .header-block.compact #delaiBadge { display:none !important; }
   .header-block.compact h1 { font-size:16px; margin:2px 0; }
@@ -107,12 +54,6 @@
   .step-label { font-size:12px; color:#8a9490; margin-bottom:6px; }
   .question { font-size:16px; font-weight:600; margin:0 0 16px; line-height:1.4; }
   .options { display:flex; flex-direction:column; gap:10px; }
-  /* Grille compacte — ajoutée le 04/09 (Cyrille) : certaines étapes ont
-     beaucoup d'options courtes (ex : les ~20 coloris RAL) et en liste sur
-     une seule colonne, ça oblige à faire défiler pour tout voir. Réservée
-     aux steps qui le demandent explicitement (voir s.grille dans
-     getStepsPortails) — les autres gardent la liste verticale, mieux
-     adaptée aux libellés longs. */
   .options.grid-2col { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); }
   .option { border:1.5px solid #d8e3de; border-radius:10px; padding:13px 16px; font-size:14.5px; cursor:pointer; background:white; transition:border-color .15s, background .15s; }
   .option:hover { border-color:var(--brand,#1e6f4c); }
@@ -133,10 +74,6 @@
   .trust-footer .trust-badges { display:flex; justify-content:center; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-size:12px; color:#4a5a54; font-weight:600; }
   .trust-footer .legal-line { color:#14312a; }
   .btn-footer-callback { background:white; border:1.5px solid var(--brand,#1e6f4c); color:#14312a; padding:8px 16px; font-size:12.5px; font-weight:700; border-radius:10px; cursor:pointer; }
-
-  /* ---- Vérification SMS du téléphone (étape identité) — même look & feel
-     que estimation.html (SalesFlow), couleurs pilotées par --brand pour
-     rester cohérentes avec la charte de chaque artisan. ---- */
   .btn-secondaire-sms {
     background:var(--brand-tint,#eaf4ef); color:var(--brand,#1e6f4c); border:1.5px solid var(--brand,#1e6f4c);
     padding:10px 18px; border-radius:10px; font-size:0.9rem; font-weight:700; cursor:pointer; margin-bottom:10px;
@@ -146,8 +83,6 @@
   .sms-status-ok { color:var(--brand,#1e6f4c); font-weight:600; }
   .sms-status-error { color:#991b1b; }
   .sms-status-loading { color:#5b6b64; }
-
-  /* Bandeau "aperçu" — visible uniquement tant que le mini-site n'est pas publié */
   .preview-banner {
     position:fixed; top:0; left:0; right:0; z-index:100;
     background:#14312a; color:#fff; font-size:13px; font-weight:600;
@@ -214,16 +149,7 @@
 <script>
 const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
-// Appel direct à l'API REST (comme partout ailleurs sur le site) au lieu de
-// la bibliothèque @supabase/supabase-js chargée depuis un CDN — retirée le
-// 02/09 après des cas où l'aperçu affichait "introuvable" alors que la fiche
-// existait bien en base, potentiellement liés au chargement de cette
-// bibliothèque externe.
 
-/* -----------------------------------------------------------------
-   Gabarits de questions par défaut, par métier. Réutilisent le même
-   moteur générique que skyeco-pro-moteur-generique.html.
-   ----------------------------------------------------------------- */
 const METIER_TEMPLATES = {
   paysagiste: {
     heroTitre: "Un extérieur<br>qui vous ressemble.",
@@ -339,11 +265,6 @@ const METIER_TEMPLATES = {
       return s;
     }
   },
-  // Ajouté le 07/09 : "resine" est la valeur réellement enregistrée pour un
-  // métier de revêtement de sol en résine (voir skyeco-pro-formulaire-
-  // creation-paysagiste.html, data-value="resine") — elle retombait jusqu'ici
-  // systématiquement sur le template générique "autre" faute de clé dédiée
-  // ici, alors même que des fiches réelles (dont celle de RMS ECOSKY) l'utilisent.
   resine: {
     heroTitre: "Un revêtement en résine<br>qui dure dans le temps.",
     eyebrow: "Estimation détaillée",
@@ -376,16 +297,6 @@ const METIER_TEMPLATES = {
   }
 };
 
-// Ajoute la question "Décrivez votre projet", puis — une fois le projet
-// classifié par api/classifier-projet-formulaire.js (voir wireStepEvents) —
-// la question de "quantité" (dont l'unité — m², ml, m³ ou forfait — vient du
-// produit chiffrable choisi par l'artisan) et ses questions spécifiques.
-// Si aucun produit ne correspond (state.produitChoisi reste null), on saute
-// directement ces questions et on garde délai/localisation, utiles dans tous
-// les cas — le prospect sera de toute façon orienté vers la prise de
-// rendez-vous avec un technicien (voir renderResultat).
-// Libellés partagés entre la question "délai" (ci-dessous) et son affichage
-// dans le récapitulatif façon devis (voir renderResultat / construireRecap).
 const DELAI_LABELS = { urgent:'Le plus vite possible', '1_3_mois':'Dans 1 à 3 mois', plus_tard:'Plus tard' };
 
 function pushQuantiteEtSuite(s, state){
@@ -394,10 +305,6 @@ function pushQuantiteEtSuite(s, state){
 
   const produit = state && state.produitChoisi;
   if(produit){
-    // Questions spécifiques à CE produit, choisies par l'IA parmi celles
-    // validées par l'artisan (voir api/classifier-projet-formulaire.js) —
-    // remplies de façon asynchrone après le step "details_projet" (voir
-    // wireStepEvents).
     if(Array.isArray(state.questionsDynamiques)){
       state.questionsDynamiques.forEach(q=>{
         const cle = 'dyn_' + q.id;
@@ -425,25 +332,6 @@ function pushQuantiteEtSuite(s, state){
   s.push({ key:"localisation", question:"Où se situe le projet ?", type:"location" });
 }
 
-// ---------------------------------------------------------------------------
-// Formulaire "basique" — demandé par Cyrille le 04/09 : au lieu du parcours à
-// étapes ci-dessus (type de projet, produits chiffrables, questions IA par
-// produit, estimation chiffrée automatique...), le parcours PAR DÉFAUT de
-// toute vitrine SANS formulaire personnalisé (voir parcoursPersonnaliseActuel)
-// se limite désormais à l'essentiel : coordonnées, adresse, description libre
-// du projet — jamais de calcul de prix automatique, toujours orienté vers la
-// prise de rendez-vous (voir le dernier "else" de renderResultat). Les
-// gabarits METIER_TEMPLATES et le système "produits chiffrables"
-// (mes-elements.html, api/analyser-produits-chiffrables.js,
-// api/classifier-projet-formulaire.js) restent en place pour le texte
-// d'accroche de la vitrine (heroTitre/eyebrow/intro) mais leur getSteps()
-// n'est plus utilisé — un futur nettoyage pourra retirer les cases
-// "estimation chiffrée automatique" / "devis détaillé" de mes-elements.html
-// si Cyrille confirme qu'elles ne servent plus à rien.
-// Clé "description_projet" (et non "details_projet" comme pushQuantiteEtSuite
-// ci-dessus) volontairement différente : évite tout déclenchement de
-// l'analyse IA classifier-projet-formulaire.js (voir wireStepEvents,
-// condition "s.key === 'details_projet'"), qui n'a plus lieu d'être ici.
 function getStepsBasique(state){
   const s = [];
   s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
@@ -453,20 +341,6 @@ function getStepsBasique(state){
   return s;
 }
 
-// ---------------------------------------------------------------------------
-// Formulaire personnalisé "resine_rms" (activé via la case "Formulaire
-// personnalisé" dans mes-elements.html + formulaire_personnalise_cle =
-// "resine_rms" en base — voir le registre PARCOURS_PERSONNALISES dans
-// runWizard) — cas particulier codé en dur, réservé à la vitrine Skyeco Pro
-// de RMS EcoSky elle-même. Remplace tout le
-// parcours générique ci-dessus (métier + produits_chiffrables + IA) par le
-// même parcours de questions que salesflow-ecosky/public/estimation.html,
-// pour un résultat identique à celui déjà en place sur le site SalesFlow de
-// RMS EcoSky. Voir calculerEstimationResineRMS (dans runWizard) pour le
-// calcul de prix, porté depuis salesflow-ecosky/api/submit-estimation.js.
-// Note : l'étape "coloris EcoSky'Gum" (sélecteur multi-couleurs) de
-// estimation.html n'est PAS reprise ici — apercu.html ne supporte pas ce
-// type d'étape ("multi-color") pour le moment.
 function getStepsResineRMS(state){
   const s = [];
   s.push({ key:"usage", question:"Quel est le type de projet ?", type:"choice",
@@ -510,9 +384,6 @@ function getStepsResineRMS(state){
   return s;
 }
 
-// Libellés d'affichage pour le récapitulatif du mode "Calcul résine RMS
-// EcoSky" (voir construireRecapResineRMS dans runWizard) — reprennent les
-// libellés des options ci-dessus.
 const RESINE_RMS_LABELS = {
   usage: { pieton:"Terrasse, tour de piscine ou allée piétonne", carrossable:"Parking ou allée pour véhicule (carrossable)" },
   support_pieton: { dalle_beton:"Dalle béton existante", carrelage:"Carrelage existant", pave:"Pavé autobloquant existant", terrain_nu:"Terrain nu, rien n'existe" },
@@ -524,70 +395,15 @@ const RESINE_RMS_LABELS = {
   age_batiment: { plus_2_ans:"Plus de 2 ans (TVA 10%)", moins_2_ans:"Moins de 2 ans (TVA 20%)" },
 };
 
-// ---------------------------------------------------------------------------
-// Formulaire personnalisé "portails" (voir PARCOURS_PERSONNALISES dans
-// runWizard) — même principe que le formulaire "resine_rms" ci-dessus : un
-// parcours codé en dur, réservé pour l'instant à la vitrine PORTALECO.
-// Demandé par Cyrille le 04/09 après avoir
-// envoyé des captures d'écran du configurateur d'un fournisseur (portail
-// ONESLIDE) : remplissage, lames, largeur, hauteur, couleur, digicode,
-// visiophone/interphone, batterie, bouton poussoir, chacun avec un supplément
-// de prix propre.
-//
-// Différence volontaire avec la page fournisseur : ici pas de "panier" ni de
-// prix ferme affiché en direct pendant la saisie — on reste sur le même
-// principe qu'ailleurs dans Skyeco Pro, une estimation indicative écran par
-// écran qui débouche sur une demande de devis (voir la réponse de Cyrille à
-// la question posée avant de coder ceci).
-//
-// IMPORTANT — 04/09 : les vrais prix ne sont plus modifiés ici dans le code.
-// Cyrille les saisit lui-même dans mes-elements.html (section "🔧 Tarifs du
-// configurateur Portails", visible pour la vitrine dont
-// formulaire_personnalise_cle === 'portails') — chaque champ s'enregistre
-// directement dans la colonne JSON portails_tarifs de la base, lue ici via
-// tarifsPortailsActuels(draftInfo). PORTAILS_TARIFS ci-dessous ne sert donc
-// plus que de valeurs par défaut (0) — un poste absent ou non encore rempli
-// en base retombe automatiquement sur 0 ici, ce qui déclenche le garde-fou
-// chiffrable:false de calculerEstimationPortails(). Aucun changement de code
-// n'est nécessaire quand un prix est modifié dans mes-elements.html.
-//
-// Refait le 04/09 sur dictée de Cyrille — reprend la nomenclature réelle du
-// fournisseur (portails AUTOPORTANTS, sans rail au sol) : trois modèles —
-// SWING GATE (battant), ONESLIDE (coulissant 1 vantail), TWINSLIDE
-// (coulissant 2 vantaux) — plus le détail remplissage/lames/largeur/hauteur/
-// couleur/angle d'ouverture/ouverture extérieure/côté alimentation. Les
-// anciennes étapes "fourniture seule / installation complète" et "options"
-// (digicode, visiophone…) sont conservées à la demande explicite de Cyrille
-// (04/09) — elles s'ajoutent à cette nouvelle liste, elles ne la remplacent pas.
-//
-// Largeur/hauteur/angle : même liste de valeurs pour les trois modèles pour
-// l'instant (simplification volontaire, comme avant) — si les gammes
-// diffèrent vraiment selon le modèle, on pourra faire dépendre les options
-// de state.type_portail plus tard.
-//
-// Couleurs RAL — ATTENTION (04/09) : liste transcrite depuis une dictée
-// vocale, donc à vérifier avec la capture d'écran que Cyrille doit envoyer.
-// Incertains en particulier : RAL 5017 (bleu), RAL 7021 (gris noir),
-// RAL 8025 (brun pâle), et les deux codes RAL 2100/2900 ("noir sablé" /
-// "gris sablé") qui ne sont pas des codes RAL classiques standards — probable
-// nomenclature propre au fournisseur pour une finition sablée/texturée.
 const PORTAILS_TARIFS = {
-  prixBaseHT: { swing_gate: 0, oneslide: 0, twinslide: 0 }, // À REMPLIR — 0 = configurateur non actif pour ce modèle
-  // Ajouté le 04/09 à la demande de Cyrille : la plupart de ses clients
-  // veulent une installation clé en main (terrassement, béton, évacuation de
-  // terre, raccordement électrique, capteurs — "il n'y a rien à faire pour
-  // le client"), pas juste la fourniture du portail. installation_complete
-  // DOIT être rempli en même temps que prixBaseHT — voir la vérification
-  // dédiée dans calculerEstimationPortails() : tant qu'il vaut 0, une
-  // demande "installation complète" reste non chiffrable plutôt que
-  // d'afficher un montant qui oublierait tout le gros œuvre.
+  prixBaseHT: { swing_gate: 0, oneslide: 0, twinslide: 0 },
   installation: { fourniture_seule: 0, installation_complete: 0 },
   remplissage: { clairline: 0, decoline: 0, lameline: 0, laserline_vertical: 0 },
   lames: { lames_120: 0, lames_200: 0 },
   largeur: { '3000': 0, '3500': 0 },
   hauteur: { '1226': 0, '1466': 0, '1585': 0, '1705': 0 },
   couleur: {
-    ral7016: 0, ral9010: 0, // inclus dans le prix de base
+    ral7016: 0, ral9010: 0,
     ral1015: 0, ral3001: 0, ral3004: 0, ral5017: 0, ral6005: 0, ral6009: 0, ral6021: 0,
     ral7006: 0, ral7021: 0, ral7022: 0, ral7039: 0, ral8014: 0, ral8019: 0, ral8025: 0,
     ral9005: 0, ral9007: 0, ral2100: 0, ral2900: 0, autre_ral: 0,
@@ -646,21 +462,11 @@ const PORTAILS_OPTIONS_LABELS = {
   interphone: "Interphone", batterie: "Batterie de secours", bouton_poussoir: "Bouton poussoir",
   ligne_electrique: "Tirage d'une ligne électrique jusqu'au portail",
 };
-// Motifs disponibles pour le remplissage LASERLINE verticale (découpe laser)
-// — captures d'écran transmises par Cyrille le 04/09. Un plexiglas est
-// systématiquement posé à l'intérieur de la découpe (voir la note du step
-// motif_laserline ci-dessous), donc aucun supplément de prix par motif —
-// seul le remplissage laserline_vertical lui-même est tarifé.
 const MOTIF_LASERLINE_LABELS = {
   cacao: "CACAO", contemporain: "CONTEMPORAIN", feuille: "FEUILLE", nina: "NINA",
   oxygen: "OXYGEN", rio1: "RIO1", rio2: "RIO2",
 };
 
-// Fusionne les tarifs saisis par Cyrille dans mes-elements.html
-// (draftInfo.portails_tarifs, colonne JSON) par-dessus les valeurs par
-// défaut de PORTAILS_TARIFS (toutes à 0) — une catégorie ou une clé absente
-// du JSON en base (ex : nouvelle option ajoutée au code mais pas encore
-// remplie) retombe simplement sur 0, sans jamais planter.
 function tarifsPortailsActuels(draftInfo){
   const enregistres = (draftInfo && draftInfo.portails_tarifs) || {};
   const resultat = {};
@@ -675,26 +481,18 @@ function getStepsPortails(state){
   s.push({ key:"type_portail", question:"Quel modèle de portail autoportant souhaitez-vous ?", type:"choice",
     note: "Portails autoportants — aucun rail au sol, la structure porte le portail elle-même.",
     prixCategorie: "prixBaseHT",
-    // Photo affichée dans le panneau visuel quand le prospect survole
-    // l'option — voir showApercuHoverPreview / wireStepEvents.
     images: {
       swing_gate: "/images/portails/swinggate.jpg",
       oneslide: "/images/portails/oneslide.jpg",
       twinslide: "/images/portails/twinslide.jpg",
     },
     options: [["swing_gate","SWING GATE — Portail battant"],["oneslide","ONESLIDE — Portail coulissant 1 vantail"],["twinslide","TWINSLIDE — Portail coulissant 2 vantaux"]] });
-  // Ajouté le 04/09 (Cyrille) : distingue la simple fourniture du portail
-  // d'une installation complète (terrassement, béton, évacuation de terre,
-  // raccordement électrique, capteurs) — un poste de coût majeur, à part du
-  // prix du portail lui-même. Voir PORTAILS_TARIFS.installation.
   s.push({ key:"installation", question:"Souhaitez-vous la fourniture seule ou l'installation complète ?", type:"choice",
     options: [["fourniture_seule","Fourniture du portail seul (pose non comprise)"],
       ["installation_complete","Installation complète clé en main — terrassement, béton, évacuation de terre, raccordement électrique, capteurs"]] });
   s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
   s.push({ key:"remplissage", question:"Quel remplissage souhaitez-vous ?", type:"choice",
     prixCategorie: "remplissage",
-    // Illustrations recadrées depuis le catalogue Portaleco source (page
-    // "Nos designs") — voir showApercuHoverPreview.
     images: {
       clairline: "/images/portails/remplissage-clairline.jpg",
       decoline: "/images/portails/remplissage-decoline.jpg",
@@ -702,9 +500,6 @@ function getStepsPortails(state){
       laserline_vertical: "/images/portails/remplissage-laserline.jpg",
     },
     options: [["clairline","CLAIRLINE"],["decoline","DECOLINE"],["lameline","LAMELINE"],["laserline_vertical","LASERLINE verticale (motif découpé au laser)"]] });
-  // Motif du remplissage laser — uniquement si LASERLINE verticale a été
-  // choisie. Le plexiglas posé derrière la découpe est une info technique
-  // importante (tenue du remplissage), d'où la note.
   if(state.remplissage === "laserline_vertical"){
     s.push({ key:"motif_laserline", question:"Quel motif laser souhaitez-vous ?", type:"choice",
       note: "Un plexiglas sera installé à l'intérieur de la découpe laser.",
@@ -720,8 +515,6 @@ function getStepsPortails(state){
   s.push({ key:"hauteur", question:"Quelle hauteur souhaitez-vous ?", type:"choice",
     prixCategorie: "hauteur", grille: true,
     options: [["1226","1,226 m"],["1466","1,466 m"],["1585","1,585 m"],["1705","1,705 m"]] });
-  // grille:true ajouté le 04/09 (Cyrille) — la vingtaine de coloris RAL en
-  // liste sur une seule colonne obligeait à beaucoup faire défiler.
   s.push({ key:"couleur", question:"Quelle couleur pour votre portail ?", type:"choice",
     prixCategorie: "couleur", grille: true,
     options: Object.entries(PORTAILS_LABELS.couleur).map(([val,label])=>[val,label]) });
@@ -741,12 +534,6 @@ function getStepsPortails(state){
       ["ligne_electrique","Tirage d'une ligne électrique jusqu'au portail"]] });
   s.push({ key:"details_projet", question:"Décrivez votre projet en quelques mots", type:"textarea",
     placeholder:"Ex : accès existant, portail à remplacer, contraintes particulières…", optional:true, dictable:true });
-  // Ajouté le 04/09 (Cyrille) : manquait dans ce parcours — sans cette
-  // réponse, l'estimation retombait toujours sur le taux de TVA par défaut
-  // configuré par l'artisan, au lieu du taux réellement applicable au
-  // client (10% rénovation d'un bâtiment de plus de 2 ans, 20% sinon).
-  // Même question, mêmes libellés que le parcours "resine_rms" (voir
-  // getStepsResineRMS ci-dessus) — voir calculerEstimationPortails.
   s.push({ key:"age_batiment", question:"Le bâtiment concerné a-t-il plus de 2 ans ?", type:"choice",
     note: "Détermine le taux de TVA applicable à votre projet.",
     options: [["plus_2_ans","Oui, plus de 2 ans (TVA 10%)"], ["moins_2_ans","Non, moins de 2 ans (TVA 20%)"]] });
@@ -800,16 +587,18 @@ const FALLBACK_IMAGES = {
   ]
 };
 
-// Sécurité (06/09/2026) : heroTitle et legalLine ci-dessous sont construits
-// avec innerHTML et incluent des champs renseignés par l'ARTISAN lui-même
-// (entreprise, titre choisi, SIRET, adresse, assurance, zone, téléphone,
-// email...) puis affichés à TOUS LES VISITEURS de la vitrine publique. Sans
-// échappement, un champ contenant du HTML/JS (saisi par erreur, ou par un
-// compte compromis/malveillant) s'exécutait dans le navigateur de chaque
-// prospect qui consulte la page (XSS stockée). Toute valeur placée dans ces
-// blocs doit passer par escapeHtml.
 function escapeHtml(valeur) {
   return String(valeur == null ? '' : valeur).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+
+function detecterEmbedVideo(url){
+  if(!url) return null;
+  const embedYoutube = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+  if(embedYoutube) return { type:'youtube', id: embedYoutube[1] };
+  const embedVimeo = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if(embedVimeo) return { type:'vimeo', id: embedVimeo[1] };
+  if(/(?:^|\.)facebook\.com\/|fb\.watch\//.test(url)) return { type:'facebook', url };
+  return null;
 }
 
 async function init(){
@@ -821,11 +610,7 @@ async function init(){
   }
 
   const resp = await fetch(
-    // Sécurité (06/09/2026) : liste explicite plutôt que select=* — voir la
-    // migration verrouiller_colonnes_sensibles_vitrine_drafts, qui retire à
-    // anon l'accès à des colonnes sensibles (hash de mot de passe, jetons...)
-    // qu'un select=* tenterait de lire et ferait échouer intégralement.
-    `${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${id}&select=adresse_cp,adresse_rue,adresse_ville,assurance_decennale_assureur,assurance_decennale_numero,capital_social,couleur,description,email,entreprise,forme_juridique,formulaire_personnalise,formulaire_personnalise_cle,formulaire_position,id,logo_url,metier,mode_devis_detaille,photos,portails_tarifs,produits_chiffrables,rcs_ville,siret,status,telephone,titre_hero_choisi,tva_taux,video_url,zone`,
+    `${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${id}&select=adresse_cp,adresse_rue,adresse_ville,assurance_decennale_assureur,assurance_decennale_numero,capital_social,couleur,description,email,entreprise,fond_formulaire_flou,fond_formulaire_source,forme_juridique,formulaire_personnalise,formulaire_personnalise_cle,formulaire_position,id,logo_url,metier,mode_devis_detaille,photos,portails_tarifs,produits_chiffrables,rcs_ville,siret,status,telephone,titre_hero_choisi,tva_taux,video_url,zone`,
     { headers: { apikey: SUPABASE_ANON_KEY } }
   );
   const rows = await resp.json().catch(() => []);
@@ -845,10 +630,9 @@ async function init(){
   document.documentElement.style.setProperty('--brand', brandColor);
   document.documentElement.style.setProperty('--brand-tint', brandColor + '1A');
   document.documentElement.style.setProperty('--brand-dark', '#14312a');
+  const flouFond = (draft.fond_formulaire_flou != null) ? draft.fond_formulaire_flou : 14;
+  document.documentElement.style.setProperty('--flou-fond', flouFond + 'px');
 
-  // Position du formulaire (gauche/droite), configurée par l'artisan dans
-  // mes-elements.html — voir la classe .formulaire-droite ci-dessus. Sans
-  // valeur (anciens brouillons), reste à gauche comme aujourd'hui.
   if (draft.formulaire_position === 'droite') {
     document.querySelector('.split-layout').classList.add('formulaire-droite');
   }
@@ -867,11 +651,6 @@ async function init(){
   document.getElementById('introText').textContent = draft.description || template.intro;
   document.getElementById('miniBadges').innerHTML = ['✅ Sans engagement','⏱️ Réponse sous 24h','🔒 Données confidentielles'].map(b=>'<span>'+b+'</span>').join('');
 
-  // 08/09/2026 : bouton catalogue retiré à la demande de Cyrille (badge,
-  // champs et logique d'affichage supprimés — voir aussi mes-elements.html).
-
-  // Mentions légales complètes — n'affiche que ce qui a réellement été renseigné,
-  // pour ne jamais montrer de champ vide même si l'artisan n'a pas tout complété.
   const adresseComplete = [draft.adresse_rue, draft.adresse_cp, draft.adresse_ville].filter(Boolean).join(' ');
   const formeEtCapital = [draft.forme_juridique, draft.capital_social ? `au capital de ${draft.capital_social}` : null].filter(Boolean).join(' ');
   const assurance = draft.assurance_decennale_assureur
@@ -890,15 +669,41 @@ async function init(){
 
   document.getElementById('legalLine').innerHTML = lignesLegales.map(escapeHtml).join('<br/>');
 
-  // Carrousel de photos en fond du formulaire — indépendant du panneau
-  // gauche (qui peut afficher la vidéo à la place).
   (function initFormBgCarousel(){
+    const fondContainer = document.getElementById('formBgCarousel');
+    const sourceVideo = draft.fond_formulaire_source === 'video' && draft.video_url;
+
+    if(sourceVideo){
+      const embed = detecterEmbedVideo(draft.video_url);
+      if(embed){
+        const iframe = document.createElement('iframe');
+        if(embed.type === 'youtube'){
+          iframe.src = 'https://www.youtube-nocookie.com/embed/' + embed.id + '?autoplay=1&mute=1&loop=1&playlist=' + embed.id + '&controls=0&showinfo=0&modestbranding=1&playsinline=1&rel=0';
+        } else if(embed.type === 'vimeo'){
+          iframe.src = 'https://player.vimeo.com/video/' + embed.id + '?autoplay=1&muted=1&loop=1&background=1';
+        } else {
+          iframe.src = 'https://www.facebook.com/plugins/video.php?href=' + encodeURIComponent(embed.url) + '&show_text=false&autoplay=true&mute=1';
+        }
+        iframe.setAttribute('frameborder', '0');
+        iframe.setAttribute('allow', 'autoplay; fullscreen; encrypted-media; picture-in-picture');
+        iframe.className = 'active';
+        iframe.style.cssText = 'position:absolute; inset:0; width:100%; height:100%; border:0; pointer-events:none; opacity:1; filter:blur(var(--flou-fond,14px)); transform:scale(1.1);';
+        fondContainer.appendChild(iframe);
+      } else {
+        const video = document.createElement('video');
+        video.src = draft.video_url;
+        video.autoplay = true; video.muted = true; video.loop = true; video.playsInline = true;
+        video.className = 'active';
+        fondContainer.appendChild(video);
+      }
+      return;
+    }
+
     const metiersPourFond = Array.isArray(draft.metier) ? draft.metier : (draft.metier ? [draft.metier] : []);
     const imagesFallbackFond = metiersPourFond.length
       ? [...new Set(metiersPourFond.flatMap(m => FALLBACK_IMAGES[m] || []))]
       : FALLBACK_IMAGES.autre;
     const imagesFond = (draft.photos && draft.photos.length) ? draft.photos : (imagesFallbackFond.length ? imagesFallbackFond : FALLBACK_IMAGES.autre);
-    const fondContainer = document.getElementById('formBgCarousel');
     const fondImgs = imagesFond.map((src,i)=>{ const img=document.createElement('img'); img.src=src; if(i===0) img.className='active'; fondContainer.appendChild(img); return img; });
     if(fondImgs.length>1){
       let idxFond=0;
@@ -906,38 +711,17 @@ async function init(){
     }
   })();
 
-  // Panneau visuel coupé en deux (04/09, à la demande de Cyrille) : la
-  // moitié haute (#heroImageMedia) garde la vidéo/le carrousel de photos
-  // habituel ; la moitié basse (#heroPreviewHalf) est dédiée à l'aperçu au
-  // survol des options du formulaire (voir plus bas). Fonctionne pareil
-  // que l'artisan ait fourni une vidéo ou seulement des photos.
   const mediaContainer = document.getElementById('heroImageMedia');
   if(draft.video_url){
-    // Un lien YouTube/Vimeo/Facebook collé dans "mes éléments" (page de
-    // destination, pas un fichier vidéo) ne peut pas être lu par une balise
-    // <video> — corrigé le 04/09 : on détecte ces liens et on les affiche
-    // via l'iframe d'intégration officielle du site, en fond muet/en boucle
-    // pour rester cohérent avec un fichier uploadé directement. Un vrai
-    // fichier vidéo (uploadé, donc hébergé sur Supabase) continue de passer
-    // par <video>, sans changement.
-    const embedYoutube = draft.video_url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
-    const embedVimeo = !embedYoutube ? draft.video_url.match(/vimeo\.com\/(?:video\/)?(\d+)/) : null;
-    // Facebook n'expose pas d'identifiant simple à extraire (lien de
-    // partage type facebook.com/share/v/...) : son plugin d'intégration
-    // officiel accepte directement l'URL complète en paramètre "href".
-    // Limite connue : contrairement à YouTube/Vimeo, ce plugin ne propose
-    // pas de vraie boucle automatique — la vidéo se relance simplement en
-    // muet, sans repartir toute seule à la fin. La vidéo doit aussi être
-    // partagée publiquement sur Facebook, sinon le plugin affiche une erreur.
-    const embedFacebook = (!embedYoutube && !embedVimeo && /(?:^|\.)facebook\.com\/|fb\.watch\//.test(draft.video_url)) ? draft.video_url : null;
-    if(embedYoutube || embedVimeo || embedFacebook){
+    const embed = detecterEmbedVideo(draft.video_url);
+    if(embed){
       const iframe = document.createElement('iframe');
-      if(embedYoutube){
-        iframe.src = 'https://www.youtube-nocookie.com/embed/' + embedYoutube[1] + '?autoplay=1&mute=1&loop=1&playlist=' + embedYoutube[1] + '&controls=0&showinfo=0&modestbranding=1&playsinline=1&rel=0';
-      } else if(embedVimeo){
-        iframe.src = 'https://player.vimeo.com/video/' + embedVimeo[1] + '?autoplay=1&muted=1&loop=1&background=1';
+      if(embed.type === 'youtube'){
+        iframe.src = 'https://www.youtube-nocookie.com/embed/' + embed.id + '?autoplay=1&mute=1&loop=1&playlist=' + embed.id + '&controls=0&showinfo=0&modestbranding=1&playsinline=1&rel=0';
+      } else if(embed.type === 'vimeo'){
+        iframe.src = 'https://player.vimeo.com/video/' + embed.id + '?autoplay=1&muted=1&loop=1&background=1';
       } else {
-        iframe.src = 'https://www.facebook.com/plugins/video.php?href=' + encodeURIComponent(embedFacebook) + '&show_text=false&autoplay=true&mute=1';
+        iframe.src = 'https://www.facebook.com/plugins/video.php?href=' + encodeURIComponent(embed.url) + '&show_text=false&autoplay=true&mute=1';
       }
       iframe.setAttribute('frameborder', '0');
       iframe.setAttribute('allow', 'autoplay; fullscreen; encrypted-media; picture-in-picture');
@@ -964,11 +748,6 @@ async function init(){
     }
   }
 
-  // Aperçu au survol des options du formulaire (ex : passer la souris sur
-  // "OneSlide" affiche sa photo dans la moitié basse du panneau visuel,
-  // à côté de la vidéo/du carrousel toujours visible au-dessus). Voir
-  // wireStepEvents (s.type==='choice') pour la pose des écouteurs, et
-  // s.images dans getStepsPortails pour la liste des images disponibles.
   const previewHalf = document.getElementById('heroPreviewHalf');
   const previewPlaceholder = document.getElementById('heroPreviewPlaceholder');
   const hoverPreviewImg = document.createElement('img');
@@ -1025,10 +804,6 @@ async function init(){
   }
 
   document.getElementById('btnPublier').addEventListener('click', ()=>{
-    // Avant de choisir le forfait, on montre un aperçu "vivant" du futur
-    // tableau de bord (données fictives sur 6 mois, cliquable pour
-    // comprendre chaque encart) — pour que l'artisan voie concrètement ce
-    // qui l'attend avant de s'engager sur une formule.
     window.location.href = 'mon-dashboard-demo.html?id=' + draft.id;
   });
   document.getElementById('btnFooterCallback').addEventListener('click', ()=>{
@@ -1057,7 +832,6 @@ async function init(){
     });
   });
 
-  // Retour depuis Stripe après paiement : on vérifie et on publie côté serveur.
   const returningSessionId = params.get('session_id');
   if (returningSessionId) {
     document.getElementById('previewBanner').innerHTML =
@@ -1073,9 +847,6 @@ async function init(){
         document.getElementById('previewBanner').style.background = '#1e6f4c';
         document.getElementById('previewBanner').innerHTML =
           '<span>✅ Votre mini-site est en ligne — création de votre accès au tableau de bord…</span>';
-        // Envoi SMS/email du lien d'accès en secours (au cas où l'artisan
-        // fermerait la page avant la fin de la redirection ci-dessous), puis
-        // direction immédiate vers la création du mot de passe du dashboard.
         fetch('/api/envoyer-acces-dashboard', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1105,21 +876,6 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
   const cardEl = document.getElementById('card');
   const progressEl = document.getElementById('progress');
 
-  // ---------------------------------------------------------------------
-  // Formulaires personnalisés (colonnes formulaire_personnalise +
-  // formulaire_personnalise_cle) — demandé par Cyrille le 04/09 pour ne
-  // plus avoir à créer une nouvelle case à cocher ET une nouvelle colonne
-  // Supabase à chaque fois qu'un artisan a besoin d'un parcours sur mesure
-  // (jusqu'ici : mode_calcul_resine_rms pour RMS EcoSky, mode_calcul_portails
-  // pour PORTALECO — deux mécanismes séparés qui ne passaient pas à
-  // l'échelle). Désormais UNE seule case "Formulaire personnalisé" dans
-  // mes-elements.html ; laquelle des versions codées en dur s'affiche
-  // dépend de formulaire_personnalise_cle (texte, jamais exposé dans
-  // l'interface — posé directement en base par Claude au moment de coder le
-  // parcours sur mesure de CET artisan précis). Ajouter un futur parcours
-  // sur mesure pour un autre artisan ne demande donc plus de nouvelle
-  // colonne : juste une nouvelle entrée ici, et poser sa clé sur son
-  // brouillon.
   const PARCOURS_PERSONNALISES = {
     resine_rms: { getSteps: getStepsResineRMS, calculer: () => calculerEstimationResineRMS(), recap: (estimation) => construireRecapResineRMS(estimation) },
     portails: { getSteps: getStepsPortails, calculer: () => calculerEstimationPortails(), recap: (estimation) => construireRecapPortails(estimation) },
@@ -1130,18 +886,8 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
   }
 
   function getSteps(){
-    // Formulaire personnalisé (voir ci-dessus) : remplace entièrement le
-    // parcours du métier par le parcours codé en dur correspondant à
-    // formulaire_personnalise_cle.
     const parcours = parcoursPersonnaliseActuel();
-    // Formulaire "basique" (voir getStepsBasique ci-dessus) : parcours par
-    // défaut de toute vitrine sans formulaire personnalisé, à la place de
-    // l'ancien parcours à étapes par métier (template.getSteps).
     const steps = parcours ? parcours.getSteps(state) : getStepsBasique(state);
-    // Surcharges de texte des questions générales par métier — configurées
-    // par l'artisan dans mes-elements.html (jsonb {clé: nouveau texte}).
-    // Ne change jamais la clé/le type/les options, seulement le libellé
-    // affiché au prospect.
     const surcharges = draftInfo && draftInfo.questions_generales_texte;
     if (surcharges && typeof surcharges === 'object') {
       steps.forEach(s => {
@@ -1151,10 +897,6 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     return steps;
   }
 
-  // 07/09/2026 : voir le commentaire CSS sur ".pas-de-survol" plus haut — si
-  // aucune étape de ce parcours ne définit d'aperçu au survol (s.images),
-  // le second panneau resterait vide en permanence ; on laisse alors le
-  // carrousel/la vidéo prendre tout le panneau visuel à la place.
   const aDesApercusAuSurvol = getSteps().some(s => s.images && Object.keys(s.images).length);
   if (!aDesApercusAuSurvol) {
     const panneauVisuel = document.getElementById('heroImagePanel');
@@ -1178,33 +920,20 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
   function renderStep(){
     const steps=getSteps(); if(state.step>=steps.length) state.step=steps.length-1;
     const s=steps[state.step];
-    // Mode compact du bandeau d'intro dès la 2e question (voir CSS
-    // .header-block.compact) — laisse le plus de place possible à la
-    // question courante pour limiter le défilement.
     const headerBlockEl = document.querySelector('.header-block');
     if(headerBlockEl) headerBlockEl.classList.toggle('compact', state.step > 0);
     const miniBadgesEl = document.getElementById('miniBadges');
     if(miniBadgesEl) miniBadgesEl.classList.toggle('compact', state.step > 0);
     let html = '<div class="step-label">Étape '+(state.step+1)+' sur '+steps.length+'</div>';
     html += '<div class="question">'+s.question+'</div>';
-    // Note informative optionnelle sous la question (ex : précision sur le
-    // plexiglas posé derrière un motif laser découpé) — ajouté 04/09 pour le
-    // parcours "portails", réutilisable par tout step qui en a besoin.
     if(s.note) html += '<div style="font-size:12.5px; color:#5b6b64; margin:-8px 0 14px; line-height:1.5;">'+s.note+'</div>';
     if(s.type==='choice'){
-      // Suffixe de prix par option (ex : "+314€ HT") quand le step précise
-      // une prixCategorie — même mécanique que options_multi ci-dessous,
-      // lue depuis tarifsPortailsActuels(draftInfo) (grille remplie par
-      // Cyrille dans mes-elements.html). Uniquement utilisé par le parcours
-      // "portails" pour l'instant.
       const tarifsCategorie = s.prixCategorie ? (tarifsPortailsActuels(draftInfo)[s.prixCategorie] || {}) : null;
       html+='<div class="options'+(s.grille ? ' grid-2col' : '')+'">';
       s.options.forEach(([val,label])=>{
         const sel=state[s.key]===val?' selected':'';
         const prix = tarifsCategorie ? (tarifsCategorie[val] || 0) : 0;
         const suffixe = prix > 0 ? ' <span style="font-weight:400; opacity:0.7;">(+'+prix+'€ HT)</span>' : '';
-        // data-label : le libellé "propre" (sans le suffixe prix), utilisé
-        // pour la légende de l'aperçu au survol (voir s.images / wireStepEvents).
         html+='<div class="option'+sel+'" data-val="'+val+'" data-label="'+String(label).replace(/"/g,'&quot;')+'">'+label+suffixe+'</div>';
       });
       html+='</div>';
@@ -1266,10 +995,6 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
         '</div>'+
         '<div style="font-size:12px; color:#8a9490; margin-top:6px;">Facultatif — passez si vous préférez.</div>';
     } else if(s.type==='options_multi'){
-      // Plusieurs cases à cocher indépendantes (0 à N sélectionnées), chacune
-      // avec son propre supplément — voir PORTAILS_TARIFS.options. Contrairement
-      // aux autres types d'étape, cocher une case ne fait pas ré-afficher tout
-      // l'écran (comme un champ texte), pour ne pas perdre le focus/scroll.
       const choixActuels = state[s.key] || {};
       html+='<div class="options" style="gap:8px;">'+
         s.options.map(([val,label])=>{
@@ -1283,12 +1008,6 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
         '</div>'+
         '<div style="font-size:12px; color:#8a9490; margin-top:6px;">Facultatif — cochez uniquement ce qui vous intéresse.</div>';
     }
-    // "Recevoir mon estimation" n'a de sens que quand un vrai calcul de prix
-    // suit (parcours personnalisé — resine_rms, portails...). En mode
-    // "basique" (aucun parcours, voir getStepsBasique), il n'y a jamais de
-    // prix calculé : "Continuer" pendant le parcours, "Envoyer ma demande"
-    // sur la dernière étape — la prise de rendez-vous proprement dite reste
-    // un bouton séparé sur l'écran de résultat (voir renderResultat).
     let libelleNext;
     if(parcoursPersonnaliseActuel()){
       libelleNext = (s.key === 'identite') ? 'Recevoir mon estimation →' : 'Continuer';
@@ -1301,17 +1020,12 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     wireStepEvents(s, steps);
     document.getElementById('btnNext').disabled = !canProceed(s);
   }
-  // Dictée vocale (facultative) sur la question "Décrivez votre projet" —
-  // répond au besoin de pouvoir répondre "par écrit ou en parlant". Utilise
-  // l'API navigateur SpeechRecognition, sans dépendance externe ; le bouton
-  // reste simplement masqué si le navigateur ne la supporte pas (ex. Firefox
-  // desktop) — dégradation silencieuse, la saisie au clavier reste possible.
   function initMicApercu(textarea){
     const btn = document.getElementById('btnMicApercu');
     const statusEl = document.getElementById('micStatusApercu');
     if(!btn) return;
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if(!SR) return; // pas de mic si l'API n'existe pas dans ce navigateur
+    if(!SR) return;
     btn.style.display = 'inline-flex';
     btn.style.alignItems = 'center';
     btn.style.justifyContent = 'center';
@@ -1338,9 +1052,6 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     if(s.type==='choice'){
       cardEl.querySelectorAll('.option').forEach(el=>{
         el.addEventListener('click',()=>{ state[s.key]=el.dataset.val; renderProgress(); renderStep(); });
-        // Aperçu au survol — uniquement quand l'étape définit une image pour
-        // cette option (voir s.images, ex : type_portail). Ne fait rien sur
-        // les étapes qui n'en ont pas encore (remplissage, couleur…).
         if(s.images && s.images[el.dataset.val] && window.showApercuHoverPreview){
           el.addEventListener('mouseenter', ()=> window.showApercuHoverPreview(s.images[el.dataset.val], el.dataset.label));
           el.addEventListener('mouseleave', ()=> window.hideApercuHoverPreview());
@@ -1367,9 +1078,6 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
       document.getElementById('checkRgpd').addEventListener('change', (e)=>{ state.rgpdAccepte = e.target.checked; document.getElementById('btnNext').disabled=!canProceed(s); });
       document.getElementById('checkMarketing').addEventListener('change', (e)=>{ state.marketingAccepte = e.target.checked; });
 
-      // Vérification SMS — même comportement (statut coloré, décompte 30s
-      // avant renvoi) que sur estimation.html (SalesFlow) ; voir ce fichier
-      // pour l'original porté ici tel quel, adapté aux ids "...Apercu".
       const btnEnvoyerCode = document.getElementById('btnEnvoyerCodeApercu');
       const btnVerifierCode = document.getElementById('btnVerifierCodeApercu');
       const smsCodeZone = document.getElementById('smsCodeRowApercu');
@@ -1498,12 +1206,6 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     document.getElementById('btnBack').addEventListener('click',()=>{ if(state.step>0){ state.step-=1; renderProgress(); renderStep(); } });
     document.getElementById('btnNext').addEventListener('click', async ()=>{
       if(!canProceed(s)) return;
-      // Juste après que le prospect a décrit son projet : si l'artisan a
-      // défini des produits chiffrables, on demande à l'IA si ce projet
-      // correspond à l'un d'eux (api/classifier-projet-formulaire.js) avant
-      // de continuer — jamais bloquant : en cas d'échec ou d'absence de
-      // correspondance, le projet est simplement considéré non chiffrable
-      // (routage vers la prise de rendez-vous technicien, voir renderResultat).
       if(s.key === 'details_projet' && !state.questionsDynamiquesChargees){
         const produitsConfigures = draftInfo && Array.isArray(draftInfo.produits_chiffrables) ? draftInfo.produits_chiffrables : [];
         if(!produitsConfigures.length){
@@ -1544,23 +1246,14 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
       }
     });
   }
-  // Calcul de prix automatique réactivé (02/09) — utilise le produit repéré
-  // par la classification IA (state.produitChoisi, voir wireStepEvents) et
-  // la quantité saisie par le prospect (state.quantite), à partir des
-  // produits chiffrables configurés par l'artisan lui-même dans
-  // mes-elements.html (prix, unité, minimum).
   function calculerEstimation(){
-    // Formulaire personnalisé (voir parcoursPersonnaliseActuel ci-dessus) :
-    // calcul entièrement différent, propre au parcours codé en dur de CET
-    // artisan (ex : calculerEstimationResineRMS, port exact de
-    // salesflow-ecosky/api/submit-estimation.js).
     const parcours = parcoursPersonnaliseActuel();
     if(parcours) return parcours.calculer();
     const produit = state.produitChoisi;
     if(!produit) return { chiffrable:false };
 
     const prix = Number(produit.prix);
-    if(!prix || prix <= 0) return { chiffrable:false }; // prix non renseigné par l'artisan pour ce produit
+    if(!prix || prix <= 0) return { chiffrable:false };
 
     const quantite = produit.unite === 'forfait' ? null : Number(state.quantite);
     let montantHT;
@@ -1576,10 +1269,6 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     }
 
     const montantTTC = Math.round(montantHT * (1 + tvaTaux / 100));
-    // Remise volume générique (même paliers que la grille RMS EcoSky) —
-    // s'applique à tous les artisans Skyeco Pro : <5000€=5%, 5000-10000€=10%,
-    // ≥10000€=15%. Incite le prospect à contacter un technicien pour la
-    // faire valider, jamais appliquée automatiquement sur la facture finale.
     let remisePourcent = 0;
     if (montantTTC >= 10000) remisePourcent = 15;
     else if (montantTTC >= 5000) remisePourcent = 10;
@@ -1598,20 +1287,12 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
       montantApresRemise,
     };
   }
-  // Récapitulatif du formulaire "basique" (voir getStepsBasique) — aucune
-  // estimation chiffrée, juste l'adresse et la description du projet quand
-  // elles ont été renseignées (les deux sont facultatives), pour que
-  // l'artisan les ait dès l'email de notification (voir enregistrerDemande).
   function construireRecapBasique(adresse, descriptionProjet){
     const recap = [];
     if(adresse) recap.push({ label:'Adresse', valeur: adresse });
     if(descriptionProjet) recap.push({ label:'Description du projet', valeur: descriptionProjet });
     return recap.length ? recap : null;
   }
-  // Récapitulatif détaillé d'une estimation chiffrable — utilisé à la fois
-  // pour l'email envoyé à l'artisan (voir enregistrerDemande) et pour
-  // l'affichage prospect en mode "devis détaillé" (voir renderResultat,
-  // activé par l'artisan dans mes-elements.html : mode_devis_detaille).
   function construireRecap(estimation){
     const unitesLabels = { m2:'m²', ml:'ml', m3:'m³', forfait:'forfait' };
     const recap = [{ label:'Prestation', valeur: estimation.produit.nom }];
@@ -1637,12 +1318,6 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     recap.push({ label:'Montant estimé', valeur: estimation.montantTTC + ' € TTC' });
     return recap;
   }
-  // Phrase de calcul façon devis, sur le modèle de ce que fait déjà
-  // RMS EcoSky sur son propre site SalesFlow (api/submit-estimation.js) :
-  // "115€ HT/m² × 20m² = 2300€ HT, soit environ 2530€ TTC (TVA 10%) — [note]."
-  // Ici généralisée à n'importe quel produit/unité/artisan Skyeco Pro — la
-  // "note" reprend les limites que l'artisan a lui-même signalées pour ce
-  // produit (mes-elements.html) au lieu d'un texte codé en dur par métier.
   function construirePhraseEstimation(estimation){
     const unitesLabels = { m2:'m²', ml:'ml', m3:'m³' };
     const produit = estimation.produit;
@@ -1655,13 +1330,6 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     return 'Estimation indicative : forfait de '+estimation.montantHT+'€ HT, soit environ '+estimation.montantTTC+'€ TTC (TVA '+tvaTaux+'%) — '+note+'.';
   }
 
-  // Port exact de computeEstimation() dans salesflow-ecosky/api/submit-estimation.js
-  // — mêmes règles de prix (115€/150€/180€ HT/m² selon support et état,
-  // +50€/m² couleur hors standard, bordure à 45€ HT/ml, TVA 10%/20% selon
-  // l'âge du bâtiment, remise 5/10/15% selon montant) et même phrase de
-  // résultat, pour que ce mode donne un résultat identique à celui déjà en
-  // place sur le site SalesFlow de RMS EcoSky. Voir getStepsResineRMS pour
-  // les questions correspondantes.
   function calculerEstimationResineRMS(){
     const surface = parseFloat(state.surface);
     const usage = state.usage;
@@ -1754,12 +1422,6 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     };
   }
 
-  // Calcul du mode "Configurateur portails" — additionne le prix de base du
-  // type de portail (PORTAILS_TARIFS.prixBaseHT) et chaque supplément choisi
-  // (remplissage, lames, largeur, hauteur, couleur, options cochées). Tant
-  // que le prix de base du type choisi vaut 0 (grille non encore remplie par
-  // Cyrille, voir le commentaire au-dessus de PORTAILS_TARIFS), renvoie
-  // chiffrable:false — jamais de montant à 0€ ou faux affiché au prospect.
   function calculerEstimationPortails(){
     const tarifs = tarifsPortailsActuels(draftInfo);
     const type = state.type_portail;
@@ -1770,11 +1432,6 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
         texte: "Ce type de portail nécessite un chiffrage personnalisé — un technicien vous recontacte rapidement avec un prix précis.",
       };
     }
-    // Même garde-fou que prixBaseHT ci-dessus, appliquée spécifiquement à
-    // l'installation complète (terrassement, béton, évacuation, électricité,
-    // capteurs) : tant que son prix n'est pas rempli, on ne calcule PAS un
-    // montant qui "oublierait" tout le gros œuvre — on route vers un
-    // technicien comme pour un prix de base manquant.
     if(state.installation === 'installation_complete' && !tarifs.installation.installation_complete){
       return {
         chiffrable: false,
@@ -1796,16 +1453,9 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     Object.keys(optionsChoisies).forEach(cle => { if(optionsChoisies[cle]) ajouter(tarifs.options, cle); });
 
     totalHT = Math.round(totalHT);
-    // Taux de TVA réellement applicable au client (10% rénovation d'un
-    // bâtiment de plus de 2 ans, 20% sinon — voir l'étape age_batiment
-    // ajoutée le 04/09), plutôt que le taux par défaut configuré par
-    // l'artisan (tvaTaux) — celui-ci ne sert plus que de filet de sécurité
-    // si jamais cette étape n'a pas de réponse.
     const tauxTVAApplicable = state.age_batiment === 'plus_2_ans' ? 10 : (state.age_batiment === 'moins_2_ans' ? 20 : tvaTaux);
     const montantTTC = Math.round(totalHT * (1 + tauxTVAApplicable / 100));
 
-    // Même barème de remise indicative que le reste de Skyeco Pro (voir
-    // calculerEstimation) — toujours à valider par un technicien.
     let remisePourcent = 0;
     if(montantTTC >= 10000) remisePourcent = 15;
     else if(montantTTC >= 5000) remisePourcent = 10;
@@ -1822,9 +1472,6 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     };
   }
 
-  // Récapitulatif du mode "Configurateur portails" — pendant de
-  // construireRecapResineRMS() ci-dessus, basé sur les champs du parcours
-  // getStepsPortails (state.type_portail, state.remplissage…).
   function construireRecapPortails(estimation){
     const recap = [];
     recap.push({ label:'Structure', valeur:'Portail autoportant (aucun rail au sol)' });
@@ -1850,10 +1497,6 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     return recap;
   }
 
-  // Récapitulatif du mode "Calcul résine RMS EcoSky" — pendant de
-  // construireRecap() ci-dessus, mais basé sur les champs du parcours
-  // salesflow-ecosky (state.usage, state.support_pieton…) plutôt que sur un
-  // "produit" générique.
   function construireRecapResineRMS(estimation){
     const recap = [];
     if(state.usage) recap.push({ label:'Type de projet', valeur: RESINE_RMS_LABELS.usage[state.usage] || state.usage });
@@ -1877,34 +1520,14 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     cardEl.innerHTML = '<div class="question" style="text-align:center;">Enregistrement de votre demande…</div>';
     document.getElementById('progress').style.display = 'none';
 
-    // Sépare les champs identité (colonnes dédiées) du reste (stocké en jsonb "reponses").
-    // produitChoisi est retiré de "reste" : déjà repris en détail dans "recap"
-    // ci-dessous, pas besoin de le dupliquer tel quel dans reponses.
-    // adresse_rue/adresse_cp/adresse_ville (étape "adresse" du formulaire
-    // basique, voir getStepsBasique) sont recombinés en un seul champ
-    // "adresse" plus lisible plutôt que trois clés séparées dans reponses —
-    // reconnu tel quel par extraireAdresse() dans mon-dashboard.html.
     const { nom, prenom, telephone, telephoneVerifie, email, produitChoisi, adresse_rue, adresse_cp, adresse_ville, ...reste } = state;
     const adresseComplete = [adresse_rue, adresse_cp, adresse_ville].filter(Boolean).join(' ');
     const estimation = calculerEstimation();
 
-    // Récapitulatif détaillé envoyé à api/notify-nouvelle-demande.js pour un
-    // email complet, pas juste un accusé de réception sec — voir sa gestion
-    // du champ optionnel "recap". Cas chiffrable (parcours personnalisé ou
-    // ancien produit chiffrable) : détail du calcul. Cas basique (aucun
-    // parcours, jamais chiffrable — voir getStepsBasique) : adresse +
-    // description du projet, pour que l'artisan ait ces infos dès l'email de
-    // notification sans avoir à ouvrir le tableau de bord.
     const parcours = parcoursPersonnaliseActuel();
     const recap = estimation.chiffrable
       ? (parcours ? parcours.recap(estimation) : construireRecap(estimation))
       : (!parcours ? construireRecapBasique(adresseComplete, state.description_projet) : null);
-    // Phrase de calcul façon devis (voir construirePhraseEstimation /
-    // calculerEstimationResineRMS / calculerEstimationPortails) — transmise à
-    // api/notify-nouvelle-demande.js pour que le SMS ET l'email envoyés au
-    // prospect contiennent le montant chiffré lui-même, pas seulement un
-    // accusé de réception générique. Même logique que ce que fait déjà
-    // salesflow-ecosky pour RMS EcoSky.
     const estimationTexte = estimation.chiffrable
       ? (parcours ? estimation.texte : construirePhraseEstimation(estimation))
       : null;
@@ -1946,20 +1569,9 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
 
   function renderResultat(estimation, leadId){
     let priceBlock, disclaimer;
-    // Mode "devis détaillé" — activé par l'artisan lui-même dans
-    // mes-elements.html (case "Présenter le résultat façon devis détaillé",
-    // colonne mode_devis_detaille). Désactivé par défaut : sans cette case
-    // cochée, le comportement reste le montant unique ci-dessous, inchangé.
-    // Formulaire personnalisé (voir parcoursPersonnaliseActuel en haut de
-    // runWizard) : tous les parcours sur mesure partagent la même
-    // présentation de résultat — seul le constructeur de récapitulatif
-    // diffère (parcours.recap).
     const parcours = parcoursPersonnaliseActuel();
     const modeDevisDetaille = !parcours && estimation.chiffrable && draftInfo && draftInfo.mode_devis_detaille === true;
     if(parcours && estimation.chiffrable){
-      // Résultat d'un formulaire personnalisé — même présentation que le
-      // mode "devis détaillé" générique ci-dessous, mais avec la phrase et
-      // les champs propres à CE parcours sur mesure (voir parcours.recap).
       const detailsRecap = parcours.recap(estimation).filter(l => l.label !== 'Montant estimé');
       priceBlock =
         '<div class="result-box">'+
@@ -1980,21 +1592,11 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
         '<a class="btn btn-primary" style="display:block; width:100%; text-align:center; text-decoration:none; margin-top:10px; box-sizing:border-box;" href="/prendre-rdv.html?id='+encodeURIComponent(draftId)+'" target="_blank" rel="noopener">📅 Prendre rendez-vous à un horaire précis — pour connaître précisément ce qui est réellement inclus'+(estimation.remisePourcent > 0 ? ' et voir si vous pouvez bénéficier de la remise' : '')+'</a>';
       disclaimer = 'Cette estimation reste indicative et sans valeur contractuelle — elle devra être confirmée par l\'artisan lors d\'un appel téléphonique. Vous recevrez ce récapitulatif par email.';
     } else if(parcours){
-      // Cas non chiffrable dans un formulaire personnalisé (ex : surface <
-      // 10m² côté résine, type de portail sans prix de base configuré côté
-      // portails…) : on affiche le message propre à ce parcours
-      // (estimation.texte) plutôt que le message générique, toujours routé
-      // vers la prise de rendez-vous, jamais bloqué.
       priceBlock =
         '<div class="result-box"><div class="result-note">'+estimation.texte+'</div></div>'+
         '<a class="btn btn-primary" style="display:block; width:100%; text-align:center; text-decoration:none; margin-top:10px; box-sizing:border-box;" href="/prendre-rdv.html?id='+encodeURIComponent(draftId)+'" target="_blank" rel="noopener">📅 Prendre rendez-vous</a>';
       disclaimer = 'Vous recevrez une confirmation de votre demande par email.';
     } else if(modeDevisDetaille){
-      // Style calqué sur ce que fait déjà RMS EcoSky sur SalesFlow (une
-      // phrase de calcul façon devis sous le montant), plutôt qu'un tableau —
-      // voir construirePhraseEstimation. Les à-côtés (délai, localisation,
-      // réponses aux questions du produit) restent visibles en dessous, sous
-      // une forme compacte plutôt qu'en tableau détaillé.
       const detailsRecap = construireRecap(estimation).filter(l =>
         !['Prestation','Quantité','Prix unitaire','Montant HT','Montant estimé'].includes(l.label));
       priceBlock =
@@ -2030,11 +1632,6 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
         '<a class="btn btn-primary" style="display:block; width:100%; text-align:center; text-decoration:none; margin-top:10px; box-sizing:border-box;" href="/prendre-rdv.html?id='+encodeURIComponent(draftId)+'" target="_blank" rel="noopener">📅 Prendre rendez-vous à un horaire précis — pour connaître précisément ce qui est réellement inclus'+(estimation.remisePourcent > 0 ? ' et voir si vous pouvez bénéficier de la remise' : '')+'</a>';
       disclaimer = 'Cette estimation reste indicative et devra être confirmée par l\'artisan lors d\'un appel téléphonique. Vous recevrez ce récapitulatif par email.';
     } else {
-      // Formulaire "basique" (voir getStepsBasique) — jamais chiffrable par
-      // définition, toujours orienté vers la vraie prise de rendez-vous
-      // (calendrier natif de l'artisan). On rappelle l'adresse et la
-      // description du projet saisies, pour rassurer le prospect que sa
-      // demande a bien été comprise.
       const adresseAffichage = [state.adresse_rue, state.adresse_cp, state.adresse_ville].filter(Boolean).join(' ');
       const detailsBasique = construireRecapBasique(adresseAffichage, state.description_projet) || [];
       priceBlock =
@@ -2105,8 +1702,6 @@ init();
   var CLE = 'skyeco_cookie_consent';
   function lireChoix(){ try { return JSON.parse(localStorage.getItem(CLE) || 'null'); } catch(e){ return null; } }
   function appliquerChoix(choix){
-    // Point d'extension : charger ici Google Ads / Analytics uniquement si choix.niveau === 'tous'.
-    // Rien n'est charge pour l'instant.
     window.skyecoConsentement = choix;
   }
   window.skyecoCookiesChoix = function(niveau){

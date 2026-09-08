@@ -3,13 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Envoyer mes photos — Skyeco Pro</title>
+<title>Mes informations — Skyeco Pro</title>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f7f5f0; color:#2a3d35; padding:32px 20px 60px; line-height:1.6; }
   .wrap { max-width:480px; margin:0 auto; }
   h1 { font-size:1.4rem; margin-bottom:10px; }
+  h2 { font-size:1rem; margin:22px 0 10px; color:#14312a; }
   .sub { font-size:0.92rem; color:#5f6f66; margin-bottom:24px; }
+  label { display:block; font-size:0.82rem; font-weight:600; color:#5f6f66; margin-bottom:4px; }
+  input[type=text] {
+    width:100%; padding:12px 14px; border:1.5px solid #d8d2c2; border-radius:10px;
+    font-size:0.95rem; margin-bottom:14px; background:#fdfcf9; color:#2a3d35;
+  }
+  input[type=text]:focus { outline:none; border-color:#1e6f4c; }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
   .upload-box {
     border:1.5px dashed #d8d2c2; border-radius:14px; padding:28px; text-align:center; cursor:pointer;
     background:#fdfcf9; transition:all 0.2s; margin-bottom:18px;
@@ -41,7 +49,24 @@
   const leadId = params.get('lead');
   const token = params.get('token');
   const wrap = document.getElementById('wrap');
-  let photosUrls = [];
+  // Ajouté 08/09/2026 : cette page ne demandait que des photos ; elle
+  // collecte maintenant aussi nom/prénom/adresse, pour le cas où c'est
+  // Cyrille (l'artisan) qui a créé la demande lui-même avec son propre
+  // numéro (obligatoire pour la vérification SMS côté formulaire public) et
+  // n'a donc pas les vraies coordonnées du client dans son tableau de bord.
+  let infos = { photos: [], nom: '', prenom: '', adresse: '' };
+
+  function escapeAttr(v) {
+    return String(v || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+  }
+
+  async function appelRpc(nom, corps) {
+    return fetch(`${SUPABASE_URL}/rest/v1/rpc/${nom}`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(corps),
+    });
+  }
 
   async function init() {
     if (!leadId || !token) {
@@ -52,22 +77,23 @@
       // Sécurité (06/09/2026) : cette page est anonyme (juste un lien avec
       // un token), donc la lecture/écriture passe par une fonction RPC qui
       // vérifie le photos_token EN BASE, sans exposer le reste de la
-      // demande (nom, téléphone…) via la clé anon.
-      const resp = await fetch(`${SUPABASE_URL}/rest/v1/rpc/rpc_get_lead_photos`, {
-        method: 'POST',
-        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ p_lead_id: leadId, p_token: token })
-      });
+      // demande (email, statut interne…) via la clé anon.
+      const resp = await appelRpc('rpc_get_lead_infos', { p_lead_id: leadId, p_token: token });
       if (!resp.ok) {
         wrap.innerHTML = '<div class="msg-err">Ce lien est invalide ou a expiré.</div>';
         return;
       }
-      const photos = await resp.json();
-      if (photos === null) {
+      const data = await resp.json();
+      if (data === null) {
         wrap.innerHTML = '<div class="msg-err">Ce lien est invalide ou a expiré.</div>';
         return;
       }
-      photosUrls = Array.isArray(photos) ? photos : [];
+      infos = {
+        photos: Array.isArray(data.photos) ? data.photos : [],
+        nom: data.nom || '',
+        prenom: data.prenom || '',
+        adresse: data.adresse || '',
+      };
       render();
     } catch (e) {
       wrap.innerHTML = '<div class="msg-err">Impossible de charger la page pour le moment.</div>';
@@ -76,12 +102,22 @@
 
   function render() {
     wrap.innerHTML = `
-      <h1>📷 Envoyez vos photos</h1>
-      <p class="sub">Prenez ou choisissez des photos de votre projet — elles seront transmises directement à l'artisan avec votre demande.</p>
-      <div class="upload-box ${photosUrls.length ? 'has-file' : ''}" id="boxPhotos">
+      <h1>👋 Vos informations</h1>
+      <p class="sub">Complétez vos coordonnées et ajoutez quelques photos de votre projet — tout sera transmis directement à l'artisan.</p>
+
+      <h2>Vos coordonnées</h2>
+      <div class="row2">
+        <div><label for="champPrenom">Prénom</label><input type="text" id="champPrenom" value="${escapeAttr(infos.prenom)}"></div>
+        <div><label for="champNom">Nom</label><input type="text" id="champNom" value="${escapeAttr(infos.nom)}"></div>
+      </div>
+      <label for="champAdresse">Adresse complète du chantier</label>
+      <input type="text" id="champAdresse" value="${escapeAttr(infos.adresse)}" placeholder="12 rue des Fleurs, 56400 Brech">
+
+      <h2>Vos photos</h2>
+      <div class="upload-box ${infos.photos.length ? 'has-file' : ''}" id="boxPhotos">
         <input type="file" id="inputPhotos" accept="image/*" capture="environment" multiple>
         <div class="upload-label">📁 Prendre ou choisir des photos</div>
-        <div class="upload-status" id="statusPhotos">${photosUrls.length ? photosUrls.length + ' photo(s) déjà envoyée(s)' : 'Aucune photo pour le moment'}</div>
+        <div class="upload-status" id="statusPhotos">${infos.photos.length ? infos.photos.length + ' photo(s) déjà envoyée(s)' : 'Aucune photo pour le moment'}</div>
       </div>
       <div class="photos-grid" id="photosGrid"></div>
       <button type="button" class="btn" id="btnTerminer">✓ Terminé</button>
@@ -89,19 +125,11 @@
     rafraichirGrid();
     document.getElementById('boxPhotos').addEventListener('click', () => document.getElementById('inputPhotos').click());
     document.getElementById('inputPhotos').addEventListener('change', uploaderPhotos);
-    document.getElementById('btnTerminer').addEventListener('click', () => {
-      wrap.innerHTML = `
-        <div class="msg-ok">
-          <div class="icon">✅</div>
-          <div style="font-weight:700; font-size:1.1rem; margin-bottom:8px;">Merci !</div>
-          <div style="color:#5f6f66;">Vos photos ont bien été transmises. Vous pouvez fermer cette page.</div>
-        </div>
-      `;
-    });
+    document.getElementById('btnTerminer').addEventListener('click', terminer);
   }
 
   function rafraichirGrid() {
-    document.getElementById('photosGrid').innerHTML = photosUrls.map(url => `
+    document.getElementById('photosGrid').innerHTML = infos.photos.map(url => `
       <div class="photo-thumb"><img src="${url}" alt=""></div>
     `).join('');
   }
@@ -120,19 +148,40 @@
           body: file,
         });
         if (!resp.ok) throw new Error();
-        photosUrls.push(`${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${nomFichier}`);
+        infos.photos.push(`${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${nomFichier}`);
       } catch (err) { /* on continue les autres photos même si une échoue */ }
     }
-    statusEl.textContent = `${photosUrls.length} photo(s) envoyée(s)`;
+    statusEl.textContent = `${infos.photos.length} photo(s) envoyée(s)`;
     document.getElementById('boxPhotos').classList.add('has-file');
     rafraichirGrid();
     try {
-      await fetch(`${SUPABASE_URL}/rest/v1/rpc/rpc_set_lead_photos`, {
-        method: 'POST',
-        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ p_lead_id: leadId, p_token: token, p_photos: photosUrls }),
-      });
+      // On sauvegarde les photos tout de suite (comme avant) sans toucher au
+      // reste — les autres champs restent null donc inchangés côté base.
+      await appelRpc('rpc_set_lead_infos', { p_lead_id: leadId, p_token: token, p_photos: infos.photos });
     } catch (e) { /* silencieux — les photos restent visibles à l'écran même si la sauvegarde échoue, l'artisan pourra redemander si besoin */ }
+  }
+
+  async function terminer() {
+    const btn = document.getElementById('btnTerminer');
+    btn.disabled = true;
+    btn.textContent = 'Enregistrement…';
+    const corps = {
+      p_lead_id: leadId,
+      p_token: token,
+      p_nom: document.getElementById('champNom').value.trim() || null,
+      p_prenom: document.getElementById('champPrenom').value.trim() || null,
+      p_adresse: document.getElementById('champAdresse').value.trim() || null,
+    };
+    try {
+      await appelRpc('rpc_set_lead_infos', corps);
+    } catch (e) { /* on affiche quand même le message de remerciement — l'artisan pourra redemander si besoin */ }
+    wrap.innerHTML = `
+      <div class="msg-ok">
+        <div class="icon">✅</div>
+        <div style="font-weight:700; font-size:1.1rem; margin-bottom:8px;">Merci !</div>
+        <div style="color:#5f6f66;">Vos informations ont bien été transmises. Vous pouvez fermer cette page.</div>
+      </div>
+    `;
   }
 
   init();

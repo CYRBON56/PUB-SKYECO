@@ -5,7 +5,7 @@
 // campagne se met en route" demandé : aucune étape manuelle après paiement.
 //
 // Le montant payé par l'artisan (session.metadata.budget) est TTC (ex. 100€).
-// Skyeco Ads facture ce montant avec TVA à 20% (voir modèle de facturation),
+// Skyeco IA Ads facture ce montant avec TVA à 20% (voir modèle de facturation),
 // donc le budget RÉELLEMENT dépensé en diffusion publicitaire est le montant
 // HT — ex. 100€ TTC -> 83,33€ HT de budget de campagne. C'est ce montant HT
 // qui est stocké dans tarif_prix et utilisé pour créer la campagne Google Ads.

@@ -117,8 +117,10 @@ export default async function handler(req, res) {
   };
 
   try {
-    // 1. Sélectionne le prochain lot : jamais contacté, pas désabonné, pas marqué obsolète.
-    let filtre = `email=not.is.null&opt_out=eq.false&bounced=eq.false&email_envoye=eq.false`;
+    // 1. Sélectionne le prochain lot : jamais contacté, pas désabonné, pas marqué obsolète,
+    // pas arrêté manuellement (colonne "stopped" — ajoutée le 09/09/2026 : elle existait déjà
+    // dans le schéma et était affichée par api/track-click.js, mais n'était jamais vérifiée ici).
+    let filtre = `email=not.is.null&opt_out=eq.false&bounced=eq.false&email_envoye=eq.false&stopped=eq.false`;
     if (metier) filtre += `&metier=eq.${encodeURIComponent(metier)}`;
     if (familleMetier) filtre += `&famille_metier=eq.${encodeURIComponent(familleMetier)}`;
     const lotResp = await fetch(

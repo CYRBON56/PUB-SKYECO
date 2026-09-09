@@ -18,9 +18,14 @@
     <rect x="124" y="76" width="14" height="90" rx="2" fill="#F4F7F9"/>
   </g>
   <path d="M 42 128 Q 90 96 128 66" stroke="#E8622C" stroke-width="3" stroke-dasharray="1 9" stroke-linecap="round" fill="none" opacity="0.85"/>
-  <g transform="translate(112,58) rotate(-28)">
-    <path d="M 0 20 L 66 0 L 18 14 L 10 34 L 4 22 Z" fill="#E8622C"/>
-    <path d="M 0 20 L 18 14 L 10 34 Z" fill="#C74F20"/>
-    <path d="M 18 14 L 66 0 L 24 4 Z" fill="#F0A878"/>
+  <!-- Avion façon chasseur (silhouette delta + canards, style Rafale), montant le long de la trajectoire pointillée -->
+  <g transform="translate(108,60) rotate(-28) scale(0.82)">
+    <path d="M 46,-1.5 L 18,-3.5 L 2,-26 L 34,-3 Z" fill="#F0A878"/>
+    <path d="M 46,1.5 L 18,3.5 L 2,26 L 34,3 Z" fill="#C74F20"/>
+    <path d="M 62,-1 L 50,-2 L 64,-15 L 60,-1.5 Z" fill="#F0A878"/>
+    <path d="M 62,1 L 50,2 L 64,15 L 60,1.5 Z" fill="#C74F20"/>
+    <path d="M 13,-2.5 L 3,-3.5 L -9,-10 L 10,-3 Z" fill="#F0A878"/>
+    <path d="M 13,2.5 L 3,3.5 L -9,10 L 10,3 Z" fill="#C74F20"/>
+    <path d="M 0,0 L 14,-4 L 62,-1.5 L 78,0 L 62,1.5 L 14,4 Z" fill="#E8622C"/>
   </g>
 </svg>

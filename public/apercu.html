@@ -48,6 +48,14 @@
   .image-panel-preview .hover-preview.active { opacity:1; }
   .image-panel-preview .hover-preview-label { position:absolute; left:0; right:0; bottom:0; z-index:2; background:linear-gradient(0deg, rgba(15,35,29,0.92) 0%, rgba(15,35,29,0) 100%); color:#fff; font-weight:700; font-size:14px; padding:16px 16px 10px; text-align:center; opacity:0; transition:opacity .25s ease-in-out; }
   .image-panel-preview .hover-preview-label.active { opacity:1; }
+  /* Carrousel de photos permanent dans la moitié basse (09/09, demande de
+     Cyrille : "mettre sur 2 ecrans la video et le carroussel") — quand
+     l'artisan a une vidéo (moitié haute) ET des photos, la moitié basse
+     n'est plus vide tant qu'aucune option n'est survolée : elle affiche ce
+     carrousel en continu. L'aperçu au survol (ci-dessus) reste prioritaire
+     et s'affiche par-dessus (z-index) le temps du survol. */
+  .image-panel-preview .preview-carrousel-img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity .8s ease-in-out; }
+  .image-panel-preview .preview-carrousel-img.active { opacity:1; }
   @media (max-width:800px){ .image-panel-preview{ display:none; } }
   .form-panel { flex:1 1 55%; position:relative; display:flex; align-items:stretch; justify-content:center; padding:20px 24px; overflow:hidden; order:1; }
   /* Position du formulaire (gauche/droite) — configurée par l'artisan dans
@@ -955,10 +963,19 @@ async function init(){
 
   // Panneau visuel coupé en deux (04/09, à la demande de Cyrille) : la
   // moitié haute (#heroImageMedia) garde la vidéo/le carrousel de photos
-  // habituel ; la moitié basse (#heroPreviewHalf) est dédiée à l'aperçu au
-  // survol des options du formulaire (voir plus bas). Fonctionne pareil
-  // que l'artisan ait fourni une vidéo ou seulement des photos.
+  // habituel ; la moitié basse (#heroPreviewHalf) sert à l'aperçu au survol
+  // des options du formulaire (voir plus bas). Mis à jour le 09/09 : quand
+  // l'artisan a une vidéo (donc la moitié haute est prise par la vidéo), la
+  // moitié basse affiche en permanence le carrousel de photos au lieu de
+  // rester vide entre deux survols — "2 écrans" (vidéo + carrousel) au lieu
+  // d'un seul. Sans vidéo, comportement inchangé : carrousel en haut,
+  // aperçu au survol en bas.
   const mediaContainer = document.getElementById('heroImageMedia');
+  const metiersListeApercu = Array.isArray(draft.metier) ? draft.metier : (draft.metier ? [draft.metier] : []);
+  const imagesFallbackApercu = metiersListeApercu.length
+    ? [...new Set(metiersListeApercu.flatMap(m => FALLBACK_IMAGES[m] || []))]
+    : FALLBACK_IMAGES.autre;
+  const imagesCarrouselApercu = (draft.photos && draft.photos.length) ? draft.photos : (imagesFallbackApercu.length ? imagesFallbackApercu : FALLBACK_IMAGES.autre);
   if(draft.video_url){
     // Un lien YouTube/Vimeo/Facebook collé dans "mes éléments" (page de
     // destination, pas un fichier vidéo) ne peut pas être lu par une balise
@@ -998,13 +1015,24 @@ async function init(){
       video.style.cssText = 'position:absolute; inset:0; width:100%; height:100%; object-fit:cover;';
       mediaContainer.insertBefore(video, mediaContainer.firstChild);
     }
+    // Vidéo en haut : la moitié basse (habituellement vide tant qu'aucune
+    // option n'est survolée) affiche désormais le carrousel de photos en
+    // continu, au lieu de rester sur le texte d'invitation.
+    const previewHalfBas = document.getElementById('heroPreviewHalf');
+    const placeholderBas = document.getElementById('heroPreviewPlaceholder');
+    if(placeholderBas) placeholderBas.style.display = 'none';
+    const imgsCarrouselBas = imagesCarrouselApercu.map((src,i)=>{
+      const img=document.createElement('img');
+      img.src=src; img.className = 'preview-carrousel-img' + (i===0 ? ' active' : '');
+      previewHalfBas.insertBefore(img, previewHalfBas.firstChild);
+      return img;
+    });
+    if(imgsCarrouselBas.length>1){
+      let idxBas=0;
+      setInterval(()=>{ imgsCarrouselBas[idxBas].classList.remove('active'); idxBas=(idxBas+1)%imgsCarrouselBas.length; imgsCarrouselBas[idxBas].classList.add('active'); }, 2500);
+    }
   } else {
-    const metiersListeApercu = Array.isArray(draft.metier) ? draft.metier : (draft.metier ? [draft.metier] : []);
-    const imagesFallback = metiersListeApercu.length
-      ? [...new Set(metiersListeApercu.flatMap(m => FALLBACK_IMAGES[m] || []))]
-      : FALLBACK_IMAGES.autre;
-    const images = (draft.photos && draft.photos.length) ? draft.photos : (imagesFallback.length ? imagesFallback : FALLBACK_IMAGES.autre);
-    const imgs = images.map((src,i)=>{ const img=document.createElement('img'); img.src=src; if(i===0) img.className='active'; mediaContainer.insertBefore(img, mediaContainer.firstChild); return img; });
+    const imgs = imagesCarrouselApercu.map((src,i)=>{ const img=document.createElement('img'); img.src=src; if(i===0) img.className='active'; mediaContainer.insertBefore(img, mediaContainer.firstChild); return img; });
     if(imgs.length>1){
       let idx=0;
       setInterval(()=>{ imgs[idx].classList.remove('active'); idx=(idx+1)%imgs.length; imgs[idx].classList.add('active'); }, 2500);

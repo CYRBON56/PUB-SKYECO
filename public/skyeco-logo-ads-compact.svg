@@ -33,6 +33,6 @@
     <path d="M 13,2.5 L 3,3.5 L -9,10 L 10,3 Z" fill="#C74F20"/>
     <path d="M 0,0 L 14,-4 L 62,-1.5 L 78,0 L 62,1.5 L 14,4 Z" fill="#E8622C"/>
   </g>
-  <text x="222" y="102" class="wordmark" font-size="58" fill="#14304A">SKY<tspan fill="#E8622C">ECO</tspan></text>
+  <text x="222" y="102" class="wordmark" font-size="58" fill="#FFFFFF">SKY<tspan fill="#E8622C">ECO</tspan></text>
   <text x="224" y="138" class="wordmark" font-size="27" letter-spacing="2" fill="#E8622C">IA ADS</text>
 </svg>

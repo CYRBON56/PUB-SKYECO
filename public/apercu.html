@@ -58,6 +58,16 @@
   .option { border:1.5px solid #d8e3de; border-radius:10px; padding:13px 16px; font-size:14.5px; cursor:pointer; background:white; transition:border-color .15s, background .15s; }
   .option:hover { border-color:var(--brand,#1e6f4c); }
   .option.selected { border-color:var(--brand,#1e6f4c); background:var(--brand-tint,#eaf4ef); font-weight:600; }
+  .options-card { gap:12px; }
+  .option-card { display:flex; align-items:center; gap:14px; text-align:left; padding:12px; }
+  .option-card-img { width:64px; height:64px; object-fit:cover; border-radius:8px; flex-shrink:0; }
+  .option-card-content { flex:1; }
+  .option-card-title { font-weight:600; font-size:14.5px; margin-bottom:2px; }
+  .option-card-desc { font-size:12.5px; color:#5b6b64; line-height:1.4; margin-bottom:4px; }
+  .option-card-price { font-size:12.5px; font-weight:700; color:var(--brand,#1e6f4c); }
+  .option-card-radio { width:20px; height:20px; border-radius:50%; border:2px solid #d8e3de; flex-shrink:0; position:relative; }
+  .option-card.selected .option-card-radio { border-color:var(--brand,#1e6f4c); }
+  .option-card.selected .option-card-radio::after { content:''; position:absolute; inset:3px; border-radius:50%; background:var(--brand,#1e6f4c); }
   input[type="text"],input[type="tel"],input[type="email"],input[type="number"] { width:100%; border:1.5px solid #d8e3de; border-radius:10px; padding:12px 14px; font-size:15px; margin-bottom:12px; font-family:inherit; }
   input:focus { outline:none; border-color:var(--brand,#1e6f4c); }
   label.field-label { display:block; font-size:12.5px; color:#5b6b64; margin-bottom:4px; font-weight:600; }
@@ -343,8 +353,20 @@ function getStepsBasique(state){
 
 function getStepsResineRMS(state){
   const s = [];
-  s.push({ key:"usage", question:"Quel est le type de projet ?", type:"choice",
-    options: [["pieton","Terrasse, tour de piscine ou allée piétonne"], ["carrossable","Parking ou allée pour véhicule (carrossable)"]] });
+  s.push({ key:"usage", question:"Quel est le type de projet ?", type:"choice", cardStyle: true,
+    options: [["pieton","Terrasse, tour de piscine ou allée piétonne"], ["carrossable","Parking ou allée pour véhicule (carrossable)"]],
+    cardDetails: {
+      pieton: {
+        desc: "Résine EPDM antidérapante, sans joint, résistante aux UV",
+        price: "à partir de 100€ HT/m²",
+        img: "https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/1-terrasse-mobilier-noir.jpg"
+      },
+      carrossable: {
+        desc: "Granulat lié, résistant au poids d'un véhicule",
+        price: "à partir de 130€ HT/m²",
+        img: "https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/8-escalier-terrasse.jpg"
+      }
+    } });
 
   s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
 
@@ -929,14 +951,32 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     if(s.note) html += '<div style="font-size:12.5px; color:#5b6b64; margin:-8px 0 14px; line-height:1.5;">'+s.note+'</div>';
     if(s.type==='choice'){
       const tarifsCategorie = s.prixCategorie ? (tarifsPortailsActuels(draftInfo)[s.prixCategorie] || {}) : null;
-      html+='<div class="options'+(s.grille ? ' grid-2col' : '')+'">';
-      s.options.forEach(([val,label])=>{
-        const sel=state[s.key]===val?' selected':'';
-        const prix = tarifsCategorie ? (tarifsCategorie[val] || 0) : 0;
-        const suffixe = prix > 0 ? ' <span style="font-weight:400; opacity:0.7;">(+'+prix+'€ HT)</span>' : '';
-        html+='<div class="option'+sel+'" data-val="'+val+'" data-label="'+String(label).replace(/"/g,'&quot;')+'">'+label+suffixe+'</div>';
-      });
-      html+='</div>';
+      if(s.cardStyle && s.cardDetails){
+        html+='<div class="options options-card">';
+        s.options.forEach(([val,label])=>{
+          const sel=state[s.key]===val?' selected':'';
+          const det = s.cardDetails[val] || {};
+          html+='<div class="option option-card'+sel+'" data-val="'+val+'" data-label="'+String(label).replace(/"/g,'&quot;')+'">'+
+            (det.img ? '<img src="'+det.img+'" alt="" class="option-card-img">' : '')+
+            '<div class="option-card-content">'+
+              '<div class="option-card-title">'+label+'</div>'+
+              (det.desc ? '<div class="option-card-desc">'+det.desc+'</div>' : '')+
+              (det.price ? '<div class="option-card-price">'+det.price+'</div>' : '')+
+            '</div>'+
+            '<div class="option-card-radio"></div>'+
+          '</div>';
+        });
+        html+='</div>';
+      } else {
+        html+='<div class="options'+(s.grille ? ' grid-2col' : '')+'">';
+        s.options.forEach(([val,label])=>{
+          const sel=state[s.key]===val?' selected':'';
+          const prix = tarifsCategorie ? (tarifsCategorie[val] || 0) : 0;
+          const suffixe = prix > 0 ? ' <span style="font-weight:400; opacity:0.7;">(+'+prix+'€ HT)</span>' : '';
+          html+='<div class="option'+sel+'" data-val="'+val+'" data-label="'+String(label).replace(/"/g,'&quot;')+'">'+label+suffixe+'</div>';
+        });
+        html+='</div>';
+      }
     } else if(s.type==='number'){
       html+='<input type="number" id="inputNum" placeholder="'+s.placeholder+'" value="'+(state[s.key]||'')+'" min="1" />';
     } else if(s.type==='location'){

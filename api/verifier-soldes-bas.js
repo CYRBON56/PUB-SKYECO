@@ -148,7 +148,7 @@ export default async function handler(req, res) {
           if (!draft.campagne_pausee_budget_epuise) {
             await executerActionGoogleAds('pause_campaign', { campaign_id: draft.google_ads_campaign_resource });
 
-            const texteEpuise = `Bonjour, votre budget publicitaire Skyeco Ads est épuisé — votre campagne Google Ads a été mise en pause automatiquement. Rechargez depuis votre tableau de bord pour relancer la diffusion.`;
+            const texteEpuise = `Bonjour, votre budget publicitaire Skyeco IA Ads est épuisé — votre campagne Google Ads a été mise en pause automatiquement. Rechargez depuis votre tableau de bord pour relancer la diffusion.`;
             await envoyerSMS(draft.telephone, texteEpuise, draft.twilio_phone_number);
 
             await fetch(`${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft.id}`, {
@@ -160,7 +160,7 @@ export default async function handler(req, res) {
             resultats.push({ entreprise: draft.entreprise, budgetRestant, misEnPause: true });
           }
         } else if (budgetRestant <= SEUIL_ALERTE_SOLDE && !draft.alerte_solde_bas_envoyee) {
-          const texteAlerte = `Bonjour, il vous reste environ ${budgetRestant} € de budget publicitaire Skyeco Ads. Pensez à recharger pour continuer à recevoir des demandes.`;
+          const texteAlerte = `Bonjour, il vous reste environ ${budgetRestant} € de budget publicitaire Skyeco IA Ads. Pensez à recharger pour continuer à recevoir des demandes.`;
           await envoyerSMS(draft.telephone, texteAlerte, draft.twilio_phone_number);
 
           await fetch(`${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft.id}`, {

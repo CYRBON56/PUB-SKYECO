@@ -60,7 +60,7 @@ export default async function handler(req, res) {
             currency: 'eur',
             unit_amount: Math.round(budgetNum * 100),
             product_data: {
-              name: 'Budget publicitaire Skyeco Ads',
+              name: 'Budget publicitaire Skyeco IA Ads',
               description: `Financement de campagne — ${budgetNum} € (dont commission de service incluse).`,
               images: ['https://www.skyeco.fr/skyeco-google-ads-carre.png'],
             },

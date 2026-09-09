@@ -57,6 +57,12 @@
   .image-panel-preview .preview-carrousel-img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity .8s ease-in-out; }
   .image-panel-preview .preview-carrousel-img.active { opacity:1; }
   @media (max-width:800px){ .image-panel-preview{ display:none; } }
+  /* Masque complètement la moitié basse (aperçu au survol) quand aucune
+     option de l'étape en cours n'a de photo à montrer au survol (voir
+     s.images / aDesApercusAuSurvol dans runWizard) — la moitié haute
+     (vidéo/carrousel) prend alors toute la hauteur du panneau. */
+  .image-panel.pas-de-survol .image-panel-media { flex:1 1 100%; }
+  .image-panel.pas-de-survol .image-panel-preview { display:none; }
   .form-panel { flex:1 1 55%; position:relative; display:flex; align-items:stretch; justify-content:center; padding:20px 24px; overflow:hidden; order:1; }
   /* Position du formulaire (gauche/droite) — configurée par l'artisan dans
      mes-elements.html (colonne formulaire_position), posée en JS sur
@@ -74,8 +80,8 @@
      prenait pas bien son cadre". Le flou gomme ce problème de cadrage et
      rend le fond plus discret ; scale(1.1) évite un liseré flou/transparent
      sur les bords, qui apparaîtrait sinon à cause du flou lui-même. */
-  .form-bg-carousel img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 1.2s ease-in-out; filter:blur(14px); transform:scale(1.1); }
-  .form-bg-carousel img.active { opacity:1; }
+  .form-bg-carousel img, .form-bg-carousel video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 1.2s ease-in-out; filter:blur(var(--flou-fond,14px)); transform:scale(1.1); }
+  .form-bg-carousel img.active, .form-bg-carousel video.active { opacity:1; }
   @media (max-width:800px){ .split-layout{ flex-direction:column; height:100vh; overflow:hidden; } .image-panel{ flex:0 0 110px; } .form-panel{ padding:12px 16px; } }
   @media (max-width:480px){ .image-panel{ flex:0 0 64px; } .form-panel{ padding:10px 14px; } .header-block{ padding:10px 14px; margin-bottom:10px; } h1{ font-size:19px; margin:4px 0 6px; } .eyebrow{ font-size:11px; } .sub{ font-size:14px; margin-bottom:0; line-height:1.45; } .card{ padding:16px; } .question{ font-size:17px; margin-bottom:14px; line-height:1.35; } .option{ padding:14px 16px; font-size:15.5px; } .progress{ margin-bottom:12px; } input[type="text"],input[type="tel"],input[type="email"],input[type="number"]{ font-size:16px; padding:13px 14px; margin-bottom:10px; } label.field-label{ font-size:14px; } .nav-row{ flex-wrap:wrap; margin-top:16px; } button.btn{ font-size:15px; padding:13px 16px; } .btn-primary{ flex:1 1 100%; order:1; } .btn-ghost{ order:2; padding:8px 0; font-size:14px; } .trust-footer{ margin-top:10px; padding-top:10px; } .trust-badges-row{ display:none !important; } }
 
@@ -122,6 +128,21 @@
   .option-avec-vignette { display:flex; align-items:center; gap:12px; }
   .option-vignette { width:56px; height:56px; border-radius:8px; object-fit:cover; flex-shrink:0; background:#eef2ef; }
   .option-avec-vignette .option-texte { flex:1; }
+  /* Cartes avec photo + description + prix — variante disponible via
+     s.cardStyle/s.cardDetails sur n'importe quelle étape à choix, plus
+     complète que la simple vignette ci-dessus. Non utilisée pour l'instant
+     (Cyrille a préféré le style vignette simple le 09/09) mais laissée en
+     place, prête à resservir. */
+  .options-card { gap:12px; }
+  .option-card { display:flex; align-items:center; gap:14px; text-align:left; padding:12px; }
+  .option-card-img { width:64px; height:64px; object-fit:cover; border-radius:8px; flex-shrink:0; }
+  .option-card-content { flex:1; }
+  .option-card-title { font-weight:600; font-size:14.5px; margin-bottom:2px; }
+  .option-card-desc { font-size:12.5px; color:#5b6b64; line-height:1.4; margin-bottom:4px; }
+  .option-card-price { font-size:12.5px; font-weight:700; color:var(--brand,#1e6f4c); }
+  .option-card-radio { width:20px; height:20px; border-radius:50%; border:2px solid #d8e3de; flex-shrink:0; position:relative; }
+  .option-card.selected .option-card-radio { border-color:var(--brand,#1e6f4c); }
+  .option-card.selected .option-card-radio::after { content:''; position:absolute; inset:3px; border-radius:50%; background:var(--brand,#1e6f4c); }
   input[type="text"],input[type="tel"],input[type="email"],input[type="number"] { width:100%; border:1.5px solid #d8e3de; border-radius:10px; padding:12px 14px; font-size:15px; margin-bottom:12px; font-family:inherit; }
   input:focus { outline:none; border-color:var(--brand,#1e6f4c); }
   label.field-label { display:block; font-size:12.5px; color:#5b6b64; margin-bottom:4px; font-weight:600; }
@@ -483,6 +504,8 @@ function getStepsResineRMS(state){
   const s = [];
   s.push({ key:"usage", question:"Quel est le type de projet ?", type:"choice",
     options: [["pieton","Terrasse, tour de piscine ou allée piétonne"], ["carrossable","Parking ou allée pour véhicule (carrossable)"]],
+    // Style simple (photo + libellé, sans description ni prix) — préféré par
+    // Cyrille le 09/09 à la version "cardStyle" plus chargée testée juste avant.
     vignettes: {
       pieton: "https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/elements-artisan/89338dcc-a009-4815-a769-f0bede180f37/photo-1788891680513.jpg",
       carrossable: "https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/elements-artisan/89338dcc-a009-4815-a769-f0bede180f37/photo-1788891686913.jpg"
@@ -841,7 +864,7 @@ async function init(){
     // migration verrouiller_colonnes_sensibles_vitrine_drafts, qui retire à
     // anon l'accès à des colonnes sensibles (hash de mot de passe, jetons...)
     // qu'un select=* tenterait de lire et ferait échouer intégralement.
-    `${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${id}&select=adresse_cp,adresse_rue,adresse_ville,assurance_decennale_assureur,assurance_decennale_numero,capital_social,catalogue_fichier_url,catalogue_image_url,catalogue_titre,couleur,description,email,entreprise,forme_juridique,formulaire_personnalise,formulaire_personnalise_cle,formulaire_position,id,logo_url,metier,mode_devis_detaille,photos,portails_tarifs,produits_chiffrables,rcs_ville,siret,status,telephone,titre_hero_choisi,tva_taux,video_url,zone`,
+    `${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${id}&select=adresse_cp,adresse_rue,adresse_ville,assurance_decennale_assureur,assurance_decennale_numero,capital_social,catalogue_fichier_url,catalogue_image_url,catalogue_titre,couleur,description,email,entreprise,fond_formulaire_flou,fond_formulaire_source,forme_juridique,formulaire_personnalise,formulaire_personnalise_cle,formulaire_position,id,logo_url,metier,mode_devis_detaille,photos,portails_tarifs,produits_chiffrables,rcs_ville,siret,status,telephone,titre_hero_choisi,tva_taux,video_url,zone`,
     { headers: { apikey: SUPABASE_ANON_KEY } }
   );
   const rows = await resp.json().catch(() => []);
@@ -861,6 +884,12 @@ async function init(){
   document.documentElement.style.setProperty('--brand', brandColor);
   document.documentElement.style.setProperty('--brand-tint', brandColor + '1A');
   document.documentElement.style.setProperty('--brand-dark', '#14312a');
+
+  // Niveau de flou du fond décoratif derrière le formulaire (curseur "Netteté
+  // du fond" dans mes-elements.html, colonne fond_formulaire_flou, 0-30px,
+  // 14px par défaut) — voir .form-bg-carousel img/video ci-dessus.
+  const flouFond = (draft.fond_formulaire_flou != null) ? draft.fond_formulaire_flou : 14;
+  document.documentElement.style.setProperty('--flou-fond', flouFond + 'px');
 
   // Position du formulaire (gauche/droite), configurée par l'artisan dans
   // mes-elements.html — voir la classe .formulaire-droite ci-dessus. Sans
@@ -948,12 +977,44 @@ async function init(){
   // Carrousel de photos en fond du formulaire — indépendant du panneau
   // gauche (qui peut afficher la vidéo à la place).
   (function initFormBgCarousel(){
+    const fondContainer = document.getElementById('formBgCarousel');
+    // Choix carrousel de photos / vidéo comme fond du formulaire (select
+    // "Image derrière le formulaire" dans mes-elements.html, colonne
+    // fond_formulaire_source) — carrousel par défaut si non renseigné.
+    const sourceVideo = draft.fond_formulaire_source === 'video' && draft.video_url;
+    if(sourceVideo){
+      const embedYoutube = draft.video_url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+      const embedVimeo = !embedYoutube ? draft.video_url.match(/vimeo\.com\/(?:video\/)?(\d+)/) : null;
+      const embedFacebook = (!embedYoutube && !embedVimeo && /(?:^|\.)facebook\.com\/|fb\.watch\//.test(draft.video_url)) ? draft.video_url : null;
+      if(embedYoutube || embedVimeo || embedFacebook){
+        const iframe = document.createElement('iframe');
+        if(embedYoutube){
+          iframe.src = 'https://www.youtube-nocookie.com/embed/' + embedYoutube[1] + '?autoplay=1&mute=1&loop=1&playlist=' + embedYoutube[1] + '&controls=0&showinfo=0&modestbranding=1&playsinline=1&rel=0';
+        } else if(embedVimeo){
+          iframe.src = 'https://player.vimeo.com/video/' + embedVimeo[1] + '?autoplay=1&muted=1&loop=1&background=1';
+        } else {
+          iframe.src = 'https://www.facebook.com/plugins/video.php?href=' + encodeURIComponent(embedFacebook) + '&show_text=false&autoplay=true&mute=1';
+        }
+        iframe.setAttribute('frameborder', '0');
+        iframe.setAttribute('allow', 'autoplay; fullscreen; encrypted-media; picture-in-picture');
+        iframe.className = 'active';
+        iframe.style.cssText = 'position:absolute; inset:0; width:100%; height:100%; border:0; pointer-events:none; opacity:1; filter:blur(var(--flou-fond,14px)); transform:scale(1.1);';
+        fondContainer.appendChild(iframe);
+      } else {
+        const video = document.createElement('video');
+        video.src = draft.video_url;
+        video.autoplay = true; video.muted = true; video.loop = true; video.playsInline = true;
+        video.className = 'active';
+        fondContainer.appendChild(video);
+      }
+      return;
+    }
+
     const metiersPourFond = Array.isArray(draft.metier) ? draft.metier : (draft.metier ? [draft.metier] : []);
     const imagesFallbackFond = metiersPourFond.length
       ? [...new Set(metiersPourFond.flatMap(m => FALLBACK_IMAGES[m] || []))]
       : FALLBACK_IMAGES.autre;
     const imagesFond = (draft.photos && draft.photos.length) ? draft.photos : (imagesFallbackFond.length ? imagesFallbackFond : FALLBACK_IMAGES.autre);
-    const fondContainer = document.getElementById('formBgCarousel');
     const fondImgs = imagesFond.map((src,i)=>{ const img=document.createElement('img'); img.src=src; if(i===0) img.className='active'; fondContainer.appendChild(img); return img; });
     if(fondImgs.length>1){
       let idxFond=0;
@@ -1225,6 +1286,22 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     }
     return steps;
   }
+
+  // Masque la moitié basse du panneau visuel (aperçu au survol) quand aucune
+  // option d'aucune étape de CE parcours ne définit de photo à montrer au
+  // survol (voir s.images, ex : type_portail) ET qu'il n'y a pas de vidéo —
+  // la vidéo/le carrousel du haut occupe alors tout le panneau plutôt que de
+  // laisser une moitié vide et inutile en permanence. Ne s'applique PAS
+  // quand une vidéo est présente : dans ce cas la moitié basse affiche déjà
+  // le carrousel de photos en continu ("2 écrans", voir initFormBgCarousel /
+  // le bloc if(draft.video_url) plus haut dans init()), donc elle n'est
+  // jamais vide même sans aperçu au survol.
+  const aDesApercusAuSurvol = getSteps().some(s => s.images && Object.keys(s.images).length);
+  if (!aDesApercusAuSurvol && !draftInfo.video_url) {
+    const panneauVisuel = document.getElementById('heroImagePanel');
+    if (panneauVisuel) panneauVisuel.classList.add('pas-de-survol');
+  }
+
   function renderProgress(){
     const steps = getSteps(); progressEl.innerHTML='';
     const total = steps.length+1;
@@ -1262,20 +1339,42 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
       // Cyrille dans mes-elements.html). Uniquement utilisé par le parcours
       // "portails" pour l'instant.
       const tarifsCategorie = s.prixCategorie ? (tarifsPortailsActuels(draftInfo)[s.prixCategorie] || {}) : null;
-      html+='<div class="options'+(s.grille ? ' grid-2col' : '')+'">';
-      s.options.forEach(([val,label])=>{
-        const sel=state[s.key]===val?' selected':'';
-        const prix = tarifsCategorie ? (tarifsCategorie[val] || 0) : 0;
-        const suffixe = prix > 0 ? ' <span style="font-weight:400; opacity:0.7;">(+'+prix+'€ HT)</span>' : '';
-        // data-label : le libellé "propre" (sans le suffixe prix), utilisé
-        // pour la légende de l'aperçu au survol (voir s.images / wireStepEvents).
-        const vignetteUrl = s.vignettes ? s.vignettes[val] : null;
-        const contenu = vignetteUrl
-          ? '<img class="option-vignette" src="'+vignetteUrl+'" alt="" loading="lazy"><span class="option-texte">'+label+suffixe+'</span>'
-          : label+suffixe;
-        html+='<div class="option'+sel+(vignetteUrl ? ' option-avec-vignette' : '')+'" data-val="'+val+'" data-label="'+String(label).replace(/"/g,'&quot;')+'">'+contenu+'</div>';
-      });
-      html+='</div>';
+      // Cartes avec photo + description + prix de départ (ex : les 2 choix
+      // "type de projet" du parcours résine RMS EcoSky, voir cardDetails dans
+      // getStepsResineRMS) — plus complet que la simple vignette ci-dessous,
+      // utilisé quand le step précise cardStyle+cardDetails.
+      if(s.cardStyle && s.cardDetails){
+        html+='<div class="options options-card">';
+        s.options.forEach(([val,label])=>{
+          const sel=state[s.key]===val?' selected':'';
+          const det = s.cardDetails[val] || {};
+          html+='<div class="option option-card'+sel+'" data-val="'+val+'" data-label="'+String(label).replace(/"/g,'&quot;')+'">'+
+            (det.img ? '<img src="'+det.img+'" alt="" class="option-card-img">' : '')+
+            '<div class="option-card-content">'+
+              '<div class="option-card-title">'+label+'</div>'+
+              (det.desc ? '<div class="option-card-desc">'+det.desc+'</div>' : '')+
+              (det.price ? '<div class="option-card-price">'+det.price+'</div>' : '')+
+            '</div>'+
+            '<div class="option-card-radio"></div>'+
+          '</div>';
+        });
+        html+='</div>';
+      } else {
+        html+='<div class="options'+(s.grille ? ' grid-2col' : '')+'">';
+        s.options.forEach(([val,label])=>{
+          const sel=state[s.key]===val?' selected':'';
+          const prix = tarifsCategorie ? (tarifsCategorie[val] || 0) : 0;
+          const suffixe = prix > 0 ? ' <span style="font-weight:400; opacity:0.7;">(+'+prix+'€ HT)</span>' : '';
+          // data-label : le libellé "propre" (sans le suffixe prix), utilisé
+          // pour la légende de l'aperçu au survol (voir s.images / wireStepEvents).
+          const vignetteUrl = s.vignettes ? s.vignettes[val] : null;
+          const contenu = vignetteUrl
+            ? '<img class="option-vignette" src="'+vignetteUrl+'" alt="" loading="lazy"><span class="option-texte">'+label+suffixe+'</span>'
+            : label+suffixe;
+          html+='<div class="option'+sel+(vignetteUrl ? ' option-avec-vignette' : '')+'" data-val="'+val+'" data-label="'+String(label).replace(/"/g,'&quot;')+'">'+contenu+'</div>';
+        });
+        html+='</div>';
+      }
     } else if(s.type==='number'){
       html+='<input type="number" id="inputNum" placeholder="'+s.placeholder+'" value="'+(state[s.key]||'')+'" min="1" />';
     } else if(s.type==='location'){

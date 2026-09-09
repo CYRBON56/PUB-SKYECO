@@ -1350,19 +1350,19 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     if(usage === "pieton"){
       const support = state.support_pieton;
       if(support === "dalle_beton"){
-        prixM2 = 115;
+        prixM2 = 100;
         note = state.etat_dalle === "a_reprendre"
           ? "une plus-value sera à prévoir pour la réparation de la dalle, montant à valider par un technicien"
           : "sous réserve de la qualité réelle de la dalle, à confirmer";
       } else if(support === "carrelage"){
         if(state.enlevement_carrelage === "client"){
-          prixM2 = 115;
+          prixM2 = 100;
           note = "prix applicable une fois les carreaux existants retirés par vos soins";
         } else {
           chiffrable = false;
         }
       } else if(support === "pave"){
-        prixM2 = 115;
+        prixM2 = 100;
         note = "prix de départ : le tarif définitif dépend de l'état des pavés existants et sera validé par un technicien";
       } else {
         chiffrable = false;
@@ -1372,7 +1372,7 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
         prixM2 = 180;
         note = "comprend terrassement, évacuation, pose d'un concassé, profilage et compactage";
       } else if(state.etat_terrain_carrossable === "deja_prepare"){
-        prixM2 = 150;
+        prixM2 = 130;
         note = "terrain déjà préparé, tarif à valider avec un technicien";
       }
       if(prixM2 && state.couleur_granulat === "autre"){

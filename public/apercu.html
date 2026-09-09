@@ -106,6 +106,14 @@
   .option { border:1.5px solid #d8e3de; border-radius:10px; padding:13px 16px; font-size:14.5px; cursor:pointer; background:white; transition:border-color .15s, background .15s; }
   .option:hover { border-color:var(--brand,#1e6f4c); }
   .option.selected { border-color:var(--brand,#1e6f4c); background:var(--brand-tint,#eaf4ef); font-weight:600; }
+  /* Vignette photo optionnelle sur une option (ex : les 2 choix "type de
+     projet" du parcours résine RMS EcoSky, voir s.vignettes dans
+     getStepsResineRMS) — distincte de s.images (aperçu au survol dans le
+     panneau de gauche) : ici la photo reste affichée en permanence, à
+     l'intérieur même de la carte d'option. */
+  .option-avec-vignette { display:flex; align-items:center; gap:12px; }
+  .option-vignette { width:56px; height:56px; border-radius:8px; object-fit:cover; flex-shrink:0; background:#eef2ef; }
+  .option-avec-vignette .option-texte { flex:1; }
   input[type="text"],input[type="tel"],input[type="email"],input[type="number"] { width:100%; border:1.5px solid #d8e3de; border-radius:10px; padding:12px 14px; font-size:15px; margin-bottom:12px; font-family:inherit; }
   input:focus { outline:none; border-color:var(--brand,#1e6f4c); }
   label.field-label { display:block; font-size:12.5px; color:#5b6b64; margin-bottom:4px; font-weight:600; }
@@ -466,7 +474,11 @@ function getStepsBasique(state){
 function getStepsResineRMS(state){
   const s = [];
   s.push({ key:"usage", question:"Quel est le type de projet ?", type:"choice",
-    options: [["pieton","Terrasse, tour de piscine ou allée piétonne"], ["carrossable","Parking ou allée pour véhicule (carrossable)"]] });
+    options: [["pieton","Terrasse, tour de piscine ou allée piétonne"], ["carrossable","Parking ou allée pour véhicule (carrossable)"]],
+    vignettes: {
+      pieton: "https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/elements-artisan/89338dcc-a009-4815-a769-f0bede180f37/photo-1788891680513.jpg",
+      carrossable: "https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/elements-artisan/89338dcc-a009-4815-a769-f0bede180f37/photo-1788891686913.jpg"
+    } });
 
   s.push({ key:"identite", question:"Vos coordonnées", type:"identity" });
 
@@ -1229,7 +1241,11 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
         const suffixe = prix > 0 ? ' <span style="font-weight:400; opacity:0.7;">(+'+prix+'€ HT)</span>' : '';
         // data-label : le libellé "propre" (sans le suffixe prix), utilisé
         // pour la légende de l'aperçu au survol (voir s.images / wireStepEvents).
-        html+='<div class="option'+sel+'" data-val="'+val+'" data-label="'+String(label).replace(/"/g,'&quot;')+'">'+label+suffixe+'</div>';
+        const vignetteUrl = s.vignettes ? s.vignettes[val] : null;
+        const contenu = vignetteUrl
+          ? '<img class="option-vignette" src="'+vignetteUrl+'" alt="" loading="lazy"><span class="option-texte">'+label+suffixe+'</span>'
+          : label+suffixe;
+        html+='<div class="option'+sel+(vignetteUrl ? ' option-avec-vignette' : '')+'" data-val="'+val+'" data-label="'+String(label).replace(/"/g,'&quot;')+'">'+contenu+'</div>';
       });
       html+='</div>';
     } else if(s.type==='number'){

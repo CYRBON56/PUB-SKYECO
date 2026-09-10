@@ -176,6 +176,11 @@
   .btn-primary:disabled{ background:var(--paper-line); color:var(--concrete); cursor:not-allowed; }
   .btn-ghost{ background:transparent; border-color:var(--paper-line); color:var(--navy); }
   .btn-ghost:hover{ border-color:var(--blue); }
+  .btn-hero{ width:100%; font-size:17px; padding:19px 24px; margin-top:8px; box-shadow:0 8px 24px rgba(232,98,44,0.28); }
+  .nav-row.centered{ justify-content:center; }
+  .welcome-panel{ text-align:center; padding:18px 0 6px; }
+  .welcome-panel h2{ margin-bottom:14px; }
+  .welcome-panel .hint{ font-size:15px; max-width:340px; margin:0 auto; }
 
   .error{ color:var(--orange-dark); font-size:12.5px; margin-top:6px; display:none; font-family:'IBM Plex Mono',monospace; }
   .error.show{ display:block; }
@@ -236,21 +241,19 @@
 
       <form id="wizardForm" novalidate>
 
-        <!-- STEP 0 : éligibilité (SIRET) -->
-        <div class="panel active" data-step="0">
-          <h2 class="q">Vérifiez votre éligibilité.</h2>
-          <p class="hint">Un numéro de SIRET valide suffit pour commencer — c'est gratuit et sans engagement.</p>
-          <label for="siret">Numéro de SIRET</label>
-          <input type="text" id="siret" inputmode="numeric" maxlength="14" placeholder="Ex : 93999787000018">
-          <div class="status-line mono" id="siretStatus">14 chiffres, sans espace.</div>
-          <div class="error mono" id="err-siret">Merci de renseigner un SIRET valide (14 chiffres).</div>
+        <!-- STEP 0 : bienvenue -->
+        <div class="panel active welcome-panel" data-step="0">
+          <h2 class="q">Votre tableau de bord vous attend.</h2>
+          <p class="hint">Pilotage de vos annonces, vos prospects et vos devis &#8212; d&#233;couvrez &#224; quoi &#231;a ressemble pour vous, gratuitement.</p>
         </div>
 
         <!-- STEP 1 : coordonnées -->
         <div class="panel" data-step="1">
-          <h2 class="q">Votre tableau de bord vous attend.</h2>
-          <div class="status-line mono" id="entrepriseConfirmee" style="display:none; color:var(--ok); font-weight:600; margin-bottom:14px;"></div>
+          <h2 class="q">Vos informations.</h2>
           <p class="hint">Quelques infos pour pr&#233;parer votre acc&#232;s &#8212; gratuit, sans engagement.</p>
+
+          <label for="entreprise">Nom de l'entreprise</label>
+          <input type="text" id="entreprise" placeholder="Ex : RMS EcoSky">
 
           <label for="nom">Nom</label>
           <input type="text" id="nom" placeholder="Ex : Bon">
@@ -288,14 +291,12 @@
               <input type="text" id="adresseVille" placeholder="Ex : Brech">
             </div>
           </div>
-          <div class="status-line mono">Pr&#233;-rempli depuis votre SIRET &#8212; modifiable si besoin.</div>
-
-          <div class="error mono" id="err-entreprise">Merci de renseigner votre nom, pr&#233;nom, un email valide et un t&#233;l&#233;phone v&#233;rifi&#233;.</div>
+          <div class="error mono" id="err-entreprise">Merci de renseigner le nom de votre entreprise, votre nom, pr&#233;nom, un email valide et un t&#233;l&#233;phone v&#233;rifi&#233;.</div>
         </div>
 
-        <div class="nav-row">
+        <div class="nav-row" id="navRow">
           <button type="button" class="btn btn-ghost" id="btnBack">← Retour</button>
-          <button type="button" class="btn btn-primary" id="btnNext">Continuer →</button>
+          <button type="button" class="btn btn-primary" id="btnNext">Commencer gratuitement, sans engagement →</button>
         </div>
       </form>
 
@@ -336,23 +337,14 @@
   })();
 
   const steps = Array.from(document.querySelectorAll('.panel'));
-  const stepLabels = ['Éligibilité','Coordonnées'];
+  const stepLabels = ['Bienvenue','Vos informations'];
   let current = 0;
-  // Correspondance code région INSEE → nom (renvoyé par l'API SIRET dans siege.region)
-  const REGIONS_INSEE = {
-    '01':'Guadeloupe', '02':'Martinique', '03':'Guyane', '04':'La Réunion', '06':'Mayotte',
-    '11':'Île-de-France', '24':'Centre-Val de Loire', '27':'Bourgogne-Franche-Comté',
-    '28':'Normandie', '32':'Hauts-de-France', '44':'Grand Est', '52':'Pays de la Loire',
-    '53':'Bretagne', '75':'Nouvelle-Aquitaine', '76':'Occitanie', '84':'Auvergne-Rhône-Alpes',
-    '93':'Provence-Alpes-Côte d\'Azur', '94':'Corse'
-  };
 
   const state = {
-    siret:'', siretVerifie:false, entreprise:'', zone:'',
+    entreprise:'',
     nom:'', prenom:'',
     telephone:'', telephoneVerifie:false, email:'',
-    formeJuridique:'', dateCreation:'', codeNaf:'', libelleActivite:'',
-    adresseRue:'', adresseCp:'', adresseVille:'', departement:''
+    adresseRue:'', adresseCp:'', adresseVille:''
   };
 
   const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
@@ -401,13 +393,14 @@
   }
 
   function canProceed(i){
-    if(i===0){ return state.siret.length === 14; }
+    if(i===0){ return true; }
     if(i===1){
+      const entrepriseOk = document.getElementById('entreprise').value.trim().length > 0;
       const nomOk = document.getElementById('nom').value.trim().length > 0;
       const prenomOk = document.getElementById('prenom').value.trim().length > 0;
       const emailOk = /\S+@\S+\.\S+/.test(document.getElementById('email').value.trim());
       const telOk = isTelephoneValid(document.getElementById('telephone').value);
-      return nomOk && prenomOk && emailOk && telOk && state.telephoneVerifie;
+      return entrepriseOk && nomOk && prenomOk && emailOk && telOk && state.telephoneVerifie;
     }
     return true;
   }
@@ -416,107 +409,27 @@
     steps.forEach(p=>p.classList.remove('active'));
     steps[i].classList.add('active');
     document.getElementById('btnBack').style.visibility = i===0 ? 'hidden' : 'visible';
-    document.getElementById('btnNext').textContent = i===steps.length-1 ? 'Accéder à mon tableau de bord' : 'Continuer →';
-    document.getElementById('btnNext').disabled = !canProceed(i);
+    const navRow = document.getElementById('navRow');
+    const btnNext = document.getElementById('btnNext');
+    if(i===0){
+      btnNext.textContent = 'Commencer gratuitement, sans engagement →';
+      btnNext.classList.add('btn-hero');
+      navRow.classList.add('centered');
+    } else if(i===steps.length-1){
+      btnNext.textContent = 'Accéder à mon tableau de bord';
+      btnNext.classList.remove('btn-hero');
+      navRow.classList.remove('centered');
+    } else {
+      btnNext.textContent = 'Continuer →';
+      btnNext.classList.remove('btn-hero');
+      navRow.classList.remove('centered');
+    }
+    btnNext.disabled = !canProceed(i);
     renderStepper();
   }
 
-  // Step 0: SIRET
-  const siretEl = document.getElementById('siret');
-  const siretStatusEl = document.getElementById('siretStatus');
-  let siretTimer = null;
-
-  siretEl.addEventListener('input', ()=>{
-    const digits = siretEl.value.replace(/\D/g,'').slice(0,14);
-    siretEl.value = digits;
-    state.siret = digits;
-    state.siretVerifie = false;
-    document.getElementById('err-siret').classList.remove('show');
-    clearTimeout(siretTimer);
-    if(digits.length < 14){
-      siretStatusEl.textContent = '14 chiffres, sans espace.';
-      siretStatusEl.style.color = 'var(--concrete)';
-      document.getElementById('btnNext').disabled = !canProceed(0);
-      return;
-    }
-    siretStatusEl.textContent = 'Vérification en cours…';
-    siretStatusEl.style.color = 'var(--concrete)';
-    siretTimer = setTimeout(async ()=>{
-      try{
-        const res = await fetch('https://recherche-entreprises.api.gouv.fr/search?q=' + digits);
-        const data = await res.json();
-        const result = data.results && data.results[0];
-        if(result){
-          state.siretVerifie = true;
-          siretStatusEl.textContent = '✓ ' + result.nom_complet;
-          siretStatusEl.style.color = 'var(--ok)';
-          state.entreprise = result.nom_complet;
-          const entrepriseConfirmeeEl = document.getElementById('entrepriseConfirmee');
-          entrepriseConfirmeeEl.textContent = '✓ ' + result.nom_complet;
-          entrepriseConfirmeeEl.style.display = 'block';
-
-          // Forme juridique (SAS, SARL, EI, EURL...) — pré-remplit
-          // directement le même champ utilisé plus tard dans mes-elements.html.
-          if(result.nature_juridique){
-            state.formeJuridique = result.nature_juridique;
-          }
-
-          // Date de création — utile pour l'ancienneté affichée sur la vitrine.
-          if(result.date_creation){
-            state.dateCreation = result.date_creation;
-          }
-
-          // Activité principale (code + libellé NAF) — utile pour orienter
-          // le métier plus tard si besoin, sans obliger l'artisan à le ressaisir.
-          if(result.activite_principale){
-            state.codeNaf = result.activite_principale;
-          }
-          if(result.libelle_activite_principale){
-            state.libelleActivite = result.libelle_activite_principale;
-          }
-
-          if(result.siege){
-            const s = result.siege;
-
-            // Adresse complète du siège — pré-remplit les mêmes colonnes
-            // (adresse_rue, adresse_cp, adresse_ville) que mes-elements.html.
-            const numeroEtVoie = [s.numero_voie, s.type_voie, s.libelle_voie].filter(Boolean).join(' ');
-            if(numeroEtVoie){ state.adresseRue = numeroEtVoie; document.getElementById('adresseRue').value = numeroEtVoie; }
-            if(s.code_postal){ state.adresseCp = s.code_postal; document.getElementById('adresseCp').value = s.code_postal; }
-            if(s.libelle_commune){ state.adresseVille = s.libelle_commune; document.getElementById('adresseVille').value = s.libelle_commune; }
-
-            // Zone d'intervention déduite : ville + région.
-            if(s.libelle_commune){
-              const nomRegion = REGIONS_INSEE[s.region] || '';
-              state.zone = nomRegion ? (s.libelle_commune + ', ' + nomRegion) : s.libelle_commune;
-            }
-
-            // Département du siège — transmis tel quel à l'estimation de
-            // clics, plus fiable qu'un texte libre pour la région exacte.
-            if(s.departement){ state.departement = s.departement; }
-
-            // Sécurité : avertit si l'établissement semble fermé, sans
-            // bloquer (l'info peut être temporairement inexacte).
-            if(s.etat_administratif === 'F'){
-              siretStatusEl.textContent = '⚠️ ' + result.nom_complet + ' — cet établissement apparaît comme fermé, vérifiez votre numéro.';
-              siretStatusEl.style.color = 'var(--orange-dark)';
-            }
-          }
-        } else {
-          state.siretVerifie = false;
-          siretStatusEl.textContent = "SIRET introuvable — vérifiez le numéro.";
-          siretStatusEl.style.color = 'var(--orange-dark)';
-        }
-      } catch(e){
-        state.siretVerifie = true;
-        siretStatusEl.textContent = 'Vérification indisponible — vous pouvez continuer.';
-        siretStatusEl.style.color = 'var(--concrete)';
-      }
-      document.getElementById('btnNext').disabled = !canProceed(0);
-    }, 500);
-  });
-
   // Step 1: coordonnées
+  document.getElementById('entreprise').addEventListener('input', (e)=>{ state.entreprise = e.target.value; document.getElementById('btnNext').disabled = !canProceed(1); });
   document.getElementById('nom').addEventListener('input', (e)=>{ state.nom = e.target.value; document.getElementById('btnNext').disabled = !canProceed(1); });
   document.getElementById('prenom').addEventListener('input', (e)=>{ state.prenom = e.target.value; document.getElementById('btnNext').disabled = !canProceed(1); });
   document.getElementById('email').addEventListener('input', ()=>{ document.getElementById('btnNext').disabled = !canProceed(1); });
@@ -652,15 +565,8 @@
     }
   });
   function validateStep(i){
-    if(i===0){
-      state.siret = siretEl.value.trim();
-      if(!/^\d{14}$/.test(state.siret)){
-        document.getElementById('err-siret').classList.add('show');
-        return false;
-      }
-      document.getElementById('err-siret').classList.remove('show');
-    }
     if(i===1){
+      state.entreprise = document.getElementById('entreprise').value.trim();
       state.nom = document.getElementById('nom').value.trim();
       state.prenom = document.getElementById('prenom').value.trim();
       state.telephone = document.getElementById('telephone').value.trim();
@@ -704,21 +610,14 @@
     const { data, error } = await supabaseClient
       .from('skyeco_pro_vitrine_drafts')
       .insert([{
-        siret: state.siret,
         entreprise: state.entreprise,
-        zone: state.zone,
         contact_nom: state.nom || null,
         contact_prenom: state.prenom || null,
         telephone: state.telephone,
         email: state.email,
-        forme_juridique: state.formeJuridique || null,
-        date_creation_entreprise: state.dateCreation || null,
-        code_naf: state.codeNaf || null,
-        libelle_activite: state.libelleActivite || null,
         adresse_rue: state.adresseRue || null,
         adresse_cp: state.adresseCp || null,
         adresse_ville: state.adresseVille || null,
-        departement: state.departement || null,
         status: 'preview'
       }])
       // Sécurité (06/09/2026) : .select() sans argument équivaut à select=*

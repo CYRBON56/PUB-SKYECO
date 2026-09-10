@@ -363,6 +363,16 @@
           <option>Autre</option>
         </select>
 
+        <div style="display:flex; align-items:flex-start; gap:10px; background:#f5f8f6; border:1.5px solid #d8e3de; border-radius:12px; padding:14px 16px; margin-top:12px;">
+          <input type="checkbox" id="checkFranchiseTva" style="width:auto; margin-top:3px; accent-color:#1e6f4c;">
+          <label for="checkFranchiseTva" style="margin:0; font-weight:700; color:#14312a; cursor:pointer; display:block; width:100%;">
+            Je suis en franchise en base de TVA (auto-entrepreneur/micro-entreprise)
+            <span style="display:block; font-weight:400; font-size:0.82rem; color:#5b6b64; margin-top:3px;">Vos devis et factures n'afficheront alors aucune TVA, avec la mention légale "TVA non applicable, art. 293 B du CGI" à la place. À cocher vous-même — nous ne pouvons pas le déduire avec certitude de votre SIRET, seul vous savez si vous dépassez les seuils.</span>
+          </label>
+        </div>
+        <button type="button" id="btnVerifierSiret" style="margin-top:8px; background:#fff; color:#1e6f4c; border:1.5px solid #1e6f4c; border-radius:8px; padding:8px 14px; font-size:0.82rem; font-weight:700; cursor:pointer;">🔍 Vérifier ma forme juridique via mon SIRET</button>
+        <div id="statutVerifSiret" class="hint" style="margin-top:6px;"></div>
+
         <div class="row2">
           <div>
             <label>Capital social (si société)</label>
@@ -698,6 +708,8 @@
       document.getElementById('adresseVille').value = draft.adresse_ville || '';
       document.getElementById('siret').value = draft.siret || '';
       document.getElementById('formeJuridique').value = draft.forme_juridique || '';
+      const checkFranchiseTvaInit = document.getElementById('checkFranchiseTva');
+      if (checkFranchiseTvaInit) checkFranchiseTvaInit.checked = !!draft.franchise_tva;
       document.getElementById('capitalSocial').value = draft.capital_social || '';
       document.getElementById('rcsVille').value = draft.rcs_ville || '';
       document.getElementById('assuranceAssureur').value = draft.assurance_decennale_assureur || '';
@@ -902,8 +914,46 @@
     });
   });
 
-  // Le système "Produits chiffrables" (description libre → IA → prix par
-  // produit) a été retiré le 04/09 en même temps que le "Formulaire
+  // Case "Franchise en base de TVA" — sauvegarde immédiate (comme une case
+  // à cocher, pas un champ texte, donc en dehors de la boucle générique
+  // CHAMPS_AUTO_SAVE ci-dessus).
+  const checkFranchiseTva = document.getElementById('checkFranchiseTva');
+  if (checkFranchiseTva) {
+    checkFranchiseTva.addEventListener('change', () => {
+      sauvegarderChampsImmediat({ franchise_tva: checkFranchiseTva.checked });
+    });
+  }
+
+  // Vérification SIRET (10/09/2026) : appelle l'API publique gratuite de
+  // l'État (recherche-entreprises.api.gouv.fr) pour confirmer la forme
+  // juridique déclarée, et PRÉ-COCHE la case franchise TVA si le SIRET
+  // correspond à un entrepreneur individuel (indice, pas une certitude) —
+  // l'artisan reste libre de décocher, la sauvegarde se fait via
+  // l'écouteur 'change' ci-dessus, pas ici.
+  const btnVerifierSiret = document.getElementById('btnVerifierSiret');
+  if (btnVerifierSiret) {
+    btnVerifierSiret.addEventListener('click', async () => {
+      const siret = document.getElementById('siret').value.trim();
+      const statut = document.getElementById('statutVerifSiret');
+      if (!siret) { statut.textContent = "Renseigne d'abord ton SIRET ci-dessus."; return; }
+      statut.textContent = 'Vérification…';
+      try {
+        const res = await fetch('/api/verifier-siret', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ siret })
+        });
+        const data = await res.json();
+        if (!data.success) { statut.textContent = data.error || 'Vérification indisponible pour le moment.'; return; }
+        if (!data.trouve) { statut.textContent = 'SIRET introuvable dans le répertoire officiel — vérifie la saisie.'; return; }
+        statut.textContent = `${data.libelleNature || 'Forme juridique'} confirmée (${data.denomination || ''}).`;
+        if (data.suggestionFranchiseTva && checkFranchiseTva && !checkFranchiseTva.checked) {
+          checkFranchiseTva.checked = true;
+          statut.textContent += ' Case "franchise en base de TVA" pré-cochée — à confirmer ou décocher toi-même.';
+        }
+      } catch (e) {
+        statut.textContent = 'Vérification indisponible pour le moment — tu peux cocher la case manuellement.';
+      }
+    });
+  }
   // estimatif" — plus utilisé par public/apercu.html, qui affiche désormais
   // systématiquement le formulaire basique par défaut (voir getStepsBasique)
   // ou le formulaire personnalisé pour les vitrines qui en ont un. Les
@@ -1220,6 +1270,7 @@
       adresse_ville: document.getElementById('adresseVille').value.trim(),
       siret: document.getElementById('siret').value.trim(),
       forme_juridique: document.getElementById('formeJuridique').value,
+      franchise_tva: document.getElementById('checkFranchiseTva') ? document.getElementById('checkFranchiseTva').checked : false,
       capital_social: document.getElementById('capitalSocial').value.trim(),
       rcs_ville: document.getElementById('rcsVille').value.trim(),
       assurance_decennale_assureur: document.getElementById('assuranceAssureur').value.trim(),

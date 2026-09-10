@@ -1,4 +1,4 @@
-`<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -49,16 +49,6 @@
   }
   .btn-etre-rappele-fixe:hover{ filter:brightness(1.05); }
   @media (max-width:600px){ .btn-etre-rappele-fixe{ padding:9px 14px; font-size:12px; } }
-
-  .btn-voir-demo-fixe {
-    position:fixed; top:70px; left:20px; z-index:200;
-    display:flex; align-items:center; gap:6px;
-    background:var(--navy,#14304A); color:#fff; text-decoration:none;
-    border-radius:999px; padding:10px 18px; font-size:13px; font-weight:700;
-    box-shadow:0 3px 14px rgba(0,0,0,0.28); border:1px solid rgba(255,255,255,0.15);
-  }
-  .btn-voir-demo-fixe:hover{ filter:brightness(1.15); }
-  @media (max-width:600px){ .btn-voir-demo-fixe{ top:64px; padding:9px 14px; font-size:12px; } }
 
   @media(max-width:768px){
     .page-logo{ top:12px; left:12px; padding:5px 10px 5px 5px; }
@@ -187,6 +177,13 @@
   .btn-ghost{ background:transparent; border-color:var(--paper-line); color:var(--navy); }
   .btn-ghost:hover{ border-color:var(--blue); }
 
+  .splash-view{ background:var(--white); border:1px solid var(--paper-line); padding:56px 36px; text-align:center; }
+  .splash-logo{ height:56px; display:block; margin:0 auto 26px; }
+  .splash-title{ font-family:'Big Shoulders Display',sans-serif; font-weight:900; font-size:34px; color:var(--navy); line-height:1.05; }
+  .splash-tagline{ color:var(--concrete); font-size:16px; line-height:1.5; max-width:340px; margin:16px auto 30px; }
+  .btn-splash{ display:inline-block; font-size:16px; padding:16px 30px; box-shadow:0 8px 24px rgba(232,98,44,0.28); text-decoration:none; }
+  @media(max-width:480px){ .splash-view{ padding:40px 22px; } .splash-title{ font-size:28px; } }
+
   .error{ color:var(--orange-dark); font-size:12.5px; margin-top:6px; display:none; font-family:'IBM Plex Mono',monospace; }
   .error.show{ display:block; }
 
@@ -213,7 +210,6 @@
 </div>
 
 <a class="btn-etre-rappele-fixe" href="/prendre-rdv.html?id=4fbdb122-9fca-4636-b80c-d9e4abc2542b" target="_blank" rel="noopener">📞 Être rappelé</a>
-<a class="btn-voir-demo-fixe" href="/mon-dashboard-demo.html" target="_blank" rel="noopener">👀 Voir le dashboard démo</a>
 
 <div class="split-layout">
   <img class="shared-carousel-img active" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/1-terrasse-mobilier-noir.jpg" alt="">
@@ -236,6 +232,14 @@
   <div class="form-panel" id="photoCarousel">
     <div class="carousel-caption">Des extérieurs pensés pour durer.</div>
     <div class="card">
+      <div id="splashView" class="splash-view">
+        <img class="splash-logo" src="/skyeco-logo-ads-compact.svg" alt="Skyeco IA Ads">
+        <h1 class="splash-title">Skyeco Ads</h1>
+        <p class="splash-tagline">L'IA qui attrape vos prospects sur internet et les fait atterrir dans votre tableau de bord.</p>
+        <a class="btn btn-primary btn-splash" href="/mon-dashboard-demo.html?visiteur=1">Voir mon tableau de bord →</a>
+      </div>
+
+      <div id="formView" class="form-view" style="display:none;">
       <header class="top">
         <div class="logo"><img src="/skyeco-logo-ads-compact.svg" alt="Skyeco IA Ads" style="height:38px; display:block;"></div>
         <div class="eyebrow mono">SKYECO IA ADS</div>
@@ -311,6 +315,7 @@
         <p>Votre essai gratuit de 30 jours démarre maintenant. Direction la création de votre vitrine — quelques minutes pour renseigner vos infos, photos et prestations.</p>
         <div class="loader mono">PRÉPARATION DE VOTRE ESPACE…</div>
       </div>
+      </div>
     </div>
   </div>
 </div>
@@ -355,6 +360,16 @@
   const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
   const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+  // 10/09/2026 : cette page ne s'affiche en formulaire QUE si elle est
+  // atteinte depuis le dashboard démo ("?etape=inscription", posé par le
+  // bouton "Démarrer mon essai gratuit" de mon-dashboard-demo.html). Tout
+  // autre accès direct (lien d'annonce, favori, etc.) montre juste le logo
+  // + une accroche + un bouton vers le dashboard démo — on ne demande plus
+  // aucune information avant que la personne ait vu la démo.
+  const depuisDemo = new URLSearchParams(window.location.search).get('etape') === 'inscription';
+  document.getElementById('splashView').style.display = depuisDemo ? 'none' : 'block';
+  document.getElementById('formView').style.display = depuisDemo ? 'block' : 'none';
 
   // Mode test (usage interne uniquement) : ajouter "&test=1" à l'URL fait
   // apparaître un bouton pour sauter la vérification SMS (sans jamais envoyer

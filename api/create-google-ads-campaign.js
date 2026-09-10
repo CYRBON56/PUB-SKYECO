@@ -1,53 +1,63 @@
 // /api/create-google-ads-campaign.js
-// Crée une campagne Google Ads complète (campagne + budget, groupe d'annonces,
-// mots-clés, annonce responsive search) via l'API Windsor.ai, qui gère
-// elle-même l'authentification OAuth Google Ads en interne.
+// Crée une campagne Google Ads complète (compte client dédié + campagne +
+// budget, groupe d'annonces, mots-clés, annonce responsive search) pour un
+// artisan client de Skyeco Pro.
 //
-// Variables d'environnement requises :
-//   WINDSOR_API_KEY
-//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-//   GOOGLE_ADS_ACCOUNT_ID = "7849903984" (ou "784-990-3984") — le compte
-//   ECOSKY by RMS réellement utilisé pour les annonces.
-//   Confirmé le 30/08 : 735-335-0497 est un AUTRE compte Google Ads
-//   (personnel de Cyrille, suspendu) — ce n'est pas celui-ci. Ne pas
-//   remplacer 7849903984 par 7353350497 malgré ce qui a pu être dit plus
-//   tôt dans cette conversation.
+// RESTRUCTURATION DU 10/09/2026 (avec Cyrille) : jusqu'ici, TOUTES les
+// campagnes de TOUS les artisans étaient créées dans le même compte Google
+// Ads partagé (784-990-3984 "ECOSKY by RMS"), via Windsor.ai. Nouveau
+// fonctionnement : chaque artisan reçoit désormais son PROPRE compte client
+// Google Ads, créé automatiquement sous le compte manager (MCC) Skyeco Pro
+// 735-335-0497, dans lequel sa campagne est ensuite créée. Deux raisons à
+// ce changement :
+//   1. Un compte "nouveau" par artisan est ce qui permet de prétendre aux
+//      crédits promotionnels Google Ads "nouvel annonceur" et, une fois le
+//      statut Google Partners obtenu sur ce MCC, à des crédits Partners
+//      distribuables aux clients.
+//   2. Windsor.ai (utilisé pour créer les campagnes) n'a AUCUNE action de
+//      création de compte (vérifié le 10/09/2026 via list_actions sur le
+//      connecteur google_ads — uniquement des actions de gestion de
+//      campagnes/groupes/annonces/mots-clés sur des comptes qui existent
+//      déjà). La création de compte doit donc passer par un appel direct à
+//      l'API Google Ads (voir ./_lib/google-ads-mcc.js) — et comme on est
+//      déjà obligé d'y appeler l'API directement pour ça, TOUTE la
+//      construction de la campagne (budget, campagne, ciblage géo, groupe
+//      d'annonces, mots-clés, annonce) est faite ici en direct plutôt que
+//      via Windsor, pour éviter de dépendre de la sélection manuelle de
+//      comptes dans l'interface Windsor.ai (qui ne propose pas d'API pour
+//      ajouter automatiquement un nouveau compte à la volée).
 //
-// BUG CORRIGÉ le 03/09 (1ère campagne réelle jamais créée en live, jamais
-// détecté avant faute de trafic/paiement réel) : ce fichier retirait les
-// tirets avant d'envoyer l'ID de compte à Windsor.ai ("7849903984"). Erreur
-// réelle obtenue : "Account 7849903984 is not available. The configured
-// accounts are: 784-990-3984." — Windsor.ai attend en réalité le format
-// AVEC tirets, exactement comme affiché dans Google Ads. On reformate donc
-// systématiquement l'ID en XXX-XXX-XXXX au lieu de retirer les tirets.
+// ATTENTION — point à vérifier au premier vrai test (voir aussi le
+// commentaire dans ./_lib/google-ads-mcc.js) : le Developer Token du projet
+// Google Cloud "Skyeco Pro AP" avait été obtenu avec le niveau d'accès le
+// plus bas ("Explorer"/Test), qui limite les appels API aux seuls "comptes
+// de test" Google Ads déclarés comme tels — pas les vrais comptes créés ici.
+// Si ce niveau n'a pas été relevé depuis, le tout premier appel
+// (creerCompteClient) échouera avec une erreur explicite du type "Test
+// developer tokens can only be used with test accounts" : pas un bug de ce
+// fichier, un accès à faire relever dans Google Ads > Centre API.
+//
+// IMPORTANT — chantier PAS encore fait, à prévoir avant de mettre ça en
+// route pour un vrai artisan payant : get-campaign-spend.js (dépenses
+// affichées sur le dashboard), verifier-soldes-bas.js (pause automatique
+// si le budget est épuisé) et pause-campagne-ads.js (bouton
+// pause/relance manuel) supposent TOUS encore que la campagne d'un artisan
+// se trouve dans le compte partagé 784-990-3984 via Windsor.ai. Avec ce
+// changement, il faudra aussi leur apprendre à lire
+// google_ads_client_account_id et à interroger le bon compte — sans quoi
+// un artisan migré vers un compte dédié n'aurait plus de suivi de dépense
+// ni de pause automatique fonctionnels. Pas traité dans ce fichier.
+//
+// Variables d'environnement requises : voir ./_lib/google-ads-mcc.js
+// (GOOGLE_ADS_OAUTH_CLIENT_ID/SECRET/REFRESH_TOKEN, GOOGLE_ADS_DEVELOPER_TOKEN,
+// GOOGLE_ADS_MCC_ID), plus SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY.
 
-const WINDSOR_BASE = 'https://connectors.windsor.ai/google_ads';
-const TAUX_COMMISSION = 0.30; // doit rester synchronisé avec les autres fichiers (30% depuis le 10/09/2026, était 50%)
+import { creerCompteClient, mutate } from './_lib/google-ads-mcc.js';
 
-// BUG CORRIGÉ le 08/09 (trouvé en creusant pourquoi la campagne "RESINE
-// MARBRE SOL" de Cyrille, live depuis 6 jours, n'avait reçu ni impression ni
-// clic malgré un budget actif, des mots-clés pertinents et une annonce
-// approuvée) : cette fonction créait la campagne, le groupe d'annonces, les
-// mots-clés et l'annonce, mais n'appelait JAMAIS set_campaign_geo_targeting —
-// aucune zone géographique n'était donc attachée à la campagne. Sans ciblage
-// géographique, Google Ads ne diffuse quasiment jamais une campagne Search,
-// ce qui correspond exactement à ce qui a été observé (données Google Ads en
-// direct : ENABLED/ELIGIBLE mais 0 impression/0 clic/0 dépense). Confirmé
-// avoir touché les 2 seules campagnes réelles créées jusqu'ici (les 2
-// vitrines de Cyrille lui-même — aucun autre artisan payant n'a encore de
-// campagne, donc aucun autre client n'a été impacté) ; corrigées manuellement
-// le 08/09 via l'action set_campaign_geo_targeting (ciblage Morbihan,
-// identifiant 9040912, confirmé en direct par l'API — voir ci-dessous).
-//
-// Repris de GEO_TARGET_BY_DEPARTEMENT dans estimate-reach.js (à tenir
-// synchronisé) — MAIS avec le département 56 corrigé : l'ancienne valeur
-// (1006094) n'avait jamais été vérifiée en conditions réelles (voir le
-// commentaire d'avertissement dans estimate-reach.js) ; l'identifiant
-// 9040912 a lui été confirmé le 08/09 par l'API Google Ads elle-même
-// (réponse : "targeting Morbihan,Brittany,France (9040912)") en l'appliquant
-// réellement aux 2 campagnes de Cyrille. Les autres départements du
-// dictionnaire restent non re-vérifiés par cette voie — même prudence que
-// dans estimate-reach.js si on les utilise un jour pour du ciblage réel.
+const TAUX_COMMISSION = 0.30; // synchronisé avec les autres fichiers (30% depuis le 10/09/2026)
+
+// Historique conservé tel quel (ciblage géographique) — inchangé par cette
+// restructuration, ne dépend pas de Windsor.ai.
 const GEO_TARGET_BY_DEPARTEMENT = {
   '56': '9040912', // Morbihan — confirmé par l'API Google Ads le 08/09
   '35': '1006083', // Ille-et-Vilaine — non re-vérifié, repris tel quel
@@ -57,58 +67,13 @@ const GEO_TARGET_BY_DEPARTEMENT = {
 };
 const GEO_TARGET_FRANCE = '2250'; // dernier repli si aucune zone n'a pu être déterminée
 
-// AJOUT le 08/09 (demande de Cyrille : un artisan du Jura, par exemple, n'a
-// aucun identifiant vérifié dans GEO_TARGET_BY_DEPARTEMENT ci-dessus — sans
-// ce qui suit, sa campagne seraît ciblée sur la France entière, beaucoup
-// trop large pour un artisan local). Plutôt que de compléter le dictionnaire
-// département par département (96 identifiants Google à trouver et vérifier
-// un par un, avec le risque de mal cibler si l'un d'eux est faux — voir
-// l'avertissement plus haut), on cible PAR RAYON autour de la ville réelle
-// de l'artisan (son champ "zone", ex. "Brech, Bretagne" ou "Lons-le-Saunier,
-// Bourgogne-Franche-Comté"), géocodée via l'API Adresse du gouvernement
-// français (api-adresse.data.gouv.fr — gratuite, sans clé, pas de compte
-// Google requis). Ça marche pour N'IMPORTE QUEL département dès le premier
-// jour, et c'est plus précis qu'un département entier (le Morbihan, par
-// exemple, fait ~80 km de large — un rayon de 30 km autour de la ville de
-// l'artisan cible bien mieux sa vraie zone de chalandise). Le dictionnaire
-// GEO_TARGET_BY_DEPARTEMENT ci-dessus et GEO_TARGET_FRANCE restent en repli,
-// utilisés uniquement si le géocodage échoue (API indisponible, zone vide ou
-// introuvable) — voir determinerCiblageGeographique ci-dessous.
-//
-// Non testé en conditions réelles à l'écriture de ce commentaire : le bac à
-// sable dans lequel ce correctif a été écrit bloque les appels réseau
-// sortants vers des domaines externes (politique de l'organisation), donc
-// ni data.geopf.fr ni api-adresse.data.gouv.fr n'ont pu être appelés en
-// direct depuis cet environnement — seulement les fonctions Vercel de
-// Cyrille, elles, ont un accès réseau normal. Format d'URL et de réponse
-// vérifiés par ailleurs (documentation officielle + exemple concret), mais
-// à confirmer une fois en production sur un vrai artisan (ou en rejouant
-// get-google-ads-details.js juste après une création) : si le ciblage
-// obtenu est bien un "radius"/proximité autour de la bonne ville, pas un
-// repli département/France.
-const RAYON_PAR_DEFAUT_KM = 30; // rayon raisonnable pour un artisan local si la zone ne précise rien
+const RAYON_PAR_DEFAUT_KM = 30;
 
-// Extrait un rayon explicitement mentionné dans la zone (ex. "Brech et
-// alentours (30 km)" -> 30) — sinon le rayon par défaut ci-dessus.
 function extraireRayonKm(zoneTexte) {
   const m = String(zoneTexte || '').match(/(\d+)\s*km/i);
   return m ? parseInt(m[1], 10) : RAYON_PAR_DEFAUT_KM;
 }
 
-// Géocode le nom de ville/lieu contenu dans la zone d'intervention de
-// l'artisan. On retire d'abord un éventuel "et alentours (XX km)" ou ", nom
-// de région" — l'API cherche un lieu précis, pas une phrase descriptive
-// complète. Retourne null (plutôt que de faire échouer toute la création de
-// campagne) si la zone est vide, introuvable, ou si l'API est injoignable.
-//
-// Endpoints essayés dans l'ordre : l'API de géocodage de la Géoplateforme
-// IGN (data.geopf.fr/geocodage/search) EN PREMIER — c'est la suite officielle
-// de la Base Adresse Nationale depuis son transfert de data.gouv.fr à l'IGN
-// (cf. "L'API Adresse de la BAN est transférée à l'IGN") — puis
-// l'ancien domaine api-adresse.data.gouv.fr en repli, au cas où le transfert
-// ne serait pas (encore) complet pour tous les usages. Les deux renvoient le
-// même format GeoJSON (features[0].geometry.coordinates = [longitude,
-// latitude]). Gratuit, sans clé, aucun compte requis dans les deux cas.
 const GEOCODAGE_ENDPOINTS = [
   'https://data.geopf.fr/geocodage/search',
   'https://api-adresse.data.gouv.fr/search/',
@@ -134,46 +99,20 @@ async function geocoderZone(zoneTexte) {
       return { latitude, longitude };
     } catch (e) {
       // Endpoint injoignable : on tente le suivant, puis on retombe sur le
-      // département/la France si aucun des deux ne répond (voir
-      // determinerCiblageGeographique).
+      // département/la France si aucun des deux ne répond.
     }
   }
   return null;
 }
 
-// Détermine et retourne les paramètres à passer à set_campaign_geo_targeting
-// pour ce site : par rayon autour de sa ville réelle si le géocodage
-// réussit (cas normal, précis, valable pour n'importe quel département),
-// sinon par département vérifié (Bretagne), sinon la France entière.
 async function determinerCiblageGeographique(draft) {
   const coordZone = await geocoderZone(draft.zone);
   if (coordZone) {
-    return {
-      locations: [],
-      proximities: [{
-        latitude: coordZone.latitude,
-        longitude: coordZone.longitude,
-        radius: extraireRayonKm(draft.zone),
-        radius_units: 'KILOMETERS',
-      }],
-    };
+    return { type: 'proximity', latitude: coordZone.latitude, longitude: coordZone.longitude, radiusKm: extraireRayonKm(draft.zone) };
   }
   const departementCode = draft.departement ? String(draft.departement).trim().toUpperCase() : null;
   const geoTargetConstantId = (departementCode && GEO_TARGET_BY_DEPARTEMENT[departementCode]) || GEO_TARGET_FRANCE;
-  return {
-    locations: [{ geo_target_constant_id: geoTargetConstantId, negative: false }],
-    proximities: [],
-  };
-}
-
-// Windsor.ai attend l'identifiant de compte Google Ads AVEC tirets
-// (format XXX-XXX-XXXX, identique à l'interface Google Ads) — voir le
-// commentaire d'en-tête du 03/09. Fonctionne que la variable d'env soit
-// stockée avec ou sans tirets.
-function formaterCompteGoogleAds(id) {
-  const chiffres = String(id || '').replace(/[^0-9]/g, '');
-  if (chiffres.length !== 10) return String(id || '').trim();
-  return `${chiffres.slice(0, 3)}-${chiffres.slice(3, 6)}-${chiffres.slice(6)}`;
+  return { type: 'location', geoTargetConstantId };
 }
 
 const KEYWORDS_BY_METIER = {
@@ -187,26 +126,6 @@ const KEYWORDS_BY_METIER = {
   autre: ['devis travaux extérieur', 'artisan paysagiste devis'],
 };
 
-async function executerAction(action, params) {
-  const accountId = formaterCompteGoogleAds(process.env.GOOGLE_ADS_ACCOUNT_ID);
-  const resp = await fetch(`${WINDSOR_BASE}/actions?api_key=${process.env.WINDSOR_API_KEY}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ account: accountId, action, params }),
-  });
-  const data = await resp.json();
-  if (!resp.ok) throw new Error(`Action Windsor.ai "${action}" échouée : ${JSON.stringify(data)}`);
-  return data;
-}
-
-// Le domaine réellement affiché dans l'annonce Google Ads est TOUJOURS celui
-// de final_url (app.skyeco.fr) — Google ne permet pas de le remplacer par
-// celui de l'artisan (voir échange du 04/09 avec Cyrille). Ce qu'on peut en
-// revanche personnaliser, ce sont les deux segments de "chemin" affichés
-// après ce domaine (path1/path2, ex. skyeco.fr/menuiserie-dupont) : on y met
-// le nom de domaine du site existant de l'artisan s'il en a renseigné un
-// (site_web_existant), sinon le nom de son entreprise, et sa zone
-// d'intervention en second segment.
 function extraireDomaine(urlBrute) {
   if (!urlBrute) return '';
   return String(urlBrute).trim()
@@ -218,9 +137,9 @@ function extraireDomaine(urlBrute) {
 
 function slugifierPourAnnonce(texte, maxLength) {
   return String(texte || '')
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // retire les accents
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
     .toLowerCase()
-    .replace(/\.[a-z]{2,}$/i, '') // retire une extension de domaine finale (.fr, .com...)
+    .replace(/\.[a-z]{2,}$/i, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .substring(0, maxLength);
@@ -233,40 +152,17 @@ function construirePathsAnnonce(draft) {
   return { path1, path2 };
 }
 
-// Bug corrigé le 03/09 (détecté sur la 1ère fois que l'automatisation
-// atteignait cette étape en conditions réelles, RESINE MARBRE SOL/RMS) :
-// l'API Windsor.ai ne renvoie PAS un champ structuré "campaign_id" / "id" —
-// elle renvoie un texte de confirmation dans data.result, du type "Search
-// campaign '...' (id 24207666876) created successfully...". Le code
-// cherchait campagne.campaign_id / campagne.id, toujours undefined, ce qui
-// envoyait un campaign_id "undefined" à l'étape suivante (create_ad_group),
-// rejetée par Windsor.ai avec "campaign_id: Field required" — la campagne,
-// elle, avait bien été créée (orpheline, jamais rattachée au dashboard).
-// Cette fonction extrait l'id numérique (ou "ad_group_id~ad_id") du texte de
-// confirmation, avec repli sur d'éventuels champs structurés si l'API change.
-// Corrigé le 04/09 (RMS EcoSky : Google Ads a refusé une annonce, policy
-// "SYMBOLS"/PROHIBITED sur le caractère "(") — les parenthèses sont
-// interdites dans les titres et descriptions Google Ads. Beaucoup de noms
-// d'entreprise saisis en contiennent (ex : "RESINE MARBRE SOL (ECOSKY)
-// (RMS)"), utilisés ici en repli si l'artisan n'a jamais personnalisé son
-// annonce — on les retire systématiquement avant l'envoi à Windsor.ai. Même
-// correctif dans appliquer-annonce-ads.js et mon-dashboard.html
-// (genererAnnoncePropos, texte par défaut proposé à l'artisan).
 function nettoyerSymbolesInterdits(texte) {
   return String(texte || '').replace(/[()]/g, '').replace(/\s{2,}/g, ' ').trim();
 }
 
-function extraireId(data) {
-  if (data && typeof data === 'object') {
-    if (data.campaign_id) return String(data.campaign_id);
-    if (data.ad_group_id) return String(data.ad_group_id);
-    if (data.id) return String(data.id);
-    if (typeof data.result === 'string') {
-      const m = data.result.match(/\(id[:\s]+([0-9]+(?:~[0-9]+)?)\)/i);
-      if (m) return m[1];
-    }
-  }
-  return null;
+// Extrait le dernier segment d'un resourceName Google Ads
+// ("customers/X/campaigns/123" -> "123", "customers/X/adGroupAds/1~2" ->
+// "1~2" — ce format "ad_group_id~ad_id" est le même que celui déjà utilisé
+// ailleurs dans le produit, ex. pause-campagne-ads.js).
+function idDepuisResourceName(resourceName) {
+  const parts = String(resourceName || '').split('/');
+  return parts[parts.length - 1] || null;
 }
 
 export default async function handler(req, res) {
@@ -287,7 +183,7 @@ export default async function handler(req, res) {
 
   try {
     const draftResp = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}&select=entreprise,metier,zone,departement,tarif_prix,mots_cles_choisis,annonce_titres,annonce_descriptions,google_ads_campaign_resource,google_ads_ad_group_resource,campagne_pausee_budget_epuise,site_web_existant`,
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}&select=entreprise,metier,zone,departement,tarif_prix,mots_cles_choisis,annonce_titres,annonce_descriptions,google_ads_campaign_resource,google_ads_ad_group_resource,google_ads_budget_resource,google_ads_client_account_id,campagne_pausee_budget_epuise,site_web_existant`,
       { headers: supaHeaders }
     );
     const draftRows = await draftResp.json();
@@ -298,31 +194,39 @@ export default async function handler(req, res) {
     }
 
     const budgetNetEuros = draft.tarif_prix * (1 - TAUX_COMMISSION);
-    // Bug corrigé le 03/09 (détecté sur la 1ère création réelle en live,
-    // PORTALECO) : Google Ads exige un montant multiple de l'unité minimale
-    // (10 000 micros = 0,01 €) — erreur réelle obtenue : "A money amount was
-    // not a multiple of a minimum unit." On arrondit donc d'abord au centime
-    // le plus proche, puis on convertit en micros (au lieu d'arrondir
-    // directement des micros bruts, qui ne tombe quasiment jamais sur un
-    // multiple de 10 000).
     const budgetJournalierMicros = Math.round((budgetNetEuros / 30) * 100) * 10_000;
 
-    // 03/09 : une campagne existe déjà pour ce site (recharge, pas premier
-    // paiement) — on ne recrée JAMAIS une deuxième campagne en double.
-    // On met juste à jour le budget journalier, et on ne réactive la
-    // diffusion que si elle avait été mise en pause AUTOMATIQUEMENT pour
-    // solde épuisé (campagne_pausee_budget_epuise) — jamais si Cyrille
-    // l'avait mise en pause lui-même pour une autre raison (voir
-    // pause-campagne-ads.js), auquel cas seul lui peut la relancer.
-    if (draft.google_ads_campaign_resource) {
-      await executerAction('set_campaign_budget', {
-        campaign_id: draft.google_ads_campaign_resource,
-        budget_type: 'daily',
-        amount_micros: budgetJournalierMicros,
+    // Étape 0 (nouvelle, 10/09/2026) : chaque artisan a son propre compte
+    // client Google Ads sous le MCC — on le crée une seule fois, à la
+    // toute première campagne de ce site, et on ne le recrée JAMAIS
+    // ensuite (enregistré immédiatement en base pour éviter d'en créer un
+    // second si une étape suivante échoue et que ce endpoint est rappelé).
+    let clientAccountId = draft.google_ads_client_account_id;
+    if (!clientAccountId) {
+      clientAccountId = await creerCompteClient({ nomCompte: `Skyeco Pro — ${draft.entreprise || draft_id}` });
+      await fetch(`${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}`, {
+        method: 'PATCH',
+        headers: { ...supaHeaders, Prefer: 'return=minimal' },
+        body: JSON.stringify({ google_ads_client_account_id: clientAccountId }),
       });
+    }
+
+    // Recharge (une campagne existe déjà pour ce compte) : on met juste à
+    // jour le budget journalier, et on ne réactive la diffusion que si
+    // elle avait été mise en pause automatiquement pour solde épuisé.
+    if (draft.google_ads_campaign_resource) {
+      if (draft.google_ads_budget_resource) {
+        await mutate(clientAccountId, 'campaignBudgets', [{
+          update: { resourceName: draft.google_ads_budget_resource, amountMicros: String(budgetJournalierMicros) },
+          updateMask: 'amount_micros',
+        }]);
+      }
 
       if (draft.campagne_pausee_budget_epuise) {
-        await executerAction('enable_campaign', { campaign_id: draft.google_ads_campaign_resource });
+        await mutate(clientAccountId, 'campaigns', [{
+          update: { resourceName: `customers/${clientAccountId}/campaigns/${draft.google_ads_campaign_resource}`, status: 'ENABLED' },
+          updateMask: 'status',
+        }]);
         await fetch(`${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}`, {
           method: 'PATCH',
           headers: { ...supaHeaders, Prefer: 'return=minimal' },
@@ -334,13 +238,12 @@ export default async function handler(req, res) {
         success: true,
         campaignId: draft.google_ads_campaign_resource,
         adGroupId: draft.google_ads_ad_group_resource,
+        clientAccountId,
         misAJour: true,
         relanceeAutomatiquement: !!draft.campagne_pausee_budget_epuise,
       });
     }
 
-    // Priorité aux mots-clés choisis par l'artisan (via l'IA de suggestion
-    // dans campagne.html) — sinon on retombe sur la liste fixe par métier.
     const motsClesChoisis = Array.isArray(draft.mots_cles_choisis)
       ? draft.mots_cles_choisis
           .filter(m => typeof m === 'string' && m.trim())
@@ -357,52 +260,72 @@ export default async function handler(req, res) {
 
     const nomCampagne = `Skyeco Pro — ${draft.entreprise || draft_id}`.substring(0, 254);
 
-    // 1. Créer la campagne (paused par défaut, sécurité).
-    const campagne = await executerAction('create_campaign', {
-      name: nomCampagne,
-      budget_amount_micros: budgetJournalierMicros,
-      channel_type: 'search',
-      bidding_strategy: 'manual_cpc',
-      status: 'paused',
-    });
-    const campaignId = extraireId(campagne);
-    if (!campaignId) {
-      throw new Error(`Impossible d'extraire l'id de la campagne créée : ${JSON.stringify(campagne)}`);
+    // 1. Créer le budget, puis la campagne (paused par défaut, sécurité) —
+    // deux appels séparés côté API Google Ads (contrairement à Windsor.ai
+    // qui faisait les deux en un seul appel "create_campaign").
+    const [budgetResult] = await mutate(clientAccountId, 'campaignBudgets', [{
+      create: { name: `${nomCampagne} — Budget`, amountMicros: String(budgetJournalierMicros), deliveryMethod: 'STANDARD' },
+    }]);
+    const budgetResourceName = budgetResult && budgetResult.resourceName;
+    if (!budgetResourceName) {
+      throw new Error('Impossible de créer le budget de campagne : ' + JSON.stringify(budgetResult));
     }
 
-    // 1bis. Ciblage géographique — voir le commentaire du 08/09 en haut de ce
-    // fichier : sans cette étape, la campagne ne diffuse quasiment jamais.
-    // Par rayon autour de la ville réelle de l'artisan si elle a pu être
-    // géocodée (précis, valable pour n'importe quel département — ex. le
-    // Jura), sinon département vérifié (Bretagne) ou France entière en repli.
+    const [campagneResult] = await mutate(clientAccountId, 'campaigns', [{
+      create: {
+        name: nomCampagne,
+        advertisingChannelType: 'SEARCH',
+        status: 'PAUSED',
+        campaignBudget: budgetResourceName,
+        manualCpc: {},
+        networkSettings: { targetGoogleSearch: true, targetSearchNetwork: false, targetContentNetwork: false, targetPartnerSearchNetwork: false },
+      },
+    }]);
+    const campagneResourceName = campagneResult && campagneResult.resourceName;
+    if (!campagneResourceName) {
+      throw new Error('Impossible de créer la campagne : ' + JSON.stringify(campagneResult));
+    }
+    const campaignId = idDepuisResourceName(campagneResourceName);
+
+    // 1bis. Ciblage géographique — sans cette étape, la campagne ne
+    // diffuse quasiment jamais (voir historique du 08/09).
     const ciblageGeo = await determinerCiblageGeographique(draft);
-    await executerAction('set_campaign_geo_targeting', {
-      campaign_id: campaignId,
-      ...ciblageGeo,
-    });
+    if (ciblageGeo.type === 'proximity') {
+      await mutate(clientAccountId, 'campaignCriteria', [{
+        create: {
+          campaign: campagneResourceName,
+          proximity: {
+            geoPoint: {
+              latitudeInMicroDegrees: Math.round(ciblageGeo.latitude * 1_000_000),
+              longitudeInMicroDegrees: Math.round(ciblageGeo.longitude * 1_000_000),
+            },
+            radius: ciblageGeo.radiusKm,
+            radiusUnits: 'KILOMETERS',
+          },
+        },
+      }]);
+    } else {
+      await mutate(clientAccountId, 'campaignCriteria', [{
+        create: { campaign: campagneResourceName, location: { geoTargetConstant: `geoTargetConstants/${ciblageGeo.geoTargetConstantId}` } },
+      }]);
+    }
 
     // 2. Créer le groupe d'annonces.
-    const adGroup = await executerAction('create_ad_group', {
-      campaign_id: campaignId,
-      name: 'Estimation',
-      status: 'paused',
-    });
-    const adGroupId = extraireId(adGroup);
-    if (!adGroupId) {
-      throw new Error(`Impossible d'extraire l'id du groupe d'annonces créé (campagne ${campaignId} déjà créée dans Google Ads) : ${JSON.stringify(adGroup)}`);
+    const [adGroupResult] = await mutate(clientAccountId, 'adGroups', [{
+      create: { campaign: campagneResourceName, name: 'Estimation', status: 'PAUSED', type: 'SEARCH_STANDARD' },
+    }]);
+    const adGroupResourceName = adGroupResult && adGroupResult.resourceName;
+    if (!adGroupResourceName) {
+      throw new Error(`Impossible de créer le groupe d'annonces (campagne ${campaignId} déjà créée) : ` + JSON.stringify(adGroupResult));
     }
+    const adGroupId = idDepuisResourceName(adGroupResourceName);
 
     // 3. Ajouter les mots-clés (phrase match, plus sûr que broad pour du BTP local).
-    await executerAction('push_keywords', {
-      ad_group_id: adGroupId,
-      keywords: keywords.map(k => ({ text: k, match_type: 'PHRASE' })),
-      status: 'enabled',
-    });
+    await mutate(clientAccountId, 'adGroupCriteria', keywords.map(k => ({
+      create: { adGroup: adGroupResourceName, status: 'ENABLED', keyword: { text: k, matchType: 'PHRASE' } },
+    })));
 
-    // 4. Créer l'annonce elle-même — textes choisis/modifiés par l'artisan
-    // dans l'aperçu d'annonce de campagne.html (colonnes annonce_titres /
-    // annonce_descriptions, 31/08), sinon repli sur les textes génériques
-    // d'origine si l'artisan n'a jamais ouvert cet aperçu.
+    // 4. Créer l'annonce elle-même.
     const titresValides = Array.isArray(draft.annonce_titres)
       ? draft.annonce_titres.filter(t => typeof t === 'string' && t.trim()).map(t => nettoyerSymbolesInterdits(t).substring(0, 30)).slice(0, 3)
       : [];
@@ -411,47 +334,31 @@ export default async function handler(req, res) {
       : [];
 
     const urlVitrine = `https://app.skyeco.fr/apercu.html?id=${draft_id}`;
-    // path1/path2 : le domaine affiché reste app.skyeco.fr (imposé par
-    // Google Ads, voir construirePathsAnnonce ci-dessus), mais ces deux
-    // segments permettent d'afficher quelque chose qui identifie l'artisan
-    // juste après — ex. app.skyeco.fr/menuiserie-dupont/brech.
     const { path1, path2 } = construirePathsAnnonce(draft);
-    const annonce = await executerAction('create_responsive_search_ad', {
-      ad_group_id: adGroupId,
-      headlines: titresValides.length ? titresValides : [
-        nettoyerSymbolesInterdits(draft.entreprise || 'Devis gratuit').substring(0, 30),
-        'Estimation gratuite en ligne',
-        'Devis sous 24h',
-      ],
-      descriptions: descriptionsValides.length ? descriptionsValides : [
-        'Obtenez votre estimation en 2 minutes, sans engagement.',
-        'Artisan local — réponse rapide garantie.',
-      ],
-      final_url: urlVitrine,
-      ...(path1 ? { path1 } : {}),
-      ...(path2 ? { path2 } : {}),
-      status: 'paused',
-    });
-    // Bug corrigé le 03/09 : l'id de l'annonce créée (format Windsor.ai
-    // "<ad_group_id>~<ad_id>", voir extraireId) n'était jusqu'ici jamais
-    // capturé ni enregistré — impossible ensuite de la réactiver
-    // individuellement (action enable_ad, distincte de enable_campaign et
-    // enable_ad_group) une fois la campagne validée. Voir aussi
-    // pause-campagne-ads.js, qui l'utilise désormais.
-    const adResource = extraireId(annonce);
+    const [annonceResult] = await mutate(clientAccountId, 'adGroupAds', [{
+      create: {
+        adGroup: adGroupResourceName,
+        status: 'PAUSED',
+        ad: {
+          finalUrls: [urlVitrine],
+          responsiveSearchAd: {
+            headlines: (titresValides.length ? titresValides : [
+              nettoyerSymbolesInterdits(draft.entreprise || 'Devis gratuit').substring(0, 30),
+              'Estimation gratuite en ligne',
+              'Devis sous 24h',
+            ]).map(text => ({ text })),
+            descriptions: (descriptionsValides.length ? descriptionsValides : [
+              'Obtenez votre estimation en 2 minutes, sans engagement.',
+              'Artisan local — réponse rapide garantie.',
+            ]).map(text => ({ text })),
+            ...(path1 ? { path1 } : {}),
+            ...(path2 ? { path2 } : {}),
+          },
+        },
+      },
+    }]);
+    const adResource = annonceResult && idDepuisResourceName(annonceResult.resourceName);
 
-    // Bug corrigé le 03/09 (racine de "je ne vois pas l'annonce dans Google") :
-    // la campagne est créée en PAUSE dans Google Ads (ci-dessus, sécurité —
-    // en attente de validation avant diffusion réelle), mais rien ne posait
-    // jusqu'ici campagne_diffusion_pausee=true côté Supabase. Or c'est CE
-    // champ, pas le vrai statut Google Ads, que lit le tableau de bord
-    // (get-campaign-spend.js) pour son badge "🟢 Active"/"⏸️ En pause" — la
-    // campagne restait donc indéfiniment en pause dans Google Ads tout en
-    // s'affichant "Active" sur le dashboard, sans qu'aucun bouton ne signale
-    // qu'il fallait cliquer sur "Relancer la diffusion" pour l'activer
-    // réellement. On pose maintenant ce champ à true à la création, pour que
-    // le dashboard affiche bien "En pause" et propose ce bouton — qui appelle
-    // déjà correctement enable_campaign (voir pause-campagne-ads.js).
     await fetch(`${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}`, {
       method: 'PATCH',
       headers: { ...supaHeaders, Prefer: 'return=minimal' },
@@ -459,14 +366,15 @@ export default async function handler(req, res) {
         google_ads_campaign_resource: String(campaignId),
         google_ads_ad_group_resource: String(adGroupId),
         google_ads_ad_resource: adResource ? String(adResource) : null,
+        google_ads_budget_resource: budgetResourceName,
         google_ads_cree_le: new Date().toISOString(),
         campagne_diffusion_pausee: true,
       }),
     });
 
-    return res.status(200).json({ success: true, campaignId, adGroupId });
+    return res.status(200).json({ success: true, campaignId, adGroupId, clientAccountId });
   } catch (err) {
-    console.error('Erreur create-google-ads-campaign (Windsor.ai) :', err);
+    console.error('Erreur create-google-ads-campaign (API Google Ads directe) :', err);
     return res.status(500).json({ error: err.message });
   }
 }

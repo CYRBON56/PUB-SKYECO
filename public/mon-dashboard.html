@@ -484,6 +484,7 @@
       <button type="button" id="btnAjouterVitrine" title="Chaque vitrine est un site et un forfait séparés, facturés indépendamment" style="display:none; background:#fff; color:#1e6f4c; border:1.5px dashed #1e6f4c; border-radius:10px; padding:9px 14px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap;">+ Nouvelle vitrine</button>
       <button type="button" id="btnVoirArchives" style="display:none; background:none; border:none; color:#8a9891; font-size:0.78rem; font-weight:700; cursor:pointer; text-decoration:underline; padding:0 4px; white-space:nowrap;">📦 Vitrines archivées</button>
       <button type="button" class="btn-elements" id="btnMesRdv" style="background:#fff; color:#1e6f4c; border:1.5px solid #1e6f4c;">📅 Mes rendez-vous</button>
+      <a class="btn-elements" id="btnMesDevis" href="#" style="background:#fff; color:#1e6f4c; border:1.5px solid #1e6f4c;">📄 Devis &amp; factures</a>
       <a class="btn-elements" id="btnElements" href="#">✏️ Modifier mes éléments</a>
     </div>
   </div>
@@ -848,6 +849,7 @@
   const params = new URLSearchParams(window.location.search);
   const draftId = params.get('id');
   document.getElementById('btnApprovisionnerRapide').href = '/campagne.html?id=' + draftId;
+  document.getElementById('btnMesDevis').href = '/mes-devis.html?id=' + draftId + (params.get('admin_token') ? '&admin_token=' + params.get('admin_token') : '');
   // Partagé entre initMotsCles(), initAnnonce() et initZoneCiblee() : compte
   // les sauvegardes réseau en cours (zone, mots-clés, annonce). Tant que ce
   // compteur est > 0, on avertit avant de quitter/recharger la page — sinon
@@ -2418,14 +2420,16 @@
       signe: `<span class="devis-badge signe">✅ Signé${l.devis_signe_le ? ' le ' + new Date(l.devis_signe_le).toLocaleDateString('fr-FR') : ''}</span>`,
     };
     const lienVoir = l.devis_pdf_url ? `<a class="btn-devis voir" href="${l.devis_pdf_url}" target="_blank" rel="noopener">Voir</a>` : '';
+    const suffixeToken = params.get('admin_token') ? '&admin_token=' + params.get('admin_token') : '';
+    const lienDevisNatif = `<a class="btn-devis" href="/mes-devis.html?id=${l.draft_id}&leadId=${l.id}${suffixeToken}" style="background:#1e6f4c;">🧾 Devis</a>`;
 
     if (statut === 'aucun') {
-      return `<div class="devis-actions"><button type="button" class="btn-devis envoyer" data-action="envoyer-devis" data-lead="${l.id}" data-site="${l.draft_id}">📄 Envoyer un devis</button></div>`;
+      return `<div class="devis-actions">${lienDevisNatif}<button type="button" class="btn-devis envoyer" data-action="envoyer-devis" data-lead="${l.id}" data-site="${l.draft_id}">📄 Envoyer un devis</button></div>`;
     }
     if (statut === 'signe') {
-      return `<div class="devis-actions">${badges.signe}${lienVoir}</div>`;
+      return `<div class="devis-actions">${lienDevisNatif}${badges.signe}${lienVoir}</div>`;
     }
-    return `<div class="devis-actions">${badges[statut] || ''}${lienVoir}<button type="button" class="btn-devis relancer" data-action="relancer-devis" data-lead="${l.id}" data-site="${l.draft_id}">🔁 Relancer</button></div>`;
+    return `<div class="devis-actions">${lienDevisNatif}${badges[statut] || ''}${lienVoir}<button type="button" class="btn-devis relancer" data-action="relancer-devis" data-lead="${l.id}" data-site="${l.draft_id}">🔁 Relancer</button></div>`;
   }
 
   function obtenirInputDevis() {

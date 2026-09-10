@@ -38,6 +38,20 @@ export default async function handler(req, res) {
     if (session.metadata?.draft_id !== draftId || session.metadata?.type !== 'ad_budget') {
       return res.status(400).json({ error: "Cette session ne correspond pas à cette campagne." });
     }
+    // Facture Stripe générée automatiquement (invoice_creation activé côté
+    // create-ad-budget-checkout.js) — on récupère son lien pour l'afficher
+    // à l'artisan juste après paiement et, si dispo, le PDF téléchargeable.
+    let factureUrl = null;
+    let facturePdfUrl = null;
+    if (session.invoice) {
+      try {
+        const invoiceStripe = await stripe.invoices.retrieve(session.invoice);
+        factureUrl = invoiceStripe.hosted_invoice_url || null;
+        facturePdfUrl = invoiceStripe.invoice_pdf || null;
+      } catch (factureErr) {
+        console.error('Erreur récupération facture Stripe :', factureErr);
+      }
+    }
     const budgetTTC = parseFloat(session.metadata.budget);
     // Montant réellement disponible pour la diffusion, une fois la TVA retirée.
     const budgetHT = Math.round((budgetTTC / (1 + TAUX_TVA)) * 100) / 100;
@@ -87,6 +101,8 @@ export default async function handler(req, res) {
       campagneMessage: campagne?.success
         ? "Votre campagne a été créée en pause — elle sera vérifiée avant diffusion."
         : "Budget enregistré, mais la campagne n'a pas pu être créée automatiquement. Notre équipe s'en occupe.",
+      factureUrl,
+      facturePdfUrl,
     });
   } catch (err) {
     console.error('Erreur confirm-ad-payment :', err);

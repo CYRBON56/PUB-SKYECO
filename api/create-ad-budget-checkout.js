@@ -68,6 +68,7 @@ export default async function handler(req, res) {
       mode: 'payment',
       payment_method_types: ['card'],
       locale: 'fr',
+      invoice_creation: { enabled: true },
       line_items: [
         {
           price_data: {

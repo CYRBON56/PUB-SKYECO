@@ -1,20 +1,19 @@
 // /api/clics-par-zone.js
 // Répartition géographique des clics Google Ads reçus (d'où viennent les
-// clics), via la dimension "click_view_location_of_presence_*" de Windsor.ai
-// — c'est la localisation physique réelle de la personne au moment du clic
-// (et non la configuration de ciblage de la campagne).
+// clics), via les champs "geo_target_city" / "geo_target_region" de
+// Windsor.ai — la localisation physique réelle de la personne au moment du
+// clic (et non la configuration de ciblage de la campagne).
 //
-// LIMITE CONNUE (importante) : Google Ads / Windsor.ai ne renvoient qu'un
+// 10/09/2026 : l'ancienne version utilisait les champs
+// "click_view_location_of_presence_city/region", qui ne renvoient qu'un
 // identifiant technique par zone (ex: "geoTargetConstants/9218241"), jamais
-// le nom de la ville directement — il n'existe aujourd'hui aucun champ
-// Windsor qui fasse cette traduction pour cette dimension précise (vérifié
-// exhaustivement sur le connecteur google_ads). La table `geo_target_names`
-// sert de cache pour les noms au fur et à mesure qu'ils sont résolus (par ex.
-// renseignés manuellement depuis le rapport "Lieux" de l'interface Google Ads
-// de l'artisan, qui affiche lui les noms en clair) ; tant qu'une zone n'y est
-// pas encore renseignée, l'API renvoie son identifiant brut et le tableau de
-// bord affiche "Secteur (réf. ...)" — les volumes de clics restent exacts et
-// exploitables même sans nom, pour comparer les zones entre elles.
+// le nom de la ville — d'où l'affichage "Secteur (réf. ...)" côté dashboard.
+// Vérifié ce jour : les champs "geo_target_city" / "geo_target_region"
+// (marqués "(Alias)" côté Windsor) renvoient directement le nom résolu
+// ("Lorient", "Vannes"...) pour la même notion de localisation physique,
+// sans configuration ni table de correspondance supplémentaire. Plus besoin
+// de cache de noms — la table "geo_target_names" évoquée dans une version
+// précédente de ce commentaire n'a jamais été créée et n'est plus utile.
 //
 // Variables d'environnement requises :
 //   WINDSOR_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, DASHBOARD_SESSION_SECRET
@@ -89,7 +88,7 @@ export default async function handler(req, res) {
     }
 
     const filtre = encodeURIComponent(JSON.stringify([['campaign_id', 'eq', draft.google_ads_campaign_resource]]));
-    const champs = 'click_view_location_of_presence_city,click_view_location_of_presence_region,clicks';
+    const champs = 'geo_target_city,geo_target_region,clicks';
     const url = `https://connectors.windsor.ai/google_ads?api_key=${process.env.WINDSOR_API_KEY}&fields=${champs}&filter=${filtre}&date_preset=last_30d`;
 
     const windsorResp = await fetch(url);
@@ -99,35 +98,17 @@ export default async function handler(req, res) {
     const lignes = windsorData.data || [];
 
     // Regroupe par ville (repli sur la région si la ville n'est pas connue
-    // pour ce clic — arrive pour certains clics mobiles/imprécis).
-    const totaux = new Map(); // id -> clics
+    // pour ce clic — arrive pour certains clics mobiles/imprécis). Les deux
+    // champs sont déjà des noms résolus, pas des identifiants.
+    const totaux = new Map(); // nom -> clics
     for (const l of lignes) {
-      const id = l.click_view_location_of_presence_city || l.click_view_location_of_presence_region;
-      if (!id) continue;
-      totaux.set(id, (totaux.get(id) || 0) + (Number(l.clicks) || 0));
-    }
-
-    const ids = [...totaux.keys()];
-    let noms = {};
-    if (ids.length) {
-      const filtreIds = ids.map(id => `"${id}"`).join(',');
-      const cacheResp = await fetch(
-        `${process.env.SUPABASE_URL}/rest/v1/geo_target_names?criteria_id=in.(${filtreIds})&select=criteria_id,nom`,
-        { headers: supaHeaders }
-      );
-      if (cacheResp.ok) {
-        const cacheRows = await cacheResp.json();
-        noms = Object.fromEntries(cacheRows.filter(r => r.nom).map(r => [r.criteria_id, r.nom]));
-      }
+      const nom = l.geo_target_city || l.geo_target_region;
+      if (!nom) continue;
+      totaux.set(nom, (totaux.get(nom) || 0) + (Number(l.clicks) || 0));
     }
 
     const zones = [...totaux.entries()]
-      .map(([id, clics]) => ({
-        id,
-        nom: noms[id] || null,
-        label: noms[id] || `Secteur (réf. ${id.replace('geoTargetConstants/', '')})`,
-        clics,
-      }))
+      .map(([nom, clics]) => ({ id: nom, nom, label: nom, clics }))
       .sort((a, b) => b.clics - a.clics)
       .slice(0, 10);
 

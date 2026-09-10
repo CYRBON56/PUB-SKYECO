@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Devis &amp; factures — Skyeco Ads</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1e6f4c">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f5f8f6; color:#14312a; padding:24px 16px 60px; }
+  .wrap { max-width:920px; margin:0 auto; }
+  .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;
+    background:#fff; border-radius:16px; padding:18px 22px; box-shadow:0 8px 26px rgba(20,49,42,0.09); }
+  .header-titre { display:flex; align-items:center; gap:14px; }
+  .logo-entreprise { width:46px; height:46px; border-radius:10px; object-fit:contain; background:#fff; padding:4px; border:1px solid #eef2ef; display:none; }
+  h1 { font-size:1.35rem; font-weight:800; }
+  .retour { color:#1e6f4c; text-decoration:none; font-weight:700; font-size:0.9rem; }
+  .card { background:#fff; border-radius:16px; padding:20px; margin-bottom:18px; box-shadow:0 6px 22px rgba(20,49,42,0.08); }
+  .card h2 { font-size:1.05rem; margin-bottom:12px; }
+  .btn { display:inline-flex; align-items:center; gap:6px; background:#1e6f4c; color:#fff; border:none; padding:10px 18px;
+    border-radius:10px; font-weight:700; font-size:0.88rem; cursor:pointer; }
+  .btn:hover { filter:brightness(1.08); }
+  .btn-secondaire { background:#eef2ef; color:#14312a; }
+  .btn-orange { background:linear-gradient(120deg, #f0a878, #e8622c 60%, #c74f20); }
+  .btn-danger { background:#fff; color:#c0392b; border:1px solid #f0c4be; }
+  .btn-petit { padding:6px 12px; font-size:0.78rem; border-radius:8px; }
+  table { width:100%; border-collapse:collapse; font-size:0.86rem; }
+  th { text-align:left; color:#8a9891; font-size:0.72rem; text-transform:uppercase; padding:6px 8px; border-bottom:1px solid #eef2ef; }
+  td { padding:8px; border-bottom:1px solid #f4f6f5; vertical-align:middle; }
+  .badge { display:inline-block; padding:3px 9px; border-radius:20px; font-size:0.72rem; font-weight:700; }
+  .badge-devis { background:#eaf1ee; color:#1e6f4c; }
+  .badge-facture { background:#fdeee6; color:#c74f20; }
+  .badge-brouillon { background:#f2f2f2; color:#888; }
+  .actions-ligne { display:flex; gap:6px; flex-wrap:wrap; }
+  .vide { color:#8a9891; font-size:0.88rem; padding:16px 0; text-align:center; }
+  input, select, textarea { width:100%; padding:9px 10px; border:1px solid #dde5e1; border-radius:8px; font-size:0.88rem; font-family:inherit; }
+  label { display:block; font-size:0.78rem; color:#5c6b64; margin-bottom:4px; margin-top:10px; font-weight:600; }
+  .grille-2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .lignes-devis { margin-top:16px; }
+  .ligne-produit { display:grid; grid-template-columns:2fr 70px 90px 70px 30px; gap:6px; align-items:center; margin-bottom:8px; }
+  .ligne-produit input, .ligne-produit select { padding:7px 8px; font-size:0.82rem; }
+  .btn-x { background:none; border:none; color:#c0392b; font-size:1.1rem; cursor:pointer; padding:0; }
+  .totaux { text-align:right; margin-top:14px; font-size:0.9rem; }
+  .totaux strong { font-size:1.15rem; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(20,49,42,0.45); display:none; align-items:flex-start; justify-content:center;
+    padding:20px 12px; overflow-y:auto; z-index:50; }
+  .modal-overlay.actif { display:flex; }
+  .modal { background:#fff; border-radius:16px; padding:22px; max-width:640px; width:100%; margin-top:20px; }
+  .loading { text-align:center; padding:60px 20px; color:#8a9891; }
+  .hint { font-size:0.78rem; color:#8a9891; margin-top:6px; }
+</style>
+</head>
+<body>
+
+<div class="wrap" id="app" style="display:none;">
+  <div class="header">
+    <div class="header-titre">
+      <img id="logoEntreprise" class="logo-entreprise" alt="Logo">
+      <div>
+        <h1>Devis &amp; factures</h1>
+        <div class="hint" id="nomEntrepriseTxt"></div>
+      </div>
+    </div>
+    <a class="retour" id="lienRetour" href="#">← Retour au tableau de bord</a>
+  </div>
+
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h2 style="margin:0;">📦 Catalogue produits</h2>
+      <button class="btn btn-secondaire btn-petit" id="btnAjouterProduit">+ Ajouter un produit</button>
+    </div>
+    <table id="tableProduits">
+      <thead><tr><th>Nom</th><th>Unité</th><th>Prix HT</th><th>TVA</th><th></th></tr></thead>
+      <tbody id="corpsProduits"></tbody>
+    </table>
+    <div class="vide" id="videProduits" style="display:none;">Aucun produit enregistré pour l'instant — ajoute tes prestations récurrentes pour les réutiliser dans chaque devis.</div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h2 style="margin:0;">📄 Devis &amp; factures</h2>
+      <button class="btn btn-orange" id="btnNouveauDevis">+ Nouveau devis</button>
+    </div>
+    <table>
+      <thead><tr><th>N°</th><th>Type</th><th>Client</th><th>Total TTC</th><th></th></tr></thead>
+      <tbody id="corpsDevis"></tbody>
+    </table>
+    <div class="vide" id="videDevis" style="display:none;">Aucun devis pour l'instant.</div>
+  </div>
+</div>
+<div class="loading" id="chargement">Chargement…</div>
+
+<!-- Modal produit -->
+<div class="modal-overlay" id="modalProduit">
+  <div class="modal">
+    <h2 style="margin-bottom:14px;">Produit</h2>
+    <input type="hidden" id="produitId">
+    <label>Nom</label>
+    <input type="text" id="produitNom" placeholder="Ex : Pose résine EcoSky'Gum">
+    <label>Description (optionnel)</label>
+    <textarea id="produitDescription" rows="2"></textarea>
+    <div class="grille-2">
+      <div><label>Unité</label>
+        <select id="produitUnite">
+          <option value="m2">m²</option><option value="ml">ml</option><option value="m3">m³</option>
+          <option value="forfait">Forfait</option><option value="heure">Heure</option><option value="unite">Unité</option>
+        </select>
+      </div>
+      <div><label>Prix unitaire HT (€)</label><input type="number" id="produitPrixHt" step="0.01"></div>
+    </div>
+    <label>TVA</label>
+    <select id="produitTva">
+      <option value="20">20%</option><option value="10">10%</option><option value="5.5">5,5%</option><option value="0">0%</option>
+    </select>
+    <div style="display:flex; gap:10px; margin-top:18px;">
+      <button class="btn" id="btnSauverProduit">Enregistrer</button>
+      <button class="btn btn-secondaire" id="btnAnnulerProduit">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal devis -->
+<div class="modal-overlay" id="modalDevis">
+  <div class="modal" style="max-width:760px;">
+    <h2 style="margin-bottom:14px;" id="titreModalDevis">Nouveau devis</h2>
+    <input type="hidden" id="devisId">
+    <div class="grille-2">
+      <div><label>Nom du client</label><input type="text" id="clientNom"></div>
+      <div><label>Téléphone</label><input type="text" id="clientTelephone"></div>
+    </div>
+    <div class="grille-2">
+      <div><label>Email</label><input type="email" id="clientEmail"></div>
+      <div><label>Adresse du projet</label><input type="text" id="clientAdresse"></div>
+    </div>
+
+    <div class="lignes-devis">
+      <label style="margin-top:16px;">Lignes</label>
+      <div id="corpsLignes"></div>
+      <button class="btn btn-secondaire btn-petit" id="btnAjouterLigne" type="button">+ Ajouter une ligne</button>
+    </div>
+
+    <div class="totaux" id="blocTotauxNormal">
+      Total HT : <span id="totalHtAffiche">0,00 €</span><br>
+      TVA : <span id="totalTvaAffiche">0,00 €</span><br>
+      <strong>Total TTC : <span id="totalTtcAffiche">0,00 €</span></strong>
+    </div>
+    <div class="totaux" id="blocTotauxFranchise" style="display:none;">
+      <div class="hint" style="text-align:right;">TVA non applicable, art. 293 B du CGI</div>
+      <strong>Total : <span id="totalFranchiseAffiche">0,00 €</span></strong>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:18px; flex-wrap:wrap;">
+      <button class="btn" id="btnSauverDevis">Enregistrer</button>
+      <button class="btn btn-secondaire" id="btnAnnulerDevis">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+  const params = new URLSearchParams(window.location.search);
+  const draftId = params.get('id');
+  const leadId = params.get('leadId') || null;
+  document.getElementById('lienRetour').href = '/mon-dashboard.html?id=' + draftId;
+
+  let token = null;
+  let entreprise = {};
+  let produitsCache = [];
+  let leadInfos = null; // rempli si on arrive depuis "Gérer les clients"
+
+  if (!draftId) {
+    document.getElementById('chargement').textContent = 'Lien invalide — identifiant du site manquant.';
+  } else {
+    verifierAccesPuisCharger();
+  }
+
+  async function verifierAccesPuisCharger() {
+    const adminToken = params.get('admin_token');
+    token = adminToken || sessionStorage.getItem('skyeco_dashboard_token_' + draftId) || sessionStorage.getItem('skyeco_dashboard_token');
+    if (!token) { window.location.href = '/acces-dashboard.html?id=' + draftId; return; }
+
+    const res = await fetch('/api/dashboard-verify-session', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ draftId, token })
+    });
+    const data = await res.json();
+    if (!data.valid) { window.location.href = '/acces-dashboard.html?id=' + draftId; return; }
+
+    await chargerEntreprise();
+    if (leadId) await chargerLeadInfos();
+    await Promise.all([chargerProduits(), chargerDevis()]);
+    afficherBanniereClient();
+    document.getElementById('chargement').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+  }
+
+  async function chargerLeadInfos() {
+    try {
+      const data = await appelerApi('lead_infos', { leadId });
+      leadInfos = data.lead;
+    } catch (e) {
+      // Le lien peut être ancien/invalide — on continue sans pré-remplissage,
+      // la vue redevient simplement "tous les devis" de l'artisan.
+      leadInfos = null;
+    }
+  }
+
+  function afficherBanniereClient() {
+    if (!leadId) return;
+    const h1 = document.querySelector('h1');
+    const bandeau = document.createElement('div');
+    bandeau.style.cssText = 'background:#eaf1ee; color:#1e6f4c; padding:10px 16px; border-radius:10px; font-size:0.85rem; font-weight:700; margin-bottom:16px;';
+    const lienTous = `<a href="/mes-devis.html?id=${draftId}${params.get('admin_token') ? '&admin_token=' + params.get('admin_token') : ''}" style="color:#1e6f4c;">voir tous les devis →</a>`;
+    const contexte = leadInfos && leadInfos.contexte
+      ? `<div style="font-weight:400; margin-top:4px; font-size:0.8rem;">📋 Sa demande : ${echapper(leadInfos.contexte)}</div>` : '';
+    bandeau.innerHTML = `👤 Devis &amp; factures de <strong>${echapper(leadInfos ? leadInfos.nomComplet : 'ce client')}</strong> — ${lienTous}${contexte}`;
+    document.querySelector('#app .header').insertAdjacentElement('afterend', bandeau);
+  }
+
+  async function chargerEntreprise() {
+    const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,logo_url,telephone,email,adresse_rue,adresse_cp,adresse_ville,siret,forme_juridique,capital_social,rcs_ville,assurance_decennale_assureur,assurance_decennale_numero,tva_taux,franchise_tva`, {
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }
+    });
+    const rows = await resp.json();
+    entreprise = rows[0] || {};
+    document.getElementById('nomEntrepriseTxt').textContent = entreprise.entreprise || '';
+    if (entreprise.logo_url) {
+      const img = document.getElementById('logoEntreprise');
+      img.src = entreprise.logo_url; img.style.display = 'block';
+    }
+  }
+
+  async function appelerApi(action, extra = {}) {
+    const res = await fetch('/api/devis-gestion', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, draftId, token, ...extra })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Erreur inconnue.');
+    return data;
+  }
+
+  const fmt = n => (Number(n) || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+
+  // ---------- Produits ----------
+  async function chargerProduits() {
+    const data = await appelerApi('produits_liste');
+    produitsCache = data.produits || [];
+    const corps = document.getElementById('corpsProduits');
+    corps.innerHTML = '';
+    document.getElementById('videProduits').style.display = produitsCache.length ? 'none' : 'block';
+    produitsCache.forEach(p => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${echapper(p.nom)}</td><td>${p.unite}</td><td>${fmt(p.prix_ht)}</td><td>${p.tva_taux}%</td>
+        <td class="actions-ligne">
+          <button class="btn btn-secondaire btn-petit" onclick="ouvrirProduit('${p.id}')">Modifier</button>
+          <button class="btn btn-danger btn-petit" onclick="supprimerProduit('${p.id}')">Suppr.</button>
+        </td>`;
+      corps.appendChild(tr);
+    });
+  }
+
+  function echapper(s) { return String(s || '').replace(/</g, '&lt;'); }
+
+  window.ouvrirProduit = function (id) {
+    const p = produitsCache.find(x => x.id === id);
+    document.getElementById('produitId').value = p ? p.id : '';
+    document.getElementById('produitNom').value = p ? p.nom : '';
+    document.getElementById('produitDescription').value = p ? (p.description || '') : '';
+    document.getElementById('produitUnite').value = p ? p.unite : 'forfait';
+    document.getElementById('produitPrixHt').value = p ? p.prix_ht : '';
+    document.getElementById('produitTva').value = p ? p.tva_taux : '20';
+    document.getElementById('modalProduit').classList.add('actif');
+  };
+  document.getElementById('btnAjouterProduit').addEventListener('click', () => ouvrirProduit(null));
+  document.getElementById('btnAnnulerProduit').addEventListener('click', () => document.getElementById('modalProduit').classList.remove('actif'));
+  document.getElementById('btnSauverProduit').addEventListener('click', async () => {
+    const nom = document.getElementById('produitNom').value.trim();
+    if (!nom) { alert('Le nom est requis.'); return; }
+    try {
+      await appelerApi('produit_sauver', {
+        produit: {
+          id: document.getElementById('produitId').value || undefined,
+          nom,
+          description: document.getElementById('produitDescription').value.trim(),
+          unite: document.getElementById('produitUnite').value,
+          prixHt: parseFloat(document.getElementById('produitPrixHt').value) || 0,
+          tvaTaux: parseFloat(document.getElementById('produitTva').value),
+        }
+      });
+      document.getElementById('modalProduit').classList.remove('actif');
+      await chargerProduits();
+    } catch (e) { alert('Erreur : ' + e.message); }
+  });
+  window.supprimerProduit = async function (id) {
+    if (!confirm('Supprimer ce produit du catalogue ?')) return;
+    try { await appelerApi('produit_supprimer', { produitId: id }); await chargerProduits(); }
+    catch (e) { alert('Erreur : ' + e.message); }
+  };
+
+  // ---------- Devis / Factures ----------
+  let documentsCache = [];
+  let lignesEnCours = [];
+
+  async function chargerDevis() {
+    const data = await appelerApi('devis_liste', leadId ? { leadId } : {});
+    documentsCache = data.documents || [];
+    const corps = document.getElementById('corpsDevis');
+    corps.innerHTML = '';
+    document.getElementById('videDevis').style.display = documentsCache.length ? 'none' : 'block';
+    documentsCache.forEach(d => {
+      const tr = document.createElement('tr');
+      const badgeType = d.type === 'facture' ? '<span class="badge badge-facture">Facture</span>' : '<span class="badge badge-devis">Devis</span>';
+      const badgeStatut = d.statut === 'brouillon' ? ' <span class="badge badge-brouillon">brouillon</span>' : '';
+      let actions = `<button class="btn btn-secondaire btn-petit" onclick="telechargerPdf('${d.id}')">Télécharger</button>`;
+      if (d.type === 'devis') {
+        actions += ` <button class="btn btn-secondaire btn-petit" onclick="ouvrirDevis('${d.id}')">Modifier</button>`;
+        actions += ` <button class="btn btn-orange btn-petit" onclick="transformerEnFacture('${d.id}')">→ Facture</button>`;
+        actions += ` <button class="btn btn-danger btn-petit" onclick="supprimerDevis('${d.id}')">Suppr.</button>`;
+      }
+      tr.innerHTML = `<td>${d.numero}</td><td>${badgeType}${badgeStatut}</td><td>${echapper(d.client_nom || '—')}</td><td>${fmt(d.total_ttc)}</td><td class="actions-ligne">${actions}</td>`;
+      corps.appendChild(tr);
+    });
+  }
+
+  function ligneVide() { return { produitId: null, nom: '', description: '', quantite: 1, unite: 'forfait', prixUnitaireHt: 0, tvaTaux: entreprise.franchise_tva ? 0 : (entreprise.tva_taux || 20) }; }
+
+  function rendreLignes() {
+    const corps = document.getElementById('corpsLignes');
+    corps.innerHTML = '';
+    lignesEnCours.forEach((l, i) => {
+      const div = document.createElement('div');
+      div.className = 'ligne-produit';
+      const optionsCatalogue = produitsCache.map(p => `<option value="${p.id}">${echapper(p.nom)}</option>`).join('');
+      div.innerHTML = `
+        <div>
+          <select onchange="choisirProduitLigne(${i}, this.value)" style="margin-bottom:4px;">
+            <option value="">— produit libre —</option>${optionsCatalogue}
+          </select>
+          <input type="text" placeholder="Désignation" value="${echapper(l.nom)}" oninput="lignesEnCours[${i}].nom=this.value">
+        </div>
+        <input type="number" step="0.01" value="${l.quantite}" oninput="lignesEnCours[${i}].quantite=parseFloat(this.value)||0; recalculerTotaux();">
+        <input type="number" step="0.01" value="${l.prixUnitaireHt}" oninput="lignesEnCours[${i}].prixUnitaireHt=parseFloat(this.value)||0; recalculerTotaux();">
+        ${entreprise.franchise_tva ? `<span style="font-size:0.78rem; color:#8a9891;" title="Franchise en base de TVA">TVA n/a</span>` : `<select onchange="lignesEnCours[${i}].tvaTaux=parseFloat(this.value); recalculerTotaux();">
+          <option value="20" ${l.tvaTaux == 20 ? 'selected' : ''}>20%</option>
+          <option value="10" ${l.tvaTaux == 10 ? 'selected' : ''}>10%</option>
+          <option value="5.5" ${l.tvaTaux == 5.5 ? 'selected' : ''}>5,5%</option>
+          <option value="0" ${l.tvaTaux == 0 ? 'selected' : ''}>0%</option>
+        </select>`}
+        <button class="btn-x" onclick="supprimerLigne(${i})">✕</button>
+      `;
+      corps.appendChild(div);
+    });
+    recalculerTotaux();
+  }
+
+  window.choisirProduitLigne = function (i, produitId) {
+    const p = produitsCache.find(x => x.id === produitId);
+    if (p) {
+      lignesEnCours[i] = { produitId: p.id, nom: p.nom, description: p.description || '', quantite: 1, unite: p.unite, prixUnitaireHt: p.prix_ht, tvaTaux: p.tva_taux };
+    }
+    rendreLignes();
+  };
+  window.supprimerLigne = function (i) { lignesEnCours.splice(i, 1); rendreLignes(); };
+  document.getElementById('btnAjouterLigne').addEventListener('click', () => { lignesEnCours.push(ligneVide()); rendreLignes(); });
+
+  function recalculerTotaux() {
+    let ht = 0, tva = 0;
+    lignesEnCours.forEach(l => { const lht = (l.quantite || 0) * (l.prixUnitaireHt || 0); ht += lht; tva += lht * ((l.tvaTaux || 0) / 100); });
+    if (entreprise.franchise_tva) {
+      document.getElementById('blocTotauxNormal').style.display = 'none';
+      document.getElementById('blocTotauxFranchise').style.display = 'block';
+      document.getElementById('totalFranchiseAffiche').textContent = fmt(ht);
+    } else {
+      document.getElementById('blocTotauxNormal').style.display = 'block';
+      document.getElementById('blocTotauxFranchise').style.display = 'none';
+      document.getElementById('totalHtAffiche').textContent = fmt(ht);
+      document.getElementById('totalTvaAffiche').textContent = fmt(tva);
+      document.getElementById('totalTtcAffiche').textContent = fmt(ht + tva);
+    }
+  }
+
+  document.getElementById('btnNouveauDevis').addEventListener('click', () => {
+    document.getElementById('titreModalDevis').textContent = 'Nouveau devis';
+    document.getElementById('devisId').value = '';
+    // Pré-rempli depuis la fiche client si on arrive de "Gérer les clients"
+    // (voir chargerLeadInfos) — reste modifiable avant enregistrement.
+    document.getElementById('clientNom').value = leadInfos ? leadInfos.nomComplet : '';
+    document.getElementById('clientTelephone').value = leadInfos ? leadInfos.telephone : '';
+    document.getElementById('clientEmail').value = leadInfos ? leadInfos.email : '';
+    document.getElementById('clientAdresse').value = leadInfos ? leadInfos.adresse : '';
+    lignesEnCours = [ligneVide()];
+    rendreLignes();
+    document.getElementById('modalDevis').classList.add('actif');
+  });
+
+  window.ouvrirDevis = async function (id) {
+    try {
+      const data = await appelerApi('devis_get', { devisId: id });
+      const d = data.document;
+      document.getElementById('titreModalDevis').textContent = 'Modifier le devis ' + d.numero;
+      document.getElementById('devisId').value = d.id;
+      document.getElementById('clientNom').value = d.client_nom || '';
+      document.getElementById('clientTelephone').value = d.client_telephone || '';
+      document.getElementById('clientEmail').value = d.client_email || '';
+      document.getElementById('clientAdresse').value = d.client_adresse || '';
+      lignesEnCours = (d.lignes || []).map(l => ({
+        produitId: l.produit_id, nom: l.nom, description: l.description || '',
+        quantite: l.quantite, unite: l.unite, prixUnitaireHt: l.prix_unitaire_ht, tvaTaux: l.tva_taux,
+      }));
+      if (!lignesEnCours.length) lignesEnCours = [ligneVide()];
+      rendreLignes();
+      document.getElementById('modalDevis').classList.add('actif');
+    } catch (e) { alert('Erreur : ' + e.message); }
+  };
+
+  document.getElementById('btnAnnulerDevis').addEventListener('click', () => document.getElementById('modalDevis').classList.remove('actif'));
+
+  document.getElementById('btnSauverDevis').addEventListener('click', async () => {
+    const clientNom = document.getElementById('clientNom').value.trim();
+    if (!clientNom) { alert('Le nom du client est requis.'); return; }
+    const lignesValides = lignesEnCours.filter(l => l.nom && l.nom.trim());
+    if (!lignesValides.length) { alert('Ajoute au moins une ligne.'); return; }
+    try {
+      await appelerApi('devis_sauver', {
+        devis: {
+          id: document.getElementById('devisId').value || undefined,
+          leadId: document.getElementById('devisId').value ? undefined : leadId, // seulement à la création
+          clientNom,
+          clientTelephone: document.getElementById('clientTelephone').value.trim(),
+          clientEmail: document.getElementById('clientEmail').value.trim(),
+          clientAdresse: document.getElementById('clientAdresse').value.trim(),
+          lignes: lignesValides,
+        }
+      });
+      document.getElementById('modalDevis').classList.remove('actif');
+      await chargerDevis();
+    } catch (e) { alert('Erreur : ' + e.message); }
+  });
+
+  window.supprimerDevis = async function (id) {
+    if (!confirm('Supprimer ce devis ?')) return;
+    try { await appelerApi('devis_supprimer', { devisId: id }); await chargerDevis(); }
+    catch (e) { alert('Erreur : ' + e.message); }
+  };
+
+  window.transformerEnFacture = async function (id) {
+    if (!confirm("Transformer ce devis en facture ?\n\nUn numéro de facture définitif sera attribué — cette action ne peut pas être annulée (obligation légale de numérotation continue).")) return;
+    try { await appelerApi('devis_facturer', { devisId: id }); await chargerDevis(); }
+    catch (e) { alert('Erreur : ' + e.message); }
+  };
+
+  // ---------- PDF (généré et téléchargé directement dans le navigateur) ----------
+  window.telechargerPdf = async function (id) {
+    try {
+      const data = await appelerApi('devis_get', { devisId: id });
+      genererPdf(data.document);
+    } catch (e) { alert('Erreur : ' + e.message); }
+  };
+
+  function genererPdf(d) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const estFacture = d.type === 'facture';
+    let y = 20;
+
+    doc.setFontSize(18);
+    doc.setTextColor(30, 111, 76);
+    doc.text(estFacture ? 'FACTURE' : 'DEVIS', 14, y);
+    doc.setFontSize(10);
+    doc.setTextColor(80);
+    doc.text(`N° ${d.numero}`, 14, y + 7);
+    doc.text(`Date : ${new Date(d.created_at).toLocaleDateString('fr-FR')}`, 14, y + 13);
+
+    // Entête entreprise (haut droit)
+    doc.setFontSize(10);
+    doc.setTextColor(20);
+    let yE = 20;
+    doc.text(String(entreprise.entreprise || ''), 200, yE, { align: 'right' }); yE += 5;
+    if (entreprise.adresse_rue) { doc.text(String(entreprise.adresse_rue), 200, yE, { align: 'right' }); yE += 5; }
+    if (entreprise.adresse_cp || entreprise.adresse_ville) { doc.text(`${entreprise.adresse_cp || ''} ${entreprise.adresse_ville || ''}`, 200, yE, { align: 'right' }); yE += 5; }
+    if (entreprise.siret) { doc.text(`SIRET ${entreprise.siret}`, 200, yE, { align: 'right' }); yE += 5; }
+    if (entreprise.telephone) { doc.text(String(entreprise.telephone), 200, yE, { align: 'right' }); yE += 5; }
+
+    y = Math.max(y + 26, yE + 8);
+    doc.setDrawColor(220); doc.line(14, y, 196, y); y += 8;
+
+    // Client
+    doc.setFontSize(10); doc.setTextColor(20);
+    doc.text('Client :', 14, y); y += 5;
+    doc.text(String(d.client_nom || ''), 14, y); y += 5;
+    if (d.client_adresse) { doc.text(String(d.client_adresse), 14, y); y += 5; }
+    if (d.client_telephone) { doc.text(String(d.client_telephone), 14, y); y += 5; }
+    if (d.client_email) { doc.text(String(d.client_email), 14, y); y += 5; }
+    y += 6;
+
+    // Tableau lignes
+    doc.setFontSize(8.5); doc.setTextColor(120);
+    doc.text('DÉSIGNATION', 14, y); doc.text('QTÉ', 120, y); doc.text('PU HT', 140, y); doc.text('TVA', 165, y); doc.text('TOTAL HT', 180, y);
+    y += 4; doc.setDrawColor(220); doc.line(14, y, 196, y); y += 6;
+    doc.setFontSize(9); doc.setTextColor(20);
+    (d.lignes || []).forEach(l => {
+      if (y > 265) { doc.addPage(); y = 20; }
+      const totalLigneHt = (l.quantite || 0) * (l.prix_unitaire_ht || 0);
+      doc.text(String(l.nom).substring(0, 55), 14, y);
+      doc.text(`${l.quantite} ${l.unite}`, 120, y);
+      doc.text(fmt(l.prix_unitaire_ht), 140, y);
+      doc.text(`${l.tva_taux}%`, 165, y);
+      doc.text(fmt(totalLigneHt), 180, y);
+      y += 7;
+    });
+
+    y += 4; doc.setDrawColor(220); doc.line(120, y, 196, y); y += 8;
+    doc.setFontSize(9.5);
+    if (entreprise.franchise_tva) {
+      doc.setFontSize(12); doc.setTextColor(30, 111, 76);
+      doc.text(`Total : ${fmt(d.total_ht)}`, 196, y, { align: 'right' }); y += 6;
+      doc.setFontSize(8); doc.setTextColor(120);
+      doc.text('TVA non applicable, art. 293 B du CGI', 196, y, { align: 'right' }); y += 10;
+    } else {
+      doc.text(`Total HT : ${fmt(d.total_ht)}`, 196, y, { align: 'right' }); y += 6;
+      doc.text(`TVA : ${fmt(d.total_tva)}`, 196, y, { align: 'right' }); y += 6;
+      doc.setFontSize(12); doc.setTextColor(30, 111, 76);
+      doc.text(`Total TTC : ${fmt(d.total_ttc)}`, 196, y, { align: 'right' }); y += 14;
+    }
+
+    // Mentions légales / conditions
+    doc.setFontSize(7.5); doc.setTextColor(130);
+    const mentions = [];
+    if (entreprise.entreprise) mentions.push(`${entreprise.entreprise}${entreprise.forme_juridique ? ' — ' + entreprise.forme_juridique : ''}${entreprise.capital_social ? ', capital social ' + entreprise.capital_social + '€' : ''}`);
+    if (entreprise.siret) mentions.push(`SIRET ${entreprise.siret}${entreprise.rcs_ville ? ' — RCS ' + entreprise.rcs_ville : ''}`);
+    if (entreprise.assurance_decennale_assureur) mentions.push(`Assurance RC décennale : ${entreprise.assurance_decennale_assureur}${entreprise.assurance_decennale_numero ? ' n° ' + entreprise.assurance_decennale_numero : ''}`);
+    mentions.push(estFacture ? 'Document généré via Skyeco Ads — le règlement s\'effectue directement auprès du prestataire, hors de cet outil.' : 'Devis valable 30 jours à compter de sa date d\'émission, sauf mention contraire.');
+    mentions.forEach(m => { doc.text(m, 14, y); y += 4.5; });
+
+    if (y > 275) { doc.addPage(); y = 20; }
+
+    doc.save(`${estFacture ? 'facture' : 'devis'}-${d.numero}.pdf`);
+  }
+</script>
+</body>
+</html>

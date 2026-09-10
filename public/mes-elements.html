@@ -276,6 +276,27 @@
     </div>
   </div>
 
+  <div class="section open" data-section="assistant-ia">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">🤖</span>
+        <div>
+          <h2>Assistant IA — Construire ma vitrine</h2>
+          <p class="sub">Décris ton activité avec tes mots, l'IA te propose des titres sur-mesure — plus rapide que de tout écrire toi-même.</p>
+        </div>
+      </div>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="section-body">
+      <div class="section-body-inner">
+        <label style="margin-top:0;">Décris ton activité en quelques phrases</label>
+        <textarea id="assistantVitrineDescription" rows="4" placeholder="Ex : Je pose des terrasses et plages de piscine en résine EPDM dans le Morbihan depuis 10 ans, surtout pour des particuliers avec piscine. Je travaille aussi sur les allées et les margelles."></textarea>
+        <button type="button" id="btnAssistantVitrineIA" style="margin-top:10px; background:#e8622c; color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:0.85rem; font-weight:700; cursor:pointer;">✨ Construire ma vitrine avec l'IA</button>
+        <div id="assistantVitrineResultat" style="margin-top:12px;"></div>
+      </div>
+    </div>
+  </div>
+
   <div class="section" data-section="titre">
     <div class="section-header">
       <div class="section-title">
@@ -1021,6 +1042,31 @@
   // pré-écrits de TITRES_PAR_METIER, sans les remplacer. Utilise le(s)
   // métier(s) déjà renseignés sur le profil ; si aucun métier n'est encore
   // choisi, on prévient l'artisan au lieu d'appeler l'API pour rien.
+  // Applique un titre suggéré par l'IA (utilisé par la suggestion "métier"
+  // ci-dessous ET par le nouvel assistant "Construire ma vitrine avec l'IA")
+  // : bascule sur le titre personnalisé et enregistre immédiatement.
+  function appliquerTitreSuggere(texte, zoneBoxAEffacer) {
+    const radioCustom = document.querySelector('input[name="titreRadio"][value="custom"]');
+    const inputPerso = document.getElementById('titrePersonnalise');
+    if (radioCustom) radioCustom.checked = true;
+    if (inputPerso) {
+      inputPerso.style.display = 'block';
+      inputPerso.value = texte;
+    }
+    titreChoisi = texte;
+    sauvegarderChampsImmediat({ titre_hero_choisi: titreChoisi });
+    if (zoneBoxAEffacer) zoneBoxAEffacer.innerHTML = '';
+  }
+
+  function afficherSuggestionsTitre(zoneBox, titres) {
+    zoneBox.innerHTML = titres.map(t => `
+      <button type="button" class="titre-suggestion-ia" style="display:block; width:100%; text-align:left; margin-bottom:6px; padding:10px 12px; background:#f5f8f6; border:1px solid #dde5e1; border-radius:8px; cursor:pointer; font-size:0.88rem;">${t.replace(/"/g, '&quot;')}</button>
+    `).join('');
+    zoneBox.querySelectorAll('.titre-suggestion-ia').forEach(elBtn => {
+      elBtn.addEventListener('click', () => appliquerTitreSuggere(elBtn.textContent, zoneBox));
+    });
+  }
+
   document.getElementById('btnSuggererTitre').addEventListener('click', async () => {
     const btn = document.getElementById('btnSuggererTitre');
     const zoneBox = document.getElementById('suggestionsTitreIA');
@@ -1044,23 +1090,7 @@
       });
       const data = await res.json();
       if (data.success && data.titres && data.titres.length) {
-        zoneBox.innerHTML = data.titres.map(t => `
-          <button type="button" class="titre-suggestion-ia" style="display:block; width:100%; text-align:left; margin-bottom:6px; padding:10px 12px; background:#f5f8f6; border:1px solid #dde5e1; border-radius:8px; cursor:pointer; font-size:0.88rem;">${t.replace(/"/g, '&quot;')}</button>
-        `).join('');
-        zoneBox.querySelectorAll('.titre-suggestion-ia').forEach(elBtn => {
-          elBtn.addEventListener('click', () => {
-            const radioCustom = document.querySelector('input[name="titreRadio"][value="custom"]');
-            const inputPerso = document.getElementById('titrePersonnalise');
-            if (radioCustom) radioCustom.checked = true;
-            if (inputPerso) {
-              inputPerso.style.display = 'block';
-              inputPerso.value = elBtn.textContent;
-            }
-            titreChoisi = elBtn.textContent;
-            sauvegarderChampsImmediat({ titre_hero_choisi: titreChoisi });
-            zoneBox.innerHTML = '';
-          });
-        });
+        afficherSuggestionsTitre(zoneBox, data.titres);
       } else {
         zoneBox.innerHTML = '<div class="hint">' + (data.error || "Suggestion indisponible pour le moment, réessaie plus tard.") + '</div>';
       }
@@ -1071,6 +1101,61 @@
       btn.textContent = texteOriginal;
     }
   });
+
+  // Assistant IA "Construire ma vitrine" (10/09/2026) : à partir d'une
+  // description libre de son activité, l'artisan obtient des titres
+  // sur-mesure (plus précis que la liste générique par métier ci-dessous) —
+  // voir api/generer-vitrine-ia.js pour le détail et les limites de portée
+  // assumées (le reste du contenu de la vitrine vient des gabarits communs
+  // par métier, entretenus par Cyrille, pas d'un texte libre par artisan).
+  const btnAssistantVitrine = document.getElementById('btnAssistantVitrineIA');
+  if (btnAssistantVitrine) {
+    btnAssistantVitrine.addEventListener('click', async () => {
+      const zoneBox = document.getElementById('assistantVitrineResultat');
+      const description = document.getElementById('assistantVitrineDescription').value.trim();
+      if (description.length < 10) {
+        zoneBox.innerHTML = '<div class="hint">Décris ton activité en une ou deux phrases pour obtenir de meilleures suggestions.</div>';
+        return;
+      }
+      const texteOriginal = btnAssistantVitrine.textContent;
+      btnAssistantVitrine.disabled = true;
+      btnAssistantVitrine.textContent = 'Construction en cours…';
+      zoneBox.innerHTML = '';
+      try {
+        const res = await fetch('/api/generer-vitrine-ia', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ description, metiers: metiersActuels, zone: zoneActuelle })
+        });
+        const data = await res.json();
+        if (data.success && data.titres && data.titres.length) {
+          let html = '<label style="margin-top:0;">Titres sur-mesure — clique pour utiliser</label>';
+          html += data.titres.map(t => `
+            <button type="button" class="titre-suggestion-ia titre-assistant-ia" style="display:block; width:100%; text-align:left; margin-bottom:6px; padding:10px 12px; background:#f5f8f6; border:1px solid #dde5e1; border-radius:8px; cursor:pointer; font-size:0.88rem;">${t.replace(/"/g, '&quot;')}</button>
+          `).join('');
+          if (data.metierSuggereLabel) {
+            html += `<div class="hint" style="margin-top:8px;">💡 D'après ta description, ça ressemble à : <strong>${data.metierSuggereLabel}</strong>. Le métier qui pilote ton ciblage publicitaire se confirme dans ton tableau de bord.</div>`;
+          }
+          zoneBox.innerHTML = html;
+          zoneBox.querySelectorAll('.titre-assistant-ia').forEach(elBtn => {
+            elBtn.addEventListener('click', () => {
+              appliquerTitreSuggere(elBtn.textContent, null);
+              const section = btnAssistantVitrine.closest('.section');
+              if (section) section.classList.add('open');
+              document.querySelector('[data-section="titre"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
+          });
+        } else {
+          zoneBox.innerHTML = '<div class="hint">' + (data.error || "Génération indisponible pour le moment, réessaie plus tard.") + '</div>';
+        }
+      } catch (e) {
+        zoneBox.innerHTML = '<div class="hint">Génération indisponible pour le moment, réessaie plus tard.</div>';
+      } finally {
+        btnAssistantVitrine.disabled = false;
+        btnAssistantVitrine.textContent = texteOriginal;
+      }
+    });
+  }
 
   document.getElementById('boxLogo').addEventListener('click', () => document.getElementById('inputLogo').click());
   document.getElementById('inputLogo').addEventListener('change', async e => {

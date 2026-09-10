@@ -32,7 +32,7 @@
 //   CRON_SECRET (protège l'endpoint contre les appels non autorisés)
 //   GOOGLE_ADS_ACCOUNT_ID
 
-const TAUX_COMMISSION = 0.50; // doit rester synchronisé avec get-campaign-spend.js
+const TAUX_COMMISSION = 0.30; // doit rester synchronisé avec les autres fichiers (30% depuis le 10/09/2026, était 50%)
 const FACTEUR_CONSOMMATION = 1 / (1 - TAUX_COMMISSION);
 const SEUIL_ALERTE_SOLDE = 50; // €
 

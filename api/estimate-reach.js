@@ -233,9 +233,19 @@ export default async function handler(req, res) {
   // Formule "abonnement" : facturé séparément, hors de ce calcul — commission
   // prélevée sur le budget publicitaire alloué par le client. Le reste part
   // réellement en dépense pub sur Google Ads.
-  const TAUX_COMMISSION = 0.50; // 50% pour l'instant
-  const commissionPub = budgetNum ? +(budgetNum * TAUX_COMMISSION).toFixed(2) : 0;
-  const budgetNetPub = Math.max(0, budgetNum - commissionPub);
+  //
+  // 10/09/2026 : "budget" ici est le montant TTC saisi par l'artisan (même
+  // valeur que "budget" dans create-ad-budget-checkout.js). La commission
+  // s'applique — comme dans confirm-ad-payment.js / create-google-ads-campaign.js
+  // — sur le montant HT, pas sur le TTC directement : avant ce correctif, le
+  // calcul sautait l'étape TVA et donnait donc une estimation de clics trop
+  // optimiste par rapport à ce que la campagne recevrait réellement une fois
+  // payée (écart ~17%, exactement le taux de TVA).
+  const TAUX_TVA = 0.20;
+  const TAUX_COMMISSION = 0.30;
+  const budgetHT = budgetNum ? +(budgetNum / (1 + TAUX_TVA)).toFixed(2) : 0;
+  const commissionPub = budgetNum ? +(budgetHT * TAUX_COMMISSION).toFixed(2) : 0;
+  const budgetNetPub = Math.max(0, budgetHT - commissionPub);
 
   // Ciblage géographique : département précis si on l'a et qu'il est
   // configuré dans GEO_TARGET_BY_DEPARTEMENT (volume RÉEL pour cette zone,
@@ -316,6 +326,8 @@ export default async function handler(req, res) {
       totalMonthlyVolume,
       avgCpcEur,
       budgetPaye: budgetNum || null,
+      budgetHT: budgetNum ? budgetHT : null,
+      tauxTVA: TAUX_TVA,
       tauxCommission: TAUX_COMMISSION,
       commissionPub: budgetNum ? commissionPub : null,
       budgetNetPub: budgetNum ? budgetNetPub : null,

@@ -14,6 +14,14 @@
 // que celui déjà en place dans create-checkout-session.js /
 // demarrer-essai-gratuit.js pour le paiement du forfait.
 //
+// Transparence (10/09/2026, demandé par Cyrille) : le libellé Stripe
+// détaille désormais le montant HT réellement dépensé en diffusion Google
+// Ads et la commission de service (30% du HT, voir TAUX_COMMISSION dans
+// create-google-ads-campaign.js / estimate-reach.js / etc. — même taux
+// partout), au lieu de la seule mention vague "commission incluse". Le
+// montant total facturé (budgetNum) et son traitement dans
+// confirm-ad-payment.js / create-google-ads-campaign.js ne changent pas.
+//
 // Variables d'environnement requises :
 //   STRIPE_SECRET_KEY
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
@@ -22,6 +30,8 @@ import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const BUDGET_MIN = 100;
+const TAUX_TVA = 0.20;
+const TAUX_COMMISSION = 0.30;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -50,6 +60,10 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: "Ce site n'a pas encore été validé — demandez la validation depuis votre page." });
     }
 
+    const budgetHT = Math.round((budgetNum / (1 + TAUX_TVA)) * 100) / 100;
+    const commission = Math.round(budgetHT * TAUX_COMMISSION * 100) / 100;
+    const budgetNetPub = Math.round((budgetHT - commission) * 100) / 100;
+
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       payment_method_types: ['card'],
@@ -61,7 +75,7 @@ export default async function handler(req, res) {
             unit_amount: Math.round(budgetNum * 100),
             product_data: {
               name: 'Budget publicitaire Skyeco IA Ads',
-              description: `Financement de campagne — ${budgetNum} € (dont commission de service incluse).`,
+              description: `${budgetNum} € TTC — dont ${budgetNetPub} € HT réellement dépensés en diffusion sur Google Ads et ${commission} € HT de commission de service Skyeco IA Ads (30%).`,
               images: ['https://www.skyeco.fr/skyeco-google-ads-carre.png'],
             },
           },

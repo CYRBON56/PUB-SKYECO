@@ -28,7 +28,7 @@ const FORFAITS = {
   // pendant 12 mois. Le rang de la vitrine (1ère/2e vs 3e+) est déterminé
   // côté page (choisir-forfait.html, comptage des vitrines du compte par
   // email) et transmis ici via "plan" — jamais recalculé côté serveur ici,
-  // mais la commission de 50% sur le budget pub (TAUX_COMMISSION,
+  // mais la commission de 30% sur le budget pub (TAUX_COMMISSION,
   // api/estimate-reach.js et api/create-google-ads-campaign.js) ne dépend
   // pas du forfait choisi et reste donc inchangée quel que soit le plan.
   5: { nom: 'Skyeco Pro — Vitrine supplémentaire (3e vitrine et suivantes)', centimesHT: 9990 },

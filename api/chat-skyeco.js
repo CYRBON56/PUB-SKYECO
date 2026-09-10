@@ -29,7 +29,7 @@ LA FORMULE (prix HT/mois, sans engagement) — une seule formule, tout compris :
 POINTS IMPORTANTS :
 - La création du site est gratuite dans tous les cas — l'abonnement démarre seulement une fois que l'artisan valide sa vraie vitrine.
 - Sans engagement : résiliable à tout moment, ou pause possible 1 mois sans prélèvement.
-- Le budget publicitaire (Google Ads) est séparé de l'abonnement — une commission de service est prélevée dessus, le reste finance vraiment les clics.
+- Le budget publicitaire (Google Ads) est séparé de l'abonnement — une commission de service de 30% est prélevée sur le montant HT (hors TVA), le reste finance vraiment les clics sur Google Ads.
 - Le budget publicitaire n'est pas garanti sur un mois fixe : il est consommé au rythme réel des clics reçus.
 
 TON :

@@ -1,7 +1,7 @@
 // /api/get-campaign-spend.js
 // Interroge la vraie dépense/clics Google Ads via l'API Windsor.ai, et calcule
 // la consommation ajustée du solde artisan (chaque € Google = 2€ du solde,
-// puisque la commission de service est de 50%). Envoie un SMS d'alerte à
+// puisque la commission de service est de 30%). Envoie un SMS d'alerte à
 // l'artisan la première fois que son solde restant passe à 50€ ou moins, et
 // met en pause automatiquement SA campagne (uniquement la sienne) dès que le
 // solde atteint 0€ — même garde-fou que le cron verifier-soldes-bas.js, mais
@@ -53,7 +53,7 @@ async function verifierToken(token, draftIdAttendu) {
   }
 }
 
-const TAUX_COMMISSION = 0.50; // doit rester synchronisé avec les autres fichiers
+const TAUX_COMMISSION = 0.30; // doit rester synchronisé avec les autres fichiers (30% depuis le 10/09/2026, était 50%)
 const FACTEUR_CONSOMMATION = 1 / (1 - TAUX_COMMISSION);
 const SEUIL_ALERTE_SOLDE = 50; // €
 

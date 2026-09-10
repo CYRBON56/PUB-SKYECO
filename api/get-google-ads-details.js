@@ -59,7 +59,7 @@ async function verifierToken(token, draftIdAttendu) {
   }
 }
 
-const TAUX_COMMISSION = 0.50; // doit rester synchronisé avec les autres fichiers
+const TAUX_COMMISSION = 0.30; // doit rester synchronisé avec les autres fichiers (30% depuis le 10/09/2026, était 50%) — non utilisée plus bas pour l'instant, gardée par cohérence
 
 async function interrogerWindsor(campaignId, fields, dateDepart) {
   const filtre = encodeURIComponent(JSON.stringify([['campaign_id', 'eq', campaignId]]));

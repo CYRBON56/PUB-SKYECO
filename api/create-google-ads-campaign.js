@@ -22,7 +22,7 @@
 // systématiquement l'ID en XXX-XXX-XXXX au lieu de retirer les tirets.
 
 const WINDSOR_BASE = 'https://connectors.windsor.ai/google_ads';
-const TAUX_COMMISSION = 0.50; // doit rester synchronisé avec les autres fichiers
+const TAUX_COMMISSION = 0.30; // doit rester synchronisé avec les autres fichiers (30% depuis le 10/09/2026, était 50%)
 
 // BUG CORRIGÉ le 08/09 (trouvé en creusant pourquoi la campagne "RESINE
 // MARBRE SOL" de Cyrille, live depuis 6 jours, n'avait reçu ni impression ni

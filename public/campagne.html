@@ -267,6 +267,7 @@
     let draftEntreprise = null;
     let draftAnnonceTitres = null;
     let draftAnnonceDescriptions = null;
+    let draftSiret = null;
     let motsClesActuels = [];
 
     function mettreAJourEstimation() {
@@ -330,12 +331,13 @@
 
     async function chargerDraftPuisInitialiser() {
       try {
-        const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,metier,zone,departement,mots_cles_choisis,annonce_titres,annonce_descriptions`, {
+        const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,metier,zone,departement,mots_cles_choisis,annonce_titres,annonce_descriptions,siret`, {
           headers: { apikey: SUPABASE_ANON_KEY }
         });
         const rows = await resp.json();
         const draft = rows[0] || {};
         draftEntreprise = draft.entreprise;
+        draftSiret = draft.siret;
         draftMetier = draft.metier;
         draftZone = draft.zone;
         draftDepartement = draft.departement;
@@ -611,6 +613,21 @@
 
     btnPayer.addEventListener('click', async () => {
       const budget = parseFloat(budgetInput.value);
+
+      // 10/09/2026 : avant de mettre en ligne un vrai budget publicitaire,
+      // l'identité légale de l'entreprise (SIRET) doit être connue pour la
+      // facturation — si ce n'est pas encore le cas, on envoie d'abord
+      // l'artisan finaliser son compte (SIRET, nom, prénom, adresse, email,
+      // téléphone re-vérifié par SMS), puis on revient ici avec le même
+      // budget déjà saisi.
+      if (!draftSiret) {
+        const suite = new URLSearchParams();
+        suite.set('id', draftId);
+        if (budget) suite.set('budget', budget);
+        window.location.href = '/skyeco-pro-inscription-siret.html?' + suite.toString();
+        return;
+      }
+
       btnPayer.disabled = true;
       btnPayer.textContent = 'Redirection vers le paiement…';
       try {

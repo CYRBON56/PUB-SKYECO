@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finaliser mon compte — Skyeco Ads</title>
+<link rel="icon" href="/skyeco-icon-ads.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    font-family:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    background:#f5f8f6; color:#14312a; min-height:100vh; display:flex; align-items:center; justify-content:center;
+    padding:24px;
+  }
+  .mono { font-family:'IBM Plex Mono',monospace; }
+  .card { background:#fff; border-radius:16px; padding:36px; max-width:520px; width:100%; box-shadow:0 10px 30px rgba(0,0,0,0.08); }
+  .logo-row { display:flex; align-items:center; gap:10px; margin-bottom:22px; }
+  .logo-row img { height:32px; width:32px; border-radius:7px; }
+  .logo-row span { font-family:'Big Shoulders Display',sans-serif; font-weight:800; font-size:16px; letter-spacing:.3px; }
+  .logo-row span .orange { color:#e8622c; }
+  h1 { font-family:'Big Shoulders Display',sans-serif; font-weight:800; font-size:1.5rem; margin-bottom:6px; }
+  .sub { color:#5b6b64; font-size:0.92rem; margin-bottom:26px; line-height:1.5; }
+
+  label { display:block; font-size:0.82rem; font-weight:700; margin-bottom:6px; margin-top:16px; color:#14312a; }
+  label:first-of-type { margin-top:0; }
+  input[type=text], input[type=email], input[type=tel] {
+    width:100%; border:1.5px solid #d7dedb; border-radius:10px; padding:12px 14px;
+    font-family:'IBM Plex Sans',sans-serif; font-size:14.5px; color:#14312a; background:#f9fbfa;
+  }
+  input:focus { outline:none; background:#fff; border-color:#1e6f4c; }
+  .status-line { font-family:'IBM Plex Mono',monospace; font-size:12px; color:#5b6b64; margin:6px 0 2px; }
+  .status-line.ok { color:#1e6f4c; font-weight:600; }
+  .status-line.error { color:#c74f20; }
+
+  .sms-block { margin:12px 0 4px; padding:14px; background:#f5f8f6; border-radius:10px; border:1px solid #eef1f0; }
+  .sms-block p { font-size:12.5px; color:#5b6b64; margin-bottom:10px; line-height:1.4; }
+  .btn-sms { background:#eaf4ef; color:#1e6f4c; border:1.5px solid #1e6f4c; border-radius:8px; padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .btn-sms:hover:not(:disabled) { background:#1e6f4c; color:#fff; }
+  .btn-sms:disabled { opacity:.5; cursor:not-allowed; }
+  .sms-code-row { display:flex; gap:8px; margin-top:10px; }
+  .sms-code-row input { flex:1; letter-spacing:.3em; text-align:center; margin:0; }
+  .sms-status { margin-top:8px; font-size:12.5px; }
+  .sms-status.ok { color:#1e6f4c; font-weight:600; }
+  .sms-status.error { color:#c74f20; }
+
+  .adresse-row { display:flex; gap:10px; }
+  .adresse-row > div:first-child { flex:0 0 130px; }
+  .adresse-row > div:last-child { flex:1; }
+
+  .btn-continuer {
+    width:100%; margin-top:26px; background:#e8622c; color:#fff; border:none; border-radius:10px;
+    padding:15px; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit;
+  }
+  .btn-continuer:hover:not(:disabled) { background:#c74f20; }
+  .btn-continuer:disabled { background:#d7dedb; color:#8a9891; cursor:not-allowed; }
+
+  .error-box { color:#c74f20; font-size:12.5px; margin-top:10px; display:none; font-family:'IBM Plex Mono',monospace; }
+  .error-box.show { display:block; }
+  .loading, .error-msg { text-align:center; color:#5b6b64; padding:20px 0; }
+</style>
+</head>
+<body>
+
+<div class="card" id="app">
+  <div class="loading">Chargement…</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+(function(){
+  const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+  const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+  const params = new URLSearchParams(window.location.search);
+  const draftId = params.get('id');
+  const budget = params.get('budget');
+  const app = document.getElementById('app');
+
+  // Mode test (usage interne) : "&test=1" fait apparaître le contournement
+  // de vérification SMS, même mécanisme/mot de passe que sur
+  // skyeco-pro-formulaire-creation.html.
+  const TEST_MODE = params.get('test') === '1';
+
+  if (!draftId) {
+    app.innerHTML = '<div class="error-msg">Lien invalide — identifiant du site manquant.</div>';
+    return;
+  }
+  if (!supabaseClient) {
+    app.innerHTML = '<div class="error-msg">Service indisponible. Rechargez la page.</div>';
+    return;
+  }
+
+  const state = { telephoneVerifie: false, telephone: '' };
+
+  init();
+
+  async function init(){
+    let draft = {};
+    try {
+      const { data, error } = await supabaseClient
+        .from('skyeco_pro_vitrine_drafts')
+        .select('entreprise,siret,contact_nom,contact_prenom,email,telephone,adresse_rue,adresse_cp,adresse_ville,forme_juridique')
+        .eq('id', draftId)
+        .single();
+      if (error) throw error;
+      draft = data || {};
+    } catch (e) {
+      app.innerHTML = '<div class="error-msg">Impossible de charger votre compte. Vérifiez le lien ou réessayez.</div>';
+      return;
+    }
+
+    render(draft);
+  }
+
+  function render(draft){
+    app.innerHTML = `
+      <div class="logo-row">
+        <img src="/skyeco-icon-ads.svg" alt="">
+        <span>SKY<span class="orange">ECO</span> ADS</span>
+      </div>
+      <h1>Finalisez votre compte</h1>
+      <p class="sub">Avant de mettre en ligne votre budget publicitaire${budget ? ' de <strong>' + budget + ' €</strong>' : ''}, il nous faut votre identité d'entreprise pour la facturation — deux minutes.</p>
+
+      <label for="siret">SIRET</label>
+      <input type="text" id="siret" inputmode="numeric" maxlength="14" placeholder="14 chiffres" value="${draft.siret || ''}">
+      <div class="status-line mono" id="siretStatus">Saisissez votre SIRET — vos informations se complètent automatiquement.</div>
+
+      <label for="entreprise">Nom de l'entreprise</label>
+      <input type="text" id="entreprise" placeholder="Ex : RMS EcoSky" value="${escAttr(draft.entreprise)}">
+
+      <label for="nom">Nom</label>
+      <input type="text" id="nom" placeholder="Ex : Bon" value="${escAttr(draft.contact_nom)}">
+
+      <label for="prenom">Prénom</label>
+      <input type="text" id="prenom" placeholder="Ex : Cyrille" value="${escAttr(draft.contact_prenom)}">
+
+      <label for="email">Email</label>
+      <input type="email" id="email" placeholder="Ex : contact@monentreprise.fr" value="${escAttr(draft.email)}">
+
+      <label for="telephone">Téléphone</label>
+      <input type="tel" id="telephone" inputmode="numeric" placeholder="Ex : 06 12 34 56 78" value="${escAttr(draft.telephone)}">
+      <div class="status-line mono" id="telStatus">Numéro français, 10 chiffres — une vérification par SMS est nécessaire.</div>
+      <div class="sms-block" id="smsBlock">
+        <p>Vérifiez votre numéro pour confirmer votre identité avant la mise en ligne du budget.</p>
+        <button type="button" class="btn-sms" id="btnEnvoyerCode" disabled>Vérifier mon numéro par SMS</button>
+        <button type="button" class="btn-sms" id="btnSimulerVerifTel" style="display:none; margin-left:8px; background:#fff3cd; color:#8a6d1f; border-color:#f0d98c;">🧪 Simuler la vérification (test)</button>
+        <div class="sms-code-row" id="smsCodeRow" style="display:none;">
+          <input type="text" id="smsCode" inputmode="numeric" maxlength="6" placeholder="Code reçu">
+          <button type="button" class="btn-sms" id="btnVerifierCode">Valider</button>
+        </div>
+        <div class="sms-status" id="smsStatus"></div>
+      </div>
+
+      <label for="adresseRue">Adresse</label>
+      <input type="text" id="adresseRue" placeholder="Ex : 23 route de Corn er Hoet" value="${escAttr(draft.adresse_rue)}">
+      <div class="adresse-row" style="margin-top:16px;">
+        <div>
+          <label for="adresseCp" style="margin-top:0;">Code postal</label>
+          <input type="text" id="adresseCp" inputmode="numeric" maxlength="5" placeholder="Ex : 56400" value="${escAttr(draft.adresse_cp)}">
+        </div>
+        <div>
+          <label for="adresseVille" style="margin-top:0;">Ville</label>
+          <input type="text" id="adresseVille" placeholder="Ex : Brech" value="${escAttr(draft.adresse_ville)}">
+        </div>
+      </div>
+
+      <div class="error-box mono" id="errBox">Merci de compléter le nom de l'entreprise, votre nom, prénom, un email valide, un téléphone vérifié et votre adresse complète.</div>
+      <button type="button" class="btn-continuer" id="btnContinuer" disabled>Continuer vers le paiement →</button>
+    `;
+
+    state.telephoneVerifie = false; // toujours re-vérifié à cette étape, même si un numéro existait déjà
+    wireUp(draft);
+  }
+
+  function escAttr(v){
+    return (v == null ? '' : String(v)).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+  }
+
+  function departementDepuisCP(cp){
+    if (!cp || cp.length < 2) return null;
+    if (cp.startsWith('97') || cp.startsWith('98')) return cp.slice(0,3);
+    if (cp.startsWith('20')) return parseInt(cp,10) < 20200 ? '2A' : '2B';
+    return cp.slice(0,2);
+  }
+
+  function isTelephoneValid(raw){
+    const digits = (raw||'').replace(/\D/g,'');
+    return /^0\d{9}$/.test(digits);
+  }
+
+  async function rechercherSiret(siret){
+    const res = await fetch('https://recherche-entreprises.api.gouv.fr/search?q=' + encodeURIComponent(siret) + '&page=1&per_page=1');
+    if (!res.ok) throw new Error('service indisponible');
+    const data = await res.json();
+    const r = data.results && data.results[0];
+    if (!r) return null;
+    const matching = (r.matching_etablissements || []).find(e => e.siret === siret);
+    const etab = matching || (r.siege && r.siege.siret === siret ? r.siege : r.siege) || {};
+    return {
+      nom: r.nom_raison_sociale || r.nom_complet || '',
+      formeJuridique: r.nature_juridique || '',
+      adresse: etab.adresse || '',
+      codePostal: etab.code_postal || '',
+      ville: etab.libelle_commune || ''
+    };
+  }
+
+  function wireUp(draft){
+    const els = {
+      siret: document.getElementById('siret'),
+      siretStatus: document.getElementById('siretStatus'),
+      entreprise: document.getElementById('entreprise'),
+      nom: document.getElementById('nom'),
+      prenom: document.getElementById('prenom'),
+      email: document.getElementById('email'),
+      telephone: document.getElementById('telephone'),
+      telStatus: document.getElementById('telStatus'),
+      adresseRue: document.getElementById('adresseRue'),
+      adresseCp: document.getElementById('adresseCp'),
+      adresseVille: document.getElementById('adresseVille'),
+      errBox: document.getElementById('errBox'),
+      btnContinuer: document.getElementById('btnContinuer'),
+      btnEnvoyerCode: document.getElementById('btnEnvoyerCode'),
+      smsCodeRow: document.getElementById('smsCodeRow'),
+      smsCodeInput: document.getElementById('smsCode'),
+      btnVerifierCode: document.getElementById('btnVerifierCode'),
+      smsStatusEl: document.getElementById('smsStatus'),
+      btnSimulerVerifTel: document.getElementById('btnSimulerVerifTel')
+    };
+
+    let formeJuridique = draft.forme_juridique || '';
+    let departement = null;
+
+    function canProceed(){
+      const entrepriseOk = els.entreprise.value.trim().length > 0;
+      const nomOk = els.nom.value.trim().length > 0;
+      const prenomOk = els.prenom.value.trim().length > 0;
+      const emailOk = /\S+@\S+\.\S+/.test(els.email.value.trim());
+      const telOk = isTelephoneValid(els.telephone.value);
+      const adresseOk = els.adresseRue.value.trim().length > 0 && els.adresseCp.value.trim().length === 5 && els.adresseVille.value.trim().length > 0;
+      return entrepriseOk && nomOk && prenomOk && emailOk && telOk && state.telephoneVerifie && adresseOk;
+    }
+
+    function majBouton(){ els.btnContinuer.disabled = !canProceed(); }
+
+    ['entreprise','nom','prenom','email','adresseRue','adresseVille'].forEach(id => {
+      els[id].addEventListener('input', majBouton);
+    });
+    els.adresseCp.addEventListener('input', (e) => {
+      e.target.value = e.target.value.replace(/\D/g,'').slice(0,5);
+      majBouton();
+    });
+
+    // Recherche SIRET automatique dès que 14 chiffres sont saisis. Ne
+    // remplace JAMAIS un champ déjà renseigné par l'artisan lui-même —
+    // ne complète que ce qui est vide, comme demandé.
+    els.siret.addEventListener('input', () => {
+      els.siret.value = els.siret.value.replace(/\D/g,'').slice(0,14);
+      const siret = els.siret.value;
+      if (siret.length < 14) {
+        els.siretStatus.textContent = 'Saisissez votre SIRET — vos informations se complètent automatiquement.';
+        els.siretStatus.className = 'status-line mono';
+        return;
+      }
+      els.siretStatus.textContent = 'Recherche en cours…';
+      els.siretStatus.className = 'status-line mono';
+      rechercherSiret(siret).then(info => {
+        if (!info || (!info.nom && !info.adresse)) {
+          els.siretStatus.textContent = 'SIRET non reconnu — complétez les informations manuellement ci-dessous.';
+          els.siretStatus.className = 'status-line mono error';
+          return;
+        }
+        if (!els.entreprise.value.trim() && info.nom) els.entreprise.value = info.nom;
+        if (!els.adresseRue.value.trim() && info.adresse) els.adresseRue.value = info.adresse;
+        if (!els.adresseCp.value.trim() && info.codePostal) els.adresseCp.value = info.codePostal;
+        if (!els.adresseVille.value.trim() && info.ville) els.adresseVille.value = info.ville;
+        formeJuridique = info.formeJuridique || formeJuridique;
+        els.siretStatus.textContent = '✓ Entreprise trouvée : ' + (info.nom || els.entreprise.value);
+        els.siretStatus.className = 'status-line mono ok';
+        majBouton();
+      }).catch(() => {
+        els.siretStatus.textContent = "Recherche indisponible pour l'instant — complétez manuellement.";
+        els.siretStatus.className = 'status-line mono error';
+      });
+    });
+
+    function resetSmsVerification(){
+      state.telephoneVerifie = false;
+      els.smsCodeRow.style.display = 'none';
+      els.smsCodeInput.value = '';
+      els.smsStatusEl.textContent = '';
+      els.smsStatusEl.className = 'sms-status';
+      els.btnEnvoyerCode.style.display = 'inline-block';
+      els.btnEnvoyerCode.textContent = 'Vérifier mon numéro par SMS';
+      if (TEST_MODE) els.btnSimulerVerifTel.style.display = 'inline-block';
+      majBouton();
+    }
+
+    els.telephone.addEventListener('input', () => {
+      let digits = els.telephone.value.replace(/\D/g,'').slice(0,10);
+      const formatted = digits.replace(/(\d{2})(?=\d)/g,'$1 ').trim();
+      els.telephone.value = formatted;
+      state.telephone = formatted;
+      resetSmsVerification();
+      if (digits.length === 0) {
+        els.telStatus.textContent = 'Numéro français, 10 chiffres — une vérification par SMS est nécessaire.';
+        els.telStatus.style.color = '#5b6b64';
+        els.btnEnvoyerCode.disabled = true;
+      } else if (isTelephoneValid(digits)) {
+        els.telStatus.textContent = '✓ Format valide';
+        els.telStatus.style.color = '#1e6f4c';
+        els.btnEnvoyerCode.disabled = false;
+      } else {
+        els.telStatus.textContent = digits.length < 10 ? 'Numéro incomplet.' : "Doit commencer par 0 (ex : 06...).";
+        els.telStatus.style.color = '#c74f20';
+        els.btnEnvoyerCode.disabled = true;
+      }
+    });
+    // Déclenche la validation initiale si le téléphone était déjà pré-rempli.
+    els.telephone.dispatchEvent(new Event('input'));
+
+    els.btnEnvoyerCode.addEventListener('click', async () => {
+      els.btnEnvoyerCode.disabled = true;
+      els.smsStatusEl.textContent = 'Envoi du code…';
+      els.smsStatusEl.className = 'sms-status';
+      try {
+        const res = await fetch('/api/verify-send-code', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ telephone: state.telephone })
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || "Erreur lors de l'envoi.");
+        els.smsCodeRow.style.display = 'flex';
+        els.smsStatusEl.textContent = 'Code envoyé par SMS.';
+        els.smsStatusEl.className = 'sms-status ok';
+      } catch (err) {
+        els.smsStatusEl.textContent = err.message;
+        els.smsStatusEl.className = 'sms-status error';
+      } finally {
+        els.btnEnvoyerCode.disabled = false;
+      }
+    });
+
+    if (TEST_MODE) els.btnSimulerVerifTel.style.display = 'inline-block';
+    els.btnSimulerVerifTel.addEventListener('click', async () => {
+      let motDePasseInterne = sessionStorage.getItem('skyeco_admin_internal_pw');
+      if (!motDePasseInterne) {
+        motDePasseInterne = prompt('Mot de passe interne (mode test) :');
+        if (!motDePasseInterne) return;
+      }
+      els.btnSimulerVerifTel.disabled = true;
+      els.smsStatusEl.textContent = 'Vérification du mot de passe interne…';
+      els.smsStatusEl.className = 'sms-status';
+      try {
+        const res = await fetch('/api/verify-test-bypass', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ motDePasseInterne })
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Mot de passe interne incorrect.');
+        sessionStorage.setItem('skyeco_admin_internal_pw', motDePasseInterne);
+        state.telephoneVerifie = true;
+        els.btnEnvoyerCode.style.display = 'none';
+        els.btnSimulerVerifTel.style.display = 'none';
+        els.smsCodeRow.style.display = 'none';
+        els.smsStatusEl.textContent = '✓ Numéro vérifié (test — aucun SMS envoyé).';
+        els.smsStatusEl.className = 'sms-status ok';
+      } catch (err) {
+        sessionStorage.removeItem('skyeco_admin_internal_pw');
+        state.telephoneVerifie = false;
+        els.smsStatusEl.textContent = err.message;
+        els.smsStatusEl.className = 'sms-status error';
+      } finally {
+        els.btnSimulerVerifTel.disabled = false;
+        majBouton();
+      }
+    });
+
+    els.btnVerifierCode.addEventListener('click', async () => {
+      els.btnVerifierCode.disabled = true;
+      els.smsStatusEl.textContent = 'Vérification…';
+      els.smsStatusEl.className = 'sms-status';
+      try {
+        const res = await fetch('/api/verify-check-code', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ telephone: state.telephone, code: els.smsCodeInput.value.trim() })
+        });
+        const data = await res.json();
+        if (!data.success || !data.verified) throw new Error(data.error || 'Code invalide.');
+        state.telephoneVerifie = true;
+        els.btnEnvoyerCode.style.display = 'none';
+        els.smsCodeRow.style.display = 'none';
+        els.smsStatusEl.textContent = '✓ Numéro vérifié.';
+        els.smsStatusEl.className = 'sms-status ok';
+      } catch (err) {
+        state.telephoneVerifie = false;
+        els.smsStatusEl.textContent = err.message;
+        els.smsStatusEl.className = 'sms-status error';
+      } finally {
+        els.btnVerifierCode.disabled = false;
+        majBouton();
+      }
+    });
+
+    els.btnContinuer.addEventListener('click', async () => {
+      if (!canProceed()) {
+        els.errBox.classList.add('show');
+        return;
+      }
+      els.errBox.classList.remove('show');
+      els.btnContinuer.disabled = true;
+      els.btnContinuer.textContent = 'Enregistrement…';
+
+      const cp = els.adresseCp.value.trim();
+      departement = departementDepuisCP(cp);
+
+      const { error } = await supabaseClient
+        .from('skyeco_pro_vitrine_drafts')
+        .update({
+          siret: els.siret.value.trim() || null,
+          entreprise: els.entreprise.value.trim(),
+          forme_juridique: formeJuridique || null,
+          contact_nom: els.nom.value.trim(),
+          contact_prenom: els.prenom.value.trim(),
+          email: els.email.value.trim(),
+          telephone: state.telephone,
+          adresse_rue: els.adresseRue.value.trim(),
+          adresse_cp: cp,
+          adresse_ville: els.adresseVille.value.trim(),
+          departement: departement || null
+        })
+        .eq('id', draftId);
+
+      if (error) {
+        els.btnContinuer.disabled = false;
+        els.btnContinuer.textContent = 'Continuer vers le paiement →';
+        alert("Une erreur est survenue lors de l'enregistrement. Merci de réessayer. (" + error.message + ")");
+        return;
+      }
+
+      const suite = new URLSearchParams();
+      suite.set('id', draftId);
+      if (budget) suite.set('budget', budget);
+      window.location.href = '/campagne.html?' + suite.toString();
+    });
+  }
+})();
+</script>
+</body>
+</html>

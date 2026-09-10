@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Créez votre formulaire vitrine gratuitement en 2 minutes — Skyeco IA Ads</title>
+<title>Votre tableau de bord vous attend — inscription gratuite — Skyeco IA Ads</title>
 <link rel="icon" href="/skyeco-icon-ads.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -228,8 +228,8 @@
       <header class="top">
         <div class="logo"><img src="/skyeco-logo-ads-compact.svg" alt="Skyeco IA Ads" style="height:38px; display:block;"></div>
         <div class="eyebrow mono">SKYECO IA ADS</div>
-        <h1 class="title">L'IA qui fait décoller vos prospects.</h1>
-        <p class="subeyebrow">🤖 Formulaire vitrine gratuit, prêt en 2 minutes — sans engagement.</p>
+        <h1 class="title">Votre tableau de bord vous attend.</h1>
+        <p class="subeyebrow">🚀 Inscription gratuite, en 2 minutes — sans engagement, sans carte bancaire.</p>
       </header>
       <div class="stepper" id="stepper"></div>
       <div class="step-label mono" id="stepLabel"></div>
@@ -248,28 +248,49 @@
 
         <!-- STEP 1 : coordonnées -->
         <div class="panel" data-step="1">
-          <h2 class="q">Comment vous joindre ?</h2>
+          <h2 class="q">Votre tableau de bord vous attend.</h2>
           <div class="status-line mono" id="entrepriseConfirmee" style="display:none; color:var(--ok); font-weight:600; margin-bottom:14px;"></div>
-          <p class="hint">On vous recontacte pour construire votre vraie vitrine ensemble.</p>
+          <p class="hint">Quelques infos pour pr&#233;parer votre acc&#232;s &#8212; gratuit, sans engagement.</p>
 
-          <label for="telephone">Téléphone</label>
+          <label for="nom">Nom</label>
+          <input type="text" id="nom" placeholder="Ex : Bon">
+
+          <label for="prenom">Pr&#233;nom</label>
+          <input type="text" id="prenom" placeholder="Ex : Cyrille">
+
+          <label for="email">Email</label>
+          <input type="email" id="email" placeholder="Ex : contact@monentreprise.fr">
+
+          <label for="telephone">T&#233;l&#233;phone</label>
           <input type="tel" id="telephone" inputmode="numeric" placeholder="Ex : 06 12 34 56 78">
-          <div class="status-line mono" id="telStatus">Numéro français, 10 chiffres.</div>
+          <div class="status-line mono" id="telStatus">Num&#233;ro fran&#231;ais, 10 chiffres.</div>
 
           <div class="sms-block" id="smsBlock">
-            <p>Vérifiez votre numéro pour confirmer que votre demande est bien réelle.</p>
-            <button type="button" class="btn-sms" id="btnEnvoyerCode" disabled>Vérifier mon numéro par SMS</button>
-            <button type="button" class="btn-sms" id="btnSimulerVerifTel" style="display:none; margin-left:8px; background:#fff3cd; color:#8a6d1f; border-color:#f0d98c;">🧪 Simuler la vérification (test)</button>
+            <p>V&#233;rifiez votre num&#233;ro pour confirmer que votre demande est bien r&#233;elle.</p>
+            <button type="button" class="btn-sms" id="btnEnvoyerCode" disabled>V&#233;rifier mon num&#233;ro par SMS</button>
+            <button type="button" class="btn-sms" id="btnSimulerVerifTel" style="display:none; margin-left:8px; background:#fff3cd; color:#8a6d1f; border-color:#f0d98c;">🧪 Simuler la v&#233;rification (test)</button>
             <div class="sms-code-row" id="smsCodeRow" style="display:none;">
-              <input type="text" id="smsCode" inputmode="numeric" maxlength="6" placeholder="Code reçu">
+              <input type="text" id="smsCode" inputmode="numeric" maxlength="6" placeholder="Code re&#231;u">
               <button type="button" class="btn-sms" id="btnVerifierCode">Valider</button>
             </div>
             <div class="sms-status" id="smsStatus"></div>
           </div>
 
-          <label for="email">Email</label>
-          <input type="email" id="email" placeholder="Ex : contact@monentreprise.fr">
-          <div class="error mono" id="err-entreprise">Merci de renseigner un téléphone vérifié et un email valide.</div>
+          <label for="adresseRue">Adresse</label>
+          <input type="text" id="adresseRue" placeholder="Ex : 23 route de Corn er Hoet">
+          <div style="display:flex; gap:10px;">
+            <div style="flex:0 0 130px;">
+              <label for="adresseCp">Code postal</label>
+              <input type="text" id="adresseCp" inputmode="numeric" maxlength="5" placeholder="Ex : 56400">
+            </div>
+            <div style="flex:1;">
+              <label for="adresseVille">Ville</label>
+              <input type="text" id="adresseVille" placeholder="Ex : Brech">
+            </div>
+          </div>
+          <div class="status-line mono">Pr&#233;-rempli depuis votre SIRET &#8212; modifiable si besoin.</div>
+
+          <div class="error mono" id="err-entreprise">Merci de renseigner votre nom, pr&#233;nom, un email valide et un t&#233;l&#233;phone v&#233;rifi&#233;.</div>
         </div>
 
         <div class="nav-row">
@@ -280,9 +301,9 @@
 
       <div class="success" id="successPanel">
         <div class="icon">✓</div>
-        <h2>Génération en cours.</h2>
-        <p>Votre aperçu gratuit sera prêt dans quelques instants. Vous pourrez le consulter, le modifier, et décider de le mettre en ligne quand vous le souhaitez — sans engagement.</p>
-        <div class="loader mono">PRÉPARATION DE VOTRE APERÇU…</div>
+        <h2>Votre tableau de bord arrive.</h2>
+        <p>Vous allez y découvrir à quoi ressemblera votre suivi de campagnes et de prospects. Vous pourrez le consulter, l'ajuster, et décider de passer à l'essai gratuit quand vous le souhaitez — sans engagement.</p>
+        <div class="loader mono">PRÉPARATION DE VOTRE TABLEAU DE BORD…</div>
       </div>
     </div>
   </div>
@@ -328,6 +349,7 @@
 
   const state = {
     siret:'', siretVerifie:false, entreprise:'', zone:'',
+    nom:'', prenom:'',
     telephone:'', telephoneVerifie:false, email:'',
     formeJuridique:'', dateCreation:'', codeNaf:'', libelleActivite:'',
     adresseRue:'', adresseCp:'', adresseVille:'', departement:''
@@ -381,9 +403,11 @@
   function canProceed(i){
     if(i===0){ return state.siret.length === 14; }
     if(i===1){
+      const nomOk = document.getElementById('nom').value.trim().length > 0;
+      const prenomOk = document.getElementById('prenom').value.trim().length > 0;
       const emailOk = /\S+@\S+\.\S+/.test(document.getElementById('email').value.trim());
       const telOk = isTelephoneValid(document.getElementById('telephone').value);
-      return emailOk && telOk && state.telephoneVerifie;
+      return nomOk && prenomOk && emailOk && telOk && state.telephoneVerifie;
     }
     return true;
   }
@@ -392,7 +416,7 @@
     steps.forEach(p=>p.classList.remove('active'));
     steps[i].classList.add('active');
     document.getElementById('btnBack').style.visibility = i===0 ? 'hidden' : 'visible';
-    document.getElementById('btnNext').textContent = i===steps.length-1 ? 'Générer mon aperçu gratuit' : 'Continuer →';
+    document.getElementById('btnNext').textContent = i===steps.length-1 ? 'Accéder à mon tableau de bord' : 'Continuer →';
     document.getElementById('btnNext').disabled = !canProceed(i);
     renderStepper();
   }
@@ -457,9 +481,9 @@
             // Adresse complète du siège — pré-remplit les mêmes colonnes
             // (adresse_rue, adresse_cp, adresse_ville) que mes-elements.html.
             const numeroEtVoie = [s.numero_voie, s.type_voie, s.libelle_voie].filter(Boolean).join(' ');
-            if(numeroEtVoie){ state.adresseRue = numeroEtVoie; }
-            if(s.code_postal){ state.adresseCp = s.code_postal; }
-            if(s.libelle_commune){ state.adresseVille = s.libelle_commune; }
+            if(numeroEtVoie){ state.adresseRue = numeroEtVoie; document.getElementById('adresseRue').value = numeroEtVoie; }
+            if(s.code_postal){ state.adresseCp = s.code_postal; document.getElementById('adresseCp').value = s.code_postal; }
+            if(s.libelle_commune){ state.adresseVille = s.libelle_commune; document.getElementById('adresseVille').value = s.libelle_commune; }
 
             // Zone d'intervention déduite : ville + région.
             if(s.libelle_commune){
@@ -493,7 +517,12 @@
   });
 
   // Step 1: coordonnées
+  document.getElementById('nom').addEventListener('input', (e)=>{ state.nom = e.target.value; document.getElementById('btnNext').disabled = !canProceed(1); });
+  document.getElementById('prenom').addEventListener('input', (e)=>{ state.prenom = e.target.value; document.getElementById('btnNext').disabled = !canProceed(1); });
   document.getElementById('email').addEventListener('input', ()=>{ document.getElementById('btnNext').disabled = !canProceed(1); });
+  document.getElementById('adresseRue').addEventListener('input', (e)=>{ state.adresseRue = e.target.value; });
+  document.getElementById('adresseCp').addEventListener('input', (e)=>{ e.target.value = e.target.value.replace(/\D/g,'').slice(0,5); state.adresseCp = e.target.value; });
+  document.getElementById('adresseVille').addEventListener('input', (e)=>{ state.adresseVille = e.target.value; });
 
   const telEl = document.getElementById('telephone');
   const telStatusEl = document.getElementById('telStatus');
@@ -632,6 +661,8 @@
       document.getElementById('err-siret').classList.remove('show');
     }
     if(i===1){
+      state.nom = document.getElementById('nom').value.trim();
+      state.prenom = document.getElementById('prenom').value.trim();
       state.telephone = document.getElementById('telephone').value.trim();
       state.email = document.getElementById('email').value.trim();
       if(!canProceed(1)){
@@ -661,11 +692,11 @@
 
   async function submitForm(){
     document.getElementById('btnNext').disabled = true;
-    document.getElementById('btnNext').textContent = 'Génération en cours…';
+    document.getElementById('btnNext').textContent = 'Préparation de votre tableau de bord…';
 
     if (!supabaseClient) {
       document.getElementById('btnNext').disabled = false;
-      document.getElementById('btnNext').textContent = 'Générer mon aperçu gratuit';
+      document.getElementById('btnNext').textContent = 'Accéder à mon tableau de bord';
       alert("Le service de sauvegarde n'a pas pu se charger. Vérifiez votre connexion et réessayez.");
       return;
     }
@@ -676,6 +707,8 @@
         siret: state.siret,
         entreprise: state.entreprise,
         zone: state.zone,
+        contact_nom: state.nom || null,
+        contact_prenom: state.prenom || null,
         telephone: state.telephone,
         email: state.email,
         forme_juridique: state.formeJuridique || null,
@@ -697,7 +730,7 @@
 
     if(error){
       document.getElementById('btnNext').disabled = false;
-      document.getElementById('btnNext').textContent = 'Générer mon aperçu gratuit';
+      document.getElementById('btnNext').textContent = 'Accéder à mon tableau de bord';
       alert("Une erreur est survenue lors de l'enregistrement. Merci de réessayer. (" + error.message + ")");
       return;
     }

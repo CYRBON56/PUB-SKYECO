@@ -60,6 +60,44 @@ async function notifierAdminEmail(sujet, texte) {
   }
 }
 
+// --- Notification ARTISAN après un prélèvement mensuel réussi (10/09/2026)
+// Avant ce changement, un artisan prélevé de 39,90€/mois ne recevait RIEN :
+// aucun email, aucun SMS, aucune facture — seul Cyrille était notifié, et
+// uniquement en cas d'ÉCHEC de paiement. Corrigé ici.
+//
+// Choix technique : on ne réémet pas nous-mêmes une facture PDF pour cet
+// abonnement — Stripe génère déjà une facture légale (hosted_invoice_url,
+// PDF téléchargeable, avec la TVA si un taux de taxe est configuré sur le
+// prix Stripe) à chaque prélèvement réussi. Il suffit d'activer l'envoi
+// automatique de cette facture par email dans Stripe : Dashboard → Settings
+// → Business → Customer emails → activer "Successful payments". Ce webhook
+// ajoute seulement le SMS (que Stripe n'envoie jamais), avec le montant et
+// le lien vers la facture Stripe.
+//
+// ⚠️ À vérifier une fois côté Stripe : le prix de l'abonnement (39,90€/mois)
+// doit avoir un Tax Rate à 20% rattaché pour que la facture Stripe affiche
+// la TVA — sinon la facture générée sera HT=TTC sans mention de taux.
+async function envoyerSmsArtisan(telephone, texte) {
+  if (!telephone) return;
+  try {
+    const sid = process.env.TWILIO_ACCOUNT_SID;
+    const token = process.env.TWILIO_AUTH_TOKEN;
+    const from = process.env.TWILIO_FROM_NUMBER;
+    const digits = String(telephone).replace(/\D/g, '');
+    const to = digits.startsWith('33') ? '+' + digits : (digits.startsWith('0') ? '+33' + digits.slice(1) : telephone);
+    await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Basic ' + Buffer.from(`${sid}:${token}`).toString('base64'),
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({ To: to, From: from, Body: texte }),
+    });
+  } catch (e) {
+    console.error('Erreur SMS artisan (prélèvement réussi) :', e);
+  }
+}
+
 export const config = {
   api: { bodyParser: false }, // Stripe a besoin du corps brut pour vérifier la signature
 };
@@ -125,6 +163,24 @@ export default async function handler(req, res) {
               body: JSON.stringify({ subscription_status: 'active', echec_paiement_depuis_le: null }),
             }
           );
+
+          // SMS à l'artisan (voir envoyerSmsArtisan ci-dessus) — uniquement
+          // pour un montant réellement prélevé (0€ = simple renouvellement
+          // d'essai gratuit, rien à notifier). La facture officielle part
+          // par email directement via Stripe (à activer côté Dashboard).
+          if (invoice.amount_paid > 0) {
+            const draftResp = await fetch(
+              `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?stripe_subscription_id=eq.${invoice.subscription}&select=entreprise,telephone`,
+              { headers: supaHeaders }
+            );
+            const draftRows = draftResp.ok ? await draftResp.json() : [];
+            const draft = draftRows[0];
+            if (draft?.telephone) {
+              const montant = (invoice.amount_paid / 100).toFixed(2).replace('.', ',');
+              const texteSms = `Skyeco Ads — prélèvement de ${montant}€ effectué pour votre abonnement. Facture disponible par email` + (invoice.hosted_invoice_url ? ` ou ici : ${invoice.hosted_invoice_url}` : '.');
+              await envoyerSmsArtisan(draft.telephone, texteSms);
+            }
+          }
         }
         break;
       }

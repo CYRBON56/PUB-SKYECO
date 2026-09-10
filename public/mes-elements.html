@@ -1102,12 +1102,16 @@
     }
   });
 
-  // Assistant IA "Construire ma vitrine" (10/09/2026) : à partir d'une
-  // description libre de son activité, l'artisan obtient des titres
-  // sur-mesure (plus précis que la liste générique par métier ci-dessous) —
-  // voir api/generer-vitrine-ia.js pour le détail et les limites de portée
-  // assumées (le reste du contenu de la vitrine vient des gabarits communs
-  // par métier, entretenus par Cyrille, pas d'un texte libre par artisan).
+  // Assistant IA "Construire ma vitrine complète" (10/09/2026) : à partir
+  // d'une description libre de son activité, l'artisan obtient : (1) des
+  // titres sur-mesure (plus précis que la liste générique par métier), (2)
+  // un brouillon du formulaire de devis (questions + logique de calcul) —
+  // voir api/generer-vitrine-ia.js pour le détail. Ce brouillon n'active
+  // RIEN tout seul : il est déposé dans le circuit "Formulaire personnalisé"
+  // déjà existant (case à cocher + api/demander-formulaire-personnalise.js),
+  // donc Cyrille (ou Claude sur sa demande) le relit et le code à la main
+  // dans public/apercu.html avant toute mise en ligne — conforme à la
+  // décision du 04/09/2026 de garder le contrôle qualité sur les prix.
   const btnAssistantVitrine = document.getElementById('btnAssistantVitrineIA');
   if (btnAssistantVitrine) {
     btnAssistantVitrine.addEventListener('click', async () => {
@@ -1119,7 +1123,7 @@
       }
       const texteOriginal = btnAssistantVitrine.textContent;
       btnAssistantVitrine.disabled = true;
-      btnAssistantVitrine.textContent = 'Construction en cours…';
+      btnAssistantVitrine.textContent = 'Construction en cours… (jusqu\'à 30 secondes)';
       zoneBox.innerHTML = '';
       try {
         const res = await fetch('/api/generer-vitrine-ia', {
@@ -1136,6 +1140,16 @@
           if (data.metierSuggereLabel) {
             html += `<div class="hint" style="margin-top:8px;">💡 D'après ta description, ça ressemble à : <strong>${data.metierSuggereLabel}</strong>. Le métier qui pilote ton ciblage publicitaire se confirme dans ton tableau de bord.</div>`;
           }
+          if (data.formulaireBrouillon) {
+            const idBrouillon = 'brouillonFormulaireIA';
+            html += `
+              <label style="margin-top:18px;">Brouillon de ton formulaire de devis</label>
+              <p class="hint" style="margin:2px 0 8px;">Une proposition de questions à poser à tes clients et de calcul de prix — à faire valider et coder par ton conseiller avant mise en ligne, rien n'est activé automatiquement.</p>
+              <div id="${idBrouillon}" style="white-space:pre-wrap; background:#f5f8f6; border:1px solid #dde5e1; border-radius:8px; padding:12px 14px; font-size:0.85rem; color:#14312a; max-height:320px; overflow-y:auto;">${data.formulaireBrouillon.replace(/</g, '&lt;')}</div>
+              <button type="button" id="btnEnvoyerBrouillonFormulaire" style="margin-top:10px; background:#1e6f4c; color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:0.85rem; font-weight:700; cursor:pointer;">📨 Envoyer ce brouillon à mon conseiller</button>
+              <div id="statutEnvoiBrouillon" class="hint" style="margin-top:6px; display:none; color:#1e6f4c; font-weight:700;">✓ Envoyé — ton conseiller va relire et construire ce formulaire, tu seras recontacté.</div>
+            `;
+          }
           zoneBox.innerHTML = html;
           zoneBox.querySelectorAll('.titre-assistant-ia').forEach(elBtn => {
             elBtn.addEventListener('click', () => {
@@ -1145,6 +1159,24 @@
               document.querySelector('[data-section="titre"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             });
           });
+          const btnEnvoyerBrouillon = document.getElementById('btnEnvoyerBrouillonFormulaire');
+          if (btnEnvoyerBrouillon) {
+            btnEnvoyerBrouillon.addEventListener('click', () => {
+              const checkFP = document.getElementById('checkFormulairePersonnalise');
+              const descFP = document.getElementById('formulairePersonnaliseDescription');
+              const wrapperFP = document.getElementById('formulairePersonnaliseDescriptionWrapper');
+              descFP.value = data.formulaireBrouillon;
+              wrapperFP.style.display = 'block';
+              sauvegarderChampsImmediat({ formulaire_personnalise_description: descFP.value.trim() });
+              checkFP.checked = true;
+              checkFP.dispatchEvent(new Event('change'));
+              btnEnvoyerBrouillon.disabled = true;
+              btnEnvoyerBrouillon.textContent = '✓ Envoyé';
+              document.getElementById('statutEnvoiBrouillon').style.display = 'block';
+              const sectionProduits = document.querySelector('[data-section="produits"]');
+              if (sectionProduits) sectionProduits.classList.add('open');
+            });
+          }
         } else {
           zoneBox.innerHTML = '<div class="hint">' + (data.error || "Génération indisponible pour le moment, réessaie plus tard.") + '</div>';
         }

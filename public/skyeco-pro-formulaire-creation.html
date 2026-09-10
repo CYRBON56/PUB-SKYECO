@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Votre tableau de bord vous attend — inscription gratuite — Skyeco IA Ads</title>
+<title>Inscription gratuite — Skyeco IA Ads</title>
 <link rel="icon" href="/skyeco-icon-ads.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -176,11 +176,6 @@
   .btn-primary:disabled{ background:var(--paper-line); color:var(--concrete); cursor:not-allowed; }
   .btn-ghost{ background:transparent; border-color:var(--paper-line); color:var(--navy); }
   .btn-ghost:hover{ border-color:var(--blue); }
-  .btn-hero{ width:100%; font-size:17px; padding:19px 24px; margin-top:8px; box-shadow:0 8px 24px rgba(232,98,44,0.28); }
-  .nav-row.centered{ justify-content:center; }
-  .welcome-panel{ text-align:center; padding:18px 0 6px; }
-  .welcome-panel h2{ margin-bottom:14px; }
-  .welcome-panel .hint{ font-size:15px; max-width:340px; margin:0 auto; }
 
   .error{ color:var(--orange-dark); font-size:12.5px; margin-top:6px; display:none; font-family:'IBM Plex Mono',monospace; }
   .error.show{ display:block; }
@@ -233,23 +228,17 @@
       <header class="top">
         <div class="logo"><img src="/skyeco-logo-ads-compact.svg" alt="Skyeco IA Ads" style="height:38px; display:block;"></div>
         <div class="eyebrow mono">SKYECO IA ADS</div>
-        <h1 class="title">Votre tableau de bord vous attend.</h1>
-        <p class="subeyebrow">🚀 Inscription gratuite, en 2 minutes — sans engagement, sans carte bancaire.</p>
+        <h1 class="title">Créez votre compte gratuit.</h1>
+        <p class="subeyebrow">🚀 2 minutes, sans engagement, sans carte bancaire.</p>
       </header>
       <div class="stepper" id="stepper"></div>
       <div class="step-label mono" id="stepLabel"></div>
 
       <form id="wizardForm" novalidate>
 
-        <!-- STEP 0 : bienvenue -->
-        <div class="panel active welcome-panel" data-step="0">
-          <h2 class="q">Votre tableau de bord vous attend.</h2>
-          <p class="hint">Pilotage de vos annonces, vos prospects et vos devis &#8212; d&#233;couvrez &#224; quoi &#231;a ressemble pour vous, gratuitement.</p>
-        </div>
-
-        <!-- STEP 1 : coordonnées -->
-        <div class="panel" data-step="1">
-          <h2 class="q">Vos informations.</h2>
+        <!-- STEP 0 : coordonnées -->
+        <div class="panel active" data-step="0">
+          <h2 class="q">Cr&#233;ez votre compte gratuit.</h2>
           <p class="hint">Quelques infos pour pr&#233;parer votre acc&#232;s &#8212; gratuit, sans engagement.</p>
 
           <label for="entreprise">Nom de l'entreprise</label>
@@ -291,20 +280,25 @@
               <input type="text" id="adresseVille" placeholder="Ex : Brech">
             </div>
           </div>
-          <div class="error mono" id="err-entreprise">Merci de renseigner le nom de votre entreprise, votre nom, pr&#233;nom, un email valide et un t&#233;l&#233;phone v&#233;rifi&#233;.</div>
+          <label style="display:flex; align-items:flex-start; gap:8px; font-size:13px; font-weight:400; color:var(--concrete); margin-top:20px; cursor:pointer;">
+            <input type="checkbox" id="cguEssaiCheckbox" style="width:16px; height:16px; flex-shrink:0; margin-top:2px;">
+            <span>J'accepte les <a href="/cgv.html" target="_blank" rel="noopener">conditions g&#233;n&#233;rales de vente</a>.</span>
+          </label>
+
+          <div class="error mono" id="err-entreprise">Merci de renseigner le nom de votre entreprise, votre nom, pr&#233;nom, un email valide, un t&#233;l&#233;phone v&#233;rifi&#233; et d'accepter les CGV.</div>
         </div>
 
         <div class="nav-row" id="navRow">
-          <button type="button" class="btn btn-ghost" id="btnBack">← Retour</button>
-          <button type="button" class="btn btn-primary" id="btnNext">Commencer gratuitement, sans engagement →</button>
+          <button type="button" class="btn btn-ghost" id="btnBack" style="visibility:hidden;">← Retour</button>
+          <button type="button" class="btn btn-primary" id="btnNext">Démarrer mon essai gratuit et créer ma vitrine →</button>
         </div>
       </form>
 
       <div class="success" id="successPanel">
         <div class="icon">✓</div>
-        <h2>Votre tableau de bord arrive.</h2>
-        <p>Vous allez y découvrir à quoi ressemblera votre suivi de campagnes et de prospects. Vous pourrez le consulter, l'ajuster, et décider de passer à l'essai gratuit quand vous le souhaitez — sans engagement.</p>
-        <div class="loader mono">PRÉPARATION DE VOTRE TABLEAU DE BORD…</div>
+        <h2>Votre compte est prêt.</h2>
+        <p>Votre essai gratuit de 30 jours démarre maintenant. Direction la création de votre vitrine — quelques minutes pour renseigner vos infos, photos et prestations.</p>
+        <div class="loader mono">PRÉPARATION DE VOTRE ESPACE…</div>
       </div>
     </div>
   </div>
@@ -337,7 +331,7 @@
   })();
 
   const steps = Array.from(document.querySelectorAll('.panel'));
-  const stepLabels = ['Bienvenue','Vos informations'];
+  const stepLabels = ['Vos informations'];
   let current = 0;
 
   const state = {
@@ -392,47 +386,29 @@
     return /^0\d{9}$/.test(digits);
   }
 
-  function canProceed(i){
-    if(i===0){ return true; }
-    if(i===1){
-      const entrepriseOk = document.getElementById('entreprise').value.trim().length > 0;
-      const nomOk = document.getElementById('nom').value.trim().length > 0;
-      const prenomOk = document.getElementById('prenom').value.trim().length > 0;
-      const emailOk = /\S+@\S+\.\S+/.test(document.getElementById('email').value.trim());
-      const telOk = isTelephoneValid(document.getElementById('telephone').value);
-      return entrepriseOk && nomOk && prenomOk && emailOk && telOk && state.telephoneVerifie;
-    }
-    return true;
+  function canProceed(){
+    const entrepriseOk = document.getElementById('entreprise').value.trim().length > 0;
+    const nomOk = document.getElementById('nom').value.trim().length > 0;
+    const prenomOk = document.getElementById('prenom').value.trim().length > 0;
+    const emailOk = /\S+@\S+\.\S+/.test(document.getElementById('email').value.trim());
+    const telOk = isTelephoneValid(document.getElementById('telephone').value);
+    const cguOk = document.getElementById('cguEssaiCheckbox').checked;
+    return entrepriseOk && nomOk && prenomOk && emailOk && telOk && state.telephoneVerifie && cguOk;
   }
 
   function showStep(i){
     steps.forEach(p=>p.classList.remove('active'));
     steps[i].classList.add('active');
-    document.getElementById('btnBack').style.visibility = i===0 ? 'hidden' : 'visible';
-    const navRow = document.getElementById('navRow');
-    const btnNext = document.getElementById('btnNext');
-    if(i===0){
-      btnNext.textContent = 'Commencer gratuitement, sans engagement →';
-      btnNext.classList.add('btn-hero');
-      navRow.classList.add('centered');
-    } else if(i===steps.length-1){
-      btnNext.textContent = 'Accéder à mon tableau de bord';
-      btnNext.classList.remove('btn-hero');
-      navRow.classList.remove('centered');
-    } else {
-      btnNext.textContent = 'Continuer →';
-      btnNext.classList.remove('btn-hero');
-      navRow.classList.remove('centered');
-    }
-    btnNext.disabled = !canProceed(i);
+    document.getElementById('btnNext').disabled = !canProceed();
     renderStepper();
   }
 
-  // Step 1: coordonnées
-  document.getElementById('entreprise').addEventListener('input', (e)=>{ state.entreprise = e.target.value; document.getElementById('btnNext').disabled = !canProceed(1); });
-  document.getElementById('nom').addEventListener('input', (e)=>{ state.nom = e.target.value; document.getElementById('btnNext').disabled = !canProceed(1); });
-  document.getElementById('prenom').addEventListener('input', (e)=>{ state.prenom = e.target.value; document.getElementById('btnNext').disabled = !canProceed(1); });
-  document.getElementById('email').addEventListener('input', ()=>{ document.getElementById('btnNext').disabled = !canProceed(1); });
+  // Coordonnées
+  document.getElementById('entreprise').addEventListener('input', (e)=>{ state.entreprise = e.target.value; document.getElementById('btnNext').disabled = !canProceed(); });
+  document.getElementById('nom').addEventListener('input', (e)=>{ state.nom = e.target.value; document.getElementById('btnNext').disabled = !canProceed(); });
+  document.getElementById('prenom').addEventListener('input', (e)=>{ state.prenom = e.target.value; document.getElementById('btnNext').disabled = !canProceed(); });
+  document.getElementById('email').addEventListener('input', ()=>{ document.getElementById('btnNext').disabled = !canProceed(); });
+  document.getElementById('cguEssaiCheckbox').addEventListener('change', ()=>{ document.getElementById('btnNext').disabled = !canProceed(); });
   document.getElementById('adresseRue').addEventListener('input', (e)=>{ state.adresseRue = e.target.value; });
   document.getElementById('adresseCp').addEventListener('input', (e)=>{ e.target.value = e.target.value.replace(/\D/g,'').slice(0,5); state.adresseCp = e.target.value; });
   document.getElementById('adresseVille').addEventListener('input', (e)=>{ state.adresseVille = e.target.value; });
@@ -476,7 +452,7 @@
       telStatusEl.style.color = 'var(--orange-dark)';
       btnEnvoyerCode.disabled = true;
     }
-    document.getElementById('btnNext').disabled = !canProceed(1);
+    document.getElementById('btnNext').disabled = !canProceed();
   });
 
   btnEnvoyerCode.addEventListener('click', async ()=>{
@@ -535,7 +511,7 @@
       smsStatusEl.className = 'sms-status error';
     } finally {
       btnSimulerVerifTel.disabled = false;
-      document.getElementById('btnNext').disabled = !canProceed(1);
+      document.getElementById('btnNext').disabled = !canProceed();
     }
   });
 
@@ -561,33 +537,26 @@
       smsStatusEl.className = 'sms-status error';
     } finally {
       btnVerifierCode.disabled = false;
-      document.getElementById('btnNext').disabled = !canProceed(1);
+      document.getElementById('btnNext').disabled = !canProceed();
     }
   });
-  function validateStep(i){
-    if(i===1){
-      state.entreprise = document.getElementById('entreprise').value.trim();
-      state.nom = document.getElementById('nom').value.trim();
-      state.prenom = document.getElementById('prenom').value.trim();
-      state.telephone = document.getElementById('telephone').value.trim();
-      state.email = document.getElementById('email').value.trim();
-      if(!canProceed(1)){
-        document.getElementById('err-entreprise').classList.add('show');
-        return false;
-      }
-      document.getElementById('err-entreprise').classList.remove('show');
+  function validateStep(){
+    state.entreprise = document.getElementById('entreprise').value.trim();
+    state.nom = document.getElementById('nom').value.trim();
+    state.prenom = document.getElementById('prenom').value.trim();
+    state.telephone = document.getElementById('telephone').value.trim();
+    state.email = document.getElementById('email').value.trim();
+    if(!canProceed()){
+      document.getElementById('err-entreprise').classList.add('show');
+      return false;
     }
+    document.getElementById('err-entreprise').classList.remove('show');
     return true;
   }
 
   document.getElementById('btnNext').addEventListener('click', ()=>{
-    if(!validateStep(current)) return;
-    if(current === steps.length-1){
-      submitForm();
-      return;
-    }
-    current++;
-    showStep(current);
+    if(!validateStep()) return;
+    submitForm();
   });
 
   document.getElementById('btnBack').addEventListener('click', ()=>{
@@ -634,11 +603,32 @@
       return;
     }
 
+    const draftId = data.id;
+
+    try{
+      const resEssai = await fetch('/api/demarrer-essai-gratuit', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ draftId })
+      });
+      const dataEssai = await resEssai.json();
+      if(!dataEssai.success) throw new Error(dataEssai.error || "Erreur lors du démarrage de l'essai.");
+    } catch(err){
+      document.getElementById('btnNext').disabled = false;
+      document.getElementById('btnNext').textContent = 'Accéder à mon tableau de bord';
+      alert("Votre compte a été créé mais le démarrage de l'essai a échoué. Merci de réessayer. (" + err.message + ")");
+      return;
+    }
+
+    fetch('/api/envoyer-bienvenue-essai', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ draftId })
+    }).catch(()=>{});
+
     document.getElementById('wizardForm').style.display = 'none';
     document.getElementById('successPanel').classList.add('active');
 
     setTimeout(()=>{
-      window.location.href = 'mon-dashboard-demo.html?id=' + data.id;
+      window.location.href = '/mes-elements.html?id=' + draftId;
     }, 1400);
   }
 

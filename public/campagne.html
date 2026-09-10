@@ -300,8 +300,13 @@
           const potentiel = data.totalMonthlyVolume ? ` · Potentiel estimé sur ce mois : ${data.totalMonthlyVolume} clics possibles avec ces mots-clés et cette zone` : '';
           document.getElementById('estimationDetail').textContent =
             (data.avgCpcEur ? `CPC moyen estimé : ${data.avgCpcEur} €` : '') + potentiel;
-          document.getElementById('breakdown').innerHTML =
-            `Ce budget couvre la gestion de votre campagne et sa diffusion sur Google Ads.`;
+          // 10/09/2026 : détail visible du montant qui va réellement en
+          // diffusion Google Ads vs. la commission de service, au lieu
+          // d'une phrase générique — demandé par Cyrille.
+          document.getElementById('breakdown').innerHTML = (data.budgetNetPub != null)
+            ? `${budget} € TTC · ${data.budgetHT} € HT, dont <strong>${data.budgetNetPub} € réellement en diffusion sur Google Ads</strong> ` +
+              `et ${data.commissionPub} € de frais de pilotage Skyeco IA Ads (${Math.round(data.tauxCommission * 100)}%).`
+            : `Ce budget couvre la gestion de votre campagne et sa diffusion sur Google Ads.`;
           estimationOk = true;
           majEtatBoutonPayer();
           btnPayer.textContent = `Payer ${budget} € et lancer ma campagne`;

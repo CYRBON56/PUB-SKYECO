@@ -2608,14 +2608,23 @@
     const potentielBox = document.getElementById('motsClesPotentiel');
     const potentielChiffre = document.getElementById('motsClesPotentielChiffre');
     const potentielDetail = document.getElementById('motsClesPotentielDetail');
-    const TAUX_COMMISSION_INVERSE = 0.50; // doit rester synchronisé avec les autres fichiers
+    const TAUX_COMMISSION_INVERSE = 0.30; // doit rester synchronisé avec les autres fichiers (30% depuis le 10/09/2026, était 50%)
+    const TAUX_TVA_INVERSE = 0.20;
 
+    // 10/09/2026 : ce calcul part du nombre de clics réels voulus et doit
+    // retrouver le montant TTC à payer — donc inverser toute la chaîne
+    // TTC -> HT -> commission (voir confirm-ad-payment.js /
+    // create-google-ads-campaign.js), pas juste la commission seule comme
+    // avant. Sans l'étape TVA, le budget suggéré ici sous-estimait d'environ
+    // 17% ce qu'il fallait réellement payer pour obtenir ce nombre de clics.
     function calculerBudgetInverse() {
       const clics = parseInt(slider.value, 10);
       sliderValue.textContent = clics + (clics > 1 ? ' clics' : ' clic');
-      const budgetCalcule = Math.round((clics * avgCpcEur) / (1 - TAUX_COMMISSION_INVERSE));
+      const budgetNetNecessaire = clics * avgCpcEur;
+      const budgetHTNecessaire = budgetNetNecessaire / (1 - TAUX_COMMISSION_INVERSE);
+      const budgetCalcule = Math.round(budgetHTNecessaire * (1 + TAUX_TVA_INVERSE));
       const budgetNecessaire = Math.max(100, budgetCalcule);
-      budgetValue.textContent = budgetCalcule < 100 ? '100 € (minimum)' : '≈ ' + budgetNecessaire + ' €';
+      budgetValue.textContent = budgetCalcule < 100 ? '100 € (minimum)' : '≈ ' + budgetNecessaire + ' € TTC';
       document.getElementById('btnFondsInverse').href = '/campagne.html?id=' + draftId + '&budget=' + budgetNecessaire;
     }
 
@@ -2875,7 +2884,7 @@
   // affichage/édition que initZoneCiblee ci-dessus.
   function initBudgetJournalier(budgetManuelActuel, tarifMensuelPaye) {
     let budgetManuel = budgetManuelActuel;
-    const TAUX_COMMISSION = 0.50; // doit rester synchronisé avec create-google-ads-campaign.js
+    const TAUX_COMMISSION = 0.30; // doit rester synchronisé avec create-google-ads-campaign.js (30% depuis le 10/09/2026, était 50%)
     const budgetAutoEstime = tarifMensuelPaye
       ? +((tarifMensuelPaye * (1 - TAUX_COMMISSION)) / 30).toFixed(2)
       : null;

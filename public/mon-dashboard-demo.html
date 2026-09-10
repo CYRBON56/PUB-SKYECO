@@ -606,11 +606,21 @@
   //    du forfait.
   const params = new URLSearchParams(window.location.search);
   const draftId = params.get('id');
+  // 10/09/2026 : nouveau point d'entrée depuis la page d'accueil publique —
+  // le visiteur arrive directement sur cette démo pleine page (sans brouillon
+  // existant, "?visiteur=1") pour donner envie AVANT de demander la moindre
+  // information. Il ne remplit le formulaire d'inscription que s'il clique
+  // sur "Démarrer mon essai gratuit" depuis ici.
+  const visiteurMode = params.get('visiteur') === '1';
   const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
   if (draftId) {
+    // Le lien retour ne veut dire quelque chose que si une vraie vitrine
+    // existe déjà pour ce brouillon — jamais affiché en mode visiteur.
     document.getElementById('lienRetour').href = '/apercu.html?id=' + encodeURIComponent(draftId);
     document.getElementById('lienRetour').style.display = 'inline-flex';
+  }
+  if (draftId || visiteurMode) {
     document.getElementById('introFunnel').style.display = 'block';
     document.getElementById('btnVoirVitrineDemo').style.display = 'inline-flex';
 
@@ -651,6 +661,13 @@
     // Google, sur campagne.html) — on démarre juste l'essai (1 mois, sans
     // engagement, sans carte bancaire) et on l'envoie construire sa vitrine.
     document.getElementById('btnDemarrerEssai').addEventListener('click', async () => {
+      // Mode visiteur (pas encore de brouillon) : on ne démarre rien ici —
+      // direction le formulaire d'inscription, qui créera le compte, démarrera
+      // l'essai puis enverra vers la construction de la vitrine.
+      if (!draftId) {
+        window.location.href = '/skyeco-pro-formulaire-creation.html';
+        return;
+      }
       const btn = document.getElementById('btnDemarrerEssai');
       const erreurEl = document.getElementById('essaiErreur');
       erreurEl.style.display = 'none';

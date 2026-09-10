@@ -77,8 +77,8 @@ async function verifierToken(token, draftIdAttendu) {
 
 const MODELE_CLAUDE = 'claude-sonnet-4-6';
 const WINDSOR_BASE = 'https://connectors.windsor.ai/google_ads';
-const MAX_ACTIONS_PAR_APPEL = 3;
-const MAX_TOURS_OUTILS = 5; // filet de sécurité contre une boucle d'appels d'outils
+const MAX_ACTIONS_PAR_APPEL = 5; // relevé de 3 à 5 le 10/09/2026 à la demande de Cyrille (3 était trop restrictif pour une seule analyse)
+const MAX_TOURS_OUTILS = 7; // relevé en même temps que MAX_ACTIONS_PAR_APPEL pour laisser assez de tours au modèle pour appliquer les 5 actions
 
 const BORNES_BUDGET = { min: 1, max: 100 };
 const BORNES_CPC = { min: 0.05, max: 10 };
@@ -373,7 +373,7 @@ export default async function handler(req, res) {
       for (const appel of appelsOutils) {
         let resultatTexte;
         if (actionsAppliquees >= MAX_ACTIONS_PAR_APPEL) {
-          resultatTexte = "Limite atteinte : pas plus de 3 actions automatiques par analyse. Explique à l'artisan qu'il peut redemander une analyse pour continuer.";
+          resultatTexte = `Limite atteinte : pas plus de ${MAX_ACTIONS_PAR_APPEL} actions automatiques par analyse. Explique à l'artisan qu'il peut redemander une analyse pour continuer.`;
         } else {
           try {
             resultatTexte = await executerOutil(appel.name, appel.input, draft, supaHeaders, journal);

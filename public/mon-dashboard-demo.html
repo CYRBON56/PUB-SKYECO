@@ -658,19 +658,51 @@
     // Google, sur campagne.html) — on démarre juste l'essai (1 mois, sans
     // engagement, sans carte bancaire) et on l'envoie construire sa vitrine.
     document.getElementById('btnDemarrerEssai').addEventListener('click', async () => {
-      // Mode visiteur (pas encore de brouillon) : on ne démarre rien ici —
-      // direction le formulaire d'inscription, qui créera le compte, démarrera
-      // l'essai puis enverra vers la construction de la vitrine.
-      if (!draftId) {
-        window.location.href = '/skyeco-pro-formulaire-creation.html';
-        return;
-      }
       const btn = document.getElementById('btnDemarrerEssai');
       const erreurEl = document.getElementById('essaiErreur');
       erreurEl.style.display = 'none';
       if (!document.getElementById('cguEssaiCheckbox').checked) {
         erreurEl.textContent = "Merci d'accepter les conditions générales de vente pour continuer.";
         erreurEl.style.display = 'block';
+        return;
+      }
+      // Mode visiteur (pas encore de brouillon) : on crée un brouillon vide
+      // en silence (sans SIRET ni vérification SMS à ce stade — ces infos
+      // sont demandées directement dans mes-elements.html) puis on envoie
+      // l'artisan construire sa vitrine tout de suite.
+      if (!draftId) {
+        btn.disabled = true;
+        btn.textContent = 'Préparation de votre espace…';
+        try {
+          const res = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts`, {
+            method: 'POST',
+            headers: {
+              apikey: SUPABASE_ANON_KEY,
+              Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+              'Content-Type': 'application/json',
+              Prefer: 'return=representation',
+            },
+            body: JSON.stringify([{ entreprise: '', telephone: '', email: '', status: 'preview' }]),
+          });
+          const rows = await res.json();
+          if (!res.ok || !rows[0]?.id) throw new Error(rows?.message || "Impossible de préparer votre espace.");
+          const nouveauDraftId = rows[0].id;
+          // Démarre tout de suite les 30 jours d'essai (même appel que le
+          // formulaire d'inscription complet) — pas d'email/SMS de
+          // bienvenue ici, l'artisan n'a pas encore renseigné ses
+          // coordonnées, il les saisit à l'instant sur mes-elements.html.
+          await fetch('/api/demarrer-essai-gratuit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ draftId: nouveauDraftId }),
+          }).catch(() => {});
+          window.location.href = '/mes-elements.html?id=' + nouveauDraftId;
+        } catch (e) {
+          erreurEl.textContent = "Impossible de préparer votre espace pour le moment. Merci de réessayer.";
+          erreurEl.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Commencer par votre formulaire vitrine →';
+        }
         return;
       }
       btn.disabled = true;

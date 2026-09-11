@@ -1,0 +1,211 @@
+<!-- ============================================================
+     ONGLET "Réseaux sociaux" — dashboard Skyeco Pro
+     Bloc autonome avec données d'exemple (statiques).
+     Remplacer les données de la liste par un fetch Supabase
+     (table de posts + artisan_social_connections).
+============================================================ -->
+
+<style>
+  .sf-social {
+    --sf-ink: #1c2b24;
+    --sf-muted: #5b6b63;
+    --sf-line: #d7ddd8;
+    --sf-accent: #2f6b4f;
+    --sf-accent-soft: #eaf2ec;
+    --sf-warn: #b8551f;
+    --sf-warn-soft: #fbeee3;
+    --sf-surface: #ffffff;
+    --sf-bg: #f6f8f6;
+
+    max-width: 780px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--sf-ink);
+  }
+
+  .sf-social__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+
+  .sf-social__header h2 {
+    margin: 0;
+    font-size: 20px;
+  }
+
+  .sf-social__status {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: var(--sf-surface);
+    border: 1px solid var(--sf-line);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 22px;
+  }
+
+  .sf-social__status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--sf-accent);
+    flex-shrink: 0;
+  }
+
+  .sf-social__status-dot.sf-off {
+    background: var(--sf-warn);
+  }
+
+  .sf-social__status-text {
+    flex: 1;
+    font-size: 14.5px;
+  }
+
+  .sf-social__status-text strong {
+    display: block;
+    font-size: 15px;
+    margin-bottom: 2px;
+  }
+
+  .sf-social__btn {
+    background: var(--sf-accent);
+    color: #fff;
+    border: none;
+    padding: 9px 16px;
+    border-radius: 7px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .sf-social__btn.sf-secondary {
+    background: transparent;
+    color: var(--sf-accent);
+    border: 1px solid var(--sf-line);
+  }
+
+  .sf-social__list {
+    background: var(--sf-surface);
+    border: 1px solid var(--sf-line);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .sf-social__row {
+    display: grid;
+    grid-template-columns: 56px 1fr auto auto;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--sf-line);
+  }
+
+  .sf-social__row:last-child {
+    border-bottom: none;
+  }
+
+  .sf-social__thumb {
+    width: 56px;
+    height: 56px;
+    border-radius: 8px;
+    background: var(--sf-accent-soft);
+    background-size: cover;
+    background-position: center;
+  }
+
+  .sf-social__caption {
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--sf-ink);
+  }
+
+  .sf-social__meta {
+    font-size: 12.5px;
+    color: var(--sf-muted);
+    margin-top: 3px;
+  }
+
+  .sf-social__pill {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .sf-social__pill.sf-pill-planned { background: var(--sf-accent-soft); color: var(--sf-accent); }
+  .sf-social__pill.sf-pill-draft   { background: #f0f0ee; color: var(--sf-muted); }
+  .sf-social__pill.sf-pill-failed  { background: var(--sf-warn-soft); color: var(--sf-warn); }
+  .sf-social__pill.sf-pill-done    { background: #e4eef7; color: #2b5c86; }
+
+  .sf-social__row-action {
+    font-size: 13px;
+    color: var(--sf-accent);
+    text-decoration: none;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-weight: 600;
+  }
+</style>
+
+<div class="sf-social">
+  <div class="sf-social__header">
+    <h2>Réseaux sociaux</h2>
+    <button class="sf-social__btn" type="button" onclick="window.sfNewPost && window.sfNewPost()">Nouveau post</button>
+  </div>
+
+  <!-- Statut de connexion — basculer sf-off / retirer selon l'état réel -->
+  <div class="sf-social__status">
+    <span class="sf-social__status-dot"></span>
+    <div class="sf-social__status-text">
+      <strong>Instagram connecté</strong>
+      @ecosky_paysages — jetons valides jusqu'au 12/11/2026
+    </div>
+    <button class="sf-social__btn sf-secondary" type="button" onclick="window.sfManageConnection && window.sfManageConnection()">Gérer la connexion</button>
+  </div>
+
+  <!-- Liste des posts — données d'exemple -->
+  <div class="sf-social__list">
+    <div class="sf-social__row">
+      <div class="sf-social__thumb" style="background-image:url('chantier-terrasse-01.jpg')"></div>
+      <div>
+        <div class="sf-social__caption">Terrasse en résine EPDM livrée à Auray — finition gris anthracite, 42m².</div>
+        <div class="sf-social__meta">Planifié pour le 14/09 à 18h00</div>
+      </div>
+      <span class="sf-social__pill sf-pill-planned">Planifié</span>
+      <button class="sf-social__row-action" type="button">Modifier</button>
+    </div>
+
+    <div class="sf-social__row">
+      <div class="sf-social__thumb" style="background-image:url('chantier-allee-02.jpg')"></div>
+      <div>
+        <div class="sf-social__caption">Allée de jardin, pose en cours — projet à Vannes.</div>
+        <div class="sf-social__meta">Brouillon — non planifié</div>
+      </div>
+      <span class="sf-social__pill sf-pill-draft">Brouillon</span>
+      <button class="sf-social__row-action" type="button">Modifier</button>
+    </div>
+
+    <div class="sf-social__row">
+      <div class="sf-social__thumb" style="background-image:url('chantier-piscine-03.jpg')"></div>
+      <div>
+        <div class="sf-social__caption">Tour de piscine terminé à Ploemeur.</div>
+        <div class="sf-social__meta">Publié le 08/09 à 09h15</div>
+      </div>
+      <span class="sf-social__pill sf-pill-done">Publié</span>
+      <button class="sf-social__row-action" type="button">Voir</button>
+    </div>
+
+    <div class="sf-social__row">
+      <div class="sf-social__thumb" style="background-image:url('chantier-cloture-04.jpg')"></div>
+      <div>
+        <div class="sf-social__caption">Clôture bois posée à Lorient.</div>
+        <div class="sf-social__meta">Échec — token expiré</div>
+      </div>
+      <span class="sf-social__pill sf-pill-failed">Échec</span>
+      <button class="sf-social__row-action" type="button">Réessayer</button>
+    </div>
+  </div>
+</div>

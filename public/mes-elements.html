@@ -245,6 +245,9 @@
           <textarea id="gammaPrompt" placeholder="Décris l'image que tu veux — ex : pose d'une terrasse en résine EPDM gris anthracite chez un particulier, jardin moderne, journée ensoleillée" style="min-height:56px;"></textarea>
           <button type="button" id="btnGammaGenerer" class="btn-extraire" style="margin-top:8px;">Générer l'image</button>
           <div id="gammaStatus" class="upload-status" style="margin-top:8px;"></div>
+          <button type="button" id="btnGammaCarrousel" class="btn-extraire" style="margin-top:10px; background:#1e6f4c; color:#fff;">🎞️ Générer un carrousel de 4 photos avec l'IA</button>
+          <p class="hint" style="margin:4px 0 0;">Enchaîne 4 générations d'un coup (une scène différente à chaque fois selon ton métier) pour démarrer ton carrousel sans tout taper à la main.</p>
+          <div id="gammaCarrouselStatus" class="upload-status" style="margin-top:6px;"></div>
         </div>
 
         <label>Vidéo de chantier ou avant/après (optionnel)</label>
@@ -1112,6 +1115,136 @@
   // donc Cyrille (ou Claude sur sa demande) le relit et le code à la main
   // dans public/apercu.html avant toute mise en ligne — conforme à la
   // décision du 04/09/2026 de garder le contrôle qualité sur les prix.
+  // Scènes de secours par métier pour le carrousel de photos IA (10/09/2026)
+  // — une phrase = une photo générée via Gamma (api/generer-image-gamma.js,
+  // déjà en place pour le bouton "Générer l'image" ci-dessous). On ne fait
+  // qu'enchaîner plusieurs appels à ce même endpoint avec des scènes
+  // différentes, rien de nouveau côté serveur.
+  const SCENES_CARROUSEL_PAR_METIER = {
+    paysagiste: [
+      "Un jardin résidentiel fraîchement aménagé, massifs et pelouse, journée ensoleillée",
+      "Une haie parfaitement taillée devant une maison moderne",
+      "Une allée de jardin en pas japonais entourée de végétation",
+      "Un aménagement paysager complet avec terrasse en bois et massifs fleuris",
+    ],
+    piscine: [
+      "Une piscine extérieure avec plage en pierre naturelle, eau turquoise, journée ensoleillée",
+      "Un pool house moderne à côté d'une piscine à débordement",
+      "Une piscine familiale entourée d'un jardin paysagé",
+      "Une margelle de piscine en résine claire au bord de l'eau",
+    ],
+    tonte: [
+      "Une pelouse parfaitement tondue avec des bandes régulières, jardin résidentiel",
+      "Un jardin entretenu avec bordures nettes et pelouse dense",
+      "Une tondeuse professionnelle en action sur un grand terrain",
+      "Un jardin particulier fraîchement tondu au printemps",
+    ],
+    terrasse: [
+      "Une terrasse en résine gris anthracite avec mobilier de jardin, journée ensoleillée",
+      "Un escalier de terrasse extérieur en matériaux modernes",
+      "Une terrasse couverte avec pergola donnant sur un jardin",
+      "Une terrasse résidentielle vue du dessus avec salon de jardin",
+    ],
+    paysagiste_concepteur: [
+      "Un jardin contemporain avec plan paysager structuré et éclairage extérieur",
+      "Une allée paysagée avec dallage et massifs floraux",
+      "Un jardin de particulier avec zones distinctes et végétation variée",
+      "Un aménagement extérieur haut de gamme avec terrasse et végétation",
+    ],
+    arboriste: [
+      "Un arboriste en action taillant un grand arbre, équipement de sécurité",
+      "Un arbre majestueux fraîchement élagué dans un parc résidentiel",
+      "Un abattage contrôlé d'arbre en zone résidentielle",
+      "Un jardin après élagage professionnel, bois évacué proprement",
+    ],
+    espaces_verts: [
+      "Un espace vert entretenu avec pelouse tondue et haies taillées",
+      "Un jardin résidentiel bien entretenu au printemps",
+      "Une allée de jardin propre bordée de massifs entretenus",
+      "Un parc ou jardin public soigné",
+    ],
+    resine: [
+      "Une terrasse extérieure recouverte de résine EPDM gris anthracite, surface lisse, journée ensoleillée",
+      "Un tour de piscine en revêtement de sol résine beige",
+      "Une allée en résine décorative devant une maison moderne",
+      "Un sol en résine coulée vue de près, texture soignée",
+    ],
+    autre: [
+      "Un chantier de travaux extérieurs propre et professionnel",
+      "Une réalisation extérieure soignée pour un client particulier",
+      "Une équipe de terrain sur un chantier résidentiel",
+      "Un extérieur de maison rénové avec soin",
+    ],
+  };
+
+  // Un appel = une image (identique au bouton manuel "Générer l'image").
+  async function genererUneImageGamma(prompt) {
+    const startResp = await fetch('/api/generer-image-gamma', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'start', prompt, draftId }),
+    });
+    const startData = await startResp.json();
+    if (!startData.success) throw new Error(startData.error || 'Échec du lancement');
+    const generationId = startData.generationId;
+    const attendre = ms => new Promise(r => setTimeout(r, ms));
+    for (let tentative = 0; tentative < 20; tentative++) {
+      await attendre(3000);
+      const statusResp = await fetch('/api/generer-image-gamma', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'status', generationId, draftId }),
+      });
+      const statusData = await statusResp.json();
+      if (!statusData.success) throw new Error(statusData.error || 'Échec de la vérification');
+      if (statusData.status === 'completed') return statusData.url;
+      if (statusData.status === 'failed') throw new Error(statusData.error || 'La génération a échoué');
+    }
+    throw new Error('La génération prend trop de temps');
+  }
+
+  // Enchaîne plusieurs générations Gamma à la suite pour constituer un
+  // premier carrousel en un clic — utilisée automatiquement par l'assistant
+  // IA ci-dessus quand l'artisan n'a encore AUCUNE vraie photo (jamais pour
+  // remplacer des photos déjà ajoutées à la main), et disponible aussi via
+  // le bouton manuel du bloc Gamma. Chaque photo réussie est ajoutée et
+  // enregistrée immédiatement, sans attendre la fin des autres, pour ne
+  // rien perdre si une génération échoue ou prend trop de temps.
+  async function genererCarrouselPhotosIA(metierSuggere, descriptionLibre, statusEl) {
+    const metierValide = m => Object.prototype.hasOwnProperty.call(SCENES_CARROUSEL_PAR_METIER, m);
+    const metier = metierValide(metierSuggere) ? metierSuggere
+      : (metiersActuels[0] && metierValide(metiersActuels[0])) ? metiersActuels[0]
+      : 'autre';
+    const scenes = SCENES_CARROUSEL_PAR_METIER[metier];
+    const nb = Math.min(4, 10 - photosUrls.length);
+    if (nb <= 0) {
+      if (statusEl) statusEl.textContent = 'Carrousel déjà plein (10 photos maximum).';
+      return;
+    }
+    const contexte = descriptionLibre && descriptionLibre.trim() ? ` — ${descriptionLibre.trim().slice(0, 200)}` : '';
+
+    let reussies = 0;
+    for (let i = 0; i < nb; i++) {
+      if (statusEl) statusEl.textContent = `📷 Génération des photos avec l'IA (Gamma)… (${i + 1}/${nb}, ~30 secondes chacune)`;
+      try {
+        const url = await genererUneImageGamma(scenes[i % scenes.length] + contexte);
+        photosUrls.push(url);
+        reussies++;
+        rafraichirGridPhotos();
+        document.getElementById('statusPhotos').textContent = `${photosUrls.length} photo(s) ajoutée(s)`;
+        document.getElementById('boxPhotos').classList.add('has-file');
+        sauvegarderChampsImmediat({ photos: photosUrls });
+      } catch (e) {
+        // On continue les photos suivantes même si l'une d'elles échoue.
+      }
+    }
+    if (statusEl) {
+      statusEl.textContent = reussies > 0
+        ? `✓ ${reussies} photo(s) générée(s) et ajoutée(s) à ton carrousel`
+        : "La génération de photos n'a pas fonctionné pour le moment (réessaie plus tard, ou ajoute tes propres photos).";
+    }
+  }
+
   const btnAssistantVitrine = document.getElementById('btnAssistantVitrineIA');
   if (btnAssistantVitrine) {
     btnAssistantVitrine.addEventListener('click', async () => {
@@ -1150,6 +1283,12 @@
               <div id="statutEnvoiBrouillon" class="hint" style="margin-top:6px; display:none; color:#1e6f4c; font-weight:700;">✓ Envoyé — ton conseiller va relire et construire ce formulaire, tu seras recontacté.</div>
             `;
           }
+          if (photosUrls.length === 0) {
+            html += `
+              <label style="margin-top:18px;">Photos de ton carrousel</label>
+              <div id="statutCarrouselIA" class="hint" style="color:#4a8a68; font-weight:600;">📷 Tu n'as pas encore de photo — génération automatique de 4 visuels avec l'IA (Gamma) pour démarrer ton carrousel…</div>
+            `;
+          }
           zoneBox.innerHTML = html;
           zoneBox.querySelectorAll('.titre-assistant-ia').forEach(elBtn => {
             elBtn.addEventListener('click', () => {
@@ -1176,6 +1315,9 @@
               const sectionProduits = document.querySelector('[data-section="produits"]');
               if (sectionProduits) sectionProduits.classList.add('open');
             });
+          }
+          if (photosUrls.length === 0) {
+            genererCarrouselPhotosIA(data.metierSuggere, description, document.getElementById('statutCarrouselIA'));
           }
         } else {
           zoneBox.innerHTML = '<div class="hint">' + (data.error || "Génération indisponible pour le moment, réessaie plus tard.") + '</div>';
@@ -1297,6 +1439,26 @@
       statusEl.textContent = 'Image ajoutée au carrousel ✓';
     } catch (err) {
       statusEl.textContent = 'Erreur : ' + err.message;
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  // Génère 4 photos à la suite en un clic (voir genererCarrouselPhotosIA
+  // plus haut) — même endpoint /api/generer-image-gamma que le bouton
+  // "Générer l'image" juste au-dessus, simplement enchaîné 4 fois avec des
+  // scènes différentes selon le métier choisi dans le tableau de bord.
+  document.getElementById('btnGammaCarrousel').addEventListener('click', async () => {
+    const statusEl = document.getElementById('gammaCarrouselStatus');
+    const btn = document.getElementById('btnGammaCarrousel');
+    if (photosUrls.length >= 10) {
+      statusEl.textContent = 'Carrousel déjà plein (10 photos maximum).';
+      return;
+    }
+    btn.disabled = true;
+    const descriptionLibre = document.getElementById('gammaPrompt').value.trim();
+    try {
+      await genererCarrouselPhotosIA(null, descriptionLibre, statusEl);
     } finally {
       btn.disabled = false;
     }

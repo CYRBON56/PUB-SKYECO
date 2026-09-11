@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Réseaux sociaux — Skyeco Pro</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #211a35;
+    background: #f6f5fb;
+  }
+  header {
+    background: #211a35;
+    color: white;
+    padding: 18px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  header .brand { font-weight: 800; font-size: 1.1rem; display: flex; align-items: center; }
+  header a.retour {
+    color: white;
+    text-decoration: none;
+    font-size: 0.85rem;
+    border: 1px solid rgba(255,255,255,0.4);
+    padding: 7px 14px;
+    border-radius: 8px;
+  }
+  .wrap { max-width: 1080px; margin: 40px auto; padding: 0 20px; }
+  .card {
+    background: white;
+    border-radius: 14px;
+    padding: 28px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+  }
+  .card h2 { margin: 0 0 6px; font-size: 1.15rem; }
+  .card p { color: #8a8296; font-size: 0.92rem; margin: 4px 0; }
+  .loading, .error { text-align: center; padding: 60px 20px; color: #8a8296; }
+
+  /* ---- Statut de connexion ---- */
+  .rs-status { display: flex; align-items: center; gap: 18px; }
+  .rs-status-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #7c3aed; flex-shrink: 0;
+  }
+  .rs-status-dot.off { background: #b8551f; }
+  .rs-status-text { flex: 1; }
+  .rs-status-text strong { display: block; color: #211a35; font-size: 0.98rem; margin-bottom: 2px; }
+  .rs-btn {
+    background: #7c3aed; color: white; border: none;
+    padding: 10px 18px; border-radius: 10px;
+    font-size: 0.88rem; font-weight: 700; cursor: pointer;
+  }
+  .rs-btn.secondary {
+    background: transparent; color: #7c3aed; border: 1px solid #ddd6fe;
+  }
+  .rs-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+
+  /* ---- Liste des posts ---- */
+  .rs-list { padding: 0; overflow: hidden; }
+  .rs-row {
+    display: grid;
+    grid-template-columns: 56px 1fr auto auto;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 28px;
+    border-top: 1px solid #ede9fe;
+  }
+  .rs-row:first-child { border-top: none; }
+  .rs-thumb {
+    width: 56px; height: 56px; border-radius: 8px;
+    background: #f5f3ff; background-size: cover; background-position: center;
+  }
+  .rs-caption { font-size: 0.9rem; color: #211a35; line-height: 1.4; }
+  .rs-meta { font-size: 0.78rem; color: #8a8296; margin-top: 3px; }
+  .rs-pill {
+    font-size: 0.75rem; font-weight: 700; padding: 4px 10px;
+    border-radius: 999px; white-space: nowrap;
+  }
+  .rs-pill.planned { background: #f5f3ff; color: #7c3aed; }
+  .rs-pill.draft { background: #f0ece0; color: #8a6d1f; }
+  .rs-pill.failed { background: #fdeaea; color: #991b1b; }
+  .rs-pill.done { background: #e4eef4; color: #2c5f8a; }
+  .rs-action {
+    font-size: 0.82rem; color: #7c3aed; font-weight: 700;
+    background: none; border: none; cursor: pointer;
+  }
+  .rs-empty { padding: 32px 28px; text-align: center; color: #8a8296; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Skyeco Pro</div>
+  <a class="retour" href="/dashboard.html">← Retour au tableau de bord</a>
+</header>
+
+<div class="wrap" id="app">
+  <div class="loading">Chargement…</div>
+</div>
+
+<script>
+  const SUPABASE_URL = "https://heviivnlswohnrzcguxv.supabase.co";
+  const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_un7u9BDV_1IL3EjYTuAoOg_ZUKZ-ZjW";
+
+  const app = document.getElementById("app");
+  const token = sessionStorage.getItem("skyeco_access_token");
+  if (!token) {
+    window.location.href = "/connexion.html";
+  }
+
+  const pillLabels = { planifie: "Planifié", brouillon: "Brouillon", echec: "Échec", publie: "Publié" };
+  const pillClass = { planifie: "planned", brouillon: "draft", echec: "failed", publie: "done" };
+
+  function renderPosts(posts) {
+    if (!posts || posts.length === 0) {
+      return `<div class="rs-empty">Aucun post pour l'instant. Ajoutez un chantier pour générer votre premier post.</div>`;
+    }
+    return posts
+      .map((p) => `
+        <div class="rs-row">
+          <div class="rs-thumb" style="background-image:url('${p.photo_url || ""}')"></div>
+          <div>
+            <div class="rs-caption">${escapeHtml(p.legende)}</div>
+            <div class="rs-meta">${escapeHtml(p.meta)}</div>
+          </div>
+          <span class="rs-pill ${pillClass[p.statut] || "draft"}">${pillLabels[p.statut] || p.statut}</span>
+          <button class="rs-action" type="button" onclick="window.rsEditPost && window.rsEditPost('${p.id}')">${p.statut === "publie" ? "Voir" : p.statut === "echec" ? "Réessayer" : "Modifier"}</button>
+        </div>
+      `)
+      .join("");
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str || "";
+    return div.innerHTML;
+  }
+
+  async function getMyUserId() {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: { apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error("Session invalide, merci de vous reconnecter.");
+    const data = await res.json();
+    return data.id;
+  }
+
+  (async function charger() {
+    try {
+      const entrepriseRes = await fetch(`${SUPABASE_URL}/rest/v1/entreprises?select=*&owner_user_id=eq.${encodeURIComponent(await getMyUserId())}`, {
+        headers: { apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: `Bearer ${token}` },
+      });
+      if (!entrepriseRes.ok) throw new Error("Impossible de charger votre entreprise.");
+      const entreprises = await entrepriseRes.json();
+      const entreprise = entreprises[0];
+      if (!entreprise) throw new Error("Aucune entreprise trouvée pour ce compte.");
+
+      // Connexion réseaux sociaux
+      const connexionRes = await fetch(`${SUPABASE_URL}/rest/v1/artisan_social_connections?select=*&entreprise_id=eq.${encodeURIComponent(entreprise.id)}`, {
+        headers: { apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: `Bearer ${token}` },
+      });
+      const connexions = connexionRes.ok ? await connexionRes.json() : [];
+      const connexion = connexions[0];
+
+      // Posts
+      const postsRes = await fetch(`${SUPABASE_URL}/rest/v1/social_posts?select=*&entreprise_id=eq.${encodeURIComponent(entreprise.id)}&order=created_at.desc`, {
+        headers: { apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: `Bearer ${token}` },
+      });
+      const posts = postsRes.ok ? await postsRes.json() : [];
+
+      app.innerHTML = `
+        <div class="card">
+          <div class="rs-status">
+            <span class="rs-status-dot ${connexion ? "" : "off"}"></span>
+            <div class="rs-status-text">
+              <strong>${connexion ? `Instagram connecté — @${escapeHtml(connexion.ig_username || "")}` : "Aucun compte connecté"}</strong>
+              ${connexion ? `Jetons valides jusqu'au ${new Date(connexion.expires_at).toLocaleDateString("fr-FR")}` : "Connectez votre Instagram Business pour activer la publication automatique."}
+            </div>
+            <button class="rs-btn ${connexion ? "secondary" : ""}" type="button" onclick="window.rsConnectInstagram && window.rsConnectInstagram()">
+              ${connexion ? "Gérer la connexion" : "Connecter Instagram"}
+            </button>
+          </div>
+        </div>
+
+        <div class="card rs-header-row">
+          <h2 style="margin:0;">Vos publications</h2>
+          <button class="rs-btn" type="button" onclick="window.rsNewPost && window.rsNewPost()">Nouveau post</button>
+        </div>
+
+        <div class="card rs-list">
+          ${renderPosts(posts)}
+        </div>
+      `;
+    } catch (err) {
+      app.innerHTML = `<div class="error">${err.message}</div>`;
+    }
+  })();
+</script>
+</body>
+</html>

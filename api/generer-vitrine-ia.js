@@ -24,6 +24,23 @@
 //
 // Variable d'environnement requise : ANTHROPIC_API_KEY (même clé que
 // api/suggerer-titre.js, api/interpreter-chiffrage.js, etc.)
+//
+// --- Historique du format de réponse (important, lire avant de retoucher) ---
+// v1 (10/09) demandait une réponse en JSON strict. Ça a cassé en prod dès le
+// lendemain (11/09) : le champ "formulaireBrouillon" est un long texte
+// multi-lignes de type cahier des charges, et Claude y glisse parfois de
+// VRAIS retours à la ligne, guillemets ou autres caractères non échappés au
+// lieu du "\n"/"\"" attendu par la consigne — hors JSON strict interdit tout
+// caractère de contrôle brut ET toute guillemet non échappée dans une
+// chaîne. Un premier correctif (échappement ciblé des retours à la ligne
+// avant JSON.parse) a réglé UN cas mais le bug est réapparu le jour même
+// avec une autre cause probable (guillemets internes au texte, ex. un
+// artisan qui écrit des mesures ou des mots entre guillemets). Plutôt que
+// d'empiler des correctifs JSON au cas par cas, v2 abandonne complètement le
+// JSON pour "formulaireBrouillon" : la réponse est un texte simple avec des
+// marqueurs de section, parsé par simple découpage de chaîne — AUCUN
+// caractère (guillemet, retour à la ligne, antislash...) ne peut casser ce
+// format, il n'y a rien à échapper.
 
 const METIER_LABELS = {
   paysagiste: 'Paysagiste',
@@ -36,6 +53,19 @@ const METIER_LABELS = {
   resine: 'Revêtement en résine',
   autre: 'Autre',
 };
+
+function instructionsFormatReponse(clesMetiers) {
+  return `Réponds STRICTEMENT dans ce format texte brut, rien avant ni après, aucun markdown (pas de **gras**, pas de listes à puces avec *, pas de bloc \`\`\`) :
+
+TITRE1: premier titre
+TITRE2: deuxième titre
+TITRE3: troisième titre
+TITRE4: quatrième titre
+METIER: une seule clé parmi ${clesMetiers}
+###BROUILLON_DEBUT###
+texte du brouillon ici, sur autant de lignes que nécessaire — guillemets, ponctuation et mise en forme libres, ce n'est pas du JSON
+###BROUILLON_FIN###`;
+}
 
 function construirePrompt(description, metiers, zone) {
   const listeMetiers = Array.isArray(metiers) && metiers.length
@@ -64,57 +94,71 @@ Fais trois choses à partir de cette description :
    - une explication en langage clair de la façon de calculer un prix ou une fourchette de prix à partir des réponses (prix au m², au forfait, par option cumulée, etc.) — reste réaliste et raisonnable si l'artisan n'a donné aucun tarif, en le signalant clairement ("prix à définir par l'artisan pour X") plutôt qu'en inventant des chiffres.
    Si la description ne donne pas assez d'éléments pour un métier donné, base-toi sur les pratiques courantes de ce métier en France, et signale explicitement les hypothèses faites.
 
-Réponds STRICTEMENT en JSON valide, sans aucun texte avant ou après, sous cette forme exacte :
-{
-  "titres": ["titre 1", "titre 2", "titre 3", "titre 4"],
-  "metierSuggere": "cle_metier",
-  "formulaireBrouillon": "texte du brouillon, avec retours à la ligne \\n pour la mise en page"
-}`;
+${instructionsFormatReponse(clesMetiers)}`;
 }
 
-// Corrige un bug réel rencontré en production le 11/09 : malgré la
-// consigne du prompt ("retours à la ligne \\n"), Claude renvoie parfois le
-// texte de "formulaireBrouillon" avec de VRAIS retours à la ligne à
-// l'intérieur de la valeur JSON (naturel vu que c'est un long texte
-// multi-lignes de type cahier des charges) — hors JSON strict n'autorise
-// aucun caractère de contrôle brut (saut de ligne/tabulation) à l'intérieur
-// d'une chaîne, donc JSON.parse() échouait systématiquement dès que le
-// brouillon dépassait une ligne ("Réponse IA illisible" affiché à
-// l'artisan). Cette fonction ré-échappe ces caractères UNIQUEMENT à
-// l'intérieur des chaînes JSON (en suivant l'état guillemets/échappement
-// caractère par caractère), sans toucher au reste de la structure JSON.
-function echapperControlesDansChaines(texteJson) {
-  let resultat = '';
-  let dansChaine = false;
-  let echappementPrecedent = false;
-  for (let i = 0; i < texteJson.length; i++) {
-    const c = texteJson[i];
-    if (!dansChaine) {
-      if (c === '"') dansChaine = true;
-      resultat += c;
-      continue;
-    }
-    if (echappementPrecedent) {
-      resultat += c;
-      echappementPrecedent = false;
-      continue;
-    }
-    if (c === '\\') {
-      resultat += c;
-      echappementPrecedent = true;
-      continue;
-    }
-    if (c === '"') {
-      dansChaine = false;
-      resultat += c;
-      continue;
-    }
-    if (c === '\n') { resultat += '\\n'; continue; }
-    if (c === '\r') { continue; }
-    if (c === '\t') { resultat += '\\t'; continue; }
-    resultat += c;
+function nettoyerTexteIA(texte) {
+  return texte.replace(/\*\*/g, '').replace(/`/g, '').trim();
+}
+
+// Découpe la réponse texte de Claude par marqueurs — voir l'historique en
+// tête de fichier sur pourquoi ce n'est plus du JSON.parse.
+function analyserReponseTexte(texteBrut) {
+  const titres = [];
+  for (let i = 1; i <= 4; i++) {
+    const m = texteBrut.match(new RegExp(`^TITRE${i}\\s*:\\s*(.+)$`, 'mi'));
+    if (m && m[1].trim()) titres.push(nettoyerTexteIA(m[1]));
   }
-  return resultat;
+  if (!titres.length) {
+    throw new Error('Réponse IA illisible : ' + texteBrut.slice(0, 300));
+  }
+
+  const mMetier = texteBrut.match(/^METIER\s*:\s*(\S+)/mi);
+  const clefMetier = mMetier ? mMetier[1].trim().toLowerCase().replace(/[^a-z_]/g, '') : null;
+  const metierSuggere = clefMetier && Object.prototype.hasOwnProperty.call(METIER_LABELS, clefMetier)
+    ? clefMetier
+    : null;
+
+  const mBrouillon = texteBrut.match(/###BROUILLON_DEBUT###([\s\S]*?)###BROUILLON_FIN###/i);
+  const formulaireBrouillon = mBrouillon && mBrouillon[1].trim()
+    ? nettoyerTexteIA(mBrouillon[1]).slice(0, 4000)
+    : null;
+
+  return {
+    titres: titres.slice(0, 4),
+    metierSuggere,
+    metierSuggereLabel: metierSuggere ? METIER_LABELS[metierSuggere] : null,
+    formulaireBrouillon,
+  };
+}
+
+async function appellerClaude(prompt) {
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': process.env.ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1800,
+      messages: [{ role: 'user', content: prompt }],
+    }),
+  });
+
+  if (!resp.ok) {
+    const detail = await resp.text();
+    throw new Error(detail);
+  }
+
+  const data = await resp.json();
+  const texteBrut = (data.content || [])
+    .map(bloc => (bloc.type === 'text' ? bloc.text : ''))
+    .join('')
+    .trim();
+
+  return analyserReponseTexte(texteBrut);
 }
 
 export default async function handler(req, res) {
@@ -132,61 +176,14 @@ export default async function handler(req, res) {
 
   try {
     const prompt = construirePrompt(description.trim(), metiers, zone);
-
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1800,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-    });
-
-    if (!resp.ok) {
-      const detail = await resp.text();
-      throw new Error(detail);
-    }
-
-    const data = await resp.json();
-    const texteBrut = (data.content || [])
-      .map(bloc => (bloc.type === 'text' ? bloc.text : ''))
-      .join('')
-      .trim();
-
-    let resultat;
-    try {
-      const nettoye = texteBrut.replace(/```json|```/g, '').trim();
-      resultat = JSON.parse(echapperControlesDansChaines(nettoye));
-    } catch (erreurParse) {
-      throw new Error('Réponse IA illisible : ' + texteBrut.slice(0, 300));
-    }
-
-    const titres = Array.isArray(resultat.titres)
-      ? resultat.titres.filter(t => typeof t === 'string' && t.trim()).slice(0, 4)
-      : [];
-    if (!titres.length) {
-      throw new Error('Aucun titre généré.');
-    }
-
-    const metierSuggere = Object.prototype.hasOwnProperty.call(METIER_LABELS, resultat.metierSuggere)
-      ? resultat.metierSuggere
-      : null;
-
-    const formulaireBrouillon = typeof resultat.formulaireBrouillon === 'string' && resultat.formulaireBrouillon.trim()
-      ? resultat.formulaireBrouillon.trim().slice(0, 4000)
-      : null;
+    const resultat = await appellerClaude(prompt);
 
     return res.status(200).json({
       success: true,
-      titres,
-      metierSuggere,
-      metierSuggereLabel: metierSuggere ? METIER_LABELS[metierSuggere] : null,
-      formulaireBrouillon,
+      titres: resultat.titres,
+      metierSuggere: resultat.metierSuggere,
+      metierSuggereLabel: resultat.metierSuggereLabel,
+      formulaireBrouillon: resultat.formulaireBrouillon,
     });
   } catch (err) {
     console.error('Erreur generer-vitrine-ia :', err);

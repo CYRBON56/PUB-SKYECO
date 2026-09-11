@@ -227,6 +227,24 @@ function contexteCommun(metiers, zone) {
   return { metierTexte, zoneTexte, clesMetiers: Object.keys(METIER_LABELS).join(', ') };
 }
 
+// Format de réponse en texte à marqueurs, pas en JSON — voir l'historique
+// détaillé en tête de api/generer-vitrine-ia.js (bug réel du 11/09 : un long
+// texte multi-lignes plein de guillemets/ponctuation libre est fondamentalement
+// mal adapté à une valeur de chaîne JSON stricte ; un texte à marqueurs n'a
+// rien à échapper, donc rien à casser).
+function instructionsFormatReponse(clesMetiers) {
+  return `Réponds STRICTEMENT dans ce format texte brut, rien avant ni après, aucun markdown (pas de **gras**, pas de listes à puces avec *, pas de bloc \`\`\`) :
+
+TITRE1: premier titre
+TITRE2: deuxième titre
+TITRE3: troisième titre
+TITRE4: quatrième titre
+METIER: une seule clé parmi ${clesMetiers}
+###BROUILLON_DEBUT###
+texte du brouillon ici, sur autant de lignes que nécessaire — guillemets, ponctuation et mise en forme libres, ce n'est pas du JSON
+###BROUILLON_FIN###`;
+}
+
 const TACHES_ET_FORMAT = (clesMetiers) => `Fais trois choses :
 
 1. Propose 4 titres d'accroche courts et percutants (entre 4 et 9 mots chacun), sur-mesure pour CET artisan précis. Donne confiance, donne envie de demander un devis — jamais de formules génériques creuses ("Votre satisfaction, notre priorité").
@@ -238,12 +256,7 @@ const TACHES_ET_FORMAT = (clesMetiers) => `Fais trois choses :
    - une explication en langage clair de la façon de calculer un prix ou une fourchette de prix à partir des réponses. Reste réaliste si aucun tarif n'est donné, en le signalant clairement ("prix à définir par l'artisan pour X") plutôt qu'en inventant des chiffres.
    Si les informations disponibles ne suffisent pas pour un métier donné, base-toi sur les pratiques courantes de ce métier en France, et signale explicitement les hypothèses faites.
 
-Réponds STRICTEMENT en JSON valide, sans aucun texte avant ou après, sous cette forme exacte :
-{
-  "titres": ["titre 1", "titre 2", "titre 3", "titre 4"],
-  "metierSuggere": "cle_metier",
-  "formulaireBrouillon": "texte du brouillon, avec retours à la ligne \\n pour la mise en page"
-}`;
+${instructionsFormatReponse(clesMetiers)}`;
 
 function construirePromptProprSite(texteExtrait, metiers, zone) {
   const { metierTexte, zoneTexte, clesMetiers } = contexteCommun(metiers, zone);
@@ -279,44 +292,40 @@ IMPORTANT : tu n'as reçu que la STRUCTURE de ce site inspirant (l'ordre de ses 
 ${TACHES_ET_FORMAT(clesMetiers)}`;
 }
 
-// Identique à api/generer-vitrine-ia.js : corrige un bug réel rencontré en
-// production le 11/09 où Claude renvoie parfois "formulaireBrouillon" avec
-// de VRAIS retours à la ligne à l'intérieur de la valeur JSON au lieu de
-// "\n" échappé, ce qui casse JSON.parse() (strict JSON n'autorise aucun
-// caractère de contrôle brut dans une chaîne). Ré-échappe ces caractères
-// UNIQUEMENT à l'intérieur des chaînes JSON, sans toucher au reste.
-function echapperControlesDansChaines(texteJson) {
-  let resultat = '';
-  let dansChaine = false;
-  let echappementPrecedent = false;
-  for (let i = 0; i < texteJson.length; i++) {
-    const c = texteJson[i];
-    if (!dansChaine) {
-      if (c === '"') dansChaine = true;
-      resultat += c;
-      continue;
-    }
-    if (echappementPrecedent) {
-      resultat += c;
-      echappementPrecedent = false;
-      continue;
-    }
-    if (c === '\\') {
-      resultat += c;
-      echappementPrecedent = true;
-      continue;
-    }
-    if (c === '"') {
-      dansChaine = false;
-      resultat += c;
-      continue;
-    }
-    if (c === '\n') { resultat += '\\n'; continue; }
-    if (c === '\r') { continue; }
-    if (c === '\t') { resultat += '\\t'; continue; }
-    resultat += c;
+function nettoyerTexteIA(texte) {
+  return texte.replace(/\*\*/g, '').replace(/`/g, '').trim();
+}
+
+// Identique à api/generer-vitrine-ia.js : découpe la réponse texte à
+// marqueurs par simple recherche de motifs, sans jamais passer par
+// JSON.parse — voir l'historique en tête de generer-vitrine-ia.js.
+function analyserReponseTexte(texteBrut) {
+  const titres = [];
+  for (let i = 1; i <= 4; i++) {
+    const m = texteBrut.match(new RegExp(`^TITRE${i}\\s*:\\s*(.+)$`, 'mi'));
+    if (m && m[1].trim()) titres.push(nettoyerTexteIA(m[1]));
   }
-  return resultat;
+  if (!titres.length) {
+    throw new Error('Réponse IA illisible : ' + texteBrut.slice(0, 300));
+  }
+
+  const mMetier = texteBrut.match(/^METIER\s*:\s*(\S+)/mi);
+  const clefMetier = mMetier ? mMetier[1].trim().toLowerCase().replace(/[^a-z_]/g, '') : null;
+  const metierSuggere = clefMetier && Object.prototype.hasOwnProperty.call(METIER_LABELS, clefMetier)
+    ? clefMetier
+    : null;
+
+  const mBrouillon = texteBrut.match(/###BROUILLON_DEBUT###([\s\S]*?)###BROUILLON_FIN###/i);
+  const formulaireBrouillon = mBrouillon && mBrouillon[1].trim()
+    ? nettoyerTexteIA(mBrouillon[1]).slice(0, 4000)
+    : null;
+
+  return {
+    titres: titres.slice(0, 4),
+    metierSuggere,
+    metierSuggereLabel: metierSuggere ? METIER_LABELS[metierSuggere] : null,
+    formulaireBrouillon,
+  };
 }
 
 async function appellerClaude(prompt) {
@@ -345,35 +354,7 @@ async function appellerClaude(prompt) {
     .join('')
     .trim();
 
-  let resultat;
-  try {
-    const nettoye = texteBrut.replace(/```json|```/g, '').trim();
-    resultat = JSON.parse(echapperControlesDansChaines(nettoye));
-  } catch (erreurParse) {
-    throw new Error('Réponse IA illisible : ' + texteBrut.slice(0, 300));
-  }
-
-  const titres = Array.isArray(resultat.titres)
-    ? resultat.titres.filter(t => typeof t === 'string' && t.trim()).slice(0, 4)
-    : [];
-  if (!titres.length) {
-    throw new Error('Aucun titre généré.');
-  }
-
-  const metierSuggere = Object.prototype.hasOwnProperty.call(METIER_LABELS, resultat.metierSuggere)
-    ? resultat.metierSuggere
-    : null;
-
-  const formulaireBrouillon = typeof resultat.formulaireBrouillon === 'string' && resultat.formulaireBrouillon.trim()
-    ? resultat.formulaireBrouillon.trim().slice(0, 4000)
-    : null;
-
-  return {
-    titres,
-    metierSuggere,
-    metierSuggereLabel: metierSuggere ? METIER_LABELS[metierSuggere] : null,
-    formulaireBrouillon,
-  };
+  return analyserReponseTexte(texteBrut);
 }
 
 // ---------------------------------------------------------------------

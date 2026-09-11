@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mon tableau de bord — Skyeco Pro</title>
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#1e6f4c">
+<meta name="theme-color" content="#7c3aed">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -14,13 +14,41 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f5f8f6; color:#14312a; padding:32px 24px 60px; position:relative; overflow-x:hidden; }
+  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f6f5fb; color:#211a35; padding:28px 24px 60px; position:relative; overflow-x:hidden; }
   .leaf-bg { position:fixed; z-index:0; pointer-events:none; }
   .leaf-bg svg { display:block; filter:blur(0.5px); }
   .wrap { position:relative; z-index:1; max-width:980px; margin:0 auto; }
+
+  /* Refonte 11/09 : mise en page à deux colonnes (sidebar de navigation +
+     contenu), demandée par Cyrille pour se rapprocher d'un dashboard marketing
+     moderne — voir la référence visuelle fournie. Les ids/classes utilisés par
+     le JS (panelTabs, panel-tab, panelAds/panelClients/...) sont conservés à
+     l'identique ; seule leur disposition/CSS change. */
+  .dash-shell { max-width:1240px; display:flex; align-items:flex-start; gap:24px; }
+  .dash-sidebar {
+    flex:0 0 240px; position:sticky; top:24px; background:#fff; border-radius:20px;
+    padding:20px 14px; box-shadow:0 8px 26px rgba(76,29,149,0.09); display:flex; flex-direction:column; gap:6px;
+  }
+  .sidebar-brand {
+    display:flex; align-items:center; gap:10px; padding:6px 10px 18px; margin-bottom:8px; border-bottom:1.5px solid #f0edf9;
+  }
+  .sidebar-brand-logo {
+    width:38px; height:38px; border-radius:11px; flex-shrink:0;
+    background:linear-gradient(135deg, #a78bfa, #ec4899); display:flex; align-items:center; justify-content:center;
+    font-size:1.15rem;
+  }
+  .sidebar-brand-texte { font-size:0.98rem; font-weight:800; color:#211a35; line-height:1.2; }
+  .sidebar-brand-sous { font-size:0.68rem; color:#8a8296; font-weight:600; }
+  .dash-main { flex:1; min-width:0; }
+  @media (max-width:860px) {
+    .dash-shell { flex-direction:column; }
+    .dash-sidebar { position:static; width:100%; flex-direction:row; overflow-x:auto; }
+    .sidebar-brand { display:none; }
+  }
   .header {
     display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:16px;
-    background:#fff; border-radius:18px; padding:20px 26px; box-shadow:0 8px 26px rgba(20,49,42,0.09);
+    background:linear-gradient(120deg, #ffffff 55%, #f5f3ff); border-radius:18px; padding:20px 26px;
+    box-shadow:0 8px 26px rgba(76,29,149,0.08);
   }
   .header-titre { display:flex; align-items:center; gap:16px; }
   .logo-entreprise {
@@ -29,13 +57,13 @@
   }
   h1 { font-size:1.6rem; font-weight:800; letter-spacing:-0.01em; }
   .btn-fonds {
-    display:inline-flex; align-items:center; gap:8px; background:linear-gradient(120deg, #f0a878, #e8622c 60%, #c74f20);
+    display:inline-flex; align-items:center; gap:8px; background:linear-gradient(120deg, #f9a8d4, #ec4899 60%, #be185d);
     color:#fff; text-decoration:none; padding:12px 22px; border-radius:11px; font-weight:700; font-size:0.92rem;
     box-shadow:0 6px 16px rgba(199,79,32,0.28); transition:transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
   }
   .btn-fonds:hover { transform:translateY(-1px); filter:brightness(1.05); box-shadow:0 9px 20px rgba(199,79,32,0.34); }
   .btn-elements {
-    display:inline-flex; align-items:center; gap:8px; background:#1e6f4c; color:#fff; text-decoration:none;
+    display:inline-flex; align-items:center; gap:8px; background:#7c3aed; color:#fff; text-decoration:none;
     padding:12px 22px; border-radius:11px; font-weight:700; font-size:0.92rem;
     box-shadow:0 6px 16px rgba(30,111,76,0.24); transition:transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
   }
@@ -43,21 +71,23 @@
 
   .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:28px; }
   .stat-card {
-    background:#fff; border-radius:16px; padding:22px 20px; box-shadow:0 6px 22px rgba(20,49,42,0.08);
+    background:#fff; border-radius:16px; padding:20px 20px 20px 64px; box-shadow:0 6px 22px rgba(76,29,149,0.07);
     position:relative; overflow:hidden; transition:transform 0.15s ease, box-shadow 0.15s ease;
   }
   .stat-card::before {
-    content:''; position:absolute; top:0; left:0; right:0; height:4px;
-    background:linear-gradient(90deg, #f0a878, #e8622c 55%, #c74f20);
+    content:'📈'; position:absolute; top:20px; left:18px; width:34px; height:34px; border-radius:10px;
+    background:linear-gradient(135deg, #ede9fe, #fce7f3); display:flex; align-items:center; justify-content:center;
+    font-size:1rem; line-height:1;
   }
-  .stat-card:hover { transform:translateY(-3px); box-shadow:0 12px 28px rgba(20,49,42,0.13); }
+  .stat-card:nth-child(2)::before { content:'🖱️'; }
+  .stat-card:hover { transform:translateY(-3px); box-shadow:0 12px 28px rgba(76,29,149,0.14); }
   .stat-value { font-size:2.05rem; font-weight:800; }
   .stat-label { font-size:0.78rem; color:#8a9891; margin-top:2px; }
 
-  .solde-box { background:#fff; border:2px solid #1e6f4c; border-radius:14px; padding:22px; margin-bottom:28px; }
+  .solde-box { background:#fff; border:2px solid #7c3aed; border-radius:14px; padding:22px; margin-bottom:28px; }
   .btn-pause-diffusion {
     display:inline-flex; align-items:center; gap:10px;
-    background:linear-gradient(120deg, #f0a878, #e8622c 55%, #c74f20);
+    background:linear-gradient(120deg, #f9a8d4, #ec4899 55%, #be185d);
     color:#fff; border:none; border-radius:14px;
     padding:17px 32px; font-size:1.05rem; font-weight:800; letter-spacing:0.01em;
     cursor:pointer; margin-top:16px;
@@ -67,7 +97,7 @@
   .btn-pause-diffusion:hover { transform:translateY(-2px); filter:brightness(1.05); box-shadow:0 14px 30px rgba(199,79,32,0.4); }
   .btn-pause-diffusion:active { transform:translateY(0); }
   .btn-pause-diffusion.actif-pause {
-    background:linear-gradient(120deg, #4a9d78, #1e6f4c 60%, #14513a);
+    background:linear-gradient(120deg, #a78bfa, #7c3aed 60%, #5b21b6);
     box-shadow:0 10px 24px rgba(30,111,76,0.32);
   }
   .btn-pause-diffusion.actif-pause:hover { box-shadow:0 14px 30px rgba(30,111,76,0.4); }
@@ -75,59 +105,68 @@
   .pause-note { font-size:0.76rem; color:#8a9891; margin-top:6px; }
   .solde-box h3 { font-size:0.95rem; margin-bottom:14px; }
   .solde-bar-track { background:#eef1f0; border-radius:8px; height:12px; overflow:hidden; margin-bottom:10px; }
-  .solde-bar-fill { background:#e8622c; height:100%; transition:width 0.4s ease; }
+  .solde-bar-fill { background:#ec4899; height:100%; transition:width 0.4s ease; }
   .solde-bar-fill.alerte { background:#c0392b; }
   .solde-stats { display:flex; justify-content:space-between; font-size:0.85rem; color:#5b6b64; margin-bottom:14px; }
-  .solde-stats strong { color:#14312a; font-size:1.05rem; }
+  .solde-stats strong { color:#211a35; font-size:1.05rem; }
   .solde-detail { font-size:0.76rem; color:#8a9891; line-height:1.6; }
 
   .liste-panel { background:#fff; border-radius:16px; padding:24px; box-shadow:0 6px 22px rgba(20,49,42,0.08); }
 
-  .panel-tabs { display:flex; gap:14px; margin-bottom:24px; flex-wrap:wrap; }
+  /* panel-tabs joue maintenant le rôle de nav verticale dans .dash-sidebar
+     (voir .dash-sidebar plus haut) — au-delà de 860px de large. En dessous,
+     la media query de .dash-sidebar la repasse en ligne horizontale. */
+  .panel-tabs { display:flex; flex-direction:column; gap:6px; }
   .panel-tab {
-    flex:1; min-width:220px; display:flex; align-items:center; gap:14px; text-align:left;
-    background:#fff; border:2px solid #e6e2d6; border-radius:16px; padding:18px 20px;
-    cursor:pointer; box-shadow:0 4px 16px rgba(20,49,42,0.06); transition:border-color 0.2s, transform 0.15s;
+    display:flex; align-items:center; gap:12px; text-align:left; width:100%;
+    background:transparent; border:none; border-radius:12px; padding:12px 12px;
+    cursor:pointer; transition:background 0.15s, transform 0.1s;
   }
-  .panel-tab:hover { transform:translateY(-1px); box-shadow:0 8px 20px rgba(20,49,42,0.09); }
-  .panel-tab.active { border-color:#1e6f4c; background:#f2f8f5; box-shadow:0 8px 22px rgba(30,111,76,0.14); }
+  .panel-tab:hover { background:#f7f5fb; }
+  .panel-tab.active { background:linear-gradient(120deg, #7c3aed, #ec4899); box-shadow:0 8px 20px rgba(124,58,237,0.28); }
   .panel-tab-icone {
-    font-size:1.7rem; flex-shrink:0; width:44px; height:44px; border-radius:12px; background:#f2f4f1;
+    font-size:1.15rem; flex-shrink:0; width:34px; height:34px; border-radius:10px; background:#f2f4f1;
     display:flex; align-items:center; justify-content:center;
   }
-  .panel-tab.active .panel-tab-icone { background:#e3f0e8; }
-  .panel-tab-texte { font-size:1rem; font-weight:800; color:#14312a; display:flex; flex-direction:column; gap:2px; }
-  .panel-tab-sous { font-size:0.76rem; font-weight:400; color:#5b6b64; }
+  .panel-tab.active .panel-tab-icone { background:rgba(255,255,255,0.22); }
+  .panel-tab-texte { font-size:0.88rem; font-weight:800; color:#211a35; display:flex; flex-direction:column; gap:1px; }
+  .panel-tab.active .panel-tab-texte { color:#fff; }
+  .panel-tab-sous { font-size:0.68rem; font-weight:400; color:#8a8296; }
+  .panel-tab.active .panel-tab-sous { color:rgba(255,255,255,0.85); }
+  @media (max-width:860px) {
+    .panel-tabs { flex-direction:row; flex-wrap:wrap; gap:8px; }
+    .panel-tab { flex:1; min-width:150px; }
+  }
 
   .zones-liste { display:flex; flex-direction:column; gap:8px; }
   .zone-ligne { display:flex; align-items:center; gap:12px; }
   .zone-ligne .zone-nom { flex:0 0 180px; font-size:0.85rem; color:#3a4a43; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .zone-ligne .zone-barre-track { flex:1; background:#eef1f0; border-radius:6px; height:10px; overflow:hidden; }
-  .zone-ligne .zone-barre-fill { background:#1e6f4c; height:100%; border-radius:6px; }
-  .zone-ligne .zone-clics { flex:0 0 70px; text-align:right; font-size:0.85rem; font-weight:700; color:#14312a; }
+  .zone-ligne .zone-barre-fill { background:#7c3aed; height:100%; border-radius:6px; }
+  .zone-ligne .zone-clics { flex:0 0 70px; text-align:right; font-size:0.85rem; font-weight:700; color:#211a35; }
 
   .devis-badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:0.72rem; font-weight:700; white-space:nowrap; }
   .devis-badge.aucun { background:#eef1f0; color:#8a9891; }
   .devis-badge.envoye { background:#e6f0ff; color:#2f5fa8; }
-  .devis-badge.relance { background:#fdf1ea; color:#b8571f; }
-  .devis-badge.signe { background:#e3f5ea; color:#1e6f4c; }
+  .devis-badge.relance { background:#fdf2f8; color:#b8571f; }
+  .devis-badge.signe { background:#e3f5ea; color:#7c3aed; }
   .devis-actions { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
   .btn-devis { border:none; border-radius:8px; padding:6px 10px; font-size:0.74rem; font-weight:700; cursor:pointer; white-space:nowrap; }
-  .btn-devis.envoyer { background:#1e6f4c; color:#fff; }
-  .btn-devis.relancer { background:#e8622c; color:#fff; }
+  .btn-devis.envoyer { background:#7c3aed; color:#fff; }
+  .btn-devis.relancer { background:#ec4899; color:#fff; }
   .btn-devis.voir { background:#eef1f0; color:#3a4a43; text-decoration:none; }
   .btn-devis:disabled { opacity:0.6; cursor:wait; }
 
-  .estim-box { background:#fff; border:2px solid #e8622c; border-radius:14px; padding:22px; margin-bottom:28px; }
+  .estim-box { background:#fff; border:2px solid #ec4899; border-radius:14px; padding:22px; margin-bottom:28px; }
   .estim-box h3 { font-size:0.95rem; margin-bottom:14px; }
   .estim-row { display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
   .estim-row label { font-size:0.85rem; font-weight:700; }
   .estim-row input {
     width:110px; font-size:1.15rem; font-weight:800; padding:8px 12px; border:2px solid #d7dedb;
-    border-radius:10px; color:#14312a;
+    border-radius:10px; color:#211a35;
   }
   .estim-resultat { display:flex; gap:28px; }
-  .estim-resultat .chiffre { font-size:1.5rem; font-weight:800; color:#e8622c; }
+  .estim-resultat .chiffre { font-size:1.5rem; font-weight:800; color:#ec4899; }
   .estim-resultat .label { font-size:0.76rem; color:#5b6b64; }
   .estim-note { font-size:0.74rem; color:#8a9891; margin-top:10px; }
 
@@ -141,22 +180,22 @@
   .motscles-hint { font-size:0.8rem; color:#5b6b64; margin-bottom:12px; line-height:1.5; }
   .motscles-textarea {
     width:100%; min-height:70px; padding:11px 12px; border:1.5px solid #d7dedb; border-radius:9px;
-    font-size:0.88rem; font-family:inherit; resize:vertical; color:#14312a;
+    font-size:0.88rem; font-family:inherit; resize:vertical; color:#211a35;
   }
-  .motscles-textarea:focus { outline:none; border-color:#1e6f4c; }
+  .motscles-textarea:focus { outline:none; border-color:#7c3aed; }
   .btn-suggerer {
-    margin-top:10px; background:#1e6f4c; color:#fff; border:none; border-radius:9px;
+    margin-top:10px; background:#7c3aed; color:#fff; border:none; border-radius:9px;
     padding:10px 16px; font-size:0.85rem; font-weight:700; cursor:pointer;
   }
   .btn-suggerer:hover:not(:disabled) { filter:brightness(1.08); }
   .btn-suggerer:disabled { opacity:0.6; cursor:wait; }
   .motscles-liste { margin-top:14px; display:flex; flex-direction:column; gap:8px; }
   .motscle-item { display:flex; align-items:center; gap:8px; font-size:0.86rem; }
-  .motscle-item input[type="checkbox"] { width:16px; height:16px; accent-color:#1e6f4c; flex-shrink:0; }
+  .motscle-item input[type="checkbox"] { width:16px; height:16px; accent-color:#7c3aed; flex-shrink:0; }
   .motscle-texte { flex:1; }
   .motscle-potentiel-badge {
     font-size:0.7rem; font-weight:700; white-space:nowrap; border-radius:6px; padding:2px 8px;
-    background:#eaf5ef; color:#1e6f4c; flex-shrink:0;
+    background:#eaf5ef; color:#7c3aed; flex-shrink:0;
   }
   .motscle-potentiel-badge.faible { background:#f2f4f1; color:#8a9891; }
   .motscles-ajout { display:flex; gap:8px; margin-top:12px; }
@@ -164,15 +203,15 @@
     flex:1; padding:9px 11px; border:1.5px solid #d7dedb; border-radius:8px; font-size:0.85rem; font-family:inherit;
   }
   .motscles-ajout button {
-    background:#f2f4f1; color:#14312a; border:none; border-radius:8px; padding:9px 14px;
+    background:#f2f4f1; color:#211a35; border:none; border-radius:8px; padding:9px 14px;
     font-size:0.82rem; font-weight:700; cursor:pointer; white-space:nowrap;
   }
   .motscles-note { font-size:0.76rem; color:#8a9891; margin-top:10px; }
   .motscles-potentiel {
-    margin-top:14px; background:#fdf3ee; border:1.5px solid #f0c4ad; border-radius:10px;
+    margin-top:14px; background:#fdf2f8; border:1.5px solid #fbcfe8; border-radius:10px;
     padding:14px 16px;
   }
-  .motscles-potentiel .chiffre { font-size:1.4rem; font-weight:800; color:#e8622c; }
+  .motscles-potentiel .chiffre { font-size:1.4rem; font-weight:800; color:#ec4899; }
   .motscles-potentiel .detail { font-size:0.82rem; color:#5b6b64; margin-top:4px; line-height:1.5; }
 
   .annonce-hint { font-size:0.8rem; color:#5b6b64; margin-bottom:16px; line-height:1.5; }
@@ -185,102 +224,102 @@
   .annonce-preview .titre-annonce { font-size:19px; color:#1a0dab; font-weight:400; margin-top:3px; line-height:1.3; }
   .annonce-preview .desc-annonce { font-size:13.5px; color:#4d5156; margin-top:4px; line-height:1.5; }
   .annonce-champ { margin-bottom:12px; }
-  .annonce-champ label { display:flex; justify-content:space-between; font-size:0.78rem; font-weight:700; margin-bottom:5px; color:#14312a; }
+  .annonce-champ label { display:flex; justify-content:space-between; font-size:0.78rem; font-weight:700; margin-bottom:5px; color:#211a35; }
   .annonce-champ label .compteur { font-weight:400; color:#8a9891; }
   .annonce-champ input, .annonce-champ textarea {
     width:100%; padding:9px 11px; border:1.5px solid #d7dedb; border-radius:8px; font-size:0.85rem;
-    font-family:inherit; color:#14312a;
+    font-family:inherit; color:#211a35;
   }
-  .annonce-champ input:focus, .annonce-champ textarea:focus { outline:none; border-color:#1e6f4c; }
+  .annonce-champ input:focus, .annonce-champ textarea:focus { outline:none; border-color:#7c3aed; }
   .annonce-champ textarea { resize:vertical; min-height:50px; }
   .annonce-champ input.trop-long, .annonce-champ textarea.trop-long { border-color:#c0392b; }
   .annonce-sauvegarde-note { font-size:0.74rem; color:#8a9891; margin-top:4px; min-height:1em; }
 
   .slider-row { display:flex; align-items:center; gap:14px; margin-bottom:14px; }
-  .slider-row input[type="range"] { flex:1; accent-color:#1e6f4c; height:6px; }
-  .slider-row .slider-value { font-weight:800; font-size:1.05rem; min-width:78px; text-align:right; color:#14312a; }
+  .slider-row input[type="range"] { flex:1; accent-color:#7c3aed; height:6px; }
+  .slider-row .slider-value { font-weight:800; font-size:1.05rem; min-width:78px; text-align:right; color:#211a35; }
 
   .kw-table { width:100%; border-collapse:collapse; font-size:0.82rem; }
   .kw-table th { text-align:left; padding:8px 6px; color:#8a9891; font-weight:700; font-size:0.68rem; text-transform:uppercase; border-bottom:1.5px solid #eef1f0; }
   .kw-table td { padding:9px 6px; border-bottom:1px solid #eef1f0; vertical-align:middle; }
   .kw-table tr:last-child td { border-bottom:none; }
   .kw-pertinence { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }
-  .kw-pertinence.haute { background:#1e6f4c; }
+  .kw-pertinence.haute { background:#7c3aed; }
   .kw-pertinence.moyenne { background:#e8b93c; }
   .kw-pertinence.faible { background:#c0392b; }
-  .btn-exclure-kw { background:#fdf1ea; color:#c0392b; border:none; border-radius:8px; padding:5px 10px; font-size:0.72rem; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .btn-exclure-kw { background:#fdf2f8; color:#c0392b; border:none; border-radius:8px; padding:5px 10px; font-size:0.72rem; font-weight:700; cursor:pointer; white-space:nowrap; }
   .btn-exclure-kw:hover { background:#fbe0d5; }
   .kw-negatif { color:#c0392b; font-size:0.7rem; font-weight:700; }
 
   .ajout-kw-row { display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
   .ajout-kw-row input[type="text"] { flex:1; min-width:160px; padding:9px 12px; border:1.5px solid #d7dedb; border-radius:9px; font-size:0.85rem; }
   .ajout-kw-row select { padding:9px 10px; border:1.5px solid #d7dedb; border-radius:9px; font-size:0.82rem; background:#fff; }
-  .ajout-kw-row button { background:#1e6f4c; color:#fff; border:none; border-radius:9px; padding:9px 16px; font-weight:700; font-size:0.82rem; cursor:pointer; white-space:nowrap; }
+  .ajout-kw-row button { background:#7c3aed; color:#fff; border:none; border-radius:9px; padding:9px 16px; font-weight:700; font-size:0.82rem; cursor:pointer; white-space:nowrap; }
   .ajout-kw-row button:disabled { opacity:0.5; cursor:not-allowed; }
 
   .heures-chart { display:flex; align-items:flex-end; gap:3px; height:120px; margin-bottom:6px; }
   .heure-barre-wrap { flex:1; display:flex; flex-direction:column; justify-content:flex-end; height:100%; }
   .heure-barre { width:100%; background:#cfe3d7; border-radius:3px 3px 0 0; min-height:2px; transition:background 0.15s; }
-  .heure-barre.pointe { background:#e8622c; }
+  .heure-barre.pointe { background:#ec4899; }
   .heures-labels { display:flex; gap:3px; }
   .heures-labels span { flex:1; text-align:center; font-size:0.62rem; color:#8a9891; }
   .heures-note { font-size:0.8rem; color:#5b6b64; margin-top:12px; }
-  .heures-note strong { color:#e8622c; }
+  .heures-note strong { color:#ec4899; }
 
   .zone-affichage { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; }
   .zone-affichage span { font-weight:700; font-size:0.98rem; }
-  .btn-modifier-zone { background:#f2f4f1; color:#14312a; border:none; border-radius:8px; padding:8px 14px; font-size:0.82rem; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .btn-modifier-zone { background:#f2f4f1; color:#211a35; border:none; border-radius:8px; padding:8px 14px; font-size:0.82rem; font-weight:700; cursor:pointer; white-space:nowrap; }
   .btn-modifier-zone:hover { background:#e6ebe8; }
   .zone-edition { display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
   .zone-edition input { flex:1; min-width:220px; padding:10px 12px; border:1.5px solid #d7dedb; border-radius:9px; font-size:0.9rem; font-family:inherit; }
   .zone-edition button { border:none; border-radius:9px; padding:10px 16px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap; }
-  #btnEnregistrerZone { background:#1e6f4c; color:#fff; }
-  .btn-annuler-zone { background:#f2f4f1; color:#14312a; }
+  #btnEnregistrerZone { background:#7c3aed; color:#fff; }
+  .btn-annuler-zone { background:#f2f4f1; color:#211a35; }
 
-  .coaching-panel { background:#f6faf7; border:1.5px solid #d7e8dd; border-radius:14px; padding:18px 20px; margin-top:20px !important; }
+  .coaching-panel { background:#f5f3ff; border:1.5px solid #ddd6fe; border-radius:14px; padding:18px 20px; margin-top:20px !important; }
   .coaching-panel-header { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
   .coaching-panel-header h3 { margin-bottom:0; flex:1; }
   .coaching-logo { flex-shrink:0; border-radius:11px; }
   .btn-toggle-coach { flex-shrink:0; background:#fff; color:#5b6b64; border:1.5px solid #d8e3de; border-radius:8px; padding:8px 14px; font-size:0.78rem; font-weight:700; cursor:pointer; white-space:nowrap; }
   .btn-toggle-coach:hover { background:#f2f4f1; }
-  .btn-toggle-coach.coach-est-en-pause { background:#1e6f4c; color:#fff; border-color:#1e6f4c; }
+  .btn-toggle-coach.coach-est-en-pause { background:#7c3aed; color:#fff; border-color:#7c3aed; }
   .coaching-ia-pause { font-size:0.85rem; line-height:1.5; color:#5b6b64; background:#fff; border:1.5px dashed #d8e3de; border-radius:10px; padding:14px 16px; }
   .coaching-liste { list-style:none; display:flex; flex-direction:column; gap:10px; }
   .coaching-liste li { font-size:0.85rem; line-height:1.5; color:#294038; padding-left:24px; position:relative; }
-  .coaching-liste li::before { content:'✓'; position:absolute; left:0; top:0; color:#1e6f4c; font-weight:800; }
-  .coaching-liste li strong { color:#14312a; }
-  .coaching-liste li.alerte::before { content:'⚠'; color:#e8622c; }
+  .coaching-liste li::before { content:'✓'; position:absolute; left:0; top:0; color:#7c3aed; font-weight:800; }
+  .coaching-liste li strong { color:#211a35; }
+  .coaching-liste li.alerte::before { content:'⚠'; color:#ec4899; }
 
   .coaching-ia-reponse { font-size:0.85rem; line-height:1.6; color:#294038; white-space:pre-wrap; }
   .coaching-ia-actions { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
-  .coaching-ia-action { font-size:0.78rem; font-weight:700; color:#1e6f4c; background:#e9f5ee; border:1px solid #c9e6d5; border-radius:8px; padding:8px 12px; }
+  .coaching-ia-action { font-size:0.78rem; font-weight:700; color:#7c3aed; background:#ede9fe; border:1px solid #ddd6fe; border-radius:8px; padding:8px 12px; }
   .coaching-chat { margin-top:18px; border-top:1.5px solid #e2ede6; padding-top:14px; }
   .coaching-chat-historique { display:flex; flex-direction:column; gap:10px; margin-bottom:12px; max-height:320px; overflow-y:auto; }
   .coaching-chat-historique:empty { display:none; }
   .coaching-bulle { font-size:0.83rem; line-height:1.5; padding:9px 13px; border-radius:12px; max-width:88%; white-space:pre-wrap; }
-  .coaching-bulle-artisan { align-self:flex-end; background:#1e6f4c; color:#fff; border-bottom-right-radius:3px; }
+  .coaching-bulle-artisan { align-self:flex-end; background:#7c3aed; color:#fff; border-bottom-right-radius:3px; }
   .coaching-bulle-coach { align-self:flex-start; background:#fff; color:#294038; border:1.5px solid #e2ede6; border-bottom-left-radius:3px; }
   .coaching-bulle-erreur { align-self:flex-start; background:#fdecea; color:#b3261e; border:1.5px solid #f6c9c4; }
   .coaching-chat-form { display:flex; gap:8px; }
   .coaching-chat-form input { flex:1; border:1.5px solid #d8e3de; border-radius:8px; padding:10px 12px; font-size:0.85rem; font-family:inherit; }
   .coaching-chat-form input:disabled { background:#f2f4f1; color:#8a9891; }
-  .coaching-chat-form button { background:#1e6f4c; color:#fff; border:none; border-radius:8px; padding:10px 18px; font-size:0.82rem; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .coaching-chat-form button { background:#7c3aed; color:#fff; border:none; border-radius:8px; padding:10px 18px; font-size:0.82rem; font-weight:700; cursor:pointer; white-space:nowrap; }
   .coaching-chat-form button:disabled { background:#a9c4b7; cursor:default; }
 
   .liste-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px; }
   .liste-header h3 { font-size:1.05rem; display:flex; align-items:center; gap:9px; }
   .liste-header h3::before { content:'👥'; font-size:1.1rem; }
   .btn-pdf {
-    background:#fff; border:1.5px solid #1e6f4c; border-radius:10px; padding:10px 18px; font-size:0.82rem;
-    font-weight:700; color:#1e6f4c; cursor:pointer; transition:background 0.15s ease, transform 0.15s ease;
+    background:#fff; border:1.5px solid #7c3aed; border-radius:10px; padding:10px 18px; font-size:0.82rem;
+    font-weight:700; color:#7c3aed; cursor:pointer; transition:background 0.15s ease, transform 0.15s ease;
   }
-  .btn-pdf:hover { background:#eaf4ef; transform:translateY(-1px); }
+  .btn-pdf:hover { background:#f5f3ff; transform:translateY(-1px); }
 
   table { width:100%; border-collapse:collapse; font-size:0.85rem; }
   th { text-align:left; padding:10px 8px; color:#8a9891; font-weight:700; font-size:0.72rem; text-transform:uppercase; border-bottom:1.5px solid #eef1f0; }
   td { padding:10px 8px; border-bottom:1px solid #eef1f0; }
   tr:last-child td { border-bottom:none; }
-  .statut-badge { font-size:0.7rem; font-weight:700; padding:4px 11px; border-radius:999px; background:#eaf4ef; color:#1e6f4c; display:inline-flex; align-items:center; gap:5px; white-space:nowrap; }
+  .statut-badge { font-size:0.7rem; font-weight:700; padding:4px 11px; border-radius:999px; background:#f5f3ff; color:#7c3aed; display:inline-flex; align-items:center; gap:5px; white-space:nowrap; }
 
   .table-scroll { overflow-x:auto; margin:0 -4px; padding:0 4px; }
   table.table-clients { border-collapse:separate; border-spacing:0; min-width:640px; }
@@ -293,15 +332,15 @@
   .client-identite { display:flex; align-items:center; gap:10px; }
   .client-avatar {
     flex-shrink:0; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-    background:linear-gradient(135deg, #f0a878, #e8622c); color:#fff; font-size:0.72rem; font-weight:800;
+    background:linear-gradient(135deg, #f9a8d4, #ec4899); color:#fff; font-size:0.72rem; font-weight:800;
   }
-  .client-nom { font-weight:700; color:#14312a; white-space:nowrap; }
+  .client-nom { font-weight:700; color:#211a35; white-space:nowrap; }
   .client-contact { display:block; color:#3a4a43; text-decoration:none; font-size:0.82rem; white-space:nowrap; }
   /* Fiche de démonstration (07/09) : identité/coordonnées à peine visibles à
      l'écran, pour filmer sans donner l'impression de montrer de vraies
      coordonnées client — le reste du tableau (date, statut, devis) reste net. */
   .client-floute-demo { filter:blur(4.5px); opacity:0.65; user-select:none; pointer-events:none; }
-  .client-contact:hover { text-decoration:underline; color:#1e6f4c; }
+  .client-contact:hover { text-decoration:underline; color:#7c3aed; }
   /* Ajouté 08/09 : bouton de correction du nom/contact d'une demande — utile
      quand Cyrille saisit lui-même une demande pour un client qu'il a déjà eu
      au téléphone (le numéro/email enregistrés sont alors les SIENS, requis
@@ -311,7 +350,7 @@
     margin-top:4px; background:none; border:1px solid #dde5e1; border-radius:6px;
     color:#5f6368; font-size:0.72rem; padding:2px 7px; cursor:pointer;
   }
-  .btn-modifier-contact:hover { background:#f0f4f2; color:#1e6f4c; border-color:#c7d3cd; }
+  .btn-modifier-contact:hover { background:#f0f4f2; color:#7c3aed; border-color:#c7d3cd; }
   /* Ajouté 08/09 : même style pour le bouton "Demander photos/coordonnées"
      (envoie un SMS avec un lien où le client saisit lui-même nom/prénom/
      adresse et ses photos — voir envoyer-photos.html et envoyer-sms-photos.js). */
@@ -347,14 +386,14 @@
     box-shadow:0 4px 16px rgba(20,49,42,0.05); transition:box-shadow 0.15s, border-color 0.15s;
   }
   .jour-carte:hover { box-shadow:0 8px 24px rgba(20,49,42,0.09); }
-  .jour-carte.aujourdhui { border-color:#1e6f4c; }
+  .jour-carte.aujourdhui { border-color:#7c3aed; }
   .jour-entete { text-align:center; margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid #eef1f0; }
   .jour-jour { font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:#8a9891; }
-  .jour-numero { font-size:1.5rem; font-weight:800; color:#14312a; line-height:1.15; }
+  .jour-numero { font-size:1.5rem; font-weight:800; color:#211a35; line-height:1.15; }
   .jour-mois { font-size:0.68rem; color:#8a9891; text-transform:capitalize; }
   .jour-badge-auj {
     display:inline-block; margin-top:5px; font-size:0.58rem; font-weight:700; color:#fff;
-    background:#1e6f4c; border-radius:999px; padding:2px 9px;
+    background:#7c3aed; border-radius:999px; padding:2px 9px;
   }
   .bloquer-jour {
     width:100%; padding:7px 0; margin-bottom:9px; border:1.5px dashed #eef1f0; background:transparent;
@@ -368,14 +407,14 @@
     transition:border-color 0.15s, background 0.15s, transform 0.1s;
   }
   .creneau .heure { font-weight:700; }
-  .creneau.libre:hover { border-color:#1e6f4c; background:#f5f8f6; transform:translateY(-1px); }
-  .creneau.confirme { background:#eaf5ef; border-color:#1e6f4c; color:#1e6f4c; cursor:default; }
-  .creneau.confirme .client { display:block; font-size:0.7rem; font-weight:500; margin-top:2px; color:#14312a; opacity:0.8; }
+  .creneau.libre:hover { border-color:#7c3aed; background:#f5f8f6; transform:translateY(-1px); }
+  .creneau.confirme { background:#eaf5ef; border-color:#7c3aed; color:#7c3aed; cursor:default; }
+  .creneau.confirme .client { display:block; font-size:0.7rem; font-weight:500; margin-top:2px; color:#211a35; opacity:0.8; }
   .creneau.indisponible { background:#f2f4f1; border-color:#c7cdc9; color:#8a9891; text-decoration:line-through; }
   .creneau.indisponible:hover { text-decoration:none; border-color:#c0392b; color:#c0392b; }
   .calendrier-toast {
     position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(10px); z-index:3000;
-    background:#14312a; color:#fff; padding:11px 20px; border-radius:10px; font-size:0.85rem; font-weight:600;
+    background:#211a35; color:#fff; padding:11px 20px; border-radius:10px; font-size:0.85rem; font-weight:600;
     opacity:0; transition:opacity 0.2s, transform 0.2s; pointer-events:none; box-shadow:0 8px 24px rgba(0,0,0,0.18);
   }
   .calendrier-toast.visible { opacity:1; transform:translateX(-50%) translateY(0); }
@@ -393,10 +432,10 @@
 
 <!-- 07/09 : message ponctuel de Cyrille (voir api/messages-artisan.js) — visible
      uniquement côté artisan, en plus du SMS déjà reçu. -->
-<div id="messageAdminBanniere" style="display:none;position:fixed;left:16px;right:16px;bottom:16px;max-width:420px;margin:0 auto;z-index:10000;background:#fff;border:1.5px solid #e8622c;border-radius:14px;padding:16px 18px;box-shadow:0 8px 30px rgba(20,49,42,0.18);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <div style="font-weight:800;color:#e8622c;margin-bottom:6px;">✉️ Message de Cyrille</div>
-  <div id="messageAdminContenu" style="color:#14312a;font-size:0.92rem;line-height:1.4;margin-bottom:10px;"></div>
-  <button type="button" id="btnMessageAdminLu" style="background:#1e6f4c;color:#fff;border:none;padding:8px 16px;border-radius:9px;font-weight:700;cursor:pointer;font-size:0.85rem;">J'ai vu, merci</button>
+<div id="messageAdminBanniere" style="display:none;position:fixed;left:16px;right:16px;bottom:16px;max-width:420px;margin:0 auto;z-index:10000;background:#fff;border:1.5px solid #ec4899;border-radius:14px;padding:16px 18px;box-shadow:0 8px 30px rgba(20,49,42,0.18);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <div style="font-weight:800;color:#ec4899;margin-bottom:6px;">✉️ Message de Cyrille</div>
+  <div id="messageAdminContenu" style="color:#211a35;font-size:0.92rem;line-height:1.4;margin-bottom:10px;"></div>
+  <button type="button" id="btnMessageAdminLu" style="background:#7c3aed;color:#fff;border:none;padding:8px 16px;border-radius:9px;font-weight:700;cursor:pointer;font-size:0.85rem;">J'ai vu, merci</button>
 </div>
 
 <!-- 07/09 : partage d'écran en direct (voir api/ecran-partage.js) — Cyrille
@@ -407,11 +446,11 @@
 <!-- Côté artisan : demande d'autorisation, puis bannière tant que le partage est actif. -->
 <div id="ecranPartageConsentement" style="display:none;position:fixed;inset:0;z-index:10003;background:rgba(20,49,42,0.55);align-items:center;justify-content:center;padding:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <div style="background:#fff;border-radius:16px;padding:26px 24px;max-width:400px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.25);">
-    <div style="font-size:1.05rem;font-weight:800;color:#14312a;margin-bottom:10px;">🎥 Cyrille souhaite voir votre écran en direct</div>
+    <div style="font-size:1.05rem;font-weight:800;color:#211a35;margin-bottom:10px;">🎥 Cyrille souhaite voir votre écran en direct</div>
     <p style="font-size:0.88rem;color:#6b7a72;line-height:1.4;margin-bottom:18px;">Pour vous aider sur votre dashboard. Si vous acceptez, votre navigateur vous demandera de choisir quoi partager — sélectionnez cet onglet. Il ne peut rien cliquer ni taper à votre place, il voit seulement votre écran.</p>
     <div style="display:flex;gap:10px;justify-content:center;">
       <button type="button" id="btnEcranPartageRefuser" style="background:#f0f1ec;color:#6b7a72;border:none;padding:11px 18px;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.88rem;">Refuser</button>
-      <button type="button" id="btnEcranPartageAutoriser" style="background:#1e6f4c;color:#fff;border:none;padding:11px 18px;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.88rem;">Autoriser</button>
+      <button type="button" id="btnEcranPartageAutoriser" style="background:#7c3aed;color:#fff;border:none;padding:11px 18px;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.88rem;">Autoriser</button>
     </div>
   </div>
 </div>
@@ -421,70 +460,57 @@
 </div>
 
 <!-- Côté admin (Cyrille) : badge de statut + vidéo reçue. -->
-<div id="ecranPartageVideoWrap" style="display:none;position:fixed;bottom:16px;right:16px;z-index:10001;background:#14312a;border-radius:14px;padding:10px;box-shadow:0 10px 40px rgba(0,0,0,0.35);">
+<div id="ecranPartageVideoWrap" style="display:none;position:fixed;bottom:16px;right:16px;z-index:10001;background:#211a35;border-radius:14px;padding:10px;box-shadow:0 10px 40px rgba(0,0,0,0.35);">
   <video id="ecranPartageVideo" autoplay playsinline style="max-width:46vw;max-height:60vh;border-radius:8px;display:block;"></video>
 </div>
 
-<!-- Feuilles décoratives en arrière-plan, effet 3D via dégradés et ombres -->
-<div class="leaf-bg" style="top:-60px; right:-80px; opacity:0.55;">
-  <svg width="360" height="360" viewBox="0 0 360 360">
-    <defs>
-      <radialGradient id="leafGrad1" cx="35%" cy="30%" r="75%">
-        <stop offset="0%" stop-color="#4a9d6e"/>
-        <stop offset="55%" stop-color="#1e6f4c"/>
-        <stop offset="100%" stop-color="#0f4a30"/>
-      </radialGradient>
-      <filter id="leafShadow1" x="-50%" y="-50%" width="200%" height="200%">
-        <feDropShadow dx="8" dy="14" stdDeviation="16" flood-color="#0a3320" flood-opacity="0.35"/>
-      </filter>
-    </defs>
-    <path filter="url(#leafShadow1)" fill="url(#leafGrad1)" d="M180,30 C260,50 320,120 300,210 C280,300 190,330 130,290 C70,250 50,160 90,100 C115,63 145,40 180,30 Z"/>
-    <path d="M180,50 C180,140 200,220 260,270" stroke="#0a3320" stroke-width="4" fill="none" opacity="0.4" stroke-linecap="round"/>
-  </svg>
-</div>
+<!-- Refonte 11/09 : les feuilles décoratives (thème EcoSky) sont remplacées par
+     de simples formes floues violet/rose, plus proches d'un dashboard
+     marketing moderne (cf. référence visuelle de Cyrille) — purement
+     décoratif, aucun impact sur le JS. -->
+<div class="leaf-bg" style="top:-120px; right:-120px; width:420px; height:420px; border-radius:50%; background:radial-gradient(circle, #c4b5fd, transparent 70%); filter:blur(40px); opacity:0.5;"></div>
+<div class="leaf-bg" style="bottom:-140px; left:-120px; width:460px; height:460px; border-radius:50%; background:radial-gradient(circle, #f9a8d4, transparent 70%); filter:blur(46px); opacity:0.35;"></div>
 
-<div class="leaf-bg" style="bottom:-100px; left:-100px; opacity:0.4;">
-  <svg width="420" height="420" viewBox="0 0 420 420">
-    <defs>
-      <radialGradient id="leafGrad2" cx="40%" cy="35%" r="70%">
-        <stop offset="0%" stop-color="#f3a878"/>
-        <stop offset="55%" stop-color="#e8622c"/>
-        <stop offset="100%" stop-color="#b8481c"/>
-      </radialGradient>
-      <filter id="leafShadow2" x="-50%" y="-50%" width="200%" height="200%">
-        <feDropShadow dx="-6" dy="12" stdDeviation="18" flood-color="#7a2e10" flood-opacity="0.3"/>
-      </filter>
-    </defs>
-    <path filter="url(#leafShadow2)" fill="url(#leafGrad2)" d="M210,40 C300,70 370,150 350,240 C330,330 230,370 150,330 C70,290 40,190 80,120 C110,70 160,45 210,40 Z"/>
-    <path d="M210,60 C205,160 220,260 300,320" stroke="#7a2e10" stroke-width="5" fill="none" opacity="0.35" stroke-linecap="round"/>
-  </svg>
-</div>
-
-<div class="leaf-bg" style="top:35%; right:-140px; opacity:0.3;">
-  <svg width="280" height="280" viewBox="0 0 280 280">
-    <defs>
-      <radialGradient id="leafGrad3" cx="35%" cy="30%" r="75%">
-        <stop offset="0%" stop-color="#6fbf95"/>
-        <stop offset="55%" stop-color="#1e6f4c"/>
-        <stop offset="100%" stop-color="#0f4a30"/>
-      </radialGradient>
-    </defs>
-    <path fill="url(#leafGrad3)" d="M140,20 C210,40 250,100 230,170 C210,240 140,260 90,230 C40,200 25,130 60,80 C85,45 110,25 140,20 Z"/>
-  </svg>
-</div>
-
-<div class="wrap">
+<div class="wrap dash-shell">
+  <aside class="dash-sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-logo">🚀</div>
+      <div>
+        <div class="sidebar-brand-texte">Skyeco Pro</div>
+        <div class="sidebar-brand-sous">Votre dashboard</div>
+      </div>
+    </div>
+    <div class="panel-tabs" id="panelTabs">
+      <button type="button" class="panel-tab active" id="tabAds" data-tab="ads">
+        <span class="panel-tab-icone"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M12 2l4.5 7.79h-9L12 2z"/><path fill="#34A853" d="M3.5 9.79h9L7.75 22l-4.25-12.21z"/><path fill="#FBBC05" d="M16.5 9.79h4L16.25 22l-4.25-12.21h4.5z"/></svg></span>
+        <span class="panel-tab-texte">Gérer Google Ads<span class="panel-tab-sous">Ciblage, mots-clés, budget, clics</span></span>
+      </button>
+      <button type="button" class="panel-tab" id="tabClients" data-tab="clients">
+        <span class="panel-tab-icone">👥</span>
+        <span class="panel-tab-texte">Gérer les clients<span class="panel-tab-sous">Demandes, devis, signatures</span></span>
+      </button>
+      <button type="button" class="panel-tab" id="tabCalendrier" data-tab="calendrier">
+        <span class="panel-tab-icone">📅</span>
+        <span class="panel-tab-texte">Mon calendrier<span class="panel-tab-sous">Rendez-vous, disponibilités</span></span>
+      </button>
+      <button type="button" class="panel-tab" id="tabAppelVideo" data-tab="appelvideo" style="display:none;">
+        <span class="panel-tab-icone">📹</span>
+        <span class="panel-tab-texte">Appel vidéo<span class="panel-tab-sous">Besoin d'aide en direct</span></span>
+      </button>
+    </div>
+  </aside>
+  <div class="dash-main">
   <div class="header">
     <div class="header-titre">
       <img class="logo-entreprise" id="logoEntreprise" alt="Logo">
       <h1>Mon tableau de bord</h1>
     </div>
     <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-      <select id="selecteurSite" style="display:none; border:1.5px solid #1e6f4c; border-radius:10px; padding:9px 12px; font-weight:700; font-size:0.85rem; color:#14312a; background:#fff; cursor:pointer;"></select>
-      <button type="button" id="btnAjouterVitrine" title="Chaque vitrine est un site et un forfait séparés, facturés indépendamment" style="display:none; background:#fff; color:#1e6f4c; border:1.5px dashed #1e6f4c; border-radius:10px; padding:9px 14px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap;">+ Nouvelle vitrine</button>
+      <select id="selecteurSite" style="display:none; border:1.5px solid #7c3aed; border-radius:10px; padding:9px 12px; font-weight:700; font-size:0.85rem; color:#211a35; background:#fff; cursor:pointer;"></select>
+      <button type="button" id="btnAjouterVitrine" title="Chaque vitrine est un site et un forfait séparés, facturés indépendamment" style="display:none; background:#fff; color:#7c3aed; border:1.5px dashed #7c3aed; border-radius:10px; padding:9px 14px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap;">+ Nouvelle vitrine</button>
       <button type="button" id="btnVoirArchives" style="display:none; background:none; border:none; color:#8a9891; font-size:0.78rem; font-weight:700; cursor:pointer; text-decoration:underline; padding:0 4px; white-space:nowrap;">📦 Vitrines archivées</button>
-      <button type="button" class="btn-elements" id="btnMesRdv" style="background:#fff; color:#1e6f4c; border:1.5px solid #1e6f4c;">📅 Mes rendez-vous</button>
-      <a class="btn-elements" id="btnMesDevis" href="#" style="background:#fff; color:#1e6f4c; border:1.5px solid #1e6f4c;">📄 Devis &amp; factures</a>
+      <button type="button" class="btn-elements" id="btnMesRdv" style="background:#fff; color:#7c3aed; border:1.5px solid #7c3aed;">📅 Mes rendez-vous</button>
+      <a class="btn-elements" id="btnMesDevis" href="#" style="background:#fff; color:#7c3aed; border:1.5px solid #7c3aed;">📄 Devis &amp; factures</a>
       <a class="btn-elements" id="btnElements" href="#">✏️ Modifier mes éléments</a>
     </div>
   </div>
@@ -493,25 +519,25 @@
        #apercuCampagnes ci-dessous, masqué s'il n'en reste qu'une) : une
        vitrine archivée doit rester consultable/désarchivable même si
        l'artisan n'a plus qu'un seul site actif. -->
-  <div id="vitrinesArchiveesPanel" style="display:none; margin-bottom:22px; background:#f6faf7; border:1.5px solid #d7e8dd; border-radius:14px; padding:16px 18px;">
-    <div style="font-weight:800; font-size:0.85rem; color:#14312a; margin-bottom:10px;">Vitrines archivées</div>
+  <div id="vitrinesArchiveesPanel" style="display:none; margin-bottom:22px; background:#f5f3ff; border:1.5px solid #ddd6fe; border-radius:14px; padding:16px 18px;">
+    <div style="font-weight:800; font-size:0.85rem; color:#211a35; margin-bottom:10px;">Vitrines archivées</div>
     <div id="vitrinesArchiveesContenu"><div class="loading">Chargement…</div></div>
   </div>
 
-  <div id="banniereePause" style="display:none; background:#fdf1ea; border:1.5px solid #e8622c; border-radius:14px; padding:16px 20px; margin-bottom:20px; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
+  <div id="banniereePause" style="display:none; background:#fdf2f8; border:1.5px solid #ec4899; border-radius:14px; padding:16px 20px; margin-bottom:20px; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
     <div>
-      <strong style="color:#e8622c;">⏸️ Votre abonnement est en pause</strong>
+      <strong style="color:#ec4899;">⏸️ Votre abonnement est en pause</strong>
       <p style="font-size:0.85rem; color:#5b6b64; margin-top:4px;">Votre site n'est pas visible par vos prospects tant que la pause dure.</p>
     </div>
-    <button id="btnReprendreMaintenant" style="background:#e8622c; color:#fff; border:none; border-radius:10px; padding:10px 18px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap;">Reprendre maintenant</button>
+    <button id="btnReprendreMaintenant" style="background:#ec4899; color:#fff; border:none; border-radius:10px; padding:10px 18px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap;">Reprendre maintenant</button>
   </div>
 
-  <div id="banniereMettreEnLigne" style="display:none; background:#eaf4ef; border:1.5px solid #1e6f4c; border-radius:14px; padding:16px 20px; margin-bottom:20px; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
+  <div id="banniereMettreEnLigne" style="display:none; background:#f5f3ff; border:1.5px solid #7c3aed; border-radius:14px; padding:16px 20px; margin-bottom:20px; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
     <div>
-      <strong style="color:#1e6f4c;">🚀 Votre site n'est pas encore en ligne</strong>
+      <strong style="color:#7c3aed;">🚀 Votre site n'est pas encore en ligne</strong>
       <p style="font-size:0.85rem; color:#5b6b64; margin-top:4px;">Une fois vos mots-clés et votre annonce prêts, mettez votre vitrine en ligne pour commencer à recevoir des demandes.</p>
     </div>
-    <a id="btnMettreEnLigne" href="#" style="background:#1e6f4c; color:#fff; border:none; border-radius:10px; padding:10px 18px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap; text-decoration:none; display:inline-block;">Mettre en ligne</a>
+    <a id="btnMettreEnLigne" href="#" style="background:#7c3aed; color:#fff; border:none; border-radius:10px; padding:10px 18px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap; text-decoration:none; display:inline-block;">Mettre en ligne</a>
   </div>
 
   <!-- Vue d'ensemble multi-vitrines : visible seulement si le compte a
@@ -536,25 +562,6 @@
   <button class="btn-pause-diffusion" id="btnPauseDiffusion" style="display:none;"></button>
   <p class="pause-note">Mettre en pause n'arrête que la diffusion des annonces — votre solde publicitaire reste intact, relancez quand vous voulez.</p>
 
-  <div class="panel-tabs" id="panelTabs">
-    <button type="button" class="panel-tab active" id="tabAds" data-tab="ads">
-      <span class="panel-tab-icone"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M12 2l4.5 7.79h-9L12 2z"/><path fill="#34A853" d="M3.5 9.79h9L7.75 22l-4.25-12.21z"/><path fill="#FBBC05" d="M16.5 9.79h4L16.25 22l-4.25-12.21h4.5z"/></svg></span>
-      <span class="panel-tab-texte">Gérer Google Ads<span class="panel-tab-sous">Ciblage, mots-clés, budget, clics</span></span>
-    </button>
-    <button type="button" class="panel-tab" id="tabClients" data-tab="clients">
-      <span class="panel-tab-icone">👥</span>
-      <span class="panel-tab-texte">Gérer les clients<span class="panel-tab-sous">Demandes, devis, signatures</span></span>
-    </button>
-    <button type="button" class="panel-tab" id="tabCalendrier" data-tab="calendrier">
-      <span class="panel-tab-icone">📅</span>
-      <span class="panel-tab-texte">Mon calendrier<span class="panel-tab-sous">Rendez-vous, disponibilités</span></span>
-    </button>
-    <button type="button" class="panel-tab" id="tabAppelVideo" data-tab="appelvideo" style="display:none;">
-      <span class="panel-tab-icone">📹</span>
-      <span class="panel-tab-texte">Appel vidéo<span class="panel-tab-sous">Besoin d'aide en direct</span></span>
-    </button>
-  </div>
-
   <div id="panelAds">
   <div class="ads-section" id="adsSection" style="display:none;">
     <h2 style="display:flex; align-items:center; gap:10px;"><svg width="26" height="26" viewBox="0 0 24 24"><path fill="#4285F4" d="M12 2l4.5 7.79h-9L12 2z"/><path fill="#34A853" d="M3.5 9.79h9L7.75 22l-4.25-12.21z"/><path fill="#FBBC05" d="M16.5 9.79h4L16.25 22l-4.25-12.21h4.5z"/></svg> Pilotage Google Ads</h2>
@@ -562,11 +569,11 @@
 
     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:12px; margin:18px 0 24px;">
       <div style="background:#f8f9fa; border:1px solid #e8eaed; border-radius:12px; padding:16px;">
-        <div style="font-size:1.6rem; font-weight:800; color:#14312a;" id="metricClics">—</div>
+        <div style="font-size:1.6rem; font-weight:800; color:#211a35;" id="metricClics">—</div>
         <div style="font-size:0.78rem; color:#5f6368;">Clics ce mois-ci</div>
       </div>
       <div style="background:#f8f9fa; border:1px solid #e8eaed; border-radius:12px; padding:16px;">
-        <div style="font-size:1.6rem; font-weight:800; color:#14312a;" id="metricCout">—</div>
+        <div style="font-size:1.6rem; font-weight:800; color:#211a35;" id="metricCout">—</div>
         <div style="font-size:0.78rem; color:#5f6368;">Consommé sur votre solde</div>
       </div>
       <div style="background:#f8f9fa; border:1px solid #e8eaed; border-radius:12px; padding:16px;">
@@ -574,7 +581,7 @@
         <div style="font-size:0.78rem; color:#5f6368;">Conversions (demandes reçues)</div>
       </div>
     </div>
-    <a href="#" id="btnApprovisionnerRapide" style="display:inline-flex; align-items:center; gap:8px; background:#1e6f4c; color:#fff; text-decoration:none; border-radius:10px; padding:11px 18px; font-size:0.85rem; font-weight:700; margin-bottom:24px;">💳 Approvisionner mon budget</a>
+    <a href="#" id="btnApprovisionnerRapide" style="display:inline-flex; align-items:center; gap:8px; background:#7c3aed; color:#fff; text-decoration:none; border-radius:10px; padding:11px 18px; font-size:0.85rem; font-weight:700; margin-bottom:24px;">💳 Approvisionner mon budget</a>
 
     <div class="ads-souspanel" id="sectionZoneCiblee">
       <h3>Où voulez-vous être visible ?</h3>
@@ -650,7 +657,7 @@
         <div class="titre-annonce" id="previewTitre">—</div>
         <div class="desc-annonce" id="previewDesc">—</div>
       </div>
-      <button type="button" id="btnRegenererAnnonce" style="margin:12px 0 18px; background:#fff; color:#1e6f4c; border:1.5px solid #1e6f4c; border-radius:8px; padding:9px 14px; font-size:0.82rem; font-weight:700; cursor:pointer;">🔄 Régénérer depuis mes mots-clés</button>
+      <button type="button" id="btnRegenererAnnonce" style="margin:12px 0 18px; background:#fff; color:#7c3aed; border:1.5px solid #7c3aed; border-radius:8px; padding:9px 14px; font-size:0.82rem; font-weight:700; cursor:pointer;">🔄 Régénérer depuis mes mots-clés</button>
       <div class="annonce-champ">
         <label>Titre 1 <span class="compteur" id="cptTitre1">0/30</span></label>
         <input type="text" id="annonceTitre1" maxlength="30">
@@ -672,7 +679,7 @@
         <textarea id="annonceDesc2" maxlength="90"></textarea>
       </div>
       <div class="annonce-sauvegarde-note" id="annonceSauvegardeNote"></div>
-      <button type="button" id="btnAppliquerAnnonceAds" style="display:none; margin-top:6px; background:#1e6f4c; color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:0.85rem; font-weight:700; cursor:pointer;">🚀 Appliquer ce texte dans Google Ads</button>
+      <button type="button" id="btnAppliquerAnnonceAds" style="display:none; margin-top:6px; background:#7c3aed; color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:0.85rem; font-weight:700; cursor:pointer;">🚀 Appliquer ce texte dans Google Ads</button>
       <div class="annonce-hint" id="annonceAppliquerHint" style="display:none; margin-top:8px; margin-bottom:0;">Ces textes sont enregistrés ici, mais votre annonce déjà en ligne dans Google Ads garde son texte actuel tant que vous ne cliquez pas sur ce bouton.</div>
       <div class="annonce-sauvegarde-note" id="annonceAppliqueeNote"></div>
     </div>
@@ -718,7 +725,7 @@
       <div class="heures-labels" id="heuresLabels"></div>
       <div class="heures-note" id="heuresNote"></div>
       <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;">
-        <button type="button" id="btnHorairesPointe" style="background:#1e6f4c; color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:0.82rem; font-weight:700; cursor:pointer;">🕐 Limiter la diffusion aux heures de pointe</button>
+        <button type="button" id="btnHorairesPointe" style="background:#7c3aed; color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:0.82rem; font-weight:700; cursor:pointer;">🕐 Limiter la diffusion aux heures de pointe</button>
         <button type="button" id="btnHorairesToute" style="background:#fff; color:#5b6b64; border:1.5px solid #d8e3de; border-radius:8px; padding:10px 16px; font-size:0.82rem; font-weight:700; cursor:pointer;">Revenir à une diffusion 24h/24</button>
       </div>
       <div id="horairesNote" style="font-size:0.78rem; color:#8a9891; margin-top:8px;"></div>
@@ -740,9 +747,9 @@
         <svg class="coaching-logo" width="40" height="40" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <defs>
             <linearGradient id="coachBg" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stop-color="#f0a878"/>
-              <stop offset="55%" stop-color="#e8622c"/>
-              <stop offset="100%" stop-color="#c74f20"/>
+              <stop offset="0%" stop-color="#f9a8d4"/>
+              <stop offset="55%" stop-color="#ec4899"/>
+              <stop offset="100%" stop-color="#be185d"/>
             </linearGradient>
             <linearGradient id="coachVisor" x1="0" y1="0" x2="1" y2="1">
               <stop offset="0%" stop-color="#1c3d5a"/>
@@ -763,10 +770,10 @@
           <circle cx="52" cy="59" r="4.4" fill="#f9f5ee"/>
           <circle cx="68" cy="59" r="4.4" fill="#f9f5ee"/>
           <path d="M46 74 q14 12 28 0" fill="none" stroke="#14304a" stroke-width="4.5" stroke-linecap="round"/>
-          <circle cx="40" cy="70" r="4" fill="#e8622c" opacity="0.35"/>
-          <circle cx="80" cy="70" r="4" fill="#e8622c" opacity="0.35"/>
-          <circle cx="92" cy="90" r="16" fill="#f9f5ee" stroke="#c74f20" stroke-width="2.5"/>
-          <path d="M88 96 v-9 c0-1.6 1.3-2.4 2.4-2.4 c0.5-2.6 1-4.6 1-6 c0-1.7 1.2-2.6 2.3-2.2 c1 .4 1.5 1.6 1.3 2.8 l-0.7 3.4 h4.6 c1.3 0 2.3 1.1 2 2.4 l-1.4 7.4 c-0.3 1.5-1.6 2.6-3.1 2.6 h-6.4 c-1.1 0-2-.9-2-2 Z" fill="#e8622c"/>
+          <circle cx="40" cy="70" r="4" fill="#ec4899" opacity="0.35"/>
+          <circle cx="80" cy="70" r="4" fill="#ec4899" opacity="0.35"/>
+          <circle cx="92" cy="90" r="16" fill="#f9f5ee" stroke="#be185d" stroke-width="2.5"/>
+          <path d="M88 96 v-9 c0-1.6 1.3-2.4 2.4-2.4 c0.5-2.6 1-4.6 1-6 c0-1.7 1.2-2.6 2.3-2.2 c1 .4 1.5 1.6 1.3 2.8 l-0.7 3.4 h4.6 c1.3 0 2.3 1.1 2 2.4 l-1.4 7.4 c-0.3 1.5-1.6 2.6-3.1 2.6 h-6.4 c-1.1 0-2-.9-2-2 Z" fill="#ec4899"/>
         </svg>
         <h3>Coach IA Ads</h3>
         <button type="button" id="btnToggleCoach" class="btn-toggle-coach">⏸️ Mettre en pause</button>
@@ -802,7 +809,7 @@
         <button class="btn-pdf" id="btnExportPdf">📄 Exporter en PDF</button>
       </div>
     </div>
-    <div id="clientsArchivesPanel" style="display:none; margin-bottom:18px; background:#f6faf7; border:1.5px solid #d7e8dd; border-radius:14px; padding:16px 18px;">
+    <div id="clientsArchivesPanel" style="display:none; margin-bottom:18px; background:#f5f3ff; border:1.5px solid #ddd6fe; border-radius:14px; padding:16px 18px;">
       <div style="font-size:0.82rem; font-weight:700; color:#3a4a43; margin-bottom:10px;">Clients archivés</div>
       <div id="clientsArchivesContenu"><div class="loading">Chargement…</div></div>
     </div>
@@ -816,7 +823,7 @@
       <h3 class="calendrier-titre">Mon calendrier</h3>
       <div class="calendrier-legende">
         <span class="legende-item"><span class="pastille" style="background:#fff;border:1.5px solid #eef1f0"></span>Libre</span>
-        <span class="legende-item"><span class="pastille" style="background:#eaf5ef;border:1.5px solid #1e6f4c"></span>RDV confirmé</span>
+        <span class="legende-item"><span class="pastille" style="background:#eaf5ef;border:1.5px solid #7c3aed"></span>RDV confirmé</span>
         <span class="legende-item"><span class="pastille" style="background:#f2f4f1;border:1.5px solid #c7cdc9"></span>Bloqué par vous</span>
       </div>
     </div>
@@ -831,13 +838,14 @@
         <h3 class="calendrier-titre">Appel vidéo avec Cyrille</h3>
       </div>
       <p class="calendrier-note">Un souci sur votre campagne ou votre vitrine ? Demandez un rendez-vous en visio — Cyrille valide le créneau puis vous appelle directement au moment convenu.</p>
-      <button type="button" id="btnDemanderAppelVideo" class="btn-action" style="background:#e8622c;color:#fff;border:none;padding:12px 20px;border-radius:10px;font-weight:700;cursor:pointer;">📅 Demander un appel vidéo</button>
-      <div id="appelVideoBanniere" style="display:none;margin-top:18px;padding:16px 18px;border-radius:12px;background:#fdeceb;border:1.5px solid #e8622c;">
+      <button type="button" id="btnDemanderAppelVideo" class="btn-action" style="background:#ec4899;color:#fff;border:none;padding:12px 20px;border-radius:10px;font-weight:700;cursor:pointer;">📅 Demander un appel vidéo</button>
+      <div id="appelVideoBanniere" style="display:none;margin-top:18px;padding:16px 18px;border-radius:12px;background:#fdeceb;border:1.5px solid #ec4899;">
         <div style="font-weight:800;color:#c0392b;margin-bottom:6px;">🔴 Cyrille vous appelle maintenant</div>
-        <a id="lienRejoindreAppel" href="#" target="_blank" rel="noopener" style="display:inline-block;margin-top:4px;background:#1e6f4c;color:#fff;padding:10px 18px;border-radius:9px;font-weight:700;text-decoration:none;">Rejoindre l'appel</a>
+        <a id="lienRejoindreAppel" href="#" target="_blank" rel="noopener" style="display:inline-block;margin-top:4px;background:#7c3aed;color:#fff;padding:10px 18px;border-radius:9px;font-weight:700;text-decoration:none;">Rejoindre l'appel</a>
       </div>
     </div>
   </div>
+  </div><!-- /dash-main -->
 </div>
 
 <div id="calendrierToast" class="calendrier-toast"></div>
@@ -1106,17 +1114,17 @@
         // pause (le badge essai écrasait le badge de diffusion).
         const diffusionPausee = s.status === 'en_pause' || s.pausee;
         const diffusionLabel = diffusionPausee ? '⏸️ Diffusion en pause' : '● Diffusion active';
-        const diffusionCouleur = diffusionPausee ? '#e8622c' : '#1e6f4c';
+        const diffusionCouleur = diffusionPausee ? '#ec4899' : '#7c3aed';
         const estEssai = s.status === 'essai';
         // Suppression définitive proposée seulement si la vitrine n'a
         // strictement aucune trace d'activité réelle — même condition que
         // /api/gerer-vitrine.js, revérifiée côté serveur de toute façon.
         const supprimable = !s.tarif_actif && !s.google_ads_campaign_resource;
         return `
-          <div style="min-width:180px; flex:1; max-width:260px; background:#fff; border:1.5px solid ${estActuelle ? '#1e6f4c' : '#e4e9e6'}; border-radius:14px; padding:14px 16px; box-shadow:${estActuelle ? '0 4px 14px rgba(30,111,76,0.14)' : 'none'};">
+          <div style="min-width:180px; flex:1; max-width:260px; background:#fff; border:1.5px solid ${estActuelle ? '#7c3aed' : '#e4e9e6'}; border-radius:14px; padding:14px 16px; box-shadow:${estActuelle ? '0 4px 14px rgba(30,111,76,0.14)' : 'none'};">
             <a href="/mon-dashboard.html?id=${s.id}" style="text-decoration:none; display:block;">
-              <div style="font-weight:800; color:#14312a; font-size:0.92rem; margin-bottom:6px;">${s.entreprise || 'Vitrine sans nom'}</div>
-              <div style="font-size:1.4rem; font-weight:800; color:#14312a;">${s.clics === null ? '—' : s.clics}<span style="font-size:0.75rem; font-weight:600; color:#5b6b64;"> clics ce mois-ci</span></div>
+              <div style="font-weight:800; color:#211a35; font-size:0.92rem; margin-bottom:6px;">${s.entreprise || 'Vitrine sans nom'}</div>
+              <div style="font-size:1.4rem; font-weight:800; color:#211a35;">${s.clics === null ? '—' : s.clics}<span style="font-size:0.75rem; font-weight:600; color:#5b6b64;"> clics ce mois-ci</span></div>
               <div style="font-size:0.78rem; font-weight:700; color:${diffusionCouleur}; margin-top:6px;">${diffusionLabel}</div>
               ${estEssai ? `<div style="font-size:0.72rem; font-weight:600; color:#5b6b64; margin-top:2px;">🎁 Essai gratuit</div>` : ''}
             </a>
@@ -1251,7 +1259,7 @@
       contenu.innerHTML = archivees.map(s => `
         <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px solid #e4e9e6;">
           <span style="font-size:0.85rem; font-weight:700; color:#3a4a43;">${s.entreprise || 'Vitrine sans nom'}</span>
-          <button type="button" class="btn-tuile-action" data-id="${s.id}" onclick="desarchiverVitrine(this)" style="background:#eaf4ef; border:1px solid #1e6f4c; color:#1e6f4c; border-radius:8px; padding:5px 10px; font-size:0.75rem; font-weight:700; cursor:pointer;">↩️ Désarchiver</button>
+          <button type="button" class="btn-tuile-action" data-id="${s.id}" onclick="desarchiverVitrine(this)" style="background:#f5f3ff; border:1px solid #7c3aed; color:#7c3aed; border-radius:8px; padding:5px 10px; font-size:0.75rem; font-weight:700; cursor:pointer;">↩️ Désarchiver</button>
         </div>
       `).join('');
     } catch (e) {
@@ -1505,7 +1513,7 @@
     let offreDejaTraitee = false;
 
     const badge = document.createElement('div');
-    badge.style.cssText = 'position:fixed;top:10px;right:10px;z-index:10001;background:#14312a;color:#fff;padding:9px 14px;border-radius:10px;font-weight:700;font-size:0.82rem;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,0.2);';
+    badge.style.cssText = 'position:fixed;top:10px;right:10px;z-index:10001;background:#211a35;color:#fff;padding:9px 14px;border-radius:10px;font-weight:700;font-size:0.82rem;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,0.2);';
     badge.textContent = "🕓 En attente de l'autorisation de l'artisan…";
     document.body.appendChild(badge);
 
@@ -1540,20 +1548,20 @@
         if (data.statut !== statutConnu) {
           statutConnu = data.statut;
           if (data.statut === 'refuse') { badge.textContent = "🚫 L'artisan a refusé le partage d'écran"; badge.style.background = '#c0392b'; nettoyer(); }
-          else if (data.statut === 'demande') { badge.textContent = "🕓 En attente de l'autorisation de l'artisan…"; badge.style.background = '#14312a'; }
+          else if (data.statut === 'demande') { badge.textContent = "🕓 En attente de l'autorisation de l'artisan…"; badge.style.background = '#211a35'; }
           else if (data.statut === 'termine') { badge.textContent = 'Partage terminé'; badge.style.background = '#6b7a72'; nettoyer(); offreDejaTraitee = false; }
         }
 
         if (data.statut === 'offre_prete' && data.offreSdp && !offreDejaTraitee) {
           offreDejaTraitee = true;
           badge.textContent = '🟡 Connexion en cours…';
-          badge.style.background = '#e8622c';
+          badge.style.background = '#ec4899';
           pc = new RTCPeerConnection(RTC_CONFIG);
           pc.ontrack = (e) => {
             videoEl.srcObject = e.streams[0];
             videoWrap.style.display = '';
             badge.textContent = '🟢 Vous voyez son écran en direct';
-            badge.style.background = '#1e6f4c';
+            badge.style.background = '#7c3aed';
           };
           pc.onconnectionstatechange = () => {
             if (['disconnected', 'failed', 'closed'].includes(pc.connectionState)) nettoyer();
@@ -1772,7 +1780,7 @@
           if (!dejaDemarre) {
             const btnDemarrer = document.createElement('span');
             btnDemarrer.textContent = '🎥 Démarrer l\'appel';
-            btnDemarrer.style.cssText = 'display:block;margin-top:6px;background:#1e6f4c;color:#fff;padding:6px 10px;border-radius:7px;font-weight:700;font-size:0.78rem;text-align:center;';
+            btnDemarrer.style.cssText = 'display:block;margin-top:6px;background:#7c3aed;color:#fff;padding:6px 10px;border-radius:7px;font-weight:700;font-size:0.78rem;text-align:center;';
             btnDemarrer.addEventListener('click', (ev) => { ev.stopPropagation(); demarrerAppelVideoDepuisCalendrier(c.id, btnDemarrer); });
             btn.appendChild(btnDemarrer);
           } else if (c.appel_statut === 'en_cours') {
@@ -1972,7 +1980,7 @@
       if (statut === 'essai' && rows[0]?.essai_gratuit_fin) {
         const joursRestants = Math.max(0, Math.ceil((new Date(rows[0].essai_gratuit_fin) - Date.now()) / (24 * 60 * 60 * 1000)));
         const banniereEssai = document.createElement('div');
-        banniereEssai.style.cssText = 'background:#e8f5ee; color:#1e6f4c; text-align:center; padding:10px; font-size:0.85rem; font-weight:600;';
+        banniereEssai.style.cssText = 'background:#e8f5ee; color:#7c3aed; text-align:center; padding:10px; font-size:0.85rem; font-weight:600;';
         banniereEssai.textContent = `🎁 Essai gratuit — ${joursRestants} jour${joursRestants > 1 ? 's' : ''} restant${joursRestants > 1 ? 's' : ''}`;
         document.body.prepend(banniereEssai);
       }
@@ -2048,8 +2056,8 @@
 
       const alerte = data.pourcentageConsomme >= 90 ? 'alerte' : '';
       const statutBadge = data.diffusionPausee
-        ? '<span class="statut-badge" style="background:#fdf1ea; color:#e8622c;">⏸️ En pause</span>'
-        : '<span class="statut-badge" style="background:#eaf4ef; color:#1e6f4c;">🟢 Active</span>';
+        ? '<span class="statut-badge" style="background:#fdf2f8; color:#ec4899;">⏸️ En pause</span>'
+        : '<span class="statut-badge" style="background:#f5f3ff; color:#7c3aed;">🟢 Active</span>';
       box.innerHTML = `
         <h3>Solde publicitaire ${statutBadge}</h3>
         <div class="solde-bar-track"><div class="solde-bar-fill ${alerte}" style="width:${data.pourcentageConsomme}%"></div></div>
@@ -2266,7 +2274,7 @@
       <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px solid #e4e9e6;">
         <span style="font-size:0.85rem; font-weight:700; color:#3a4a43;">${escapeHtmlDash((l.prenom || '') + ' ' + (l.nom || '')) || 'Client sans nom'}</span>
         <span style="display:flex; gap:8px;">
-          <button type="button" class="btn-tuile-action" data-id="${l.id}" onclick="desarchiverLead(this)" style="background:#eaf4ef; border:1px solid #1e6f4c; color:#1e6f4c; border-radius:8px; padding:5px 10px; font-size:0.75rem; font-weight:700; cursor:pointer;">↩️ Désarchiver</button>
+          <button type="button" class="btn-tuile-action" data-id="${l.id}" onclick="desarchiverLead(this)" style="background:#f5f3ff; border:1px solid #7c3aed; color:#7c3aed; border-radius:8px; padding:5px 10px; font-size:0.75rem; font-weight:700; cursor:pointer;">↩️ Désarchiver</button>
           <button type="button" class="btn-tuile-action" data-id="${l.id}" onclick="supprimerLeadDefinitif(this)" style="background:none; border:1px solid #e3b3a8; color:#c0392b; border-radius:8px; padding:5px 10px; font-size:0.75rem; font-weight:700; cursor:pointer;">🗑️ Supprimer</button>
         </span>
       </div>
@@ -2421,7 +2429,7 @@
     };
     const lienVoir = l.devis_pdf_url ? `<a class="btn-devis voir" href="${l.devis_pdf_url}" target="_blank" rel="noopener">Voir</a>` : '';
     const suffixeToken = params.get('admin_token') ? '&admin_token=' + params.get('admin_token') : '';
-    const lienDevisNatif = `<a class="btn-devis" href="/mes-devis.html?id=${l.draft_id}&leadId=${l.id}${suffixeToken}" style="background:#1e6f4c;">🧾 Devis</a>`;
+    const lienDevisNatif = `<a class="btn-devis" href="/mes-devis.html?id=${l.draft_id}&leadId=${l.id}${suffixeToken}" style="background:#7c3aed;">🧾 Devis</a>`;
 
     if (statut === 'aucun') {
       return `<div class="devis-actions">${lienDevisNatif}<button type="button" class="btn-devis envoyer" data-action="envoyer-devis" data-lead="${l.id}" data-site="${l.draft_id}">📄 Envoyer un devis</button></div>`;
@@ -3970,7 +3978,7 @@
       const data = await res.json();
       if (data.success) {
         feedback.textContent = `✓ "${texte}" ajouté — les nouvelles statistiques apparaîtront après les premiers clics.`;
-        feedback.style.color = '#1e6f4c';
+        feedback.style.color = '#7c3aed';
         input.value = '';
       } else {
         feedback.textContent = data.error || "Erreur lors de l'ajout.";
@@ -4003,12 +4011,12 @@
   externe, gratuit) — fonctionne sur Chrome/Edge, pas sur Safari/Firefox
   pour la reconnaissance vocale (support partiel/absent côté navigateur).
 -->
-<div id="skyecoChatBubble" style="position:fixed; bottom:22px; right:22px; z-index:999; background:linear-gradient(135deg, #f0a878 0%, #e8622c 55%, #c74f20 100%); color:#fff; display:flex; align-items:center; gap:9px; padding:14px 22px 14px 18px; border-radius:999px; font-size:15px; font-weight:700; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; cursor:pointer; box-shadow:0 8px 26px rgba(232,98,44,0.4); transition:transform 0.15s ease, box-shadow 0.15s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 32px rgba(232,98,44,0.5)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 8px 26px rgba(232,98,44,0.4)';">
+<div id="skyecoChatBubble" style="position:fixed; bottom:22px; right:22px; z-index:999; background:linear-gradient(135deg, #f9a8d4 0%, #ec4899 55%, #be185d 100%); color:#fff; display:flex; align-items:center; gap:9px; padding:14px 22px 14px 18px; border-radius:999px; font-size:15px; font-weight:700; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; cursor:pointer; box-shadow:0 8px 26px rgba(232,98,44,0.4); transition:transform 0.15s ease, box-shadow 0.15s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 32px rgba(232,98,44,0.5)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 8px 26px rgba(232,98,44,0.4)';">
   <span style="font-size:19px; line-height:1;">💬</span><span>Besoin d'aide ?</span>
 </div>
 
 <div id="skyecoChatWindow" style="display:none; position:fixed; bottom:92px; right:22px; z-index:999; width:340px; max-width:calc(100vw - 32px); height:460px; max-height:70vh; background:#fff; border-radius:16px; box-shadow:0 10px 40px rgba(0,0,0,0.25); flex-direction:column; overflow:hidden; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-  <div style="background:#14312a; color:#fff; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
+  <div style="background:#211a35; color:#fff; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
     <div>
       <div style="font-weight:700; font-size:0.92rem;">Skyeco Pro</div>
       <div style="font-size:0.72rem; opacity:0.75;">Réponse en quelques secondes</div>
@@ -4023,8 +4031,8 @@
   <div id="skyecoChatMessages" style="flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:10px; background:#f7f5f0;"></div>
   <div style="padding:10px; border-top:1px solid #eef1ec; display:flex; gap:8px; background:#fff;">
     <input type="text" id="skyecoChatInput" placeholder="Pose ta question ou parle…" style="flex:1; border:1.5px solid #e0e5df; border-radius:10px; padding:9px 12px; font-size:0.86rem;">
-    <button id="skyecoChatMic" title="Parler au lieu d'écrire" style="background:#f2f4f1; color:#14312a; border:none; border-radius:10px; padding:9px 12px; font-weight:700; cursor:pointer; font-size:0.9rem;">🎤</button>
-    <button id="skyecoChatSend" style="background:#1e6f4c; color:#fff; border:none; border-radius:10px; padding:9px 14px; font-weight:700; cursor:pointer; font-size:0.86rem;">→</button>
+    <button id="skyecoChatMic" title="Parler au lieu d'écrire" style="background:#f2f4f1; color:#211a35; border:none; border-radius:10px; padding:9px 12px; font-weight:700; cursor:pointer; font-size:0.9rem;">🎤</button>
+    <button id="skyecoChatSend" style="background:#7c3aed; color:#fff; border:none; border-radius:10px; padding:9px 14px; font-weight:700; cursor:pointer; font-size:0.86rem;">→</button>
   </div>
 </div>
 
@@ -4045,8 +4053,8 @@
   function ajouterMessage(role, texte) {
     const bulle = document.createElement('div');
     bulle.style.cssText = role === 'user'
-      ? 'align-self:flex-end; background:#1e6f4c; color:#fff; padding:9px 13px; border-radius:14px 14px 3px 14px; font-size:0.85rem; max-width:80%; line-height:1.45;'
-      : 'align-self:flex-start; background:#fff; color:#14312a; padding:9px 13px; border-radius:14px 14px 14px 3px; font-size:0.85rem; max-width:85%; line-height:1.45; box-shadow:0 1px 3px rgba(0,0,0,0.08);';
+      ? 'align-self:flex-end; background:#7c3aed; color:#fff; padding:9px 13px; border-radius:14px 14px 3px 14px; font-size:0.85rem; max-width:80%; line-height:1.45;'
+      : 'align-self:flex-start; background:#fff; color:#211a35; padding:9px 13px; border-radius:14px 14px 14px 3px; font-size:0.85rem; max-width:85%; line-height:1.45; box-shadow:0 1px 3px rgba(0,0,0,0.08);';
     bulle.textContent = texte;
     messagesEl.appendChild(bulle);
     messagesEl.scrollTop = messagesEl.scrollHeight;

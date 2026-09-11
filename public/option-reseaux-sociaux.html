@@ -1,0 +1,124 @@
+<!-- ============================================================
+     OPTION : Publication automatique réseaux sociaux — Skyeco Pro
+     Bloc autonome, à coller dans la page tarifs / formulaire / dashboard.
+     Pas de dépendance externe. Personnaliser les couleurs si besoin
+     (variables CSS en haut du <style>).
+============================================================ -->
+
+<style>
+  .sf-option-social {
+    --sf-ink: #1c2b24;
+    --sf-muted: #5b6b63;
+    --sf-line: #d7ddd8;
+    --sf-accent: #2f6b4f;
+    --sf-accent-soft: #eaf2ec;
+    --sf-surface: #ffffff;
+
+    max-width: 560px;
+    background: var(--sf-surface);
+    border: 1px solid var(--sf-line);
+    border-radius: 10px;
+    padding: 28px 30px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--sf-ink);
+  }
+
+  .sf-option-social__badge {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--sf-accent);
+    background: var(--sf-accent-soft);
+    padding: 4px 10px;
+    border-radius: 6px;
+    margin-bottom: 14px;
+  }
+
+  .sf-option-social h3 {
+    margin: 0 0 8px;
+    font-size: 21px;
+    line-height: 1.3;
+  }
+
+  .sf-option-social p.sf-option-social__lead {
+    margin: 0 0 18px;
+    color: var(--sf-muted);
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .sf-option-social ul {
+    list-style: none;
+    margin: 0 0 20px;
+    padding: 0;
+  }
+
+  .sf-option-social li {
+    position: relative;
+    padding-left: 22px;
+    margin-bottom: 10px;
+    font-size: 14.5px;
+    line-height: 1.45;
+  }
+
+  .sf-option-social li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 7px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--sf-accent);
+  }
+
+  .sf-option-social__note {
+    font-size: 13px;
+    color: var(--sf-muted);
+    border-top: 1px solid var(--sf-line);
+    padding-top: 14px;
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+
+  .sf-option-social__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--sf-accent);
+    color: #fff;
+    border: none;
+    padding: 11px 20px;
+    border-radius: 7px;
+    font-size: 14.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .sf-option-social__cta:hover {
+    background: #245a41;
+  }
+</style>
+
+<div class="sf-option-social">
+  <span class="sf-option-social__badge">Option</span>
+  <h3>Publication automatique sur les réseaux sociaux</h3>
+  <p class="sf-option-social__lead">
+    Vos chantiers publiés sur Instagram et Facebook, sans y penser.
+  </p>
+
+  <ul>
+    <li>À chaque chantier ajouté, une légende et des hashtags sont générés automatiquement à partir de vos photos</li>
+    <li>Vous validez ou modifiez le post en un clic depuis votre tableau de bord</li>
+    <li>Publication immédiate ou planifiée à l'heure de votre choix</li>
+  </ul>
+
+  <p class="sf-option-social__note">
+    Nécessite un compte Instagram Business ou Creator relié à une Page Facebook.
+    Si ce n'est pas encore le cas, on vous accompagne pour la mise en place (5 minutes).
+  </p>
+
+  <button class="sf-option-social__cta" type="button" onclick="window.sfActivateSocialOption && window.sfActivateSocialOption()">
+    Activer cette option
+  </button>
+</div>

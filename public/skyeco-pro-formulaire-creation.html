@@ -177,12 +177,18 @@
   .btn-ghost{ background:transparent; border-color:var(--paper-line); color:var(--navy); }
   .btn-ghost:hover{ border-color:var(--blue); }
 
-  .splash-view{ background:var(--white); border:1px solid var(--paper-line); padding:56px 36px; text-align:center; }
+  .splash-view{ background:var(--white); border:1px solid var(--paper-line); padding:56px 36px; text-align:center; max-height:100vh; overflow-y:auto; }
   .splash-logo{ height:56px; display:block; margin:0 auto 26px; }
   .splash-title{ font-family:'Big Shoulders Display',sans-serif; font-weight:900; font-size:34px; color:var(--navy); line-height:1.05; }
-  .splash-tagline{ color:var(--concrete); font-size:16px; line-height:1.5; max-width:340px; margin:16px auto 30px; }
+  .splash-tagline{ color:var(--concrete); font-size:16px; line-height:1.5; max-width:400px; margin:16px auto 30px; }
   .btn-splash{ display:inline-block; font-size:16px; padding:16px 30px; box-shadow:0 8px 24px rgba(232,98,44,0.28); text-decoration:none; }
   @media(max-width:480px){ .splash-view{ padding:40px 22px; } .splash-title{ font-size:28px; } }
+
+  .splash-benefices{ list-style:none; text-align:left; max-width:420px; margin:0 auto 32px; display:flex; flex-direction:column; gap:18px; }
+  .splash-benefices li{ display:flex; align-items:flex-start; gap:13px; font-size:14.5px; line-height:1.48; color:var(--concrete); }
+  .splash-benefices li strong{ color:var(--navy); font-weight:700; }
+  .splash-benefice-icone{ flex:0 0 auto; width:36px; height:36px; border-radius:10px; background:var(--paper); display:flex; align-items:center; justify-content:center; font-size:17px; }
+  @media(max-width:480px){ .splash-benefices{ gap:14px; } .splash-benefices li{ font-size:13.5px; } }
 
   .error{ color:var(--orange-dark); font-size:12.5px; margin-top:6px; display:none; font-family:'IBM Plex Mono',monospace; }
   .error.show{ display:block; }
@@ -235,7 +241,27 @@
       <div id="splashView" class="splash-view">
         <img class="splash-logo" src="/skyeco-logo-ads-compact.svg" alt="Skyeco IA Ads">
         <h1 class="splash-title">Skyeco Ads</h1>
-        <p class="splash-tagline">L'IA qui attrape vos prospects sur internet et les fait atterrir dans votre tableau de bord.</p>
+        <p class="splash-tagline">Une vraie révolution pour votre activité&nbsp;: Skyeco Ads prend en charge vos tâches les plus chronophages — vous gardez un œil sur tout, sans plus rien faire à la main.</p>
+
+        <ul class="splash-benefices">
+          <li>
+            <span class="splash-benefice-icone">🎯</span>
+            <div><strong>Vos Google Ads pilotées et coachées automatiquement</strong> — mots-clés choisis pour votre métier, suivi quotidien, correction des campagnes qui sous-performent.</div>
+          </li>
+          <li>
+            <span class="splash-benefice-icone">🖼️</span>
+            <div><strong>Votre propre page vitrine</strong> — carrousel photo et formulaire d'estimation de devis, prête à recevoir vos prospects.</div>
+          </li>
+          <li>
+            <span class="splash-benefice-icone">📲</span>
+            <div><strong>Vos prospects suivis par email et SMS</strong> — relances automatiques, aucune demande n'est oubliée.</div>
+          </li>
+          <li>
+            <span class="splash-benefice-icone">✍️</span>
+            <div><strong>Vos devis envoyés avec signature électronique</strong> — par email et SMS, en quelques clics.</div>
+          </li>
+        </ul>
+
         <a class="btn btn-primary btn-splash" href="/mon-dashboard-demo.html?visiteur=1">Voir mon tableau de bord →</a>
       </div>
 

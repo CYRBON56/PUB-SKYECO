@@ -72,6 +72,51 @@ Réponds STRICTEMENT en JSON valide, sans aucun texte avant ou après, sous cett
 }`;
 }
 
+// Corrige un bug réel rencontré en production le 11/09 : malgré la
+// consigne du prompt ("retours à la ligne \\n"), Claude renvoie parfois le
+// texte de "formulaireBrouillon" avec de VRAIS retours à la ligne à
+// l'intérieur de la valeur JSON (naturel vu que c'est un long texte
+// multi-lignes de type cahier des charges) — hors JSON strict n'autorise
+// aucun caractère de contrôle brut (saut de ligne/tabulation) à l'intérieur
+// d'une chaîne, donc JSON.parse() échouait systématiquement dès que le
+// brouillon dépassait une ligne ("Réponse IA illisible" affiché à
+// l'artisan). Cette fonction ré-échappe ces caractères UNIQUEMENT à
+// l'intérieur des chaînes JSON (en suivant l'état guillemets/échappement
+// caractère par caractère), sans toucher au reste de la structure JSON.
+function echapperControlesDansChaines(texteJson) {
+  let resultat = '';
+  let dansChaine = false;
+  let echappementPrecedent = false;
+  for (let i = 0; i < texteJson.length; i++) {
+    const c = texteJson[i];
+    if (!dansChaine) {
+      if (c === '"') dansChaine = true;
+      resultat += c;
+      continue;
+    }
+    if (echappementPrecedent) {
+      resultat += c;
+      echappementPrecedent = false;
+      continue;
+    }
+    if (c === '\\') {
+      resultat += c;
+      echappementPrecedent = true;
+      continue;
+    }
+    if (c === '"') {
+      dansChaine = false;
+      resultat += c;
+      continue;
+    }
+    if (c === '\n') { resultat += '\\n'; continue; }
+    if (c === '\r') { continue; }
+    if (c === '\t') { resultat += '\\t'; continue; }
+    resultat += c;
+  }
+  return resultat;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Méthode non autorisée' });
@@ -116,7 +161,7 @@ export default async function handler(req, res) {
     let resultat;
     try {
       const nettoye = texteBrut.replace(/```json|```/g, '').trim();
-      resultat = JSON.parse(nettoye);
+      resultat = JSON.parse(echapperControlesDansChaines(nettoye));
     } catch (erreurParse) {
       throw new Error('Réponse IA illisible : ' + texteBrut.slice(0, 300));
     }

@@ -10,11 +10,11 @@
   body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    color: #14312a;
-    background: #f5f8f6;
+    color: #211a35;
+    background: #f6f5fb;
   }
   header {
-    background: #14312a;
+    background: #211a35;
     color: white;
     padding: 18px 28px;
     display: flex;
@@ -40,11 +40,11 @@
     margin-bottom: 20px;
   }
   .card h2 { margin: 0 0 6px; font-size: 1.15rem; }
-  .card p { color: #5b6b64; font-size: 0.92rem; margin: 4px 0; }
+  .card p { color: #8a8296; font-size: 0.92rem; margin: 4px 0; }
   .statut { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; }
-  .statut-actif { background: #eaf4ef; color: #1e6f4c; }
+  .statut-actif { background: #f5f3ff; color: #7c3aed; }
   .statut-impaye, .statut-suspendu { background: #fdeaea; color: #991b1b; }
-  .loading, .error { text-align: center; padding: 60px 20px; color: #5b6b64; }
+  .loading, .error { text-align: center; padding: 60px 20px; color: #8a8296; }
 
   /* ---- Chat Skyeco ---- */
   .chat-card { padding: 0; overflow: hidden; }
@@ -57,14 +57,14 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
-    background: #fbfcfa;
-    border-top: 1px solid #eef1ee;
-    border-bottom: 1px solid #eef1ee;
+    background: #faf8ff;
+    border-top: 1px solid #ede9fe;
+    border-bottom: 1px solid #ede9fe;
   }
   .chat-empty {
     margin: auto;
     text-align: center;
-    color: #8a9490;
+    color: #8a8296;
     font-size: 0.88rem;
     max-width: 260px;
   }
@@ -78,20 +78,20 @@
   }
   .bubble-client {
     align-self: flex-end;
-    background: #1e6f4c;
+    background: #7c3aed;
     color: white;
     border-bottom-right-radius: 4px;
   }
   .bubble-ia {
     align-self: flex-start;
-    background: #eef4f0;
-    color: #14312a;
+    background: #f5f3ff;
+    color: #211a35;
     border-bottom-left-radius: 4px;
   }
   .bubble-cyrille {
     align-self: flex-start;
     background: #f0e9da;
-    color: #14312a;
+    color: #211a35;
     border-bottom-left-radius: 4px;
   }
   .bubble-label {
@@ -103,7 +103,7 @@
     margin-bottom: 3px;
     display: block;
   }
-  .bubble-loading { align-self: flex-start; color: #8a9490; font-size: 0.85rem; font-style: italic; }
+  .bubble-loading { align-self: flex-start; color: #8a8296; font-size: 0.85rem; font-style: italic; }
   .chat-input-row {
     display: flex;
     gap: 8px;
@@ -111,15 +111,15 @@
   }
   .chat-input-row input {
     flex: 1;
-    border: 1.5px solid #d8e3de;
+    border: 1.5px solid #ddd6fe;
     border-radius: 10px;
     padding: 11px 14px;
     font-size: 0.92rem;
     font-family: inherit;
   }
-  .chat-input-row input:focus { outline: none; border-color: #1e6f4c; }
+  .chat-input-row input:focus { outline: none; border-color: #7c3aed; }
   .chat-input-row button {
-    background: #1e6f4c;
+    background: #7c3aed;
     color: white;
     border: none;
     border-radius: 10px;
@@ -132,29 +132,29 @@
 
   /* ---- Prospects (client) ---- */
   .prospects-stats{ display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin:16px 0; }
-  .p-stat{ background:#f5f8f6; border-radius:10px; padding:12px 14px; }
-  .p-stat .num{ font-size:22px; font-weight:800; color:#14312a; }
-  .p-stat .lbl{ font-size:10.5px; color:#8a9490; text-transform:uppercase; letter-spacing:0.4px; margin-top:2px; }
+  .p-stat{ background:#f6f5fb; border-radius:10px; padding:12px 14px; }
+  .p-stat .num{ font-size:22px; font-weight:800; color:#211a35; }
+  .p-stat .lbl{ font-size:10.5px; color:#8a8296; text-transform:uppercase; letter-spacing:0.4px; margin-top:2px; }
   .p-tabs{ display:flex; gap:6px; flex-wrap:wrap; margin:14px 0; }
-  .p-tab{ background:#fff; border:1px solid #d8e3de; border-radius:16px; padding:6px 12px; font-size:12px; font-weight:600; cursor:pointer; color:#14312a; }
-  .p-tab.active{ background:#14312a; border-color:#14312a; color:#fff; }
+  .p-tab{ background:#fff; border:1px solid #ddd6fe; border-radius:16px; padding:6px 12px; font-size:12px; font-weight:600; cursor:pointer; color:#211a35; }
+  .p-tab.active{ background:#211a35; border-color:#211a35; color:#fff; }
   .p-toolbar{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
-  .p-toolbar input[type=number]{ width:80px; padding:8px 10px; border:1px solid #d8e3de; border-radius:8px; font-family:inherit; }
-  .p-btn{ background:#fff; border:1px solid #d8e3de; color:#14312a; padding:8px 14px; border-radius:8px; font-size:12.5px; font-weight:700; cursor:pointer; }
-  .p-btn.primary{ background:#1e6f4c; border-color:#1e6f4c; color:#fff; }
+  .p-toolbar input[type=number]{ width:80px; padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-family:inherit; }
+  .p-btn{ background:#fff; border:1px solid #ddd6fe; color:#211a35; padding:8px 14px; border-radius:8px; font-size:12.5px; font-weight:700; cursor:pointer; }
+  .p-btn.primary{ background:#7c3aed; border-color:#7c3aed; color:#fff; }
   .p-btn.danger{ background:#fdeaea; border-color:#f3c6c6; color:#991b1b; }
   .p-status{ font-size:12.5px; margin:8px 0; }
-  .p-status.ok{ color:#1e6f4c; }
+  .p-status.ok{ color:#7c3aed; }
   .p-status.err{ color:#991b1b; }
-  .p-table-wrap{ overflow-x:auto; border:1px solid #eef1ee; border-radius:10px; }
+  .p-table-wrap{ overflow-x:auto; border:1px solid #ede9fe; border-radius:10px; }
   table.p-table{ width:100%; border-collapse:collapse; font-size:12.5px; }
-  table.p-table th{ text-align:left; padding:10px 12px; background:#f5f8f6; color:#8a9490; font-size:10.5px; text-transform:uppercase; }
-  table.p-table td{ padding:10px 12px; border-top:1px solid #eef1ee; vertical-align:top; }
+  table.p-table th{ text-align:left; padding:10px 12px; background:#f6f5fb; color:#8a8296; font-size:10.5px; text-transform:uppercase; }
+  table.p-table td{ padding:10px 12px; border-top:1px solid #ede9fe; vertical-align:top; }
   .p-badge{ display:inline-block; padding:2px 8px; border-radius:12px; font-size:10.5px; font-weight:700; }
   .p-badge.attente{ background:#f0ece0; color:#8a6d1f; }
   .p-badge.envoye{ background:#e4eef4; color:#2c5f8a; }
   .p-badge.ouvert{ background:#eee4f4; color:#6b4fa0; }
-  .p-badge.clique{ background:#e4f4ea; color:#1e6f4c; }
+  .p-badge.clique{ background:#e4f4ea; color:#7c3aed; }
   .p-badge.stop{ background:#fdeaea; color:#991b1b; }
   .p-test-row{ background:#fff8e8; }
   .import-row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:10px 0; }
@@ -318,12 +318,12 @@
         <div class="card">
           <h2>Votre vitrine</h2>
           <p>Renseignez les informations nécessaires (activité, services, photos, logo, nom de domaine) pour qu'on construise votre vitrine.</p>
-          <p><a href="/vitrine-infos.html" style="display:inline-block; margin-top:8px; background:#1e6f4c; color:white; padding:10px 18px; border-radius:10px; text-decoration:none; font-size:0.9rem; font-weight:700;">Remplir les informations →</a></p>
+          <p><a href="/vitrine-infos.html" style="display:inline-block; margin-top:8px; background:#7c3aed; color:white; padding:10px 18px; border-radius:10px; text-decoration:none; font-size:0.9rem; font-weight:700;">Remplir les informations →</a></p>
         </div>
         <div class="card" id="prospectsCard">
           <h2>Vos prospects</h2>
           <p>Importez vos contacts, envoyez vos emails de prospection et suivez qui a ouvert, cliqué, ou s'est désabonné.</p>
-          <p><a href="/mes-prospects.html" style="display:inline-block; margin-top:8px; background:#1a56db; color:white; padding:10px 18px; border-radius:10px; text-decoration:none; font-size:0.9rem; font-weight:700;">Gérer mes prospects →</a></p>
+          <p><a href="/mes-prospects.html" style="display:inline-block; margin-top:8px; background:#7c3aed; color:white; padding:10px 18px; border-radius:10px; text-decoration:none; font-size:0.9rem; font-weight:700;">Gérer mes prospects →</a></p>
         </div>
       `;
       initChat(entreprise.id);

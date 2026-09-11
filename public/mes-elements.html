@@ -294,6 +294,21 @@
       <div class="section-body-inner">
         <label style="margin-top:0;">Décris ton activité en quelques phrases</label>
         <textarea id="assistantVitrineDescription" rows="4" placeholder="Ex : Je pose des terrasses et plages de piscine en résine EPDM dans le Morbihan depuis 10 ans, surtout pour des particuliers avec piscine. Je travaille aussi sur les allées et les margelles."></textarea>
+
+        <label style="margin-top:14px;">Ou pars d'un lien existant (optionnel)</label>
+        <input type="url" id="assistantVitrineUrl" placeholder="https://..." style="width:100%; box-sizing:border-box; padding:10px 12px; border:1px solid #dde5e1; border-radius:8px; font-size:0.88rem; font-family:inherit;">
+        <div style="display:flex; flex-wrap:wrap; gap:16px; margin-top:8px;">
+          <label style="display:flex; align-items:center; gap:6px; font-weight:400; margin:0; font-size:0.85rem; cursor:pointer;">
+            <input type="radio" name="assistantVitrineUrlMode" id="assistantVitrineUrlModePropre" value="propre_site" checked style="width:auto; margin:0;">
+            C'est mon site actuel
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; font-weight:400; margin:0; font-size:0.85rem; cursor:pointer;">
+            <input type="radio" name="assistantVitrineUrlMode" id="assistantVitrineUrlModeInspiration" value="inspiration" style="width:auto; margin:0;">
+            C'est un site qui m'inspire
+          </label>
+        </div>
+        <p class="hint" style="margin:6px 0 0;">« Mon site actuel » réutilise tes propres textes et photos. « Un site qui m'inspire » ne copie jamais son contenu — l'IA s'inspire seulement de sa structure pour créer un texte 100% nouveau, propre à toi.</p>
+
         <button type="button" id="btnAssistantVitrineIA" style="margin-top:10px; background:#e8622c; color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:0.85rem; font-weight:700; cursor:pointer;">✨ Construire ma vitrine avec l'IA</button>
         <div id="assistantVitrineResultat" style="margin-top:12px;"></div>
       </div>
@@ -1245,80 +1260,151 @@
     }
   }
 
+  // Affiche le résultat de l'assistant IA (titres + brouillon de formulaire
+  // + déclenchement du carrousel photo si besoin) — factorisé car appelé
+  // aussi bien depuis une description tapée à la main (api/generer-vitrine-ia)
+  // que depuis un lien importé (api/analyser-site-vitrine, 11/09).
+  function afficherResultatAssistantVitrine(data, zoneBox, btnAssistantVitrine, descriptionPourCarrousel) {
+    // logo/photos récupérés automatiquement (mode "mon site actuel" uniquement) :
+    // on les applique comme un envoi manuel classique, sans jamais écraser un
+    // logo/des photos déjà présents.
+    if (data.logoUrl && !logoUrl) {
+      logoUrl = data.logoUrl;
+      document.getElementById('statusLogo').textContent = 'Logo récupéré depuis ton site ✓';
+      document.getElementById('boxLogo').classList.add('has-file');
+      document.getElementById('logoPreview').src = logoUrl;
+      sauvegarderChampsImmediat({ logo_url: logoUrl });
+    }
+    if (Array.isArray(data.photosUrls) && data.photosUrls.length) {
+      let ajoutees = 0;
+      data.photosUrls.forEach(u => {
+        if (!photosUrls.includes(u)) { photosUrls.push(u); ajoutees++; }
+      });
+      if (ajoutees > 0) {
+        rafraichirGridPhotos();
+        document.getElementById('statusPhotos').textContent = `${photosUrls.length} photo(s) ajoutée(s)`;
+        document.getElementById('boxPhotos').classList.add('has-file');
+        sauvegarderChampsImmediat({ photos: photosUrls });
+      }
+    }
+
+    let html = '<label style="margin-top:0;">Titres sur-mesure — clique pour utiliser</label>';
+    html += data.titres.map(t => `
+      <button type="button" class="titre-suggestion-ia titre-assistant-ia" style="display:block; width:100%; text-align:left; margin-bottom:6px; padding:10px 12px; background:#f5f8f6; border:1px solid #dde5e1; border-radius:8px; cursor:pointer; font-size:0.88rem;">${t.replace(/"/g, '&quot;')}</button>
+    `).join('');
+    if (data.metierSuggereLabel) {
+      html += `<div class="hint" style="margin-top:8px;">💡 D'après ta description, ça ressemble à : <strong>${data.metierSuggereLabel}</strong>. Le métier qui pilote ton ciblage publicitaire se confirme dans ton tableau de bord.</div>`;
+    }
+    if (data.logoUrl || (data.photosUrls && data.photosUrls.length)) {
+      html += `<div class="hint" style="margin-top:8px; color:#1e6f4c; font-weight:600;">✓ Logo et/ou photos récupérés depuis ton site et déjà ajoutés ci-dessous.</div>`;
+    }
+    if (data.formulaireBrouillon) {
+      const idBrouillon = 'brouillonFormulaireIA';
+      html += `
+        <label style="margin-top:18px;">Brouillon de ton formulaire de devis</label>
+        <p class="hint" style="margin:2px 0 8px;">Une proposition de questions à poser à tes clients et de calcul de prix — à faire valider et coder par ton conseiller avant mise en ligne, rien n'est activé automatiquement.</p>
+        <div id="${idBrouillon}" style="white-space:pre-wrap; background:#f5f8f6; border:1px solid #dde5e1; border-radius:8px; padding:12px 14px; font-size:0.85rem; color:#14312a; max-height:320px; overflow-y:auto;">${data.formulaireBrouillon.replace(/</g, '&lt;')}</div>
+        <button type="button" id="btnEnvoyerBrouillonFormulaire" style="margin-top:10px; background:#1e6f4c; color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:0.85rem; font-weight:700; cursor:pointer;">📨 Envoyer ce brouillon à mon conseiller</button>
+        <div id="statutEnvoiBrouillon" class="hint" style="margin-top:6px; display:none; color:#1e6f4c; font-weight:700;">✓ Envoyé — ton conseiller va relire et construire ce formulaire, tu seras recontacté.</div>
+      `;
+    }
+    if (photosUrls.length === 0) {
+      html += `
+        <label style="margin-top:18px;">Photos de ton carrousel</label>
+        <div id="statutCarrouselIA" class="hint" style="color:#4a8a68; font-weight:600;">📷 Tu n'as pas encore de photo — génération automatique de 4 visuels avec l'IA (Gamma) pour démarrer ton carrousel…</div>
+      `;
+    }
+    zoneBox.innerHTML = html;
+    zoneBox.querySelectorAll('.titre-assistant-ia').forEach(elBtn => {
+      elBtn.addEventListener('click', () => {
+        appliquerTitreSuggere(elBtn.textContent, null);
+        const section = btnAssistantVitrine.closest('.section');
+        if (section) section.classList.add('open');
+        document.querySelector('[data-section="titre"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    });
+    const btnEnvoyerBrouillon = document.getElementById('btnEnvoyerBrouillonFormulaire');
+    if (btnEnvoyerBrouillon) {
+      btnEnvoyerBrouillon.addEventListener('click', () => {
+        const checkFP = document.getElementById('checkFormulairePersonnalise');
+        const descFP = document.getElementById('formulairePersonnaliseDescription');
+        const wrapperFP = document.getElementById('formulairePersonnaliseDescriptionWrapper');
+        descFP.value = data.formulaireBrouillon;
+        wrapperFP.style.display = 'block';
+        sauvegarderChampsImmediat({ formulaire_personnalise_description: descFP.value.trim() });
+        checkFP.checked = true;
+        checkFP.dispatchEvent(new Event('change'));
+        btnEnvoyerBrouillon.disabled = true;
+        btnEnvoyerBrouillon.textContent = '✓ Envoyé';
+        document.getElementById('statutEnvoiBrouillon').style.display = 'block';
+        const sectionProduits = document.querySelector('[data-section="produits"]');
+        if (sectionProduits) sectionProduits.classList.add('open');
+      });
+    }
+    if (photosUrls.length === 0) {
+      genererCarrouselPhotosIA(data.metierSuggere, descriptionPourCarrousel, document.getElementById('statutCarrouselIA'));
+    }
+  }
+
   const btnAssistantVitrine = document.getElementById('btnAssistantVitrineIA');
   if (btnAssistantVitrine) {
     btnAssistantVitrine.addEventListener('click', async () => {
       const zoneBox = document.getElementById('assistantVitrineResultat');
       const description = document.getElementById('assistantVitrineDescription').value.trim();
-      if (description.length < 10) {
-        zoneBox.innerHTML = '<div class="hint">Décris ton activité en une ou deux phrases pour obtenir de meilleures suggestions.</div>';
+      const urlSite = document.getElementById('assistantVitrineUrl').value.trim();
+      const modeUrl = document.querySelector('input[name="assistantVitrineUrlMode"]:checked')?.value || 'propre_site';
+
+      if (!urlSite && description.length < 10) {
+        zoneBox.innerHTML = '<div class="hint">Décris ton activité en une ou deux phrases (ou colle un lien ci-dessus) pour obtenir de meilleures suggestions.</div>';
         return;
       }
+      if (urlSite && !/^https?:\/\//i.test(urlSite)) {
+        zoneBox.innerHTML = '<div class="hint">Le lien doit commencer par http:// ou https://</div>';
+        return;
+      }
+
       const texteOriginal = btnAssistantVitrine.textContent;
       btnAssistantVitrine.disabled = true;
       btnAssistantVitrine.textContent = 'Construction en cours… (jusqu\'à 30 secondes)';
       zoneBox.innerHTML = '';
-      try {
+
+      // Repli automatique vers la génération à partir de la description tapée
+      // (comportement historique, inchangé) — utilisé soit directement quand
+      // aucun lien n'est renseigné, soit quand le lien fourni n'a pas pu être
+      // lu (site_illisible) et qu'une description est disponible en secours.
+      async function genererDepuisDescription() {
         const res = await fetch('/api/generer-vitrine-ia', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ description, metiers: metiersActuels, zone: zoneActuelle })
         });
-        const data = await res.json();
-        if (data.success && data.titres && data.titres.length) {
-          let html = '<label style="margin-top:0;">Titres sur-mesure — clique pour utiliser</label>';
-          html += data.titres.map(t => `
-            <button type="button" class="titre-suggestion-ia titre-assistant-ia" style="display:block; width:100%; text-align:left; margin-bottom:6px; padding:10px 12px; background:#f5f8f6; border:1px solid #dde5e1; border-radius:8px; cursor:pointer; font-size:0.88rem;">${t.replace(/"/g, '&quot;')}</button>
-          `).join('');
-          if (data.metierSuggereLabel) {
-            html += `<div class="hint" style="margin-top:8px;">💡 D'après ta description, ça ressemble à : <strong>${data.metierSuggereLabel}</strong>. Le métier qui pilote ton ciblage publicitaire se confirme dans ton tableau de bord.</div>`;
-          }
-          if (data.formulaireBrouillon) {
-            const idBrouillon = 'brouillonFormulaireIA';
-            html += `
-              <label style="margin-top:18px;">Brouillon de ton formulaire de devis</label>
-              <p class="hint" style="margin:2px 0 8px;">Une proposition de questions à poser à tes clients et de calcul de prix — à faire valider et coder par ton conseiller avant mise en ligne, rien n'est activé automatiquement.</p>
-              <div id="${idBrouillon}" style="white-space:pre-wrap; background:#f5f8f6; border:1px solid #dde5e1; border-radius:8px; padding:12px 14px; font-size:0.85rem; color:#14312a; max-height:320px; overflow-y:auto;">${data.formulaireBrouillon.replace(/</g, '&lt;')}</div>
-              <button type="button" id="btnEnvoyerBrouillonFormulaire" style="margin-top:10px; background:#1e6f4c; color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:0.85rem; font-weight:700; cursor:pointer;">📨 Envoyer ce brouillon à mon conseiller</button>
-              <div id="statutEnvoiBrouillon" class="hint" style="margin-top:6px; display:none; color:#1e6f4c; font-weight:700;">✓ Envoyé — ton conseiller va relire et construire ce formulaire, tu seras recontacté.</div>
-            `;
-          }
-          if (photosUrls.length === 0) {
-            html += `
-              <label style="margin-top:18px;">Photos de ton carrousel</label>
-              <div id="statutCarrouselIA" class="hint" style="color:#4a8a68; font-weight:600;">📷 Tu n'as pas encore de photo — génération automatique de 4 visuels avec l'IA (Gamma) pour démarrer ton carrousel…</div>
-            `;
-          }
-          zoneBox.innerHTML = html;
-          zoneBox.querySelectorAll('.titre-assistant-ia').forEach(elBtn => {
-            elBtn.addEventListener('click', () => {
-              appliquerTitreSuggere(elBtn.textContent, null);
-              const section = btnAssistantVitrine.closest('.section');
-              if (section) section.classList.add('open');
-              document.querySelector('[data-section="titre"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            });
+        return res.json();
+      }
+
+      try {
+        let data;
+        if (urlSite) {
+          const res = await fetch('/api/analyser-site-vitrine', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: urlSite, mode: modeUrl, description, metiers: metiersActuels, zone: zoneActuelle, draftId })
           });
-          const btnEnvoyerBrouillon = document.getElementById('btnEnvoyerBrouillonFormulaire');
-          if (btnEnvoyerBrouillon) {
-            btnEnvoyerBrouillon.addEventListener('click', () => {
-              const checkFP = document.getElementById('checkFormulairePersonnalise');
-              const descFP = document.getElementById('formulairePersonnaliseDescription');
-              const wrapperFP = document.getElementById('formulairePersonnaliseDescriptionWrapper');
-              descFP.value = data.formulaireBrouillon;
-              wrapperFP.style.display = 'block';
-              sauvegarderChampsImmediat({ formulaire_personnalise_description: descFP.value.trim() });
-              checkFP.checked = true;
-              checkFP.dispatchEvent(new Event('change'));
-              btnEnvoyerBrouillon.disabled = true;
-              btnEnvoyerBrouillon.textContent = '✓ Envoyé';
-              document.getElementById('statutEnvoiBrouillon').style.display = 'block';
-              const sectionProduits = document.querySelector('[data-section="produits"]');
-              if (sectionProduits) sectionProduits.classList.add('open');
-            });
+          data = await res.json();
+          if (!data.success && data.raison === 'site_illisible') {
+            if (description.length >= 10) {
+              zoneBox.innerHTML = '<div class="hint">On n\'a pas réussi à lire ce site — génération à partir de ta description à la place…</div>';
+              data = await genererDepuisDescription();
+            } else {
+              zoneBox.innerHTML = '<div class="hint">On n\'a pas réussi à lire ce site. Décris plutôt ton activité en une ou deux phrases ci-dessus, puis relance.</div>';
+              return;
+            }
           }
-          if (photosUrls.length === 0) {
-            genererCarrouselPhotosIA(data.metierSuggere, description, document.getElementById('statutCarrouselIA'));
-          }
+        } else {
+          data = await genererDepuisDescription();
+        }
+
+        if (data.success && data.titres && data.titres.length) {
+          afficherResultatAssistantVitrine(data, zoneBox, btnAssistantVitrine, description);
         } else {
           zoneBox.innerHTML = '<div class="hint">' + (data.error || "Génération indisponible pour le moment, réessaie plus tard.") + '</div>';
         }

@@ -3,186 +3,804 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Aperçu du dashboard — Pro</title>
+<title>Aperçu du dashboard — Skyeco Pro</title>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f5f8f6; color:#14312a; padding:24px; position:relative; overflow-x:hidden; }
+  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f6f5fb; color:#211a35; padding:28px 24px; position:relative; overflow-x:hidden; }
   .shape-bg { position:fixed; z-index:0; pointer-events:none; opacity:0.16; }
   .wrap { max-width:980px; margin:0 auto; position:relative; z-index:1; }
 
-  .nav-paliers { display:flex; gap:6px; margin-bottom:18px; background:#fff; padding:6px; border-radius:999px; box-shadow:0 2px 10px rgba(0,0,0,0.05); width:fit-content; }
-  .nav-palier { text-decoration:none; padding:7px 14px; border-radius:999px; font-size:0.76rem; font-weight:700; color:#8a9891; }
-  .nav-palier.actif { background:#1e6f4c; color:#fff; }
+  .lien-retour {
+    display:inline-flex; align-items:center; gap:6px; color:#8a8296; text-decoration:none;
+    font-size:0.88rem; margin-bottom:14px;
+  }
+  .lien-retour:hover { color:#211a35; }
 
-  .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+  .banniere-demo {
+    display:flex; align-items:center; justify-content:center; gap:10px; text-align:center;
+    background:linear-gradient(120deg, #f9a8d4, #ec4899 55%, #be185d); color:#fff;
+    border-radius:16px; padding:14px 20px; margin-bottom:18px; box-shadow:0 10px 26px rgba(199,79,32,0.28);
+  }
+  .banniere-demo .picto { font-size:1.4rem; line-height:1; }
+  .banniere-demo strong {
+    font-size:1.15rem; font-weight:800; letter-spacing:0.03em; text-transform:uppercase;
+  }
+  .banniere-demo span.sous-texte { display:block; font-size:0.76rem; font-weight:600; opacity:0.92; margin-top:2px; }
+  @media (max-width:520px){ .banniere-demo strong{ font-size:0.98rem; } }
+
+  .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:10px; }
   h1 { font-size:1.3rem; }
-  .demo-badge { background:#eaf4ef; color:#1e6f4c; font-size:0.72rem; font-weight:700; padding:5px 12px; border-radius:999px; }
+  .demo-badge { background:#f5f3ff; color:#7c3aed; font-size:0.72rem; font-weight:700; padding:5px 12px; border-radius:999px; white-space:nowrap; }
+  .intro-funnel { font-size:0.88rem; color:#8a8296; line-height:1.6; margin-bottom:14px; }
+  .intro-funnel strong { color:#211a35; }
+  .btn-voir-vitrine-demo {
+    display:inline-flex; align-items:center; gap:6px; background:#fff; border:1.5px solid #7c3aed; color:#7c3aed;
+    font-size:0.82rem; font-weight:700; text-decoration:none; padding:8px 16px; border-radius:999px; margin-bottom:20px;
+    cursor:pointer; font-family:inherit;
+  }
+  .btn-voir-vitrine-demo:hover { background:#f5f3ff; }
+  .btn-voir-vitrine-demo:disabled { opacity:0.75; cursor:default; }
+  .hint-clic {
+    display:inline-flex; align-items:center; gap:6px; background:#fdf2f8; border:1px solid #fbcfe8; color:#be185d;
+    font-size:0.78rem; font-weight:700; padding:6px 12px; border-radius:999px; margin-bottom:22px;
+  }
 
-  .stats-row { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin-bottom:24px; }
+  .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
+  @media (max-width:640px){ .stats-row{ grid-template-columns:repeat(2,1fr); } }
   .stat-card { background:#fff; border-radius:14px; padding:18px; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
-  .stat-value { font-size:1.7rem; font-weight:800; }
-  .stat-label { font-size:0.75rem; color:#8a9891; margin-top:2px; }
+  .stat-value { font-size:1.6rem; font-weight:800; }
+  .stat-label { font-size:0.72rem; color:#8a8296; margin-top:2px; }
 
-  .solde-box { background:#fff; border:2px solid #1e6f4c; border-radius:14px; padding:20px; margin-bottom:16px; }
+  .solde-box { background:#fff; border:2px solid #7c3aed; border-radius:14px; padding:20px; margin-bottom:16px; }
   .solde-box h3 { font-size:0.9rem; margin-bottom:12px; }
-  .solde-bar-track { background:#eef1f0; border-radius:8px; height:11px; overflow:hidden; margin-bottom:10px; }
-  .solde-bar-fill { background:#e8622c; height:100%; width:58%; }
-  .solde-stats { display:flex; justify-content:space-between; font-size:0.82rem; color:#5b6b64; }
-  .solde-stats strong { color:#14312a; font-size:1rem; }
-  .btn-pause-demo { background:#f2f4f1; color:#14312a; border:1.5px solid #d7dedb; border-radius:10px; padding:8px 14px; font-size:0.78rem; font-weight:700; margin-top:12px; cursor:default; }
+
+  .abonnement-box { background:#fff; border:1px solid #ede9fe; border-radius:14px; padding:20px; margin-bottom:16px; }
+  .abonnement-box h3 { font-size:0.9rem; margin-bottom:6px; }
+  .abonnement-box .sub { font-size:0.8rem; color:#8a8296; margin-bottom:14px; line-height:1.5; }
+  .abonnement-actions { display:flex; gap:10px; flex-wrap:wrap; }
+  .btn-pause-abonnement-demo {
+    background:#f5f3ff; color:#211a35; border:1.5px solid #ddd6fe; border-radius:10px; padding:9px 15px;
+    font-size:0.8rem; font-weight:700; cursor:default;
+  }
+  .btn-resilier-demo {
+    background:none; color:#8a8296; border:none; font-size:0.8rem; font-weight:600; cursor:default;
+    text-decoration:underline;
+  }
+  .solde-bar-track { background:#ede9fe; border-radius:8px; height:11px; overflow:hidden; margin-bottom:10px; }
+  .solde-bar-fill { background:#ec4899; height:100%; width:58%; }
+  .solde-stats { display:flex; justify-content:space-between; font-size:0.82rem; color:#8a8296; }
+  .solde-stats strong { color:#211a35; font-size:1rem; }
+  .btn-pause-demo {
+    display:inline-flex; align-items:center; gap:10px;
+    background:linear-gradient(120deg, #f9a8d4, #ec4899 55%, #be185d);
+    color:#fff; border:none; border-radius:14px; padding:16px 30px;
+    font-size:1rem; font-weight:800; letter-spacing:0.01em;
+    margin-top:14px; cursor:default; box-shadow:0 10px 24px rgba(199,79,32,0.32);
+  }
+
+  .ads-section { background:#fff; border-radius:14px; padding:22px; margin-bottom:16px; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
+  .ads-section h2 { font-size:1.05rem; margin-bottom:4px; }
+  .ads-section .ads-sub { font-size:0.82rem; color:#8a8296; margin-bottom:20px; }
+  .ads-souspanel { border-top:1.5px solid #ede9fe; padding-top:20px; margin-top:20px; }
+  .ads-souspanel:first-of-type { border-top:none; padding-top:0; margin-top:0; }
+  .ads-souspanel h3 { font-size:0.9rem; margin-bottom:12px; }
+
+  .zone-affichage { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; }
+  .zone-affichage span { font-weight:700; font-size:0.98rem; }
+  .btn-modifier-zone-demo { background:#f5f3ff; color:#211a35; border:none; border-radius:8px; padding:8px 14px; font-size:0.82rem; font-weight:700; cursor:default; white-space:nowrap; }
+  .estim-note { font-size:0.74rem; color:#8a8296; margin-top:10px; }
+
+  .motscles-liste { display:flex; flex-direction:column; gap:8px; margin-bottom:6px; }
+  .motscle-item { display:flex; align-items:center; gap:8px; font-size:0.86rem; }
+  .motscle-item input[type="checkbox"] { width:16px; height:16px; accent-color:#7c3aed; flex-shrink:0; }
+  .motscle-texte { flex:1; }
+  .motscle-potentiel-badge {
+    font-size:0.7rem; font-weight:700; white-space:nowrap; border-radius:6px; padding:2px 8px;
+    background:#f5f3ff; color:#7c3aed; flex-shrink:0;
+  }
+  .motscle-potentiel-badge.faible { background:#f5f3ff; color:#8a8296; }
+  .motscles-potentiel {
+    margin-top:14px; background:#fdf2f8; border:1.5px solid #fbcfe8; border-radius:10px;
+    padding:14px 16px;
+  }
+  .motscles-potentiel .chiffre { font-size:1.4rem; font-weight:800; color:#ec4899; }
+  .motscles-potentiel .detail { font-size:0.82rem; color:#8a8296; margin-top:4px; line-height:1.5; }
+  .btn-rafraichir-demo {
+    margin-top:10px; background:#8a8296; color:#fff; border:none; border-radius:9px;
+    padding:9px 15px; font-size:0.82rem; font-weight:700; cursor:default;
+  }
+
+  .annonce-hint { font-size:0.8rem; color:#8a8296; margin-bottom:16px; line-height:1.5; }
+  .annonce-preview { border:1px solid #ddd6fe; border-radius:8px; padding:14px 16px; margin-bottom:14px; font-family:Arial, sans-serif; }
+  .annonce-preview .badge-annonce {
+    display:inline-block; font-size:11px; font-weight:700; color:#1a1a1a; border:1px solid #1a1a1a;
+    border-radius:3px; padding:0 4px; margin-right:6px; vertical-align:middle;
+  }
+  .annonce-preview .domaine-annonce { font-size:14px; color:#006621; vertical-align:middle; }
+  .annonce-preview .titre-annonce { font-size:19px; color:#1a0dab; font-weight:400; margin-top:3px; line-height:1.3; }
+  .annonce-preview .desc-annonce { font-size:13.5px; color:#4d5156; margin-top:4px; line-height:1.5; }
+  .annonce-champ { margin-bottom:10px; }
+  .annonce-champ label { display:flex; justify-content:space-between; font-size:0.78rem; font-weight:700; margin-bottom:5px; color:#211a35; }
+  .annonce-champ label .compteur { font-weight:400; color:#8a8296; }
+  .annonce-champ input, .annonce-champ textarea {
+    width:100%; padding:9px 11px; border:1.5px solid #ddd6fe; border-radius:8px; font-size:0.85rem;
+    font-family:inherit; color:#211a35; background:#faf8ff;
+  }
+  .annonce-champ textarea { resize:none; min-height:46px; }
+
+  .ga-slider-row { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+  .ga-slider-row input[type="range"] { flex:1; accent-color:#ec4899; }
+  .ga-slider-row span { font-weight:800; font-size:0.9rem; min-width:60px; text-align:right; }
+  .ga-budget-resultat { font-size:0.83rem; color:#8a8296; margin-bottom:6px; }
+  .ga-budget-resultat strong { color:#ec4899; font-size:1.05rem; }
+
+  .ga-heures-chart { display:flex; align-items:flex-end; gap:3px; height:60px; margin-bottom:4px; }
+  .ga-heure-barre { flex:1; background:#f5d0e8; border-radius:2px 2px 0 0; min-height:2px; }
+  .ga-heure-barre.pointe { background:#ec4899; }
+  .ga-heures-note { font-size:0.74rem; color:#8a8296; margin-top:8px; }
+  .ga-heures-note strong { color:#ec4899; }
+
+  .coaching-panel-header-demo { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+  .coaching-panel-header-demo h3 { margin-bottom:0; }
+  .coaching-logo-demo { flex-shrink:0; border-radius:11px; }
+  .coaching-ia-action-demo {
+    display:inline-flex; align-items:center; gap:6px; background:#f5f3ff; color:#7c3aed;
+    font-size:0.8rem; font-weight:700; padding:8px 13px; border-radius:10px; margin-bottom:12px;
+  }
+  .coaching-ia-reponse-demo {
+    background:#faf8ff; border:1.5px solid #ede9fe; border-radius:10px; padding:14px 16px;
+    font-size:0.85rem; color:#433a54; line-height:1.6; margin-bottom:14px; white-space:pre-line;
+  }
+  .coaching-chat-demo { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+  .coaching-bulle-demo {
+    max-width:82%; padding:10px 13px; border-radius:12px; font-size:0.82rem; line-height:1.5;
+  }
+  .coaching-bulle-demo.artisan {
+    align-self:flex-end; background:#ec4899; color:#fff; border-bottom-right-radius:3px;
+  }
+  .coaching-bulle-demo.coach {
+    align-self:flex-start; background:#f5f3ff; color:#211a35; border-bottom-left-radius:3px;
+  }
+  .btn-toggle-coach-demo {
+    background:#f5f3ff; color:#211a35; border:1.5px solid #ddd6fe; border-radius:999px; padding:7px 14px;
+    font-size:0.76rem; font-weight:700; cursor:default; white-space:nowrap; margin-left:auto;
+  }
 
   .liste-panel { background:#fff; border-radius:14px; padding:20px; margin-bottom:16px; }
   .liste-panel h3 { font-size:0.9rem; margin-bottom:14px; }
   table { width:100%; border-collapse:collapse; font-size:0.8rem; }
-  th { text-align:left; padding:8px 6px; color:#8a9891; font-weight:700; font-size:0.68rem; text-transform:uppercase; border-bottom:1.5px solid #eef1f0; }
-  td { padding:9px 6px; border-bottom:1px solid #eef1f0; vertical-align:middle; }
-  .statut-badge { font-size:0.66rem; font-weight:700; padding:3px 8px; border-radius:999px; background:#eaf4ef; color:#1e6f4c; }
-  .btn-sms-demo { background:#fdf1ea; color:#e8622c; font-size:0.68rem; font-weight:700; padding:4px 9px; border-radius:999px; border:none; white-space:nowrap; }
+  th { text-align:left; padding:8px 6px; color:#8a8296; font-weight:700; font-size:0.68rem; text-transform:uppercase; border-bottom:1.5px solid #ede9fe; }
+  td { padding:9px 6px; border-bottom:1px solid #ede9fe; vertical-align:middle; }
+  .statut-badge { font-size:0.66rem; font-weight:700; padding:3px 8px; border-radius:999px; background:#f5f3ff; color:#7c3aed; white-space:nowrap; }
+  .statut-badge.devis-envoye { background:#fdf2f8; color:#ec4899; }
+  .statut-badge.signe { background:#f5f3ff; color:#211a35; }
+  .statut-badge.rdv-pris { background:#eaf0fb; color:#2a4d8f; }
+  .statut-badge.rappel-demande { background:#f1eefb; color:#5b3fa0; }
+  .btn-rappeler-demo { background:#f5f3ff; color:#211a35; font-size:0.68rem; font-weight:700; padding:4px 9px; border-radius:999px; border:none; white-space:nowrap; }
+  .stat-detail { font-size:0.68rem; color:#8a8296; margin-top:6px; line-height:1.4; }
+  .btn-pdf-demo { background:#f5f3ff; color:#211a35; font-size:0.68rem; font-weight:700; padding:4px 9px; border-radius:999px; border:none; white-space:nowrap; }
 
-  .upsell-box { background:#fdfcf9; border:1.5px dashed #d7dedb; border-radius:14px; padding:18px; text-align:center; }
-  .upsell-box p { font-size:0.83rem; color:#5b6b64; line-height:1.6; }
-  .upsell-box strong { color:#e8622c; }
+  .rdv-panel { background:#fff; border-radius:14px; padding:20px; margin-bottom:16px; }
+  .rdv-panel h3 { font-size:0.9rem; margin-bottom:14px; }
+  .rdv-liste { display:flex; flex-direction:column; gap:10px; }
+  .rdv-card {
+    display:flex; align-items:center; gap:14px; border:1.5px solid #ede9fe; border-radius:12px; padding:12px 14px;
+  }
+  .rdv-quand { flex-shrink:0; width:92px; text-align:center; }
+  .rdv-jour { font-size:0.72rem; font-weight:700; color:#8a8296; text-transform:uppercase; }
+  .rdv-heure { font-size:1.05rem; font-weight:800; color:#7c3aed; }
+  .rdv-infos { flex:1; }
+  .rdv-nom { font-weight:700; font-size:0.86rem; }
+  .rdv-type { font-size:0.78rem; color:#8a8296; margin-top:1px; }
+  .rdv-source { font-size:0.68rem; font-weight:700; color:#7c3aed; background:#f5f3ff; padding:3px 9px; border-radius:999px; white-space:nowrap; }
 
-  .ga-panel { background:#fff; border-radius:14px; padding:20px; margin-bottom:16px; }
-  .ga-panel h3 { font-size:0.9rem; margin-bottom:14px; }
-  .ga-slider-row { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
-  .ga-slider-row input[type="range"] { flex:1; accent-color:#1e6f4c; }
-  .ga-slider-row span { font-weight:800; font-size:0.9rem; min-width:60px; text-align:right; }
-  .ga-budget-resultat { font-size:0.83rem; color:#5b6b64; margin-bottom:6px; }
-  .ga-budget-resultat strong { color:#e8622c; font-size:1.05rem; }
-  .ga-souspanel { border-top:1.5px solid #eef1f0; padding-top:16px; margin-top:16px; }
-  .ga-souspanel h4 { font-size:0.8rem; margin-bottom:10px; color:#14312a; }
-  .ga-kw-row { display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px solid #eef1f0; font-size:0.78rem; }
-  .ga-kw-row:last-child { border-bottom:none; }
-  .ga-kw-dot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:7px; }
-  .ga-kw-dot.haute { background:#1e6f4c; }
-  .ga-kw-dot.moyenne { background:#e8b93c; }
-  .ga-kw-dot.faible { background:#c0392b; }
-  .ga-kw-clics { color:#8a9891; font-size:0.74rem; white-space:nowrap; }
-  .ga-heures-chart { display:flex; align-items:flex-end; gap:3px; height:60px; margin-bottom:4px; }
-  .ga-heure-barre { flex:1; background:#cfe3d7; border-radius:2px 2px 0 0; min-height:2px; }
-  .ga-heure-barre.pointe { background:#e8622c; }
-  .ga-heures-note { font-size:0.74rem; color:#8a9891; margin-top:8px; }
-  .ga-heures-note strong { color:#e8622c; }
+  .devis-panel { background:#fff; border-radius:14px; padding:20px; margin-bottom:16px; }
+  .devis-panel h3 { font-size:0.9rem; margin-bottom:14px; }
+  .devis-card { display:flex; align-items:center; gap:14px; border:1.5px solid #ede9fe; border-radius:12px; padding:14px; margin-bottom:10px; }
+  .devis-card:last-child { margin-bottom:0; }
+  .devis-icone { width:42px; height:52px; background:#fdf2f8; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }
+  .devis-infos { flex:1; }
+  .devis-nom { font-weight:700; font-size:0.86rem; }
+  .devis-montant { font-size:0.78rem; color:#8a8296; margin-top:1px; }
+  .devis-actions { display:flex; gap:6px; }
+  .btn-signature { background:#7c3aed; color:#fff; font-size:0.7rem; font-weight:700; padding:6px 11px; border-radius:8px; border:none; white-space:nowrap; }
+
+  .relance-panel { background:#fff; border-radius:14px; padding:20px; }
+  .relance-panel h3 { font-size:0.9rem; margin-bottom:12px; }
+  .relance-row { display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid #ede9fe; font-size:0.8rem; gap:10px; flex-wrap:wrap; }
+  .relance-row:last-child { border-bottom:none; }
+  .btn-relance-demo { background:#ec4899; color:#fff; font-size:0.68rem; font-weight:700; padding:4px 10px; border-radius:999px; border:none; white-space:nowrap; }
+
+  /* Zones cliquables "ça explique ce que c'est" */
+  .explicable { cursor:help; border-radius:14px; transition:box-shadow 0.15s ease, outline-color 0.15s ease; outline:2px solid transparent; outline-offset:2px; }
+  .explicable:hover { outline-color:#7c3aed; }
+  .explain-bubble {
+    position:absolute; z-index:10000; max-width:300px; background:#211a35; color:#fff; border-radius:12px;
+    padding:14px 16px; font-size:0.82rem; line-height:1.5; box-shadow:0 14px 34px rgba(0,0,0,0.28);
+  }
+  .explain-title { font-weight:800; font-size:0.84rem; margin-bottom:5px; color:#c4b5fd; }
+  .explain-text { color:#ede9fe; }
+  .explain-close {
+    position:absolute; top:6px; right:8px; background:none; border:none; color:#c4b5fd; font-size:1rem;
+    font-weight:700; cursor:pointer; line-height:1; padding:2px 4px;
+  }
+
+  .cta-funnel {
+    background:#fff; border:2px solid #7c3aed; border-radius:16px; padding:26px 24px; margin-top:24px;
+    text-align:center;
+  }
+  .cta-funnel p { font-size:0.94rem; color:#433a54; margin-bottom:16px; line-height:1.55; }
+  .cta-funnel p strong { color:#211a35; }
+  .btn-continuer {
+    display:inline-block; background:#ec4899; color:#fff; text-decoration:none; font-weight:800;
+    font-size:0.98rem; padding:14px 30px; border-radius:12px; box-shadow:0 12px 28px rgba(232,98,44,0.35);
+  }
+
+  /* 08/09/2026 : CTA "essai sans paiement" mis en avant en haut de page,
+     demandé par Cyrille — visible immédiatement à l'arrivée sur la demo,
+     sans avoir à dérouler toute la page pour trouver le panneau d'essai. */
+  .cta-essai-haut {
+    display:none; background:linear-gradient(120deg, #7c3aed, #5b21b6); color:#fff; border-radius:16px;
+    padding:18px 22px; margin-bottom:20px; align-items:center; justify-content:space-between; gap:16px;
+    flex-wrap:wrap; box-shadow:0 12px 28px rgba(30,111,76,0.28);
+  }
+  .cta-essai-haut .texte strong { display:block; font-size:1.05rem; font-weight:800; margin-bottom:3px; }
+  .cta-essai-haut .texte span { font-size:0.82rem; opacity:0.92; }
+  .btn-essai-haut {
+    display:inline-block; background:#fff; color:#7c3aed; text-decoration:none; font-weight:800;
+    font-size:0.92rem; padding:13px 22px; border-radius:11px; white-space:nowrap; cursor:pointer; border:none;
+    box-shadow:0 6px 16px rgba(0,0,0,0.15);
+  }
+  .btn-essai-haut:hover { filter:brightness(0.97); }
+
+  /* 08/09/2026 : contenu détaillé du forfait dans le panneau d'essai gratuit */
+  .forfait-inclus { text-align:left; background:#f6f5fb; border-radius:10px; padding:16px 18px; margin-bottom:16px; }
+  .forfait-inclus .titre-inclus { font-size:0.82rem; font-weight:800; color:#211a35; margin-bottom:10px; }
+  .forfait-inclus ul { list-style:none; display:flex; flex-direction:column; gap:8px; }
+  .forfait-inclus li { font-size:0.82rem; color:#433a54; line-height:1.5; display:flex; gap:8px; align-items:flex-start; }
+  .forfait-inclus li .puce { color:#7c3aed; font-weight:800; flex-shrink:0; }
 </style>
 </head>
 <body>
 
 <svg class="shape-bg" style="top:-60px; right:-100px;" width="320" height="320" viewBox="0 0 320 320">
-  <defs><radialGradient id="s1" cx="35%" cy="30%" r="75%"><stop offset="0%" stop-color="#7bc79e"/><stop offset="100%" stop-color="#1e6f4c"/></radialGradient></defs>
+  <defs><radialGradient id="s1" cx="35%" cy="30%" r="75%"><stop offset="0%" stop-color="#f9a8d4"/><stop offset="100%" stop-color="#ec4899"/></radialGradient></defs>
   <path d="M160,20 C240,40 300,110 280,190 C260,270 170,300 100,260 C30,220 15,130 60,70 C90,30 125,15 160,20 Z" fill="url(#s1)"/>
 </svg>
 <svg class="shape-bg" style="bottom:-90px; left:-90px;" width="300" height="300" viewBox="0 0 300 300">
-  <defs><radialGradient id="s2" cx="35%" cy="30%" r="75%"><stop offset="0%" stop-color="#f0a878"/><stop offset="100%" stop-color="#e8622c"/></radialGradient></defs>
-  <rect x="20" y="20" width="260" height="260" rx="60" fill="url(#s2)"/>
+  <defs><radialGradient id="s2" cx="35%" cy="30%" r="75%"><stop offset="0%" stop-color="#a78bfa"/><stop offset="100%" stop-color="#211a35"/></radialGradient></defs>
+  <circle cx="150" cy="150" r="130" fill="url(#s2)"/>
 </svg>
 
 <div class="wrap">
-  <div class="nav-paliers">
-    <a class="nav-palier" href="/mon-dashboard-demo-essentiel.html">Essentiel</a>
-    <a class="nav-palier actif" href="/mon-dashboard-demo-pro.html">Pro</a>
-    <a class="nav-palier" href="/mon-dashboard-demo-business.html">Business</a>
+  <a href="#" id="lienRetour" class="lien-retour" style="display:none;">← Retour à ma vitrine</a>
+
+  <div class="banniere-demo">
+    <span class="picto">🧭</span>
+    <span><strong>Tableau de bord DEMO</strong><span class="sous-texte" id="sousTexteBanniere">Données fictives — pour vous montrer à quoi ressemblera votre espace</span></span>
+  </div>
+
+  <!-- 08/09/2026 : CTA "essai sans paiement" — bandeau vert visible dès l'arrivée -->
+  <div id="ctaEssaiHaut" class="cta-essai-haut">
+    <div class="texte">
+      <strong>✨ Essayez sans paiement pendant 1 mois</strong>
+      <span>Sans engagement, sans carte bancaire — vous créez d'abord votre vitrine, tranquillement.</span>
+    </div>
+    <button type="button" class="btn-essai-haut" id="btnEssaiHaut">Faire un essai sans paiement →</button>
   </div>
 
   <div class="header">
     <h1>Mon tableau de bord</h1>
-    <span class="demo-badge">Exemple illustratif — Forfait Pro</span>
+    <span class="demo-badge" id="badgeHaut">Exemple illustratif — Skyeco Pro</span>
   </div>
+  <div id="introFunnel" style="display:none;" class="intro-funnel">
+    Voici, avec des données fictives sur <strong>6 mois</strong>, à quoi ressemblera votre tableau de bord une fois votre vitrine en ligne.
+  </div>
+  <button type="button" id="btnVoirVitrineDemo" class="btn-voir-vitrine-demo" style="display:none;">👁️ Voir la vitrine d'un vrai client</button>
+  <div id="hintClic" style="display:none;" class="hint-clic">💡 Cliquez sur un encart pour voir à quoi il sert</div>
 
   <div class="stats-row">
-    <div class="stat-card"><div class="stat-value">18</div><div class="stat-label">demandes reçues</div></div>
-    <div class="stat-card"><div class="stat-value">42</div><div class="stat-label">clics ce mois-ci</div></div>
+    <div class="stat-card explicable" data-explain-title="📥 Demandes reçues" data-explain="Chaque demande apparaît ici automatiquement, quel que soit le canal utilisé par le client : formulaire complet, bouton rapide « être rappelé », ou réservation directe d'un rendez-vous.">
+      <div class="stat-value">112</div><div class="stat-label">demandes reçues (6 mois)</div>
+      <div class="stat-detail">dont 21 via « être rappelé », 17 via prise de rendez-vous</div>
+    </div>
+    <div class="stat-card explicable" data-explain-title="🖱️ Clics publicitaires" data-explain="Le nombre de visiteurs arrivés sur votre vitrine en cliquant sur votre publicité Google Ads ce mois-ci — c'est ce budget qui vous amène ces visiteurs.">
+      <div class="stat-value">42</div><div class="stat-label">clics ce mois-ci</div>
+    </div>
+    <div class="stat-card explicable" data-explain-title="✍️ Devis signés" data-explain="Le nombre de devis que vos clients ont acceptés et signés électroniquement, directement depuis leur téléphone, sans rendez-vous ni papier.">
+      <div class="stat-value">24</div><div class="stat-label">devis signés (6 mois)</div>
+    </div>
+    <div class="stat-card explicable" data-explain-title="📅 Rendez-vous pris" data-explain="Le nombre de rendez-vous que vos prospects ont réservés eux-mêmes dans votre agenda en ligne — vous n'avez plus besoin de les rappeler pour caler une date.">
+      <div class="stat-value">17</div><div class="stat-label">rendez-vous pris (6 mois)</div>
+    </div>
   </div>
 
-  <div class="solde-box">
-    <h3>Solde publicitaire</h3>
+  <div class="solde-box explicable" data-explain-title="💶 Budget publicitaire" data-explain="C'est le budget que vous avez choisi de consacrer à la publicité Google Ads ce mois-ci. Il se consomme au fur et à mesure des clics reçus — vous pouvez le mettre en pause à tout moment.">
+    <h3>Solde publicitaire <span class="statut-badge" style="font-size:0.7rem; font-weight:700; padding:3px 9px; border-radius:999px; background:#f5f3ff; color:#7c3aed;">🟢 Active</span></h3>
     <div class="solde-bar-track"><div class="solde-bar-fill"></div></div>
     <div class="solde-stats">
-      <span>Consommé : <strong>160 €</strong></span>
-      <span>Restant : <strong>140 €</strong> / 300 €</span>
+      <span>Consommé : <strong>126 €</strong></span>
+      <span>Restant : <strong>174 €</strong> / 300 €</span>
     </div>
     <button class="btn-pause-demo">⏸️ Mettre en pause la diffusion</button>
+    <button type="button" id="btnApprovisionnerDemo" style="display:inline-flex; align-items:center; gap:8px; background:#7c3aed; color:#fff; border:none; text-decoration:none; border-radius:10px; padding:11px 18px; font-size:0.85rem; font-weight:700; margin-left:10px; cursor:pointer;">💳 Approvisionner mon budget</button>
   </div>
 
-  <div class="ga-panel">
-    <h3>🎯 Pilotage Google Ads</h3>
-    <div class="ga-slider-row">
-      <input type="range" min="1" max="150" value="35" disabled>
-      <span>35 clics</span>
+  <div class="abonnement-box explicable" data-explain-title="⏸️ Mettre en pause votre abonnement" data-explain="En cas de baisse d'activité (vacances, carnet de commandes plein...), vous pouvez mettre votre abonnement en pause 1 mois sans être prélevé — votre vitrine n'est simplement plus visible pendant ce temps, puis reprend automatiquement. Vous pouvez aussi résilier à tout moment.">
+    <h3>Gérer mon abonnement</h3>
+    <div class="sub">Une baisse d'activité, des vacances, un carnet de commandes plein ? Vous gardez la main sur votre forfait à tout moment.</div>
+    <div class="abonnement-actions">
+      <button class="btn-pause-abonnement-demo">⏸️ Mettre en pause 1 mois (sans prélèvement)</button>
+      <button class="btn-resilier-demo">Résilier mon abonnement</button>
     </div>
-    <div class="ga-budget-resultat">Budget ads estimé : <strong>≈ 130 €</strong></div>
+  </div>
 
-    <div class="ga-souspanel">
-      <h4>Quels mots-clés génèrent vos clics ?</h4>
-      <div class="ga-kw-row"><span><span class="ga-kw-dot haute"></span>terrasse composite prix</span><span class="ga-kw-clics">18 clics · 2,10 € CPC</span></div>
-      <div class="ga-kw-row"><span><span class="ga-kw-dot haute"></span>pose terrasse devis</span><span class="ga-kw-clics">14 clics · 1,90 € CPC</span></div>
-      <div class="ga-kw-row"><span><span class="ga-kw-dot moyenne"></span>terrasse bois prix</span><span class="ga-kw-clics">7 clics · 1,75 € CPC</span></div>
-      <div class="ga-kw-row"><span><span class="ga-kw-dot faible"></span>devis travaux extérieur</span><span class="ga-kw-clics">3 clics · 2,30 € CPC</span></div>
+  <div class="ads-section">
+    <h2>🎯 Pilotage Google Ads</h2>
+    <div class="ads-sub">Le détail de votre campagne — où vous êtes visible, combien investir, quels mots-clés fonctionnent, et à quel moment vos clics arrivent.</div>
+
+    <div class="ads-souspanel explicable" data-explain-title="📍 Zone d'affichage" data-explain="Vos annonces ciblent votre département — un client d'un autre département ne verra jamais votre publicité. Vous pouvez décrire votre secteur d'intervention en texte libre, à titre indicatif.">
+      <h3>Où voulez-vous être visible ?</h3>
+      <div class="zone-affichage">
+        <span>Morbihan (56)</span>
+        <button type="button" class="btn-modifier-zone-demo">✏️ Modifier</button>
+      </div>
+      <div class="estim-note">Vos annonces ne se déclenchent que pour des recherches faites dans ce département.</div>
     </div>
 
-    <div class="ga-souspanel">
-      <h4>À quelle heure vos clics arrivent-ils ?</h4>
+    <div class="ads-souspanel explicable" data-explain-title="✨ Mots-clés" data-explain="On identifie automatiquement les recherches Google les plus fréquentes pour votre métier, pour que votre annonce apparaisse au bon moment, pour la bonne recherche.">
+      <h3>✨ Quels mots-clés pour votre annonce ?</h3>
+      <div class="motscles-liste">
+        <div class="motscle-item"><input type="checkbox" checked disabled><span class="motscle-texte">aménagement extérieur paysagiste</span><span class="motscle-potentiel-badge">≈ 320 recherches/mois</span></div>
+        <div class="motscle-item"><input type="checkbox" checked disabled><span class="motscle-texte">devis paysagiste</span><span class="motscle-potentiel-badge">≈ 210 recherches/mois</span></div>
+        <div class="motscle-item"><input type="checkbox" checked disabled><span class="motscle-texte">paysagiste prix</span><span class="motscle-potentiel-badge">≈ 90 recherches/mois</span></div>
+        <div class="motscle-item"><input type="checkbox" disabled><span class="motscle-texte">entretien jardin copropriété</span><span class="motscle-potentiel-badge faible">aucune recherche connue</span></div>
+      </div>
+      <button type="button" class="btn-rafraichir-demo">🔄 Rafraîchir l'estimation de clics</button>
+      <div class="motscles-potentiel">
+        <div class="chiffre">≈ 79 clics/mois possibles</div>
+        <div class="detail">Avec ces mots-clés dans votre zone, pour un budget de 300 € — coût par clic moyen estimé : 1,50 €.</div>
+      </div>
+    </div>
+
+    <div class="ads-souspanel explicable" data-explain-title="🔎 Votre annonce" data-explain="Voici exactement à quoi ressemblera votre publicité sur Google — modifiable à tout moment depuis votre espace, sans compétence technique.">
+      <h3>🔎 Votre annonce Google Ads</h3>
+      <div class="annonce-hint">Voici à quoi ressemblera votre annonce sur Google. Modifiable à tout moment depuis votre espace.</div>
+      <div class="annonce-preview">
+        <div><span class="badge-annonce">Annonce</span><span class="domaine-annonce">app.skyeco.fr</span></div>
+        <div class="titre-annonce">RM Paysages | Aménagement extérieur | Devis sous 24h</div>
+        <div class="desc-annonce">Obtenez votre estimation en 2 minutes, sans engagement. Artisan local à Auray — réponse rapide garantie.</div>
+      </div>
+      <div class="annonce-champ">
+        <label>Titre 1 <span class="compteur">21/30</span></label>
+        <input type="text" value="RM Paysages" disabled>
+      </div>
+      <div class="annonce-champ">
+        <label>Description 1 <span class="compteur">78/90</span></label>
+        <textarea disabled>Obtenez votre estimation en 2 minutes, sans engagement. Artisan local à Auray.</textarea>
+      </div>
+    </div>
+
+    <div class="ads-souspanel explicable" data-explain-title="🎚️ Budget" data-explain="Ajustez votre budget pour viser plus ou moins de clics, selon vos objectifs du moment — plus ou moins de chantiers à honorer.">
+      <h3>Vous voulez viser plus de clics ? Ajustez votre budget</h3>
+      <div class="ga-slider-row">
+        <input type="range" min="1" max="150" value="55" disabled>
+        <span>55 clics</span>
+      </div>
+      <div class="ga-budget-resultat">Budget ads estimé : <strong>≈ 165 €</strong></div>
+      <div class="estim-note">Ce budget n'est pas garanti sur une durée fixe — il est consommé au fur et à mesure des clics reçus.</div>
+    </div>
+
+    <div class="ads-souspanel explicable" data-explain-title="🕐 Heures de clics" data-explain="On vous montre à quel moment de la journée vos futurs clients cliquent le plus, pour mieux comprendre le rythme de votre activité.">
+      <h3>À quelle heure vos clics arrivent-ils ?</h3>
       <div class="ga-heures-chart">
-        <div class="ga-heure-barre" style="height:15%;"></div>
-        <div class="ga-heure-barre" style="height:10%;"></div>
+        <div class="ga-heure-barre" style="height:12%;"></div>
         <div class="ga-heure-barre" style="height:8%;"></div>
         <div class="ga-heure-barre" style="height:6%;"></div>
         <div class="ga-heure-barre" style="height:5%;"></div>
-        <div class="ga-heure-barre" style="height:12%;"></div>
-        <div class="ga-heure-barre" style="height:22%;"></div>
-        <div class="ga-heure-barre" style="height:38%;"></div>
-        <div class="ga-heure-barre" style="height:55%;"></div>
-        <div class="ga-heure-barre" style="height:70%;"></div>
-        <div class="ga-heure-barre pointe" style="height:88%;"></div>
-        <div class="ga-heure-barre pointe" style="height:100%;"></div>
-        <div class="ga-heure-barre pointe" style="height:92%;"></div>
+        <div class="ga-heure-barre" style="height:4%;"></div>
+        <div class="ga-heure-barre" style="height:14%;"></div>
+        <div class="ga-heure-barre" style="height:26%;"></div>
+        <div class="ga-heure-barre" style="height:42%;"></div>
         <div class="ga-heure-barre" style="height:60%;"></div>
-        <div class="ga-heure-barre" style="height:40%;"></div>
-        <div class="ga-heure-barre" style="height:35%;"></div>
-        <div class="ga-heure-barre" style="height:45%;"></div>
-        <div class="ga-heure-barre" style="height:58%;"></div>
-        <div class="ga-heure-barre pointe" style="height:78%;"></div>
-        <div class="ga-heure-barre" style="height:50%;"></div>
-        <div class="ga-heure-barre" style="height:30%;"></div>
-        <div class="ga-heure-barre" style="height:18%;"></div>
-        <div class="ga-heure-barre" style="height:10%;"></div>
-        <div class="ga-heure-barre" style="height:6%;"></div>
+        <div class="ga-heure-barre pointe" style="height:82%;"></div>
+        <div class="ga-heure-barre pointe" style="height:96%;"></div>
+        <div class="ga-heure-barre pointe" style="height:100%;"></div>
+        <div class="ga-heure-barre" style="height:64%;"></div>
+        <div class="ga-heure-barre" style="height:48%;"></div>
+        <div class="ga-heure-barre" style="height:38%;"></div>
+        <div class="ga-heure-barre" style="height:42%;"></div>
+        <div class="ga-heure-barre" style="height:52%;"></div>
+        <div class="ga-heure-barre" style="height:66%;"></div>
+        <div class="ga-heure-barre pointe" style="height:80%;"></div>
+        <div class="ga-heure-barre" style="height:54%;"></div>
+        <div class="ga-heure-barre" style="height:32%;"></div>
+        <div class="ga-heure-barre" style="height:20%;"></div>
+        <div class="ga-heure-barre" style="height:12%;"></div>
+        <div class="ga-heure-barre" style="height:7%;"></div>
       </div>
-      <div class="ga-heures-note">Vos clics sont les plus nombreux vers <strong>11h-13h</strong> et <strong>19h</strong> — les créneaux les plus rentables pour ce métier.</div>
+      <div class="ga-heures-note">Vos clics sont les plus nombreux vers <strong>10h-12h</strong> et <strong>19h</strong> — les créneaux les plus rentables pour ce métier.</div>
+    </div>
+
+    <div class="ads-souspanel explicable" data-explain-title="🤖 Coach IA Ads" data-explain="Un assistant qui surveille votre campagne en continu, vous explique ce qui se passe en langage simple, et peut ajuster automatiquement mots-clés, enchères ou budget pour améliorer vos résultats. Vous pouvez le mettre en pause à tout moment.">
+      <div class="coaching-panel-header-demo">
+        <svg class="coaching-logo-demo" width="40" height="40" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="coachBgDemo" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#f9a8d4"/>
+              <stop offset="55%" stop-color="#ec4899"/>
+              <stop offset="100%" stop-color="#be185d"/>
+            </linearGradient>
+            <linearGradient id="coachVisorDemo" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#4c1d95"/>
+              <stop offset="100%" stop-color="#4c1d95"/>
+            </linearGradient>
+          </defs>
+          <rect x="3" y="3" width="114" height="114" rx="30" fill="url(#coachBgDemo)"/>
+          <path d="M97 22 l2.2 5.2 5.2 2.2 -5.2 2.2 -2.2 5.2 -2.2 -5.2 -5.2 -2.2 5.2 -2.2 Z" fill="#ffe29a"/>
+          <circle cx="22" cy="88" r="3.2" fill="#ffe29a"/>
+          <circle cx="18" cy="30" r="2" fill="#ffe29a" opacity="0.85"/>
+          <line x1="60" y1="20" x2="60" y2="30" stroke="#4c1d95" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="60" cy="16" r="5.5" fill="#ffe29a" stroke="#4c1d95" stroke-width="2.5"/>
+          <rect x="26" y="30" width="68" height="58" rx="24" fill="#f5f3ff"/>
+          <circle cx="24" cy="58" r="8" fill="#4c1d95"/>
+          <circle cx="96" cy="58" r="8" fill="#4c1d95"/>
+          <path d="M24 50 a36 36 0 0 1 72 0" fill="none" stroke="#4c1d95" stroke-width="4" stroke-linecap="round"/>
+          <rect x="38" y="50" width="44" height="18" rx="9" fill="url(#coachVisorDemo)"/>
+          <circle cx="52" cy="59" r="4.4" fill="#f5f3ff"/>
+          <circle cx="68" cy="59" r="4.4" fill="#f5f3ff"/>
+          <path d="M46 74 q14 12 28 0" fill="none" stroke="#4c1d95" stroke-width="4.5" stroke-linecap="round"/>
+          <circle cx="40" cy="70" r="4" fill="#ec4899" opacity="0.35"/>
+          <circle cx="80" cy="70" r="4" fill="#ec4899" opacity="0.35"/>
+          <circle cx="92" cy="90" r="16" fill="#f5f3ff" stroke="#be185d" stroke-width="2.5"/>
+          <path d="M88 96 v-9 c0-1.6 1.3-2.4 2.4-2.4 c0.5-2.6 1-4.6 1-6 c0-1.7 1.2-2.6 2.3-2.2 c1 .4 1.5 1.6 1.3 2.8 l-0.7 3.4 h4.6 c1.3 0 2.3 1.1 2 2.4 l-1.4 7.4 c-0.3 1.5-1.6 2.6-3.1 2.6 h-6.4 c-1.1 0-2-.9-2-2 Z" fill="#ec4899"/>
+        </svg>
+        <h3>Coach IA Ads</h3>
+        <button type="button" class="btn-toggle-coach-demo">⏸️ Mettre en pause</button>
+      </div>
+      <div class="coaching-ia-action-demo">✓ 1 action appliquée automatiquement par le coach — détails ci-dessous.</div>
+      <div class="coaching-ia-reponse-demo">Votre budget quotidien est presque toujours consommé avant midi : vous perdez probablement des clics l'après-midi. J'ai augmenté l'enchère maximale sur « devis paysagiste » de 1,50 € à 1,80 € pour capter plus de clics sur ce mot-clé qui convertit bien chez vous.</div>
+      <div class="coaching-chat-demo">
+        <div class="coaching-bulle-demo artisan">Pourquoi mon budget part si vite le matin ?</div>
+        <div class="coaching-bulle-demo coach">C'est le créneau 10h-12h : c'est là que vos clients cherchent le plus. C'est un bon signe — c'est votre créneau le plus rentable, je le laisse actif en priorité.</div>
+      </div>
     </div>
   </div>
 
-  <div class="liste-panel">
-    <h3>Demandes d'estimation</h3>
+  <div class="liste-panel explicable" data-explain-title="📋 Demandes d'estimation" data-explain="Chaque demande reçue apparaît ici avec son statut et son canal d'entrée — nouveau, rappel demandé, rendez-vous pris, devis envoyé, ou signé — mis à jour automatiquement, sans rien à faire de votre côté.">
+    <h3>Demandes d'estimation (6 derniers mois)</h3>
     <table>
       <thead><tr><th>Date</th><th>Nom</th><th>Adresse</th><th>Statut</th><th></th></tr></thead>
       <tbody>
-        <tr><td>26/08</td><td>M. Le Roux</td><td>Vannes</td><td><span class="statut-badge">nouveau</span></td><td><button class="btn-sms-demo">📅 SMS RDV</button></td></tr>
-        <tr><td>24/08</td><td>Mme Guillou</td><td>Auray</td><td><span class="statut-badge">contacté</span></td><td><button class="btn-sms-demo">📅 SMS RDV</button></td></tr>
-        <tr><td>21/08</td><td>M. Even</td><td>Brech</td><td><span class="statut-badge">traité</span></td><td>—</td></tr>
-        <tr><td>19/08</td><td>Mme Le Bris</td><td>Vannes</td><td><span class="statut-badge">nouveau</span></td><td><button class="btn-sms-demo">📅 SMS RDV</button></td></tr>
+        <tr><td>26/08</td><td>M. Le Roux</td><td>Vannes</td><td><span class="statut-badge">nouveau</span></td><td>—</td></tr>
+        <tr><td>25/08</td><td>M. Cadoret</td><td>Auray</td><td><span class="statut-badge rappel-demande">📞 Rappel demandé</span></td><td><button class="btn-rappeler-demo">📞 Rappeler</button></td></tr>
+        <tr><td>24/08</td><td>Mme Guillou</td><td>Auray</td><td><span class="statut-badge devis-envoye">devis envoyé</span></td><td><button class="btn-pdf-demo">📄 Voir le PDF</button></td></tr>
+        <tr><td>21/08</td><td>M. Even</td><td>Brech</td><td><span class="statut-badge signe">✓ signé électroniquement</span></td><td><button class="btn-pdf-demo">📄 Voir le PDF</button></td></tr>
+        <tr><td>19/08</td><td>Mme Le Bris</td><td>Vannes</td><td><span class="statut-badge devis-envoye">devis envoyé</span></td><td><button class="btn-pdf-demo">📄 Voir le PDF</button></td></tr>
+        <tr><td>12/08</td><td>M. Kervadec</td><td>Pluvigner</td><td><span class="statut-badge rdv-pris">📅 RDV pris</span></td><td>—</td></tr>
+        <tr><td>02/08</td><td>Mme Bernier</td><td>Vannes</td><td><span class="statut-badge rappel-demande">📞 Rappel demandé</span></td><td><button class="btn-rappeler-demo">📞 Rappeler</button></td></tr>
+        <tr><td>28/07</td><td>Mme Tanguy</td><td>Auray</td><td><span class="statut-badge signe">✓ signé électroniquement</span></td><td><button class="btn-pdf-demo">📄 Voir le PDF</button></td></tr>
+        <tr><td>15/07</td><td>M. Le Gall</td><td>Vannes</td><td><span class="statut-badge signe">✓ signé électroniquement</span></td><td><button class="btn-pdf-demo">📄 Voir le PDF</button></td></tr>
+        <tr><td>02/06</td><td>Mme Robic</td><td>Brech</td><td><span class="statut-badge rdv-pris">📅 RDV pris</span></td><td>—</td></tr>
+        <tr><td>19/05</td><td>M. Danielou</td><td>Vannes</td><td><span class="statut-badge signe">✓ signé électroniquement</span></td><td><button class="btn-pdf-demo">📄 Voir le PDF</button></td></tr>
+        <tr><td>04/04</td><td>Mme Perrot</td><td>Auray</td><td><span class="statut-badge signe">✓ signé électroniquement</span></td><td><button class="btn-pdf-demo">📄 Voir le PDF</button></td></tr>
+        <tr><td>21/03</td><td>M. Guého</td><td>Pluvigner</td><td><span class="statut-badge signe">✓ signé électroniquement</span></td><td><button class="btn-pdf-demo">📄 Voir le PDF</button></td></tr>
       </tbody>
     </table>
   </div>
 
-  <div class="upsell-box">
-    <p>Avec le forfait <strong>Business</strong>, envoyez vos devis directement depuis ce tableau avec signature électronique par SMS, et relancez automatiquement ceux qui n'ont pas répondu.</p>
+  <div class="rdv-panel explicable" data-explain-title="📅 Calendrier de rendez-vous" data-explain="Vos prospects réservent eux-mêmes un rendez-vous dans votre agenda en ligne, sur les créneaux que vous avez ouverts — vous n'avez plus besoin de les rappeler pour caler une date.">
+    <h3>Prochains rendez-vous</h3>
+    <div class="rdv-liste">
+      <div class="rdv-card">
+        <div class="rdv-quand"><div class="rdv-jour">Lun. 01 sept.</div><div class="rdv-heure">09:00</div></div>
+        <div class="rdv-infos"><div class="rdv-nom">M. Le Roux</div><div class="rdv-type">Estimation terrasse résine — Vannes</div></div>
+        <div class="rdv-source">Réservé en ligne</div>
+      </div>
+      <div class="rdv-card">
+        <div class="rdv-quand"><div class="rdv-jour">Mer. 03 sept.</div><div class="rdv-heure">14:30</div></div>
+        <div class="rdv-infos"><div class="rdv-nom">Mme Kervadec</div><div class="rdv-type">Devis clôture + portail — Pluvigner</div></div>
+        <div class="rdv-source">Réservé en ligne</div>
+      </div>
+      <div class="rdv-card">
+        <div class="rdv-quand"><div class="rdv-jour">Ven. 05 sept.</div><div class="rdv-heure">11:00</div></div>
+        <div class="rdv-infos"><div class="rdv-nom">Mme Robic</div><div class="rdv-type">Aménagement extérieur — Brech</div></div>
+        <div class="rdv-source">Réservé en ligne</div>
+      </div>
+    </div>
   </div>
-</div>
-<!-- SKYECO_COOKIE_BANNER_START -->
-<div id="skyeco-cookies" style="position:fixed; left:0; right:0; bottom:0; z-index:99999; background:#14202B; color:#F4F7F9; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; box-shadow:0 -6px 24px rgba(0,0,0,0.25); display:none;">
-  <div style="max-width:1000px; margin:0 auto; padding:18px 20px; display:flex; align-items:center; gap:24px; flex-wrap:wrap;">
-    <p style="flex:1; min-width:240px; margin:0; font-size:13.5px; line-height:1.5; color:#C9D6DF;">
-      Nous utilisons des cookies n&#233;cessaires au fonctionnement du site et, avec votre accord, des cookies de mesure d&#8217;audience et de suivi publicitaire (Google Ads) pour am&#233;liorer nos services.
-      <a href="/politique-confidentialite.html" style="color:#E8622C; text-decoration:underline;">En savoir plus</a>
-    </p>
-    <div style="display:flex; gap:10px; flex-shrink:0; flex-wrap:wrap;">
-      <button type="button" onclick="skyecoCookiesChoix('essentiel')" style="background:transparent; border:1px solid rgba(255,255,255,0.35); color:#F4F7F9; padding:10px 16px; font-size:13px; font-weight:600; cursor:pointer; border-radius:4px;">Essentiels uniquement</button>
-      <button type="button" onclick="skyecoCookiesChoix('tous')" style="background:#E8622C; border:1px solid #E8622C; color:#fff; padding:10px 18px; font-size:13px; font-weight:700; cursor:pointer; border-radius:4px;">Tout accepter</button>
+
+  <div class="devis-panel explicable" data-explain-title="✍️ Devis & signature" data-explain="Ici, vous téléchargez le devis PDF et l'envoyez par SMS pour signature électronique en un clic — votre client signe directement depuis son téléphone, sans rendez-vous.">
+    <h3>Devis en attente de signature</h3>
+    <div class="devis-card">
+      <div class="devis-icone">📄</div>
+      <div class="devis-infos">
+        <div class="devis-nom">Mme Guillou — Terrasse composite 24m²</div>
+        <div class="devis-montant">Devis : 3 240 € TTC — envoyé le 24/08</div>
+      </div>
+      <div class="devis-actions">
+        <button class="btn-pdf-demo">📄 PDF</button>
+        <button class="btn-signature">✍️ Relancer signature SMS</button>
+      </div>
+    </div>
+    <div class="devis-card">
+      <div class="devis-icone">📄</div>
+      <div class="devis-infos">
+        <div class="devis-nom">Mme Le Bris — Aménagement paysager</div>
+        <div class="devis-montant">Devis : 5 680 € TTC — envoyé le 19/08</div>
+      </div>
+      <div class="devis-actions">
+        <button class="btn-pdf-demo">📄 PDF</button>
+        <button class="btn-signature">✍️ Relancer signature SMS</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="relance-panel explicable" data-explain-title="🔔 Relances automatiques" data-explain="Si un client ne répond pas après quelques jours, Skyeco Pro lui envoie automatiquement un SMS de relance — sans que vous ayez à y penser.">
+    <h3>Relances automatiques</h3>
+    <div class="relance-row">
+      <span>Mme Guillou — devis envoyé il y a 3 jours, sans réponse</span>
+      <button class="btn-relance-demo">Relancer par SMS</button>
+    </div>
+    <div class="relance-row">
+      <span>Mme Le Bris — devis envoyé il y a 5 jours, sans réponse</span>
+      <button class="btn-relance-demo">Relancer par SMS</button>
+    </div>
+  </div>
+
+  <div id="ctaFunnel" class="cta-funnel" style="display:none;">
+    <p>C'est exactement <strong>ce qui vous attend</strong> une fois votre vitrine en ligne — vos vrais clients, vos vraies demandes, à cet endroit.</p>
+
+    <div style="max-width:460px; margin:20px auto 0; background:#fff; border-radius:14px; padding:24px; text-align:left; box-shadow:0 10px 30px rgba(0,0,0,0.08);">
+      <p style="margin:0 0 6px; font-size:1rem; font-weight:800; color:#211a35;">Essayez gratuitement pendant 1 mois</p>
+      <p style="margin:0 0 16px; font-size:0.86rem; color:#8a8296; line-height:1.55;">Sans engagement, sans carte bancaire. Vous ne payez rien pour l'instant — vous créez d'abord votre formulaire vitrine.</p>
+      <div style="background:#f6f5fb; border-radius:10px; padding:14px 16px; margin-bottom:16px;">
+        <div style="font-size:0.78rem; color:#8a8296; margin-bottom:2px;">Tarif après votre mois d'essai</div>
+        <div style="font-size:1.3rem; font-weight:800; color:#211a35;">39,90 € HT<span style="font-size:0.85rem; font-weight:600; color:#8a8296;">/mois</span></div>
+        <div style="font-size:0.76rem; color:#8a8296; margin-top:2px;">pendant 12 mois, puis 79,90 € HT/mois — résiliable à tout moment</div>
+      </div>
+
+      <!-- 08/09/2026 : détail complet de ce que contient le forfait, demandé par Cyrille -->
+      <div class="forfait-inclus">
+        <div class="titre-inclus">Ce qui est inclus dans votre forfait :</div>
+        <ul>
+          <li><span class="puce">✓</span><span>Votre formulaire vitrine en ligne, créé et hébergé pour vous</span></li>
+          <li><span class="puce">✓</span><span>Votre tableau de bord de suivi, comme celui que vous venez de voir</span></li>
+          <li><span class="puce">✓</span><span>La gestion automatisée de votre campagne Google Ads par un coach IA — il surveille et ajuste vos annonces pour vous</span></li>
+          <li><span class="puce">✓</span><span>Le suivi de chaque prospect, de l'annonce jusqu'au devis final</span></li>
+          <li><span class="puce">✓</span><span>L'envoi automatique de SMS et d'email à vos prospects</span></li>
+          <li><span class="puce">✓</span><span>Vos devis générés avec signature électronique, directement depuis le téléphone du client</span></li>
+          <li><span class="puce">✓</span><span>Un rendez-vous avec nous pour la mise en place de votre espace</span></li>
+        </ul>
+      </div>
+
+      <!-- 09/09/2026 : bloc "Ce qui n'est pas inclus" retiré sur demande de
+           Cyrille (10/09/2026) — CTA simplifié en un seul bouton. -->
+
+      <label style="display:flex; align-items:flex-start; gap:8px; font-size:0.82rem; color:#433a54; line-height:1.5; margin-bottom:16px; cursor:pointer;">
+        <input type="checkbox" id="cguEssaiCheckbox" style="margin-top:2px; width:16px; height:16px; flex-shrink:0; accent-color:#7c3aed;">
+        <span>J'accepte les <a href="/cgv.html" target="_blank" style="color:#7c3aed;">conditions générales de vente</a>.</span>
+      </label>
+      <div id="essaiErreur" style="color:#c0392b; font-size:0.82rem; margin-bottom:10px; display:none;"></div>
+      <button type="button" id="btnDemarrerEssai" style="width:100%; background:#7c3aed; color:#fff; border:none; border-radius:10px; padding:14px; font-size:0.96rem; font-weight:700; cursor:pointer;">Commencer par votre formulaire vitrine →</button>
     </div>
   </div>
 </div>
-<button type="button" id="skyeco-cookies-lien" onclick="skyecoCookiesOuvrir()" aria-label="G&#233;rer mes cookies" style="display:none; position:fixed; left:16px; bottom:16px; z-index:99998; background:#14202B; color:#F4F7F9; border:1px solid rgba(255,255,255,0.25); border-radius:20px; padding:8px 14px; font-size:12px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; cursor:pointer;">&#x1F36A; Cookies</button>
+
+<script>
+  // Mode "funnel" : cette page démo est utilisée à deux endroits différents.
+  // 1) Intégrée en petit aperçu générique dans prochaines-etapes.html (sans
+  //    "?id="), tôt dans le tunnel — on ne touche pas à ce comportement.
+  // 2) Ouverte en pleine page juste après que l'artisan a cliqué "Mettre en
+  //    ligne" sur sa vraie vitrine (apercu.html), avec "?id=<draftId>" — on
+  //    ajoute alors le lien retour et le bouton de poursuite vers le choix
+  //    du forfait.
+  const params = new URLSearchParams(window.location.search);
+  const draftId = params.get('id');
+  // 10/09/2026 : nouveau point d'entrée depuis la page d'accueil publique —
+  // le visiteur arrive directement sur cette démo pleine page (sans brouillon
+  // existant, "?visiteur=1") pour donner envie AVANT de demander la moindre
+  // information. Il ne remplit le formulaire d'inscription que s'il clique
+  // sur "Démarrer mon essai gratuit" depuis ici.
+  const visiteurMode = params.get('visiteur') === '1';
+  const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+  if (draftId) {
+    // Le lien retour ne veut dire quelque chose que si une vraie vitrine
+    // existe déjà pour ce brouillon — jamais affiché en mode visiteur.
+    document.getElementById('lienRetour').href = '/apercu.html?id=' + encodeURIComponent(draftId);
+    document.getElementById('lienRetour').style.display = 'inline-flex';
+  }
+  if (draftId || visiteurMode) {
+    document.getElementById('introFunnel').style.display = 'block';
+    document.getElementById('btnVoirVitrineDemo').style.display = 'inline-flex';
+
+    // 08/09/2026 : bandeau "essai sans paiement" visible dès l'arrivée sur
+    // la démo — clique = défile jusqu'au panneau d'essai gratuit en bas.
+    document.getElementById('ctaEssaiHaut').style.display = 'flex';
+    document.getElementById('btnEssaiHaut').addEventListener('click', () => {
+      document.getElementById('ctaFunnel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    // 10/09/2026 : "Approvisionner mon budget" dans le bloc Solde publicitaire
+    // renvoie vers ce même bloc de création de compte, plutôt que de quitter
+    // directement la page.
+    document.getElementById('btnApprovisionnerDemo').addEventListener('click', () => {
+      document.getElementById('ctaFunnel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    // Aperçu de 4 secondes : on ouvre la vraie vitrine dans un nouvel onglet,
+    // puis on la referme automatiquement et on revient ici, sans que
+    // l'artisan ait à cliquer sur "Retour" lui-même (demandé le 04/09).
+    document.getElementById('btnVoirVitrineDemo').addEventListener('click', () => {
+      const btn = document.getElementById('btnVoirVitrineDemo');
+      const texteInitial = btn.textContent;
+      const fenetreVitrine = window.open('https://salesflow-ecosky.vercel.app/estimation.html', '_blank');
+      if (!fenetreVitrine) {
+        alert('Votre navigateur a bloqué l\'ouverture de la vitrine. Autorisez les fenêtres popup pour ce site puis réessayez.');
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = '👁️ Aperçu en cours… retour automatique dans 4s';
+      setTimeout(() => {
+        try { fenetreVitrine.close(); } catch (e) {}
+        window.focus();
+        btn.disabled = false;
+        btn.textContent = texteInitial;
+      }, 4000);
+    });
+    document.getElementById('hintClic').style.display = 'inline-flex';
+    document.getElementById('badgeHaut').textContent = 'Aperçu de votre futur tableau de bord';
+    document.getElementById('sousTexteBanniere').textContent = 'Données fictives sur 6 mois — voici à quoi ressemblera votre vrai tableau de bord';
+    document.getElementById('ctaFunnel').style.display = 'block';
+
+    // Clic sur "Démarrer mon essai gratuit" : plus de création de compte à
+    // cette étape (déplacée au moment où l'artisan veut lancer ses annonces
+    // Google, sur campagne.html) — on démarre juste l'essai (1 mois, sans
+    // engagement, sans carte bancaire) et on l'envoie construire sa vitrine.
+    document.getElementById('btnDemarrerEssai').addEventListener('click', async () => {
+      const btn = document.getElementById('btnDemarrerEssai');
+      const erreurEl = document.getElementById('essaiErreur');
+      erreurEl.style.display = 'none';
+      if (!document.getElementById('cguEssaiCheckbox').checked) {
+        erreurEl.textContent = "Merci d'accepter les conditions générales de vente pour continuer.";
+        erreurEl.style.display = 'block';
+        return;
+      }
+      // Mode visiteur (pas encore de brouillon) : on crée un brouillon vide
+      // en silence (sans SIRET ni vérification SMS à ce stade — ces infos
+      // sont demandées directement dans mes-elements.html) puis on envoie
+      // l'artisan construire sa vitrine tout de suite.
+      if (!draftId) {
+        btn.disabled = true;
+        btn.textContent = 'Préparation de votre espace…';
+        try {
+          const res = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts`, {
+            method: 'POST',
+            headers: {
+              apikey: SUPABASE_ANON_KEY,
+              Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+              'Content-Type': 'application/json',
+              Prefer: 'return=representation',
+            },
+            body: JSON.stringify([{ entreprise: '', telephone: '', email: '', status: 'preview' }]),
+          });
+          const rows = await res.json();
+          if (!res.ok || !rows[0]?.id) throw new Error(rows?.message || "Impossible de préparer votre espace.");
+          const nouveauDraftId = rows[0].id;
+          // Démarre tout de suite les 30 jours d'essai (même appel que le
+          // formulaire d'inscription complet) — pas d'email/SMS de
+          // bienvenue ici, l'artisan n'a pas encore renseigné ses
+          // coordonnées, il les saisit à l'instant sur mes-elements.html.
+          await fetch('/api/demarrer-essai-gratuit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ draftId: nouveauDraftId }),
+          }).catch(() => {});
+          window.location.href = '/mes-elements.html?id=' + nouveauDraftId;
+        } catch (e) {
+          erreurEl.textContent = "Impossible de préparer votre espace pour le moment. Merci de réessayer.";
+          erreurEl.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Commencer par votre formulaire vitrine →';
+        }
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'Démarrage de votre essai…';
+      try {
+        const res = await fetch('/api/demarrer-essai-gratuit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId })
+        });
+        const data = await res.json();
+        if (data.success) {
+          // 08/09/2026 : SMS + email de bienvenue avec le lien du tableau de
+          // bord, demandé par Cyrille — déclenché en "fire and forget" pour
+          // ne jamais retarder la redirection vers mes-elements.html, même
+          // si l'envoi échoue ou prend du temps.
+          fetch('/api/envoyer-bienvenue-essai', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ draftId })
+          }).catch(() => {});
+          window.location.href = '/mes-elements.html?id=' + encodeURIComponent(draftId);
+        } else {
+          erreurEl.textContent = data.error || "Impossible de démarrer l'essai pour le moment.";
+          erreurEl.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Commencer par votre formulaire vitrine →';
+        }
+      } catch (e) {
+        erreurEl.textContent = 'Impossible de contacter le serveur.';
+        erreurEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Commencer par votre formulaire vitrine →';
+      }
+    });
+  }
+
+  // Petit système "cliquez pour comprendre" : chaque encart avec
+  // data-explain affiche une bulle d'explication à côté, au clic.
+  (function initExplications() {
+    let ouvertSur = null;
+    let bulle = null;
+
+    function fermer() {
+      if (bulle) { bulle.remove(); bulle = null; }
+      ouvertSur = null;
+    }
+
+    document.querySelectorAll('[data-explain]').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (ouvertSur === el) { fermer(); return; }
+        fermer();
+        ouvertSur = el;
+
+        bulle = document.createElement('div');
+        bulle.className = 'explain-bubble';
+        bulle.innerHTML =
+          '<button type="button" class="explain-close" aria-label="Fermer">×</button>' +
+          '<div class="explain-title">' + (el.dataset.explainTitle || '💡 Astuce') + '</div>' +
+          '<div class="explain-text">' + el.dataset.explain + '</div>';
+        document.body.appendChild(bulle);
+
+        const r = el.getBoundingClientRect();
+        const bulleLargeur = 300;
+        let top = r.bottom + window.scrollY + 10;
+        let left = r.left + window.scrollX;
+        const maxLeft = window.scrollX + document.documentElement.clientWidth - bulleLargeur - 16;
+        if (left > maxLeft) left = Math.max(16, maxLeft);
+        bulle.style.top = top + 'px';
+        bulle.style.left = left + 'px';
+
+        bulle.querySelector('.explain-close').addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          fermer();
+        });
+      });
+    });
+
+    document.addEventListener('click', fermer);
+    window.addEventListener('scroll', fermer, true);
+  })();
+</script>
+
+<!-- SKYECO_COOKIE_BANNER_START -->
+<div id="skyeco-cookies" style="position:fixed; left:0; right:0; bottom:0; z-index:99999; background:#14202B; color:#F5F3FF; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; box-shadow:0 -6px 24px rgba(0,0,0,0.25); display:none;">
+  <div style="max-width:1000px; margin:0 auto; padding:18px 20px; display:flex; align-items:center; gap:24px; flex-wrap:wrap;">
+    <p style="flex:1; min-width:240px; margin:0; font-size:13.5px; line-height:1.5; color:#C9D6DF;">
+      Nous utilisons des cookies n&#233;cessaires au fonctionnement du site et, avec votre accord, des cookies de mesure d&#8217;audience et de suivi publicitaire (Google Ads) pour am&#233;liorer nos services.
+      <a href="/politique-confidentialite.html" style="color:#EC4899; text-decoration:underline;">En savoir plus</a>
+    </p>
+    <div style="display:flex; gap:10px; flex-shrink:0; flex-wrap:wrap;">
+      <button type="button" onclick="skyecoCookiesChoix('essentiel')" style="background:transparent; border:1px solid rgba(255,255,255,0.35); color:#F5F3FF; padding:10px 16px; font-size:13px; font-weight:600; cursor:pointer; border-radius:4px;">Essentiels uniquement</button>
+      <button type="button" onclick="skyecoCookiesChoix('tous')" style="background:#EC4899; border:1px solid #EC4899; color:#fff; padding:10px 18px; font-size:13px; font-weight:700; cursor:pointer; border-radius:4px;">Tout accepter</button>
+    </div>
+  </div>
+</div>
+<button type="button" id="skyeco-cookies-lien" onclick="skyecoCookiesOuvrir()" aria-label="G&#233;rer mes cookies" style="display:none; position:fixed; left:16px; bottom:16px; z-index:99998; background:#14202B; color:#F5F3FF; border:1px solid rgba(255,255,255,0.25); border-radius:20px; padding:8px 14px; font-size:12px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; cursor:pointer;">&#x1F36A; Cookies</button>
 <script>
 (function(){
   var CLE = 'skyeco_cookie_consent';

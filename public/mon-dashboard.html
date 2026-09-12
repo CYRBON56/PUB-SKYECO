@@ -844,6 +844,20 @@
   const params = new URLSearchParams(window.location.search);
   const draftId = params.get('id');
   document.getElementById('btnApprovisionnerRapide').href = '/campagne.html?id=' + draftId;
+
+  window.tarifActifActuel = false;
+  function verrouillerActionPayante(elementId) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    el.addEventListener('click', (e) => {
+      if (!window.tarifActifActuel) {
+        e.preventDefault();
+        window.location.href = '/mes-elements.html?id=' + draftId;
+      }
+    });
+  }
+  verrouillerActionPayante('btnApprovisionnerRapide');
+  verrouillerActionPayante('btnFondsInverse');
   document.getElementById('btnMesDevis').href = '/mes-devis.html?id=' + draftId + (params.get('admin_token') ? '&admin_token=' + params.get('admin_token') : '');
   let sauvegardesEnCours = 0;
   function demarrerSauvegarde() { sauvegardesEnCours++; }
@@ -1283,6 +1297,10 @@
       });
 
       document.getElementById('btnConnecterInstagram').addEventListener('click', () => {
+        if (!window.tarifActifActuel) {
+          window.location.href = '/mes-elements.html?id=' + draftId;
+          return;
+        }
         if (connexion) {
           rsOuvrirOnboarding(true);
         } else {
@@ -2038,11 +2056,14 @@
 
   async function chargerLogo() {
     try {
-      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=logo_url`, {
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=logo_url,tarif_actif`, {
         headers: { apikey: SUPABASE_ANON_KEY }
       });
       const rows = await resp.json();
       const logoUrl = rows[0]?.logo_url;
+      // Verrou paiement (11/09) : sans forfait actif, "Approvisionner" et
+      // "Connecter Instagram" redirigent vers mes-elements.html.
+      window.tarifActifActuel = !!rows[0]?.tarif_actif;
       if (logoUrl) {
         const img = document.getElementById('logoEntreprise');
         img.src = logoUrl;

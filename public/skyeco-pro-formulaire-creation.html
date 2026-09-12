@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -40,20 +41,35 @@
   .page-logo-text .orange-accent{ color:var(--orange,#E8622C); }
   .page-logo-text .page-logo-pro{ font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:10.5px; letter-spacing:1px; color:var(--concrete,#5B6268); vertical-align:1px; }
 
-  .btn-etre-rappele-fixe {
+  .fixed-actions-topright{
     position:fixed; top:20px; right:20px; z-index:200;
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end;
+    max-width:calc(100vw - 40px);
+  }
+  .btn-etre-rappele-fixe {
     display:flex; align-items:center; gap:6px;
     background:var(--orange,#E8622C); color:#fff; text-decoration:none;
     border-radius:999px; padding:10px 18px; font-size:13px; font-weight:700;
-    box-shadow:0 3px 14px rgba(0,0,0,0.28);
+    box-shadow:0 3px 14px rgba(0,0,0,0.28); white-space:nowrap;
   }
   .btn-etre-rappele-fixe:hover{ filter:brightness(1.05); }
-  @media (max-width:600px){ .btn-etre-rappele-fixe{ padding:9px 14px; font-size:12px; } }
+  .btn-deja-client-fixe{
+    display:flex; align-items:center; gap:6px;
+    background:var(--white,#fff); color:var(--navy,#14304A); text-decoration:none;
+    border:1.5px solid var(--paper-line,#DCE4E9);
+    border-radius:999px; padding:9px 16px; font-size:13px; font-weight:700;
+    box-shadow:0 3px 14px rgba(0,0,0,0.15); white-space:nowrap;
+  }
+  .btn-deja-client-fixe:hover{ border-color:var(--blue,#2C5F8A); }
+  @media (max-width:600px){
+    .btn-etre-rappele-fixe, .btn-deja-client-fixe{ padding:9px 14px; font-size:12px; }
+  }
 
   @media(max-width:768px){
     .page-logo{ top:12px; left:12px; padding:5px 10px 5px 5px; }
     .page-logo img{ height:24px; width:24px; }
     .page-logo-text{ font-size:13px; }
+    .fixed-actions-topright{ top:12px; right:12px; }
   }
   .video-panel{
     flex:1 1 50%; position:relative; display:flex; flex-direction:column;
@@ -63,7 +79,8 @@
   .carousel-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 1s ease-in-out; }
   .carousel-img.active{ opacity:1; }
 
-  .explainer-bg-video{ position:relative; max-width:100%; max-height:100%; width:auto; height:auto; display:block; border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.35); }
+  .explainer-bg-video{ position:relative; max-width:340px; max-height:520px; width:auto; height:auto; display:block; border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.35); }
+  @media(max-width:768px){ .explainer-bg-video{ max-width:260px; max-height:400px; } }
   .unmute-btn{
     position:absolute; bottom:16px; left:50%; transform:translateX(-50%);
     background:var(--orange); color:#fff; border:none; border-radius:999px;
@@ -215,7 +232,9 @@
   <span class="page-logo-text">SKY<span class="orange-accent">ECO</span> <span class="page-logo-pro">IA ADS</span></span>
 </div>
 
-<a class="btn-etre-rappele-fixe" href="/prendre-rdv.html?id=4fbdb122-9fca-4636-b80c-d9e4abc2542b" target="_blank" rel="noopener">📞 Être rappelé</a>
+<div class="fixed-actions-topright">
+  <a class="btn-etre-rappele-fixe" href="/prendre-rdv.html?id=4fbdb122-9fca-4636-b80c-d9e4abc2542b" target="_blank" rel="noopener">📞 Être rappelé</a>
+</div>
 
 <div class="split-layout">
   <img class="shared-carousel-img active" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/1-terrasse-mobilier-noir.jpg" alt="">
@@ -262,7 +281,10 @@
           </li>
         </ul>
 
-        <a class="btn btn-primary btn-splash" href="/mon-dashboard-demo.html?visiteur=1">Voir mon tableau de bord →</a>
+        <div style="display:flex; flex-direction:column; gap:12px; max-width:340px; margin:0 auto;">
+          <a class="btn btn-primary btn-splash" href="/mon-dashboard-demo.html?visiteur=1" style="width:100%; text-align:center;">🚀 Faire un essai gratuit →</a>
+          <a href="/connexion.html" style="width:100%; text-align:center; display:inline-block; background:var(--white); color:var(--navy); border:2px solid var(--paper-line); padding:14px 24px; border-radius:0; font-size:15px; font-weight:600; text-decoration:none;">Déjà inscrit ? Se connecter</a>
+        </div>
       </div>
 
       <div id="formView" class="form-view" style="display:none;">
@@ -387,22 +409,10 @@
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
   const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
-  // 10/09/2026 : cette page ne s'affiche en formulaire QUE si elle est
-  // atteinte depuis le dashboard démo ("?etape=inscription", posé par le
-  // bouton "Démarrer mon essai gratuit" de mon-dashboard-demo.html). Tout
-  // autre accès direct (lien d'annonce, favori, etc.) montre juste le logo
-  // + une accroche + un bouton vers le dashboard démo — on ne demande plus
-  // aucune information avant que la personne ait vu la démo.
   const depuisDemo = new URLSearchParams(window.location.search).get('etape') === 'inscription';
   document.getElementById('splashView').style.display = depuisDemo ? 'none' : 'block';
   document.getElementById('formView').style.display = depuisDemo ? 'block' : 'none';
 
-  // Mode test (usage interne uniquement) : ajouter "&test=1" à l'URL fait
-  // apparaître un bouton pour sauter la vérification SMS (sans jamais envoyer
-  // ni vérifier de vrai code) — protégé par le mot de passe interne, jamais
-  // accessible à un vrai visiteur qui ne le connaît pas. Sert à tester tout
-  // le parcours d'inscription plusieurs fois de suite, avec des numéros
-  // fictifs, sans avoir à recevoir/taper un vrai code à chaque essai.
   const TEST_MODE = new URLSearchParams(window.location.search).get('test') === '1';
 
   async function uploadToStorage(file, prefix){
@@ -415,7 +425,6 @@
     return data.publicUrl;
   }
 
-  // build stepper bars
   const stepperEl = document.getElementById('stepper');
   steps.forEach((_,i)=>{
     const bar = document.createElement('div');
@@ -455,7 +464,6 @@
     renderStepper();
   }
 
-  // Coordonnées
   document.getElementById('entreprise').addEventListener('input', (e)=>{ state.entreprise = e.target.value; document.getElementById('btnNext').disabled = !canProceed(); });
   document.getElementById('nom').addEventListener('input', (e)=>{ state.nom = e.target.value; document.getElementById('btnNext').disabled = !canProceed(); });
   document.getElementById('prenom').addEventListener('input', (e)=>{ state.prenom = e.target.value; document.getElementById('btnNext').disabled = !canProceed(); });
@@ -641,10 +649,6 @@
         adresse_ville: state.adresseVille || null,
         status: 'preview'
       }])
-      // Sécurité (06/09/2026) : .select() sans argument équivaut à select=*
-      // côté REST — voir la migration verrouiller_colonnes_sensibles_vitrine_drafts,
-      // qui ferait échouer cette lecture pour anon. Seul data.id est utilisé
-      // plus bas.
       .select('id')
       .single();
 
@@ -712,8 +716,6 @@
   var CLE = 'skyeco_cookie_consent';
   function lireChoix(){ try { return JSON.parse(localStorage.getItem(CLE) || 'null'); } catch(e){ return null; } }
   function appliquerChoix(choix){
-    // Point d'extension : charger ici Google Ads / Analytics uniquement si choix.niveau === 'tous'.
-    // Rien n'est charge pour l'instant.
     window.skyecoConsentement = choix;
   }
   window.skyecoCookiesChoix = function(niveau){

@@ -1,0 +1,745 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inscription gratuite — Skyeco IA Ads</title>
+<link rel="icon" href="/skyeco-icon-ads.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  :root{
+    --navy:#14304A; --blue:#2C5F8A; --blue-light:#6E97B8;
+    --paper:#F4F7F9; --paper-line:#DCE4E9; --orange:#E8622C; --orange-dark:#C74F20;
+    --concrete:#5B6268; --white:#FFFFFF; --ok:#3E8E5A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'IBM Plex Sans',sans-serif; background:var(--paper); color:var(--navy);
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  :focus-visible{outline:3px solid var(--orange); outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){ *{transition-duration:.001ms !important; animation-duration:.001ms !important;} }
+
+  .split-layout{ display:flex; min-height:100vh; position:relative; }
+  .shared-carousel-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 1.2s ease-in-out; z-index:0; }
+  .shared-carousel-img.active{ opacity:1; }
+  .shared-carousel-overlay{ position:absolute; inset:0; background:linear-gradient(rgba(20,48,74,0.35), rgba(20,48,74,0.42)); z-index:1; }
+
+  .page-logo{
+    position:fixed; top:20px; left:20px; z-index:200;
+    display:flex; align-items:center; gap:8px;
+    background:var(--paper,#F4F7F9); border-radius:12px; padding:6px 14px 6px 6px;
+    box-shadow:0 3px 14px rgba(0,0,0,0.28);
+  }
+  .page-logo img{ height:30px; width:30px; display:block; border-radius:7px; }
+  .page-logo-text{ font-family:'Big Shoulders Display',Arial,sans-serif; font-weight:800; font-size:16px; color:var(--navy,#14304A); letter-spacing:0.3px; }
+  .page-logo-text .orange-accent{ color:var(--orange,#E8622C); }
+  .page-logo-text .page-logo-pro{ font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:10.5px; letter-spacing:1px; color:var(--concrete,#5B6268); vertical-align:1px; }
+
+  .fixed-actions-topright{
+    position:fixed; top:20px; right:20px; z-index:200;
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end;
+    max-width:calc(100vw - 40px);
+  }
+  .btn-etre-rappele-fixe {
+    display:flex; align-items:center; gap:6px;
+    background:var(--orange,#E8622C); color:#fff; text-decoration:none;
+    border-radius:999px; padding:10px 18px; font-size:13px; font-weight:700;
+    box-shadow:0 3px 14px rgba(0,0,0,0.28); white-space:nowrap;
+  }
+  .btn-etre-rappele-fixe:hover{ filter:brightness(1.05); }
+  .btn-deja-client-fixe{
+    display:flex; align-items:center; gap:6px;
+    background:var(--white,#fff); color:var(--navy,#14304A); text-decoration:none;
+    border:1.5px solid var(--paper-line,#DCE4E9);
+    border-radius:999px; padding:9px 16px; font-size:13px; font-weight:700;
+    box-shadow:0 3px 14px rgba(0,0,0,0.15); white-space:nowrap;
+  }
+  .btn-deja-client-fixe:hover{ border-color:var(--blue,#2C5F8A); }
+  @media (max-width:600px){
+    .btn-etre-rappele-fixe, .btn-deja-client-fixe{ padding:9px 14px; font-size:12px; }
+  }
+
+  @media(max-width:768px){
+    .page-logo{ top:12px; left:12px; padding:5px 10px 5px 5px; }
+    .page-logo img{ height:24px; width:24px; }
+    .page-logo-text{ font-size:13px; }
+    .fixed-actions-topright{ top:12px; right:12px; }
+  }
+  .video-panel{
+    flex:1 1 50%; position:relative; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; padding:32px; overflow:hidden;
+    z-index:2;
+  }
+  .carousel-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 1s ease-in-out; }
+  .carousel-img.active{ opacity:1; }
+
+  .explainer-bg-video{ position:relative; max-width:340px; max-height:520px; width:auto; height:auto; display:block; border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.35); }
+  @media(max-width:768px){ .explainer-bg-video{ max-width:260px; max-height:400px; } }
+  .unmute-btn{
+    position:absolute; bottom:16px; left:50%; transform:translateX(-50%);
+    background:var(--orange); color:#fff; border:none; border-radius:999px;
+    padding:10px 20px; font-size:14px; font-weight:700; cursor:pointer;
+    box-shadow:0 6px 20px rgba(0,0,0,0.3); z-index:3;
+    animation: pulseBtn 2s ease-in-out infinite;
+  }
+  .unmute-btn:hover{ filter:brightness(1.08); }
+  .unmute-btn.hidden{ display:none; }
+  @keyframes pulseBtn{ 0%,100%{ transform:translateX(-50%) scale(1); } 50%{ transform:translateX(-50%) scale(1.05); } }
+  .video-panel::before{
+    content:''; position:absolute; inset:0;
+    background-image: repeating-linear-gradient(0deg, rgba(110,151,184,0.06) 0px, transparent 1px, transparent 32px),
+                       repeating-linear-gradient(90deg, rgba(110,151,184,0.06) 0px, transparent 1px, transparent 32px);
+    pointer-events:none;
+  }
+
+  .form-panel{ flex:1 1 50%; position:relative; display:flex; align-items:center; justify-content:center; padding:24px; overflow:hidden; z-index:2; }
+  .form-bg-overlay{ position:absolute; inset:0; z-index:-1; background:rgba(244,247,249,0.55); }
+  .carousel-caption{
+    position:absolute; left:20px; bottom:20px; z-index:1; max-width:260px;
+    background:rgba(20,48,74,0.78); color:var(--paper,#F4F7F9);
+    font-family:'IBM Plex Sans',sans-serif; font-weight:600; font-size:13px; line-height:1.4;
+    padding:9px 14px; border-radius:10px;
+  }
+  @media(max-width:768px){ .carousel-caption{ font-size:12px; padding:7px 12px; left:14px; bottom:14px; } }
+  .card{ width:100%; max-width:480px; position:relative; z-index:1; }
+
+  header.top{ background:var(--navy); color:var(--white); padding:22px 28px; margin:-24px -24px 0; }
+  @media(min-width:769px){ header.top{ margin:0; } }
+  .logo{ font-family:'Big Shoulders Display',sans-serif; font-weight:900; font-size:18px; display:flex; align-items:center; gap:8px; margin-bottom:14px;}
+  .logo .dot{ width:8px; height:8px; background:var(--orange); display:inline-block;}
+  .eyebrow{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--blue-light); letter-spacing:.08em; margin-bottom:6px;}
+  h1.title{ font-family:'Big Shoulders Display',sans-serif; font-weight:800; font-size:24px; line-height:1.1;}
+  .subeyebrow{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--orange); letter-spacing:.08em; margin-top:8px;}
+
+  .stepper{ display:flex; gap:4px; padding:16px 28px 0; background:var(--navy); }
+  .step-bar{ flex:1; height:4px; background:rgba(255,255,255,0.18); position:relative; overflow:hidden;}
+  .step-bar span{ position:absolute; inset:0; background:var(--orange); transform:scaleX(0); transform-origin:left; transition:transform .25s ease;}
+  .step-bar.done span{ transform:scaleX(1); }
+  .step-bar.active span{ transform:scaleX(1); }
+  .step-label{ padding:10px 28px 14px; font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--blue-light); background:var(--navy);}
+
+  form{ padding:28px; background:var(--white); border:1px solid var(--paper-line); border-top:none;}
+  .panel{ display:none; }
+  .panel.active{ display:block; animation: fade .2s ease; }
+  @keyframes fade{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
+
+  h2.q{ font-family:'Big Shoulders Display',sans-serif; font-weight:800; font-size:22px; margin-bottom:6px; color:var(--navy);}
+  p.hint{ color:var(--concrete); font-size:14px; margin-bottom:20px; }
+
+  .metier-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:6px;}
+  .metier-card{
+    border:1px solid var(--paper-line); padding:16px 14px; cursor:pointer; background:var(--white);
+    font-size:14.5px; font-weight:600; color:var(--navy); text-align:left;
+  }
+  .metier-card:hover{ border-color:var(--blue-light); }
+  .metier-card.selected{ border-color:var(--orange); background:#FDF3EF; box-shadow:0 0 0 1px var(--orange); }
+  .metier-card .tag{ display:block; font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--concrete); font-weight:400; margin-top:3px;}
+
+  label{ display:block; font-size:13px; font-weight:600; color:var(--navy); margin-bottom:6px; margin-top:16px;}
+  label:first-of-type{ margin-top:0; }
+  input[type=text], input[type=email], input[type=tel], textarea, select{
+    width:100%; border:1px solid var(--paper-line); padding:12px 14px; font-family:'IBM Plex Sans',sans-serif;
+    font-size:14.5px; color:var(--navy); background:var(--paper);
+  }
+  input:focus, textarea:focus, select:focus{ background:var(--white); border-color:var(--blue); }
+  textarea{ resize:vertical; min-height:80px; }
+  .status-line{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--concrete); margin:6px 0 4px;}
+  .char-count{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--concrete); text-align:right; margin-top:4px;}
+
+  .sms-block{ margin:14px 0 6px; padding:14px; background:var(--paper); border:1px solid var(--paper-line); }
+  .sms-block p{ font-size:12.5px; color:var(--concrete); margin-bottom:10px; line-height:1.4; }
+  .btn-sms{ background:#EEF4F0; color:var(--blue); border:1.5px solid var(--blue); padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; }
+  .btn-sms:hover:not(:disabled){ background:var(--blue); color:var(--white); }
+  .btn-sms:disabled{ opacity:.5; cursor:not-allowed; }
+  .btn-sms.selected{ background:var(--blue); color:var(--white); }
+  .sms-code-row{ display:flex; gap:8px; margin-top:10px; }
+  .sms-code-row input{ flex:1; letter-spacing:.3em; text-align:center; margin:0; }
+  .sms-status{ margin-top:8px; font-size:12.5px; }
+  .sms-status.ok{ color:var(--ok); font-weight:600; }
+  .sms-status.error{ color:var(--orange-dark); }
+
+  .unite-row{ display:flex; gap:8px; margin-top:6px; flex-wrap:wrap; }
+
+  .upload-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:6px;}
+  .upload-slot{
+    aspect-ratio:1; border:1.5px dashed var(--paper-line); display:flex; align-items:center; justify-content:center;
+    cursor:pointer; position:relative; overflow:hidden; background:var(--paper);
+  }
+  .upload-slot:hover{ border-color:var(--blue-light); }
+  .upload-slot span{ font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--concrete); text-align:center; padding:8px;}
+  .upload-slot img{ width:100%; height:100%; object-fit:cover; position:absolute; inset:0;}
+  .upload-slot input{ display:none; }
+
+  .palette-row{ display:flex; gap:10px; margin-top:6px; }
+  .swatch{ width:42px; height:42px; border:2px solid transparent; cursor:pointer; position:relative; }
+  .swatch.selected{ border-color:var(--navy); }
+  .swatch.selected::after{ content:'✓'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--white); font-size:16px; }
+
+  .recap{ border:1px solid var(--paper-line); padding:16px; font-size:14px; }
+  .recap dt{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--concrete); margin-top:12px;}
+  .recap dt:first-child{ margin-top:0; }
+  .recap dd{ color:var(--navy); font-weight:600; }
+
+  .nav-row{ display:flex; justify-content:space-between; align-items:center; margin-top:26px; }
+  .btn{ font-family:'IBM Plex Sans',sans-serif; font-weight:600; font-size:14.5px; padding:13px 24px; border:2px solid transparent; cursor:pointer; }
+  .btn-primary{ background:var(--orange); color:var(--white); }
+  .btn-primary:hover{ background:var(--orange-dark); }
+  .btn-primary:disabled{ background:var(--paper-line); color:var(--concrete); cursor:not-allowed; }
+  .btn-ghost{ background:transparent; border-color:var(--paper-line); color:var(--navy); }
+  .btn-ghost:hover{ border-color:var(--blue); }
+
+  .splash-view{ background:var(--white); border:1px solid var(--paper-line); padding:56px 36px; text-align:center; max-height:100vh; overflow-y:auto; }
+  .splash-logo{ height:56px; display:block; margin:0 auto 26px; }
+  .splash-title{ font-family:'Big Shoulders Display',sans-serif; font-weight:900; font-size:34px; color:var(--navy); line-height:1.05; }
+  .splash-tagline{ color:var(--concrete); font-size:16px; line-height:1.5; max-width:400px; margin:16px auto 30px; }
+  .btn-splash{ display:inline-block; font-size:16px; padding:16px 30px; box-shadow:0 8px 24px rgba(232,98,44,0.28); text-decoration:none; }
+  @media(max-width:480px){ .splash-view{ padding:40px 22px; } .splash-title{ font-size:28px; } }
+
+  .splash-benefices{ list-style:none; text-align:left; max-width:420px; margin:0 auto 32px; display:flex; flex-direction:column; gap:18px; }
+  .splash-benefices li{ display:flex; align-items:flex-start; gap:13px; font-size:14.5px; line-height:1.48; color:var(--concrete); }
+  .splash-benefices li strong{ color:var(--navy); font-weight:700; }
+  .splash-benefice-icone{ flex:0 0 auto; width:36px; height:36px; border-radius:10px; background:var(--paper); display:flex; align-items:center; justify-content:center; font-size:17px; }
+  @media(max-width:480px){ .splash-benefices{ gap:14px; } .splash-benefices li{ font-size:13.5px; } }
+
+  .error{ color:var(--orange-dark); font-size:12.5px; margin-top:6px; display:none; font-family:'IBM Plex Mono',monospace; }
+  .error.show{ display:block; }
+
+  .success{ display:none; text-align:center; padding:48px 28px; background:var(--white); border:1px solid var(--paper-line); border-top:none; }
+  .success.active{ display:block; }
+  .success .icon{ width:52px; height:52px; border:2px solid var(--ok); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 18px; color:var(--ok); font-size:24px; }
+  .success h2{ font-family:'Big Shoulders Display',sans-serif; font-weight:800; font-size:24px; margin-bottom:10px;}
+  .success p{ color:var(--concrete); font-size:14.5px; max-width:400px; margin:0 auto 22px; }
+  .success .loader{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--blue); }
+
+  @media(max-width:900px){ .metier-grid{grid-template-columns:1fr;} }
+  @media(max-width:768px){
+    .split-layout{ flex-direction:column; }
+    .video-panel{ padding:24px; }
+    header.top{ margin:0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-logo">
+  <img src="/skyeco-icon-ads.svg" alt="">
+  <span class="page-logo-text">SKY<span class="orange-accent">ECO</span> <span class="page-logo-pro">IA ADS</span></span>
+</div>
+
+<div class="fixed-actions-topright">
+  <a class="btn-deja-client-fixe" href="/connexion.html">👤 Déjà client ? Se connecter</a>
+  <a class="btn-etre-rappele-fixe" href="/prendre-rdv.html?id=4fbdb122-9fca-4636-b80c-d9e4abc2542b" target="_blank" rel="noopener">📞 Être rappelé</a>
+</div>
+
+<div class="split-layout">
+  <img class="shared-carousel-img active" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/1-terrasse-mobilier-noir.jpg" alt="">
+  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/2-terrasse-mobilier-violet.jpg" alt="">
+  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/3-piscine-motif-tortue.jpg" alt="">
+  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/4-motif-geometrique.jpg" alt="">
+  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/5-piscine-beige.jpg" alt="">
+  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/6-piscine-pool-house.jpg" alt="">
+  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/7-piscine-jardin.jpg" alt="">
+  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/8-escalier-terrasse.jpg" alt="">
+  <div class="shared-carousel-overlay"></div>
+
+  <div class="video-panel">
+    <video class="explainer-bg-video" id="explainerVideo" autoplay muted loop playsinline controls>
+      <source src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/puv%20skyeco/video.mp4" type="video/mp4">
+    </video>
+    <button id="unmuteBtn" class="unmute-btn" type="button">🔊 Activer le son</button>
+  </div>
+
+  <div class="form-panel" id="photoCarousel">
+    <div class="carousel-caption">Des extérieurs pensés pour durer.</div>
+    <div class="card">
+      <div id="splashView" class="splash-view">
+        <img class="splash-logo" src="/skyeco-logo-ads-compact.svg" alt="Skyeco IA Ads">
+        <h1 class="splash-title">Skyeco Ads</h1>
+        <p class="splash-tagline">Une vraie révolution pour votre activité&nbsp;: Skyeco Ads prend en charge vos tâches les plus chronophages — vous gardez un œil sur tout, sans plus rien faire à la main.</p>
+
+        <ul class="splash-benefices">
+          <li>
+            <span class="splash-benefice-icone">🎯</span>
+            <div><strong>Vos Google Ads pilotées et coachées automatiquement</strong> — mots-clés choisis pour votre métier, suivi quotidien, correction des campagnes qui sous-performent.</div>
+          </li>
+          <li>
+            <span class="splash-benefice-icone">🖼️</span>
+            <div><strong>Votre propre page vitrine</strong> — carrousel photo et formulaire d'estimation de devis, prête à recevoir vos prospects.</div>
+          </li>
+          <li>
+            <span class="splash-benefice-icone">📲</span>
+            <div><strong>Vos prospects suivis par email et SMS</strong> — relances automatiques, aucune demande n'est oubliée.</div>
+          </li>
+          <li>
+            <span class="splash-benefice-icone">✍️</span>
+            <div><strong>Vos devis envoyés avec signature électronique</strong> — par email et SMS, en quelques clics.</div>
+          </li>
+        </ul>
+
+        <a class="btn btn-primary btn-splash" href="/mon-dashboard-demo.html?visiteur=1">Voir mon tableau de bord →</a>
+      </div>
+
+      <div id="formView" class="form-view" style="display:none;">
+      <header class="top">
+        <div class="logo"><img src="/skyeco-logo-ads-compact.svg" alt="Skyeco IA Ads" style="height:38px; display:block;"></div>
+        <div class="eyebrow mono">SKYECO IA ADS</div>
+        <h1 class="title">Créez votre compte gratuit.</h1>
+        <p class="subeyebrow">🚀 2 minutes, sans engagement, sans carte bancaire.</p>
+      </header>
+      <div class="stepper" id="stepper"></div>
+      <div class="step-label mono" id="stepLabel"></div>
+
+      <form id="wizardForm" novalidate>
+
+        <!-- STEP 0 : coordonnées -->
+        <div class="panel active" data-step="0">
+          <h2 class="q">Cr&#233;ez votre compte gratuit.</h2>
+          <p class="hint">Quelques infos pour pr&#233;parer votre acc&#232;s &#8212; gratuit, sans engagement.</p>
+
+          <label for="entreprise">Nom de l'entreprise</label>
+          <input type="text" id="entreprise" placeholder="Ex : RMS EcoSky">
+
+          <label for="nom">Nom</label>
+          <input type="text" id="nom" placeholder="Ex : Bon">
+
+          <label for="prenom">Pr&#233;nom</label>
+          <input type="text" id="prenom" placeholder="Ex : Cyrille">
+
+          <label for="email">Email</label>
+          <input type="email" id="email" placeholder="Ex : contact@monentreprise.fr">
+
+          <label for="telephone">T&#233;l&#233;phone</label>
+          <input type="tel" id="telephone" inputmode="numeric" placeholder="Ex : 06 12 34 56 78">
+          <div class="status-line mono" id="telStatus">Num&#233;ro fran&#231;ais, 10 chiffres.</div>
+
+          <div class="sms-block" id="smsBlock">
+            <p>V&#233;rifiez votre num&#233;ro pour confirmer que votre demande est bien r&#233;elle.</p>
+            <button type="button" class="btn-sms" id="btnEnvoyerCode" disabled>V&#233;rifier mon num&#233;ro par SMS</button>
+            <button type="button" class="btn-sms" id="btnSimulerVerifTel" style="display:none; margin-left:8px; background:#fff3cd; color:#8a6d1f; border-color:#f0d98c;">🧪 Simuler la v&#233;rification (test)</button>
+            <div class="sms-code-row" id="smsCodeRow" style="display:none;">
+              <input type="text" id="smsCode" inputmode="numeric" maxlength="6" placeholder="Code re&#231;u">
+              <button type="button" class="btn-sms" id="btnVerifierCode">Valider</button>
+            </div>
+            <div class="sms-status" id="smsStatus"></div>
+          </div>
+
+          <label for="adresseRue">Adresse</label>
+          <input type="text" id="adresseRue" placeholder="Ex : 23 route de Corn er Hoet">
+          <div style="display:flex; gap:10px;">
+            <div style="flex:0 0 130px;">
+              <label for="adresseCp">Code postal</label>
+              <input type="text" id="adresseCp" inputmode="numeric" maxlength="5" placeholder="Ex : 56400">
+            </div>
+            <div style="flex:1;">
+              <label for="adresseVille">Ville</label>
+              <input type="text" id="adresseVille" placeholder="Ex : Brech">
+            </div>
+          </div>
+          <label style="display:flex; align-items:flex-start; gap:8px; font-size:13px; font-weight:400; color:var(--concrete); margin-top:20px; cursor:pointer;">
+            <input type="checkbox" id="cguEssaiCheckbox" style="width:16px; height:16px; flex-shrink:0; margin-top:2px;">
+            <span>J'accepte les <a href="/cgv.html" target="_blank" rel="noopener">conditions g&#233;n&#233;rales de vente</a>.</span>
+          </label>
+
+          <div class="error mono" id="err-entreprise">Merci de renseigner le nom de votre entreprise, votre nom, pr&#233;nom, un email valide, un t&#233;l&#233;phone v&#233;rifi&#233; et d'accepter les CGV.</div>
+        </div>
+
+        <div class="nav-row" id="navRow">
+          <button type="button" class="btn btn-ghost" id="btnBack" style="visibility:hidden;">← Retour</button>
+          <button type="button" class="btn btn-primary" id="btnNext">Démarrer mon essai gratuit et créer ma vitrine →</button>
+        </div>
+      </form>
+
+      <div class="success" id="successPanel">
+        <div class="icon">✓</div>
+        <h2>Votre compte est prêt.</h2>
+        <p>Votre essai gratuit de 30 jours démarre maintenant. Direction la création de votre vitrine — quelques minutes pour renseigner vos infos, photos et prestations.</p>
+        <div class="loader mono">PRÉPARATION DE VOTRE ESPACE…</div>
+      </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Activer le son de la vidéo au clic (l'autoplay avec son est bloqué par les navigateurs)
+  (function(){
+    const video = document.getElementById('explainerVideo');
+    const btn = document.getElementById('unmuteBtn');
+    if (video && btn) {
+      btn.addEventListener('click', function(){
+        video.muted = false;
+        video.play();
+        btn.classList.add('hidden');
+      });
+    }
+  })();
+(function(){
+  // Carrousel photo (panneau droit, fond du formulaire)
+  (function initCarousel(){
+    const imgs = Array.from(document.querySelectorAll('.shared-carousel-img'));
+    if(imgs.length <= 1) return;
+    let idx = 0;
+    setInterval(()=>{
+      imgs[idx].classList.remove('active');
+      idx = (idx + 1) % imgs.length;
+      imgs[idx].classList.add('active');
+    }, 2500);
+  })();
+
+  const steps = Array.from(document.querySelectorAll('.panel'));
+  const stepLabels = ['Vos informations'];
+  let current = 0;
+
+  const state = {
+    entreprise:'',
+    nom:'', prenom:'',
+    telephone:'', telephoneVerifie:false, email:'',
+    adresseRue:'', adresseCp:'', adresseVille:''
+  };
+
+  const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+  const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+  const depuisDemo = new URLSearchParams(window.location.search).get('etape') === 'inscription';
+  document.getElementById('splashView').style.display = depuisDemo ? 'none' : 'block';
+  document.getElementById('formView').style.display = depuisDemo ? 'block' : 'none';
+
+  const TEST_MODE = new URLSearchParams(window.location.search).get('test') === '1';
+
+  async function uploadToStorage(file, prefix){
+    if(!supabaseClient) throw new Error('Service de stockage indisponible.');
+    const ext = file.name.split('.').pop();
+    const path = prefix + '/' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.' + ext;
+    const { error } = await supabaseClient.storage.from('skyeco-pro-media').upload(path, file);
+    if(error) throw error;
+    const { data } = supabaseClient.storage.from('skyeco-pro-media').getPublicUrl(path);
+    return data.publicUrl;
+  }
+
+  const stepperEl = document.getElementById('stepper');
+  steps.forEach((_,i)=>{
+    const bar = document.createElement('div');
+    bar.className = 'step-bar';
+    bar.innerHTML = '<span></span>';
+    stepperEl.appendChild(bar);
+  });
+  const bars = Array.from(stepperEl.children);
+
+  function renderStepper(){
+    bars.forEach((b,i)=>{
+      b.classList.toggle('active', i===current);
+      b.classList.toggle('done', i<current);
+    });
+    document.getElementById('stepLabel').textContent = 'ÉTAPE ' + (current+1) + ' / ' + steps.length + ' — ' + stepLabels[current].toUpperCase();
+  }
+
+  function isTelephoneValid(raw){
+    const digits = raw.replace(/\D/g,'');
+    return /^0\d{9}$/.test(digits);
+  }
+
+  function canProceed(){
+    const entrepriseOk = document.getElementById('entreprise').value.trim().length > 0;
+    const nomOk = document.getElementById('nom').value.trim().length > 0;
+    const prenomOk = document.getElementById('prenom').value.trim().length > 0;
+    const emailOk = /\S+@\S+\.\S+/.test(document.getElementById('email').value.trim());
+    const telOk = isTelephoneValid(document.getElementById('telephone').value);
+    const cguOk = document.getElementById('cguEssaiCheckbox').checked;
+    return entrepriseOk && nomOk && prenomOk && emailOk && telOk && state.telephoneVerifie && cguOk;
+  }
+
+  function showStep(i){
+    steps.forEach(p=>p.classList.remove('active'));
+    steps[i].classList.add('active');
+    document.getElementById('btnNext').disabled = !canProceed();
+    renderStepper();
+  }
+
+  document.getElementById('entreprise').addEventListener('input', (e)=>{ state.entreprise = e.target.value; document.getElementById('btnNext').disabled = !canProceed(); });
+  document.getElementById('nom').addEventListener('input', (e)=>{ state.nom = e.target.value; document.getElementById('btnNext').disabled = !canProceed(); });
+  document.getElementById('prenom').addEventListener('input', (e)=>{ state.prenom = e.target.value; document.getElementById('btnNext').disabled = !canProceed(); });
+  document.getElementById('email').addEventListener('input', ()=>{ document.getElementById('btnNext').disabled = !canProceed(); });
+  document.getElementById('cguEssaiCheckbox').addEventListener('change', ()=>{ document.getElementById('btnNext').disabled = !canProceed(); });
+  document.getElementById('adresseRue').addEventListener('input', (e)=>{ state.adresseRue = e.target.value; });
+  document.getElementById('adresseCp').addEventListener('input', (e)=>{ e.target.value = e.target.value.replace(/\D/g,'').slice(0,5); state.adresseCp = e.target.value; });
+  document.getElementById('adresseVille').addEventListener('input', (e)=>{ state.adresseVille = e.target.value; });
+
+  const telEl = document.getElementById('telephone');
+  const telStatusEl = document.getElementById('telStatus');
+  const btnEnvoyerCode = document.getElementById('btnEnvoyerCode');
+  const smsCodeRow = document.getElementById('smsCodeRow');
+  const smsCodeInput = document.getElementById('smsCode');
+  const btnVerifierCode = document.getElementById('btnVerifierCode');
+  const smsStatusEl = document.getElementById('smsStatus');
+
+  function resetSmsVerification(){
+    state.telephoneVerifie = false;
+    smsCodeRow.style.display = 'none';
+    smsCodeInput.value = '';
+    smsStatusEl.textContent = '';
+    smsStatusEl.className = 'sms-status';
+    btnEnvoyerCode.style.display = 'inline-block';
+    btnEnvoyerCode.textContent = 'Vérifier mon numéro par SMS';
+    if (TEST_MODE) document.getElementById('btnSimulerVerifTel').style.display = 'inline-block';
+  }
+
+  telEl.addEventListener('input', ()=>{
+    let digits = telEl.value.replace(/\D/g,'').slice(0,10);
+    const formatted = digits.replace(/(\d{2})(?=\d)/g,'$1 ').trim();
+    telEl.value = formatted;
+    state.telephone = formatted;
+    resetSmsVerification();
+
+    if(digits.length === 0){
+      telStatusEl.textContent = 'Numéro français, 10 chiffres.';
+      telStatusEl.style.color = 'var(--concrete)';
+      btnEnvoyerCode.disabled = true;
+    } else if(isTelephoneValid(digits)){
+      telStatusEl.textContent = '✓ Format valide';
+      telStatusEl.style.color = 'var(--ok)';
+      btnEnvoyerCode.disabled = false;
+    } else {
+      telStatusEl.textContent = digits.length < 10 ? 'Numéro incomplet.' : 'Doit commencer par 0 (ex : 06...).';
+      telStatusEl.style.color = 'var(--orange-dark)';
+      btnEnvoyerCode.disabled = true;
+    }
+    document.getElementById('btnNext').disabled = !canProceed();
+  });
+
+  btnEnvoyerCode.addEventListener('click', async ()=>{
+    btnEnvoyerCode.disabled = true;
+    smsStatusEl.textContent = 'Envoi du code…';
+    smsStatusEl.className = 'sms-status';
+    try{
+      const res = await fetch('/api/verify-send-code', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ telephone: state.telephone })
+      });
+      const data = await res.json();
+      if(!data.success) throw new Error(data.error || "Erreur lors de l'envoi.");
+      smsCodeRow.style.display = 'flex';
+      smsStatusEl.textContent = 'Code envoyé par SMS.';
+      smsStatusEl.className = 'sms-status ok';
+    } catch(err){
+      smsStatusEl.textContent = err.message;
+      smsStatusEl.className = 'sms-status error';
+    } finally {
+      btnEnvoyerCode.disabled = false;
+    }
+  });
+
+  const btnSimulerVerifTel = document.getElementById('btnSimulerVerifTel');
+  if (TEST_MODE) {
+    btnSimulerVerifTel.style.display = 'inline-block';
+  }
+  btnSimulerVerifTel.addEventListener('click', async ()=>{
+    let motDePasseInterne = sessionStorage.getItem('skyeco_admin_internal_pw');
+    if (!motDePasseInterne) {
+      motDePasseInterne = prompt('Mot de passe interne (mode test) :');
+      if (!motDePasseInterne) return;
+    }
+    btnSimulerVerifTel.disabled = true;
+    smsStatusEl.textContent = 'Vérification du mot de passe interne…';
+    smsStatusEl.className = 'sms-status';
+    try {
+      const res = await fetch('/api/verify-test-bypass', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ motDePasseInterne })
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Mot de passe interne incorrect.');
+      sessionStorage.setItem('skyeco_admin_internal_pw', motDePasseInterne);
+      state.telephoneVerifie = true;
+      btnEnvoyerCode.style.display = 'none';
+      btnSimulerVerifTel.style.display = 'none';
+      smsCodeRow.style.display = 'none';
+      smsStatusEl.textContent = '✓ Numéro vérifié (test — aucun SMS envoyé).';
+      smsStatusEl.className = 'sms-status ok';
+    } catch(err) {
+      sessionStorage.removeItem('skyeco_admin_internal_pw');
+      state.telephoneVerifie = false;
+      smsStatusEl.textContent = err.message;
+      smsStatusEl.className = 'sms-status error';
+    } finally {
+      btnSimulerVerifTel.disabled = false;
+      document.getElementById('btnNext').disabled = !canProceed();
+    }
+  });
+
+  btnVerifierCode.addEventListener('click', async ()=>{
+    btnVerifierCode.disabled = true;
+    smsStatusEl.textContent = 'Vérification…';
+    smsStatusEl.className = 'sms-status';
+    try{
+      const res = await fetch('/api/verify-check-code', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ telephone: state.telephone, code: smsCodeInput.value.trim() })
+      });
+      const data = await res.json();
+      if(!data.success || !data.verified) throw new Error(data.error || 'Code invalide.');
+      state.telephoneVerifie = true;
+      btnEnvoyerCode.style.display = 'none';
+      smsCodeRow.style.display = 'none';
+      smsStatusEl.textContent = '✓ Numéro vérifié.';
+      smsStatusEl.className = 'sms-status ok';
+    } catch(err){
+      state.telephoneVerifie = false;
+      smsStatusEl.textContent = err.message;
+      smsStatusEl.className = 'sms-status error';
+    } finally {
+      btnVerifierCode.disabled = false;
+      document.getElementById('btnNext').disabled = !canProceed();
+    }
+  });
+  function validateStep(){
+    state.entreprise = document.getElementById('entreprise').value.trim();
+    state.nom = document.getElementById('nom').value.trim();
+    state.prenom = document.getElementById('prenom').value.trim();
+    state.telephone = document.getElementById('telephone').value.trim();
+    state.email = document.getElementById('email').value.trim();
+    if(!canProceed()){
+      document.getElementById('err-entreprise').classList.add('show');
+      return false;
+    }
+    document.getElementById('err-entreprise').classList.remove('show');
+    return true;
+  }
+
+  document.getElementById('btnNext').addEventListener('click', ()=>{
+    if(!validateStep()) return;
+    submitForm();
+  });
+
+  document.getElementById('btnBack').addEventListener('click', ()=>{
+    if(current===0) return;
+    current--;
+    showStep(current);
+  });
+
+  async function submitForm(){
+    document.getElementById('btnNext').disabled = true;
+    document.getElementById('btnNext').textContent = 'Préparation de votre tableau de bord…';
+
+    if (!supabaseClient) {
+      document.getElementById('btnNext').disabled = false;
+      document.getElementById('btnNext').textContent = 'Accéder à mon tableau de bord';
+      alert("Le service de sauvegarde n'a pas pu se charger. Vérifiez votre connexion et réessayez.");
+      return;
+    }
+
+    const { data, error } = await supabaseClient
+      .from('skyeco_pro_vitrine_drafts')
+      .insert([{
+        entreprise: state.entreprise,
+        contact_nom: state.nom || null,
+        contact_prenom: state.prenom || null,
+        telephone: state.telephone,
+        email: state.email,
+        adresse_rue: state.adresseRue || null,
+        adresse_cp: state.adresseCp || null,
+        adresse_ville: state.adresseVille || null,
+        status: 'preview'
+      }])
+      .select('id')
+      .single();
+
+    if(error){
+      document.getElementById('btnNext').disabled = false;
+      document.getElementById('btnNext').textContent = 'Accéder à mon tableau de bord';
+      alert("Une erreur est survenue lors de l'enregistrement. Merci de réessayer. (" + error.message + ")");
+      return;
+    }
+
+    const draftId = data.id;
+
+    try{
+      const resEssai = await fetch('/api/demarrer-essai-gratuit', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ draftId })
+      });
+      const dataEssai = await resEssai.json();
+      if(!dataEssai.success) throw new Error(dataEssai.error || "Erreur lors du démarrage de l'essai.");
+    } catch(err){
+      document.getElementById('btnNext').disabled = false;
+      document.getElementById('btnNext').textContent = 'Accéder à mon tableau de bord';
+      alert("Votre compte a été créé mais le démarrage de l'essai a échoué. Merci de réessayer. (" + err.message + ")");
+      return;
+    }
+
+    fetch('/api/envoyer-bienvenue-essai', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ draftId })
+    }).catch(()=>{});
+
+    document.getElementById('wizardForm').style.display = 'none';
+    document.getElementById('successPanel').classList.add('active');
+
+    setTimeout(()=>{
+      window.location.href = '/mes-elements.html?id=' + draftId;
+    }, 1400);
+  }
+
+  showStep(0);
+})();
+</script>
+
+<div style="text-align:center; font-size:11px; color:#8a9891; padding:24px 16px 16px; line-height:1.7;">
+  RMS EcoSky (Skyeco IA Ads) — RÉSINE MARBRE SOL, SASU au capital de 50 000 € — SIRET 939 997 870 00018<br>
+  23 Route de Corn Er Hoet, 56400 Brech — <a href="mailto:infos@ecosky.fr" style="color:#8a9891;">infos@ecosky.fr</a><br>
+  <a href="/mentions-legales.html" style="color:#8a9891;">Mentions légales</a> · <a href="/politique-confidentialite.html" style="color:#8a9891;">Confidentialité</a> · <a href="/cgv.html" style="color:#8a9891;">CGV</a>
+</div>
+<!-- SKYECO_COOKIE_BANNER_START -->
+<div id="skyeco-cookies" style="position:fixed; left:0; right:0; bottom:0; z-index:99999; background:#14202B; color:#F4F7F9; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; box-shadow:0 -6px 24px rgba(0,0,0,0.25); display:none;">
+  <div style="max-width:1000px; margin:0 auto; padding:18px 20px; display:flex; align-items:center; gap:24px; flex-wrap:wrap;">
+    <p style="flex:1; min-width:240px; margin:0; font-size:13.5px; line-height:1.5; color:#C9D6DF;">
+      Nous utilisons des cookies n&#233;cessaires au fonctionnement du site et, avec votre accord, des cookies de mesure d&#8217;audience et de suivi publicitaire (Google Ads) pour am&#233;liorer nos services.
+      <a href="/politique-confidentialite.html" style="color:#E8622C; text-decoration:underline;">En savoir plus</a>
+    </p>
+    <div style="display:flex; gap:10px; flex-shrink:0; flex-wrap:wrap;">
+      <button type="button" onclick="skyecoCookiesChoix('essentiel')" style="background:transparent; border:1px solid rgba(255,255,255,0.35); color:#F4F7F9; padding:10px 16px; font-size:13px; font-weight:600; cursor:pointer; border-radius:4px;">Essentiels uniquement</button>
+      <button type="button" onclick="skyecoCookiesChoix('tous')" style="background:#E8622C; border:1px solid #E8622C; color:#fff; padding:10px 18px; font-size:13px; font-weight:700; cursor:pointer; border-radius:4px;">Tout accepter</button>
+    </div>
+  </div>
+</div>
+<button type="button" id="skyeco-cookies-lien" onclick="skyecoCookiesOuvrir()" aria-label="G&#233;rer mes cookies" style="display:none; position:fixed; left:16px; bottom:16px; z-index:99998; background:#14202B; color:#F4F7F9; border:1px solid rgba(255,255,255,0.25); border-radius:20px; padding:8px 14px; font-size:12px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; cursor:pointer;">&#x1F36A; Cookies</button>
+<script>
+(function(){
+  var CLE = 'skyeco_cookie_consent';
+  function lireChoix(){ try { return JSON.parse(localStorage.getItem(CLE) || 'null'); } catch(e){ return null; } }
+  function appliquerChoix(choix){
+    window.skyecoConsentement = choix;
+  }
+  window.skyecoCookiesChoix = function(niveau){
+    var choix = { niveau: niveau, date: new Date().toISOString() };
+    try { localStorage.setItem(CLE, JSON.stringify(choix)); } catch(e){}
+    var b = document.getElementById('skyeco-cookies'); if(b) b.style.display = 'none';
+    var l = document.getElementById('skyeco-cookies-lien'); if(l) l.style.display = 'block';
+    appliquerChoix(choix);
+  };
+  window.skyecoCookiesOuvrir = function(){
+    var b = document.getElementById('skyeco-cookies'); if(b) b.style.display = 'block';
+    var l = document.getElementById('skyeco-cookies-lien'); if(l) l.style.display = 'none';
+  };
+  document.addEventListener('DOMContentLoaded', function(){
+    var choix = lireChoix();
+    var b = document.getElementById('skyeco-cookies');
+    var l = document.getElementById('skyeco-cookies-lien');
+    if(choix && choix.niveau){
+      if(l) l.style.display = 'block';
+      appliquerChoix(choix);
+    } else if(b){
+      b.style.display = 'block';
+    }
+  });
+})();
+</script>
+<!-- SKYECO_COOKIE_BANNER_END -->
+</body>
+</html>

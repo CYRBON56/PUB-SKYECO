@@ -19,11 +19,6 @@
   .leaf-bg svg { display:block; filter:blur(0.5px); }
   .wrap { position:relative; z-index:1; max-width:980px; margin:0 auto; }
 
-  /* Refonte 11/09 : mise en page à deux colonnes (sidebar de navigation +
-     contenu), demandée par Cyrille pour se rapprocher d'un dashboard marketing
-     moderne — voir la référence visuelle fournie. Les ids/classes utilisés par
-     le JS (panelTabs, panel-tab, panelAds/panelClients/...) sont conservés à
-     l'identique ; seule leur disposition/CSS change. */
   .dash-shell { max-width:1240px; display:flex; align-items:flex-start; gap:24px; }
   .dash-sidebar {
     flex:0 0 240px; position:sticky; top:24px; background:#fff; border-radius:20px;
@@ -113,9 +108,6 @@
 
   .liste-panel { background:#fff; border-radius:16px; padding:24px; box-shadow:0 6px 22px rgba(20,49,42,0.08); }
 
-  /* panel-tabs joue maintenant le rôle de nav verticale dans .dash-sidebar
-     (voir .dash-sidebar plus haut) — au-delà de 860px de large. En dessous,
-     la media query de .dash-sidebar la repasse en ligne horizontale. */
   .panel-tabs { display:flex; flex-direction:column; gap:6px; }
   .panel-tab {
     display:flex; align-items:center; gap:12px; text-align:left; width:100%;
@@ -336,30 +328,14 @@
   }
   .client-nom { font-weight:700; color:#211a35; white-space:nowrap; }
   .client-contact { display:block; color:#3a4a43; text-decoration:none; font-size:0.82rem; white-space:nowrap; }
-  /* Fiche de démonstration (07/09) : identité/coordonnées à peine visibles à
-     l'écran, pour filmer sans donner l'impression de montrer de vraies
-     coordonnées client — le reste du tableau (date, statut, devis) reste net. */
   .client-floute-demo { filter:blur(4.5px); opacity:0.65; user-select:none; pointer-events:none; }
   .client-contact:hover { text-decoration:underline; color:#7c3aed; }
-  /* Ajouté 08/09 : bouton de correction du nom/contact d'une demande — utile
-     quand Cyrille saisit lui-même une demande pour un client qu'il a déjà eu
-     au téléphone (le numéro/email enregistrés sont alors les SIENS, requis
-     pour la vérification SMS, pas ceux du client — voir le commentaire sur
-     lead-modifier-contact.js). */
   .btn-modifier-contact {
     margin-top:4px; background:none; border:1px solid #dde5e1; border-radius:6px;
     color:#5f6368; font-size:0.72rem; padding:2px 7px; cursor:pointer;
   }
   .btn-modifier-contact:hover { background:#f0f4f2; color:#7c3aed; border-color:#c7d3cd; }
-  /* Ajouté 08/09 : même style pour le bouton "Demander photos/coordonnées"
-     (envoie un SMS avec un lien où le client saisit lui-même nom/prénom/
-     adresse et ses photos — voir envoyer-photos.html et envoyer-sms-photos.js). */
   .btn-demander-photos { margin-top:4px; margin-left:4px; }
-  /* Ajouté 08/09 : bouton "Archiver" un client depuis "Demandes d'estimation"
-     (demande de Cyrille : "il faut pouvoir archiver puis supprimer les
-     clients du dashboard") — même style, retiré de la vue par défaut sans
-     rien supprimer, voir gerer-lead.js. Restauré le 09/09 après suppression
-     accidentelle. */
   .btn-archiver-lead { margin-top:4px; margin-left:4px; }
 
   .loading, .empty-msg { text-align:center; padding:50px 20px; color:#8a9891; font-size:0.92rem; }
@@ -424,26 +400,38 @@
     display:flex; align-items:center; justify-content:center;
     color:#5b6b64; font-size:0.95rem;
   }
+
+  /* ---- Réseaux sociaux (11/09) ---- */
+  .rs-status { display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
+  .rs-status-dot { width:10px; height:10px; border-radius:50%; background:#7c3aed; flex-shrink:0; }
+  .rs-status-dot.off { background:#ec4899; }
+  .rs-status-text { flex:1; min-width:200px; }
+  .rs-status-text strong { display:block; color:#211a35; font-size:0.95rem; margin-bottom:2px; }
+  .rs-btn { background:#7c3aed; color:#fff; border:none; padding:10px 18px; border-radius:10px; font-size:0.85rem; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .rs-btn.secondary { background:#fff; color:#7c3aed; border:1.5px solid #7c3aed; }
+  .rs-row { display:grid; grid-template-columns:52px 1fr auto auto; align-items:center; gap:14px; padding:14px 0; border-top:1px solid #eef1f0; }
+  .rs-row:first-child { border-top:none; }
+  .rs-thumb { width:52px; height:52px; border-radius:8px; background:#f5f3ff; background-size:cover; background-position:center; }
+  .rs-caption { font-size:0.86rem; color:#211a35; line-height:1.4; }
+  .rs-meta { font-size:0.74rem; color:#8a9891; margin-top:3px; }
+  .rs-pill { font-size:0.72rem; font-weight:700; padding:4px 10px; border-radius:999px; white-space:nowrap; }
+  .rs-pill.planned { background:#f5f3ff; color:#7c3aed; }
+  .rs-pill.draft { background:#f0ece0; color:#8a6d1f; }
+  .rs-pill.failed { background:#fdeaea; color:#991b1b; }
+  .rs-pill.done { background:#e4eef4; color:#2c5f8a; }
+  .rs-action { font-size:0.78rem; color:#7c3aed; font-weight:700; background:none; border:none; cursor:pointer; }
 </style>
 </head>
 <body>
 
 <div class="verif-acces-overlay" id="verifAccesOverlay">Vérification de votre accès…</div>
 
-<!-- 07/09 : message ponctuel de Cyrille (voir api/messages-artisan.js) — visible
-     uniquement côté artisan, en plus du SMS déjà reçu. -->
 <div id="messageAdminBanniere" style="display:none;position:fixed;left:16px;right:16px;bottom:16px;max-width:420px;margin:0 auto;z-index:10000;background:#fff;border:1.5px solid #ec4899;border-radius:14px;padding:16px 18px;box-shadow:0 8px 30px rgba(20,49,42,0.18);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <div style="font-weight:800;color:#ec4899;margin-bottom:6px;">✉️ Message de Cyrille</div>
   <div id="messageAdminContenu" style="color:#211a35;font-size:0.92rem;line-height:1.4;margin-bottom:10px;"></div>
   <button type="button" id="btnMessageAdminLu" style="background:#7c3aed;color:#fff;border:none;padding:8px 16px;border-radius:9px;font-weight:700;cursor:pointer;font-size:0.85rem;">J'ai vu, merci</button>
 </div>
 
-<!-- 07/09 : partage d'écran en direct (voir api/ecran-partage.js) — Cyrille
-     voit réellement l'écran (l'onglet dashboard) de l'artisan, en vidéo, avec
-     son accord explicite à chaque fois. Pas de contrôle à distance : lecture
-     seule, l'artisan garde la main sur son clavier/souris. -->
-
-<!-- Côté artisan : demande d'autorisation, puis bannière tant que le partage est actif. -->
 <div id="ecranPartageConsentement" style="display:none;position:fixed;inset:0;z-index:10003;background:rgba(20,49,42,0.55);align-items:center;justify-content:center;padding:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <div style="background:#fff;border-radius:16px;padding:26px 24px;max-width:400px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.25);">
     <div style="font-size:1.05rem;font-weight:800;color:#211a35;margin-bottom:10px;">🎥 Cyrille souhaite voir votre écran en direct</div>
@@ -459,15 +447,10 @@
   <button type="button" id="btnEcranPartageArreter" style="margin-left:12px;background:rgba(255,255,255,0.25);color:#fff;border:none;padding:4px 12px;border-radius:8px;font-weight:700;font-size:0.78rem;cursor:pointer;">Arrêter le partage</button>
 </div>
 
-<!-- Côté admin (Cyrille) : badge de statut + vidéo reçue. -->
 <div id="ecranPartageVideoWrap" style="display:none;position:fixed;bottom:16px;right:16px;z-index:10001;background:#211a35;border-radius:14px;padding:10px;box-shadow:0 10px 40px rgba(0,0,0,0.35);">
   <video id="ecranPartageVideo" autoplay playsinline style="max-width:46vw;max-height:60vh;border-radius:8px;display:block;"></video>
 </div>
 
-<!-- Refonte 11/09 : les feuilles décoratives (thème EcoSky) sont remplacées par
-     de simples formes floues violet/rose, plus proches d'un dashboard
-     marketing moderne (cf. référence visuelle de Cyrille) — purement
-     décoratif, aucun impact sur le JS. -->
 <div class="leaf-bg" style="top:-120px; right:-120px; width:420px; height:420px; border-radius:50%; background:radial-gradient(circle, #c4b5fd, transparent 70%); filter:blur(40px); opacity:0.5;"></div>
 <div class="leaf-bg" style="bottom:-140px; left:-120px; width:460px; height:460px; border-radius:50%; background:radial-gradient(circle, #f9a8d4, transparent 70%); filter:blur(46px); opacity:0.35;"></div>
 
@@ -488,6 +471,10 @@
       <button type="button" class="panel-tab" id="tabClients" data-tab="clients">
         <span class="panel-tab-icone">👥</span>
         <span class="panel-tab-texte">Gérer les clients<span class="panel-tab-sous">Demandes, devis, signatures</span></span>
+      </button>
+      <button type="button" class="panel-tab" id="tabReseaux" data-tab="reseaux">
+        <span class="panel-tab-icone">📱</span>
+        <span class="panel-tab-texte">Réseaux sociaux<span class="panel-tab-sous">Publication Instagram &amp; Facebook</span></span>
       </button>
       <button type="button" class="panel-tab" id="tabCalendrier" data-tab="calendrier">
         <span class="panel-tab-icone">📅</span>
@@ -515,10 +502,6 @@
     </div>
   </div>
 
-  <!-- (04/09) Indépendant du nombre de vitrines actives (contrairement à
-       #apercuCampagnes ci-dessous, masqué s'il n'en reste qu'une) : une
-       vitrine archivée doit rester consultable/désarchivable même si
-       l'artisan n'a plus qu'un seul site actif. -->
   <div id="vitrinesArchiveesPanel" style="display:none; margin-bottom:22px; background:#f5f3ff; border:1.5px solid #ddd6fe; border-radius:14px; padding:16px 18px;">
     <div style="font-weight:800; font-size:0.85rem; color:#211a35; margin-bottom:10px;">Vitrines archivées</div>
     <div id="vitrinesArchiveesContenu"><div class="loading">Chargement…</div></div>
@@ -540,12 +523,6 @@
     <a id="btnMettreEnLigne" href="#" style="background:#7c3aed; color:#fff; border:none; border-radius:10px; padding:10px 18px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap; text-decoration:none; display:inline-block;">Mettre en ligne</a>
   </div>
 
-  <!-- Vue d'ensemble multi-vitrines : visible seulement si le compte a
-       plusieurs sites (voir chargerApercuCampagnes). Chaque tuile = une
-       vitrine/campagne, avec ses clics du mois ; cliquer dessus ouvre le
-       tableau de bord détaillé (mots-clés, annonce, budget) de CETTE
-       vitrine — le reste de la page (ci-dessous) reste le détail du site
-       actuellement sélectionné. -->
   <div id="apercuCampagnes" style="display:none; margin-bottom:22px;">
     <p style="font-size:0.78rem; font-weight:800; text-transform:uppercase; letter-spacing:0.03em; color:#5b6b64; margin-bottom:10px;">Vos vitrines</p>
     <div id="apercuCampagnesTuiles" style="display:flex; gap:12px; flex-wrap:wrap;"></div>
@@ -817,6 +794,16 @@
   </div>
   </div>
 
+  <div id="panelReseaux" style="display:none;">
+  <div class="liste-panel">
+    <div class="liste-header">
+      <h3 style="display:flex; align-items:center; gap:9px;"><span style="font-size:1.1rem;">📱</span>Réseaux sociaux</h3>
+      <button type="button" class="btn-pdf" id="btnNouveauPostReseaux">+ Nouveau post</button>
+    </div>
+    <div id="reseauxContent"><div class="loading">Chargement…</div></div>
+  </div>
+  </div>
+
   <div id="panelCalendrier" style="display:none;">
   <div class="liste-panel calendrier-panel">
     <div class="liste-header">
@@ -858,13 +845,6 @@
   const draftId = params.get('id');
   document.getElementById('btnApprovisionnerRapide').href = '/campagne.html?id=' + draftId;
   document.getElementById('btnMesDevis').href = '/mes-devis.html?id=' + draftId + (params.get('admin_token') ? '&admin_token=' + params.get('admin_token') : '');
-  // Partagé entre initMotsCles(), initAnnonce() et initZoneCiblee() : compte
-  // les sauvegardes réseau en cours (zone, mots-clés, annonce). Tant que ce
-  // compteur est > 0, on avertit avant de quitter/recharger la page — sinon
-  // une sauvegarde tout juste lancée (coche d'un mot-clé, saisie dans
-  // l'annonce...) peut être interrompue par un F5 trop rapide, avant même
-  // d'avoir atteint le serveur, et sembler "disparaître" au rechargement
-  // alors qu'elle n'a en réalité jamais été enregistrée.
   let sauvegardesEnCours = 0;
   function demarrerSauvegarde() { sauvegardesEnCours++; }
   function terminerSauvegarde() { sauvegardesEnCours = Math.max(0, sauvegardesEnCours - 1); }
@@ -875,24 +855,8 @@
     }
   });
 
-  // Statut du brouillon (site_valide, etc.) — reflété ici à chaque fois qu'un
-  // fetch qui inclut la colonne "status" revient (verifierStatutPause() et
-  // initPilotageAds(), ci-dessous) : variable VRAIMENT globale au script,
-  // contrairement à "draftInfo" qui n'existe qu'en local à l'intérieur de
-  // initPilotageAds() (03/09 : bloquerSiEssaiExpire() référençait par erreur
-  // ce "draftInfo" local depuis la portée globale du script, où il n'existe
-  // pas du tout — "ReferenceError: draftInfo is not defined" à chaque appel,
-  // qui interrompait silencieusement (promesse non gérée, aucun message
-  // affiché) l'enregistrement des mots-clés/zone/annonce/horaires pour TOUTE
-  // vitrine où cette fonction était appelée).
   let statutDraftActuel = null;
 
-  // Essai gratuit terminé sans passage à un forfait payant : l'artisan
-  // garde son tableau de bord et sa vitrine accessibles en lecture (la
-  // diffusion Google Ads continue tant qu'il reste du budget), mais ne peut
-  // plus RIEN modifier tant qu'il n'a pas choisi une formule — appelé au
-  // début de chaque action de sauvegarde (zone, mots-clés, annonce,
-  // horaires...). Renvoie true si bloqué (l'appelant doit alors arrêter).
   function bloquerSiEssaiExpire() {
     if (statutDraftActuel !== 'essai_expire') return false;
     if (confirm("Votre essai gratuit est terminé — passez à une formule payante pour continuer à modifier votre vitrine.\n\nVoir les formules maintenant ?")) {
@@ -900,40 +864,14 @@
     }
     return true;
   }
-  // Partagé entre initMotsCles() et initAnnonce() : reflète en permanence,
-  // en mémoire, les mots-clés actuellement cochés à l'écran (triés par
-  // volume décroissant) — utilisé par le bouton "Régénérer depuis mes
-  // mots-clés" pour éviter de relire Supabase, qui peut être temporairement
-  // en retard sur l'état réel si plusieurs cases sont cochées rapidement
-  // (chaque case déclenche sa propre sauvegarde, sans attendre la
-  // précédente — l'état affiché à l'écran, lui, est toujours à jour).
   let motsClesSelectionActuelle = [];
   let leadsData = [];
   let nomEntreprise = '';
-  // Jeton de la session en cours (compte, pas un site précis — voir
-  // dashboard-login.js) : conservé pour pouvoir rafraîchir "Mes clients"
-  // (toutes vitrines confondues) après une action, sans le redemander.
   let sessionTokenActuel = null;
-  // Jeton "brut" de CE site (draftId), quel que soit son rôle (admin ou
-  // artisan) — contrairement à sessionTokenActuel ci-dessus, jamais mis à
-  // null en mode admin (mes-artisans.html). Les API du calendrier
-  // (mes-rdv/bloquer-creneau/debloquer-creneau, corrigées le 04/09)
-  // acceptent les deux rôles, donc l'onglet "Mon calendrier" utilise
-  // toujours celui-ci plutôt que sessionTokenActuel.
   let tokenCalendrierActuel = null;
-  // Fiche de démonstration (07/09) : renseigné par chargerDemandes() dès le
-  // chargement de la page (bien avant qu'on puisse cliquer sur un onglet) —
-  // réutilisé par le calendrier pour flouter les noms/téléphones des rendez-
-  // vous fictifs, comme pour "Gérer les clients". false pour toute vraie
-  // fiche artisan.
   let estDemoActuel = false;
+  let reseauxSociauxDejaCharge = false;
 
-  // Identifiant réservé de la fiche "Skyeco Pro" (Cyrille lui-même), déjà
-  // utilisé par mes-artisans.html pour son propre accès admin/calendrier —
-  // voir la section "Appel vidéo" du doc technique du projet. Sert ici à ne
-  // JAMAIS proposer à Cyrille de "s'appeler lui-même" sur son propre
-  // dashboard : l'onglet "Appel vidéo" (demande) n'a de sens que côté
-  // artisan, Cyrille gérant sa part depuis l'onglet "Mon calendrier".
   const DRAFT_ID_SKYECO_PRO = '4fbdb122-9fca-4636-b80c-d9e4abc2542b';
 
   if (!draftId) {
@@ -942,18 +880,8 @@
     verifierAccesPuisCharger();
   }
 
-  // Accès protégé par mot de passe (voir acces-dashboard.html) : soit une
-  // session artisan normale (sessionStorage, posée après connexion), soit un
-  // jeton admin transmis dans l'URL par mes-artisans.html (Cyrille peut
-  // ouvrir n'importe quel dashboard sans connaître le mot de passe de
-  // l'artisan). Dans les deux cas, la validité est revérifiée côté serveur.
   async function verifierAccesPuisCharger() {
     const adminToken = params.get('admin_token');
-    // Un jeton "compte" (voir dashboard-login.js) est valable pour TOUTES
-    // les vitrines d'un même artisan : si le navigateur n'a pas encore de
-    // jeton propre à CE draftId (ex : on vient de passer d'un site à
-    // l'autre via le sélecteur), on retombe sur le jeton générique du
-    // compte plutôt que de redemander une connexion.
     const token = adminToken
       || sessionStorage.getItem('skyeco_dashboard_token_' + draftId)
       || sessionStorage.getItem('skyeco_dashboard_token');
@@ -976,8 +904,6 @@
         window.location.href = '/acces-dashboard.html?id=' + draftId;
         return;
       }
-      // On garde les deux clés à jour pour que le prochain chargement
-      // (celui-ci ou un autre site du même compte) retrouve le jeton.
       if (!adminToken) {
         sessionStorage.setItem('skyeco_dashboard_token_' + draftId, token);
         sessionStorage.setItem('skyeco_dashboard_token', token);
@@ -995,13 +921,6 @@
     chargerLogo();
     chargerStats();
     chargerSolde();
-    // Bug corrigé le 07/09 : "Gérer les clients" était appelé avec
-    // sessionTokenActuel, qui vaut TOUJOURS null en mode admin (voir plus
-    // haut) — /api/mes-leads recevait donc un token null, répondait 401, et
-    // la liste affichait systématiquement "Impossible de charger les
-    // demandes" dès qu'on ouvrait le dashboard d'un artisan depuis
-    // mes-artisans.html. tokenCalendrierActuel, lui, reste renseigné en mode
-    // admin (même raisonnement que pour l'envoi/relance de devis ci-dessous).
     chargerDemandes(tokenCalendrierActuel);
     initPilotageAds();
     initAppelVideo();
@@ -1009,10 +928,6 @@
     verifierStatutPause();
     chargerZones();
     initPanelTabs();
-    // Lien direct vers l'onglet calendrier (ex : bouton "Mes rendez-vous" de
-    // mes-artisans.html, mon-dashboard.html#calendrier) — même principe que
-    // #sectionZoneCiblee un peu plus haut : un seul clic ouvre directement
-    // le bon onglet, sans devoir cliquer dessus une fois la page chargée.
     if (window.location.hash === '#calendrier') {
       activerOnglet('calendrier');
       document.getElementById('panelTabs').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1027,9 +942,6 @@
     }
   }
 
-  // Sélecteur de site : un même artisan (même email) peut posséder
-  // plusieurs vitrines. On les liste et on affiche un sélecteur seulement
-  // s'il y en a plus d'une — sinon rien ne change à l'écran.
   async function chargerSitesCompte(token) {
     try {
       const res = await fetch('/api/mes-sites', {
@@ -1043,9 +955,6 @@
       const btnAjouter = document.getElementById('btnAjouterVitrine');
       btnAjouter.style.display = 'inline-block';
       btnAjouter.onclick = () => creerNouvelleVitrine(token);
-      // (04/09) Visibilité indépendante du nombre de vitrines ACTIVES —
-      // toujours affiché dès qu'on a une session artisan, pour retrouver une
-      // vitrine archivée même s'il n'en reste plus qu'une seule active.
       document.getElementById('btnVoirArchives').style.display = 'inline-block';
 
       if (data.sites.length <= 1) return;
@@ -1059,16 +968,9 @@
         window.location.href = '/mon-dashboard.html?id=' + select.value;
       });
     } catch (e) {
-      // Non bloquant : le tableau de bord du site courant reste utilisable
-      // même si la liste des autres sites n'a pas pu être chargée.
     }
   }
 
-  // Vue d'ensemble "Vos vitrines" : une tuile par vitrine du compte, avec
-  // ses clics du mois — cliquer dessus ouvre le tableau de bord détaillé de
-  // CETTE vitrine (mots-clés, annonce, budget), comme si on "rentrait"
-  // dedans. N'affiche rien s'il n'y a qu'une seule vitrine (rien ne change
-  // à l'écran pour un artisan mono-produit).
   async function chargerApercuCampagnes(token) {
     try {
       const res = await fetch('/api/mes-sites', {
@@ -1083,9 +985,6 @@
       const tuiles = document.getElementById('apercuCampagnesTuiles');
       zone.style.display = 'block';
 
-      // Chargement des clics/statut de chaque vitrine en parallèle — même
-      // endpoint que le panneau "Pilotage Google Ads" du site actuellement
-      // ouvert, mais appelé ici pour chacune des vitrines du compte.
       const details = await Promise.all(data.sites.map(async (s) => {
         try {
           const r = await fetch('/api/get-campaign-spend', {
@@ -1100,25 +999,12 @@
         }
       }));
 
-      // (04/09) La carte n'est plus un <a> unique : elle contient un lien
-      // interne (ouvrir le tableau de bord de cette vitrine) ET une petite
-      // rangée de boutons Archiver/Supprimer — imbriquer des <button> dans
-      // un <a> pose des soucis de clic, donc la carte elle-même est un
-      // simple conteneur, seul le bloc contenu est cliquable.
       tuiles.innerHTML = details.map((s) => {
         const estActuelle = s.id === draftId;
-        // Statut de diffusion (actif/en pause) — toujours affiché, qu'il
-        // s'agisse d'une vitrine en essai gratuit ou déjà payante ; avant
-        // cette correction, une vitrine en essai n'affichait QUE "🎁 Essai
-        // gratuit" sans jamais dire si sa diffusion était active ou en
-        // pause (le badge essai écrasait le badge de diffusion).
         const diffusionPausee = s.status === 'en_pause' || s.pausee;
         const diffusionLabel = diffusionPausee ? '⏸️ Diffusion en pause' : '● Diffusion active';
         const diffusionCouleur = diffusionPausee ? '#ec4899' : '#7c3aed';
         const estEssai = s.status === 'essai';
-        // Suppression définitive proposée seulement si la vitrine n'a
-        // strictement aucune trace d'activité réelle — même condition que
-        // /api/gerer-vitrine.js, revérifiée côté serveur de toute façon.
         const supprimable = !s.tarif_actif && !s.google_ads_campaign_resource;
         return `
           <div style="min-width:180px; flex:1; max-width:260px; background:#fff; border:1.5px solid ${estActuelle ? '#7c3aed' : '#e4e9e6'}; border-radius:14px; padding:14px 16px; box-shadow:${estActuelle ? '0 4px 14px rgba(30,111,76,0.14)' : 'none'};">
@@ -1136,19 +1022,9 @@
         `;
       }).join('');
     } catch (e) {
-      // Non bloquant : le reste du tableau de bord reste utilisable.
     }
   }
 
-  // (04/09, corrigé le même jour) Quand on archive/supprime la vitrine
-  // ACTUELLEMENT OUVERTE, on ne peut plus rester sur cette page (son id
-  // n'existe/n'est plus visible) — mais rediriger vers "/mon-dashboard.html"
-  // SANS ?id= déclenchait justement l'erreur "Lien invalide — identifiant du
-  // site manquant" (cette page exige toujours un id dans l'URL, voir plus
-  // haut). Cyrille est tombé dessus en archivant/supprimant la vitrine qu'il
-  // avait sous les yeux. Corrigé en redirigeant vers une AUTRE vitrine du
-  // même compte quand il en reste une, ou en affichant un message clair (au
-  // lieu de planter) s'il n'en reste plus aucune.
   async function redirigerApresActionSurSiteActuel(token) {
     try {
       const res = await fetch('/api/mes-sites', {
@@ -1168,13 +1044,6 @@
     }
   }
 
-  // (04/09) Archiver/supprimer une de ses propres vitrines — demandé par
-  // Cyrille ("y a-t-il un bouton pour archiver et supprimer une vitrine"),
-  // qui n'existait jusqu'ici que côté admin interne (mes-artisans.html, pour
-  // suivre SES artisans clients, pas pour qu'un artisan gère SES vitrines).
-  // sessionTokenActuel est null en mode admin (adminToken) — dans ce cas ces
-  // boutons ne devraient normalement pas s'afficher pour l'artisan concerné,
-  // mais on vérifie quand même ici par sécurité.
   window.archiverVitrine = async function(btn) {
     if (!sessionTokenActuel) return;
     const id = btn.dataset.id;
@@ -1193,8 +1062,6 @@
         return;
       }
       if (id === draftId) {
-        // On archive la vitrine actuellement ouverte : on ne peut plus rester
-        // ici (voir redirigerApresActionSurSiteActuel plus haut).
         await redirigerApresActionSurSiteActuel(sessionTokenActuel);
         return;
       }
@@ -1224,9 +1091,6 @@
         return;
       }
       if (id === draftId) {
-        // On supprime la vitrine actuellement ouverte : sa ligne n'existe
-        // plus, on ne peut plus rester ici (voir
-        // redirigerApresActionSurSiteActuel plus haut).
         await redirigerApresActionSurSiteActuel(sessionTokenActuel);
         return;
       }
@@ -1237,9 +1101,6 @@
     }
   };
 
-  // Panneau "📦 Vitrines archivées" — repli léger (pas de vraie navigation) :
-  // on relit /api/mes-sites avec inclureArchives:true et on filtre côté
-  // client sur archive===true, pour éviter un endpoint dédié juste pour ça.
   async function chargerVitrinesArchivees() {
     const contenu = document.getElementById('vitrinesArchiveesContenu');
     if (!sessionTokenActuel) return;
@@ -1300,18 +1161,10 @@
     }
   };
 
-  // Corrigé le 04/09 (Cyrille : "j'aurais voulu qu'il me dise directement
-  // que c'est un autre forfait") — rien ne prévenait avant de créer une
-  // vitrine supplémentaire qu'elle serait facturée à part (voir le
-  // commentaire d'en-tête de creer-vitrine-supplementaire.js : chaque
-  // vitrine a TOUJOURS son propre forfait/abonnement, dès la 2e, pas
-  // seulement à partir de la 3e). On le dit maintenant explicitement AVANT
-  // de demander le nom, pour que ce soit une décision informée plutôt qu'une
-  // surprise découverte plus tard sur la facture.
   async function creerNouvelleVitrine(token) {
     if (!confirm("Créer une nouvelle vitrine ? Il s'agit d'un site à part entière, avec son propre forfait et son propre budget publicitaire — facturés indépendamment de celui-ci. Vous choisirez son forfait juste après.")) return;
     const nom = prompt("Nom de cette nouvelle vitrine (par exemple votre autre activité) :", '');
-    if (nom === null) return; // annulé
+    if (nom === null) return;
     try {
       const res = await fetch('/api/creer-vitrine-supplementaire', {
         method: 'POST',
@@ -1337,20 +1190,17 @@
     if (btnCible) btnCible.classList.add('active');
     document.getElementById('panelAds').style.display = cible === 'ads' ? '' : 'none';
     document.getElementById('panelClients').style.display = cible === 'clients' ? '' : 'none';
+    document.getElementById('panelReseaux').style.display = cible === 'reseaux' ? '' : 'none';
     document.getElementById('panelCalendrier').style.display = cible === 'calendrier' ? '' : 'none';
     document.getElementById('panelAppelVideo').style.display = cible === 'appelvideo' ? '' : 'none';
     if (cible === 'calendrier' && !calendrierDejaCharge) {
       calendrierDejaCharge = true;
       chargerCalendrier();
     }
-    // Corrigé le 08/09 (Cyrille : une demande reçue pendant que le tableau de
-    // bord était déjà ouvert n'apparaissait pas dans "Mes clients" tant qu'il
-    // ne rechargeait pas toute la page — chargerDemandes()/chargerStats() ne
-    // s'exécutaient qu'une seule fois, au chargement initial ; changer
-    // d'onglet ne faisait que montrer/cacher les panneaux, sans jamais
-    // rafraîchir leurs données). On recharge maintenant "Mes clients" à
-    // chaque fois qu'on rouvre cet onglet, pour voir les nouvelles demandes
-    // sans avoir à recharger toute la page.
+    if (cible === 'reseaux' && !reseauxSociauxDejaCharge) {
+      reseauxSociauxDejaCharge = true;
+      chargerReseauxSociaux();
+    }
     if (cible === 'clients') {
       chargerDemandes(tokenCalendrierActuel);
       chargerStats();
@@ -1367,16 +1217,68 @@
     });
   }
 
+  // --- Onglet "Réseaux sociaux" (11/09) ------------------------------------
+  // Publication automatique Instagram/Facebook — table skyeco_pro_social_connections
+  // (statut de connexion OAuth) et skyeco_pro_social_posts (file de posts,
+  // statut brouillon/planifie/publie/echec) à créer côté Supabase. Les
+  // actions (connecter, nouveau post, modifier) appellent des endpoints
+  // /api/social-* qui restent à développer.
+  async function chargerReseauxSociaux() {
+    const content = document.getElementById('reseauxContent');
+    content.innerHTML = '<div class="loading">Chargement…</div>';
+    try {
+      const [connexionResp, postsResp] = await Promise.all([
+        fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_social_connections?draft_id=eq.${draftId}&select=*`, { headers: { apikey: SUPABASE_ANON_KEY } }),
+        fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_social_posts?draft_id=eq.${draftId}&select=*&order=created_at.desc`, { headers: { apikey: SUPABASE_ANON_KEY } }),
+      ]);
+      const connexions = connexionResp.ok ? await connexionResp.json() : [];
+      const posts = postsResp.ok ? await postsResp.json() : [];
+      const connexion = connexions[0];
+
+      const pillLabels = { planifie: 'Planifié', brouillon: 'Brouillon', echec: 'Échec', publie: 'Publié' };
+      const pillClass = { planifie: 'planned', brouillon: 'draft', echec: 'failed', publie: 'done' };
+
+      content.innerHTML = `
+        <div class="rs-status" style="margin-bottom:20px; padding-bottom:18px; border-bottom:1.5px solid #eef1f0;">
+          <span class="rs-status-dot ${connexion ? '' : 'off'}"></span>
+          <div class="rs-status-text">
+            <strong>${connexion ? `Instagram connecté — @${escapeHtmlDash(connexion.ig_username || '')}` : 'Aucun compte connecté'}</strong>
+            ${connexion ? `Jetons valides jusqu'au ${new Date(connexion.expires_at).toLocaleDateString('fr-FR')}` : "Connectez votre Instagram Business pour activer la publication automatique."}
+          </div>
+          <button type="button" class="rs-btn ${connexion ? 'secondary' : ''}" id="btnConnecterInstagram">${connexion ? 'Gérer la connexion' : 'Connecter Instagram'}</button>
+        </div>
+        ${!posts.length
+          ? '<div class="empty-msg" style="padding:20px 0;"><span class="empty-icone">📱</span>Aucun post pour l\'instant.</div>'
+          : posts.map(p => `
+            <div class="rs-row">
+              <div class="rs-thumb" style="background-image:url('${p.photo_url || ''}')"></div>
+              <div>
+                <div class="rs-caption">${escapeHtmlDash(p.legende || '')}</div>
+                <div class="rs-meta">${escapeHtmlDash(p.meta || '')}</div>
+              </div>
+              <span class="rs-pill ${pillClass[p.statut] || 'draft'}">${pillLabels[p.statut] || p.statut}</span>
+              <button type="button" class="rs-action" data-id="${p.id}">${p.statut === 'publie' ? 'Voir' : p.statut === 'echec' ? 'Réessayer' : 'Modifier'}</button>
+            </div>
+          `).join('')
+        }
+      `;
+
+      document.getElementById('btnConnecterInstagram').addEventListener('click', () => {
+        alert("Le flux de connexion Instagram n'est pas encore actif — à brancher sur le OAuth Meta une fois l'app validée.");
+      });
+    } catch (e) {
+      content.innerHTML = '<div class="empty-msg"><span class="empty-icone">⚠️</span>Impossible de charger les réseaux sociaux pour le moment.</div>';
+    }
+  }
+
+  document.getElementById('btnNouveauPostReseaux').addEventListener('click', () => {
+    alert("La création de post n'est pas encore branchée — prévu une fois la génération de légende/hashtags en place.");
+  });
+
   // --- Onglet "Appel vidéo" (05/09) : demande d'appel côté artisan --------
-  // N'a de sens que sur le dashboard d'un artisan (pas sur celui de Cyrille
-  // lui-même, DRAFT_ID_SKYECO_PRO — lui gère sa part depuis "Mon
-  // calendrier", voir afficherJoursCalendrier ci-dessous). Réutilise
-  // entièrement le système de créneaux existant (prendre-rdv.html /
-  // reserver-creneau.js), pointé sur la fiche de Cyrille, avec un type de
-  // RDV dédié qui déclenche la génération d'une salle Jitsi.
   let dernierAppelVuId = null;
   function initAppelVideo() {
-    if (draftId === DRAFT_ID_SKYECO_PRO) return; // pas pour le dashboard de Cyrille lui-même
+    if (draftId === DRAFT_ID_SKYECO_PRO) return;
     document.getElementById('tabAppelVideo').style.display = '';
     document.getElementById('btnDemanderAppelVideo').addEventListener('click', () => {
       const url = '/prendre-rdv.html?id=' + encodeURIComponent(DRAFT_ID_SKYECO_PRO)
@@ -1411,13 +1313,9 @@
         banniere.style.display = 'none';
         tab.querySelector('.panel-tab-icone').textContent = '📹';
       }
-    } catch (e) { /* silencieux — un échec de sondage n'est pas bloquant */ }
+    } catch (e) { }
   }
 
-  // --- Présence "dashboard ouvert" (05/09) : ping léger tant que cet onglet
-  // du navigateur est visible, pour afficher un statut en ligne/hors ligne
-  // dans mes-artisans.html. Aucune donnée personnelle transmise au-delà de
-  // ce que le jeton de session révèle déjà.
   let presenceInterval = null;
   function envoyerPingPresence() {
     if (!tokenCalendrierActuel) return;
@@ -1437,9 +1335,6 @@
     });
   }
 
-  // --- Message ponctuel de Cyrille (07/09) : voir api/messages-artisan.js --
-  // Uniquement côté artisan (pas sur la vue admin de Cyrille lui-même) : SMS
-  // déjà reçu, ceci n'est qu'un rappel visible dans le dashboard au cas où.
   let dernierMessageAffiche = null;
   async function verifierMessagesArtisan() {
     if (!tokenCalendrierActuel) return;
@@ -1466,10 +1361,10 @@
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'marquer_lu', messageId: nonLu.id }),
             });
-          } catch (e) { /* silencieux */ }
+          } catch (e) { }
         };
       }
-    } catch (e) { /* silencieux — un échec de sondage n'est pas bloquant */ }
+    } catch (e) { }
   }
   function initMessagesArtisan() {
     verifierMessagesArtisan();
@@ -1478,17 +1373,6 @@
     }, 45000);
   }
 
-  // --- Partage d'écran en direct (07/09) : voir api/ecran-partage.js -------
-  // Vraie prise en main "vision" (pas de contrôle à distance) : Cyrille voit
-  // l'écran de l'artisan en vidéo, via WebRTC. Signalisation par simple
-  // sondage HTTP (pas de WebSocket) : chaque camp écrit son SDP (offre côté
-  // artisan, réponse côté admin) une fois la collecte ICE terminée
-  // ("non-trickle"), l'autre camp le récupère au sondage suivant — plus
-  // simple à fiabiliser qu'un échange de candidats au fil de l'eau, pour un
-  // usage support ponctuel où 1-2s de délai ne posent aucun problème.
-  // Serveur STUN public uniquement (pas de TURN) : suffisant dans la grande
-  // majorité des cas, mais une connexion peut échouer derrière certains
-  // réseaux d'entreprise très restrictifs.
   const RTC_CONFIG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
   function attendreFinCollecteIce(pc) {
@@ -1501,11 +1385,10 @@
         }
       };
       pc.addEventListener('icegatheringstatechange', verifier);
-      setTimeout(resolve, 3000); // filet de sécurité : on part avec ce qu'on a
+      setTimeout(resolve, 3000);
     });
   }
 
-  // --- Côté admin (Cyrille) : ouvert via "🎥 Prise en main" (?guidage=1) ---
   function demarrerDemandePartageEcran() {
     const videoWrap = document.getElementById('ecranPartageVideoWrap');
     const videoEl = document.getElementById('ecranPartageVideo');
@@ -1572,11 +1455,10 @@
           await attendreFinCollecteIce(pc);
           envoyer('reponse', { sdp: pc.localDescription.sdp });
         }
-      } catch (e) { /* silencieux */ }
+      } catch (e) { }
     }, 1500);
   }
 
-  // --- Côté artisan : demande d'autorisation, puis partage effectif -------
   function demarrerEcouteDemandePartageEcran() {
     const modale = document.getElementById('ecranPartageConsentement');
     const banniere = document.getElementById('ecranPartageBanniereArtisan');
@@ -1665,15 +1547,10 @@
           reponseDejaTraitee = true;
           await pc.setRemoteDescription({ type: 'answer', sdp: data.reponseSdp });
         }
-      } catch (e) { /* silencieux */ }
+      } catch (e) { }
     }, 1200);
   }
 
-  // --- Onglet "Mon calendrier" : mêmes API que public/mes-rdv.html
-  // (mes-rdv, bloquer-creneau, debloquer-creneau), directement intégrées ici
-  // pour éviter de renvoyer l'artisan vers une page séparée. Utilise
-  // tokenCalendrierActuel (jamais null, même en accès admin via
-  // mes-artisans.html) plutôt que sessionTokenActuel.
   let calendrierToastTimer;
   function toastCalendrier(msg) {
     const el = document.getElementById('calendrierToast');
@@ -1768,10 +1645,6 @@
           btn.innerHTML = '<span class="heure">' + String(c.heure).padStart(2, '0') + 'h00</span> — bloqué';
           btn.addEventListener('click', () => debloquerCreneauCalendrier(c.iso));
         } else if (c.type_rdv === 'appel_video_artisan') {
-          // 05/09 : demande d'appel vidéo d'un artisan (voir initAppelVideo
-          // côté artisan) — affiché uniquement sur le dashboard de Cyrille
-          // lui-même (DRAFT_ID_SKYECO_PRO), puisque c'est le seul calendrier
-          // sur lequel ce type de RDV est jamais créé.
           const dejaDemarre = c.appel_statut === 'en_cours' || c.appel_statut === 'termine';
           btn.classList.add('appel-video');
           btn.innerHTML = '<span class="heure">📹 ' + String(c.heure).padStart(2, '0') + 'h00</span>'
@@ -1799,8 +1672,6 @@
             btn.appendChild(fait);
           }
         } else {
-          // Fiche de démonstration (07/09) : mêmes raisons que "Gérer les
-          // clients" — nom/téléphone du client à peine visibles à l'écran.
           const classeClientFloute = estDemoActuel ? ' client-floute-demo' : '';
           btn.innerHTML = '<span class="heure">✓ ' + String(c.heure).padStart(2, '0') + 'h00</span>'
             + '<span class="client' + classeClientFloute + '">' + (c.client_nom || 'Client') + (c.client_telephone ? ' · ' + c.client_telephone : '') + '</span>';
@@ -1896,7 +1767,7 @@
         body: JSON.stringify({ draft_id: draftId, token: tokenCalendrierActuel }),
       });
       const data = await resp.json();
-      if (!resp.ok || !data.success || !data.campagneExiste) return; // pas de campagne active -> panneau masqué
+      if (!resp.ok || !data.success || !data.campagneExiste) return;
 
       zonesPanel.style.display = '';
       if (!data.zones.length) {
@@ -1920,7 +1791,6 @@
         ? 'Sur les 30 derniers jours, du plus au moins de clics.'
         : "Sur les 30 derniers jours. Google identifie ces zones par référence technique — les noms de ville ne sont pas encore résolus pour toutes.";
     } catch (e) {
-      // Panneau discret : on n'affiche rien plutôt qu'une erreur si Windsor.ai est indisponible.
     }
   }
 
@@ -1940,7 +1810,7 @@
         img.src = logoUrl;
         img.style.display = 'block';
       }
-    } catch (e) { /* pas de logo, tant pis, on garde juste le titre */ }
+    } catch (e) { }
   }
 
   async function verifierStatutPause() {
@@ -1956,27 +1826,17 @@
         document.getElementById('banniereePause').style.display = 'flex';
       }
 
-      // Site jamais mis en ligne : bannière + bouton "Mettre en ligne", qui
-      // envoie vers choisir-forfait.html — c'est là que se pose le verrou
-      // de vérification (voir site_valide) avant de pouvoir payer/démarrer
-      // l'essai gratuit.
       if (statut === 'preview') {
         document.getElementById('btnMettreEnLigne').href = '/choisir-forfait.html?id=' + draftId;
         document.getElementById('banniereMettreEnLigne').style.display = 'flex';
       }
 
-      // Essai gratuit terminé sans paiement : on bloque l'accès au tableau
-      // de bord et on renvoie directement vers la page de choix de forfait
-      // pour régler (le statut 'essai_expire' est posé par la tâche
-      // planifiée api/verifier-essais-a-programmer.js le jour de l'échéance).
       const params = new URLSearchParams(window.location.search);
       if (statut === 'essai_expire' && !params.get('admin_token')) {
         window.location.href = '/choisir-forfait.html?id=' + draftId;
         return;
       }
 
-      // Essai en cours : petit bandeau discret avec le nombre de jours
-      // restants, pour que l'artisan sache où il en est.
       if (statut === 'essai' && rows[0]?.essai_gratuit_fin) {
         const joursRestants = Math.max(0, Math.ceil((new Date(rows[0].essai_gratuit_fin) - Date.now()) / (24 * 60 * 60 * 1000)));
         const banniereEssai = document.createElement('div');
@@ -1984,7 +1844,7 @@
         banniereEssai.textContent = `🎁 Essai gratuit — ${joursRestants} jour${joursRestants > 1 ? 's' : ''} restant${joursRestants > 1 ? 's' : ''}`;
         document.body.prepend(banniereEssai);
       }
-    } catch (e) { /* silencieux */ }
+    } catch (e) { }
   }
 
   document.getElementById('btnReprendreMaintenant').addEventListener('click', async () => {
@@ -2112,11 +1972,6 @@
     }
   });
 
-  // Un artisan avec plusieurs vitrines gère TOUS ses clients au même
-  // endroit, quel que soit le produit/site d'où vient la demande (voir
-  // discussion 03/09 : "il s'en fout, ça reste un client") — token permet
-  // de retrouver les autres sites du compte ; sans token (accès admin
-  // depuis mes-artisans.html) on reste sur le site courant uniquement.
   async function chargerDemandes(token) {
     const content = document.getElementById('listeContent');
     try {
@@ -2125,21 +1980,8 @@
       });
       const draftRows = await draftResp.json();
       nomEntreprise = draftRows[0]?.entreprise || 'Mon entreprise';
-      // Fiche de démonstration (07/09, demande de Cyrille) : les clients y
-      // sont fictifs mais réalistes — pour filmer sans donner l'impression
-      // de montrer de vraies coordonnées client à l'écran, leur identité et
-      // leurs coordonnées sont floutées (classe .client-floute-demo,
-      // définie plus haut dans <style>). Le reste (date, statut, devis)
-      // reste net pour bien montrer l'activité du compte.
       estDemoActuel = !!draftRows[0]?.est_demo;
 
-      // Sécurité (06/09/2026) : les demandes ("leads" — nom, téléphone,
-      // email, adresse de chaque prospect) sont maintenant lues via un
-      // endpoint authentifié (api/mes-leads.js) plutôt que directement
-      // depuis Supabase avec la clé anonyme — voir ce fichier pour le détail
-      // de la faille corrigée (n'importe qui pouvait lire les demandes de
-      // N'IMPORTE QUELLE vitrine en connaissant juste son draft_id, qui
-      // n'est pas secret).
       const leadsResp = await fetch('/api/mes-leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2154,11 +1996,6 @@
       sites.forEach(s => { nomsParSite[s.id] = s.entreprise || (s.id === draftId ? nomEntreprise : 'Vitrine sans nom'); });
       const plusieursSites = sites.length > 1;
 
-      // Ajouté 08/09 : les clients archivés (voir gerer-lead.js) restent dans
-      // leadsData (pour modifierContactLead/demanderPhotosLead) mais sont
-      // retirés de la liste principale — consultables via le panneau
-      // "🗑️ Clients archivés" (chargerClientsArchives ci-dessous). Restauré
-      // le 09/09 après suppression accidentelle.
       const leadsAffiches = leadsData.filter(l => !l.archive);
       document.getElementById('btnVoirClientsArchives').style.display = leadsData.some(l => l.archive) || leadsAffiches.length ? 'inline-block' : 'none';
 
@@ -2167,16 +2004,6 @@
         return;
       }
 
-      // Sécurité (06/09/2026) : nom, prénom, téléphone, email et "reponses"
-      // (dont l'adresse extraite par extraireAdresse) viennent tous du
-      // formulaire PUBLIC apercu.html, rempli par n'importe quel visiteur
-      // anonyme — avant ce correctif ils étaient injectés tels quels dans ce
-      // tableau via innerHTML : une "demande" contenant par exemple
-      // <img src=x onerror=...> comme prénom exécutait du JavaScript dans le
-      // navigateur de L'ARTISAN dès qu'il ouvrait "Mes clients" (XSS stockée),
-      // avec accès à son jeton de session stocké en sessionStorage. Toutes
-      // les valeurs issues d'un lead sont maintenant échappées avec
-      // escapeHtmlDash avant affichage.
       const classeFloute = estDemoActuel ? ' client-floute-demo' : '';
       content.innerHTML = `
         <div class="table-scroll">
@@ -2232,14 +2059,6 @@
     }
   }
 
-  // Ajouté 08/09 (demande de Cyrille : "il faut pouvoir archiver puis
-  // supprimer les clients du dashboard") — même logique que
-  // archiverVitrine/desarchiverVitrine/supprimerVitrine plus haut, mais pour
-  // une demande client (skyeco_pro_leads) au lieu d'une vitrine. Un client
-  // archivé disparaît de "Demandes d'estimation" sans rien supprimer, et
-  // n'est supprimable définitivement que depuis le panneau des archives (voir
-  // api/gerer-lead.js, qui refuse une suppression directe sur un client non
-  // archivé).
   async function archiverLead(leadId) {
     if (!confirm("Archiver ce client ? Il disparaîtra de la liste mais rien n'est supprimé — vous pourrez le retrouver dans « 🗑️ Clients archivés ».")) return;
     try {
@@ -2259,10 +2078,6 @@
     }
   }
 
-  // Panneau "🗑️ Clients archivés" — même repli léger que
-  // chargerVitrinesArchivees (pas de vraie navigation) : on relit les leads
-  // déjà chargés en mémoire (leadsData contient TOUS les clients, archivés ou
-  // non — voir chargerDemandes) plutôt que de rappeler le serveur.
   function chargerClientsArchives() {
     const contenu = document.getElementById('clientsArchivesContenu');
     const archives = leadsData.filter(l => l.archive);
@@ -2339,27 +2154,17 @@
     }
   };
 
-
-  // Initiales affichées dans le petit avatar rond de "Mes clients" —
-  // simple aide visuelle, pas de vraie photo (ajouté 04/09, demande de
-  // rendre ce tableau plus "ultra design").
   function initialesClient(prenom, nom) {
     const p = (prenom || '').trim().charAt(0);
     const n = (nom || '').trim().charAt(0);
     return (p + n).toUpperCase() || '?';
   }
 
-  // Ajouté 08/09 (demande de Cyrille : une demande qu'il saisit lui-même
-  // pour un client déjà eu au téléphone enregistre SON propre numéro/email —
-  // seul numéro qu'il peut vérifier par SMS — au lieu de ceux du client, ce
-  // qui le laissait sans aucun moyen de recontacter le vrai client depuis le
-  // tableau de bord). Permet de corriger nom/prénom/téléphone/email
-  // directement sur une demande déjà enregistrée.
   async function modifierContactLead(leadId) {
     const lead = leadsData.find(l => l.id === leadId);
     if (!lead) return;
     const nouveauPrenom = prompt('Prénom du client :', lead.prenom || '');
-    if (nouveauPrenom === null) return; // annulé
+    if (nouveauPrenom === null) return;
     const nouveauNom = prompt('Nom du client :', lead.nom || '');
     if (nouveauNom === null) return;
     const nouveauTel = prompt('Téléphone du client (ex : 06 12 34 56 78) :', lead.telephone || '');
@@ -2390,16 +2195,11 @@
     }
   }
 
-  // Ajouté 08/09 (demande de Cyrille) : plutôt que de deviner ou de rappeler
-  // le client pour ses coordonnées, on peut lui envoyer directement un SMS
-  // avec un lien où il saisit lui-même son nom/prénom/adresse et transmet
-  // ses photos — utile en particulier pour une demande que Cyrille a créée
-  // lui-même (voir modifierContactLead ci-dessus pour le même contexte).
   async function demanderPhotosLead(leadId) {
     const lead = leadsData.find(l => l.id === leadId);
     if (!lead) return;
     const telephone = prompt('Numéro de téléphone du client (il recevra un SMS avec un lien pour renseigner ses coordonnées et ses photos) :', lead.telephone || '');
-    if (telephone === null) return; // annulé
+    if (telephone === null) return;
     if (!telephone.trim()) { alert('Numéro requis.'); return; }
     try {
       const resp = await fetch('/api/envoyer-sms-photos', {
@@ -2468,19 +2268,11 @@
     input.click();
   }
 
-  // siteId = la vitrine PROPRIÉTAIRE de la demande (l.draft_id), pas
-  // forcément le site actuellement affiché sur la page — indispensable
-  // depuis que "Mes clients" regroupe les demandes de toutes les vitrines
-  // du compte : le SMS doit partir avec le bon nom d'entreprise et le bon
-  // numéro Twilio (ceux DE CETTE vitrine-là), sinon un client d'un site
-  // recevrait un devis au nom d'un autre.
   async function uploaderEtEnvoyerDevis(leadId, fichier, siteId) {
     const siteConcerne = siteId || draftId;
     const ligneCellule = document.querySelector(`[data-lead="${leadId}"]`);
     if (ligneCellule) { ligneCellule.disabled = true; ligneCellule.textContent = 'Envoi…'; }
     try {
-      // 1. Upload du PDF (le bucket Storage, lui, autorise bien l'écriture
-      // avec la clé publique — rien à changer ici).
       const chemin = `devis-artisan/${siteConcerne}/${leadId}-${Date.now()}.pdf`;
       const uploadResp = await fetch(
         `${SUPABASE_URL}/storage/v1/object/${DEVIS_BUCKET}/${chemin}?apikey=${encodeURIComponent(SUPABASE_ANON_KEY)}`,
@@ -2495,15 +2287,6 @@
 
       const devisToken = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
 
-      // 2. L'ÉCRITURE (enregistrement du devis) et le SMS se font tous les
-      // deux côté serveur (06/09/2026 — la table skyeco_pro_leads est
-      // désormais verrouillée en LECTURE ET écriture pour la clé publique ;
-      // l'endpoint relit lui-même le téléphone/prénom en base avec la clé
-      // service_role et vérifie la session avant d'agir — voir le
-      // commentaire en tête de api/envoyer-devis.js). On utilise
-      // tokenCalendrierActuel (et non sessionTokenActuel) car il reste
-      // renseigné même en mode admin (mes-artisans.html), comme pour
-      // "Mon calendrier".
       const resp = await fetch('/api/envoyer-devis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2519,18 +2302,12 @@
     }
   }
 
-  // siteId : voir le commentaire sur uploaderEtEnvoyerDevis ci-dessus, même
-  // raisonnement (bon nom d'entreprise / bon numéro Twilio pour le SMS).
   async function relancerDevis(leadId, siteId, btn) {
     const siteConcerne = siteId || draftId;
     if (!confirm('Renvoyer un SMS de relance pour ce devis ?')) return;
     btn.disabled = true;
     btn.textContent = 'Envoi…';
     try {
-      // Sécurité (06/09/2026) : l'endpoint relit lui-même le lead en base
-      // avec la clé service_role et vérifie la session — voir le
-      // commentaire en tête de api/relancer-devis.js (même raisonnement
-      // que uploaderEtEnvoyerDevis pour tokenCalendrierActuel).
       const smsResp = await fetch('/api/relancer-devis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2549,14 +2326,7 @@
 
   function extraireAdresse(reponses) {
     if (!reponses || typeof reponses !== 'object') return '—';
-    // Corrigé 08/09 : "adresse" est désormais la clé où envoyer-photos.html
-    // écrit l'adresse saisie par le client lui-même (via le bouton
-    // "📷 Demander photos") — on la privilégie toujours, sinon une demande
-    // qui avait déjà une "ville" dans reponses continuait d'afficher
-    // seulement la ville même après que le client ait donné son adresse
-    // complète.
     if (reponses.adresse) return reponses.adresse;
-    // Sinon, cherche une clé qui ressemble à une adresse, quel que soit le métier/formulaire d'origine.
     const cleAdresse = Object.keys(reponses).find(k => /adresse|address|localisation|ville/i.test(k));
     return cleAdresse ? reponses[cleAdresse] : '—';
   }
@@ -2606,12 +2376,10 @@
     doc.save(`demandes-${nomEntreprise.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.pdf`);
   });
 
-  // --- Pilotage Google Ads avancé : curseur clics -> budget, détail des
-  // mots-clés et répartition horaire des clics (données réelles via Windsor.ai).
   async function initPilotageAds() {
     document.getElementById('adsSection').style.display = 'block';
 
-    let avgCpcEur = 1.5; // repli générique si l'estimation échoue
+    let avgCpcEur = 1.5;
     let draftInfo = {};
     const slider = document.getElementById('clicsSlider');
     const sliderValue = document.getElementById('clicsSliderValue');
@@ -2620,15 +2388,9 @@
     const potentielBox = document.getElementById('motsClesPotentiel');
     const potentielChiffre = document.getElementById('motsClesPotentielChiffre');
     const potentielDetail = document.getElementById('motsClesPotentielDetail');
-    const TAUX_COMMISSION_INVERSE = 0.30; // doit rester synchronisé avec les autres fichiers (30% depuis le 10/09/2026, était 50%)
+    const TAUX_COMMISSION_INVERSE = 0.30;
     const TAUX_TVA_INVERSE = 0.20;
 
-    // 10/09/2026 : ce calcul part du nombre de clics réels voulus et doit
-    // retrouver le montant TTC à payer — donc inverser toute la chaîne
-    // TTC -> HT -> commission (voir confirm-ad-payment.js /
-    // create-google-ads-campaign.js), pas juste la commission seule comme
-    // avant. Sans l'étape TVA, le budget suggéré ici sous-estimait d'environ
-    // 17% ce qu'il fallait réellement payer pour obtenir ce nombre de clics.
     function calculerBudgetInverse() {
       const clics = parseInt(slider.value, 10);
       sliderValue.textContent = clics + (clics > 1 ? ' clics' : ' clic');
@@ -2640,14 +2402,6 @@
       document.getElementById('btnFondsInverse').href = '/campagne.html?id=' + draftId + '&budget=' + budgetNecessaire;
     }
 
-    // Affiche, juste sous la liste des mots-clés, ce que CES mots-clés
-    // précis peuvent générer comme clics — sans que l'artisan ait besoin de
-    // toucher le curseur du dessous. Avant ce correctif (31/08), seule
-    // l'information "budget pour le nombre de clics choisi sur le curseur"
-    // était visible, et comme le curseur démarre à 20 clics avec un budget
-    // minimum de 100 €, l'affichage restait quasi toujours bloqué sur
-    // "100 € (minimum)" sans jamais dire combien de clics ce budget minimum
-    // permet réellement d'obtenir avec les mots-clés choisis.
     function afficherPotentiel({ succes, erreur, totalMonthlyVolume, estimatedClicks, motsClesPersonnalises }) {
       potentielBox.style.display = 'block';
       if (!succes) {
@@ -2675,11 +2429,6 @@
       }
     }
 
-    // Interroge le Keyword Planner Google Ads réel (CPC + volume) à partir des
-    // mots-clés actuellement choisis (ou de la liste générique par métier s'il
-    // n'y en a pas encore) et de la zone, puis calibre le curseur en
-    // conséquence. Rappelée à chaque changement de la sélection de mots-clés
-    // (voir initMotsCles ci-dessous) pour que le curseur reste à jour.
     async function rafraichirEstimationVolume(motsCles) {
       try {
         const res = await fetch('/api/estimate-reach', {
@@ -2689,10 +2438,6 @@
         });
         const data = await res.json();
         if (!data.success) {
-          // Avant (bug du 31/08) : en cas d'erreur on ne touchait à rien,
-          // donc après une régénération de mots-clés qui échouait côté API
-          // rien ne semblait se passer côté "clics" — on l'affiche
-          // maintenant clairement, ici et dans le nouvel encart au-dessus.
           volumeNote.textContent = data.error || "Impossible de mettre à jour l'estimation de clics pour le moment.";
           afficherPotentiel({ succes: false, erreur: data.error });
           calculerBudgetInverse();
@@ -2702,10 +2447,6 @@
         if (data.totalMonthlyVolume) {
           const maxRealiste = Math.max(20, Math.min(1000, data.totalMonthlyVolume));
           slider.max = maxRealiste;
-          // On positionne le curseur sur le nombre de clics réellement
-          // atteignable avec le budget minimum (100 €) — plutôt que de
-          // laisser la valeur de départ arbitraire (20) qui masquait ce que
-          // ces mots-clés permettent concrètement d'obtenir.
           if (data.estimatedClicks) {
             slider.value = Math.min(data.estimatedClicks, maxRealiste);
           } else if (parseInt(slider.value, 10) > maxRealiste) {
@@ -2715,11 +2456,6 @@
             ? `≈ ${data.totalMonthlyVolume} clics possibles ce mois-ci avec vos mots-clés et votre zone actuels (base du curseur).`
             : `≈ ${data.totalMonthlyVolume} clics possibles ce mois-ci (estimation générique par métier — choisissez vos mots-clés ci-dessus pour affiner).`;
         } else {
-          // Réponse reçue avec succès mais volume nul pour CES mots-clés
-          // précis dans cette zone (fréquent avec des suggestions IA très
-          // spécifiques/locales) — c'était le cœur du bug rapporté le 31/08 :
-          // le curseur restait figé sans aucune explication après une
-          // régénération. On le dit maintenant explicitement.
           volumeNote.textContent = data.motsClesPersonnalises
             ? "Pas encore de volume de recherche connu pour ces mots-clés précis dans votre zone — le curseur garde une estimation générique. Essayez des mots-clés un peu plus larges si besoin."
             : "Pas encore de volume de recherche connu pour votre zone — le curseur garde une estimation générique.";
@@ -2747,7 +2483,7 @@
       const rows = await resp.json();
       draftInfo = rows[0] || {};
       if (draftInfo.status) statutDraftActuel = draftInfo.status;
-    } catch (e) { /* on garde draftInfo vide — repli générique dans rafraichirEstimationVolume */ }
+    } catch (e) { }
 
     initZoneCiblee(draftInfo.zone || '', draftInfo.rayon_ciblage_km || '');
     initBudgetJournalier(draftInfo.budget_journalier_manuel || null, draftInfo.tarif_prix || null);
@@ -2756,18 +2492,10 @@
     initAnnonce(draftInfo);
 
     slider.addEventListener('input', calculerBudgetInverse);
-    calculerBudgetInverse(); // affichage immédiat avec le CPC générique, affiné juste après
+    calculerBudgetInverse();
     const dataInitiale = await rafraichirEstimationVolume(Array.isArray(draftInfo.mots_cles_choisis) ? draftInfo.mots_cles_choisis : []);
     if (dataInitiale && dataInitiale.keywords) motsClesApi.appliquerStats(dataInitiale.keywords);
 
-    // Le CPC affiché ici (avgCpcEur) peut dater du dernier rafraîchissement
-    // — parfois plusieurs minutes plus tôt — alors que campagne.html
-    // recalcule le sien en direct au moment où l'artisan y arrive. Comme les
-    // enchères Google Ads varient en continu, ce léger décalage temporel
-    // suffit à donner un nombre de clics différent pour un même budget
-    // (33 ici, 28 là-bas par exemple). On limite l'écart en rafraîchissant
-    // le CPC juste avant de transmettre le budget à campagne.html, plutôt
-    // que d'utiliser une valeur qui peut avoir plusieurs minutes de retard.
     document.getElementById('btnFondsInverse').addEventListener('click', async (e) => {
       e.preventDefault();
       const lien = e.currentTarget;
@@ -2775,8 +2503,8 @@
       lien.textContent = 'Un instant…';
       try {
         await rafraichirEstimationVolume(motsClesSelectionActuelle.length ? motsClesSelectionActuelle : (Array.isArray(draftInfo.mots_cles_choisis) ? draftInfo.mots_cles_choisis : []));
-        calculerBudgetInverse(); // recalcule le budget affiché et le href avec le CPC frais
-      } catch (err) { /* on continue avec le href déjà calculé (moins frais, mais pas bloquant) */ }
+        calculerBudgetInverse();
+      } catch (err) { }
       lien.textContent = texteOriginal;
       window.location.href = lien.href;
     });
@@ -2841,11 +2569,6 @@
       affichage.style.display = 'flex';
     });
 
-    // Lien direct "changement géographique" (03/09) : le SMS/email envoyé à
-    // Cyrille par api/alerter-changement-zone.js pointe maintenant vers
-    // mon-dashboard.html#sectionZoneCiblee — on scrolle jusqu'à la section
-    // ET on ouvre directement le mode édition, pour qu'un clic sur le lien
-    // suffise (pas besoin de chercher la section puis cliquer "Modifier").
     if (window.location.hash === '#sectionZoneCiblee') {
       document.getElementById('sectionZoneCiblee').scrollIntoView({ behavior: 'smooth', block: 'start' });
       btnModifier.click();
@@ -2871,9 +2594,6 @@
         rafraichirAffichage();
         edition.style.display = 'none';
         affichage.style.display = 'flex';
-        // Alerte Cyrille — le ciblage géographique Google Ads ne se met pas
-        // à jour automatiquement (voir create-google-ads-campaign.js), il
-        // doit le reporter manuellement à chaque changement de zone/rayon.
         fetch('/api/alerter-changement-zone', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -2889,14 +2609,9 @@
     });
   }
 
-  // Montant journalier (€/jour) réellement envoyé à Google Ads — demandé le
-  // 03/09 pour pouvoir le régler soi-même depuis le tableau de bord au lieu
-  // du seul calcul automatique (budget mensuel payé / 30) posé à la création
-  // (voir create-google-ads-campaign.js) ou à chaque recharge. Même schéma
-  // affichage/édition que initZoneCiblee ci-dessus.
   function initBudgetJournalier(budgetManuelActuel, tarifMensuelPaye) {
     let budgetManuel = budgetManuelActuel;
-    const TAUX_COMMISSION = 0.30; // doit rester synchronisé avec create-google-ads-campaign.js (30% depuis le 10/09/2026, était 50%)
+    const TAUX_COMMISSION = 0.30;
     const budgetAutoEstime = tarifMensuelPaye
       ? +((tarifMensuelPaye * (1 - TAUX_COMMISSION)) / 30).toFixed(2)
       : null;
@@ -2961,10 +2676,6 @@
     });
   }
 
-  // (04/09) Même schéma que initBudgetJournalier ci-dessus, mais pour le
-  // plafond de CPC (prix max par clic) — demandé par Cyrille pour compléter
-  // le montant journalier : l'un plafonne le total dépensé par jour, l'autre
-  // le prix payé pour un clic pris isolément.
   function initPlafondCpc(plafondActuel) {
     let plafond = plafondActuel;
 
@@ -3022,20 +2733,6 @@
     });
   }
 
-  // Aperçu (format Google : badge "Annonce", URL en vert, titre en bleu,
-  // description en gris) de l'annonce responsive search que
-  // create-google-ads-campaign.js créera réellement — modifiable ici, dans
-  // le tableau de bord (mêmes colonnes annonce_titres / annonce_descriptions
-  // que le panneau équivalent de campagne.html, pour rester synchronisés
-  // quel que soit l'endroit où l'artisan modifie son annonce).
-  // Corrigé le 04/09 (RMS EcoSky : annonce refusée par Google Ads, policy
-  // "SYMBOLS"/PROHIBITED sur le caractère "(") — les parenthèses sont
-  // interdites dans les titres/descriptions Google Ads. Beaucoup de noms
-  // d'entreprise saisis en contiennent (ex : "RESINE MARBRE SOL (ECOSKY)
-  // (RMS)") — on les retire avant de générer le texte par défaut, pour ne
-  // pas proposer d'emblée un texte que Google refusera. Filet de sécurité
-  // supplémentaire côté serveur dans create-google-ads-campaign.js et
-  // appliquer-annonce-ads.js (au cas où le texte est modifié à la main).
   function nettoyerSymbolesInterdits(texte) {
     return String(texte || '').replace(/[()]/g, '').replace(/\s{2,}/g, ' ').trim();
   }
@@ -3081,20 +2778,12 @@
     const appliquerHint = document.getElementById('annonceAppliquerHint');
     const appliqueeNote = document.getElementById('annonceAppliqueeNote');
 
-    // Le bouton "Appliquer dans Google Ads" n'a de sens que si une campagne
-    // existe déjà pour ce site (sinon il n'y a encore aucune annonce en ligne
-    // à mettre à jour — le premier lancement utilisera directement le texte
-    // saisi ici, via create-google-ads-campaign.js).
     const campagneDejaCreee = !!draftInfo.google_ads_ad_group_resource;
     if (campagneDejaCreee) {
       btnAppliquer.style.display = 'inline-block';
       appliquerHint.style.display = 'block';
     }
 
-    // Domaine réellement affiché dans l'annonce Google, dérivé de l'hôte
-    // courant plutôt que codé en dur — reste juste automatiquement le jour
-    // où un nom de domaine personnalisé (app.skyeco.fr) remplace
-    // pub-skyeco-23ue.vercel.app, sans nouvelle modification de ce fichier.
     const previewDomaine = document.getElementById('previewDomaine');
     if (previewDomaine && window.location.hostname) previewDomaine.textContent = window.location.hostname;
 
@@ -3153,10 +2842,6 @@
       majCompteur(cle);
     });
 
-    // Pousse réellement le texte actuel dans Google Ads (nouvelle annonce +
-    // mise en pause de l'ancienne côté Google, voir appliquer-annonce-ads.js)
-    // — jusqu'ici, modifier ces champs n'enregistrait que dans Supabase sans
-    // jamais toucher à l'annonce déjà diffusée. Demandé par Cyrille le 04/09.
     if (campagneDejaCreee) {
       btnAppliquer.addEventListener('click', async () => {
         if (bloquerSiEssaiExpire()) return;
@@ -3170,9 +2855,6 @@
         btnAppliquer.textContent = 'Un instant…';
         appliqueeNote.textContent = '';
         try {
-          // On s'assure d'abord que Supabase a bien la dernière version
-          // saisie (au cas où l'artisan clique juste après avoir tapé, avant
-          // le délai de 600ms de la sauvegarde automatique).
           clearTimeout(sauvegardeTimer);
           await sauvegarderAnnonce();
           const res = await fetch('/api/appliquer-annonce-ads', {
@@ -3195,26 +2877,11 @@
 
     majApercu();
 
-    // Sauvegarde automatique du texte générique au premier chargement
-    // retirée (01/09) : elle se déclenchait AVANT que l'artisan ait pu
-    // cocher un seul mot-clé, figeant définitivement le texte par défaut
-    // ("Devis gratuit"...) puisque tant qu'annonce_titres existe en base,
-    // plus rien ne se régénère automatiquement (voir titresDepart
-    // ci-dessus). Sans effet néfaste de la retirer : create-google-ads-campaign.js
-    // a déjà son propre repli sur un texte générique si annonce_titres est
-    // vide au moment de lancer la campagne.
-
     document.getElementById('btnRegenererAnnonce').addEventListener('click', async () => {
       const btn = document.getElementById('btnRegenererAnnonce');
       btn.disabled = true;
       btn.textContent = '…';
       try {
-        // Utilise directement l'état à l'écran (motsClesSelectionActuelle,
-        // mis à jour en mémoire à chaque coche/décoche) plutôt qu'une
-        // relecture Supabase, qui peut être temporairement en retard —
-        // voir le commentaire sur sa déclaration. entreprise/zone n'ont
-        // pas ce problème (pas modifiables sur cette page), on garde
-        // draftInfo pour ces deux-là.
         const infosActuelles = { ...draftInfo, mots_cles_choisis: motsClesSelectionActuelle };
         const nouveauxDefauts = genererAnnoncePropos(infosActuelles);
         champs.titre1.value = nouveauxDefauts.titres[0] || '';
@@ -3235,16 +2902,9 @@
     });
   }
 
-  // Panneau "✨ Quels mots-clés pour votre annonce ?" — décrire son activité,
-  // obtenir des suggestions de l'IA, cocher/décocher/ajouter à la main. La
-  // sélection est enregistrée dans mots_cles_choisis et sert à la fois de
-  // base à l'annonce Google Ads réelle (create-google-ads-campaign.js) et à
-  // l'estimation de clics ci-dessus (onSelectionChange rafraîchit le curseur).
   function initMotsCles(draftInfo, onSelectionChange) {
     const descriptionEl = document.getElementById('motsClesDescription');
     const siteUrlEl = document.getElementById('motsClesSiteUrl');
-    // Pré-rempli avec le site déjà renseigné dans "Mes éléments" (site_web_existant)
-    // s'il y en a un — l'artisan n'a rien à retaper, juste à cliquer sur le bouton.
     if (draftInfo.site_web_existant) siteUrlEl.value = draftInfo.site_web_existant;
     const btnSuggerer = document.getElementById('btnSuggererMotsCles');
     const listeEl = document.getElementById('motsClesListe');
@@ -3253,12 +2913,8 @@
     const btnRafraichir = document.getElementById('btnRafraichirEstimation');
     const draftMetier = draftInfo.metier;
     const draftZone = draftInfo.zone;
-    let selection = new Map(); // texte -> true/false (coché ou non)
-    // Potentiel par mot-clé (recherches/mois), renseigné par Windsor.ai à
-    // chaque rafraîchissement — permet d'afficher un badge à côté de chaque
-    // mot-clé pour aider l'artisan à choisir les plus pertinents plutôt que
-    // de ne voir qu'un total global (demande du 31/08).
-    let statsParMotCle = new Map(); // texte du mot-clé (minuscules) -> { monthly_volume, cpc_eur }
+    let selection = new Map();
+    let statsParMotCle = new Map();
 
     if (Array.isArray(draftInfo.mots_cles_choisis) && draftInfo.mots_cles_choisis.length) {
       draftInfo.mots_cles_choisis.forEach(m => selection.set(m, true));
@@ -3268,11 +2924,6 @@
       rendreListe();
     }
 
-    // Windsor.ai renvoie des idées de mots-clés proches de nos "seeds", pas
-    // forcément le texte EXACT choisi par l'artisan (ex. singulier/pluriel,
-    // ordre des mots) — on cherche d'abord une correspondance exacte, sinon
-    // une correspondance partielle, comme le fait déjà estimate-reach.js
-    // côté serveur pour rattacher les idées reçues à nos mots-clés de départ.
     function trouverStats(texte) {
       const t = texte.trim().toLowerCase();
       if (statsParMotCle.has(t)) return statsParMotCle.get(t);
@@ -3282,9 +2933,6 @@
       return null;
     }
 
-    // Appelée après chaque rafraîchissement réussi (chargement initial,
-    // régénération IA, ou clic sur "Rafraîchir l'estimation de clics") avec
-    // le tableau `keywords` renvoyé par /api/estimate-reach.
     function appliquerStats(keywordsData) {
       statsParMotCle = new Map();
       if (Array.isArray(keywordsData)) {
@@ -3312,13 +2960,6 @@
       listeEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
         cb.addEventListener('change', () => {
           selection.set(cb.dataset.texte, cb.checked);
-          // On enregistre tout de suite la sélection (Supabase), mais on
-          // n'interroge PAS Windsor.ai à chaque coche/décoche — sinon
-          // décocher plusieurs mots-clés à la suite déclenche autant
-          // d'appels API à la suite. On laisse l'artisan cliquer sur
-          // "Rafraîchir l'estimation de clics" une fois sa sélection prête
-          // (demande explicite du 31/08 : pouvoir rafraîchir avec un bouton
-          // après avoir enlevé des mots-clés).
           enregistrerSelectionSupabase();
           signalerSelectionModifiee();
         });
@@ -3326,12 +2967,6 @@
     }
 
     async function enregistrerSelectionSupabase() {
-      // Triés par volume de recherche décroissant (le plus pertinent en
-      // premier) avant l'enregistrement — c'est ce premier mot-clé qui sert
-      // ensuite de Titre 2 par défaut pour l'annonce Google Ads (voir
-      // genererAnnoncePropos() dans campagne.html, qui prend simplement
-      // motsClesActuels[0]). Un mot-clé sans donnée de volume connue est
-      // classé après ceux qui en ont une.
       if (bloquerSiEssaiExpire()) return;
       const motsClesActifs = [...selection.entries()]
         .filter(([, coche]) => coche)
@@ -3349,7 +2984,7 @@
           headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
           body: JSON.stringify({ mots_cles_choisis: motsClesActifs }),
         });
-      } catch (e) { /* silencieux — la sélection reste visible même si l'enregistrement échoue */
+      } catch (e) {
       } finally {
         terminerSauvegarde();
       }
@@ -3361,10 +2996,6 @@
       noteEl.textContent = 'Sélection modifiée — cliquez sur "🔄 Rafraîchir l\'estimation de clics" pour mettre à jour le potentiel ci-dessous.';
     }
 
-    // Utilisé uniquement après une génération de mots-clés par l'IA : on
-    // enregistre ET on rafraîchit tout de suite l'estimation, pour que
-    // l'artisan voie le potentiel de clics sans action supplémentaire
-    // (c'est le parcours principal, corrigé le 31/08).
     async function sauvegarderEtRafraichir() {
       const motsClesActifs = await enregistrerSelectionSupabase();
       btnRafraichir.style.display = 'inline-block';
@@ -3483,10 +3114,8 @@
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ draftId, token: tokenCalendrierActuel, action: 'exclude', texte: m.texte, matchType: m.matchType }),
             });
-          } catch (e) { /* on continue avec les suivants même si un appel échoue */ }
+          } catch (e) { }
         }
-        // Recharge les données pour refléter les exclusions (même appel
-        // que celui qui alimente ce tableau au premier chargement).
         try {
           const res = await fetch('/api/get-google-ads-details', {
             method: 'POST',
@@ -3501,16 +3130,11 @@
             afficherAppareils(data.appareils || []);
             chargerCoachIA(data.motsCles || [], data.heuresDePointe || [], data.termesRecherche || [], data.appareils || []);
           }
-        } catch (e) { /* silencieux */ }
+        } catch (e) { }
       });
     }
   }
 
-  // (04/09) Rapport des VRAIS termes de recherche (search_term_view) — même
-  // logique visuelle que le tableau des mots-clés ci-dessus, mais on exclut
-  // toujours en EXACT (et non le type choisi dans le formulaire d'ajout de
-  // mots-clés) : on veut bloquer précisément CETTE recherche-là, pas toutes
-  // les recherches qui la contiennent.
   function afficherTermesRecherche(termes) {
     const content = document.getElementById('termesContent');
     if (!termes.length) {
@@ -3563,11 +3187,6 @@
     }
   };
 
-  // (04/09) Répartition par type d'appareil — même style de barres que le
-  // panneau "D'où viennent vos clics ?" (zone-ligne/zone-barre), lecture
-  // seule (aucun réglage par appareil n'est exposé par Windsor.ai pour
-  // Google Ads — l'artisan peut seulement s'en servir pour se rassurer ou
-  // repérer une anomalie, pas pour cibler un appareil en particulier).
   function afficherAppareils(appareils) {
     const content = document.getElementById('appareilsContent');
     if (!appareils.length) {
@@ -3659,25 +3278,11 @@
     }
   });
 
-  // (04/09) Coach IA Ads : appelle /api/coach-ads, qui fait analyser la
-  // vraie campagne Google Ads par Claude et peut agir directement dessus
-  // (exclure un mot-clé, ajuster budget/plafond CPC, pause/relance) plutôt
-  // que de se limiter à des conseils. Remplace l'ancien panneau 100%
-  // règles JS (afficherCoaching, conservé juste en dessous comme filet de
-  // secours si l'appel réseau échoue). Le chat libre est initialisé une
-  // seule fois (coachingChatInitialise) puisque cette fonction peut être
-  // rappelée après chaque rechargement des données de campagne.
   let coachingChatInitialise = false;
   let coachingChatEnCours = false;
-  let coachEstEnPause = false; // reflète coach_ia_pause en base, mis à jour à chaque chargement/bascule
-  let coachingDernieresDonnees = null; // derniers motsCles/heuresDePointe/termesRecherche/appareils, pour recharger après réactivation
+  let coachEstEnPause = false;
+  let coachingDernieresDonnees = null;
 
-  // (04/09) Bouton "Mettre en pause" / "Réactiver" — demandé par Cyrille :
-  // l'artisan doit pouvoir couper le coach IA à tout moment (il peut agir
-  // seul sur la campagne, voir plus haut) sans toucher à la diffusion de
-  // la campagne elle-même (bouton pause diffusion, ailleurs dans ce
-  // panneau Ads). Tant qu'il est en pause, /api/coach-ads ne fait plus
-  // aucun appel à Claude pour ce site (ni analyse, ni chat, ni action).
   function metAJourBoutonToggleCoach() {
     const bouton = document.getElementById('btnToggleCoach');
     if (!bouton) return;
@@ -3721,13 +3326,12 @@
         if (coachEstEnPause) {
           afficherEtatPauseCoach();
         } else if (coachingDernieresDonnees) {
-          // Réactivation : relance une analyse fraîche.
           await chargerCoachIA(...coachingDernieresDonnees);
         } else {
           afficherEtatActifCoach();
         }
       }
-    } catch (e) { /* silencieux — l'artisan peut réessayer */ }
+    } catch (e) { }
     bouton.disabled = false;
   });
 
@@ -3743,9 +3347,6 @@
     const listeSecours = document.getElementById('coachingListe');
 
     panel.style.display = 'block';
-    // Pendant le chargement : zone de résultats visible avec le spinner,
-    // chat et message de pause masqués (on ne sait pas encore lequel
-    // afficher tant que la réponse n'est pas arrivée).
     zone.style.display = 'block';
     chatBloc.style.display = 'none';
     pauseMsg.style.display = 'none';
@@ -3785,15 +3386,11 @@
         reponseZone.style.display = 'block';
         reponseZone.textContent = data.reponse;
       } else {
-        // Pas de recommandation cette fois (rare) : on retombe sur les
-        // conseils par règles pour ne jamais laisser le panneau vide.
         afficherCoaching(motsCles, heuresDePointe, termesRecherche, appareils);
       }
     } catch (e) {
       loading.style.display = 'none';
       afficherEtatActifCoach();
-      // Le coach IA n'a pas répondu (réseau, clé API...) : on affiche quand
-      // même des conseils utiles à partir des données déjà chargées.
       afficherCoaching(motsCles, heuresDePointe, termesRecherche, appareils);
     }
   }
@@ -3856,9 +3453,6 @@
     });
   }
 
-  // Filet de secours 100% règles JS (aucun appel réseau) — utilisé
-  // uniquement si le coach IA (chargerCoachIA ci-dessus) est indisponible,
-  // pour ne jamais laisser l'artisan sans aucun conseil.
   function afficherCoaching(motsCles, heuresDePointe, termesRecherche, appareils) {
     const panel = document.getElementById('coachingPanel');
     const liste = document.getElementById('coachingListe');
@@ -3892,10 +3486,6 @@
       conseils.push({ texte: `Vos prospects cliquent surtout vers <strong>${heuresTxt}</strong> — c'est le bon moment pour être joignable au téléphone et répondre vite aux demandes.` });
     }
 
-    // (04/09) Termes de recherche réels coûteux et peu rentables — même
-    // logique que pour les mots-clés ci-dessus, mais sur les VRAIES
-    // recherches (peut révéler un hors-sujet qu'aucun mot-clé n'indique,
-    // ex : "location résine" alors qu'on ne fait que la pose).
     const termesActifs = (termesRecherche || []).filter(t => t.statut !== 'EXCLUDED');
     if (termesActifs.length) {
       const maxClicsTermes = Math.max(...termesActifs.map(t => t.clics), 1);
@@ -3906,10 +3496,6 @@
       }
     }
 
-    // (04/09) Répartition par appareil — signal utile si un appareil
-    // concentre l'essentiel du coût avec un CPC moyen nettement plus élevé
-    // que les autres (souvent le cas sur tablette, moins bien optimisée par
-    // les enchères automatiques de Google).
     if (appareils && appareils.length > 1) {
       const totalClicsAppareils = appareils.reduce((s, a) => s + a.clics, 0);
       if (totalClicsAppareils > 0) {
@@ -3993,24 +3579,7 @@
     }
   });
 </script>
-<!--
-  Widget de chat Skyeco Pro — à coller juste avant </body> sur les pages
-  où on veut le chat (prochaines-etapes.html, choisir-forfait.html, etc.)
--->
-<!--
-  Widget de chat Skyeco Pro — à coller juste avant </body> sur les pages
-  où on veut le chat. Inclut la saisie vocale (micro) et la lecture des
-  réponses à voix haute, via les API natives du navigateur (aucun service
-  externe, gratuit) — fonctionne sur Chrome/Edge, pas sur Safari/Firefox
-  pour la reconnaissance vocale (support partiel/absent côté navigateur).
--->
-<!--
-  Widget de chat Skyeco Pro — à coller juste avant </body> sur les pages
-  où on veut le chat. Inclut la saisie vocale (micro) et la lecture des
-  réponses à voix haute, via les API natives du navigateur (aucun service
-  externe, gratuit) — fonctionne sur Chrome/Edge, pas sur Safari/Firefox
-  pour la reconnaissance vocale (support partiel/absent côté navigateur).
--->
+
 <div id="skyecoChatBubble" style="position:fixed; bottom:22px; right:22px; z-index:999; background:linear-gradient(135deg, #f9a8d4 0%, #ec4899 55%, #be185d 100%); color:#fff; display:flex; align-items:center; gap:9px; padding:14px 22px 14px 18px; border-radius:999px; font-size:15px; font-weight:700; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; cursor:pointer; box-shadow:0 8px 26px rgba(232,98,44,0.4); transition:transform 0.15s ease, box-shadow 0.15s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 32px rgba(232,98,44,0.5)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 8px 26px rgba(232,98,44,0.4)';">
   <span style="font-size:19px; line-height:1;">💬</span><span>Besoin d'aide ?</span>
 </div>
@@ -4074,13 +3643,9 @@
   });
   closeBtn.addEventListener('click', () => { chatWindow.style.display = 'none'; });
 
-  // Le chat reste fermé à l'arrivée sur la page — seule la bulle (avatar)
-  // est visible ; il ne s'ouvre que si l'artisan clique dessus.
-
-  // --- Saisie vocale (reconnaissance de la parole) ---
   const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognitionAPI) {
-    micBtn.style.display = 'none'; // navigateur non compatible (Safari/Firefox) — on masque simplement le micro
+    micBtn.style.display = 'none';
   } else {
     const recognition = new SpeechRecognitionAPI();
     recognition.lang = 'fr-FR';
@@ -4113,10 +3678,9 @@
     });
   }
 
-  // --- Lecture à voix haute des réponses (synthèse vocale) ---
   function lireAVoixHaute(texte) {
     if (!lireVoixCheckbox.checked || !window.speechSynthesis) return;
-    window.speechSynthesis.cancel(); // interrompt une lecture précédente si besoin
+    window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(texte);
     utterance.lang = 'fr-FR';
     window.speechSynthesis.speak(utterance);
@@ -4163,11 +3727,6 @@
 </script>
 
 <script>
-  // Installation PWA — permet à l'artisan (ou toi) d'ajouter le tableau de
-  // bord à l'écran d'accueil du téléphone comme une vraie app (icône, plein
-  // écran, pas de barre d'adresse). Aucun impact si le navigateur ne
-  // supporte pas les service workers (Safari ancien, etc.) — le site
-  // continue de fonctionner normalement dans tous les cas.
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js').catch(() => {});

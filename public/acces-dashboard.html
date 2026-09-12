@@ -117,16 +117,7 @@
 
   async function connecterEtRediriger(token) {
     sessionStorage.setItem('skyeco_dashboard_token_' + draftId, token);
-    // Jeton de compte (voir dashboard-login.js) : valable pour TOUTES les
-    // vitrines de cet artisan, pas seulement celle-ci — stocké aussi sous
-    // une clé générique pour que le sélecteur de site du tableau de bord
-    // puisse changer de vitrine sans redemander une connexion.
     sessionStorage.setItem('skyeco_dashboard_token', token);
-    // Un artisan qui vient de démarrer son essai gratuit et n'a encore
-    // jamais déposé ses éléments (elements_deposes_le vide) est envoyé
-    // construire sa vitrine plutôt que sur un tableau de bord vide — pour
-    // tous les autres (déjà construits, ou revenant après coup), rien ne
-    // change : direction le tableau de bord comme avant.
     try {
       const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=elements_deposes_le`, {
         headers: { apikey: SUPABASE_ANON_KEY }
@@ -142,11 +133,6 @@
 
   async function demarrer() {
     try {
-      // 06/09/2026 : passe désormais par /api/acces-dashboard-etat (service
-      // role) plutôt que de lire dashboard_password_hash en clé anonyme —
-      // cette colonne n'est plus accessible ainsi depuis le verrouillage des
-      // colonnes sensibles, ce qui faisait échouer toute la requête et
-      // affichait "Site introuvable." pour tous les artisans, à tort.
       const resp = await fetch('/api/acces-dashboard-etat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -168,6 +154,14 @@
   }
 
   function afficherCreation(email) {
+    // 12/09/2026 : depuis que l'essai gratuit ne demande plus l'email au
+    // départ (seulement le téléphone, vérifié par SMS — voir
+    // mon-dashboard-demo.html), cet email peut arriver vide ici. Le champ
+    // était en lecture seule (readonly), pensé pour un email déjà connu —
+    // resté vide ET readonly, il empêchait tout simplement l'artisan de le
+    // renseigner (case grisée, impossible d'écrire dedans). Il devient donc
+    // modifiable quand aucun email n'est encore connu.
+    const emailConnu = !!(email && email.trim());
     carte.innerHTML = `
       <div class="icone-cadenas">
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -177,10 +171,10 @@
         </svg>
       </div>
       <h1 class="titre-gros">Créer votre mot de passe pour accéder à votre tableau de bord</h1>
-      <p class="sub">Votre tableau de bord Skyeco Pro est prêt. Choisissez un mot de passe pour pouvoir y revenir à tout moment.</p>
+      <p class="sub">Votre tableau de bord Skyeco Pro est prêt. ${emailConnu ? 'Choisissez un mot de passe pour pouvoir y revenir à tout moment.' : 'Renseignez votre email et choisissez un mot de passe pour pouvoir y revenir à tout moment.'}</p>
       <form id="formCreation">
         <label>Identifiant (votre email)</label>
-        <input type="email" value="${email}" readonly>
+        <input type="email" id="creationEmail" value="${email || ''}" ${emailConnu ? 'readonly' : 'required placeholder="votre@email.fr"'}>
         <label>Mot de passe</label>
         <div class="champ-mdp">
           <input type="password" id="mdp1" minlength="8" required placeholder="8 caractères minimum">
@@ -199,10 +193,15 @@
     attacherToggleOeil('mdp2');
     document.getElementById('formCreation').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const emailSaisi = document.getElementById('creationEmail').value.trim();
       const mdp1 = document.getElementById('mdp1').value;
       const mdp2 = document.getElementById('mdp2').value;
       const zoneMsg = document.getElementById('zoneMsg');
       const btn = e.target.querySelector('button');
+      if (!emailSaisi) {
+        zoneMsg.innerHTML = '<div class="msg err">Merci de renseigner votre email.</div>';
+        return;
+      }
       if (mdp1 !== mdp2) {
         zoneMsg.innerHTML = '<div class="msg err">Les deux mots de passe ne correspondent pas.</div>';
         return;
@@ -213,7 +212,10 @@
         const res = await fetch('/api/dashboard-set-password', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ draftId, motDePasse: mdp1 })
+          // email envoyé en plus du mot de passe : nécessaire quand il
+          // n'était pas déjà connu (voir emailConnu ci-dessus) pour que
+          // l'API l'enregistre sur ce brouillon avant de créer le compte.
+          body: JSON.stringify({ draftId, motDePasse: mdp1, email: emailConnu ? undefined : emailSaisi })
         });
         const data = await res.json();
         if (data.success) {
@@ -383,8 +385,6 @@
   var CLE = 'skyeco_cookie_consent';
   function lireChoix(){ try { return JSON.parse(localStorage.getItem(CLE) || 'null'); } catch(e){ return null; } }
   function appliquerChoix(choix){
-    // Point d'extension : charger ici Google Ads / Analytics uniquement si choix.niveau === 'tous'.
-    // Rien n'est charge pour l'instant.
     window.skyecoConsentement = choix;
   }
   window.skyecoCookiesChoix = function(niveau){

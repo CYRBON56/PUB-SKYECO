@@ -159,6 +159,14 @@
   }
   .btn-etre-rappele-fixe:hover{ transform:translateY(-2px); box-shadow:0 8px 24px rgba(232,98,44,0.5); }
   @media (max-width:600px){ .btn-etre-rappele-fixe{ position:static; display:inline-flex; margin-bottom:16px; padding:10px 18px; font-size:12.5px; } }
+
+  /* Bandeau explicatif verrou paiement (12/09) */
+  .banniere-verrou-ads {
+    display:none; background:linear-gradient(120deg, #fff4ec, #ffe8d6); border:1.5px solid #f0c9a8;
+    border-radius:16px; padding:18px 22px; margin-bottom:26px; line-height:1.55;
+  }
+  .banniere-verrou-ads strong { color:#14312a; display:block; margin-bottom:4px; font-size:0.98rem; }
+  .banniere-verrou-ads span { color:#6b5e4c; font-size:0.88rem; }
 </style>
 </head>
 <body>
@@ -190,6 +198,11 @@
 <a class="btn-etre-rappele-fixe" href="/prendre-rdv.html?id=4fbdb122-9fca-4636-b80c-d9e4abc2542b" target="_blank" rel="noopener">📞 Être rappelé</a>
 
 <div class="wrap">
+  <div class="banniere-verrou-ads" id="banniereVerrouAds">
+    <strong>🚀 Encore une étape avant d'activer Google Ads</strong>
+    <span>Pour approvisionner votre budget publicitaire ou connecter vos réseaux sociaux, il faut d'abord finaliser votre inscription : renseignez votre SIRET et tous les éléments ci-dessous, puis choisissez votre forfait. Vous profiterez alors à 100% de votre outil.</span>
+  </div>
+
   <a href="#" id="lienRetourDashboard" class="btn-dashboard-hero" style="display:none;"><span class="icon">📊</span> Accéder à mon tableau de bord</a>
   <div class="eyebrow">Construction de votre vitrine</div>
   <h1 id="titreConstruction">Construire votre formulaire vitrine</h1>
@@ -522,6 +535,15 @@
 
   const params = new URLSearchParams(window.location.search);
   const draftId = params.get('id');
+
+  // Bandeau explicatif : affiché uniquement si on arrive ici parce que le
+  // dashboard a redirigé (bouton "Approvisionner" ou "Connecter Instagram"
+  // cliqué sans forfait payant actif — voir mon-dashboard.html,
+  // verrouillerActionPayante et le handler btnConnecterInstagram) (12/09).
+  if (params.get('verrou') === 'ads') {
+    document.getElementById('banniereVerrouAds').style.display = 'block';
+  }
+
   // Avertit avant de quitter/recharger la page si une sauvegarde (auto ou
   // upload de fichier) est encore en cours — même logique que sur le
   // tableau de bord, pour éviter de perdre une saisie envoyée trop tard.
@@ -540,16 +562,11 @@
   let videoUrl = null;
   let metiersActuels = [];
   let titreChoisi = '';
-  let draftStatutActuel = null; // status du brouillon au chargement — sert à savoir où renvoyer après enregistrement
-  let compteDejaExistant = false; // dashboard_password_hash déjà posé (compte créé avant même d'arriver ici, voir mon-dashboard-demo.html)
+  let draftStatutActuel = null;
+  let compteDejaExistant = false;
   let zoneActuelle = null;
   let tvaTauxActuel = 20;
 
-  // Suggestions de titre par métier — doit rester cohérent avec les
-  // heroTitre par défaut de METIER_TEMPLATES dans apercu.html (le premier
-  // choix de chaque métier n'est PAS forcément identique au défaut : tant
-  // qu'aucun titre n'est choisi ici, apercu.html garde son propre défaut
-  // avec le retour à la ligne — un choix explicite ici l'écrase.)
   const TITRES_PAR_METIER = {
     paysagiste: ["Un extérieur qui vous ressemble.", "Votre jardin, transformé.", "Un aménagement extérieur pensé pour durer."],
     piscine: ["Une piscine prête pour l'été.", "Votre bassin, sans mauvaise surprise.", "La piscine que vous imaginiez enfin chez vous."],
@@ -561,11 +578,6 @@
     autre: ["Un projet sur-mesure, pensé pour vous.", "Votre projet, réalisé avec sérieux.", "Un artisan de confiance, près de chez vous.", "Créé en 2007, fêtera bientôt ses 20 ans d'existence."],
   };
 
-  // QUESTIONS_GENERALES_PAR_METIER (texte des questions par métier) a été
-  // retiré le 04/09 avec le reste du "Formulaire estimatif" — voir la note
-  // plus bas, à l'endroit où construireQuestionsGenerales était définie.
-
-  // --- Accordéon ---
   document.querySelectorAll('.section-header').forEach(header => {
     header.addEventListener('click', () => {
       const section = header.closest('.section');
@@ -575,7 +587,6 @@
     });
   });
 
-  // --- Barre de progression douce, recalculée à chaque saisie ---
   function calculerProgression() {
     const groupes = {
       visuel: () => !!(logoUrl || photosUrls.length),
@@ -599,16 +610,6 @@
   document.body.addEventListener('input', calculerProgression);
   document.body.addEventListener('change', calculerProgression);
 
-  // Grille de saisie des tarifs du configurateur Portails (voir
-  // public/apercu.html, PORTAILS_TARIFS et calculerEstimationPortails, pour
-  // la structure d'origine — à garder synchronisée si de nouvelles options
-  // y sont ajoutées un jour). "champs" liste les clés de prix de chaque
-  // catégorie avec leur libellé affiché ici.
-  // Refait le 04/09 (dictée de Cyrille) — reprend la nomenclature réelle du
-  // fournisseur (portails autoportants, sans rail au sol) — voir le même
-  // commentaire détaillé dans public/apercu.html (PORTAILS_TARIFS) pour le
-  // détail des choix de transcription des couleurs RAL, à vérifier avec la
-  // capture d'écran que Cyrille doit envoyer.
   const PORTAILS_TARIFS_CATEGORIES = [
     { cle: 'prixBaseHT', titre: 'Prix de base du portail (fourniture)', champs: { swing_gate: 'SWING GATE — Portail battant', oneslide: 'ONESLIDE — Portail coulissant 1 vantail', twinslide: 'TWINSLIDE — Portail coulissant 2 vantaux' } },
     { cle: 'installation', titre: 'Installation (supplément)', champs: { fourniture_seule: 'Fourniture seule (pose non comprise)', installation_complete: 'Installation complète : terrassement, béton, évacuation de terre, raccordement électrique, capteurs' } },
@@ -703,15 +704,6 @@
 
       draftStatutActuel = draft.status || null;
 
-      // 07/09/2026 : dashboard_password_hash n'est plus lisible en clé
-      // anonyme (verrouillage des colonnes sensibles du 06/09) — cette
-      // lecture directe renvoyait donc toujours "undefined",
-      // compteDejaExistant restait toujours false, et le bouton ci-dessous
-      // pointait TOUJOURS vers /mon-dashboard.html (page protégée par mot
-      // de passe) même sans compte créé — l'artisan tombait sur un mur de
-      // connexion sans pouvoir y accéder. On vérifie donc désormais via
-      // /api/acces-dashboard-etat (service role), comme le fait déjà
-      // mon-dashboard-demo.html.
       try {
         const respEtat = await fetch('/api/acces-dashboard-etat', {
           method: 'POST',
@@ -724,12 +716,6 @@
         compteDejaExistant = false;
       }
 
-      // Le bouton est toujours affiché : on n'arrive sur cette page qu'avec
-      // un id de brouillon réel, soit via "Modifier mes éléments" depuis un
-      // tableau de bord déjà existant, soit via un premier passage — dans
-      // les deux cas un lien direct est plus utile qu'un bouton caché à
-      // cause d'un statut imprévu (ex : resté "preview" après un essai
-      // interrompu avant correction de la contrainte Supabase).
       const lienRetour = document.getElementById('lienRetourDashboard');
       lienRetour.href = compteDejaExistant
         ? '/mon-dashboard.html?id=' + draftId
@@ -737,9 +723,6 @@
       lienRetour.style.display = 'flex';
 
       document.getElementById('entreprise').value = draft.entreprise || '';
-      // Titre personnalisé avec le nom de l'entreprise qui vient de
-      // s'inscrire (demande du 04/09) — dès qu'on connaît son nom, on
-      // remplace le titre générique par défaut.
       if (draft.entreprise) {
         document.getElementById('titreConstruction').textContent = `Construisons votre formulaire vitrine, ${draft.entreprise}`;
       }
@@ -765,19 +748,6 @@
       construireOptionsTitre(metiersActuels, draft.titre_hero_choisi || '');
       tvaTauxActuel = draft.tva_taux || 20;
 
-      // Case "Formulaire personnalisé" — active/désactive le parcours sur
-      // mesure déjà codé pour CETTE vitrine (voir formulaire_personnalise_cle
-      // en base + le registre PARCOURS_PERSONNALISES dans public/apercu.html,
-      // runWizard). Décochée par défaut. Si l'artisan la coche alors qu'aucun
-      // parcours n'est encore codé pour lui (formulaire_personnalise_cle
-      // vide — cas de tout artisan autre que Cyrille lui-même pour l'instant),
-      // ça envoie une demande de RDV à Cyrille (voir
-      // api/demander-formulaire-personnalise.js) plutôt que de ne rien faire
-      // silencieusement — sa vitrine reste sur le formulaire basique en
-      // attendant (comportement automatique côté apercu.html, rien à faire
-      // ici). Ne se redéclenche pas au rechargement de la page : seul un
-      // "change" (case cochée par l'artisan) déclenche l'envoi, jamais le
-      // simple fait que draft.formulaire_personnalise soit déjà à true.
       const checkFormulairePersonnalise = document.getElementById('checkFormulairePersonnalise');
       const statusFormulairePersonnalise = document.getElementById('statusFormulairePersonnalise');
       const formulairePersonnaliseDescriptionWrapper = document.getElementById('formulairePersonnaliseDescriptionWrapper');
@@ -803,31 +773,17 @@
         }
       });
 
-      // Grille de tarifs du configurateur Portails — visible uniquement pour
-      // la vitrine dont le formulaire personnalisé est celui des portails
-      // (formulaire_personnalise_cle === 'portails', posé directement en
-      // base par Claude, jamais depuis cette page). Les valeurs saisies sont
-      // stockées dans la colonne JSON portails_tarifs et lues directement par
-      // public/apercu.html (calculerEstimationPortails / tarifsPortailsActuels)
-      // — un changement de prix ici n'exige donc aucun nouveau déploiement.
       if (draft.formulaire_personnalise_cle === 'portails') {
         document.getElementById('tarifsPortailsSection').style.display = 'block';
         construireGrilleTarifsPortails(draft.portails_tarifs || {});
       }
 
-      // Position du formulaire (gauche/droite) — voir public/apercu.html,
-      // .split-layout.formulaire-droite. "gauche" par défaut si jamais
-      // renseigné (comportement actuel inchangé).
       const selectPosition = document.getElementById('selectPositionFormulaire');
       selectPosition.value = draft.formulaire_position === 'droite' ? 'droite' : 'gauche';
       selectPosition.addEventListener('change', () => {
         sauvegarderChampsImmediat({ formulaire_position: selectPosition.value });
       });
 
-      // Fond derrière le formulaire (carrousel de photos ou vidéo) et son
-      // niveau de flou — voir public/apercu.html, initFormBgCarousel() et
-      // la variable CSS --flou-fond. Par défaut : carrousel, flou 14px
-      // (comportement identique à avant l'ajout de ce réglage).
       const selectFondSource = document.getElementById('selectFondFormulaireSource');
       const rangeFlou = document.getElementById('rangeFlouFond');
       const valeurFlouEl = document.getElementById('valeurFlouFond');
@@ -857,7 +813,7 @@
         document.getElementById('logoPreview').style.display = 'block';
       }
       if (draft.video_url) { videoUrl = draft.video_url; document.getElementById('videoLien').value = draft.video_url.startsWith('http') ? draft.video_url : ''; }
-    } catch (e) { console.error('Erreur chargerDraftExistant :', e); /* on part d'un formulaire vide plutôt que de bloquer la page */ }
+    } catch (e) { console.error('Erreur chargerDraftExistant :', e); }
     calculerProgression();
   }
 
@@ -865,7 +821,6 @@
     paysagiste: 'Paysagiste', piscine: 'Pose piscine', tonte: 'Tonte et coupe', terrasse: 'Terrasse',
     paysagiste_concepteur: 'Paysagiste concepteur', arboriste: 'Arboriste élagueur', espaces_verts: "Entretien d'espaces verts", autre: 'Autre'
   };
-  // --- Upload générique vers Supabase Storage ---
   async function uploaderFichier(file, sousDossier) {
     const ext = file.name.split('.').pop();
     const nomFichier = `elements-artisan/${draftId}/${sousDossier}-${Date.now()}.${ext}`;
@@ -885,18 +840,9 @@
     return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${nomFichier}`;
   }
 
-  // Enregistre immédiatement un ou plusieurs champs, sans attendre le bouton
-  // "Enregistrer mes éléments" final — évite qu'un logo/une photo/un titre
-  // envoyé avec succès (donc bien présent dans le stockage) reste perdu si
-  // la personne quitte la page via "Voir l'avancement" ou ferme l'onglet
-  // avant d'avoir cliqué sur le bouton d'enregistrement global.
-  let essaiExpireAlerteMontree = false; // n'affiche l'avertissement qu'une fois par session, pas à chaque frappe
+  let essaiExpireAlerteMontree = false;
   async function sauvegarderChampsImmediat(champs) {
     if (!draftId) return;
-    // Essai gratuit terminé sans passage à un forfait payant — même
-    // raisonnement que côté mon-dashboard.html (bloquerSiEssaiExpire) :
-    // plus aucune modification n'est enregistrée tant que l'artisan n'a pas
-    // choisi une formule, mais la vitrine et le dashboard restent lisibles.
     if (draftStatutActuel === 'essai_expire') {
       if (!essaiExpireAlerteMontree) {
         essaiExpireAlerteMontree = true;
@@ -913,17 +859,12 @@
         headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
         body: JSON.stringify(champs),
       });
-    } catch (e) { /* silencieux — l'enregistrement final au bas du formulaire rattrapera si besoin */
+    } catch (e) {
     } finally {
       terminerSauvegarde();
     }
   }
 
-  // --- Auto-enregistrement des champs texte restants (coordonnées, infos
-  // légales) — jusqu'ici ces champs n'étaient sauvegardés qu'au clic final
-  // sur "Enregistrer" en bas de page ; en cas de fermeture d'onglet ou de
-  // perte de connexion avant ce clic, tout était perdu. Un court délai
-  // (900ms sans frappe) évite d'enregistrer à chaque lettre tapée.
   const CHAMPS_AUTO_SAVE = {
     entreprise: 'entreprise',
     telephone: 'telephone',
@@ -956,9 +897,6 @@
     });
   });
 
-  // Case "Franchise en base de TVA" — sauvegarde immédiate (comme une case
-  // à cocher, pas un champ texte, donc en dehors de la boucle générique
-  // CHAMPS_AUTO_SAVE ci-dessus).
   const checkFranchiseTva = document.getElementById('checkFranchiseTva');
   if (checkFranchiseTva) {
     checkFranchiseTva.addEventListener('change', () => {
@@ -966,12 +904,6 @@
     });
   }
 
-  // Vérification SIRET (10/09/2026) : appelle l'API publique gratuite de
-  // l'État (recherche-entreprises.api.gouv.fr) pour confirmer la forme
-  // juridique déclarée, et PRÉ-COCHE la case franchise TVA si le SIRET
-  // correspond à un entrepreneur individuel (indice, pas une certitude) —
-  // l'artisan reste libre de décocher, la sauvegarde se fait via
-  // l'écouteur 'change' ci-dessus, pas ici.
   const btnVerifierSiret = document.getElementById('btnVerifierSiret');
   if (btnVerifierSiret) {
     btnVerifierSiret.addEventListener('click', async () => {
@@ -996,12 +928,6 @@
       }
     });
   }
-  // estimatif" — plus utilisé par public/apercu.html, qui affiche désormais
-  // systématiquement le formulaire basique par défaut (voir getStepsBasique)
-  // ou le formulaire personnalisé pour les vitrines qui en ont un. Les
-  // endpoints api/analyser-produits-chiffrables.js et
-  // api/classifier-projet-formulaire.js restent en place mais ne sont plus
-  // appelés depuis nulle part.
 
   function construireOptionsTitre(metiers, titreActuel) {
     const metierPrincipal = (metiers && metiers[0]) || 'autre';
@@ -1050,19 +976,6 @@
     });
   }
 
-  // La personnalisation du texte des questions générales par métier
-  // (construireQuestionsGenerales / questions_generales_texte) a été retirée
-  // le 04/09 en même temps que le "Formulaire estimatif" : public/apercu.html
-  // n'utilise plus ces questions par métier (voir getStepsBasique), donc ce
-  // texte n'avait plus rien à surcharger.
-
-  // Suggestion de titre par IA (Claude) — vient compléter les titres
-  // pré-écrits de TITRES_PAR_METIER, sans les remplacer. Utilise le(s)
-  // métier(s) déjà renseignés sur le profil ; si aucun métier n'est encore
-  // choisi, on prévient l'artisan au lieu d'appeler l'API pour rien.
-  // Applique un titre suggéré par l'IA (utilisé par la suggestion "métier"
-  // ci-dessous ET par le nouvel assistant "Construire ma vitrine avec l'IA")
-  // : bascule sur le titre personnalisé et enregistre immédiatement.
   function appliquerTitreSuggere(texte, zoneBoxAEffacer) {
     const radioCustom = document.querySelector('input[name="titreRadio"][value="custom"]');
     const inputPerso = document.getElementById('titrePersonnalise');
@@ -1120,21 +1033,6 @@
     }
   });
 
-  // Assistant IA "Construire ma vitrine complète" (10/09/2026) : à partir
-  // d'une description libre de son activité, l'artisan obtient : (1) des
-  // titres sur-mesure (plus précis que la liste générique par métier), (2)
-  // un brouillon du formulaire de devis (questions + logique de calcul) —
-  // voir api/generer-vitrine-ia.js pour le détail. Ce brouillon n'active
-  // RIEN tout seul : il est déposé dans le circuit "Formulaire personnalisé"
-  // déjà existant (case à cocher + api/demander-formulaire-personnalise.js),
-  // donc Cyrille (ou Claude sur sa demande) le relit et le code à la main
-  // dans public/apercu.html avant toute mise en ligne — conforme à la
-  // décision du 04/09/2026 de garder le contrôle qualité sur les prix.
-  // Scènes de secours par métier pour le carrousel de photos IA (10/09/2026)
-  // — une phrase = une photo générée via Gamma (api/generer-image-gamma.js,
-  // déjà en place pour le bouton "Générer l'image" ci-dessous). On ne fait
-  // qu'enchaîner plusieurs appels à ce même endpoint avec des scènes
-  // différentes, rien de nouveau côté serveur.
   const SCENES_CARROUSEL_PAR_METIER = {
     paysagiste: [
       "Un jardin résidentiel fraîchement aménagé, massifs et pelouse, journée ensoleillée",
@@ -1192,7 +1090,6 @@
     ],
   };
 
-  // Un appel = une image (identique au bouton manuel "Générer l'image").
   async function genererUneImageGamma(prompt) {
     const startResp = await fetch('/api/generer-image-gamma', {
       method: 'POST',
@@ -1218,13 +1115,6 @@
     throw new Error('La génération prend trop de temps');
   }
 
-  // Enchaîne plusieurs générations Gamma à la suite pour constituer un
-  // premier carrousel en un clic — utilisée automatiquement par l'assistant
-  // IA ci-dessus quand l'artisan n'a encore AUCUNE vraie photo (jamais pour
-  // remplacer des photos déjà ajoutées à la main), et disponible aussi via
-  // le bouton manuel du bloc Gamma. Chaque photo réussie est ajoutée et
-  // enregistrée immédiatement, sans attendre la fin des autres, pour ne
-  // rien perdre si une génération échoue ou prend trop de temps.
   async function genererCarrouselPhotosIA(metierSuggere, descriptionLibre, statusEl) {
     const metierValide = m => Object.prototype.hasOwnProperty.call(SCENES_CARROUSEL_PAR_METIER, m);
     const metier = metierValide(metierSuggere) ? metierSuggere
@@ -1250,7 +1140,6 @@
         document.getElementById('boxPhotos').classList.add('has-file');
         sauvegarderChampsImmediat({ photos: photosUrls });
       } catch (e) {
-        // On continue les photos suivantes même si l'une d'elles échoue.
       }
     }
     if (statusEl) {
@@ -1260,14 +1149,7 @@
     }
   }
 
-  // Affiche le résultat de l'assistant IA (titres + brouillon de formulaire
-  // + déclenchement du carrousel photo si besoin) — factorisé car appelé
-  // aussi bien depuis une description tapée à la main (api/generer-vitrine-ia)
-  // que depuis un lien importé (api/analyser-site-vitrine, 11/09).
   function afficherResultatAssistantVitrine(data, zoneBox, btnAssistantVitrine, descriptionPourCarrousel) {
-    // logo/photos récupérés automatiquement (mode "mon site actuel" uniquement) :
-    // on les applique comme un envoi manuel classique, sans jamais écraser un
-    // logo/des photos déjà présents.
     if (data.logoUrl && !logoUrl) {
       logoUrl = data.logoUrl;
       document.getElementById('statusLogo').textContent = 'Logo récupéré depuis ton site ✓';
@@ -1368,10 +1250,6 @@
       btnAssistantVitrine.textContent = 'Construction en cours… (jusqu\'à 30 secondes)';
       zoneBox.innerHTML = '';
 
-      // Repli automatique vers la génération à partir de la description tapée
-      // (comportement historique, inchangé) — utilisé soit directement quand
-      // aucun lien n'est renseigné, soit quand le lien fourni n'a pas pu être
-      // lu (site_illisible) et qu'une description est disponible en secours.
       async function genererDepuisDescription() {
         const res = await fetch('/api/generer-vitrine-ia', {
           method: 'POST',
@@ -1442,7 +1320,7 @@
       try {
         const url = await uploaderFichier(file, 'photo');
         photosUrls.push(url);
-      } catch (err) { /* on continue les autres */ }
+      } catch (err) { }
     }
     document.getElementById('statusPhotos').textContent = `${photosUrls.length} photo(s) ajoutée(s)`;
     document.getElementById('boxPhotos').classList.add('has-file');
@@ -1468,7 +1346,6 @@
     });
   }
 
-  // --- Génération d'image IA via Gamma, pour compléter le carrousel ---
   document.getElementById('btnGammaGenerer').addEventListener('click', async () => {
     const promptEl = document.getElementById('gammaPrompt');
     const statusEl = document.getElementById('gammaStatus');
@@ -1497,7 +1374,6 @@
 
       const generationId = startData.generationId;
 
-      // Sondage régulier jusqu'à obtenir le résultat (pas de sondage rapproché en boucle serrée)
       const attendre = ms => new Promise(r => setTimeout(r, ms));
       let resultat = null;
       for (let tentative = 0; tentative < 20; tentative++) {
@@ -1530,10 +1406,6 @@
     }
   });
 
-  // Génère 4 photos à la suite en un clic (voir genererCarrouselPhotosIA
-  // plus haut) — même endpoint /api/generer-image-gamma que le bouton
-  // "Générer l'image" juste au-dessus, simplement enchaîné 4 fois avec des
-  // scènes différentes selon le métier choisi dans le tableau de bord.
   document.getElementById('btnGammaCarrousel').addEventListener('click', async () => {
     const statusEl = document.getElementById('gammaCarrouselStatus');
     const btn = document.getElementById('btnGammaCarrousel');
@@ -1565,18 +1437,6 @@
     }
   });
 
-  // Lien vidéo (YouTube/Vimeo) saisi directement, sans upload — même logique
-  // d'enregistrement immédiat que le reste, pour ne rien perdre en quittant
-  // la page avant le bouton final.
-  //
-  // Correction 04/09 : la condition "&& !videoUrl" bloquait silencieusement
-  // toute modification du lien dès qu'une vidéo existait déjà (fichier
-  // uploadé, ou lien déjà enregistré au chargement de la page, ligne 745) —
-  // impossible de corriger ou remplacer le lien sans que rien ne se passe,
-  // sans le moindre message d'erreur. On enregistre maintenant à chaque
-  // changement, on garde `videoUrl` synchronisé (pour rester cohérent avec
-  // l'upload de fichier), et on affiche une confirmation comme pour les
-  // autres envois.
   document.getElementById('videoLien').addEventListener('change', () => {
     const lien = document.getElementById('videoLien').value.trim();
     videoUrl = lien || null;
@@ -1585,7 +1445,6 @@
     sauvegarderChampsImmediat({ video_url: videoUrl });
   });
 
-  // --- Extraction best-effort des mentions légales depuis un site existant ---
   document.getElementById('btnExtraire').addEventListener('click', async () => {
     const url = document.getElementById('siteExistant').value.trim();
     const box = document.getElementById('extractionResult');
@@ -1614,7 +1473,6 @@
     }
   });
 
-  // --- Génération titre + récupération de photos depuis le site existant ---
   document.getElementById('btnGenererDepuisSite').addEventListener('click', async () => {
     const btn = document.getElementById('btnGenererDepuisSite');
     const url = document.getElementById('siteExistant').value.trim();
@@ -1693,7 +1551,7 @@
               if (dataImport.success && dataImport.url) {
                 photosUrls.push(dataImport.url);
               }
-            } catch (e) { /* on continue avec les autres photos même si une échoue */ }
+            } catch (e) { }
           }
           rafraichirGridPhotos();
           document.getElementById('statusPhotos').textContent = `${photosUrls.length} photo(s) ajoutée(s)`;
@@ -1711,7 +1569,6 @@
     }
   });
 
-  // --- Enregistrement final ---
   document.getElementById('btnSubmit').addEventListener('click', async () => {
     if (draftStatutActuel === 'essai_expire') {
       if (confirm("Votre essai gratuit est terminé — passez à une formule payante pour continuer à modifier votre vitrine.\n\nVoir les formules maintenant ?")) {
@@ -1747,12 +1604,6 @@
       photos: photosUrls,
       video_url: videoFinal,
       titre_hero_choisi: titreChoisi || null,
-      // Champ retiré du formulaire (02/09) — on renvoie le taux déjà
-      // enregistré (tvaTauxActuel, lu au chargement) pour ne pas écraser un
-      // réglage existant chez un artisan qui en avait un différent de 20%
-      // (10% rénovation, 5.5% amélioration énergétique) ; 20% par défaut
-      // pour un tout nouvel artisan. Modifiable directement en base si
-      // besoin.
       tva_taux: tvaTauxActuel,
       elements_deposes_le: new Date().toISOString(),
     };
@@ -1765,16 +1616,6 @@
       });
       if (!resp.ok) throw new Error();
 
-      // Un tout premier passage (status encore "preview", pas de compte créé)
-      // continue vers l'aperçu de sa vraie vitrine (apercu.html), qui
-      // enchaîne lui-même vers la démo du tableau de bord puis le choix de
-      // formule — l'artisan doit voir son site avant de décider quoi que ce
-      // soit. Dans tous les autres cas (compte déjà créé, artisan qui vient
-      // corriger ses éléments), on reste sur cette page après l'enregistrement
-      // plutôt que de renvoyer automatiquement au tableau de bord (04/09,
-      // demande de Cyrille) — l'artisan peut enchaîner d'autres modifications
-      // sans avoir à revenir ici à chaque fois ; le lien "Retour au tableau
-      // de bord" en haut de page reste disponible s'il veut y aller.
       const versApercuPremierPassage = !compteDejaExistant && draftStatutActuel !== 'published' && draftStatutActuel !== 'en_pause' && draftStatutActuel !== 'essai';
       msg.className = 'save-msg ok';
       msg.textContent = versApercuPremierPassage
@@ -1801,16 +1642,6 @@
     }
   });
 </script>
-<!--
-  Widget de chat Skyeco Pro — à coller juste avant </body> sur les pages
-  où on veut le chat. Inclut la saisie vocale (micro) et la lecture des
-  réponses à voix haute, via les API natives du navigateur (aucun service
-  externe, gratuit) — fonctionne sur Chrome/Edge, pas sur Safari/Firefox
-  pour la reconnaissance vocale (support partiel/absent côté navigateur).
-  Ajouté le 04/09 sur cette page (mes-elements.html) — remplace le bouton
-  "besoin d'aide" ponctuel envisagé un temps : l'artisan pose directement
-  ses questions à l'assistant plutôt que d'attendre un rappel.
--->
 <div id="skyecoChatBubble" style="position:fixed; bottom:22px; right:22px; z-index:999; background:linear-gradient(135deg, #f0a878 0%, #e8622c 55%, #c74f20 100%); color:#fff; display:flex; align-items:center; gap:9px; padding:14px 22px 14px 18px; border-radius:999px; font-size:15px; font-weight:700; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; cursor:pointer; box-shadow:0 8px 26px rgba(232,98,44,0.4); transition:transform 0.15s ease, box-shadow 0.15s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 32px rgba(232,98,44,0.5)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 8px 26px rgba(232,98,44,0.4)';">
   <span style="font-size:19px; line-height:1;">💬</span><span>Besoin d'aide ?</span>
 </div>
@@ -1874,13 +1705,9 @@
   });
   closeBtn.addEventListener('click', () => { chatWindow.style.display = 'none'; });
 
-  // Le chat reste fermé à l'arrivée sur la page — seule la bulle (avatar)
-  // est visible ; il ne s'ouvre que si l'artisan clique dessus.
-
-  // --- Saisie vocale (reconnaissance de la parole) ---
   const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognitionAPI) {
-    micBtn.style.display = 'none'; // navigateur non compatible (Safari/Firefox) — on masque simplement le micro
+    micBtn.style.display = 'none';
   } else {
     const recognition = new SpeechRecognitionAPI();
     recognition.lang = 'fr-FR';
@@ -1913,10 +1740,9 @@
     });
   }
 
-  // --- Lecture à voix haute des réponses (synthèse vocale) ---
   function lireAVoixHaute(texte) {
     if (!lireVoixCheckbox.checked || !window.speechSynthesis) return;
-    window.speechSynthesis.cancel(); // interrompt une lecture précédente si besoin
+    window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(texte);
     utterance.lang = 'fr-FR';
     window.speechSynthesis.speak(utterance);

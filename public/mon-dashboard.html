@@ -932,6 +932,10 @@
       activerOnglet('calendrier');
       document.getElementById('panelTabs').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+    if (window.location.hash === '#reseaux') {
+      activerOnglet('reseaux');
+      document.getElementById('panelTabs').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
     if (!adminToken) {
       chargerSitesCompte(token);
       chargerApercuCampagnes(token);
@@ -1264,16 +1268,235 @@
       `;
 
       document.getElementById('btnConnecterInstagram').addEventListener('click', () => {
-        alert("Le flux de connexion Instagram n'est pas encore actif — à brancher sur le OAuth Meta une fois l'app validée.");
+        if (connexion) {
+          rsOuvrirOnboarding(true);
+        } else {
+          rsOuvrirOnboarding(false);
+        }
+      });
+
+      content.querySelectorAll('.rs-action').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const post = posts.find((p) => p.id === btn.dataset.id);
+          if (!post) return;
+          if (post.statut === 'echec') {
+            btn.disabled = true;
+            btn.textContent = '…';
+            const res = await fetch('/api/social-publish-post', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ postId: post.id }),
+            });
+            const data = await res.json();
+            if (!data.success) alert(data.error || 'Nouvelle tentative échouée.');
+            chargerReseauxSociaux();
+          } else if (post.statut === 'publie' && post.ig_media_id) {
+            window.open(`https://www.instagram.com/p/${post.ig_media_id}/`, '_blank');
+          }
+          // Brouillon/planifié : édition rapide non branchée pour l'instant —
+          // on peut créer un nouveau post en attendant.
+        });
       });
     } catch (e) {
       content.innerHTML = '<div class="empty-msg"><span class="empty-icone">⚠️</span>Impossible de charger les réseaux sociaux pour le moment.</div>';
     }
   }
 
+  // Guide avant connexion : Meta exige un compte Instagram Business/Creator
+  // relié à une Page Facebook — impossible à créer automatiquement par API,
+  // donc on vérifie d'abord que l'artisan a bien fait cette étape (2 choix),
+  // plutôt que de le laisser échouer sans explication pendant l'OAuth.
+  function rsOuvrirOnboarding(dejaConnecte) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:10005;background:rgba(33,26,53,0.55);display:flex;align-items:center;justify-content:center;padding:20px;';
+    overlay.innerHTML = `
+      <div style="background:#fff;border-radius:16px;padding:26px 24px;max-width:440px;box-shadow:0 12px 40px rgba(0,0,0,0.25);">
+        <div style="font-size:1.05rem;font-weight:800;color:#211a35;margin-bottom:14px;">
+          ${dejaConnecte ? 'Gérer la connexion Instagram' : 'Connecter Instagram'}
+        </div>
+        <p style="font-size:0.85rem;color:#5b6b64;line-height:1.5;margin-bottom:14px;">
+          Pour publier automatiquement, votre compte Instagram doit être en mode <strong>Professionnel (Business ou Créateur)</strong> et relié à une <strong>Page Facebook</strong>.
+        </p>
+        <ol style="font-size:0.82rem;color:#3a4a43;line-height:1.6;padding-left:18px;margin-bottom:18px;">
+          <li>Dans l'app Instagram : Paramètres → Compte → Passer à un compte professionnel</li>
+          <li>Choisissez "Entreprise", puis liez ou créez une Page Facebook associée</li>
+          <li>Revenez ici et cliquez sur "Connecter" ci-dessous</li>
+        </ol>
+        <div style="display:flex; gap:10px; justify-content:flex-end;">
+          <button type="button" id="rsOnboardingAnnuler" style="background:#f0f1ec;color:#6b7a72;border:none;padding:10px 16px;border-radius:9px;font-weight:700;cursor:pointer;font-size:0.85rem;">Annuler</button>
+          <button type="button" id="rsOnboardingContinuer" style="background:#7c3aed;color:#fff;border:none;padding:10px 16px;border-radius:9px;font-weight:700;cursor:pointer;font-size:0.85rem;">C'est fait, connecter →</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.querySelector('#rsOnboardingAnnuler').addEventListener('click', () => overlay.remove());
+    overlay.querySelector('#rsOnboardingContinuer').addEventListener('click', () => {
+      window.location.href = `/api/social-connect-start?id=${encodeURIComponent(draftId)}&token=${encodeURIComponent(tokenCalendrierActuel || '')}`;
+    });
+  }
+
   document.getElementById('btnNouveauPostReseaux').addEventListener('click', () => {
-    alert("La création de post n'est pas encore branchée — prévu une fois la génération de légende/hashtags en place.");
+    rsOuvrirFormulairePost();
   });
+
+  // Formulaire de création de post : photo/vidéo (URL déjà hébergée, ex. Supabase
+  // Storage) + note libre → génération IA de la légende/hashtags → publication
+  // immédiate ou planification.
+  function rsOuvrirFormulairePost(postExistant) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:10005;background:rgba(33,26,53,0.55);display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;';
+    overlay.innerHTML = `
+      <div style="background:#fff;border-radius:16px;padding:26px 24px;max-width:480px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,0.25);">
+        <div style="font-size:1.05rem;font-weight:800;color:#211a35;margin-bottom:14px;">Nouveau post</div>
+
+        <label style="font-size:0.78rem;font-weight:700;color:#211a35;display:block;margin-bottom:4px;">Photo du chantier (URL)</label>
+        <input type="url" id="rsPhotoUrl" placeholder="https://...supabase.co/.../chantier.jpg" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #d8e3de;border-radius:8px;font-size:0.85rem;margin-bottom:10px;">
+
+        <label style="font-size:0.78rem;font-weight:700;color:#211a35;display:block;margin-bottom:4px;">Ou vidéo du chantier (URL, optionnel — remplace la photo)</label>
+        <input type="url" id="rsVideoUrl" placeholder="https://...supabase.co/.../chantier.mp4" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #d8e3de;border-radius:8px;font-size:0.85rem;margin-bottom:10px;">
+
+        <label style="font-size:0.78rem;font-weight:700;color:#211a35;display:block;margin-bottom:4px;">Note rapide (optionnel)</label>
+        <textarea id="rsNote" placeholder="Ex : terrasse résine 40m2 à Vannes, finition gris anthracite" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #d8e3de;border-radius:8px;font-size:0.85rem;min-height:50px;margin-bottom:10px;font-family:inherit;"></textarea>
+
+        <button type="button" id="rsBtnGenerer" style="background:#fff;color:#7c3aed;border:1.5px solid #7c3aed;border-radius:9px;padding:9px 14px;font-size:0.82rem;font-weight:700;cursor:pointer;margin-bottom:14px;">✨ Générer le texte</button>
+
+        <div id="rsGenereZone" style="display:none;">
+          <label style="font-size:0.78rem;font-weight:700;color:#211a35;display:block;margin-bottom:4px;">Légende</label>
+          <textarea id="rsLegende" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #d8e3de;border-radius:8px;font-size:0.85rem;min-height:70px;margin-bottom:10px;font-family:inherit;"></textarea>
+          <label style="font-size:0.78rem;font-weight:700;color:#211a35;display:block;margin-bottom:4px;">Hashtags</label>
+          <textarea id="rsHashtags" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #d8e3de;border-radius:8px;font-size:0.85rem;min-height:50px;margin-bottom:14px;font-family:inherit;"></textarea>
+        </div>
+
+        <div id="rsGenereStatut" style="font-size:0.78rem;color:#8a9891;margin-bottom:14px;"></div>
+
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+          <input type="checkbox" id="rsPlanifierCheck" style="width:auto;">
+          <label for="rsPlanifierCheck" style="font-size:0.82rem;color:#211a35;">Planifier plutôt que publier tout de suite</label>
+        </div>
+        <input type="datetime-local" id="rsPlanifierDate" style="display:none;width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #d8e3de;border-radius:8px;font-size:0.85rem;margin-bottom:14px;">
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button type="button" id="rsAnnuler" style="background:#f0f1ec;color:#6b7a72;border:none;padding:10px 16px;border-radius:9px;font-weight:700;cursor:pointer;font-size:0.85rem;">Annuler</button>
+          <button type="button" id="rsValider" style="background:#7c3aed;color:#fff;border:none;padding:10px 18px;border-radius:9px;font-weight:700;cursor:pointer;font-size:0.85rem;" disabled>Publier maintenant</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const btnGenerer = overlay.querySelector('#rsBtnGenerer');
+    const genereZone = overlay.querySelector('#rsGenereZone');
+    const genereStatut = overlay.querySelector('#rsGenereStatut');
+    const legendeEl = overlay.querySelector('#rsLegende');
+    const hashtagsEl = overlay.querySelector('#rsHashtags');
+    const planifierCheck = overlay.querySelector('#rsPlanifierCheck');
+    const planifierDate = overlay.querySelector('#rsPlanifierDate');
+    const btnValider = overlay.querySelector('#rsValider');
+
+    overlay.querySelector('#rsAnnuler').addEventListener('click', () => overlay.remove());
+
+    planifierCheck.addEventListener('change', () => {
+      planifierDate.style.display = planifierCheck.checked ? 'block' : 'none';
+      btnValider.textContent = planifierCheck.checked ? 'Planifier' : 'Publier maintenant';
+    });
+
+    btnGenerer.addEventListener('click', async () => {
+      const photoUrl = overlay.querySelector('#rsPhotoUrl').value.trim();
+      const note = overlay.querySelector('#rsNote').value.trim();
+      if (!photoUrl && !note) {
+        genereStatut.textContent = 'Ajoutez au moins une photo ou une note pour générer le texte.';
+        return;
+      }
+      btnGenerer.disabled = true;
+      btnGenerer.textContent = 'Génération…';
+      genereStatut.textContent = '';
+      try {
+        const res = await fetch('/api/social-generate-caption', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId, photoUrls: photoUrl ? [photoUrl] : [], note }),
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Échec de la génération.');
+        legendeEl.value = data.legende || '';
+        hashtagsEl.value = (data.hashtags || []).join(' ');
+        genereZone.style.display = 'block';
+        btnValider.disabled = false;
+      } catch (e) {
+        genereStatut.textContent = e.message || 'Impossible de générer le texte pour le moment.';
+      } finally {
+        btnGenerer.disabled = false;
+        btnGenerer.textContent = '✨ Générer le texte';
+      }
+    });
+
+    btnValider.addEventListener('click', async () => {
+      const photoUrl = overlay.querySelector('#rsPhotoUrl').value.trim();
+      const videoUrl = overlay.querySelector('#rsVideoUrl').value.trim();
+      const legende = legendeEl.value.trim();
+      const hashtags = hashtagsEl.value.trim().split(/\s+/).filter(Boolean);
+      const planifier = planifierCheck.checked;
+      const scheduledAt = planifier ? new Date(planifierDate.value).toISOString() : null;
+
+      if (planifier && !planifierDate.value) {
+        genereStatut.textContent = 'Choisissez une date de planification.';
+        return;
+      }
+
+      btnValider.disabled = true;
+      btnValider.textContent = 'Un instant…';
+      try {
+        const saveRes = await fetch('/api/social-save-post', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            draftId, photoUrl: videoUrl ? null : (photoUrl || null), videoUrl: videoUrl || null,
+            legende, hashtags, statut: planifier ? 'planifie' : 'brouillon', scheduledAt,
+          }),
+        });
+        const saveData = await saveRes.json();
+        if (!saveData.success) throw new Error(saveData.error || "Échec de l'enregistrement.");
+
+        if (!planifier) {
+          // Publication immédiate.
+          const pubRes = await fetch('/api/social-publish-post', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ postId: saveData.post.id }),
+          });
+          const pubData = await pubRes.json();
+          if (!pubData.success) throw new Error(pubData.error || 'Publication échouée — le post reste enregistré en brouillon, réessayez depuis la liste.');
+        }
+
+        overlay.remove();
+        chargerReseauxSociaux();
+      } catch (e) {
+        genereStatut.textContent = e.message || 'Une erreur est survenue.';
+        btnValider.disabled = false;
+        btnValider.textContent = planifier ? 'Planifier' : 'Publier maintenant';
+      }
+    });
+  }
+
+  // Message de retour après le flux OAuth (voir /api/social-callback) :
+  // ?social=succes|refuse|sans_compte_pro|erreur dans l'URL, avec #reseaux
+  // pour rouvrir directement le bon onglet.
+  (function afficherRetourSocial() {
+    const statutSocial = params.get('social');
+    if (!statutSocial) return;
+    const messages = {
+      succes: { texte: '✓ Instagram connecté avec succès.', couleur: '#7c3aed' },
+      refuse: { texte: "Connexion annulée — vous n'avez pas autorisé l'accès.", couleur: '#8a9891' },
+      sans_compte_pro: { texte: "Aucun compte Instagram professionnel relié à une Page Facebook n'a été trouvé sur ce compte Meta. Suivez les étapes du guide puis réessayez.", couleur: '#c0392b' },
+      erreur: { texte: 'Une erreur est survenue pendant la connexion — réessayez.', couleur: '#c0392b' },
+    };
+    const info = messages[statutSocial];
+    if (!info) return;
+    const toast = document.createElement('div');
+    toast.style.cssText = `position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:10006;background:${info.couleur};color:#fff;padding:12px 20px;border-radius:10px;font-size:0.85rem;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,0.18);max-width:90vw;text-align:center;`;
+    toast.textContent = info.texte;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 6000);
+  })();
 
   // --- Onglet "Appel vidéo" (05/09) : demande d'appel côté artisan --------
   let dernierAppelVuId = null;

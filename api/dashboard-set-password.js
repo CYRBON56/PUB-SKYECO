@@ -11,6 +11,16 @@
 // artisan. Renvoie un jeton de session lié au compte (valable pour tous ses
 // sites) pour connecter l'artisan sans repasser par l'écran de connexion.
 //
+// 12/09/2026 : accepte désormais un champ `email` optionnel dans le corps
+// de la requête. Depuis que l'essai gratuit ne collecte plus l'email au
+// départ (seulement le téléphone, vérifié par SMS — voir
+// mon-dashboard-demo.html), le draft peut arriver ici SANS email déjà
+// connu. acces-dashboard.html envoie alors l'email tapé par l'artisan sur
+// cette page ; on l'enregistre sur le draft avant de créer le compte,
+// sinon le token signé (et la propagation aux autres vitrines) se
+// retrouvait construit avec un email vide, rendant toute connexion
+// ultérieure impossible.
+//
 // Variables d'environnement requises :
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 //   DASHBOARD_SESSION_SECRET (chaîne aléatoire longue, à définir dans Vercel)
@@ -36,7 +46,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ success: false, error: 'Méthode non autorisée' });
   }
 
-  const { draftId, motDePasse } = req.body || {};
+  const { draftId, motDePasse, email: emailFourni } = req.body || {};
   if (!draftId) {
     return res.status(400).json({ success: false, error: 'draftId manquant' });
   }
@@ -61,18 +71,30 @@ export default async function handler(req, res) {
       return res.status(404).json({ success: false, error: 'Site introuvable.' });
     }
 
+    // Email à utiliser pour ce compte : celui déjà en base en priorité,
+    // sinon celui fourni maintenant par l'artisan (cas d'un essai démarré
+    // par téléphone seul, sans email connu jusqu'ici).
+    const emailACompleter = !draft.email && emailFourni ? String(emailFourni).trim() : null;
+    if (!draft.email && !emailFourni) {
+      return res.status(400).json({ success: false, error: 'Email manquant.' });
+    }
+    const emailFinal = draft.email || emailACompleter;
+
     const hash = hasherMotDePasse(motDePasse);
     const maintenant = new Date().toISOString();
+
+    const champsAPatcher = {
+      dashboard_password_hash: hash,
+      dashboard_compte_cree_le: maintenant,
+      dashboard_reset_token: null,
+      dashboard_reset_token_expire: null,
+    };
+    if (emailACompleter) champsAPatcher.email = emailACompleter;
 
     const patchResp = await fetch(`${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
       method: 'PATCH',
       headers: { ...supaHeaders, Prefer: 'return=minimal' },
-      body: JSON.stringify({
-        dashboard_password_hash: hash,
-        dashboard_compte_cree_le: maintenant,
-        dashboard_reset_token: null,
-        dashboard_reset_token_expire: null,
-      }),
+      body: JSON.stringify(champsAPatcher),
     });
     if (!patchResp.ok) throw new Error("Échec de l'enregistrement du mot de passe.");
 
@@ -80,10 +102,10 @@ export default async function handler(req, res) {
     // (même email) : un seul identifiant/mot de passe pour tout le compte.
     // Best-effort — une erreur ici ne doit pas bloquer la création du tout
     // premier accès.
-    if (draft.email) {
+    if (emailFinal) {
       try {
         await fetch(
-          `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?email=ilike.${encodeURIComponent(draft.email)}&id=neq.${draftId}`,
+          `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?email=ilike.${encodeURIComponent(emailFinal)}&id=neq.${draftId}`,
           {
             method: 'PATCH',
             headers: { ...supaHeaders, Prefer: 'return=minimal' },
@@ -95,7 +117,7 @@ export default async function handler(req, res) {
       }
     }
 
-    const token = signerTokenCompte(draft.email, 60 * 60 * 24 * 30); // 30 jours
+    const token = signerTokenCompte(emailFinal, 60 * 60 * 24 * 30); // 30 jours
     return res.status(200).json({ success: true, token });
   } catch (err) {
     console.error('Erreur dashboard-set-password :', err);

@@ -1251,6 +1251,16 @@
           </div>
           <button type="button" class="rs-btn ${connexion ? 'secondary' : ''}" id="btnConnecterInstagram">${connexion ? 'Gérer la connexion' : 'Connecter Instagram'}</button>
         </div>
+
+        <div style="display:flex; align-items:center; gap:18px; padding-bottom:18px; margin-bottom:20px; border-bottom:1.5px solid #eef1f0;">
+          <span style="width:10px; height:10px; border-radius:50%; background:#c7cdc9; flex-shrink:0;"></span>
+          <div style="flex:1;">
+            <strong style="display:block; color:#211a35; font-size:0.95rem; margin-bottom:2px;">Facebook — bientôt disponible</strong>
+            <span style="color:#8a9891; font-size:0.85rem;">Si vous n'avez pas encore de Page professionnelle Facebook, vous pouvez déjà la créer.</span>
+          </div>
+          <button type="button" class="rs-btn secondary" id="btnCreerPageFacebook">Créer une Page Facebook</button>
+        </div>
+
         ${!posts.length
           ? '<div class="empty-msg" style="padding:20px 0;"><span class="empty-icone">📱</span>Aucun post pour l\'instant.</div>'
           : posts.map(p => `
@@ -1266,6 +1276,11 @@
           `).join('')
         }
       `;
+
+      document.getElementById('btnCreerPageFacebook').addEventListener('click', () => {
+        // Nouvel onglet — le dashboard reste ouvert, l'artisan revient dessus une fois sa Page créée.
+        window.open('https://www.facebook.com/pages/create', '_blank', 'noopener');
+      });
 
       document.getElementById('btnConnecterInstagram').addEventListener('click', () => {
         if (connexion) {

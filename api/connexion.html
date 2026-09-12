@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connexion — Skyeco IA Ads</title>
+<link rel="icon" href="/skyeco-icon-ads.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#14304A; --blue:#2C5F8A; --blue-light:#6E97B8;
+    --paper:#F4F7F9; --paper-line:#DCE4E9; --orange:#E8622C; --orange-dark:#C74F20;
+    --concrete:#5B6268; --white:#FFFFFF;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'IBM Plex Sans',sans-serif; background:var(--paper); color:var(--navy);
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  .card{ width:100%; max-width:400px; background:var(--white); border:1px solid var(--paper-line); padding:36px 32px; }
+  .logo-row{ display:flex; align-items:center; gap:10px; margin-bottom:24px; }
+  .logo-row img{ height:34px; width:34px; border-radius:8px; }
+  .logo-text{ font-family:'Big Shoulders Display',sans-serif; font-weight:900; font-size:18px; color:var(--navy); }
+  .logo-text .orange-accent{ color:var(--orange); }
+  h1{ font-family:'Big Shoulders Display',sans-serif; font-weight:800; font-size:24px; margin-bottom:6px; }
+  p.hint{ color:var(--concrete); font-size:14px; margin-bottom:24px; }
+  label{ display:block; font-size:13px; font-weight:600; margin-bottom:6px; margin-top:16px; }
+  label:first-of-type{ margin-top:0; }
+  input[type=email], input[type=password]{
+    width:100%; border:1px solid var(--paper-line); padding:12px 14px; font-family:'IBM Plex Sans',sans-serif;
+    font-size:14.5px; color:var(--navy); background:var(--paper);
+  }
+  input:focus{ outline:none; background:var(--white); border-color:var(--blue); }
+  .btn{ width:100%; margin-top:24px; font-family:'IBM Plex Sans',sans-serif; font-weight:600; font-size:15px; padding:13px 24px; border:none; cursor:pointer; background:var(--orange); color:var(--white); }
+  .btn:hover:not(:disabled){ background:var(--orange-dark); }
+  .btn:disabled{ opacity:.6; cursor:wait; }
+  .error{ color:var(--orange-dark); font-size:13px; margin-top:14px; display:none; font-family:'IBM Plex Mono',monospace; }
+  .error.show{ display:block; }
+  .retour{ display:block; text-align:center; margin-top:20px; font-size:13px; color:var(--blue); text-decoration:none; }
+  .retour:hover{ text-decoration:underline; }
+
+  .selecteur-sites{ display:none; }
+  .selecteur-sites.show{ display:block; }
+  .site-item{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    border:1.5px solid var(--paper-line); padding:14px 16px; margin-top:10px; cursor:pointer;
+  }
+  .site-item:hover{ border-color:var(--orange); }
+  .site-item .nom{ font-weight:700; font-size:14.5px; }
+  .site-item .zone{ color:var(--concrete); font-size:12.5px; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="logo-row">
+    <img src="/skyeco-icon-ads.svg" alt="">
+    <span class="logo-text">SKY<span class="orange-accent">ECO</span></span>
+  </div>
+
+  <div id="formulaireLogin">
+    <h1>Connexion</h1>
+    <p class="hint">Accédez à votre tableau de bord Skyeco Pro.</p>
+
+    <form id="loginForm">
+      <label for="email">Email</label>
+      <input type="email" id="email" required autocomplete="username">
+
+      <label for="motDePasse">Mot de passe</label>
+      <input type="password" id="motDePasse" required autocomplete="current-password">
+
+      <button type="submit" class="btn" id="btnLogin">Se connecter →</button>
+      <div class="error mono" id="errLogin"></div>
+    </form>
+
+    <a class="retour" href="/skyeco-pro-formulaire-creation.html">← Retour à l'accueil</a>
+  </div>
+
+  <div class="selecteur-sites" id="selecteurSites">
+    <h1>Quelle vitrine ?</h1>
+    <p class="hint">Votre compte gère plusieurs sites — choisissez lequel ouvrir.</p>
+    <div id="listeSites"></div>
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById('loginForm');
+  const btn = document.getElementById('btnLogin');
+  const errEl = document.getElementById('errLogin');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errEl.classList.remove('show');
+    btn.disabled = true;
+    btn.textContent = 'Connexion…';
+
+    try {
+      const res = await fetch('/api/dashboard-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: document.getElementById('email').value.trim(),
+          motDePasse: document.getElementById('motDePasse').value,
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Connexion impossible.');
+
+      // Le jeton est lié au COMPTE (email), valable pour tous les sites —
+      // on le stocke aussi bien sous la clé générique que sous une clé par
+      // site, pour que mon-dashboard.html le retrouve quel que soit le
+      // site ouvert (voir sa logique de lecture du jeton).
+      sessionStorage.setItem('skyeco_dashboard_token', data.token);
+      (data.sites || []).forEach((s) => {
+        sessionStorage.setItem('skyeco_dashboard_token_' + s.id, data.token);
+      });
+
+      if (!data.sites || data.sites.length <= 1) {
+        window.location.href = '/mon-dashboard.html?id=' + data.draftId;
+        return;
+      }
+
+      // Plusieurs vitrines : on laisse choisir plutôt que d'en ouvrir une au hasard.
+      afficherSelecteurSites(data.sites);
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.classList.add('show');
+      btn.disabled = false;
+      btn.textContent = 'Se connecter →';
+    }
+  });
+
+  function afficherSelecteurSites(sites) {
+    document.getElementById('formulaireLogin').style.display = 'none';
+    const selecteur = document.getElementById('selecteurSites');
+    selecteur.classList.add('show');
+
+    document.getElementById('listeSites').innerHTML = sites.map((s) => `
+      <div class="site-item" data-id="${s.id}">
+        <div>
+          <div class="nom">${escapeHtml(s.entreprise || 'Vitrine sans nom')}</div>
+          <div class="zone">${escapeHtml(s.zone || '')}</div>
+        </div>
+        <span>→</span>
+      </div>
+    `).join('');
+
+    document.querySelectorAll('.site-item').forEach((el) => {
+      el.addEventListener('click', () => {
+        window.location.href = '/mon-dashboard.html?id=' + el.dataset.id;
+      });
+    });
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+  }
+</script>
+
+</body>
+</html>

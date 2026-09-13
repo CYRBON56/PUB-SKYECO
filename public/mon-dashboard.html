@@ -852,7 +852,8 @@
     el.addEventListener('click', (e) => {
       if (!window.tarifActifActuel) {
         e.preventDefault();
-        window.location.href = '/mes-elements.html?id=' + draftId;
+        alert("Pour activer Google Ads (approvisionner votre budget), il faut d'abord finaliser votre inscription : renseignez votre SIRET et tous vos éléments, puis choisissez votre forfait. Vous profiterez alors à 100% de votre outil.");
+        window.location.href = '/mes-elements.html?id=' + draftId + '&verrou=ads';
       }
     });
   }
@@ -1298,7 +1299,8 @@
 
       document.getElementById('btnConnecterInstagram').addEventListener('click', () => {
         if (!window.tarifActifActuel) {
-          window.location.href = '/mes-elements.html?id=' + draftId;
+          alert("Pour connecter vos réseaux sociaux, il faut d'abord finaliser votre inscription : renseignez votre SIRET et tous vos éléments, puis choisissez votre forfait. Vous profiterez alors à 100% de votre outil.");
+          window.location.href = '/mes-elements.html?id=' + draftId + '&verrou=ads';
           return;
         }
         if (connexion) {

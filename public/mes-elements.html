@@ -166,7 +166,11 @@
     border-radius:16px; padding:18px 22px; margin-bottom:26px; line-height:1.55;
   }
   .banniere-verrou-ads strong { color:#14312a; display:block; margin-bottom:4px; font-size:0.98rem; }
-  .banniere-verrou-ads span { color:#6b5e4c; font-size:0.88rem; }
+  .banniere-verrou-ads span { color:#6b5e4c; font-size:0.88rem; display:block; margin-bottom:12px; }
+  .btn-banniere-verrou-ads {
+    display:inline-flex; align-items:center; gap:8px; background:#e8622c; color:#fff; text-decoration:none;
+    border-radius:10px; padding:11px 18px; font-size:0.85rem; font-weight:700;
+  }
 </style>
 </head>
 <body>
@@ -200,7 +204,8 @@
 <div class="wrap">
   <div class="banniere-verrou-ads" id="banniereVerrouAds">
     <strong>🚀 Encore une étape avant d'activer Google Ads</strong>
-    <span>Pour approvisionner votre budget publicitaire ou connecter vos réseaux sociaux, il faut d'abord finaliser votre inscription : renseignez votre SIRET et tous les éléments ci-dessous, puis choisissez votre forfait. Vous profiterez alors à 100% de votre outil.</span>
+    <span>Pour profiter de toutes les fonctionnalités de votre outil (publicité Google Ads, réseaux sociaux), il faut d'abord finaliser votre inscription : renseignez votre SIRET et tous les éléments ci-dessous, puis approvisionnez votre compte Google Ads en choisissant votre forfait.</span>
+    <a href="#" id="btnBanniereChoisirForfait" class="btn-banniere-verrou-ads">💳 Approvisionner mon compte Google Ads →</a>
   </div>
 
   <a href="#" id="lienRetourDashboard" class="btn-dashboard-hero" style="display:none;"><span class="icon">📊</span> Accéder à mon tableau de bord</a>
@@ -542,6 +547,7 @@
   // verrouillerActionPayante et le handler btnConnecterInstagram) (12/09).
   if (params.get('verrou') === 'ads') {
     document.getElementById('banniereVerrouAds').style.display = 'block';
+    document.getElementById('btnBanniereChoisirForfait').href = '/choisir-forfait.html?id=' + draftId;
   }
 
   // Avertit avant de quitter/recharger la page si une sauvegarde (auto ou

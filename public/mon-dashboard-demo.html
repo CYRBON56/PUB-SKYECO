@@ -10,6 +10,62 @@
   .shape-bg { position:fixed; z-index:0; pointer-events:none; opacity:0.16; }
   .wrap { max-width:980px; margin:0 auto; position:relative; z-index:1; }
 
+  /* 13/09/2026 : coquille identique au vrai dashboard (mon-dashboard.html) —
+     barre latérale + onglets — pour que la démo du tunnel ressemble
+     exactement à ce que voit un artisan une fois inscrit. */
+  .dash-shell { max-width:1240px; display:flex; align-items:flex-start; gap:24px; }
+  .dash-sidebar {
+    flex:0 0 240px; position:sticky; top:24px; background:#fff; border-radius:20px;
+    padding:20px 14px; box-shadow:0 8px 26px rgba(76,29,149,0.09); display:flex; flex-direction:column; gap:6px;
+  }
+  .sidebar-brand {
+    display:flex; align-items:center; gap:10px; padding:6px 10px 18px; margin-bottom:8px; border-bottom:1.5px solid #f0edf9;
+  }
+  .sidebar-brand-logo {
+    width:38px; height:38px; border-radius:11px; flex-shrink:0;
+    background:linear-gradient(135deg, #a78bfa, #ec4899); display:flex; align-items:center; justify-content:center;
+    font-size:1.15rem;
+  }
+  .sidebar-brand-texte { font-size:0.98rem; font-weight:800; color:#211a35; line-height:1.2; }
+  .sidebar-brand-sous { font-size:0.68rem; color:#8a8296; font-weight:600; }
+  .dash-main { flex:1; min-width:0; }
+  @media (max-width:860px) {
+    .dash-shell { flex-direction:column; }
+    .dash-sidebar { position:static; width:100%; flex-direction:row; overflow-x:auto; }
+    .sidebar-brand { display:none; }
+  }
+  .panel-tabs { display:flex; flex-direction:column; gap:6px; }
+  .panel-tab {
+    display:flex; align-items:center; gap:12px; text-align:left; width:100%;
+    background:transparent; border:none; border-radius:12px; padding:12px 12px;
+    cursor:pointer; transition:background 0.15s, transform 0.1s; font-family:inherit;
+  }
+  .panel-tab:hover { background:#f7f5fb; }
+  .panel-tab.active { background:linear-gradient(120deg, #7c3aed, #ec4899); box-shadow:0 8px 20px rgba(124,58,237,0.28); }
+  .panel-tab-icone {
+    font-size:1.15rem; flex-shrink:0; width:34px; height:34px; border-radius:10px; background:#f2f4f1;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .panel-tab.active .panel-tab-icone { background:rgba(255,255,255,0.22); }
+  .panel-tab-texte { font-size:0.88rem; font-weight:800; color:#211a35; display:flex; flex-direction:column; gap:1px; }
+  .panel-tab.active .panel-tab-texte { color:#fff; }
+  .panel-tab-sous { font-size:0.68rem; font-weight:400; color:#8a8296; }
+  .panel-tab.active .panel-tab-sous { color:rgba(255,255,255,0.85); }
+  @media (max-width:860px) {
+    .panel-tabs { flex-direction:row; flex-wrap:wrap; gap:8px; }
+    .panel-tab { flex:1; min-width:150px; }
+  }
+  .header-titre { display:flex; align-items:center; gap:16px; }
+  .vos-vitrines-box { margin-bottom:22px; }
+  .vos-vitrines-label { font-size:0.78rem; font-weight:800; text-transform:uppercase; letter-spacing:0.03em; color:#5b6b64; margin-bottom:10px; }
+  .vitrine-tuile { min-width:180px; flex:1; max-width:260px; background:#fff; border-radius:14px; padding:14px 16px; }
+  .vitrine-tuile .nom { font-weight:800; color:#211a35; font-size:0.92rem; margin-bottom:6px; }
+  .vitrine-tuile .clics { font-size:1.4rem; font-weight:800; color:#211a35; }
+  .vitrine-tuile .clics span { font-size:0.75rem; font-weight:600; color:#5b6b64; }
+  .vitrine-tuile .diffusion { font-size:0.78rem; font-weight:700; margin-top:6px; }
+  .vitrine-tuile .essai { font-size:0.72rem; font-weight:600; color:#5b6b64; margin-top:2px; }
+  .vitrine-tuile .archiver-demo { display:block; margin-top:10px; padding-top:10px; border-top:1px solid #f0f3f1; background:none; border:none; color:#8a9891; font-size:0.72rem; font-weight:700; cursor:default; }
+
   .lien-retour {
     display:inline-flex; align-items:center; gap:6px; color:#8a8296; text-decoration:none;
     font-size:0.88rem; margin-bottom:14px;
@@ -47,7 +103,15 @@
 
   .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
   @media (max-width:640px){ .stats-row{ grid-template-columns:repeat(2,1fr); } }
-  .stat-card { background:#fff; border-radius:14px; padding:18px; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
+  .stat-card { background:#fff; border-radius:16px; padding:18px 18px 18px 60px; box-shadow:0 2px 10px rgba(0,0,0,0.05); position:relative; }
+  .stat-card::before {
+    content:'📈'; position:absolute; top:18px; left:16px; width:32px; height:32px; border-radius:10px;
+    background:linear-gradient(135deg, #ede9fe, #fce7f3); display:flex; align-items:center; justify-content:center;
+    font-size:0.95rem; line-height:1;
+  }
+  .stat-card:nth-child(2)::before { content:'🖱️'; }
+  .stat-card:nth-child(3)::before { content:'✍️'; }
+  .stat-card:nth-child(4)::before { content:'📅'; }
   .stat-value { font-size:1.6rem; font-weight:800; }
   .stat-label { font-size:0.72rem; color:#8a8296; margin-top:2px; }
 
@@ -308,7 +372,35 @@
   <circle cx="150" cy="150" r="130" fill="url(#s2)"/>
 </svg>
 
-<div class="wrap">
+<div class="wrap dash-shell">
+  <aside class="dash-sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-logo">🚀</div>
+      <div>
+        <div class="sidebar-brand-texte">Skyeco Pro</div>
+        <div class="sidebar-brand-sous">Votre dashboard</div>
+      </div>
+    </div>
+    <div class="panel-tabs" id="panelTabsDemo">
+      <button type="button" class="panel-tab active" data-tab-demo="ads">
+        <span class="panel-tab-icone"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M12 2l4.5 7.79h-9L12 2z"/><path fill="#34A853" d="M3.5 9.79h9L7.75 22l-4.25-12.21z"/><path fill="#FBBC05" d="M16.5 9.79h4L16.25 22l-4.25-12.21h4.5z"/></svg></span>
+        <span class="panel-tab-texte">Gérer Google Ads<span class="panel-tab-sous">Ciblage, mots-clés, budget, clics</span></span>
+      </button>
+      <button type="button" class="panel-tab" data-tab-demo="clients">
+        <span class="panel-tab-icone">👥</span>
+        <span class="panel-tab-texte">Gérer les clients<span class="panel-tab-sous">Demandes, devis, signatures</span></span>
+      </button>
+      <button type="button" class="panel-tab" data-tab-demo="reseaux">
+        <span class="panel-tab-icone">📱</span>
+        <span class="panel-tab-texte">Réseaux sociaux<span class="panel-tab-sous">Publication Instagram &amp; Facebook</span></span>
+      </button>
+      <button type="button" class="panel-tab" data-tab-demo="calendrier">
+        <span class="panel-tab-icone">📅</span>
+        <span class="panel-tab-texte">Mon calendrier<span class="panel-tab-sous">Rendez-vous, disponibilités</span></span>
+      </button>
+    </div>
+  </aside>
+  <div class="dash-main">
   <a href="#" id="lienRetour" class="lien-retour" style="display:none;">← Retour à ma vitrine</a>
 
   <div class="banniere-demo">
@@ -326,7 +418,7 @@
   </div>
 
   <div class="header">
-    <h1>Mon tableau de bord</h1>
+    <div class="header-titre"><h1>Mon tableau de bord</h1></div>
     <span class="demo-badge" id="badgeHaut">Exemple illustratif — Skyeco Pro</span>
   </div>
   <div id="introFunnel" style="display:none;" class="intro-funnel">
@@ -334,6 +426,25 @@
   </div>
   <button type="button" id="btnVoirVitrineDemo" class="btn-voir-vitrine-demo" style="display:none;">👁️ Voir la vitrine d'un vrai client</button>
   <div id="hintClic" style="display:none;" class="hint-clic">💡 Cliquez sur un encart pour voir à quoi il sert</div>
+
+  <div class="vos-vitrines-box explicable" data-explain-title="🗂️ Plusieurs vitrines" data-explain="Vous gérez plusieurs enseignes ou activités ? Chaque vitrine (et son budget publicitaire) reste séparée, mais tout se pilote depuis ce même tableau de bord.">
+    <p class="vos-vitrines-label">Vos vitrines</p>
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      <div class="vitrine-tuile" style="border:1.5px solid #7c3aed; box-shadow:0 4px 14px rgba(30,111,76,0.14);">
+        <div class="nom">RMS EcoSky</div>
+        <div class="clics">21<span> clics ce mois-ci</span></div>
+        <div class="diffusion" style="color:#7c3aed;">● Diffusion active</div>
+        <div class="essai">🎁 Essai gratuit</div>
+        <button type="button" class="archiver-demo">📦 Archiver</button>
+      </div>
+      <div class="vitrine-tuile" style="border:1.5px solid #e4e9e6;">
+        <div class="nom">RMS EcoSky portail</div>
+        <div class="clics">8<span> clics ce mois-ci</span></div>
+        <div class="diffusion" style="color:#ec4899;">⏸️ Diffusion en pause</div>
+        <button type="button" class="archiver-demo">📦 Archiver</button>
+      </div>
+    </div>
+  </div>
 
   <div class="stats-row">
     <div class="stat-card explicable" data-explain-title="📥 Demandes reçues" data-explain="Chaque demande apparaît ici automatiquement, quel que soit le canal utilisé par le client : formulaire complet, bouton rapide « être rappelé », ou réservation directe d'un rendez-vous.">
@@ -371,6 +482,7 @@
     </div>
   </div>
 
+  <div id="panelAdsDemo">
   <div class="ads-section">
     <h2>🎯 Pilotage Google Ads</h2>
     <div class="ads-sub">Le détail de votre campagne — où vous êtes visible, combien investir, quels mots-clés fonctionnent, et à quel moment vos clics arrivent.</div>
@@ -502,7 +614,9 @@
       </div>
     </div>
   </div>
+  </div>
 
+  <div id="panelClientsDemo" style="display:none;">
   <div class="liste-panel explicable" data-explain-title="📋 Demandes d'estimation" data-explain="Chaque demande reçue apparaît ici avec son statut et son canal d'entrée — nouveau, rappel demandé, rendez-vous pris, devis envoyé, ou signé — mis à jour automatiquement, sans rien à faire de votre côté.">
     <h3>Demandes d'estimation (6 derniers mois)</h3>
     <table>
@@ -583,7 +697,9 @@
       <button class="btn-relance-demo">Relancer par SMS</button>
     </div>
   </div>
+  </div>
 
+  <div id="panelReseauxDemo" style="display:none;">
   <div class="rs-panel-demo explicable" data-explain-title="📱 Réseaux sociaux" data-explain="Envoyez la photo d'un chantier terminé, l'IA rédige la légende et les hashtags, et le post part automatiquement sur Instagram, Facebook, votre fiche Google et TikTok en même temps — sans jongler entre les applications.">
     <div class="liste-header">
       <h3>Réseaux sociaux</h3>
@@ -626,6 +742,31 @@
       <span class="rs-pill-demo" style="background:#f5f3ff;color:#7c3aed;">Planifié</span>
     </div>
     <div class="estim-note">Chaque photo de chantier envoyée devient un post prêt à publier — légende et hashtags proposés automatiquement par l'IA, modifiables avant envoi.</div>
+  </div>
+  </div>
+
+  <div id="panelCalendrierDemo" style="display:none;">
+  <div class="liste-panel explicable" data-explain-title="📅 Mon calendrier" data-explain="Vos prospects réservent eux-mêmes un rendez-vous sur les créneaux que vous avez ouverts — vous pouvez aussi bloquer un créneau en un clic quand vous n'êtes pas disponible.">
+    <h3>Mon calendrier</h3>
+    <div style="display:flex; gap:14px; flex-wrap:wrap; margin-bottom:16px; font-size:0.78rem; color:#8a8296;">
+      <span style="display:flex; align-items:center; gap:6px;"><span style="width:12px; height:12px; border-radius:3px; background:#fff; border:1.5px solid #eef1f0; display:inline-block;"></span>Libre</span>
+      <span style="display:flex; align-items:center; gap:6px;"><span style="width:12px; height:12px; border-radius:3px; background:#eaf5ef; border:1.5px solid #7c3aed; display:inline-block;"></span>RDV confirmé</span>
+      <span style="display:flex; align-items:center; gap:6px;"><span style="width:12px; height:12px; border-radius:3px; background:#f2f4f1; border:1.5px solid #c7cdc9; display:inline-block;"></span>Bloqué par vous</span>
+    </div>
+    <div class="rdv-liste">
+      <div class="rdv-card">
+        <div class="rdv-quand"><div class="rdv-jour">Lun. 01 sept.</div><div class="rdv-heure">09:00</div></div>
+        <div class="rdv-infos"><div class="rdv-nom">M. Le Roux</div><div class="rdv-type">Estimation terrasse résine — Vannes</div></div>
+        <div class="rdv-source">Réservé en ligne</div>
+      </div>
+      <div class="rdv-card">
+        <div class="rdv-quand"><div class="rdv-jour">Mer. 03 sept.</div><div class="rdv-heure">14:30</div></div>
+        <div class="rdv-infos"><div class="rdv-nom">Mme Kervadec</div><div class="rdv-type">Devis clôture + portail — Pluvigner</div></div>
+        <div class="rdv-source">Réservé en ligne</div>
+      </div>
+    </div>
+    <p class="estim-note" style="margin-top:14px;">Vos prospects choisissent eux-mêmes un créneau libre dans votre agenda — vous n'avez qu'à valider ou bloquer les créneaux qui ne vous conviennent pas.</p>
+  </div>
   </div>
 
   <div id="ctaFunnel" class="cta-funnel" style="display:none;">
@@ -683,7 +824,8 @@
       <button type="button" id="btnDemarrerEssai" style="width:100%; background:#7c3aed; color:#fff; border:none; border-radius:10px; padding:14px; font-size:0.96rem; font-weight:700; cursor:pointer;" disabled>Démarrer mon essai gratuit →</button>
     </div>
   </div>
-</div>
+  </div><!-- /dash-main -->
+</div><!-- /dash-shell -->
 
 <script>
   // Mode "funnel" : cette page démo est utilisée à deux endroits différents.
@@ -709,6 +851,22 @@
     document.getElementById('lienRetour').href = '/apercu.html?id=' + encodeURIComponent(draftId);
     document.getElementById('lienRetour').style.display = 'inline-flex';
   }
+
+  // 13/09/2026 : bascule entre les 4 onglets de la barre latérale — copie
+  // simplifiée (sans appel réseau, tout est déjà chargé) de activerOnglet()
+  // dans le vrai dashboard, pour que la démo se pilote de la même façon.
+  function activerOngletDemo(cible) {
+    document.querySelectorAll('#panelTabsDemo .panel-tab').forEach(b => b.classList.remove('active'));
+    const btnCible = document.querySelector(`#panelTabsDemo .panel-tab[data-tab-demo="${cible}"]`);
+    if (btnCible) btnCible.classList.add('active');
+    document.getElementById('panelAdsDemo').style.display = cible === 'ads' ? '' : 'none';
+    document.getElementById('panelClientsDemo').style.display = cible === 'clients' ? '' : 'none';
+    document.getElementById('panelReseauxDemo').style.display = cible === 'reseaux' ? '' : 'none';
+    document.getElementById('panelCalendrierDemo').style.display = cible === 'calendrier' ? '' : 'none';
+  }
+  document.querySelectorAll('#panelTabsDemo .panel-tab').forEach((btn) => {
+    btn.addEventListener('click', () => activerOngletDemo(btn.dataset.tabDemo));
+  });
 
   // --- Vérification téléphone avant de démarrer l'essai --------------------
   let telephoneVerifie = false;
@@ -974,6 +1132,156 @@
     document.addEventListener('click', fermer);
     window.addEventListener('scroll', fermer, true);
   })();
+</script>
+
+<!-- 13/09/2026 : bulle "Besoin d'aide ?" — copie du même composant que sur
+     mon-dashboard.html, branché sur le même endpoint /api/chat-skyeco (déjà
+     public, déjà utilisé ailleurs dans le tunnel), pour que ce chat réponde
+     dès la démo, avant même l'inscription. -->
+<div id="skyecoChatBubble" style="position:fixed; bottom:22px; right:22px; z-index:999; background:linear-gradient(135deg, #f9a8d4 0%, #ec4899 55%, #be185d 100%); color:#fff; display:flex; align-items:center; gap:9px; padding:14px 22px 14px 18px; border-radius:999px; font-size:15px; font-weight:700; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; cursor:pointer; box-shadow:0 8px 26px rgba(232,98,44,0.4); transition:transform 0.15s ease, box-shadow 0.15s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 32px rgba(232,98,44,0.5)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 8px 26px rgba(232,98,44,0.4)';">
+  <span style="font-size:19px; line-height:1;">💬</span><span>Besoin d'aide ?</span>
+</div>
+
+<div id="skyecoChatWindow" style="display:none; position:fixed; bottom:92px; right:22px; z-index:999; width:340px; max-width:calc(100vw - 32px); height:460px; max-height:70vh; background:#fff; border-radius:16px; box-shadow:0 10px 40px rgba(0,0,0,0.25); flex-direction:column; overflow:hidden; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <div style="background:#211a35; color:#fff; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <div style="font-weight:700; font-size:0.92rem;">Skyeco Pro</div>
+      <div style="font-size:0.72rem; opacity:0.75;">Réponse en quelques secondes</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <label style="display:flex; align-items:center; gap:4px; font-size:0.68rem; opacity:0.85; cursor:pointer;">
+        <input type="checkbox" id="skyecoChatLireVoix" style="width:auto; margin:0;"> 🔊 Lire les réponses
+      </label>
+      <button id="skyecoChatClose" style="background:none; border:none; color:#fff; font-size:20px; cursor:pointer; line-height:1;">×</button>
+    </div>
+  </div>
+  <div id="skyecoChatMessages" style="flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:10px; background:#f7f5f0;"></div>
+  <div style="padding:10px; border-top:1px solid #eef1ec; display:flex; gap:8px; background:#fff;">
+    <input type="text" id="skyecoChatInput" placeholder="Pose ta question ou parle…" style="flex:1; border:1.5px solid #e0e5df; border-radius:10px; padding:9px 12px; font-size:0.86rem;">
+    <button id="skyecoChatMic" title="Parler au lieu d'écrire" style="background:#f2f4f1; color:#211a35; border:none; border-radius:10px; padding:9px 12px; font-weight:700; cursor:pointer; font-size:0.9rem;">🎤</button>
+    <button id="skyecoChatSend" style="background:#7c3aed; color:#fff; border:none; border-radius:10px; padding:9px 14px; font-weight:700; cursor:pointer; font-size:0.86rem;">→</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  const bubble = document.getElementById('skyecoChatBubble');
+  const chatWindow = document.getElementById('skyecoChatWindow');
+  const closeBtn = document.getElementById('skyecoChatClose');
+  const messagesEl = document.getElementById('skyecoChatMessages');
+  const input = document.getElementById('skyecoChatInput');
+  const sendBtn = document.getElementById('skyecoChatSend');
+  const micBtn = document.getElementById('skyecoChatMic');
+  const lireVoixCheckbox = document.getElementById('skyecoChatLireVoix');
+
+  let historique = [];
+  let dejaOuvert = false;
+
+  function ajouterMessage(role, texte) {
+    const bulle = document.createElement('div');
+    bulle.style.cssText = role === 'user'
+      ? 'align-self:flex-end; background:#7c3aed; color:#fff; padding:9px 13px; border-radius:14px 14px 3px 14px; font-size:0.85rem; max-width:80%; line-height:1.45;'
+      : 'align-self:flex-start; background:#fff; color:#211a35; padding:9px 13px; border-radius:14px 14px 14px 3px; font-size:0.85rem; max-width:85%; line-height:1.45; box-shadow:0 1px 3px rgba(0,0,0,0.08);';
+    bulle.textContent = texte;
+    messagesEl.appendChild(bulle);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function ouvrirChat() {
+    chatWindow.style.display = 'flex';
+    if (!dejaOuvert) {
+      dejaOuvert = true;
+      ajouterMessage('assistant', "Bonjour ! Je suis là pour répondre à tes questions sur Skyeco Pro — les formules, comment ça marche, la publicité... Qu'est-ce que tu veux savoir ?");
+    }
+  }
+
+  bubble.addEventListener('click', () => {
+    const estOuvert = chatWindow.style.display === 'flex';
+    if (estOuvert) { chatWindow.style.display = 'none'; } else { ouvrirChat(); }
+  });
+  closeBtn.addEventListener('click', () => { chatWindow.style.display = 'none'; });
+
+  const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognitionAPI) {
+    micBtn.style.display = 'none';
+  } else {
+    const recognition = new SpeechRecognitionAPI();
+    recognition.lang = 'fr-FR';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    let enEcoute = false;
+
+    recognition.addEventListener('result', (e) => {
+      const texte = e.results[0][0].transcript;
+      input.value = texte;
+      envoyerMessage();
+    });
+    recognition.addEventListener('end', () => {
+      enEcoute = false;
+      micBtn.textContent = '🎤';
+      micBtn.style.background = '#f2f4f1';
+    });
+    recognition.addEventListener('error', () => {
+      enEcoute = false;
+      micBtn.textContent = '🎤';
+      micBtn.style.background = '#f2f4f1';
+    });
+
+    micBtn.addEventListener('click', () => {
+      if (enEcoute) { recognition.stop(); return; }
+      enEcoute = true;
+      micBtn.textContent = '🔴';
+      micBtn.style.background = '#fdeceb';
+      recognition.start();
+    });
+  }
+
+  function lireAVoixHaute(texte) {
+    if (!lireVoixCheckbox.checked || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(texte);
+    utterance.lang = 'fr-FR';
+    window.speechSynthesis.speak(utterance);
+  }
+
+  async function envoyerMessage() {
+    const texte = input.value.trim();
+    if (!texte) return;
+    ajouterMessage('user', texte);
+    historique.push({ role: 'user', content: texte });
+    input.value = '';
+    sendBtn.disabled = true;
+
+    const bulleAttente = document.createElement('div');
+    bulleAttente.id = 'skyecoChatWaiting';
+    bulleAttente.style.cssText = 'align-self:flex-start; color:#8a9891; font-size:0.8rem; padding:4px 8px;';
+    bulleAttente.textContent = '…';
+    messagesEl.appendChild(bulleAttente);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+
+    try {
+      const res = await fetch('/api/chat-skyeco', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: historique })
+      });
+      const data = await res.json();
+      document.getElementById('skyecoChatWaiting')?.remove();
+      const reponse = data.success ? data.reponse : "Désolé, je n'ai pas pu répondre — réessaie dans un instant.";
+      ajouterMessage('assistant', reponse);
+      historique.push({ role: 'assistant', content: reponse });
+      lireAVoixHaute(reponse);
+    } catch (e) {
+      document.getElementById('skyecoChatWaiting')?.remove();
+      ajouterMessage('assistant', 'Connexion impossible pour le moment — réessaie.');
+    } finally {
+      sendBtn.disabled = false;
+    }
+  }
+
+  sendBtn.addEventListener('click', envoyerMessage);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') envoyerMessage(); });
+})();
 </script>
 
 <!-- SKYECO_COOKIE_BANNER_START -->

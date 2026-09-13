@@ -1,0 +1,471 @@
+<title>Suivi Publicité RMS EcoSky</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+  :root {
+    --navy: #14304A;
+    --navy-soft: #1C3F5E;
+    --orange: #E8622C;
+    --orange-soft: #FCE7DD;
+    --page-bg: #EEF2F5;
+    --surface: #FFFFFF;
+    --surface-2: #F6F8FA;
+    --text: #16222E;
+    --text-soft: #5B6874;
+    --text-faint: #8A96A1;
+    --line: #E1E7EB;
+    --google-tag: #3C6E9C;
+    --google-tag-bg: #E7F0F8;
+    --meta-tag: #7A4FA3;
+    --meta-tag-bg: #F2EAF8;
+    --good: #2E9E5C;
+    --good-bg: #E5F5EC;
+    --warn: #B9761F;
+    --warn-bg: #FBF0DF;
+    --off: #8A96A1;
+    --off-bg: #EEF1F3;
+    --shadow: 0 1px 2px rgba(20,48,74,0.06), 0 8px 24px -12px rgba(20,48,74,0.18);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --navy: #1C3F5E;
+      --navy-soft: #294F70;
+      --orange: #F0813F;
+      --orange-soft: #3A2A1E;
+      --page-bg: #0B1620;
+      --surface: #12202E;
+      --surface-2: #17293A;
+      --text: #E7EDF2;
+      --text-soft: #A9B8C4;
+      --text-faint: #718392;
+      --line: #223244;
+      --google-tag: #7FB0DD;
+      --google-tag-bg: #17293D;
+      --meta-tag: #C79EE8;
+      --meta-tag-bg: #241C36;
+      --good: #4FC684;
+      --good-bg: #123424;
+      --warn: #E2A855;
+      --warn-bg: #3A2C13;
+      --off: #7D8B97;
+      --off-bg: #1A2530;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --navy: #1C3F5E;
+    --navy-soft: #294F70;
+    --orange: #F0813F;
+    --orange-soft: #3A2A1E;
+    --page-bg: #0B1620;
+    --surface: #12202E;
+    --surface-2: #17293A;
+    --text: #E7EDF2;
+    --text-soft: #A9B8C4;
+    --text-faint: #718392;
+    --line: #223244;
+    --google-tag: #7FB0DD;
+    --google-tag-bg: #17293D;
+    --meta-tag: #C79EE8;
+    --meta-tag-bg: #241C36;
+    --good: #4FC684;
+    --good-bg: #123424;
+    --warn: #E2A855;
+    --warn-bg: #3A2C13;
+    --off: #7D8B97;
+    --off-bg: #1A2530;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page-bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', Arial, sans-serif;
+    padding: clamp(16px, 4vw, 40px);
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+
+  header.top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .brandline { display: flex; align-items: center; gap: 12px; }
+  .mark {
+    width: 44px; height: 44px; border-radius: 10px;
+    background: var(--navy);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Big Shoulders Display', sans-serif;
+    font-weight: 900; font-size: 20px; color: var(--orange);
+    flex-shrink: 0;
+  }
+  h1 {
+    font-family: 'Big Shoulders Display', sans-serif;
+    font-weight: 800;
+    font-size: clamp(28px, 4vw, 38px);
+    letter-spacing: 0.2px;
+    margin: 0;
+    color: var(--navy);
+    text-wrap: balance;
+  }
+  :root[data-theme="dark"] h1, @media (prefers-color-scheme: dark) { }
+  .sub {
+    margin: 2px 0 0;
+    color: var(--text-soft);
+    font-size: 14.5px;
+  }
+  .snapshot {
+    text-align: right;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    color: var(--text-faint);
+    line-height: 1.5;
+  }
+  .snapshot b { color: var(--text-soft); font-weight: 600; }
+
+  /* Summary tiles */
+  .tiles {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  @media (max-width: 800px) { .tiles { grid-template-columns: repeat(2, 1fr); } }
+  .tile {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+  }
+  .tile .label {
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-faint);
+    font-weight: 600;
+  }
+  .tile .value {
+    font-family: 'Big Shoulders Display', sans-serif;
+    font-weight: 800;
+    font-size: 28px;
+    color: var(--navy);
+    margin-top: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+  .split-bar {
+    display: flex;
+    height: 6px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 12px;
+    background: var(--off-bg);
+  }
+  .split-bar .g { background: var(--google-tag); }
+  .split-bar .m { background: var(--meta-tag); }
+  .split-legend {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-faint);
+    margin-top: 6px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* Toolbar */
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .filters { display: flex; gap: 6px; flex-wrap: wrap; }
+  .filter-btn {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--text-soft);
+    cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  .filter-btn:hover { border-color: var(--navy); }
+  .filter-btn.active {
+    background: var(--navy);
+    color: #fff;
+    border-color: var(--navy);
+  }
+  .hint { font-size: 12.5px; color: var(--text-faint); }
+
+  /* Table */
+  .table-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    overflow: auto;
+  }
+  table { border-collapse: collapse; width: 100%; min-width: 780px; }
+  thead th {
+    position: sticky; top: 0;
+    background: var(--surface-2);
+    text-align: left;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-faint);
+    font-weight: 600;
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+    white-space: nowrap;
+    user-select: none;
+  }
+  thead th.num, td.num { text-align: right; }
+  thead th .arrow { opacity: 0.35; margin-left: 3px; font-size: 10px; }
+  thead th.sort-active .arrow { opacity: 1; color: var(--orange); }
+  tbody td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--line);
+    font-size: 13.5px;
+    vertical-align: middle;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--surface-2); }
+  td.num, td.campaign-sub { font-family: 'IBM Plex Mono', monospace; }
+  td.num { font-variant-numeric: tabular-nums; font-size: 13px; }
+  .campaign-name { font-weight: 600; color: var(--text); }
+  .campaign-sub { font-size: 11px; color: var(--text-faint); margin-top: 1px; }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .tag::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
+  .tag.google { background: var(--google-tag-bg); color: var(--google-tag); }
+  .tag.google::before { background: var(--google-tag); }
+  .tag.meta { background: var(--meta-tag-bg); color: var(--meta-tag); }
+  .tag.meta::before { background: var(--meta-tag); }
+
+  .pill {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 999px;
+  }
+  .pill.enabled { background: var(--good-bg); color: var(--good); }
+  .pill.paused { background: var(--warn-bg); color: var(--warn); }
+  .pill.removed, .pill.unknown { background: var(--off-bg); color: var(--off); }
+
+  .leads-cell { font-weight: 700; color: var(--navy); }
+  .leads-zero { color: var(--text-faint); font-weight: 400; }
+
+  footer {
+    margin-top: 18px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-faint);
+  }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brandline">
+      <div class="mark">S</div>
+      <div>
+        <h1>Suivi Publicité</h1>
+        <p class="sub">Google Ads &amp; Meta Ads réunis — RMS EcoSky</p>
+      </div>
+    </div>
+    <div class="snapshot">
+      <div>Instantané du <b id="snapshot-date"></b></div>
+      <div>Fenêtre : 90 derniers jours · via Windsor.ai</div>
+    </div>
+  </header>
+
+  <div class="tiles" id="tiles"></div>
+
+  <div class="toolbar">
+    <div class="filters" id="filters">
+      <button class="filter-btn active" data-platform="all">Toutes les plateformes</button>
+      <button class="filter-btn" data-platform="google">Google Ads</button>
+      <button class="filter-btn" data-platform="meta">Meta Ads</button>
+    </div>
+    <div class="hint">Clique un en-tête de colonne pour trier</div>
+  </div>
+
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr>
+          <th data-key="platform">Plateforme</th>
+          <th data-key="campaign">Campagne</th>
+          <th data-key="status">Statut</th>
+          <th class="num" data-key="spend">Dépense <span class="arrow">▾</span></th>
+          <th class="num" data-key="impressions">Impressions <span class="arrow">▾</span></th>
+          <th class="num" data-key="clicks">Clics <span class="arrow">▾</span></th>
+          <th class="num" data-key="ctr">CTR <span class="arrow">▾</span></th>
+          <th class="num" data-key="cpc">CPC <span class="arrow">▾</span></th>
+          <th class="num" data-key="leads">Leads / Conv. <span class="arrow">▾</span></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <footer>
+    <span>Leads = leads Meta (formulaires, Messenger) · Conv. = conversions suivies Google Ads.</span>
+    <span>Nettoyage effectué : plus aucune campagne active sur Google Ads ou Meta Ads. Demande une actualisation à tout moment.</span>
+  </footer>
+</div>
+
+<script>
+  const rows = [
+    { platform: 'google', campaign: 'Résine EPDM - Search - Estimation', status: 'paused', spend: 450.97, impressions: 84798, clicks: 372, ctr: 0.0044, cpc: 1.2123, leads: 3, leadLabel: 'conv.' },
+    { platform: 'google', campaign: 'Skyeco Pro — RMS EcoSky', status: 'paused', spend: 50.84, impressions: 280, clicks: 21, ctr: 0.075, cpc: 2.4207, leads: 0, leadLabel: 'conv.' },
+    { platform: 'google', campaign: 'Skyeco Pro — RESINE MARBRE SOL (ECOSKY) (RMS)', status: 'removed', spend: 4.54, impressions: 68, clicks: 4, ctr: 0.0588, cpc: 1.135, leads: 0, leadLabel: 'conv.' },
+    { platform: 'meta', campaign: 'Résine EPDM - Trafic - Landing 2 boutons - 40km Brech', status: 'paused', spend: 269.27, impressions: 137296, clicks: 3556, ctr: 0.0259, cpc: 0.0757, leads: 1, leadLabel: 'leads' },
+    { platform: 'meta', campaign: 'Nouvelle campagne de Trafic', status: 'unknown', spend: 80.85, impressions: 37791, clicks: 1318, ctr: 0.0349, cpc: 0.0613, leads: 0, leadLabel: 'leads' },
+    { platform: 'meta', campaign: 'rms vers ecosky', status: 'unknown', spend: 49.06, impressions: 24457, clicks: 1432, ctr: 0.0585, cpc: 0.0343, leads: 0, leadLabel: 'leads' },
+    { platform: 'meta', campaign: 'RMLS BY ECOSKY', status: 'unknown', spend: 41.47, impressions: 26014, clicks: 824, ctr: 0.0317, cpc: 0.0503, leads: 0, leadLabel: 'leads' },
+    { platform: 'meta', campaign: 'campagne rms', status: 'unknown', spend: 38.7, impressions: 10471, clicks: 235, ctr: 0.0224, cpc: 0.1647, leads: 0, leadLabel: 'leads' },
+    { platform: 'meta', campaign: 'ecosky by rms  morbihan', status: 'unknown', spend: 22.41, impressions: 9392, clicks: 321, ctr: 0.0342, cpc: 0.0698, leads: 0, leadLabel: 'leads' },
+    { platform: 'meta', campaign: 'ecosky by rms morbihan', status: 'unknown', spend: 19.36, impressions: 6478, clicks: 222, ctr: 0.0343, cpc: 0.0872, leads: 0, leadLabel: 'leads' },
+    { platform: 'meta', campaign: 'SALESFLOW ECOSKY', status: 'unknown', spend: 13.59, impressions: 985, clicks: 25, ctr: 0.0254, cpc: 0.5436, leads: 3, leadLabel: 'leads' },
+    { platform: 'meta', campaign: 'RMS', status: 'unknown', spend: 10.75, impressions: 6123, clicks: 206, ctr: 0.0336, cpc: 0.0522, leads: 0, leadLabel: 'leads' },
+    { platform: 'meta', campaign: '[06/07/2026] Promotion de Devis résine EPDM gratuit V3', status: 'unknown', spend: 10.57, impressions: 1759, clicks: 38, ctr: 0.0216, cpc: 0.2782, leads: 3, leadLabel: 'leads' },
+    { platform: 'meta', campaign: 'Obtenez votre devis résine EPDM gratuit', status: 'unknown', spend: 9.78, impressions: 1842, clicks: 34, ctr: 0.0185, cpc: 0.2877, leads: 1, leadLabel: 'leads' },
+    { platform: 'meta', campaign: "EcoSky'Gum - Carrousel V3 - Bretagne", status: 'unknown', spend: 7.08, impressions: 1118, clicks: 14, ctr: 0.0125, cpc: 0.5057, leads: 0, leadLabel: 'leads' },
+    { platform: 'meta', campaign: "EcoSky'Gum - Clic WhatsApp - Bretagne", status: 'unknown', spend: 6.7, impressions: 4449, clicks: 101, ctr: 0.0227, cpc: 0.0663, leads: 0, leadLabel: 'leads' },
+    { platform: 'meta', campaign: 'Résine EPDM - Trafic - Test', status: 'unknown', spend: 5.78, impressions: 2378, clicks: 111, ctr: 0.0467, cpc: 0.0521, leads: 0, leadLabel: 'leads' },
+    { platform: 'meta', campaign: 'Résine EPDM - Leads Formulaire - Copie', status: 'paused', spend: 0, impressions: 6, clicks: 0, ctr: 0, cpc: null, leads: 0, leadLabel: 'leads' },
+  ];
+
+  const fmtEUR = n => n.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtInt = n => n.toLocaleString('fr-FR');
+  const fmtPct = n => (n * 100).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' %';
+
+  document.getElementById('snapshot-date').textContent = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  // Summary tiles
+  function sumBy(arr, key) { return arr.reduce((a, r) => a + (r[key] || 0), 0); }
+  const g = rows.filter(r => r.platform === 'google');
+  const m = rows.filter(r => r.platform === 'meta');
+
+  const tileDefs = [
+    { label: 'Dépense totale', key: 'spend', fmt: fmtEUR },
+    { label: 'Impressions', key: 'impressions', fmt: fmtInt },
+    { label: 'Clics', key: 'clicks', fmt: fmtInt },
+    { label: 'Leads / conversions', key: 'leads', fmt: fmtInt },
+  ];
+  const tilesEl = document.getElementById('tiles');
+  tileDefs.forEach(def => {
+    const gv = sumBy(g, def.key), mv = sumBy(m, def.key), total = gv + mv;
+    const gPct = total ? (gv / total * 100) : 0;
+    const mPct = total ? (mv / total * 100) : 0;
+    const tile = document.createElement('div');
+    tile.className = 'tile';
+    tile.innerHTML = `
+      <div class="label">${def.label}</div>
+      <div class="value">${def.fmt(total)}</div>
+      <div class="split-bar"><span class="g" style="width:${gPct}%"></span><span class="m" style="width:${mPct}%"></span></div>
+      <div class="split-legend"><span>G ${def.fmt(gv)}</span><span>M ${def.fmt(mv)}</span></div>
+    `;
+    tilesEl.appendChild(tile);
+  });
+
+  // Table render
+  const statusMeta = {
+    enabled: { label: 'Active', cls: 'enabled' },
+    paused: { label: 'En pause', cls: 'paused' },
+    removed: { label: 'Supprimée', cls: 'removed' },
+    unknown: { label: 'N/D', cls: 'unknown' },
+  };
+  const platformMeta = {
+    google: { label: 'Google Ads', cls: 'google' },
+    meta: { label: 'Meta Ads', cls: 'meta' },
+  };
+
+  let currentFilter = 'all';
+  let sortKey = 'spend';
+  let sortDir = -1;
+
+  function render() {
+    let data = rows.filter(r => currentFilter === 'all' || r.platform === currentFilter);
+    data = data.slice().sort((a, b) => {
+      let av = a[sortKey], bv = b[sortKey];
+      if (sortKey === 'platform' || sortKey === 'campaign' || sortKey === 'status') {
+        av = String(av); bv = String(bv);
+        return sortDir * av.localeCompare(bv);
+      }
+      av = av ?? -Infinity; bv = bv ?? -Infinity;
+      return sortDir * (av - bv);
+    });
+
+    const tbody = document.getElementById('tbody');
+    tbody.innerHTML = data.map(r => {
+      const st = statusMeta[r.status] || statusMeta.unknown;
+      const pf = platformMeta[r.platform];
+      return `
+        <tr>
+          <td><span class="tag ${pf.cls}">${pf.label}</span></td>
+          <td><div class="campaign-name">${r.campaign}</div></td>
+          <td><span class="pill ${st.cls}">${st.label}</span></td>
+          <td class="num">${fmtEUR(r.spend)}</td>
+          <td class="num">${fmtInt(r.impressions)}</td>
+          <td class="num">${fmtInt(r.clicks)}</td>
+          <td class="num">${r.cpc === null ? '—' : fmtPct(r.ctr)}</td>
+          <td class="num">${r.cpc === null ? '—' : fmtEUR(r.cpc)}</td>
+          <td class="num ${r.leads > 0 ? 'leads-cell' : 'leads-zero'}">${r.leads} ${r.leadLabel === 'leads' ? (r.leads === 1 ? 'lead' : 'leads') : 'conv.'}</td>
+        </tr>
+      `;
+    }).join('');
+
+    document.querySelectorAll('thead th').forEach(th => {
+      th.classList.toggle('sort-active', th.dataset.key === sortKey);
+      const arrow = th.querySelector('.arrow');
+      if (arrow) arrow.textContent = th.dataset.key === sortKey ? (sortDir === 1 ? '▴' : '▾') : '▾';
+    });
+  }
+
+  document.getElementById('filters').addEventListener('click', e => {
+    const btn = e.target.closest('.filter-btn');
+    if (!btn) return;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.platform;
+    render();
+  });
+
+  document.querySelectorAll('thead th').forEach(th => {
+    th.addEventListener('click', () => {
+      const key = th.dataset.key;
+      if (key === sortKey) { sortDir *= -1; }
+      else { sortKey = key; sortDir = (key === 'campaign' || key === 'platform' || key === 'status') ? 1 : -1; }
+      render();
+    });
+  });
+
+  render();
+</script>

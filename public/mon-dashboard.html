@@ -499,6 +499,7 @@
       <button type="button" class="btn-elements" id="btnMesRdv" style="background:#fff; color:#7c3aed; border:1.5px solid #7c3aed;">📅 Mes rendez-vous</button>
       <a class="btn-elements" id="btnMesDevis" href="#" style="background:#fff; color:#7c3aed; border:1.5px solid #7c3aed;">📄 Devis &amp; factures</a>
       <a class="btn-elements" id="btnElements" href="#">✏️ Modifier mes éléments</a>
+      <a class="btn-elements" id="btnMettreEnLigneAccueil" href="#" style="background:#e8622c;">🚀 Mettre en ligne</a>
     </div>
   </div>
 
@@ -846,6 +847,7 @@
   const draftId = params.get('id');
   document.getElementById('btnApprovisionnerRapide').href = '/campagne.html?id=' + draftId;
   document.getElementById('btnMettreEnLigneAds').href = '/campagne.html?id=' + draftId;
+  document.getElementById('btnMettreEnLigneAccueil').href = '/campagne.html?id=' + draftId;
 
   window.tarifActifActuel = false;
   function verrouillerActionPayante(elementId) {
@@ -860,6 +862,7 @@
   }
   verrouillerActionPayante('btnApprovisionnerRapide');
   verrouillerActionPayante('btnMettreEnLigneAds');
+  verrouillerActionPayante('btnMettreEnLigneAccueil');
   verrouillerActionPayante('btnFondsInverse');
   document.getElementById('btnMesDevis').href = '/mes-devis.html?id=' + draftId + (params.get('admin_token') ? '&admin_token=' + params.get('admin_token') : '');
   let sauvegardesEnCours = 0;

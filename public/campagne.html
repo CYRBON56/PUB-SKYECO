@@ -11,6 +11,14 @@
   h1 { font-size:1.4rem; margin-bottom:8px; }
   .sub { color:#5b6b64; font-size:0.92rem; margin-bottom:28px; }
   label { display:block; font-size:0.85rem; font-weight:700; margin-bottom:8px; color:#14312a; }
+  .lien-completer-infos {
+    display:flex; align-items:center; gap:8px; background:#f5f8f6; border:1.5px solid #d7dedb;
+    border-radius:10px; padding:12px 14px; margin-bottom:20px; font-size:0.82rem; color:#3a4a44;
+    text-decoration:none;
+  }
+  .lien-completer-infos:hover { border-color:#1e6f4c; background:#eef5f0; }
+  .lien-completer-infos .icone { font-size:1.1rem; flex-shrink:0; }
+  .lien-completer-infos strong { color:#14312a; }
   .budget-input-row { display:flex; align-items:center; gap:10px; margin-bottom:24px; }
   .budget-input-row input {
     flex:1; font-size:1.6rem; font-weight:800; padding:14px 16px; border:2px solid #d7dedb;
@@ -59,7 +67,6 @@
   .annonce-champ input.trop-long, .annonce-champ textarea.trop-long { border-color:#c0392b; }
   .annonce-sauvegarde-note { font-size:0.74rem; color:#8a9891; margin-top:4px; min-height:1em; }
 
-  /* 08/09/2026 : case CGV obligatoire avant de payer, demandée par Cyrille */
   .cgv-checkbox-row {
     display:flex; align-items:flex-start; gap:8px; font-size:0.82rem; color:#3a4a44; line-height:1.5;
     margin-bottom:16px; cursor:pointer;
@@ -80,7 +87,6 @@
   .loading, .error-msg { text-align:center; padding:40px 0; color:#5b6b64; }
   .error-msg { color:#c0392b; }
 
-  /* 08/09/2026 : page de remerciement après paiement */
   .merci-icone { display:flex; justify-content:center; margin-bottom:14px; font-size:2.6rem; }
   .merci-bloc { background:#f5f8f6; border-radius:12px; padding:16px 18px; margin:16px 0; font-size:0.86rem; color:#3a4a44; line-height:1.6; }
   .merci-bloc strong { color:#14312a; }
@@ -108,17 +114,6 @@
   const draftId = params.get('id');
   const app = document.getElementById('app');
 
-  // Sécurité (06/09/2026) : cette page est accessible avec pour seule clé
-  // le draftId (non secret, publié dans les URLs Google Ads) — elle ne
-  // "connecte" personne elle-même. On récupère ici, en best-effort et sans
-  // bloquer l'affichage (l'estimation de budget et la confirmation de
-  // paiement Stripe juste après le retour de checkout.stripe.com doivent
-  // continuer à fonctionner même sans session), le jeton déjà posé par une
-  // connexion faite ailleurs (mon-dashboard.html, ou admin_token transmis
-  // par mes-artisans.html) — s'il existe, on le transmet aux actions
-  // sensibles (mise en pause/résiliation de l'abonnement) ; sinon ces
-  // actions renvoient l'artisan se connecter au lieu de s'exécuter pour
-  // n'importe qui connaissant l'identifiant du site.
   const sessionToken = params.get('admin_token')
     || sessionStorage.getItem('skyeco_dashboard_token_' + draftId)
     || sessionStorage.getItem('skyeco_dashboard_token')
@@ -145,13 +140,6 @@
         app.innerHTML = `<div class="error-msg">${data.error || 'Une erreur est survenue lors de la confirmation.'}</div>`;
         return;
       }
-      // 08/09/2026 : page de remerciement complète, demandée par Cyrille —
-      // remercie l'artisan, explique qu'un conseiller va le contacter, lui
-      // propose de choisir directement son créneau de RDV, précise le délai
-      // de mise en ligne de l'annonce (vérification d'éligibilité Google
-      // Ads), puis l'invite à créer son identifiant et mot de passe pour
-      // accéder à son tableau de bord (réutilise la page/API existantes de
-      // création d'accès : acces-dashboard.html + /api/dashboard-set-password).
       app.innerHTML = `
         <div class="merci-icone">🎉</div>
         <h1 style="text-align:center;">Merci, votre campagne est lancée !</h1>
@@ -249,19 +237,11 @@
     let debounceTimer = null;
     let estimationOk = false;
 
-    // 08/09/2026 : le bouton Payer n'est actif que si l'estimation est
-    // valide ET si la case CGV est cochée — demandé par Cyrille.
     function majEtatBoutonPayer() {
       btnPayer.disabled = !estimationOk || !cgvCheckbox.checked;
     }
     cgvCheckbox.addEventListener('change', majEtatBoutonPayer);
 
-    // Métier/zone/département/mots-clés du brouillon, récupérés une seule
-    // fois (voir chargerDraftPuisInitialiser ci-dessous) pour l'estimation
-    // de clics — le choix des mots-clés se fait maintenant depuis le
-    // tableau de bord (panneau Pilotage Ads dans mon-dashboard.html), pas
-    // ici. Le département (quand connu) permet à l'API un ciblage Google
-    // Ads précis au lieu d'une simple approximation par population.
     let draftMetier = null;
     let draftZone = null;
     let draftDepartement = null;
@@ -301,9 +281,6 @@
           const potentiel = data.totalMonthlyVolume ? ` · Potentiel estimé sur ce mois : ${data.totalMonthlyVolume} clics possibles avec ces mots-clés et cette zone` : '';
           document.getElementById('estimationDetail').textContent =
             (data.avgCpcEur ? `CPC moyen estimé : ${data.avgCpcEur} €` : '') + potentiel;
-          // 10/09/2026 : détail visible du montant qui va réellement en
-          // diffusion Google Ads vs. la commission de service, au lieu
-          // d'une phrase générique — demandé par Cyrille.
           document.getElementById('breakdown').innerHTML = (data.budgetNetPub != null)
             ? `${budget} € TTC · ${data.budgetHT} € HT, dont <strong>${data.budgetNetPub} € réellement en diffusion sur Google Ads</strong> ` +
               `et ${data.commissionPub} € de frais de pilotage Skyeco IA Ads (${Math.round(data.tauxCommission * 100)}%).`
@@ -343,24 +320,11 @@
         if (Array.isArray(draft.mots_cles_choisis)) motsClesActuels = draft.mots_cles_choisis;
         draftAnnonceTitres = draft.annonce_titres;
         draftAnnonceDescriptions = draft.annonce_descriptions;
-      } catch (e) { /* on continue avec metier/zone/mots-clés vides — repli générique côté API */ }
-      // Le choix des mots-clés se fait maintenant depuis le tableau de bord
-      // (panneau Pilotage Ads) — ici on ne fait que lire la sélection déjà
-      // enregistrée pour l'estimation de clics ci-dessus.
+      } catch (e) { }
       chargerEstimation();
       initAnnonce();
     }
 
-    // Aperçu (format Google : badge "Annonce", URL en vert, titre en bleu,
-    // description en gris) de l'annonce responsive search qui sera créée par
-    // create-google-ads-campaign.js — modifiable avant le lancement. Les
-    // valeurs par défaut reprennent le nom de l'entreprise, le mot-clé le
-    // plus pertinent (motsClesActuels[0] — trié par volume de recherche
-    // décroissant au moment de l'enregistrement, voir enregistrerSelectionSupabase()
-    // dans mon-dashboard.html) et la zone ; l'artisan peut tout réécrire,
-    // c'est ce texte enregistré (annonce_titres / annonce_descriptions) qui
-    // sera utilisé au clic sur "Payer et lancer ma campagne" — sinon repli
-    // sur les textes génériques déjà utilisés côté serveur.
     function genererAnnoncePropos() {
       const premierMotCle = motsClesActuels[0] || '';
       const motCleTitre = premierMotCle
@@ -398,10 +362,6 @@
       const previewDesc = document.getElementById('previewDesc');
       const sauvegardeNote = document.getElementById('annonceSauvegardeNote');
 
-      // Domaine réellement affiché dans l'annonce Google, dérivé de l'hôte
-      // courant plutôt que codé en dur — reste juste automatiquement le
-      // jour où un nom de domaine personnalisé (app.skyeco.fr) remplace
-      // pub-skyeco-23ue.vercel.app, sans nouvelle modification de ce fichier.
       const previewDomaine = document.getElementById('previewDomaine');
       if (previewDomaine && window.location.hostname) previewDomaine.textContent = window.location.hostname;
 
@@ -457,21 +417,11 @@
 
       majApercu();
 
-      // Sauvegarde automatique retirée (01/09) — même correctif que
-      // mon-dashboard.html : elle figeait le texte générique dès le premier
-      // chargement, avant même que l'artisan ait pu cocher un mot-clé.
-
       document.getElementById('btnRegenererAnnonce').addEventListener('click', async () => {
         const btn = document.getElementById('btnRegenererAnnonce');
         btn.disabled = true;
         btn.textContent = '…';
         try {
-          // motsClesActuels est lu une seule fois au chargement de cette
-          // page (le choix des mots-clés se fait depuis le tableau de
-          // bord, pas ici) — ce bouton sert donc surtout si l'artisan a
-          // modifié sa sélection sur le dashboard puis revient sur cette
-          // page sans la recharger : on relit la valeur la plus fraîche
-          // possible en base avant de régénérer.
           const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=mots_cles_choisis`, {
             headers: { apikey: SUPABASE_ANON_KEY }
           });
@@ -531,11 +481,6 @@
       }
     });
 
-    // 08/09/2026 : le bouton "Arrêter mon forfait" (rouge, avec le message
-    // détaillé) a été déplacé sur mon-dashboard.html à la demande de
-    // Cyrille — cette page (campagne.html) ne sert qu'à payer/lancer une
-    // campagne, la gestion de l'abonnement se fait depuis le tableau de
-    // bord. On garde ici le simple lien de résiliation existant.
     document.getElementById('btnResilier').addEventListener('click', async () => {
       if (!sessionToken) {
         alert('Merci de vous connecter à votre tableau de bord pour gérer votre abonnement.');
@@ -574,7 +519,7 @@
       const section = document.getElementById('consommationSection');
       try {
         if (!sessionToken) {
-          section.innerHTML = ''; // pas de session connue ici — panneau simplement masqué (rien de sensible affiché)
+          section.innerHTML = '';
           return;
         }
         const res = await fetch('/api/get-campaign-spend', {
@@ -585,7 +530,7 @@
         const data = await res.json();
 
         if (!data.success || !data.campagneExiste) {
-          section.innerHTML = ''; // pas encore de campagne, rien à afficher
+          section.innerHTML = '';
           return;
         }
 
@@ -659,8 +604,6 @@
   var CLE = 'skyeco_cookie_consent';
   function lireChoix(){ try { return JSON.parse(localStorage.getItem(CLE) || 'null'); } catch(e){ return null; } }
   function appliquerChoix(choix){
-    // Point d'extension : charger ici Google Ads / Analytics uniquement si choix.niveau === 'tous'.
-    // Rien n'est charge pour l'instant.
     window.skyecoConsentement = choix;
   }
   window.skyecoCookiesChoix = function(niveau){

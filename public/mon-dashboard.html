@@ -1248,13 +1248,16 @@
     const content = document.getElementById('reseauxContent');
     content.innerHTML = '<div class="loading">Chargement…</div>';
     try {
-      const [connexionResp, postsResp] = await Promise.all([
+      const [connexionResp, postsResp, ficheGoogleResp] = await Promise.all([
         fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_social_connections?draft_id=eq.${draftId}&select=*`, { headers: { apikey: SUPABASE_ANON_KEY } }),
         fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_social_posts?draft_id=eq.${draftId}&select=*&order=created_at.desc`, { headers: { apikey: SUPABASE_ANON_KEY } }),
+        fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=google_business_location_id`, { headers: { apikey: SUPABASE_ANON_KEY } }),
       ]);
       const connexions = connexionResp.ok ? await connexionResp.json() : [];
       const posts = postsResp.ok ? await postsResp.json() : [];
+      const fichesGoogle = ficheGoogleResp.ok ? await ficheGoogleResp.json() : [];
       const connexion = connexions[0];
+      const ficheGoogleConnectee = !!(fichesGoogle[0] && fichesGoogle[0].google_business_location_id);
 
       const pillLabels = { planifie: 'Planifié', brouillon: 'Brouillon', echec: 'Échec', publie: 'Publié' };
       const pillClass = { planifie: 'planned', brouillon: 'draft', echec: 'failed', publie: 'done' };
@@ -1269,13 +1272,37 @@
           <button type="button" class="rs-btn ${connexion ? 'secondary' : ''}" id="btnConnecterInstagram">${connexion ? 'Gérer la connexion' : 'Connecter Instagram'}</button>
         </div>
 
-        <div style="display:flex; align-items:center; gap:18px; padding-bottom:18px; margin-bottom:20px; border-bottom:1.5px solid #eef1f0;">
-          <span style="width:10px; height:10px; border-radius:50%; background:#c7cdc9; flex-shrink:0;"></span>
-          <div style="flex:1;">
-            <strong style="display:block; color:#211a35; font-size:0.95rem; margin-bottom:2px;">Facebook — bientôt disponible</strong>
-            <span style="color:#8a9891; font-size:0.85rem;">Si vous n'avez pas encore de Page professionnelle Facebook, vous pouvez déjà la créer.</span>
+        <div class="rs-status" style="margin-bottom:20px; padding-bottom:18px; border-bottom:1.5px solid #eef1f0;">
+          <span class="rs-status-dot ${connexion && connexion.facebook_page_id ? '' : 'off'}"></span>
+          <div class="rs-status-text">
+            <strong>${connexion && connexion.facebook_page_id ? `Facebook connecté — ${escapeHtmlDash(connexion.facebook_page_name || '')}` : 'Facebook non connecté'}</strong>
+            ${connexion && connexion.facebook_page_id
+              ? 'Vos posts sont aussi publiés automatiquement sur cette Page.'
+              : 'Connectez votre Page Facebook pour que vos posts s\'y publient aussi, en plus d\'Instagram. <a href="#" id="lienCreerPageFacebook" style="color:#7c3aed;font-weight:700;">Pas encore de Page ?</a>'}
           </div>
-          <button type="button" class="rs-btn secondary" id="btnCreerPageFacebook">Créer une Page Facebook</button>
+          <button type="button" class="rs-btn ${connexion && connexion.facebook_page_id ? 'secondary' : ''}" id="btnConnecterFacebook">${connexion && connexion.facebook_page_id ? 'Gérer la connexion' : 'Connecter Facebook'}</button>
+        </div>
+
+        <div class="rs-status" style="margin-bottom:20px; padding-bottom:18px; border-bottom:1.5px solid #eef1f0;">
+          <span class="rs-status-dot ${ficheGoogleConnectee ? '' : 'off'}"></span>
+          <div class="rs-status-text">
+            <strong>${ficheGoogleConnectee ? 'Fiche Google connectée' : 'Fiche Google (Google Business Profile) non connectée'}</strong>
+            ${ficheGoogleConnectee
+              ? 'Vos posts sont aussi publiés automatiquement sur votre fiche Google — utile pour votre référencement local.'
+              : "Connectez votre fiche Google pour que vos posts y apparaissent aussi. La connexion est faite manuellement par votre conseiller Skyeco Pro — cliquez pour lui envoyer la demande."}
+          </div>
+          <button type="button" class="rs-btn ${ficheGoogleConnectee ? 'secondary' : ''}" id="btnConnecterGoogleBusiness" ${ficheGoogleConnectee ? 'disabled' : ''}>${ficheGoogleConnectee ? 'Connectée ✓' : 'Demander la connexion'}</button>
+        </div>
+
+        <div class="rs-status" style="margin-bottom:20px; padding-bottom:18px; border-bottom:1.5px solid #eef1f0;">
+          <span class="rs-status-dot ${connexion && connexion.tiktok_open_id ? '' : 'off'}"></span>
+          <div class="rs-status-text">
+            <strong>${connexion && connexion.tiktok_open_id ? `TikTok connecté — @${escapeHtmlDash(connexion.tiktok_username || '')}` : 'TikTok non connecté'}</strong>
+            ${connexion && connexion.tiktok_open_id
+              ? "Vos posts sont aussi publiés automatiquement sur TikTok. ⚠️ Ils restent visibles par vous seul pour l'instant (compte en attente de validation TikTok pour la publication publique)."
+              : 'Connectez votre compte TikTok pour que vos posts y soient aussi publiés automatiquement.'}
+          </div>
+          <button type="button" class="rs-btn ${connexion && connexion.tiktok_open_id ? 'secondary' : ''}" id="btnConnecterTikTok">${connexion && connexion.tiktok_open_id ? 'Gérer la connexion' : 'Connecter TikTok'}</button>
         </div>
 
         ${!posts.length
@@ -1294,9 +1321,60 @@
         }
       `;
 
-      document.getElementById('btnCreerPageFacebook').addEventListener('click', () => {
-        // Nouvel onglet — le dashboard reste ouvert, l'artisan revient dessus une fois sa Page créée.
-        window.open('https://www.facebook.com/pages/create', '_blank', 'noopener');
+      document.getElementById('btnConnecterFacebook').addEventListener('click', () => {
+        if (!window.tarifActifActuel) {
+          window.location.href = '/mes-elements.html?id=' + draftId + '&verrou=ads';
+          return;
+        }
+        // Flux OAuth classique (voir facebook-connect-start.js) — la Page est
+        // choisie automatiquement (la première renvoyée par Meta) puis reliée.
+        window.location.href = `/api/facebook-connect-start?id=${encodeURIComponent(draftId)}&token=${encodeURIComponent(tokenCalendrierActuel || '')}`;
+      });
+      const lienCreerPageFacebook = document.getElementById('lienCreerPageFacebook');
+      if (lienCreerPageFacebook) {
+        lienCreerPageFacebook.addEventListener('click', (e) => {
+          e.preventDefault();
+          // Nouvel onglet — le dashboard reste ouvert, l'artisan revient dessus une fois sa Page créée.
+          window.open('https://www.facebook.com/pages/create', '_blank', 'noopener');
+        });
+      }
+
+      // Google Business Profile : pas d'OAuth self-service ici (voir
+      // api/demander-connexion-google-business.js) — le clic notifie
+      // simplement le conseiller Skyeco Pro, qui relie la fiche manuellement
+      // via Windsor.ai puis renseigne google_business_location_id.
+      const btnConnecterGoogleBusiness = document.getElementById('btnConnecterGoogleBusiness');
+      if (btnConnecterGoogleBusiness && !ficheGoogleConnectee) {
+        btnConnecterGoogleBusiness.addEventListener('click', async () => {
+          btnConnecterGoogleBusiness.disabled = true;
+          btnConnecterGoogleBusiness.textContent = 'Envoi…';
+          try {
+            const resp = await fetch('/api/demander-connexion-google-business', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ draftId }),
+            });
+            const data = await resp.json();
+            if (data.success) {
+              btnConnecterGoogleBusiness.textContent = '✓ Demande envoyée';
+            } else {
+              throw new Error(data.error || 'Échec de l\'envoi.');
+            }
+          } catch (e) {
+            btnConnecterGoogleBusiness.disabled = false;
+            btnConnecterGoogleBusiness.textContent = 'Demander la connexion';
+            alert('Impossible d\'envoyer la demande pour le moment — réessayez.');
+          }
+        });
+      }
+
+      document.getElementById('btnConnecterTikTok').addEventListener('click', () => {
+        if (!window.tarifActifActuel) {
+          window.location.href = '/mes-elements.html?id=' + draftId + '&verrou=ads';
+          return;
+        }
+        // Flux OAuth self-service TikTok (voir tiktok-connect-start.js).
+        window.location.href = `/api/tiktok-connect-start?id=${encodeURIComponent(draftId)}&token=${encodeURIComponent(tokenCalendrierActuel || '')}`;
       });
 
       document.getElementById('btnConnecterInstagram').addEventListener('click', () => {
@@ -1513,9 +1591,12 @@
     });
   }
 
-  // Message de retour après le flux OAuth (voir /api/social-callback) :
-  // ?social=succes|refuse|sans_compte_pro|erreur dans l'URL, avec #reseaux
-  // pour rouvrir directement le bon onglet.
+  // Message de retour après le flux OAuth (voir /api/social-callback,
+  // /api/facebook-callback et /api/tiktok-callback) :
+  // ?social=succes|refuse|sans_compte_pro|erreur (Instagram),
+  // fb_succes|fb_refuse|fb_sans_page|fb_erreur (Facebook), ou
+  // tiktok_succes|tiktok_refuse|tiktok_erreur (TikTok) dans l'URL,
+  // avec #reseaux pour rouvrir directement le bon onglet.
   (function afficherRetourSocial() {
     const statutSocial = params.get('social');
     if (!statutSocial) return;
@@ -1524,6 +1605,13 @@
       refuse: { texte: "Connexion annulée — vous n'avez pas autorisé l'accès.", couleur: '#8a9891' },
       sans_compte_pro: { texte: "Aucun compte Instagram professionnel relié à une Page Facebook n'a été trouvé sur ce compte Meta. Suivez les étapes du guide puis réessayez.", couleur: '#c0392b' },
       erreur: { texte: 'Une erreur est survenue pendant la connexion — réessayez.', couleur: '#c0392b' },
+      fb_succes: { texte: '✓ Page Facebook connectée avec succès.', couleur: '#7c3aed' },
+      fb_refuse: { texte: "Connexion Facebook annulée — vous n'avez pas autorisé l'accès.", couleur: '#8a9891' },
+      fb_sans_page: { texte: "Aucune Page Facebook trouvée sur ce compte. Créez d'abord votre Page professionnelle Facebook, puis réessayez.", couleur: '#c0392b' },
+      fb_erreur: { texte: 'Une erreur est survenue pendant la connexion à Facebook — réessayez.', couleur: '#c0392b' },
+      tiktok_succes: { texte: '✓ TikTok connecté avec succès.', couleur: '#7c3aed' },
+      tiktok_refuse: { texte: "Connexion TikTok annulée — vous n'avez pas autorisé l'accès.", couleur: '#8a9891' },
+      tiktok_erreur: { texte: 'Une erreur est survenue pendant la connexion à TikTok — réessayez.', couleur: '#c0392b' },
     };
     const info = messages[statutSocial];
     if (!info) return;

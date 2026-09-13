@@ -4,15 +4,15 @@
 // Distinct de l'abonnement mensuel (39,90€) — c'est un paiement séparé,
 // à refaire à chaque fois que l'artisan veut (re)financer sa campagne.
 //
-// Garde-fou ajouté le 03/09 : ce paiement (une fois confirmé par
-// confirm-ad-payment.js) déclenche automatiquement la création d'une VRAIE
-// campagne sur le VRAI compte Google Ads (voir create-google-ads-campaign.js)
-// — sans jamais vérifier ni le statut de la fiche ni le fait que le forfait
-// ait été réellement payé ou simulé via simuler-paiement-test.js. On bloque
-// donc ici, au tout premier point d'entrée du financement du budget pub, tant
-// que Cyrille n'a pas validé le site lui-même (site_valide) — même contrôle
-// que celui déjà en place dans create-checkout-session.js /
-// demarrer-essai-gratuit.js pour le paiement du forfait.
+// 12/09/2026 : le blocage strict sur site_valide (qui empêchait tout
+// paiement tant que Cyrille n'avait pas validé le site à la main) a été
+// retiré — décision de Cyrille pour permettre le nouveau parcours d'essai
+// par téléphone seul, où le site n'est jamais validé manuellement avant ce
+// paiement. Le site reste malgré tout vérifié avant sa mise en ligne
+// effective : voir le message renvoyé par confirm-ad-payment.js après
+// paiement ("votre campagne a été créée en pause — elle sera vérifiée
+// avant diffusion"), qui reste la garantie de contrôle qualité, sans
+// bloquer l'inscription/le paiement lui-même.
 //
 // Transparence (10/09/2026, demandé par Cyrille) : le libellé Stripe
 // détaille désormais le montant HT réellement dépensé en diffusion Google
@@ -51,15 +51,6 @@ export default async function handler(req, res) {
   const origin = req.headers.origin || `https://${req.headers.host}`;
 
   try {
-    const verifResp = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=site_valide`,
-      { headers: { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}` } }
-    );
-    const verifRows = await verifResp.json();
-    if (!verifRows[0]?.site_valide) {
-      return res.status(403).json({ error: "Ce site n'a pas encore été validé — demandez la validation depuis votre page." });
-    }
-
     const budgetHT = Math.round((budgetNum / (1 + TAUX_TVA)) * 100) / 100;
     const commission = Math.round(budgetHT * TAUX_COMMISSION * 100) / 100;
     const budgetNetPub = Math.round((budgetHT - commission) * 100) / 100;
@@ -76,7 +67,7 @@ export default async function handler(req, res) {
             unit_amount: Math.round(budgetNum * 100),
             product_data: {
               name: 'Budget publicitaire Skyeco IA Ads',
-              description: `${budgetNum} € TTC — dont ${budgetNetPub} € HT réellement dépensés en diffusion sur Google Ads et ${commission} € HT de commission de service Skyeco IA Ads (30%).`,
+              description: `${budgetNum} € TTC — dont ${budgetNetPub} € HT réellement dépensés en diffusion sur Google Ads et ${commission} € HT de commission de service Skyeco IA Ads (30%). Votre site sera vérifié par notre équipe avant sa mise en ligne.`,
               images: ['https://www.skyeco.fr/skyeco-google-ads-carre.png'],
             },
           },

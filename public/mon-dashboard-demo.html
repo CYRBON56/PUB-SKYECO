@@ -211,6 +211,25 @@
   .relance-row:last-child { border-bottom:none; }
   .btn-relance-demo { background:#ec4899; color:#fff; font-size:0.68rem; font-weight:700; padding:4px 10px; border-radius:999px; border:none; white-space:nowrap; }
 
+  /* 13/09/2026 : aperçu "Réseaux sociaux" (publication auto Instagram/Facebook/
+     Google/TikTok), pour montrer cette fonctionnalité dès la démo du tunnel. */
+  .rs-panel-demo { background:#fff; border-radius:14px; padding:20px; margin-bottom:16px; }
+  .rs-panel-demo h3 { font-size:0.9rem; }
+  .rs-panel-demo .liste-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .btn-nouveau-post-demo { background:#7c3aed; color:#fff; border:none; padding:8px 15px; border-radius:9px; font-size:0.78rem; font-weight:700; cursor:default; white-space:nowrap; }
+  .rs-status-demo { display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:11px 0; border-bottom:1px solid #ede9fe; }
+  .rs-status-dot-demo { width:9px; height:9px; border-radius:50%; background:#7c3aed; flex-shrink:0; }
+  .rs-status-dot-demo.off { background:#c7c2d6; }
+  .rs-status-texte-demo { flex:1; min-width:180px; }
+  .rs-status-texte-demo strong { display:block; color:#211a35; font-size:0.85rem; }
+  .rs-status-texte-demo span { font-size:0.74rem; color:#8a8296; }
+  .btn-connecte-demo { background:#f5f3ff; color:#7c3aed; border:1.5px solid #ddd6fe; border-radius:999px; padding:6px 13px; font-size:0.72rem; font-weight:700; cursor:default; white-space:nowrap; }
+  .rs-row-demo { display:flex; align-items:center; gap:14px; padding:12px 0; border-top:1px solid #ede9fe; }
+  .rs-thumb-demo { width:48px; height:48px; border-radius:8px; flex-shrink:0; }
+  .rs-caption-demo { font-size:0.82rem; color:#211a35; line-height:1.4; }
+  .rs-meta-demo { font-size:0.72rem; color:#8a8296; margin-top:3px; }
+  .rs-pill-demo { font-size:0.68rem; font-weight:700; padding:3px 9px; border-radius:999px; background:#e4eef4; color:#2c5f8a; white-space:nowrap; flex-shrink:0; }
+
   /* Zones cliquables "ça explique ce que c'est" */
   .explicable { cursor:help; border-radius:14px; transition:box-shadow 0.15s ease, outline-color 0.15s ease; outline:2px solid transparent; outline-offset:2px; }
   .explicable:hover { outline-color:#7c3aed; }
@@ -559,6 +578,45 @@
       <span>Mme Le Bris — devis envoyé il y a 5 jours, sans réponse</span>
       <button class="btn-relance-demo">Relancer par SMS</button>
     </div>
+  </div>
+
+  <div class="rs-panel-demo explicable" data-explain-title="📱 Réseaux sociaux" data-explain="Envoyez la photo d'un chantier terminé, l'IA rédige la légende et les hashtags, et le post part automatiquement sur Instagram, Facebook, votre fiche Google et TikTok en même temps — sans jongler entre les applications.">
+    <div class="liste-header">
+      <h3>Réseaux sociaux</h3>
+      <button class="btn-nouveau-post-demo">+ Nouveau post</button>
+    </div>
+    <div class="rs-status-demo">
+      <span class="rs-status-dot-demo"></span>
+      <div class="rs-status-texte-demo"><strong>Instagram connecté — @rms_ecosky</strong><span>Publication automatique activée</span></div>
+      <button class="btn-connecte-demo">Connecté ✓</button>
+    </div>
+    <div class="rs-status-demo">
+      <span class="rs-status-dot-demo"></span>
+      <div class="rs-status-texte-demo"><strong>Facebook connecté — RMS EcoSky</strong><span>Vos posts y sont aussi publiés</span></div>
+      <button class="btn-connecte-demo">Connecté ✓</button>
+    </div>
+    <div class="rs-status-demo" style="border-bottom:none;">
+      <span class="rs-status-dot-demo off"></span>
+      <div class="rs-status-texte-demo"><strong>TikTok</strong><span>Non connecté</span></div>
+      <button class="btn-connecte-demo">Connecter</button>
+    </div>
+    <div class="rs-row-demo">
+      <div class="rs-thumb-demo" style="background:linear-gradient(135deg,#f9a8d4,#ec4899); display:flex; align-items:center; justify-content:center; font-size:1.3rem;">🏡</div>
+      <div style="flex:1;">
+        <div class="rs-caption-demo">« Nouvelle terrasse en résine EPDM livrée cette semaine à Brech ✨ Étanche, antidérapante et sans entretien... »</div>
+        <div class="rs-meta-demo">Publié il y a 2 jours sur Instagram + Facebook — légende générée par l'IA</div>
+      </div>
+      <span class="rs-pill-demo">Publié</span>
+    </div>
+    <div class="rs-row-demo">
+      <div class="rs-thumb-demo" style="background:linear-gradient(135deg,#c4b5fd,#7c3aed); display:flex; align-items:center; justify-content:center; font-size:1.3rem;">🌳</div>
+      <div style="flex:1;">
+        <div class="rs-caption-demo">« Avant / après : aménagement paysager complet à Pluvigner 🌿 »</div>
+        <div class="rs-meta-demo">Planifié pour demain 9h</div>
+      </div>
+      <span class="rs-pill-demo" style="background:#f5f3ff;color:#7c3aed;">Planifié</span>
+    </div>
+    <div class="estim-note">Chaque photo de chantier envoyée devient un post prêt à publier — légende et hashtags proposés automatiquement par l'IA, modifiables avant envoi.</div>
   </div>
 
   <div id="ctaFunnel" class="cta-funnel" style="display:none;">

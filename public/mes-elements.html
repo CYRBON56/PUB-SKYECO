@@ -202,12 +202,6 @@
 <a class="btn-etre-rappele-fixe" href="/prendre-rdv.html?id=4fbdb122-9fca-4636-b80c-d9e4abc2542b" target="_blank" rel="noopener">📞 Être rappelé</a>
 
 <div class="wrap">
-  <div class="banniere-verrou-ads" id="banniereVerrouAds">
-    <strong>🚀 Encore une étape avant d'activer Google Ads</strong>
-    <span>Pour profiter de toutes les fonctionnalités de votre outil (publicité Google Ads, réseaux sociaux), il faut d'abord finaliser votre inscription : renseignez votre SIRET et tous les éléments ci-dessous, puis approvisionnez votre compte Google Ads en choisissant votre forfait.</span>
-    <a href="#" id="btnBanniereChoisirForfait" class="btn-banniere-verrou-ads">💳 Approvisionner mon compte Google Ads →</a>
-  </div>
-
   <a href="#" id="lienRetourDashboard" class="btn-dashboard-hero" style="display:none;"><span class="icon">📊</span> Accéder à mon tableau de bord</a>
   <div class="eyebrow">Construction de votre vitrine</div>
   <h1 id="titreConstruction">Construire votre formulaire vitrine</h1>
@@ -541,13 +535,20 @@
   const params = new URLSearchParams(window.location.search);
   const draftId = params.get('id');
 
-  // Bandeau explicatif : affiché uniquement si on arrive ici parce que le
-  // dashboard a redirigé (bouton "Approvisionner" ou "Connecter Instagram"
-  // cliqué sans forfait payant actif — voir mon-dashboard.html,
-  // verrouillerActionPayante et le handler btnConnecterInstagram) (12/09).
-  if (params.get('verrou') === 'ads') {
-    document.getElementById('banniereVerrouAds').style.display = 'block';
-    document.getElementById('btnBanniereChoisirForfait').href = '/choisir-forfait.html?id=' + draftId;
+  // Verrou paiement (12/09) : arrivée directe sur les champs SIRET/nom
+  // (sections "Coordonnées" et "Légal" ouvertes et affichées en premier),
+  // sans bandeau ni message intermédiaire — voir aussi plus bas, la
+  // redirection vers campagne.html après "Enregistrer mes éléments".
+  const verrouAds = params.get('verrou') === 'ads';
+  if (verrouAds) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('open'));
+    const sectionCoordonnees = document.querySelector('[data-section="coordonnees"]');
+    const sectionLegal = document.querySelector('[data-section="legal"]');
+    if (sectionCoordonnees) sectionCoordonnees.classList.add('open');
+    if (sectionLegal) sectionLegal.classList.add('open');
+    window.addEventListener('load', () => {
+      sectionCoordonnees?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   }
 
   // Avertit avant de quitter/recharger la page si une sauvegarde (auto ou
@@ -1624,12 +1625,18 @@
 
       const versApercuPremierPassage = !compteDejaExistant && draftStatutActuel !== 'published' && draftStatutActuel !== 'en_pause' && draftStatutActuel !== 'essai';
       msg.className = 'save-msg ok';
-      msg.textContent = versApercuPremierPassage
+      msg.textContent = verrouAds
+        ? '✓ Tes éléments ont bien été enregistrés. On t\'emmène approvisionner ton compte Google Ads…'
+        : versApercuPremierPassage
         ? '✓ Tes éléments ont bien été enregistrés. On t\'emmène voir ta vitrine…'
         : '✓ Tes éléments ont bien été enregistrés.';
       msg.style.display = 'block';
       btn.textContent = 'Enregistré ✓';
-      if (versApercuPremierPassage) {
+      if (verrouAds) {
+        setTimeout(() => {
+          window.location.href = '/campagne.html?id=' + draftId;
+        }, 1200);
+      } else if (versApercuPremierPassage) {
         setTimeout(() => {
           window.location.href = '/apercu.html?id=' + draftId;
         }, 1500);

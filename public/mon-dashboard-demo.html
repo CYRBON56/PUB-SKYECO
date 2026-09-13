@@ -212,22 +212,26 @@
   .btn-relance-demo { background:#ec4899; color:#fff; font-size:0.68rem; font-weight:700; padding:4px 10px; border-radius:999px; border:none; white-space:nowrap; }
 
   /* 13/09/2026 : aperçu "Réseaux sociaux" (publication auto Instagram/Facebook/
-     Google/TikTok), pour montrer cette fonctionnalité dès la démo du tunnel. */
+     Google/TikTok), pour montrer cette fonctionnalité dès la démo du tunnel —
+     mêmes classes/couleurs que le vrai dashboard (mon-dashboard.html, section
+     "Réseaux sociaux" : .rs-status, .rs-btn, .rs-row, .rs-thumb, .rs-pill). */
   .rs-panel-demo { background:#fff; border-radius:14px; padding:20px; margin-bottom:16px; }
   .rs-panel-demo h3 { font-size:0.9rem; }
   .rs-panel-demo .liste-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
   .btn-nouveau-post-demo { background:#7c3aed; color:#fff; border:none; padding:8px 15px; border-radius:9px; font-size:0.78rem; font-weight:700; cursor:default; white-space:nowrap; }
-  .rs-status-demo { display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:11px 0; border-bottom:1px solid #ede9fe; }
-  .rs-status-dot-demo { width:9px; height:9px; border-radius:50%; background:#7c3aed; flex-shrink:0; }
-  .rs-status-dot-demo.off { background:#c7c2d6; }
-  .rs-status-texte-demo { flex:1; min-width:180px; }
-  .rs-status-texte-demo strong { display:block; color:#211a35; font-size:0.85rem; }
-  .rs-status-texte-demo span { font-size:0.74rem; color:#8a8296; }
-  .btn-connecte-demo { background:#f5f3ff; color:#7c3aed; border:1.5px solid #ddd6fe; border-radius:999px; padding:6px 13px; font-size:0.72rem; font-weight:700; cursor:default; white-space:nowrap; }
-  .rs-row-demo { display:flex; align-items:center; gap:14px; padding:12px 0; border-top:1px solid #ede9fe; }
+  .rs-status-demo { display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:13px 0; border-top:1px solid #eef1f0; }
+  .rs-status-demo:first-of-type { border-top:none; }
+  .rs-status-dot-demo { width:10px; height:10px; border-radius:50%; background:#7c3aed; flex-shrink:0; }
+  .rs-status-dot-demo.off { background:#ec4899; }
+  .rs-status-texte-demo { flex:1; min-width:200px; }
+  .rs-status-texte-demo strong { display:block; color:#211a35; font-size:0.85rem; margin-bottom:2px; }
+  .rs-status-texte-demo span { font-size:0.74rem; color:#8a9891; }
+  .rs-btn-demo { background:#7c3aed; color:#fff; border:none; padding:10px 16px; border-radius:10px; font-size:0.78rem; font-weight:700; cursor:default; white-space:nowrap; }
+  .rs-btn-demo.secondary { background:#fff; color:#7c3aed; border:1.5px solid #7c3aed; }
+  .rs-row-demo { display:flex; align-items:center; gap:14px; padding:12px 0; border-top:1px solid #eef1f0; }
   .rs-thumb-demo { width:48px; height:48px; border-radius:8px; flex-shrink:0; }
   .rs-caption-demo { font-size:0.82rem; color:#211a35; line-height:1.4; }
-  .rs-meta-demo { font-size:0.72rem; color:#8a8296; margin-top:3px; }
+  .rs-meta-demo { font-size:0.72rem; color:#8a9891; margin-top:3px; }
   .rs-pill-demo { font-size:0.68rem; font-weight:700; padding:3px 9px; border-radius:999px; background:#e4eef4; color:#2c5f8a; white-space:nowrap; flex-shrink:0; }
 
   /* Zones cliquables "ça explique ce que c'est" */
@@ -588,17 +592,22 @@
     <div class="rs-status-demo">
       <span class="rs-status-dot-demo"></span>
       <div class="rs-status-texte-demo"><strong>Instagram connecté — @rms_ecosky</strong><span>Publication automatique activée</span></div>
-      <button class="btn-connecte-demo">Connecté ✓</button>
+      <button class="rs-btn-demo secondary">Gérer la connexion</button>
     </div>
     <div class="rs-status-demo">
       <span class="rs-status-dot-demo"></span>
-      <div class="rs-status-texte-demo"><strong>Facebook connecté — RMS EcoSky</strong><span>Vos posts y sont aussi publiés</span></div>
-      <button class="btn-connecte-demo">Connecté ✓</button>
+      <div class="rs-status-texte-demo"><strong>Facebook connecté — RMS EcoSky</strong><span>Vos posts sont aussi publiés automatiquement sur cette Page.</span></div>
+      <button class="rs-btn-demo secondary">Gérer la connexion</button>
     </div>
-    <div class="rs-status-demo" style="border-bottom:none;">
+    <div class="rs-status-demo">
+      <span class="rs-status-dot-demo"></span>
+      <div class="rs-status-texte-demo"><strong>Fiche Google connectée</strong><span>Vos posts y apparaissent aussi — utile pour votre référencement local.</span></div>
+      <button class="rs-btn-demo secondary" disabled>Connectée ✓</button>
+    </div>
+    <div class="rs-status-demo">
       <span class="rs-status-dot-demo off"></span>
-      <div class="rs-status-texte-demo"><strong>TikTok</strong><span>Non connecté</span></div>
-      <button class="btn-connecte-demo">Connecter</button>
+      <div class="rs-status-texte-demo"><strong>TikTok non connecté</strong><span>Connectez votre compte pour que vos posts y soient aussi publiés.</span></div>
+      <button class="rs-btn-demo">Connecter TikTok</button>
     </div>
     <div class="rs-row-demo">
       <div class="rs-thumb-demo" style="background:linear-gradient(135deg,#f9a8d4,#ec4899); display:flex; align-items:center; justify-content:center; font-size:1.3rem;">🏡</div>

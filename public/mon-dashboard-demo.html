@@ -204,6 +204,15 @@
   .ga-heures-note { font-size:0.74rem; color:#8a8296; margin-top:8px; }
   .ga-heures-note strong { color:#ec4899; }
 
+  /* 13/09/2026 : mêmes classes que le vrai dashboard pour les listes à barres
+     (mots-clés qui génèrent des clics, termes de recherche, villes, appareils). */
+  .zones-liste { display:flex; flex-direction:column; gap:8px; }
+  .zone-ligne { display:flex; align-items:center; gap:12px; }
+  .zone-ligne .zone-nom { flex:0 0 180px; font-size:0.85rem; color:#3a4a43; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .zone-ligne .zone-barre-track { flex:1; background:#f5f3ff; border-radius:6px; height:10px; overflow:hidden; }
+  .zone-ligne .zone-barre-fill { background:#7c3aed; height:100%; border-radius:6px; }
+  .zone-ligne .zone-clics { flex:0 0 90px; text-align:right; font-size:0.85rem; font-weight:700; color:#211a35; }
+
   .coaching-panel-header-demo { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
   .coaching-panel-header-demo h3 { margin-bottom:0; }
   .coaching-logo-demo { flex-shrink:0; border-radius:11px; }
@@ -570,6 +579,37 @@
       <div class="ga-heures-note">Vos clics sont les plus nombreux vers <strong>10h-12h</strong> et <strong>19h</strong> — les créneaux les plus rentables pour ce métier.</div>
     </div>
 
+    <div class="ads-souspanel explicable" data-explain-title="🔎 Recherches réelles" data-explain="Différent des mots-clés ciblés : ce sont les recherches Google exactes qui ont déclenché votre annonce — utile pour repérer de nouvelles formulations à cibler, ou des recherches hors sujet à exclure.">
+      <h3>Ce que les internautes tapent vraiment</h3>
+      <div class="zones-liste">
+        <div class="zone-ligne"><div class="zone-nom" title="devis terrasse résine morbihan">devis terrasse résine morbihan</div><div class="zone-barre-track"><div class="zone-barre-fill" style="width:100%;"></div></div><div class="zone-clics">18 clics</div></div>
+        <div class="zone-ligne"><div class="zone-nom" title="paysagiste pas cher vannes">paysagiste pas cher vannes</div><div class="zone-barre-track"><div class="zone-barre-fill" style="width:61%;"></div></div><div class="zone-clics">11 clics</div></div>
+        <div class="zone-ligne"><div class="zone-nom" title="prix pose clôture aluminium">prix pose clôture aluminium</div><div class="zone-barre-track"><div class="zone-barre-fill" style="width:39%;"></div></div><div class="zone-clics">7 clics</div></div>
+        <div class="zone-ligne"><div class="zone-nom" title="aménagement extérieur devis gratuit">aménagement extérieur devis gratuit</div><div class="zone-barre-track"><div class="zone-barre-fill" style="width:33%;"></div></div><div class="zone-clics">6 clics</div></div>
+      </div>
+    </div>
+
+    <div class="ads-souspanel explicable" data-explain-title="🌍 Villes des clics" data-explain="La répartition géographique de vos clics, ville par ville, sur les 30 derniers jours — pour voir concrètement où se trouvent vos futurs clients dans votre zone.">
+      <h3>D'où viennent vos clics ?</h3>
+      <div class="zones-liste">
+        <div class="zone-ligne"><div class="zone-nom">Vannes</div><div class="zone-barre-track"><div class="zone-barre-fill" style="width:100%;"></div></div><div class="zone-clics">14 clics</div></div>
+        <div class="zone-ligne"><div class="zone-nom">Auray</div><div class="zone-barre-track"><div class="zone-barre-fill" style="width:71%;"></div></div><div class="zone-clics">10 clics</div></div>
+        <div class="zone-ligne"><div class="zone-nom">Brech</div><div class="zone-barre-track"><div class="zone-barre-fill" style="width:57%;"></div></div><div class="zone-clics">8 clics</div></div>
+        <div class="zone-ligne"><div class="zone-nom">Pluvigner</div><div class="zone-barre-track"><div class="zone-barre-fill" style="width:36%;"></div></div><div class="zone-clics">5 clics</div></div>
+        <div class="zone-ligne"><div class="zone-nom">Lorient</div><div class="zone-barre-track"><div class="zone-barre-fill" style="width:29%;"></div></div><div class="zone-clics">4 clics</div></div>
+      </div>
+      <div class="estim-note">Sur les 30 derniers jours, du plus au moins de clics.</div>
+    </div>
+
+    <div class="ads-souspanel explicable" data-explain-title="📱 Appareils" data-explain="La répartition de vos clics entre mobile, ordinateur et tablette — la plupart de vos clients vous trouvent en cherchant depuis leur téléphone.">
+      <h3>Ordinateur, mobile ou tablette ?</h3>
+      <div class="zones-liste">
+        <div class="zone-ligne"><div class="zone-nom">📱 Mobile</div><div class="zone-barre-track"><div class="zone-barre-fill" style="width:100%;"></div></div><div class="zone-clics">29 (69%)</div></div>
+        <div class="zone-ligne"><div class="zone-nom">💻 Ordinateur</div><div class="zone-barre-track"><div class="zone-barre-fill" style="width:34%;"></div></div><div class="zone-clics">10 (24%)</div></div>
+        <div class="zone-ligne"><div class="zone-nom">📟 Tablette</div><div class="zone-barre-track"><div class="zone-barre-fill" style="width:10%;"></div></div><div class="zone-clics">3 (7%)</div></div>
+      </div>
+    </div>
+
     <div class="ads-souspanel explicable" data-explain-title="🤖 Coach IA Ads" data-explain="Un assistant qui surveille votre campagne en continu, vous explique ce qui se passe en langage simple, et peut ajuster automatiquement mots-clés, enchères ou budget pour améliorer vos résultats. Vous pouvez le mettre en pause à tout moment.">
       <div class="coaching-panel-header-demo">
         <svg class="coaching-logo-demo" width="40" height="40" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -616,7 +656,7 @@
   </div>
   </div>
 
-  <div id="panelClientsDemo" style="display:none;">
+  <div id="panelClientsDemo">
   <div class="liste-panel explicable" data-explain-title="📋 Demandes d'estimation" data-explain="Chaque demande reçue apparaît ici avec son statut et son canal d'entrée — nouveau, rappel demandé, rendez-vous pris, devis envoyé, ou signé — mis à jour automatiquement, sans rien à faire de votre côté.">
     <h3>Demandes d'estimation (6 derniers mois)</h3>
     <table>
@@ -699,7 +739,7 @@
   </div>
   </div>
 
-  <div id="panelReseauxDemo" style="display:none;">
+  <div id="panelReseauxDemo">
   <div class="rs-panel-demo explicable" data-explain-title="📱 Réseaux sociaux" data-explain="Envoyez la photo d'un chantier terminé, l'IA rédige la légende et les hashtags, et le post part automatiquement sur Instagram, Facebook, votre fiche Google et TikTok en même temps — sans jongler entre les applications.">
     <div class="liste-header">
       <h3>Réseaux sociaux</h3>
@@ -745,7 +785,7 @@
   </div>
   </div>
 
-  <div id="panelCalendrierDemo" style="display:none;">
+  <div id="panelCalendrierDemo">
   <div class="liste-panel explicable" data-explain-title="📅 Mon calendrier" data-explain="Vos prospects réservent eux-mêmes un rendez-vous sur les créneaux que vous avez ouverts — vous pouvez aussi bloquer un créneau en un clic quand vous n'êtes pas disponible.">
     <h3>Mon calendrier</h3>
     <div style="display:flex; gap:14px; flex-wrap:wrap; margin-bottom:16px; font-size:0.78rem; color:#8a8296;">
@@ -852,17 +892,19 @@
     document.getElementById('lienRetour').style.display = 'inline-flex';
   }
 
-  // 13/09/2026 : bascule entre les 4 onglets de la barre latérale — copie
-  // simplifiée (sans appel réseau, tout est déjà chargé) de activerOnglet()
-  // dans le vrai dashboard, pour que la démo se pilote de la même façon.
+  // 13/09/2026 : dans le vrai dashboard, cliquer un onglet cache les autres —
+  // mais ici, en démo, on veut au contraire TOUT montrer (réseaux connectés,
+  // graphique des heures, villes des clics, coach IA...) pour que le prospect
+  // ne rate aucun argument de vente en ne cliquant que sur un seul onglet.
+  // Les 4 sections restent donc toutes affichées, empilées comme avant ; les
+  // onglets de la barre latérale servent seulement à y sauter directement.
+  const ANCRES_ONGLETS_DEMO = { ads: 'panelAdsDemo', clients: 'panelClientsDemo', reseaux: 'panelReseauxDemo', calendrier: 'panelCalendrierDemo' };
   function activerOngletDemo(cible) {
     document.querySelectorAll('#panelTabsDemo .panel-tab').forEach(b => b.classList.remove('active'));
     const btnCible = document.querySelector(`#panelTabsDemo .panel-tab[data-tab-demo="${cible}"]`);
     if (btnCible) btnCible.classList.add('active');
-    document.getElementById('panelAdsDemo').style.display = cible === 'ads' ? '' : 'none';
-    document.getElementById('panelClientsDemo').style.display = cible === 'clients' ? '' : 'none';
-    document.getElementById('panelReseauxDemo').style.display = cible === 'reseaux' ? '' : 'none';
-    document.getElementById('panelCalendrierDemo').style.display = cible === 'calendrier' ? '' : 'none';
+    const cibleEl = document.getElementById(ANCRES_ONGLETS_DEMO[cible]);
+    if (cibleEl) cibleEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   document.querySelectorAll('#panelTabsDemo .panel-tab').forEach((btn) => {
     btn.addEventListener('click', () => activerOngletDemo(btn.dataset.tabDemo));

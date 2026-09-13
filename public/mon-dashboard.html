@@ -499,7 +499,7 @@
       <button type="button" class="btn-elements" id="btnMesRdv" style="background:#fff; color:#7c3aed; border:1.5px solid #7c3aed;">📅 Mes rendez-vous</button>
       <a class="btn-elements" id="btnMesDevis" href="#" style="background:#fff; color:#7c3aed; border:1.5px solid #7c3aed;">📄 Devis &amp; factures</a>
       <a class="btn-elements" id="btnElements" href="#">✏️ Modifier mes éléments</a>
-      <a class="btn-elements" id="btnMettreEnLigneAccueil" href="#" style="background:#e8622c;">🚀 Mettre en ligne</a>
+      <a class="btn-elements" id="btnMettreEnLigneAccueil" href="#" style="background:#e8622c; display:none;">🚀 Mettre en ligne</a>
     </div>
   </div>
 
@@ -560,7 +560,6 @@
       </div>
     </div>
     <a href="#" id="btnApprovisionnerRapide" style="display:inline-flex; align-items:center; gap:8px; background:#7c3aed; color:#fff; text-decoration:none; border-radius:10px; padding:11px 18px; font-size:0.85rem; font-weight:700; margin-bottom:24px;">💳 Approvisionner mon budget</a>
-    <a href="#" id="btnMettreEnLigneAds" style="display:inline-flex; align-items:center; gap:8px; background:#e8622c; color:#fff; text-decoration:none; border-radius:10px; padding:11px 18px; font-size:0.85rem; font-weight:700; margin-bottom:24px; margin-left:10px;">🚀 Mettre en ligne</a>
 
     <div class="ads-souspanel" id="sectionZoneCiblee">
       <h3>Où voulez-vous être visible ?</h3>
@@ -846,8 +845,10 @@
   const params = new URLSearchParams(window.location.search);
   const draftId = params.get('id');
   document.getElementById('btnApprovisionnerRapide').href = '/campagne.html?id=' + draftId;
-  document.getElementById('btnMettreEnLigneAds').href = '/campagne.html?id=' + draftId;
-  document.getElementById('btnMettreEnLigneAccueil').href = '/campagne.html?id=' + draftId;
+  // btnMettreEnLigneAccueil : pas de href fixe ici — voir verifierStatutPause(),
+  // qui l'affiche et pointe vers l'inscription (choisir-forfait.html) UNIQUEMENT
+  // tant que le compte n'est pas encore opérationnel (statut "preview"), comme
+  // le fait déjà banniereMettreEnLigne/btnMettreEnLigne.
 
   window.tarifActifActuel = false;
   function verrouillerActionPayante(elementId) {
@@ -861,8 +862,6 @@
     });
   }
   verrouillerActionPayante('btnApprovisionnerRapide');
-  verrouillerActionPayante('btnMettreEnLigneAds');
-  verrouillerActionPayante('btnMettreEnLigneAccueil');
   verrouillerActionPayante('btnFondsInverse');
   document.getElementById('btnMesDevis').href = '/mes-devis.html?id=' + draftId + (params.get('admin_token') ? '&admin_token=' + params.get('admin_token') : '');
   let sauvegardesEnCours = 0;
@@ -2182,6 +2181,13 @@
       if (statut === 'preview') {
         document.getElementById('btnMettreEnLigne').href = '/choisir-forfait.html?id=' + draftId;
         document.getElementById('banniereMettreEnLigne').style.display = 'flex';
+        // Même bouton, en plus visible tout en haut de l'accueil (à côté de
+        // "Modifier mes éléments") — reprend la même destination et la même
+        // condition ("compte pas encore opérationnel") que la bannière
+        // ci-dessus, disparaît de lui-même une fois le forfait choisi.
+        const btnAccueil = document.getElementById('btnMettreEnLigneAccueil');
+        btnAccueil.href = '/choisir-forfait.html?id=' + draftId;
+        btnAccueil.style.display = 'inline-flex';
       }
 
       const params = new URLSearchParams(window.location.search);

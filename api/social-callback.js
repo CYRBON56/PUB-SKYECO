@@ -39,6 +39,15 @@ export default async function handler(req, res) {
   }
   const { draftId } = decoded;
 
+  // Meta ajoute un suffixe "#_" à la fin du code renvoyé par le flux
+  // "Instagram API with Instagram Login" — ça ne fait pas partie du vrai
+  // code et il faut le retirer avant l'échange, sinon Meta répond
+  // "Error validating verification code" à chaque tentative, même avec un
+  // redirect_uri par ailleurs strictement identique (bug identifié le 13/09,
+  // confirmé par la doc officielle Meta : "The #_ appended to the end of
+  // the redirect URI is not part of the code itself, so strip it out.").
+  const codeNettoye = typeof code === "string" ? code.replace(/#_$/, "") : code;
+
   const INSTAGRAM_APP_ID = process.env.INSTAGRAM_APP_ID;
   const INSTAGRAM_APP_SECRET = process.env.INSTAGRAM_APP_SECRET;
   const INSTAGRAM_REDIRECT_URI = process.env.INSTAGRAM_REDIRECT_URI;
@@ -53,7 +62,7 @@ export default async function handler(req, res) {
       client_secret: INSTAGRAM_APP_SECRET,
       grant_type: "authorization_code",
       redirect_uri: INSTAGRAM_REDIRECT_URI,
-      code,
+      code: codeNettoye,
     });
     const shortRes = await fetch("https://api.instagram.com/oauth/access_token", {
       method: "POST",

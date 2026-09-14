@@ -2558,9 +2558,15 @@
       if (metricCout) metricCout.textContent = (data.consommationAjustee ?? '0') + ' €';
 
       const alerte = data.pourcentageConsomme >= 90 ? 'alerte' : '';
-      const statutBadge = data.diffusionPausee
-        ? '<span class="statut-badge" style="background:#fdf2f8; color:#ec4899;">⏸️ En pause</span>'
-        : '<span class="statut-badge" style="background:#f5f3ff; color:#7c3aed;">🟢 Active</span>';
+      // 14/09/2026 (soir) : distingue l'attente de vérification Google Ads
+      // (juste après un approvisionnement, jusqu'à 24h) d'une vraie pause —
+      // sans ça le badge "🟢 Active" contredisait le message affiché à
+      // l'artisan juste après son paiement.
+      const statutBadge = data.enAttenteVerification
+        ? '<span class="statut-badge" style="background:#fff7ed; color:#c2660d;">🕐 Vérification en cours</span>'
+        : (data.diffusionPausee
+          ? '<span class="statut-badge" style="background:#fdf2f8; color:#ec4899;">⏸️ En pause</span>'
+          : '<span class="statut-badge" style="background:#f5f3ff; color:#7c3aed;">🟢 Active</span>');
       box.innerHTML = `
         <h3>Solde publicitaire ${statutBadge}</h3>
         <div class="solde-bar-track"><div class="solde-bar-fill ${alerte}" style="width:${data.pourcentageConsomme}%"></div></div>
@@ -2569,7 +2575,9 @@
           <span>Restant : <strong>${data.budgetRestant} €</strong> / ${data.budgetPaye} €</span>
         </div>
         <div class="solde-detail">
-          ${data.clics} clic${data.clics === 1 ? '' : 's'} reçu${data.clics === 1 ? '' : 's'} ce mois-ci.
+          ${data.enAttenteVerification
+            ? "Compte en cours de vérification par Google Ads — vos annonces prendront effet sous 24 heures maximum."
+            : `${data.clics} clic${data.clics === 1 ? '' : 's'} reçu${data.clics === 1 ? '' : 's'} ce mois-ci.`}
         </div>
       `;
 

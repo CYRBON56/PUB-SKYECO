@@ -294,6 +294,14 @@
         </div>
         <div class="photos-grid" id="photosGrid"></div>
 
+        <!-- 14/09/2026 (soir) : photos avant/après, demandées par Cyrille —
+             remplacent le carrousel générique sur la vitrine (voir
+             apercu.html) quand au moins une paire complète est renseignée. -->
+        <label style="margin-top:18px;">Photos avant / après (jusqu'à 6 paires)</label>
+        <p class="hint" style="margin:2px 0 8px;">Une vraie preuve de réalisation convainc bien plus qu'une photo seule — ces paires remplacent automatiquement le carrousel générique sur ta vitrine.</p>
+        <div id="avantApresListe"></div>
+        <button type="button" id="btnAjouterPaireAvantApres" class="btn-extraire" style="background:#1e6f4c; color:#fff;">+ Ajouter une paire avant/après</button>
+
         <div id="gammaBox" style="margin-top:14px; border:1.5px dashed #d8d2c2; border-radius:14px; padding:16px; background:#fdfcf9;">
           <div style="display:flex; align-items:center; justify-content:between; gap:10px; margin-bottom:8px;">
             <div style="font-size:0.86rem; font-weight:600; color:#4a8a68;">🎨 Pas encore de photos ? Génère-en une avec l'IA</div>
@@ -611,6 +619,7 @@
 
   let logoUrl = null;
   let photosUrls = [];
+  let avantApresListe = []; // [{avant: url|null, apres: url|null}, ...]
   let videoUrl = null;
   let metiersActuels = [];
   let titreChoisi = '';
@@ -865,6 +874,10 @@
       if (draft.photos && draft.photos.length) {
         photosUrls = draft.photos;
         rafraichirGridPhotos();
+      }
+      if (Array.isArray(draft.photos_avant_apres) && draft.photos_avant_apres.length) {
+        avantApresListe = draft.photos_avant_apres;
+        rafraichirAvantApres();
       }
       if (draft.logo_url) {
         logoUrl = draft.logo_url;
@@ -1377,6 +1390,66 @@
       });
     });
   }
+
+  // 14/09/2026 (soir) : paires avant/après — chaque paire a deux emplacements
+  // (avant/après), chacun cliquable indépendamment tant qu'il est vide ;
+  // une fois les deux photos envoyées, la paire compte comme complète et
+  // remplace le carrousel générique sur apercu.html (voir sa sélection
+  // "draft.photos_avant_apres"). Sauvegardée telle quelle (y compris les
+  // paires incomplètes, pour ne pas perdre une photo déjà envoyée si
+  // l'artisan revient plus tard compléter l'autre côté).
+  function rafraichirAvantApres() {
+    const liste = document.getElementById('avantApresListe');
+    liste.innerHTML = avantApresListe.map((paire, i) => `
+      <div class="paire-avant-apres" data-index="${i}" style="display:flex; gap:10px; align-items:center; margin-bottom:10px; border:1.5px solid #e5e0d3; border-radius:12px; padding:10px; background:#fdfcf9;">
+        ${['avant', 'apres'].map(role => `
+          <div style="flex:1; text-align:center;">
+            <div class="photo-thumb aa-slot" data-index="${i}" data-role="${role}" style="cursor:pointer; ${paire[role] ? '' : 'border:1.5px dashed #d8d2c2; display:flex; align-items:center; justify-content:center; background:#f4f2ea;'}">
+              ${paire[role] ? `<img src="${paire[role]}" alt="${role}">` : `<span style="font-size:0.72rem; color:#8a9891;">+ ${role === 'avant' ? 'Avant' : 'Après'}</span>`}
+            </div>
+            <div class="hint" style="margin-top:2px;">${role === 'avant' ? 'Avant' : 'Après'}</div>
+          </div>
+        `).join('')}
+        <button type="button" class="btn-suppr-paire" data-index="${i}" style="background:rgba(42,61,53,0.55); color:#fff; border:none; border-radius:50%; width:24px; height:24px; font-size:14px; cursor:pointer; flex-shrink:0;">×</button>
+      </div>
+    `).join('');
+
+    liste.querySelectorAll('.aa-slot').forEach(slot => {
+      slot.addEventListener('click', () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          const idx = parseInt(slot.dataset.index);
+          const role = slot.dataset.role;
+          slot.innerHTML = '<span style="font-size:0.72rem; color:#8a9891;">Envoi…</span>';
+          try {
+            const url = await uploaderFichier(file, `avant-apres-${role}`);
+            avantApresListe[idx][role] = url;
+            rafraichirAvantApres();
+            sauvegarderChampsImmediat({ photos_avant_apres: avantApresListe });
+          } catch (err) {
+            slot.innerHTML = '<span style="font-size:0.7rem; color:#c0392b;">Erreur</span>';
+          }
+        };
+        input.click();
+      });
+    });
+    liste.querySelectorAll('.btn-suppr-paire').forEach(btn => {
+      btn.addEventListener('click', () => {
+        avantApresListe.splice(parseInt(btn.dataset.index), 1);
+        rafraichirAvantApres();
+        sauvegarderChampsImmediat({ photos_avant_apres: avantApresListe });
+      });
+    });
+  }
+  document.getElementById('btnAjouterPaireAvantApres').addEventListener('click', () => {
+    if (avantApresListe.length >= 6) return;
+    avantApresListe.push({ avant: null, apres: null });
+    rafraichirAvantApres();
+  });
 
   document.getElementById('btnGammaGenerer').addEventListener('click', async () => {
     const promptEl = document.getElementById('gammaPrompt');

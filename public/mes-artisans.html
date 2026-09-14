@@ -339,7 +339,7 @@
           ${fiches.map(f => {
             const metiers = Array.isArray(f.metier) ? f.metier.join(', ') : (f.metier || '—');
             const date = new Date(f.created_at).toLocaleDateString('fr-FR');
-            const lienElements = `${SITE_BASE}/mes-elements.html?id=${f.id}`;
+            const lienElements = `${SITE_BASE}/construire-ma-vitrine.html?id=${f.id}`;
             const initiale = (f.entreprise || '?').trim().charAt(0).toUpperCase();
             const nouvelEssai = estNouvelEssai(f);
             return `
@@ -486,7 +486,7 @@
 
   // Bouton "Mes rendez-vous" (04/09) : ce sont les demandes de RDV que TOI
   // reçois (un artisan qui souhaite qu'on construise sa vitrine ensemble au
-  // téléphone — bouton ajouté dans mes-elements.html), pas ceux de tel ou
+  // téléphone — bouton ajouté dans construire-ma-vitrine.html), pas ceux de tel ou
   // tel artisan. Réutilise le module de RDV interne + le calendrier déjà
   // intégré à mon-dashboard.html, mais pointé sur TON identité dédiée
   // ("Skyeco Pro", créée le 04/09 dans skyeco_pro_vitrine_drafts, archivée

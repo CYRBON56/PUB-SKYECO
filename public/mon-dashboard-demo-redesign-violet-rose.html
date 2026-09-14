@@ -668,7 +668,7 @@
       }
       // Mode visiteur (pas encore de brouillon) : on crée un brouillon vide
       // en silence (sans SIRET ni vérification SMS à ce stade — ces infos
-      // sont demandées directement dans mes-elements.html) puis on envoie
+      // sont demandées directement dans construire-ma-vitrine.html) puis on envoie
       // l'artisan construire sa vitrine tout de suite.
       if (!draftId) {
         btn.disabled = true;
@@ -690,13 +690,13 @@
           // Démarre tout de suite les 30 jours d'essai (même appel que le
           // formulaire d'inscription complet) — pas d'email/SMS de
           // bienvenue ici, l'artisan n'a pas encore renseigné ses
-          // coordonnées, il les saisit à l'instant sur mes-elements.html.
+          // coordonnées, il les saisit à l'instant sur construire-ma-vitrine.html.
           await fetch('/api/demarrer-essai-gratuit', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ draftId: nouveauDraftId }),
           }).catch(() => {});
-          window.location.href = '/mes-elements.html?id=' + nouveauDraftId;
+          window.location.href = '/construire-ma-vitrine.html?id=' + nouveauDraftId;
         } catch (e) {
           erreurEl.textContent = "Impossible de préparer votre espace pour le moment. Merci de réessayer.";
           erreurEl.style.display = 'block';
@@ -717,14 +717,14 @@
         if (data.success) {
           // 08/09/2026 : SMS + email de bienvenue avec le lien du tableau de
           // bord, demandé par Cyrille — déclenché en "fire and forget" pour
-          // ne jamais retarder la redirection vers mes-elements.html, même
+          // ne jamais retarder la redirection vers construire-ma-vitrine.html, même
           // si l'envoi échoue ou prend du temps.
           fetch('/api/envoyer-bienvenue-essai', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ draftId })
           }).catch(() => {});
-          window.location.href = '/mes-elements.html?id=' + encodeURIComponent(draftId);
+          window.location.href = '/construire-ma-vitrine.html?id=' + encodeURIComponent(draftId);
         } else {
           erreurEl.textContent = data.error || "Impossible de démarrer l'essai pour le moment.";
           erreurEl.style.display = 'block';

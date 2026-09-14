@@ -845,7 +845,7 @@
 
       <!-- Vérification téléphone : ajoutée après les CGV, avant de démarrer
            l'essai — l'artisan arrive ensuite directement sur son VRAI
-           dashboard (voir script plus bas), pas sur mes-elements.html. -->
+           dashboard (voir script plus bas), pas sur construire-ma-vitrine.html. -->
       <div id="blocTelephoneEssai">
         <label for="telephoneEssai" style="display:block; font-size:0.82rem; font-weight:700; color:#211a35; margin-bottom:6px;">Votre numéro de téléphone</label>
         <input type="tel" id="telephoneEssai" inputmode="numeric" placeholder="Ex : 06 12 34 56 78">
@@ -1038,7 +1038,7 @@
     // Clic sur "Démarrer mon essai gratuit" : CGV + téléphone vérifié
     // suffisent. Plus de formulaire d'entreprise à cette étape (déplacé au
     // moment où l'artisan veut approvisionner son budget Ads ou connecter
-    // ses réseaux sociaux, sur mes-elements.html) — on démarre l'essai (1
+    // ses réseaux sociaux, sur construire-ma-vitrine.html) — on démarre l'essai (1
     // mois, sans engagement, sans carte bancaire) et on l'envoie directement
     // sur son VRAI tableau de bord.
     document.getElementById('btnDemarrerEssai').addEventListener('click', async () => {
@@ -1060,7 +1060,7 @@
 
       // Mode visiteur (pas encore de brouillon) : on crée un brouillon avec
       // le téléphone déjà vérifié (sans SIRET ni autres infos à ce stade —
-      // ces informations sont demandées plus tard, dans mes-elements.html,
+      // ces informations sont demandées plus tard, dans construire-ma-vitrine.html,
       // quand l'artisan veut approvisionner son budget ou connecter ses
       // réseaux sociaux).
       if (!idAUtiliser) {
@@ -1109,7 +1109,7 @@
             body: JSON.stringify({ draftId: idAUtiliser })
           }).catch(() => {});
           // Direction le VRAI dashboard, en mode essai — les informations
-          // complètes de l'entreprise (mes-elements.html) et le choix d'un
+          // complètes de l'entreprise (construire-ma-vitrine.html) et le choix d'un
           // forfait payant ne sont demandés que plus tard, quand l'artisan
           // veut approvisionner son budget Ads ou connecter ses réseaux
           // sociaux (voir mon-dashboard.html).

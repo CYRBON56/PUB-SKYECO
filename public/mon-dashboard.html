@@ -526,11 +526,11 @@
 
   <!-- Écran de choix "3 options" (14/09/2026) — présenté dès l'arrivée sur le
        VRAI dashboard, juste après l'essai gratuit démarré depuis
-       mon-dashboard-demo.html (qui n'a jamais fait passer par mes-elements.html
+       mon-dashboard-demo.html (qui n'a jamais fait passer par construire-ma-vitrine.html
        ni choisir-forfait.html) : c'est ici, et pas plus tard, que l'artisan
        tout juste inscrit doit dire comment il veut sa vitrine. Voir
        api/definir-mode-vitrine.js et claude/skyeco-pro-brief-3-choix-vitrine.md.
-       Masqué dès que "entreprise" est renseignée (mes-elements.html déjà fait),
+       Masqué dès que "entreprise" est renseignée (construire-ma-vitrine.html déjà fait),
        pour ne pas revenir dessus à chaque visite. -->
   <style>
     .cvd-box { background:#fff; border:1.5px solid #7c3aed; border-radius:16px; padding:22px 24px; margin-bottom:22px; }
@@ -931,7 +931,7 @@
     el.addEventListener('click', (e) => {
       if (!window.tarifActifActuel) {
         e.preventDefault();
-        window.location.href = '/mes-elements.html?id=' + draftId + '&verrou=ads';
+        window.location.href = '/construire-ma-vitrine.html?id=' + draftId + '&verrou=ads';
       }
     });
   }
@@ -1008,7 +1008,7 @@
     }
 
     document.getElementById('verifAccesOverlay').remove();
-    document.getElementById('btnElements').href = '/mes-elements.html?id=' + draftId;
+    document.getElementById('btnElements').href = '/construire-ma-vitrine.html?id=' + draftId;
     sessionTokenActuel = adminToken ? null : token;
     tokenCalendrierActuel = token;
     chargerLogo();
@@ -1274,7 +1274,7 @@
         alert(data.error || "Impossible de créer la nouvelle vitrine pour le moment.");
         return;
       }
-      window.location.href = '/mes-elements.html?id=' + data.draftId;
+      window.location.href = '/construire-ma-vitrine.html?id=' + data.draftId;
     } catch (e) {
       alert('Impossible de contacter le serveur.');
     }
@@ -1400,7 +1400,7 @@
 
       document.getElementById('btnConnecterFacebook').addEventListener('click', () => {
         if (!window.tarifActifActuel) {
-          window.location.href = '/mes-elements.html?id=' + draftId + '&verrou=ads';
+          window.location.href = '/construire-ma-vitrine.html?id=' + draftId + '&verrou=ads';
           return;
         }
         // Flux OAuth classique (voir facebook-connect-start.js) — la Page est
@@ -1447,7 +1447,7 @@
 
       document.getElementById('btnConnecterTikTok').addEventListener('click', () => {
         if (!window.tarifActifActuel) {
-          window.location.href = '/mes-elements.html?id=' + draftId + '&verrou=ads';
+          window.location.href = '/construire-ma-vitrine.html?id=' + draftId + '&verrou=ads';
           return;
         }
         // Flux OAuth self-service TikTok (voir tiktok-connect-start.js).
@@ -1456,7 +1456,7 @@
 
       document.getElementById('btnConnecterInstagram').addEventListener('click', () => {
         if (!window.tarifActifActuel) {
-          window.location.href = '/mes-elements.html?id=' + draftId + '&verrou=ads';
+          window.location.href = '/construire-ma-vitrine.html?id=' + draftId + '&verrou=ads';
           return;
         }
         if (connexion) {
@@ -2230,7 +2230,7 @@
       const rows = await resp.json();
       const logoUrl = rows[0]?.logo_url;
       // Verrou paiement (11/09) : sans forfait actif, "Approvisionner" et
-      // "Connecter Instagram" redirigent vers mes-elements.html.
+      // "Connecter Instagram" redirigent vers construire-ma-vitrine.html.
       window.tarifActifActuel = !!rows[0]?.tarif_actif;
       if (logoUrl) {
         const img = document.getElementById('logoEntreprise');
@@ -2283,10 +2283,10 @@
 
   // --- Écran de choix "3 options" (14/09/2026) ----------------------------
   // N'est montré que tant que "entreprise" est vide, c'est-à-dire tant que
-  // l'artisan n'a pas encore fait mes-elements.html — donc typiquement juste
+  // l'artisan n'a pas encore fait construire-ma-vitrine.html — donc typiquement juste
   // après avoir démarré son essai gratuit depuis mon-dashboard-demo.html
-  // (ce parcours n'affiche jamais mes-elements.html ni choisir-forfait.html
-  // avant d'arriver ici). Une fois mes-elements.html complété, entreprise
+  // (ce parcours n'affiche jamais construire-ma-vitrine.html ni choisir-forfait.html
+  // avant d'arriver ici). Une fois construire-ma-vitrine.html complété, entreprise
   // n'est plus vide et ce bloc ne réapparaît plus. Réutilise le même
   // endpoint que choisir-forfait.html (api/definir-mode-vitrine.js).
   let cvdModeConfirme = { mode: 'ia', siteUrlValide: true };
@@ -2306,7 +2306,7 @@
       });
       const rows = await resp.json();
       const draft = rows[0];
-      if (!draft || draft.entreprise) return; // déjà onboardé — mes-elements.html a déjà été fait
+      if (!draft || draft.entreprise) return; // déjà onboardé — construire-ma-vitrine.html a déjà été fait
 
       const box = document.getElementById('choixVitrineDashboard');
       box.style.display = 'block';
@@ -2326,7 +2326,7 @@
       }
 
       const majContinuer = () => {
-        document.getElementById('cvdBtnContinuer').href = '/mes-elements.html?id=' + draftId + '&mode=' + cvdModeConfirme.mode;
+        document.getElementById('cvdBtnContinuer').href = '/construire-ma-vitrine.html?id=' + draftId + '&mode=' + cvdModeConfirme.mode;
       };
       majContinuer();
 

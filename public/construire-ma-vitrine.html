@@ -1,0 +1,1839 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Construire ma vitrine — Skyeco Pro</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background:#f7f5f0; color:#2a3d35; padding:80px 20px 100px;
+    position:relative; overflow-x:hidden; line-height:1.6;
+  }
+
+  /* Fond végétal, très discret — juste une présence apaisante, jamais distrayant */
+  .leaf-bg { position:fixed; z-index:0; pointer-events:none; }
+  .leaf-bg svg { display:block; }
+
+  .wrap { position:relative; z-index:1; max-width:640px; margin:0 auto; }
+
+  .eyebrow { font-size:0.78rem; font-weight:600; color:#4a8a68; letter-spacing:0.04em; text-transform:uppercase; margin-bottom:10px; }
+  h1 { font-size:2.5rem; font-weight:800; margin-bottom:14px; letter-spacing:-0.02em; line-height:1.15; }
+  .intro { font-size:0.98rem; color:#5f6f66; line-height:1.75; margin-bottom:8px; max-width:52ch; }
+  .reassurance { font-size:0.84rem; color:#7a8880; margin-bottom:36px; display:flex; align-items:center; gap:8px; }
+
+  /* Barre de progression douce */
+  .progress-wrap { margin-bottom:32px; }
+  .progress-track { background:#e9e5db; border-radius:999px; height:6px; overflow:hidden; }
+  .progress-fill { background:#4a8a68; height:100%; border-radius:999px; transition:width 0.5s ease; width:0%; }
+  .progress-label { font-size:0.76rem; color:#8a9891; margin-top:8px; }
+
+  .section {
+    background:#fffdfa; border-radius:20px; margin-bottom:16px;
+    box-shadow:0 1px 3px rgba(42,61,53,0.04), 0 8px 24px rgba(42,61,53,0.05);
+    overflow:hidden; border:1px solid rgba(42,61,53,0.04);
+  }
+  .section-header {
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:22px 26px; cursor:pointer; user-select:none;
+  }
+  .section-header:hover { background:rgba(74,138,104,0.03); }
+  .section-title { display:flex; align-items:center; gap:12px; }
+  .section-icon { font-size:1.3rem; }
+  .section h2 { font-size:1.05rem; font-weight:700; }
+  .section .sub { font-size:0.82rem; color:#8a9891; margin-top:3px; }
+  .section-check { font-size:0.78rem; color:#4a8a68; font-weight:600; opacity:0; transition:opacity 0.2s; }
+  .section-check.visible { opacity:1; }
+  .chevron { color:#c2c9c3; font-size:0.9rem; transition:transform 0.25s ease; flex-shrink:0; }
+  .section.open .chevron { transform:rotate(180deg); }
+
+  .section-body { max-height:0; overflow:hidden; transition:max-height 0.35s ease; }
+  .section.open .section-body { max-height:none; }
+  .section-body-inner { padding:4px 26px 26px; }
+
+  label { display:block; font-size:0.84rem; font-weight:600; color:#3d5248; margin-bottom:7px; margin-top:18px; }
+  label:first-of-type { margin-top:0; }
+  input[type=text], input[type=email], input[type=tel], input[type=url], input[type=number], select, textarea {
+    width:100%; padding:12px 14px; border:1.5px solid #e3ded2; border-radius:12px; font-size:0.95rem;
+    font-family:inherit; color:#2a3d35; background:#fdfcf9; transition:border-color 0.15s;
+  }
+  input:focus, select:focus, textarea:focus { outline:none; border-color:#4a8a68; }
+  textarea { resize:vertical; min-height:70px; }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .row3 { display:grid; grid-template-columns:2fr 1fr 1fr; gap:14px; }
+  .hint { font-size:0.76rem; color:#a3ab9e; margin-top:6px; line-height:1.5; }
+
+  .upload-box {
+    border:1.5px dashed #d8d2c2; border-radius:14px; padding:24px; text-align:center; cursor:pointer; transition:all 0.2s; background:#fdfcf9;
+  }
+  .upload-box:hover { border-color:#4a8a68; background:#f4f8f5; }
+  .upload-box.has-file { border-style:solid; border-color:#4a8a68; background:#f0f7f2; }
+  .upload-box input[type=file] { display:none; }
+  .upload-label { font-size:0.88rem; font-weight:600; color:#4a8a68; }
+  .upload-status { font-size:0.78rem; color:#8a9891; margin-top:6px; }
+  .logo-preview-img { display:none; max-height:60px; max-width:180px; object-fit:contain; margin:0 auto 10px; }
+
+  .titre-option { margin-bottom:2px; }
+  .titre-option label { display:flex; align-items:flex-start; gap:10px; margin:0 0 10px; font-weight:400; font-size:0.92rem; cursor:pointer; color:#2a3d35; }
+  .titre-option input[type=radio] { margin-top:3px; accent-color:#4a8a68; width:auto; }
+
+  .photos-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(88px,1fr)); gap:10px; margin-top:14px; }
+  .photo-thumb { position:relative; aspect-ratio:1; border-radius:10px; overflow:hidden; background:#f0eee6; }
+  .photo-thumb img { width:100%; height:100%; object-fit:cover; }
+  .photo-thumb .del { position:absolute; top:4px; right:4px; background:rgba(42,61,53,0.55); color:#fff; border:none; border-radius:50%; width:22px; height:22px; font-size:13px; cursor:pointer; line-height:1; }
+
+  .toggle-row { display:flex; align-items:center; gap:10px; margin-bottom:4px; }
+  .toggle-row input { width:auto; accent-color:#4a8a68; }
+  .toggle-row label { margin:0; font-weight:600; }
+
+  .extraction-box { background:#f4ece2; border-radius:12px; padding:14px 16px; margin-top:14px; font-size:0.82rem; color:#6b5e4c; line-height:1.6; }
+  .btn-extraire { background:#e8622c; color:#fff; border:none; border-radius:10px; padding:10px 18px; font-size:0.82rem; font-weight:600; cursor:pointer; margin-top:10px; transition:filter 0.15s; }
+
+  .btn-avancement {
+    display:inline-flex; align-items:center; gap:8px; background:#fff; border:1.5px solid #4a8a68;
+    color:#3d7a5a; border-radius:999px; padding:10px 18px; font-size:0.84rem; font-weight:600;
+    text-decoration:none; margin-bottom:24px; transition:background 0.15s;
+  }
+  .btn-avancement:hover { background:#f0f7f2; }
+
+  .btn-rdv-construction {
+    display:inline-flex; align-items:center; gap:8px; background:#fff; border:1.5px solid #e8622c;
+    color:#c74f20; border-radius:999px; padding:10px 18px; font-size:0.84rem; font-weight:700;
+    text-decoration:none; margin-bottom:16px; transition:background 0.15s ease, transform 0.15s ease;
+  }
+  .btn-rdv-construction:hover { background:#fdf1ea; transform:translateY(-1px); }
+
+  .btn-dashboard-hero {
+    display:flex; align-items:center; justify-content:center; gap:12px;
+    width:100%; background:linear-gradient(135deg, #4a9d6e 0%, #3d7a5a 55%, #2a5940 100%);
+    color:#fff; border:none; border-radius:16px; padding:20px; margin-bottom:24px;
+    font-size:1.05rem; font-weight:800; text-decoration:none;
+    box-shadow:0 14px 32px rgba(61,122,90,0.35); transition:transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .btn-dashboard-hero:hover { transform:translateY(-2px); box-shadow:0 18px 38px rgba(61,122,90,0.42); }
+  .btn-dashboard-hero .icon { font-size:1.3rem; }
+  .btn-extraire:hover { filter:brightness(1.06); }
+
+  .formulaire-liste { display:flex; flex-direction:column; gap:2px; margin-top:14px; }
+  .formulaire-item { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid #f1efe7; }
+  .formulaire-item:last-child { border-bottom:none; }
+  .formulaire-item input[type="checkbox"] { width:auto; flex-shrink:0; accent-color:#4a8a68; }
+  .formulaire-item .formulaire-texte { flex:1; font-size:0.86rem; color:#3d5248; }
+  .formulaire-item .formulaire-type { font-size:0.72rem; color:#a3ab9e; background:#f4ece2; border-radius:20px; padding:2px 10px; white-space:nowrap; }
+  .formulaire-ajout { display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }
+  .formulaire-ajout input[type="text"] { flex:1; min-width:200px; }
+  .formulaire-ajout select { width:auto; }
+
+  .produit-card { border:1px solid #efece2; border-radius:14px; padding:16px; margin-top:14px; background:#fdfcf9; }
+  .produit-card-header { display:grid; grid-template-columns:2fr 1fr 1fr 1fr auto; gap:10px; align-items:start; }
+  .produit-card-header label { margin-top:0; font-size:0.72rem; }
+  .produit-card-header input, .produit-card-header select { margin-top:0; }
+  .btn-suppr-produit {
+    background:none; border:1.5px solid #e3ded2; color:#a3564a; border-radius:10px;
+    width:38px; height:38px; margin-top:22px; font-size:1rem; cursor:pointer; flex-shrink:0;
+  }
+  .btn-suppr-produit:hover { background:#fbeceb; border-color:#e0b3ac; }
+  .produit-questions-titre { font-size:0.78rem; font-weight:600; color:#8a9891; margin-top:16px; margin-bottom:2px; }
+  .btn-ajouter-produit {
+    background:none; border:1.5px dashed #c7d0c9; color:#4a8a68; border-radius:12px;
+    padding:12px; width:100%; font-size:0.86rem; font-weight:600; cursor:pointer; margin-top:14px; transition:all 0.15s;
+  }
+  .btn-ajouter-produit:hover { background:#f4f8f5; border-color:#4a8a68; }
+
+  .btn-submit {
+    width:100%; background:#3d7a5a; color:#fff; border:none; border-radius:14px; padding:18px; font-size:1rem; font-weight:700; cursor:pointer; margin-top:12px; transition:filter 0.15s;
+  }
+  .btn-submit:hover { filter:brightness(1.05); }
+  .btn-submit:disabled { opacity:0.55; cursor:not-allowed; }
+  .save-note { text-align:center; font-size:0.78rem; color:#a3ab9e; margin-top:12px; }
+  .save-msg { text-align:center; font-size:0.88rem; margin-top:14px; padding:14px; border-radius:12px; line-height:1.5; }
+  .save-msg.ok { background:#eef5ef; color:#3d7a5a; }
+  .save-msg.err { background:#fbeeec; color:#b5482a; }
+  .btn-etre-rappele-fixe {
+    position:fixed; top:20px; right:20px; z-index:200;
+    display:flex; align-items:center; gap:6px;
+    background:#E8622C; color:#fff; text-decoration:none;
+    border-radius:999px; padding:12px 22px; font-size:13.5px; font-weight:700;
+    box-shadow:0 6px 20px rgba(232,98,44,0.4); transition:transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .btn-etre-rappele-fixe:hover{ transform:translateY(-2px); box-shadow:0 8px 24px rgba(232,98,44,0.5); }
+  @media (max-width:600px){ .btn-etre-rappele-fixe{ position:static; display:inline-flex; margin-bottom:16px; padding:10px 18px; font-size:12.5px; } }
+
+  /* Bandeau explicatif verrou paiement (12/09) */
+  .banniere-verrou-ads {
+    display:none; background:linear-gradient(120deg, #fff4ec, #ffe8d6); border:1.5px solid #f0c9a8;
+    border-radius:16px; padding:18px 22px; margin-bottom:26px; line-height:1.55;
+  }
+  .banniere-verrou-ads strong { color:#14312a; display:block; margin-bottom:4px; font-size:0.98rem; }
+  .banniere-verrou-ads span { color:#6b5e4c; font-size:0.88rem; display:block; margin-bottom:12px; }
+  .btn-banniere-verrou-ads {
+    display:inline-flex; align-items:center; gap:8px; background:#e8622c; color:#fff; text-decoration:none;
+    border-radius:10px; padding:11px 18px; font-size:0.85rem; font-weight:700;
+  }
+</style>
+</head>
+<body>
+
+<!-- Fond végétal très discret, purement d'ambiance -->
+<div class="leaf-bg" style="top:-40px; right:-100px; opacity:0.12;">
+  <svg width="320" height="320" viewBox="0 0 320 320">
+    <defs>
+      <radialGradient id="lf1" cx="35%" cy="30%" r="75%">
+        <stop offset="0%" stop-color="#7bc79e"/>
+        <stop offset="100%" stop-color="#3d7a5a"/>
+      </radialGradient>
+    </defs>
+    <path fill="url(#lf1)" d="M160,25 C230,45 280,105 265,180 C250,255 175,280 120,245 C65,210 50,135 85,80 C110,48 135,32 160,25 Z"/>
+  </svg>
+</div>
+<div class="leaf-bg" style="bottom:-80px; left:-90px; opacity:0.10;">
+  <svg width="380" height="380" viewBox="0 0 380 380">
+    <defs>
+      <radialGradient id="lf2" cx="40%" cy="35%" r="70%">
+        <stop offset="0%" stop-color="#f0a878"/>
+        <stop offset="100%" stop-color="#e8622c"/>
+      </radialGradient>
+    </defs>
+    <path fill="url(#lf2)" d="M190,35 C270,60 330,130 315,210 C300,290 210,325 140,290 C70,255 45,165 80,105 C105,62 150,42 190,35 Z"/>
+  </svg>
+</div>
+
+<a class="btn-etre-rappele-fixe" href="/prendre-rdv.html?id=4fbdb122-9fca-4636-b80c-d9e4abc2542b" target="_blank" rel="noopener">📞 Être rappelé</a>
+
+<div class="wrap">
+  <a href="#" id="lienRetourDashboard" class="btn-dashboard-hero" style="display:none;"><span class="icon">📊</span> Accéder à mon tableau de bord</a>
+  <div class="eyebrow">Construction de votre vitrine</div>
+  <h1 id="titreConstruction">Construire votre formulaire vitrine</h1>
+  <p class="intro">
+    Dépose ici ce qui nous permettra de construire ta vraie vitrine — à ton rythme, section par section.
+  </p>
+  <a class="btn-rdv-construction" href="/prendre-rdv.html?id=4fbdb122-9fca-4636-b80c-d9e4abc2542b" target="_blank" rel="noopener">📅 Envie qu'on la construise ensemble au téléphone ? Réservez un créneau</a>
+  <p class="reassurance">🌿 Rien n'est chronométré, et chaque section s'enregistre à part.</p>
+
+  <a class="btn-avancement" id="btnAvancement" href="#" target="_blank" rel="noopener">📊 Voir l'avancement de mon site</a>
+
+  <div class="progress-wrap">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label" id="progressLabel">0% complété</div>
+  </div>
+
+  <div class="section open" data-section="visuel">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">🎨</span>
+        <div>
+          <h2>Identité visuelle</h2>
+          <p class="sub">Logo, photos, vidéo — ce que tu as sous la main suffit.</p>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="section-check" data-check="visuel">✓ complété</span>
+        <span class="chevron">▾</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="section-body-inner">
+        <label>Logo de l'entreprise</label>
+        <div class="upload-box" id="boxLogo">
+          <input type="file" id="inputLogo" accept="image/*">
+          <img id="logoPreview" class="logo-preview-img" alt="Logo">
+          <div class="upload-label">📁 Choisir un fichier</div>
+          <div class="upload-status" id="statusLogo">Aucun fichier — PNG ou JPG, fond transparent de préférence</div>
+        </div>
+
+        <label>Photos pour le carrousel (jusqu'à 10)</label>
+        <div class="upload-box" id="boxPhotos">
+          <input type="file" id="inputPhotos" accept="image/*" multiple>
+          <div class="upload-label">📁 Ajouter des photos</div>
+          <div class="upload-status" id="statusPhotos">Aucune photo ajoutée</div>
+        </div>
+        <div class="photos-grid" id="photosGrid"></div>
+
+        <div id="gammaBox" style="margin-top:14px; border:1.5px dashed #d8d2c2; border-radius:14px; padding:16px; background:#fdfcf9;">
+          <div style="display:flex; align-items:center; justify-content:between; gap:10px; margin-bottom:8px;">
+            <div style="font-size:0.86rem; font-weight:600; color:#4a8a68;">🎨 Pas encore de photos ? Génère-en une avec l'IA</div>
+          </div>
+          <textarea id="gammaPrompt" placeholder="Décris l'image que tu veux — ex : pose d'une terrasse en résine EPDM gris anthracite chez un particulier, jardin moderne, journée ensoleillée" style="min-height:56px;"></textarea>
+          <button type="button" id="btnGammaGenerer" class="btn-extraire" style="margin-top:8px;">Générer l'image</button>
+          <div id="gammaStatus" class="upload-status" style="margin-top:8px;"></div>
+          <button type="button" id="btnGammaCarrousel" class="btn-extraire" style="margin-top:10px; background:#1e6f4c; color:#fff;">🎞️ Générer un carrousel de 4 photos avec l'IA</button>
+          <p class="hint" style="margin:4px 0 0;">Enchaîne 4 générations d'un coup (une scène différente à chaque fois selon ton métier) pour démarrer ton carrousel sans tout taper à la main.</p>
+          <div id="gammaCarrouselStatus" class="upload-status" style="margin-top:6px;"></div>
+        </div>
+
+        <label>Vidéo de chantier ou avant/après (optionnel)</label>
+        <div class="upload-box" id="boxVideo">
+          <input type="file" id="inputVideo" accept="video/*">
+          <div class="upload-label">📁 Choisir une vidéo</div>
+          <div class="upload-status" id="statusVideo">Ou colle un lien YouTube/Vimeo ci-dessous</div>
+        </div>
+        <input type="url" id="videoLien" placeholder="https://youtube.com/..." style="margin-top:10px;">
+
+        <label style="margin-top:18px;">Position du formulaire</label>
+        <select id="selectPositionFormulaire">
+          <option value="gauche">À gauche (photo/vidéo à droite)</option>
+          <option value="droite">À droite (photo/vidéo à gauche)</option>
+        </select>
+        <p class="hint">Choisis le côté où le formulaire de demande d'estimation s'affiche sur ta vitrine — l'autre côté affiche ta photo ou ta vidéo.</p>
+
+        <label style="margin-top:18px;">Image derrière le formulaire</label>
+        <select id="selectFondFormulaireSource">
+          <option value="carrousel">Le carrousel de photos</option>
+          <option value="video">La vidéo</option>
+        </select>
+        <p class="hint">Ce fond est décoratif, derrière le texte du formulaire — choisis s'il reprend tes photos ou ta vidéo.</p>
+
+        <label style="margin-top:14px;">Netteté du fond <span id="valeurFlouFond" class="hint" style="display:inline;"></span></label>
+        <input type="range" id="rangeFlouFond" min="0" max="30" step="1" style="width:100%;">
+        <p class="hint">Tout à gauche = net, tout à droite = très flou. Un fond flou garde le texte du formulaire lisible.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section open" data-section="assistant-ia">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">🤖</span>
+        <div>
+          <h2>Assistant IA — Construire ma vitrine</h2>
+          <p class="sub">Décris ton activité avec tes mots, l'IA te propose des titres sur-mesure — plus rapide que de tout écrire toi-même.</p>
+        </div>
+      </div>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="section-body">
+      <div class="section-body-inner">
+        <label style="margin-top:0;">Décris ton activité en quelques phrases</label>
+        <textarea id="assistantVitrineDescription" rows="4" placeholder="Ex : Je pose des terrasses et plages de piscine en résine EPDM dans le Morbihan depuis 10 ans, surtout pour des particuliers avec piscine. Je travaille aussi sur les allées et les margelles."></textarea>
+
+        <label style="margin-top:14px;">Ou pars d'un lien existant (optionnel)</label>
+        <input type="url" id="assistantVitrineUrl" placeholder="https://..." style="width:100%; box-sizing:border-box; padding:10px 12px; border:1px solid #dde5e1; border-radius:8px; font-size:0.88rem; font-family:inherit;">
+        <div style="display:flex; flex-wrap:wrap; gap:16px; margin-top:8px;">
+          <label style="display:flex; align-items:center; gap:6px; font-weight:400; margin:0; font-size:0.85rem; cursor:pointer;">
+            <input type="radio" name="assistantVitrineUrlMode" id="assistantVitrineUrlModePropre" value="propre_site" checked style="width:auto; margin:0;">
+            C'est mon site actuel
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; font-weight:400; margin:0; font-size:0.85rem; cursor:pointer;">
+            <input type="radio" name="assistantVitrineUrlMode" id="assistantVitrineUrlModeInspiration" value="inspiration" style="width:auto; margin:0;">
+            C'est un site qui m'inspire
+          </label>
+        </div>
+        <p class="hint" style="margin:6px 0 0;">« Mon site actuel » réutilise tes propres textes et photos. « Un site qui m'inspire » ne copie jamais son contenu — l'IA s'inspire seulement de sa structure pour créer un texte 100% nouveau, propre à toi.</p>
+
+        <button type="button" id="btnAssistantVitrineIA" style="margin-top:10px; background:#e8622c; color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:0.85rem; font-weight:700; cursor:pointer;">✨ Construire ma vitrine avec l'IA</button>
+        <div id="assistantVitrineResultat" style="margin-top:12px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" data-section="titre">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">🏷️</span>
+        <div>
+          <h2>Titre de votre vitrine</h2>
+          <p class="sub">Le grand titre affiché sur votre page — choisis celui qui te ressemble, ou écris le tien.</p>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="section-check visible" data-check="titre">✓ facultatif</span>
+        <span class="chevron">▾</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="section-body-inner" id="titreOptions">
+        <div class="hint">Renseigne d'abord ton métier dans l'estimation pour voir des suggestions adaptées — en attendant, une valeur par défaut est déjà utilisée.</div>
+      </div>
+      <button type="button" id="btnSuggererTitre" style="margin-top:10px; background:#1e6f4c; color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:0.85rem; font-weight:700; cursor:pointer;">✨ Suggérer un titre avec l'IA</button>
+      <div id="suggestionsTitreIA" style="margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <div class="section" data-section="coordonnees">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">📍</span>
+        <div><h2>Coordonnées</h2></div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="section-check" data-check="coordonnees">✓ complété</span>
+        <span class="chevron">▾</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="section-body-inner">
+        <label>Nom de l'entreprise</label>
+        <input type="text" id="entreprise" placeholder="Ex : EcoSky by RMS">
+        <p class="hint">C'est le nom affiché à toi comme artisan (tableau de bord, SMS, devis) — différent du "titre de votre vitrine" ci-dessous, qui est le gros titre vu par vos prospects sur la page publique.</p>
+
+        <label>Téléphone</label>
+        <input type="tel" id="telephone" placeholder="06 12 34 56 78">
+
+        <label>Email</label>
+        <input type="email" id="email" placeholder="contact@monentreprise.fr">
+
+        <label>Adresse</label>
+        <input type="text" id="adresseRue" placeholder="Numéro et rue">
+        <div class="row2" style="margin-top:10px;">
+          <input type="text" id="adresseCp" placeholder="Code postal">
+          <input type="text" id="adresseVille" placeholder="Ville">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" data-section="legal">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">⚖️</span>
+        <div>
+          <h2>Informations légales</h2>
+          <p class="sub">Pour tes mentions légales et tes futurs devis.</p>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="section-check" data-check="legal">✓ complété</span>
+        <span class="chevron">▾</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="section-body-inner">
+        <label>SIRET</label>
+        <input type="text" id="siret" placeholder="14 chiffres">
+
+        <label>Forme juridique</label>
+        <select id="formeJuridique">
+          <option value="">— Sélectionner —</option>
+          <option>Entreprise individuelle (EI)</option>
+          <option>Micro-entreprise</option>
+          <option>EURL</option>
+          <option>SARL</option>
+          <option>SASU</option>
+          <option>SAS</option>
+          <option>Autre</option>
+        </select>
+
+        <div style="display:flex; align-items:flex-start; gap:10px; background:#f5f8f6; border:1.5px solid #d8e3de; border-radius:12px; padding:14px 16px; margin-top:12px;">
+          <input type="checkbox" id="checkFranchiseTva" style="width:auto; margin-top:3px; accent-color:#1e6f4c;">
+          <label for="checkFranchiseTva" style="margin:0; font-weight:700; color:#14312a; cursor:pointer; display:block; width:100%;">
+            Je suis en franchise en base de TVA (auto-entrepreneur/micro-entreprise)
+            <span style="display:block; font-weight:400; font-size:0.82rem; color:#5b6b64; margin-top:3px;">Vos devis et factures n'afficheront alors aucune TVA, avec la mention légale "TVA non applicable, art. 293 B du CGI" à la place. À cocher vous-même — nous ne pouvons pas le déduire avec certitude de votre SIRET, seul vous savez si vous dépassez les seuils.</span>
+          </label>
+        </div>
+        <button type="button" id="btnVerifierSiret" style="margin-top:8px; background:#fff; color:#1e6f4c; border:1.5px solid #1e6f4c; border-radius:8px; padding:8px 14px; font-size:0.82rem; font-weight:700; cursor:pointer;">🔍 Vérifier ma forme juridique via mon SIRET</button>
+        <div id="statutVerifSiret" class="hint" style="margin-top:6px;"></div>
+
+        <div class="row2">
+          <div>
+            <label>Capital social (si société)</label>
+            <input type="text" id="capitalSocial" placeholder="Ex : 10 000 €">
+          </div>
+          <div>
+            <label>Ville d'immatriculation RCS</label>
+            <input type="text" id="rcsVille" placeholder="Ex : Lorient">
+          </div>
+        </div>
+
+        <label>Assurance décennale — assureur</label>
+        <input type="text" id="assuranceAssureur" placeholder="Ex : ERGO France">
+
+        <label>Assurance décennale — numéro de police</label>
+        <input type="text" id="assuranceNumero" placeholder="Numéro de contrat">
+
+        <div class="row2">
+          <div>
+            <label>Acompte demandé à la commande</label>
+            <input type="number" id="acomptePourcentage" min="0" max="100" placeholder="Ex : 30" style="margin-top:0;">
+          </div>
+          <div>
+            <label>Délai d'intervention habituel</label>
+            <input type="text" id="delaiIntervention" placeholder="Ex : 2 à 4 semaines" style="margin-top:0;">
+          </div>
+        </div>
+        <p class="hint">Ces deux informations apparaîtront sur le PDF d'estimation envoyé à vos prospects.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" data-section="siteweb">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">🔗</span>
+        <div>
+          <h2>Site web existant</h2>
+          <p class="sub">Facultatif — utile si tu en as déjà un.</p>
+        </div>
+      </div>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="section-body">
+      <div class="section-body-inner">
+        <input type="url" id="siteExistant" placeholder="https://monsite.fr">
+        <button type="button" class="btn-extraire" id="btnExtraire">🔍 Essayer de récupérer les infos légales</button>
+        <div class="extraction-box" id="extractionResult" style="display:none;"></div>
+
+        <button type="button" class="btn-extraire" id="btnGenererDepuisSite" style="margin-top:10px; background:#1e6f4c;">✨ Générer un titre + récupérer des photos depuis ce site</button>
+        <div id="genererDepuisSiteResult" style="margin-top:10px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" data-section="produits">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">🧮</span>
+        <div>
+          <h2>Formulaire de votre vitrine</h2>
+          <p class="sub">Deux façons de recueillir les demandes de vos prospects — le basique est déjà actif, sans rien à faire.</p>
+        </div>
+      </div>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="section-body">
+      <div class="section-body-inner">
+        <div style="background:#f5f8f6; border:1.5px solid #d8e3de; border-radius:12px; padding:14px 16px; margin-bottom:16px;">
+          <strong style="color:#14312a;">✅ Formulaire basique — actif par défaut</strong>
+          <p class="hint" style="margin:6px 0 0;">Vos prospects renseignent leur nom, prénom, email, téléphone, adresse et une description de leur projet, puis sont invités à prendre rendez-vous avec vous. Aucune configuration nécessaire de votre côté.</p>
+        </div>
+
+        <div style="display:flex; align-items:flex-start; gap:10px; background:#fff4ec; border:1.5px solid #f0c9a8; border-radius:12px; padding:14px 16px;">
+          <input type="checkbox" id="checkFormulairePersonnalise" style="width:auto; margin-top:3px; accent-color:#c9601f;">
+          <label for="checkFormulairePersonnalise" style="margin:0; font-weight:700; color:#14312a; cursor:pointer; display:block; width:100%;">
+            Formulaire personnalisé
+            <span style="display:block; font-weight:400; font-size:0.82rem; color:#5b6b64; margin-top:3px;">Remplace le formulaire basique par un parcours de questions et un calcul de prix construits sur mesure pour CETTE vitrine — visible uniquement ici, jamais partagé avec les autres vitrines. Un formulaire personnalisé se construit avec Skyeco, pas depuis cette page : cocher cette case envoie une demande à votre conseiller si rien n'est encore construit pour cette vitrine — en attendant, la vitrine continue d'afficher le formulaire basique.</span>
+            <span id="statusFormulairePersonnalise" style="display:none; margin-top:6px; font-size:0.82rem; font-weight:700; color:#1e6f4c;">✓ Demande envoyée — vous serez recontacté pour construire votre formulaire sur mesure.</span>
+          </label>
+        </div>
+        <div id="formulairePersonnaliseDescriptionWrapper" style="display:none; margin-top:10px;">
+          <label for="formulairePersonnaliseDescription" style="font-weight:600; font-size:0.85rem; color:#14312a;">Décrivez le formulaire dont vous avez besoin</label>
+          <p class="hint" style="margin:2px 0 6px;">Quelles questions poser à vos prospects, comment calculer le prix (au m², au forfait, par option...) — plus c'est précis, plus vite votre conseiller pourra vous le construire.</p>
+          <textarea id="formulairePersonnaliseDescription" rows="4" placeholder="Ex : je veux demander la surface en m² et le type de pose, puis calculer un prix au m² selon le type choisi..."></textarea>
+        </div>
+
+        <div id="tarifsPortailsSection" style="display:none; margin-top:14px;">
+          <div style="background:#fff4ec; border:1.5px solid #f0c9a8; border-radius:12px; padding:16px 18px;">
+            <strong style="color:#14312a;">🔧 Tarifs du configurateur Portails</strong>
+            <p class="hint" style="margin-top:6px;">Ces prix (en € HT) alimentent directement le configurateur de la vitrine — chaque champ se sauvegarde tout seul dès que vous en sortez, aucun ré-upload de fichier n'est nécessaire. Laissez à 0 un poste que vous ne facturez pas encore : tant que le prix de base (coulissant/battant) est à 0, le configurateur oriente le prospect vers un devis manuel plutôt que d'afficher un prix.</p>
+            <div id="tarifsPortailsGrille"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-submit" id="btnSubmit">Enregistrer mes éléments</button>
+  <p class="save-note">Tu peux revenir compléter ce formulaire plus tard, rien n'est perdu.</p>
+  <div class="save-msg" id="saveMsg" style="display:none;"></div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+  const BUCKET = 'skyeco-pro-media';
+
+  const params = new URLSearchParams(window.location.search);
+  const draftId = params.get('id');
+
+  // Verrou paiement (12/09) : arrivée directe sur les champs SIRET/nom
+  // (sections "Coordonnées" et "Légal" ouvertes et affichées en premier),
+  // sans bandeau ni message intermédiaire — voir aussi plus bas, la
+  // redirection vers campagne.html après "Enregistrer mes éléments".
+  const verrouAds = params.get('verrou') === 'ads';
+  if (verrouAds) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('open'));
+    const sectionCoordonnees = document.querySelector('[data-section="coordonnees"]');
+    const sectionLegal = document.querySelector('[data-section="legal"]');
+    if (sectionCoordonnees) sectionCoordonnees.classList.add('open');
+    if (sectionLegal) sectionLegal.classList.add('open');
+    window.addEventListener('load', () => {
+      sectionCoordonnees?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
+  // Mode simplifié (14/09/2026) : quand l'artisan a choisi "Mon site actuel"
+  // ou "Vitrine sur mesure" sur mon-dashboard.html (voir choixVitrineDashboard
+  // / api/definir-mode-vitrine.js), construire la vitrine Skyeco elle-même
+  // (logo/photos, assistant IA, titre, formulaire de tarifs) ne sert à rien :
+  // soit l'annonce pointe directement vers son propre site, soit c'est Skyeco
+  // qui la construira à la main. On ne garde donc que ce qui reste utile pour
+  // activer la campagne : Coordonnées + Informations légales.
+  const mode = params.get('mode') || 'ia';
+  const modeSimplifie = (mode === 'site_externe' || mode === 'sur_mesure');
+  if (modeSimplifie) {
+    ['visuel', 'assistant-ia', 'titre', 'siteweb', 'produits'].forEach(nom => {
+      const section = document.querySelector(`[data-section="${nom}"]`);
+      if (section) section.style.display = 'none';
+    });
+    const btnAvancement = document.getElementById('btnAvancement');
+    if (btnAvancement) btnAvancement.style.display = 'none';
+    const h1 = document.getElementById('titreConstruction');
+    const intro = document.querySelector('.intro');
+    const btnSubmitLabel = document.getElementById('btnSubmit');
+    if (h1) h1.textContent = 'Vos coordonnées et vos informations légales';
+    document.title = 'Mes informations — Skyeco Pro';
+    if (intro) {
+      intro.textContent = mode === 'site_externe'
+        ? "Vos annonces renvoient déjà vers votre site actuel — il ne reste plus qu'à renseigner vos coordonnées et vos informations légales pour activer votre campagne."
+        : "Notre équipe prépare votre vitrine sur mesure — en attendant, renseignez vos coordonnées et vos informations légales pour activer votre campagne.";
+    }
+    if (btnSubmitLabel) btnSubmitLabel.textContent = 'Enregistrer mes informations';
+    if (!verrouAds) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('open'));
+      const sectionCoordonnees = document.querySelector('[data-section="coordonnees"]');
+      const sectionLegal = document.querySelector('[data-section="legal"]');
+      if (sectionCoordonnees) sectionCoordonnees.classList.add('open');
+      if (sectionLegal) sectionLegal.classList.add('open');
+    }
+  }
+
+  // Avertit avant de quitter/recharger la page si une sauvegarde (auto ou
+  // upload de fichier) est encore en cours — même logique que sur le
+  // tableau de bord, pour éviter de perdre une saisie envoyée trop tard.
+  let sauvegardesEnCours = 0;
+  function demarrerSauvegarde() { sauvegardesEnCours++; }
+  function terminerSauvegarde() { sauvegardesEnCours = Math.max(0, sauvegardesEnCours - 1); }
+  window.addEventListener('beforeunload', (e) => {
+    if (sauvegardesEnCours > 0) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
+  let logoUrl = null;
+  let photosUrls = [];
+  let videoUrl = null;
+  let metiersActuels = [];
+  let titreChoisi = '';
+  let draftStatutActuel = null;
+  let compteDejaExistant = false;
+  let zoneActuelle = null;
+  let tvaTauxActuel = 20;
+
+  const TITRES_PAR_METIER = {
+    paysagiste: ["Un extérieur qui vous ressemble.", "Votre jardin, transformé.", "Un aménagement extérieur pensé pour durer."],
+    piscine: ["Une piscine prête pour l'été.", "Votre bassin, sans mauvaise surprise.", "La piscine que vous imaginiez enfin chez vous."],
+    tonte: ["Le sol qui tient tête aux hivers bretons.", "Un jardin toujours impeccable.", "L'entretien de votre extérieur, sans y penser."],
+    terrasse: ["Une terrasse pour en profiter longtemps.", "Votre terrasse, posée dans les règles de l'art.", "L'extérieur qui vous donne envie de rester dehors."],
+    paysagiste_concepteur: ["Un plan pensé pour durer.", "Votre extérieur, conçu sur-mesure.", "Un projet paysager pensé avant d'être réalisé."],
+    arboriste: ["Des arbres bien tenus, en toute sécurité.", "Vos arbres, entre de bonnes mains.", "L'entretien de vos arbres, sans risque."],
+    espaces_verts: ["Des espaces verts toujours soignés.", "Un entretien fiable, saison après saison.", "Vos espaces verts, pris en charge du début à la fin."],
+    autre: ["Un projet sur-mesure, pensé pour vous.", "Votre projet, réalisé avec sérieux.", "Un artisan de confiance, près de chez vous.", "Créé en 2007, fêtera bientôt ses 20 ans d'existence."],
+  };
+
+  document.querySelectorAll('.section-header').forEach(header => {
+    header.addEventListener('click', () => {
+      const section = header.closest('.section');
+      const estOuverte = section.classList.contains('open');
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('open'));
+      if (!estOuverte) section.classList.add('open');
+    });
+  });
+
+  function calculerProgression() {
+    const groupes = {};
+    if (!modeSimplifie) groupes.visuel = () => !!(logoUrl || photosUrls.length);
+    groupes.coordonnees = () => !!(document.getElementById('entreprise').value.trim() && document.getElementById('telephone').value.trim() && document.getElementById('email').value.trim());
+    groupes.legal = () => !!document.getElementById('siret').value.trim();
+    if (!modeSimplifie) groupes.siteweb = () => !!document.getElementById('siteExistant').value.trim();
+    let completes = 0;
+    Object.entries(groupes).forEach(([nom, verif]) => {
+      const rempli = verif();
+      const badge = document.querySelector(`[data-check="${nom}"]`);
+      if (badge) badge.classList.toggle('visible', rempli);
+      if (rempli) completes++;
+    });
+    const pourcentage = Math.round((completes / Object.keys(groupes).length) * 100);
+    document.getElementById('progressFill').style.width = pourcentage + '%';
+    document.getElementById('progressLabel').textContent = pourcentage === 100
+      ? 'Tout est renseigné ✓'
+      : `${pourcentage}% complété`;
+  }
+  document.body.addEventListener('input', calculerProgression);
+  document.body.addEventListener('change', calculerProgression);
+
+  const PORTAILS_TARIFS_CATEGORIES = [
+    { cle: 'prixBaseHT', titre: 'Prix de base du portail (fourniture)', champs: { swing_gate: 'SWING GATE — Portail battant', oneslide: 'ONESLIDE — Portail coulissant 1 vantail', twinslide: 'TWINSLIDE — Portail coulissant 2 vantaux' } },
+    { cle: 'installation', titre: 'Installation (supplément)', champs: { fourniture_seule: 'Fourniture seule (pose non comprise)', installation_complete: 'Installation complète : terrassement, béton, évacuation de terre, raccordement électrique, capteurs' } },
+    { cle: 'remplissage', titre: 'Remplissage (supplément)', champs: { clairline: 'CLAIRLINE', decoline: 'DECOLINE', lameline: 'LAMELINE', laserline_vertical: 'LASERLINE verticale' } },
+    { cle: 'lames', titre: 'Lames (supplément)', champs: { lames_120: 'Lames 120', lames_200: 'Lames 200' } },
+    { cle: 'largeur', titre: 'Largeur (supplément)', champs: { '3000': '3,00 m', '3500': '3,50 m' } },
+    { cle: 'hauteur', titre: 'Hauteur (supplément)', champs: { '1226': '1,226 m', '1466': '1,466 m', '1585': '1,585 m', '1705': '1,705 m' } },
+    { cle: 'couleur', titre: 'Couleur (supplément)', champs: {
+      ral7016: 'RAL 7016 — Gris anthracite (inclus)', ral9010: 'RAL 9010 — Blanc (inclus)',
+      ral1015: 'RAL 1015 — Ivoire clair', ral3001: 'RAL 3001 — Rouge', ral3004: 'RAL 3004 — Rouge Bordeaux',
+      ral5017: 'RAL 5017 — Bleu', ral6005: 'RAL 6005 — Vert mousse', ral6009: 'RAL 6009 — Vert sapin',
+      ral6021: 'RAL 6021 — Vert pâle', ral7006: 'RAL 7006 — Beige gris', ral7021: 'RAL 7021 — Gris noir',
+      ral7022: "RAL 7022 — Gris terre d'ombre", ral7039: 'RAL 7039 — Gris quartz', ral8014: 'RAL 8014 — Brun sépia',
+      ral8019: 'RAL 8019 — Brun gris', ral8025: 'RAL 8025 — Brun pâle', ral9005: 'RAL 9005 — Noir',
+      ral9007: 'RAL 9007 — Gris aluminium', ral2100: 'RAL 2100 — Noir sablé', ral2900: 'RAL 2900 — Gris sablé',
+      autre_ral: 'Autre coloris',
+    } },
+    { cle: 'angle_ouverture', titre: "Angle d'ouverture (supplément)", champs: { '90': '90°', '60': '60°' } },
+    { cle: 'ouverture_exterieure', titre: 'Ouverture depuis l\'extérieur (supplément)', champs: { oui: 'Oui', non: 'Non' } },
+    { cle: 'options', titre: 'Options (supplément)', champs: { digicode_ext: 'Digicode extérieur', digicode_int: 'Digicode intérieur', visiophone: 'Visiophone', interphone: 'Interphone', batterie: 'Batterie de secours', bouton_poussoir: 'Bouton poussoir', ligne_electrique: "Tirage d'une ligne électrique jusqu'au portail" } },
+  ];
+
+  function construireGrilleTarifsPortails(valeursActuelles) {
+    const conteneur = document.getElementById('tarifsPortailsGrille');
+    conteneur.innerHTML = '';
+    PORTAILS_TARIFS_CATEGORIES.forEach(cat => {
+      const bloc = document.createElement('div');
+      bloc.style.marginTop = '14px';
+      const titre = document.createElement('div');
+      titre.style.cssText = 'font-weight:600; color:#14312a; margin-bottom:6px; font-size:0.88rem;';
+      titre.textContent = cat.titre;
+      bloc.appendChild(titre);
+      const grille = document.createElement('div');
+      grille.style.cssText = 'display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:10px;';
+      Object.entries(cat.champs).forEach(([cle, label]) => {
+        const champWrap = document.createElement('div');
+        const lbl = document.createElement('label');
+        lbl.style.cssText = 'font-weight:400; font-size:0.8rem; color:#2a4a3c; display:block; margin-bottom:2px;';
+        lbl.textContent = label;
+        const wrapInput = document.createElement('div');
+        wrapInput.style.cssText = 'position:relative;';
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.min = '0';
+        input.step = '1';
+        input.placeholder = '0';
+        input.style.cssText = 'margin-top:0; padding-right:44px;';
+        input.dataset.cat = cat.cle;
+        input.dataset.cle = cle;
+        const val = valeursActuelles && valeursActuelles[cat.cle] ? valeursActuelles[cat.cle][cle] : null;
+        input.value = (val != null && val !== 0) ? val : '';
+        input.addEventListener('change', sauvegarderTarifsPortails);
+        const suffixe = document.createElement('span');
+        suffixe.textContent = '€ HT';
+        suffixe.style.cssText = 'position:absolute; right:12px; top:50%; transform:translateY(-50%); font-size:0.78rem; color:#8a978f; pointer-events:none;';
+        wrapInput.appendChild(input);
+        wrapInput.appendChild(suffixe);
+        champWrap.appendChild(lbl);
+        champWrap.appendChild(wrapInput);
+        grille.appendChild(champWrap);
+      });
+      bloc.appendChild(grille);
+      conteneur.appendChild(bloc);
+    });
+  }
+
+  function sauvegarderTarifsPortails() {
+    const tarifs = {};
+    PORTAILS_TARIFS_CATEGORIES.forEach(cat => { tarifs[cat.cle] = {}; });
+    document.querySelectorAll('#tarifsPortailsGrille input[data-cat]').forEach(input => {
+      const v = input.value === '' ? 0 : parseFloat(input.value);
+      tarifs[input.dataset.cat][input.dataset.cle] = isFinite(v) ? v : 0;
+    });
+    sauvegarderChampsImmediat({ portails_tarifs: tarifs });
+  }
+
+  if (!draftId) {
+    document.body.innerHTML = '<div style="text-align:center; margin-top:100px;">Lien invalide — identifiant du site manquant.</div>';
+  } else {
+    document.getElementById('btnAvancement').href = '/apercu.html?id=' + draftId;
+    chargerDraftExistant();
+  }
+
+  async function chargerDraftExistant() {
+    try {
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=*`, {
+        headers: { apikey: SUPABASE_ANON_KEY }
+      });
+      const rows = await resp.json();
+      const draft = rows[0];
+      if (!draft) return;
+
+      draftStatutActuel = draft.status || null;
+
+      try {
+        const respEtat = await fetch('/api/acces-dashboard-etat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId })
+        });
+        const etat = await respEtat.json();
+        compteDejaExistant = !!(etat.success && etat.aDejaMotDePasse);
+      } catch (e) {
+        compteDejaExistant = false;
+      }
+
+      const lienRetour = document.getElementById('lienRetourDashboard');
+      lienRetour.href = compteDejaExistant
+        ? '/mon-dashboard.html?id=' + draftId
+        : '/mon-dashboard-demo.html?id=' + draftId;
+      lienRetour.style.display = 'flex';
+
+      document.getElementById('entreprise').value = draft.entreprise || '';
+      if (draft.entreprise) {
+        document.getElementById('titreConstruction').textContent = `Construisons votre formulaire vitrine, ${draft.entreprise}`;
+      }
+      document.getElementById('telephone').value = draft.telephone || '';
+      document.getElementById('email').value = draft.email || '';
+      document.getElementById('adresseRue').value = draft.adresse_rue || '';
+      document.getElementById('adresseCp').value = draft.adresse_cp || '';
+      document.getElementById('adresseVille').value = draft.adresse_ville || '';
+      document.getElementById('siret').value = draft.siret || '';
+      document.getElementById('formeJuridique').value = draft.forme_juridique || '';
+      const checkFranchiseTvaInit = document.getElementById('checkFranchiseTva');
+      if (checkFranchiseTvaInit) checkFranchiseTvaInit.checked = !!draft.franchise_tva;
+      document.getElementById('capitalSocial').value = draft.capital_social || '';
+      document.getElementById('rcsVille').value = draft.rcs_ville || '';
+      document.getElementById('assuranceAssureur').value = draft.assurance_decennale_assureur || '';
+      document.getElementById('assuranceNumero').value = draft.assurance_decennale_numero || '';
+      document.getElementById('acomptePourcentage').value = draft.acompte_pourcentage != null ? draft.acompte_pourcentage : '';
+      document.getElementById('delaiIntervention').value = draft.delai_intervention || '';
+      document.getElementById('siteExistant').value = draft.site_web_existant || '';
+
+      metiersActuels = Array.isArray(draft.metier) ? draft.metier : (draft.metier ? [draft.metier] : []);
+      zoneActuelle = draft.zone || null;
+      construireOptionsTitre(metiersActuels, draft.titre_hero_choisi || '');
+      tvaTauxActuel = draft.tva_taux || 20;
+
+      const checkFormulairePersonnalise = document.getElementById('checkFormulairePersonnalise');
+      const statusFormulairePersonnalise = document.getElementById('statusFormulairePersonnalise');
+      const formulairePersonnaliseDescriptionWrapper = document.getElementById('formulairePersonnaliseDescriptionWrapper');
+      const formulairePersonnaliseDescription = document.getElementById('formulairePersonnaliseDescription');
+      checkFormulairePersonnalise.checked = draft.formulaire_personnalise === true;
+      if (draft.formulaire_personnalise_description) formulairePersonnaliseDescription.value = draft.formulaire_personnalise_description;
+      formulairePersonnaliseDescriptionWrapper.style.display = checkFormulairePersonnalise.checked ? 'block' : 'none';
+      formulairePersonnaliseDescription.addEventListener('change', () => {
+        sauvegarderChampsImmediat({ formulaire_personnalise_description: formulairePersonnaliseDescription.value.trim() });
+      });
+      checkFormulairePersonnalise.addEventListener('change', () => {
+        sauvegarderChampsImmediat({ formulaire_personnalise: checkFormulairePersonnalise.checked });
+        formulairePersonnaliseDescriptionWrapper.style.display = checkFormulairePersonnalise.checked ? 'block' : 'none';
+        if (checkFormulairePersonnalise.checked && !draft.formulaire_personnalise_cle) {
+          fetch('/api/demander-formulaire-personnalise', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ draftId, description: formulairePersonnaliseDescription.value.trim() }),
+          }).catch(() => {});
+          statusFormulairePersonnalise.style.display = 'block';
+        } else {
+          statusFormulairePersonnalise.style.display = 'none';
+        }
+      });
+
+      if (draft.formulaire_personnalise_cle === 'portails') {
+        document.getElementById('tarifsPortailsSection').style.display = 'block';
+        construireGrilleTarifsPortails(draft.portails_tarifs || {});
+      }
+
+      const selectPosition = document.getElementById('selectPositionFormulaire');
+      selectPosition.value = draft.formulaire_position === 'droite' ? 'droite' : 'gauche';
+      selectPosition.addEventListener('change', () => {
+        sauvegarderChampsImmediat({ formulaire_position: selectPosition.value });
+      });
+
+      const selectFondSource = document.getElementById('selectFondFormulaireSource');
+      const rangeFlou = document.getElementById('rangeFlouFond');
+      const valeurFlouEl = document.getElementById('valeurFlouFond');
+      selectFondSource.value = draft.fond_formulaire_source === 'video' ? 'video' : 'carrousel';
+      const flouInitial = (draft.fond_formulaire_flou != null) ? draft.fond_formulaire_flou : 14;
+      rangeFlou.value = flouInitial;
+      valeurFlouEl.textContent = flouInitial + 'px';
+      selectFondSource.addEventListener('change', () => {
+        sauvegarderChampsImmediat({ fond_formulaire_source: selectFondSource.value });
+      });
+      rangeFlou.addEventListener('input', () => {
+        valeurFlouEl.textContent = rangeFlou.value + 'px';
+      });
+      rangeFlou.addEventListener('change', () => {
+        sauvegarderChampsImmediat({ fond_formulaire_flou: parseInt(rangeFlou.value, 10) });
+      });
+
+      if (draft.photos && draft.photos.length) {
+        photosUrls = draft.photos;
+        rafraichirGridPhotos();
+      }
+      if (draft.logo_url) {
+        logoUrl = draft.logo_url;
+        document.getElementById('statusLogo').textContent = 'Logo déjà enregistré ✓';
+        document.getElementById('boxLogo').classList.add('has-file');
+        document.getElementById('logoPreview').src = draft.logo_url;
+        document.getElementById('logoPreview').style.display = 'block';
+      }
+      if (draft.video_url) { videoUrl = draft.video_url; document.getElementById('videoLien').value = draft.video_url.startsWith('http') ? draft.video_url : ''; }
+    } catch (e) { console.error('Erreur chargerDraftExistant :', e); }
+    calculerProgression();
+  }
+
+  const METIER_LABELS = {
+    paysagiste: 'Paysagiste', piscine: 'Pose piscine', tonte: 'Tonte et coupe', terrasse: 'Terrasse',
+    paysagiste_concepteur: 'Paysagiste concepteur', arboriste: 'Arboriste élagueur', espaces_verts: "Entretien d'espaces verts", autre: 'Autre'
+  };
+  async function uploaderFichier(file, sousDossier) {
+    const ext = file.name.split('.').pop();
+    const nomFichier = `elements-artisan/${draftId}/${sousDossier}-${Date.now()}.${ext}`;
+    const resp = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${nomFichier}?apikey=${encodeURIComponent(SUPABASE_ANON_KEY)}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        apikey: SUPABASE_ANON_KEY,
+        'Content-Type': file.type || 'application/octet-stream',
+      },
+      body: file,
+    });
+    if (!resp.ok) {
+      const detail = await resp.text().catch(() => '');
+      throw new Error("Échec de l'envoi du fichier : " + detail);
+    }
+    return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${nomFichier}`;
+  }
+
+  let essaiExpireAlerteMontree = false;
+  async function sauvegarderChampsImmediat(champs) {
+    if (!draftId) return;
+    if (draftStatutActuel === 'essai_expire') {
+      if (!essaiExpireAlerteMontree) {
+        essaiExpireAlerteMontree = true;
+        if (confirm("Votre essai gratuit est terminé — passez à une formule payante pour continuer à modifier votre vitrine.\n\nVoir les formules maintenant ?")) {
+          window.location.href = '/choisir-forfait.html?id=' + draftId;
+        }
+      }
+      return;
+    }
+    demarrerSauvegarde();
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
+        method: 'PATCH',
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify(champs),
+      });
+    } catch (e) {
+    } finally {
+      terminerSauvegarde();
+    }
+  }
+
+  const CHAMPS_AUTO_SAVE = {
+    entreprise: 'entreprise',
+    telephone: 'telephone',
+    email: 'email',
+    adresseRue: 'adresse_rue',
+    adresseCp: 'adresse_cp',
+    adresseVille: 'adresse_ville',
+    siret: 'siret',
+    formeJuridique: 'forme_juridique',
+    capitalSocial: 'capital_social',
+    rcsVille: 'rcs_ville',
+    assuranceAssureur: 'assurance_decennale_assureur',
+    assuranceNumero: 'assurance_decennale_numero',
+    acomptePourcentage: 'acompte_pourcentage',
+    delaiIntervention: 'delai_intervention',
+    siteExistant: 'site_web_existant',
+  };
+  const CHAMPS_NUMERIQUES = new Set(['tva_taux', 'acompte_pourcentage']);
+  const minuteursAutoSave = {};
+  Object.entries(CHAMPS_AUTO_SAVE).forEach(([idChamp, colonne]) => {
+    const el = document.getElementById(idChamp);
+    if (!el) return;
+    const evenement = el.tagName === 'SELECT' ? 'change' : 'input';
+    el.addEventListener(evenement, () => {
+      clearTimeout(minuteursAutoSave[idChamp]);
+      minuteursAutoSave[idChamp] = setTimeout(() => {
+        const valeur = CHAMPS_NUMERIQUES.has(colonne) ? (el.value === '' ? null : parseFloat(el.value)) : el.value.trim();
+        sauvegarderChampsImmediat({ [colonne]: valeur });
+      }, 900);
+    });
+  });
+
+  const checkFranchiseTva = document.getElementById('checkFranchiseTva');
+  if (checkFranchiseTva) {
+    checkFranchiseTva.addEventListener('change', () => {
+      sauvegarderChampsImmediat({ franchise_tva: checkFranchiseTva.checked });
+    });
+  }
+
+  const btnVerifierSiret = document.getElementById('btnVerifierSiret');
+  if (btnVerifierSiret) {
+    btnVerifierSiret.addEventListener('click', async () => {
+      const siret = document.getElementById('siret').value.trim();
+      const statut = document.getElementById('statutVerifSiret');
+      if (!siret) { statut.textContent = "Renseigne d'abord ton SIRET ci-dessus."; return; }
+      statut.textContent = 'Vérification…';
+      try {
+        const res = await fetch('/api/verifier-siret', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ siret })
+        });
+        const data = await res.json();
+        if (!data.success) { statut.textContent = data.error || 'Vérification indisponible pour le moment.'; return; }
+        if (!data.trouve) { statut.textContent = 'SIRET introuvable dans le répertoire officiel — vérifie la saisie.'; return; }
+        statut.textContent = `${data.libelleNature || 'Forme juridique'} confirmée (${data.denomination || ''}).`;
+        if (data.suggestionFranchiseTva && checkFranchiseTva && !checkFranchiseTva.checked) {
+          checkFranchiseTva.checked = true;
+          statut.textContent += ' Case "franchise en base de TVA" pré-cochée — à confirmer ou décocher toi-même.';
+        }
+      } catch (e) {
+        statut.textContent = 'Vérification indisponible pour le moment — tu peux cocher la case manuellement.';
+      }
+    });
+  }
+
+  function construireOptionsTitre(metiers, titreActuel) {
+    const metierPrincipal = (metiers && metiers[0]) || 'autre';
+    const options = TITRES_PAR_METIER[metierPrincipal] || TITRES_PAR_METIER.autre;
+    const container = document.getElementById('titreOptions');
+    const estPersonnalise = !!titreActuel && !options.includes(titreActuel);
+    titreChoisi = titreActuel || '';
+
+    const echapper = (s) => s.replace(/"/g, '&quot;');
+
+    container.innerHTML = `
+      <label style="margin-top:0;">Choisis un titre, ou écris le tien</label>
+      ${options.map(t => `
+        <div class="titre-option">
+          <label>
+            <input type="radio" name="titreRadio" value="${echapper(t)}" ${titreActuel === t ? 'checked' : ''}>
+            <span>${t}</span>
+          </label>
+        </div>
+      `).join('')}
+      <div class="titre-option">
+        <label>
+          <input type="radio" name="titreRadio" value="custom" ${estPersonnalise ? 'checked' : ''}>
+          <span>✏️ Mon propre titre</span>
+        </label>
+      </div>
+      <input type="text" id="titrePersonnalise" placeholder="Ex : Votre projet, notre métier." style="margin-top:4px; ${estPersonnalise ? '' : 'display:none;'}" value="${estPersonnalise ? echapper(titreActuel) : ''}">
+    `;
+
+    const inputPerso = document.getElementById('titrePersonnalise');
+    container.querySelectorAll('input[name="titreRadio"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        if (radio.value === 'custom') {
+          inputPerso.style.display = 'block';
+          titreChoisi = inputPerso.value.trim();
+        } else {
+          inputPerso.style.display = 'none';
+          titreChoisi = radio.value;
+        }
+        sauvegarderChampsImmediat({ titre_hero_choisi: titreChoisi || null });
+      });
+    });
+    inputPerso.addEventListener('input', () => { titreChoisi = inputPerso.value.trim(); });
+    inputPerso.addEventListener('change', () => {
+      sauvegarderChampsImmediat({ titre_hero_choisi: titreChoisi || null });
+    });
+  }
+
+  function appliquerTitreSuggere(texte, zoneBoxAEffacer) {
+    const radioCustom = document.querySelector('input[name="titreRadio"][value="custom"]');
+    const inputPerso = document.getElementById('titrePersonnalise');
+    if (radioCustom) radioCustom.checked = true;
+    if (inputPerso) {
+      inputPerso.style.display = 'block';
+      inputPerso.value = texte;
+    }
+    titreChoisi = texte;
+    sauvegarderChampsImmediat({ titre_hero_choisi: titreChoisi });
+    if (zoneBoxAEffacer) zoneBoxAEffacer.innerHTML = '';
+  }
+
+  function afficherSuggestionsTitre(zoneBox, titres) {
+    zoneBox.innerHTML = titres.map(t => `
+      <button type="button" class="titre-suggestion-ia" style="display:block; width:100%; text-align:left; margin-bottom:6px; padding:10px 12px; background:#f5f8f6; border:1px solid #dde5e1; border-radius:8px; cursor:pointer; font-size:0.88rem;">${t.replace(/"/g, '&quot;')}</button>
+    `).join('');
+    zoneBox.querySelectorAll('.titre-suggestion-ia').forEach(elBtn => {
+      elBtn.addEventListener('click', () => appliquerTitreSuggere(elBtn.textContent, zoneBox));
+    });
+  }
+
+  document.getElementById('btnSuggererTitre').addEventListener('click', async () => {
+    const btn = document.getElementById('btnSuggererTitre');
+    const zoneBox = document.getElementById('suggestionsTitreIA');
+    const metiers = metiersActuels && metiersActuels.length ? metiersActuels : [];
+
+    if (!metiers.length) {
+      zoneBox.innerHTML = '<div class="hint">Renseigne d\'abord ton métier pour obtenir des suggestions adaptées.</div>';
+      return;
+    }
+
+    const texteOriginal = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Génération…';
+    zoneBox.innerHTML = '';
+
+    try {
+      const res = await fetch('/api/suggerer-titre', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ metiers, zone: zoneActuelle })
+      });
+      const data = await res.json();
+      if (data.success && data.titres && data.titres.length) {
+        afficherSuggestionsTitre(zoneBox, data.titres);
+      } else {
+        zoneBox.innerHTML = '<div class="hint">' + (data.error || "Suggestion indisponible pour le moment, réessaie plus tard.") + '</div>';
+      }
+    } catch (e) {
+      zoneBox.innerHTML = '<div class="hint">Suggestion indisponible pour le moment, réessaie plus tard.</div>';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = texteOriginal;
+    }
+  });
+
+  const SCENES_CARROUSEL_PAR_METIER = {
+    paysagiste: [
+      "Un jardin résidentiel fraîchement aménagé, massifs et pelouse, journée ensoleillée",
+      "Une haie parfaitement taillée devant une maison moderne",
+      "Une allée de jardin en pas japonais entourée de végétation",
+      "Un aménagement paysager complet avec terrasse en bois et massifs fleuris",
+    ],
+    piscine: [
+      "Une piscine extérieure avec plage en pierre naturelle, eau turquoise, journée ensoleillée",
+      "Un pool house moderne à côté d'une piscine à débordement",
+      "Une piscine familiale entourée d'un jardin paysagé",
+      "Une margelle de piscine en résine claire au bord de l'eau",
+    ],
+    tonte: [
+      "Une pelouse parfaitement tondue avec des bandes régulières, jardin résidentiel",
+      "Un jardin entretenu avec bordures nettes et pelouse dense",
+      "Une tondeuse professionnelle en action sur un grand terrain",
+      "Un jardin particulier fraîchement tondu au printemps",
+    ],
+    terrasse: [
+      "Une terrasse en résine gris anthracite avec mobilier de jardin, journée ensoleillée",
+      "Un escalier de terrasse extérieur en matériaux modernes",
+      "Une terrasse couverte avec pergola donnant sur un jardin",
+      "Une terrasse résidentielle vue du dessus avec salon de jardin",
+    ],
+    paysagiste_concepteur: [
+      "Un jardin contemporain avec plan paysager structuré et éclairage extérieur",
+      "Une allée paysagée avec dallage et massifs floraux",
+      "Un jardin de particulier avec zones distinctes et végétation variée",
+      "Un aménagement extérieur haut de gamme avec terrasse et végétation",
+    ],
+    arboriste: [
+      "Un arboriste en action taillant un grand arbre, équipement de sécurité",
+      "Un arbre majestueux fraîchement élagué dans un parc résidentiel",
+      "Un abattage contrôlé d'arbre en zone résidentielle",
+      "Un jardin après élagage professionnel, bois évacué proprement",
+    ],
+    espaces_verts: [
+      "Un espace vert entretenu avec pelouse tondue et haies taillées",
+      "Un jardin résidentiel bien entretenu au printemps",
+      "Une allée de jardin propre bordée de massifs entretenus",
+      "Un parc ou jardin public soigné",
+    ],
+    resine: [
+      "Une terrasse extérieure recouverte de résine EPDM gris anthracite, surface lisse, journée ensoleillée",
+      "Un tour de piscine en revêtement de sol résine beige",
+      "Une allée en résine décorative devant une maison moderne",
+      "Un sol en résine coulée vue de près, texture soignée",
+    ],
+    autre: [
+      "Un chantier de travaux extérieurs propre et professionnel",
+      "Une réalisation extérieure soignée pour un client particulier",
+      "Une équipe de terrain sur un chantier résidentiel",
+      "Un extérieur de maison rénové avec soin",
+    ],
+  };
+
+  async function genererUneImageGamma(prompt) {
+    const startResp = await fetch('/api/generer-image-gamma', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'start', prompt, draftId }),
+    });
+    const startData = await startResp.json();
+    if (!startData.success) throw new Error(startData.error || 'Échec du lancement');
+    const generationId = startData.generationId;
+    const attendre = ms => new Promise(r => setTimeout(r, ms));
+    for (let tentative = 0; tentative < 20; tentative++) {
+      await attendre(3000);
+      const statusResp = await fetch('/api/generer-image-gamma', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'status', generationId, draftId }),
+      });
+      const statusData = await statusResp.json();
+      if (!statusData.success) throw new Error(statusData.error || 'Échec de la vérification');
+      if (statusData.status === 'completed') return statusData.url;
+      if (statusData.status === 'failed') throw new Error(statusData.error || 'La génération a échoué');
+    }
+    throw new Error('La génération prend trop de temps');
+  }
+
+  async function genererCarrouselPhotosIA(metierSuggere, descriptionLibre, statusEl) {
+    const metierValide = m => Object.prototype.hasOwnProperty.call(SCENES_CARROUSEL_PAR_METIER, m);
+    const metier = metierValide(metierSuggere) ? metierSuggere
+      : (metiersActuels[0] && metierValide(metiersActuels[0])) ? metiersActuels[0]
+      : 'autre';
+    const scenes = SCENES_CARROUSEL_PAR_METIER[metier];
+    const nb = Math.min(4, 10 - photosUrls.length);
+    if (nb <= 0) {
+      if (statusEl) statusEl.textContent = 'Carrousel déjà plein (10 photos maximum).';
+      return;
+    }
+    const contexte = descriptionLibre && descriptionLibre.trim() ? ` — ${descriptionLibre.trim().slice(0, 200)}` : '';
+
+    let reussies = 0;
+    for (let i = 0; i < nb; i++) {
+      if (statusEl) statusEl.textContent = `📷 Génération des photos avec l'IA (Gamma)… (${i + 1}/${nb}, ~30 secondes chacune)`;
+      try {
+        const url = await genererUneImageGamma(scenes[i % scenes.length] + contexte);
+        photosUrls.push(url);
+        reussies++;
+        rafraichirGridPhotos();
+        document.getElementById('statusPhotos').textContent = `${photosUrls.length} photo(s) ajoutée(s)`;
+        document.getElementById('boxPhotos').classList.add('has-file');
+        sauvegarderChampsImmediat({ photos: photosUrls });
+      } catch (e) {
+      }
+    }
+    if (statusEl) {
+      statusEl.textContent = reussies > 0
+        ? `✓ ${reussies} photo(s) générée(s) et ajoutée(s) à ton carrousel`
+        : "La génération de photos n'a pas fonctionné pour le moment (réessaie plus tard, ou ajoute tes propres photos).";
+    }
+  }
+
+  function afficherResultatAssistantVitrine(data, zoneBox, btnAssistantVitrine, descriptionPourCarrousel) {
+    if (data.logoUrl && !logoUrl) {
+      logoUrl = data.logoUrl;
+      document.getElementById('statusLogo').textContent = 'Logo récupéré depuis ton site ✓';
+      document.getElementById('boxLogo').classList.add('has-file');
+      document.getElementById('logoPreview').src = logoUrl;
+      sauvegarderChampsImmediat({ logo_url: logoUrl });
+    }
+    if (Array.isArray(data.photosUrls) && data.photosUrls.length) {
+      let ajoutees = 0;
+      data.photosUrls.forEach(u => {
+        if (!photosUrls.includes(u)) { photosUrls.push(u); ajoutees++; }
+      });
+      if (ajoutees > 0) {
+        rafraichirGridPhotos();
+        document.getElementById('statusPhotos').textContent = `${photosUrls.length} photo(s) ajoutée(s)`;
+        document.getElementById('boxPhotos').classList.add('has-file');
+        sauvegarderChampsImmediat({ photos: photosUrls });
+      }
+    }
+
+    let html = '<label style="margin-top:0;">Titres sur-mesure — clique pour utiliser</label>';
+    html += data.titres.map(t => `
+      <button type="button" class="titre-suggestion-ia titre-assistant-ia" style="display:block; width:100%; text-align:left; margin-bottom:6px; padding:10px 12px; background:#f5f8f6; border:1px solid #dde5e1; border-radius:8px; cursor:pointer; font-size:0.88rem;">${t.replace(/"/g, '&quot;')}</button>
+    `).join('');
+    if (data.metierSuggereLabel) {
+      html += `<div class="hint" style="margin-top:8px;">💡 D'après ta description, ça ressemble à : <strong>${data.metierSuggereLabel}</strong>. Le métier qui pilote ton ciblage publicitaire se confirme dans ton tableau de bord.</div>`;
+    }
+    if (data.logoUrl || (data.photosUrls && data.photosUrls.length)) {
+      html += `<div class="hint" style="margin-top:8px; color:#1e6f4c; font-weight:600;">✓ Logo et/ou photos récupérés depuis ton site et déjà ajoutés ci-dessous.</div>`;
+    }
+    if (data.formulaireBrouillon) {
+      const idBrouillon = 'brouillonFormulaireIA';
+      html += `
+        <label style="margin-top:18px;">Brouillon de ton formulaire de devis</label>
+        <p class="hint" style="margin:2px 0 8px;">Une proposition de questions à poser à tes clients et de calcul de prix — à faire valider et coder par ton conseiller avant mise en ligne, rien n'est activé automatiquement.</p>
+        <div id="${idBrouillon}" style="white-space:pre-wrap; background:#f5f8f6; border:1px solid #dde5e1; border-radius:8px; padding:12px 14px; font-size:0.85rem; color:#14312a; max-height:320px; overflow-y:auto;">${data.formulaireBrouillon.replace(/</g, '&lt;')}</div>
+        <button type="button" id="btnEnvoyerBrouillonFormulaire" style="margin-top:10px; background:#1e6f4c; color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:0.85rem; font-weight:700; cursor:pointer;">📨 Envoyer ce brouillon à mon conseiller</button>
+        <div id="statutEnvoiBrouillon" class="hint" style="margin-top:6px; display:none; color:#1e6f4c; font-weight:700;">✓ Envoyé — ton conseiller va relire et construire ce formulaire, tu seras recontacté.</div>
+      `;
+    }
+    if (photosUrls.length === 0) {
+      html += `
+        <label style="margin-top:18px;">Photos de ton carrousel</label>
+        <div id="statutCarrouselIA" class="hint" style="color:#4a8a68; font-weight:600;">📷 Tu n'as pas encore de photo — génération automatique de 4 visuels avec l'IA (Gamma) pour démarrer ton carrousel…</div>
+      `;
+    }
+    zoneBox.innerHTML = html;
+    zoneBox.querySelectorAll('.titre-assistant-ia').forEach(elBtn => {
+      elBtn.addEventListener('click', () => {
+        appliquerTitreSuggere(elBtn.textContent, null);
+        const section = btnAssistantVitrine.closest('.section');
+        if (section) section.classList.add('open');
+        document.querySelector('[data-section="titre"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    });
+    const btnEnvoyerBrouillon = document.getElementById('btnEnvoyerBrouillonFormulaire');
+    if (btnEnvoyerBrouillon) {
+      btnEnvoyerBrouillon.addEventListener('click', () => {
+        const checkFP = document.getElementById('checkFormulairePersonnalise');
+        const descFP = document.getElementById('formulairePersonnaliseDescription');
+        const wrapperFP = document.getElementById('formulairePersonnaliseDescriptionWrapper');
+        descFP.value = data.formulaireBrouillon;
+        wrapperFP.style.display = 'block';
+        sauvegarderChampsImmediat({ formulaire_personnalise_description: descFP.value.trim() });
+        checkFP.checked = true;
+        checkFP.dispatchEvent(new Event('change'));
+        btnEnvoyerBrouillon.disabled = true;
+        btnEnvoyerBrouillon.textContent = '✓ Envoyé';
+        document.getElementById('statutEnvoiBrouillon').style.display = 'block';
+        const sectionProduits = document.querySelector('[data-section="produits"]');
+        if (sectionProduits) sectionProduits.classList.add('open');
+      });
+    }
+    if (photosUrls.length === 0) {
+      genererCarrouselPhotosIA(data.metierSuggere, descriptionPourCarrousel, document.getElementById('statutCarrouselIA'));
+    }
+  }
+
+  const btnAssistantVitrine = document.getElementById('btnAssistantVitrineIA');
+  if (btnAssistantVitrine) {
+    btnAssistantVitrine.addEventListener('click', async () => {
+      const zoneBox = document.getElementById('assistantVitrineResultat');
+      const description = document.getElementById('assistantVitrineDescription').value.trim();
+      const urlSite = document.getElementById('assistantVitrineUrl').value.trim();
+      const modeUrl = document.querySelector('input[name="assistantVitrineUrlMode"]:checked')?.value || 'propre_site';
+
+      if (!urlSite && description.length < 10) {
+        zoneBox.innerHTML = '<div class="hint">Décris ton activité en une ou deux phrases (ou colle un lien ci-dessus) pour obtenir de meilleures suggestions.</div>';
+        return;
+      }
+      if (urlSite && !/^https?:\/\//i.test(urlSite)) {
+        zoneBox.innerHTML = '<div class="hint">Le lien doit commencer par http:// ou https://</div>';
+        return;
+      }
+
+      const texteOriginal = btnAssistantVitrine.textContent;
+      btnAssistantVitrine.disabled = true;
+      btnAssistantVitrine.textContent = 'Construction en cours… (jusqu\'à 30 secondes)';
+      zoneBox.innerHTML = '';
+
+      async function genererDepuisDescription() {
+        const res = await fetch('/api/generer-vitrine-ia', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ description, metiers: metiersActuels, zone: zoneActuelle })
+        });
+        return res.json();
+      }
+
+      try {
+        let data;
+        if (urlSite) {
+          const res = await fetch('/api/analyser-site-vitrine', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: urlSite, mode: modeUrl, description, metiers: metiersActuels, zone: zoneActuelle, draftId })
+          });
+          data = await res.json();
+          if (!data.success && data.raison === 'site_illisible') {
+            if (description.length >= 10) {
+              zoneBox.innerHTML = '<div class="hint">On n\'a pas réussi à lire ce site — génération à partir de ta description à la place…</div>';
+              data = await genererDepuisDescription();
+            } else {
+              zoneBox.innerHTML = '<div class="hint">On n\'a pas réussi à lire ce site. Décris plutôt ton activité en une ou deux phrases ci-dessus, puis relance.</div>';
+              return;
+            }
+          }
+        } else {
+          data = await genererDepuisDescription();
+        }
+
+        if (data.success && data.titres && data.titres.length) {
+          afficherResultatAssistantVitrine(data, zoneBox, btnAssistantVitrine, description);
+        } else {
+          zoneBox.innerHTML = '<div class="hint">' + (data.error || "Génération indisponible pour le moment, réessaie plus tard.") + '</div>';
+        }
+      } catch (e) {
+        zoneBox.innerHTML = '<div class="hint">Génération indisponible pour le moment, réessaie plus tard.</div>';
+      } finally {
+        btnAssistantVitrine.disabled = false;
+        btnAssistantVitrine.textContent = texteOriginal;
+      }
+    });
+  }
+
+  document.getElementById('boxLogo').addEventListener('click', () => document.getElementById('inputLogo').click());
+  document.getElementById('inputLogo').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    document.getElementById('statusLogo').textContent = 'Envoi en cours…';
+    try {
+      logoUrl = await uploaderFichier(file, 'logo');
+      document.getElementById('statusLogo').textContent = 'Logo envoyé ✓';
+      document.getElementById('boxLogo').classList.add('has-file');
+      document.getElementById('logoPreview').src = logoUrl;
+      document.getElementById('logoPreview').style.display = 'block';
+      sauvegarderChampsImmediat({ logo_url: logoUrl });
+    } catch (err) {
+      document.getElementById('statusLogo').textContent = 'Erreur : ' + err.message;
+    }
+  });
+
+  document.getElementById('boxPhotos').addEventListener('click', () => document.getElementById('inputPhotos').click());
+  document.getElementById('inputPhotos').addEventListener('change', async e => {
+    const files = Array.from(e.target.files).slice(0, 10 - photosUrls.length);
+    document.getElementById('statusPhotos').textContent = `Envoi de ${files.length} photo(s)…`;
+    for (const file of files) {
+      try {
+        const url = await uploaderFichier(file, 'photo');
+        photosUrls.push(url);
+      } catch (err) { }
+    }
+    document.getElementById('statusPhotos').textContent = `${photosUrls.length} photo(s) ajoutée(s)`;
+    document.getElementById('boxPhotos').classList.add('has-file');
+    rafraichirGridPhotos();
+    sauvegarderChampsImmediat({ photos: photosUrls });
+  });
+
+  function rafraichirGridPhotos() {
+    const grid = document.getElementById('photosGrid');
+    grid.innerHTML = photosUrls.map((url, i) => `
+      <div class="photo-thumb">
+        <img src="${url}" alt="">
+        <button type="button" class="del" data-index="${i}">×</button>
+      </div>
+    `).join('');
+    grid.querySelectorAll('.del').forEach(btn => {
+      btn.addEventListener('click', () => {
+        photosUrls.splice(parseInt(btn.dataset.index), 1);
+        rafraichirGridPhotos();
+        document.getElementById('statusPhotos').textContent = `${photosUrls.length} photo(s) ajoutée(s)`;
+        sauvegarderChampsImmediat({ photos: photosUrls });
+      });
+    });
+  }
+
+  document.getElementById('btnGammaGenerer').addEventListener('click', async () => {
+    const promptEl = document.getElementById('gammaPrompt');
+    const statusEl = document.getElementById('gammaStatus');
+    const btn = document.getElementById('btnGammaGenerer');
+    const prompt = promptEl.value.trim();
+    if (!prompt) {
+      statusEl.textContent = 'Décris d\'abord l\'image que tu veux.';
+      return;
+    }
+    if (photosUrls.length >= 10) {
+      statusEl.textContent = 'Carrousel déjà plein (10 photos maximum).';
+      return;
+    }
+
+    btn.disabled = true;
+    statusEl.textContent = 'Génération en cours… (environ 20 à 40 secondes)';
+
+    try {
+      const startResp = await fetch('/api/generer-image-gamma', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'start', prompt, draftId }),
+      });
+      const startData = await startResp.json();
+      if (!startData.success) throw new Error(startData.error || 'Échec du lancement');
+
+      const generationId = startData.generationId;
+
+      const attendre = ms => new Promise(r => setTimeout(r, ms));
+      let resultat = null;
+      for (let tentative = 0; tentative < 20; tentative++) {
+        await attendre(3000);
+        const statusResp = await fetch('/api/generer-image-gamma', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'status', generationId, draftId }),
+        });
+        const statusData = await statusResp.json();
+        if (!statusData.success) throw new Error(statusData.error || 'Échec de la vérification');
+        if (statusData.status === 'completed') { resultat = statusData; break; }
+        if (statusData.status === 'failed') throw new Error(statusData.error || 'La génération a échoué');
+      }
+
+      if (!resultat) throw new Error('La génération prend trop de temps, réessaie dans un instant.');
+
+      photosUrls.push(resultat.url);
+      rafraichirGridPhotos();
+      document.getElementById('statusPhotos').textContent = `${photosUrls.length} photo(s) ajoutée(s)`;
+      document.getElementById('boxPhotos').classList.add('has-file');
+      sauvegarderChampsImmediat({ photos: photosUrls });
+
+      promptEl.value = '';
+      statusEl.textContent = 'Image ajoutée au carrousel ✓';
+    } catch (err) {
+      statusEl.textContent = 'Erreur : ' + err.message;
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  document.getElementById('btnGammaCarrousel').addEventListener('click', async () => {
+    const statusEl = document.getElementById('gammaCarrouselStatus');
+    const btn = document.getElementById('btnGammaCarrousel');
+    if (photosUrls.length >= 10) {
+      statusEl.textContent = 'Carrousel déjà plein (10 photos maximum).';
+      return;
+    }
+    btn.disabled = true;
+    const descriptionLibre = document.getElementById('gammaPrompt').value.trim();
+    try {
+      await genererCarrouselPhotosIA(null, descriptionLibre, statusEl);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  document.getElementById('boxVideo').addEventListener('click', () => document.getElementById('inputVideo').click());
+  document.getElementById('inputVideo').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    document.getElementById('statusVideo').textContent = 'Envoi en cours…';
+    try {
+      videoUrl = await uploaderFichier(file, 'video');
+      document.getElementById('statusVideo').textContent = 'Vidéo envoyée ✓';
+      document.getElementById('boxVideo').classList.add('has-file');
+      sauvegarderChampsImmediat({ video_url: videoUrl });
+    } catch (err) {
+      document.getElementById('statusVideo').textContent = 'Erreur : ' + err.message;
+    }
+  });
+
+  document.getElementById('videoLien').addEventListener('change', () => {
+    const lien = document.getElementById('videoLien').value.trim();
+    videoUrl = lien || null;
+    document.getElementById('boxVideo').classList.remove('has-file');
+    document.getElementById('statusVideo').textContent = lien ? 'Lien vidéo enregistré ✓' : 'Ou colle un lien YouTube/Vimeo ci-dessous';
+    sauvegarderChampsImmediat({ video_url: videoUrl });
+  });
+
+  document.getElementById('btnExtraire').addEventListener('click', async () => {
+    const url = document.getElementById('siteExistant').value.trim();
+    const box = document.getElementById('extractionResult');
+    if (!url) { alert('Renseigne d\'abord une URL.'); return; }
+    box.style.display = 'block';
+    box.textContent = 'Recherche en cours…';
+    try {
+      const res = await fetch('/api/extraire-donnees-site', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+      const data = await res.json();
+      if (!data.success) { box.textContent = data.error || "Rien n'a pu être extrait automatiquement — remplis les champs manuellement."; return; }
+
+      let trouve = [];
+      if (data.siret) { document.getElementById('siret').value = document.getElementById('siret').value || data.siret; trouve.push('SIRET'); }
+      if (data.rcsVille) { document.getElementById('rcsVille').value = document.getElementById('rcsVille').value || data.rcsVille; trouve.push('RCS'); }
+      if (data.capitalSocial) { document.getElementById('capitalSocial').value = document.getElementById('capitalSocial').value || data.capitalSocial; trouve.push('capital social'); }
+
+      box.textContent = trouve.length
+        ? `Trouvé automatiquement : ${trouve.join(', ')}. Vérifie que c'est correct avant d'enregistrer — cette extraction n'est pas garantie fiable.`
+        : "Rien n'a pu être extrait automatiquement sur cette page — remplis les champs manuellement.";
+    } catch (e) {
+      box.textContent = "Impossible de vérifier ce site pour le moment — remplis les champs manuellement.";
+    }
+  });
+
+  document.getElementById('btnGenererDepuisSite').addEventListener('click', async () => {
+    const btn = document.getElementById('btnGenererDepuisSite');
+    const url = document.getElementById('siteExistant').value.trim();
+    const zone = document.getElementById('genererDepuisSiteResult');
+    if (!url) { alert('Renseigne d\'abord une URL.'); return; }
+
+    const texteOriginal = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Analyse de votre site en cours…';
+    zone.innerHTML = '';
+
+    try {
+      const res = await fetch('/api/generer-vitrine-depuis-site', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, metiers: metiersActuels, zone: zoneActuelle })
+      });
+      const data = await res.json();
+
+      let html = '';
+
+      if (data.success && data.titre) {
+        html += `
+          <div class="hint" style="margin-bottom:6px;">Titre suggéré à partir de votre site :</div>
+          <button type="button" id="btnAppliquerTitreSite" style="display:block; width:100%; text-align:left; margin-bottom:10px; padding:10px 12px; background:#f5f8f6; border:1px solid #dde5e1; border-radius:8px; cursor:pointer; font-size:0.88rem;">${data.titre.replace(/"/g, '&quot;')}</button>
+        `;
+        if (data.description) {
+          html += `<div class="hint" style="margin-bottom:10px;">Accroche suggérée (à réutiliser où tu veux) : « ${data.description.replace(/</g, '&lt;')} »</div>`;
+        }
+      } else if (data.error) {
+        html += `<div class="hint">${data.error}</div>`;
+      }
+
+      if (data.images && data.images.length) {
+        html += `<div class="hint" style="margin-top:6px; margin-bottom:6px;">Photos trouvées sur ce site — coche celles à récupérer pour ton carrousel :</div>`;
+        html += `<div id="photosSiteGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(90px, 1fr)); gap:8px; margin-bottom:10px;">`;
+        html += data.images.map((src, i) => `
+          <label style="position:relative; cursor:pointer; display:block;">
+            <input type="checkbox" class="photoSiteCheckbox" value="${src.replace(/"/g, '&quot;')}" style="position:absolute; top:4px; left:4px; width:18px; height:18px;">
+            <img src="${src}" style="width:100%; height:70px; object-fit:cover; border-radius:6px; border:1.5px solid #dde5e1;" loading="lazy">
+          </label>
+        `).join('');
+        html += `</div>`;
+        html += `<button type="button" id="btnImporterPhotosSite" style="background:#1e6f4c; color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:0.85rem; font-weight:700; cursor:pointer;">Importer les photos sélectionnées</button>`;
+      }
+
+      zone.innerHTML = html || '<div class="hint">Rien n\'a pu être généré à partir de cette page.</div>';
+
+      const btnTitre = document.getElementById('btnAppliquerTitreSite');
+      if (btnTitre) {
+        btnTitre.addEventListener('click', () => {
+          const radioCustom = document.querySelector('input[name="titreRadio"][value="custom"]');
+          const inputPerso = document.getElementById('titrePersonnalise');
+          if (radioCustom) radioCustom.checked = true;
+          if (inputPerso) { inputPerso.style.display = 'block'; inputPerso.value = data.titre; }
+          titreChoisi = data.titre;
+          sauvegarderChampsImmediat({ titre_hero_choisi: titreChoisi });
+        });
+      }
+
+      const btnImporter = document.getElementById('btnImporterPhotosSite');
+      if (btnImporter) {
+        btnImporter.addEventListener('click', async () => {
+          const coches = Array.from(document.querySelectorAll('.photoSiteCheckbox:checked')).map(c => c.value);
+          if (!coches.length) { alert('Coche au moins une photo à importer.'); return; }
+          btnImporter.disabled = true;
+          btnImporter.textContent = 'Import en cours…';
+          for (const imageUrl of coches) {
+            try {
+              const resImport = await fetch('/api/importer-photo-externe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ draftId, imageUrl })
+              });
+              const dataImport = await resImport.json();
+              if (dataImport.success && dataImport.url) {
+                photosUrls.push(dataImport.url);
+              }
+            } catch (e) { }
+          }
+          rafraichirGridPhotos();
+          document.getElementById('statusPhotos').textContent = `${photosUrls.length} photo(s) ajoutée(s)`;
+          document.getElementById('boxPhotos').classList.add('has-file');
+          sauvegarderChampsImmediat({ photos: photosUrls });
+          btnImporter.disabled = false;
+          btnImporter.textContent = 'Importer les photos sélectionnées';
+        });
+      }
+    } catch (e) {
+      zone.innerHTML = '<div class="hint">Impossible d\'analyser ce site pour le moment — réessaie plus tard.</div>';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = texteOriginal;
+    }
+  });
+
+  document.getElementById('btnSubmit').addEventListener('click', async () => {
+    if (draftStatutActuel === 'essai_expire') {
+      if (confirm("Votre essai gratuit est terminé — passez à une formule payante pour continuer à modifier votre vitrine.\n\nVoir les formules maintenant ?")) {
+        window.location.href = '/choisir-forfait.html?id=' + draftId;
+      }
+      return;
+    }
+    const btn = document.getElementById('btnSubmit');
+    const msg = document.getElementById('saveMsg');
+    btn.disabled = true;
+    btn.textContent = 'Enregistrement…';
+
+    const videoFinal = videoUrl || document.getElementById('videoLien').value.trim() || null;
+
+    const payload = {
+      entreprise: document.getElementById('entreprise').value.trim(),
+      telephone: document.getElementById('telephone').value.trim(),
+      email: document.getElementById('email').value.trim(),
+      adresse_rue: document.getElementById('adresseRue').value.trim(),
+      adresse_cp: document.getElementById('adresseCp').value.trim(),
+      adresse_ville: document.getElementById('adresseVille').value.trim(),
+      siret: document.getElementById('siret').value.trim(),
+      forme_juridique: document.getElementById('formeJuridique').value,
+      franchise_tva: document.getElementById('checkFranchiseTva') ? document.getElementById('checkFranchiseTva').checked : false,
+      capital_social: document.getElementById('capitalSocial').value.trim(),
+      rcs_ville: document.getElementById('rcsVille').value.trim(),
+      assurance_decennale_assureur: document.getElementById('assuranceAssureur').value.trim(),
+      assurance_decennale_numero: document.getElementById('assuranceNumero').value.trim(),
+      acompte_pourcentage: document.getElementById('acomptePourcentage').value === '' ? null : parseFloat(document.getElementById('acomptePourcentage').value),
+      delai_intervention: document.getElementById('delaiIntervention').value.trim(),
+      site_web_existant: document.getElementById('siteExistant').value.trim(),
+      logo_url: logoUrl,
+      photos: photosUrls,
+      video_url: videoFinal,
+      titre_hero_choisi: titreChoisi || null,
+      tva_taux: tvaTauxActuel,
+      elements_deposes_le: new Date().toISOString(),
+    };
+
+    try {
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
+        method: 'PATCH',
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify(payload),
+      });
+      if (!resp.ok) throw new Error();
+
+      const versApercuPremierPassage = !compteDejaExistant && draftStatutActuel !== 'published' && draftStatutActuel !== 'en_pause' && draftStatutActuel !== 'essai';
+      msg.className = 'save-msg ok';
+      msg.textContent = verrouAds
+        ? '✓ Tes éléments ont bien été enregistrés. On t\'emmène approvisionner ton compte Google Ads…'
+        : versApercuPremierPassage
+        ? (modeSimplifie ? '✓ Tes informations ont bien été enregistrées. Retour à ton tableau de bord…' : '✓ Tes éléments ont bien été enregistrés. On t\'emmène voir ta vitrine…')
+        : '✓ Tes éléments ont bien été enregistrés.';
+      msg.style.display = 'block';
+      btn.textContent = 'Enregistré ✓';
+      if (verrouAds) {
+        setTimeout(() => {
+          window.location.href = '/campagne.html?id=' + draftId;
+        }, 1200);
+      } else if (versApercuPremierPassage) {
+        setTimeout(() => {
+          window.location.href = modeSimplifie ? '/mon-dashboard.html?id=' + draftId : '/apercu.html?id=' + draftId;
+        }, 1500);
+      } else {
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.textContent = 'Enregistrer mes éléments';
+        }, 1500);
+      }
+    } catch (e) {
+      msg.className = 'save-msg err';
+      msg.textContent = "Une erreur est survenue — réessaie ou contacte-nous directement.";
+      msg.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Enregistrer mes éléments';
+    }
+  });
+</script>
+<div id="skyecoChatBubble" style="position:fixed; bottom:22px; right:22px; z-index:999; background:linear-gradient(135deg, #f0a878 0%, #e8622c 55%, #c74f20 100%); color:#fff; display:flex; align-items:center; gap:9px; padding:14px 22px 14px 18px; border-radius:999px; font-size:15px; font-weight:700; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; cursor:pointer; box-shadow:0 8px 26px rgba(232,98,44,0.4); transition:transform 0.15s ease, box-shadow 0.15s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 32px rgba(232,98,44,0.5)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 8px 26px rgba(232,98,44,0.4)';">
+  <span style="font-size:19px; line-height:1;">💬</span><span>Besoin d'aide ?</span>
+</div>
+
+<div id="skyecoChatWindow" style="display:none; position:fixed; bottom:92px; right:22px; z-index:999; width:340px; max-width:calc(100vw - 32px); height:460px; max-height:70vh; background:#fff; border-radius:16px; box-shadow:0 10px 40px rgba(0,0,0,0.25); flex-direction:column; overflow:hidden; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <div style="background:#14312a; color:#fff; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <div style="font-weight:700; font-size:0.92rem;">Skyeco Pro</div>
+      <div style="font-size:0.72rem; opacity:0.75;">Réponse en quelques secondes</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <label style="display:flex; align-items:center; gap:4px; font-size:0.68rem; opacity:0.85; cursor:pointer;">
+        <input type="checkbox" id="skyecoChatLireVoix" style="width:auto; margin:0;"> 🔊 Lire les réponses
+      </label>
+      <button id="skyecoChatClose" style="background:none; border:none; color:#fff; font-size:20px; cursor:pointer; line-height:1;">×</button>
+    </div>
+  </div>
+  <div id="skyecoChatMessages" style="flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:10px; background:#f7f5f0;"></div>
+  <div style="padding:10px; border-top:1px solid #eef1ec; display:flex; gap:8px; background:#fff;">
+    <input type="text" id="skyecoChatInput" placeholder="Pose ta question ou parle…" style="flex:1; border:1.5px solid #e0e5df; border-radius:10px; padding:9px 12px; font-size:0.86rem;">
+    <button id="skyecoChatMic" title="Parler au lieu d'écrire" style="background:#f2f4f1; color:#14312a; border:none; border-radius:10px; padding:9px 12px; font-weight:700; cursor:pointer; font-size:0.9rem;">🎤</button>
+    <button id="skyecoChatSend" style="background:#1e6f4c; color:#fff; border:none; border-radius:10px; padding:9px 14px; font-weight:700; cursor:pointer; font-size:0.86rem;">→</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  const bubble = document.getElementById('skyecoChatBubble');
+  const chatWindow = document.getElementById('skyecoChatWindow');
+  const closeBtn = document.getElementById('skyecoChatClose');
+  const messagesEl = document.getElementById('skyecoChatMessages');
+  const input = document.getElementById('skyecoChatInput');
+  const sendBtn = document.getElementById('skyecoChatSend');
+  const micBtn = document.getElementById('skyecoChatMic');
+  const lireVoixCheckbox = document.getElementById('skyecoChatLireVoix');
+
+  let historique = [];
+  let dejaOuvert = false;
+
+  function ajouterMessage(role, texte) {
+    const bulle = document.createElement('div');
+    bulle.style.cssText = role === 'user'
+      ? 'align-self:flex-end; background:#1e6f4c; color:#fff; padding:9px 13px; border-radius:14px 14px 3px 14px; font-size:0.85rem; max-width:80%; line-height:1.45;'
+      : 'align-self:flex-start; background:#fff; color:#14312a; padding:9px 13px; border-radius:14px 14px 14px 3px; font-size:0.85rem; max-width:85%; line-height:1.45; box-shadow:0 1px 3px rgba(0,0,0,0.08);';
+    bulle.textContent = texte;
+    messagesEl.appendChild(bulle);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function ouvrirChat() {
+    chatWindow.style.display = 'flex';
+    if (!dejaOuvert) {
+      dejaOuvert = true;
+      ajouterMessage('assistant', "Bonjour ! Je suis là pour répondre à tes questions sur Skyeco Pro — les formules, comment ça marche, la publicité... Qu'est-ce que tu veux savoir ?");
+    }
+  }
+
+  bubble.addEventListener('click', () => {
+    const estOuvert = chatWindow.style.display === 'flex';
+    if (estOuvert) { chatWindow.style.display = 'none'; } else { ouvrirChat(); }
+  });
+  closeBtn.addEventListener('click', () => { chatWindow.style.display = 'none'; });
+
+  const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognitionAPI) {
+    micBtn.style.display = 'none';
+  } else {
+    const recognition = new SpeechRecognitionAPI();
+    recognition.lang = 'fr-FR';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    let enEcoute = false;
+
+    recognition.addEventListener('result', (e) => {
+      const texte = e.results[0][0].transcript;
+      input.value = texte;
+      envoyerMessage();
+    });
+    recognition.addEventListener('end', () => {
+      enEcoute = false;
+      micBtn.textContent = '🎤';
+      micBtn.style.background = '#f2f4f1';
+    });
+    recognition.addEventListener('error', () => {
+      enEcoute = false;
+      micBtn.textContent = '🎤';
+      micBtn.style.background = '#f2f4f1';
+    });
+
+    micBtn.addEventListener('click', () => {
+      if (enEcoute) { recognition.stop(); return; }
+      enEcoute = true;
+      micBtn.textContent = '🔴';
+      micBtn.style.background = '#fdeceb';
+      recognition.start();
+    });
+  }
+
+  function lireAVoixHaute(texte) {
+    if (!lireVoixCheckbox.checked || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(texte);
+    utterance.lang = 'fr-FR';
+    window.speechSynthesis.speak(utterance);
+  }
+
+  async function envoyerMessage() {
+    const texte = input.value.trim();
+    if (!texte) return;
+    ajouterMessage('user', texte);
+    historique.push({ role: 'user', content: texte });
+    input.value = '';
+    sendBtn.disabled = true;
+
+    const bulleAttente = document.createElement('div');
+    bulleAttente.id = 'skyecoChatWaiting';
+    bulleAttente.style.cssText = 'align-self:flex-start; color:#8a9891; font-size:0.8rem; padding:4px 8px;';
+    bulleAttente.textContent = '…';
+    messagesEl.appendChild(bulleAttente);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+
+    try {
+      const res = await fetch('/api/chat-skyeco', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: historique })
+      });
+      const data = await res.json();
+      document.getElementById('skyecoChatWaiting')?.remove();
+      const reponse = data.success ? data.reponse : "Désolé, je n'ai pas pu répondre — réessaie dans un instant.";
+      ajouterMessage('assistant', reponse);
+      historique.push({ role: 'assistant', content: reponse });
+      lireAVoixHaute(reponse);
+    } catch (e) {
+      document.getElementById('skyecoChatWaiting')?.remove();
+      ajouterMessage('assistant', 'Connexion impossible pour le moment — réessaie.');
+    } finally {
+      sendBtn.disabled = false;
+    }
+  }
+
+  sendBtn.addEventListener('click', envoyerMessage);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') envoyerMessage(); });
+})();
+</script>
+</body>
+</html>

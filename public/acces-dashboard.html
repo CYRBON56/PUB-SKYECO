@@ -124,7 +124,7 @@
       });
       const rows = await resp.json();
       if (!rows[0]?.elements_deposes_le) {
-        window.location.href = '/mes-elements.html?id=' + draftId;
+        window.location.href = '/construire-ma-vitrine.html?id=' + draftId;
         return;
       }
     } catch (e) { /* en cas de doute, on part sur le comportement habituel ci-dessous */ }

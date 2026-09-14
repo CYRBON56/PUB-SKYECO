@@ -65,7 +65,7 @@
   .image-panel.pas-de-survol .image-panel-preview { display:none; }
   .form-panel { flex:1 1 55%; position:relative; display:flex; align-items:stretch; justify-content:center; padding:20px 24px; overflow:hidden; order:1; }
   /* Position du formulaire (gauche/droite) — configurée par l'artisan dans
-     mes-elements.html (colonne formulaire_position), posée en JS sur
+     construire-ma-vitrine.html (colonne formulaire_position), posée en JS sur
      .split-layout (voir init). Par défaut ("gauche"), le formulaire reste à
      gauche et la photo/vidéo à droite (ordres ci-dessus, inchangés). */
   .split-layout.formulaire-droite .image-panel { order:1; }
@@ -467,11 +467,11 @@ function pushQuantiteEtSuite(s, state){
 // du projet — jamais de calcul de prix automatique, toujours orienté vers la
 // prise de rendez-vous (voir le dernier "else" de renderResultat). Les
 // gabarits METIER_TEMPLATES et le système "produits chiffrables"
-// (mes-elements.html, api/analyser-produits-chiffrables.js,
+// (construire-ma-vitrine.html, api/analyser-produits-chiffrables.js,
 // api/classifier-projet-formulaire.js) restent en place pour le texte
 // d'accroche de la vitrine (heroTitre/eyebrow/intro) mais leur getSteps()
 // n'est plus utilisé — un futur nettoyage pourra retirer les cases
-// "estimation chiffrée automatique" / "devis détaillé" de mes-elements.html
+// "estimation chiffrée automatique" / "devis détaillé" de construire-ma-vitrine.html
 // si Cyrille confirme qu'elles ne servent plus à rien.
 // Clé "description_projet" (et non "details_projet" comme pushQuantiteEtSuite
 // ci-dessus) volontairement différente : évite tout déclenchement de
@@ -488,7 +488,7 @@ function getStepsBasique(state){
 
 // ---------------------------------------------------------------------------
 // Formulaire personnalisé "resine_rms" (activé via la case "Formulaire
-// personnalisé" dans mes-elements.html + formulaire_personnalise_cle =
+// personnalisé" dans construire-ma-vitrine.html + formulaire_personnalise_cle =
 // "resine_rms" en base — voir le registre PARCOURS_PERSONNALISES dans
 // runWizard) — cas particulier codé en dur, réservé à la vitrine Skyeco Pro
 // de RMS EcoSky elle-même. Remplace tout le
@@ -580,7 +580,7 @@ const RESINE_RMS_LABELS = {
 // la question posée avant de coder ceci).
 //
 // IMPORTANT — 04/09 : les vrais prix ne sont plus modifiés ici dans le code.
-// Cyrille les saisit lui-même dans mes-elements.html (section "🔧 Tarifs du
+// Cyrille les saisit lui-même dans construire-ma-vitrine.html (section "🔧 Tarifs du
 // configurateur Portails", visible pour la vitrine dont
 // formulaire_personnalise_cle === 'portails') — chaque champ s'enregistre
 // directement dans la colonne JSON portails_tarifs de la base, lue ici via
@@ -588,7 +588,7 @@ const RESINE_RMS_LABELS = {
 // plus que de valeurs par défaut (0) — un poste absent ou non encore rempli
 // en base retombe automatiquement sur 0 ici, ce qui déclenche le garde-fou
 // chiffrable:false de calculerEstimationPortails(). Aucun changement de code
-// n'est nécessaire quand un prix est modifié dans mes-elements.html.
+// n'est nécessaire quand un prix est modifié dans construire-ma-vitrine.html.
 //
 // Refait le 04/09 sur dictée de Cyrille — reprend la nomenclature réelle du
 // fournisseur (portails AUTOPORTANTS, sans rail au sol) : trois modèles —
@@ -695,7 +695,7 @@ const MOTIF_LASERLINE_LABELS = {
   oxygen: "OXYGEN", rio1: "RIO1", rio2: "RIO2",
 };
 
-// Fusionne les tarifs saisis par Cyrille dans mes-elements.html
+// Fusionne les tarifs saisis par Cyrille dans construire-ma-vitrine.html
 // (draftInfo.portails_tarifs, colonne JSON) par-dessus les valeurs par
 // défaut de PORTAILS_TARIFS (toutes à 0) — une catégorie ou une clé absente
 // du JSON en base (ex : nouvelle option ajoutée au code mais pas encore
@@ -886,13 +886,13 @@ async function init(){
   document.documentElement.style.setProperty('--brand-dark', '#14312a');
 
   // Niveau de flou du fond décoratif derrière le formulaire (curseur "Netteté
-  // du fond" dans mes-elements.html, colonne fond_formulaire_flou, 0-30px,
+  // du fond" dans construire-ma-vitrine.html, colonne fond_formulaire_flou, 0-30px,
   // 14px par défaut) — voir .form-bg-carousel img/video ci-dessus.
   const flouFond = (draft.fond_formulaire_flou != null) ? draft.fond_formulaire_flou : 14;
   document.documentElement.style.setProperty('--flou-fond', flouFond + 'px');
 
   // Position du formulaire (gauche/droite), configurée par l'artisan dans
-  // mes-elements.html — voir la classe .formulaire-droite ci-dessus. Sans
+  // construire-ma-vitrine.html — voir la classe .formulaire-droite ci-dessus. Sans
   // valeur (anciens brouillons), reste à gauche comme aujourd'hui.
   if (draft.formulaire_position === 'droite') {
     document.querySelector('.split-layout').classList.add('formulaire-droite');
@@ -929,7 +929,7 @@ async function init(){
   document.getElementById('miniBadges').innerHTML = ['✅ Sans engagement','⏱️ Réponse sous 24h','🔒 Données confidentielles'].map(b=>'<span>'+b+'</span>').join('');
 
   // Bouton catalogue — optionnel, configuré par l'artisan dans
-  // mes-elements.html (titre + image de couverture + fichier PDF, voir
+  // construire-ma-vitrine.html (titre + image de couverture + fichier PDF, voir
   // catalogue_titre / catalogue_image_url / catalogue_fichier_url). Ne
   // s'affiche que si un fichier catalogue a bien été envoyé ; reste discret
   // (petit encart sous le texte d'intro) mais visible en permanence pendant
@@ -945,7 +945,7 @@ async function init(){
     }
     catalogueBadge.style.display = 'flex';
     // Sécurité (06/09/2026) : catalogue_fichier_url est une valeur enregistrée
-    // par l'artisan (mes-elements.html) — window.open() exécute un lien
+    // par l'artisan (construire-ma-vitrine.html) — window.open() exécute un lien
     // "javascript:" tel quel, contrairement à une simple balise <img>/<a>. On
     // n'ouvre donc que des URL http(s), jamais un schéma arbitraire.
     catalogueBadge.addEventListener('click', () => {
@@ -979,7 +979,7 @@ async function init(){
   (function initFormBgCarousel(){
     const fondContainer = document.getElementById('formBgCarousel');
     // Choix carrousel de photos / vidéo comme fond du formulaire (select
-    // "Image derrière le formulaire" dans mes-elements.html, colonne
+    // "Image derrière le formulaire" dans construire-ma-vitrine.html, colonne
     // fond_formulaire_source) — carrousel par défaut si non renseigné.
     const sourceVideo = draft.fond_formulaire_source === 'video' && draft.video_url;
     if(sourceVideo){
@@ -1131,7 +1131,7 @@ async function init(){
   if(draft.status === 'preview'){
     document.getElementById('previewBanner').style.display = 'flex';
     document.getElementById('btnRetourDashboard').href = '/mon-dashboard.html?id=' + draft.id;
-    document.getElementById('btnRetourElements').href = '/mes-elements.html?id=' + draft.id;
+    document.getElementById('btnRetourElements').href = '/construire-ma-vitrine.html?id=' + draft.id;
   }
   if(draft.status === 'en_pause'){
     document.getElementById('appRoot').innerHTML =
@@ -1249,7 +1249,7 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
   // (jusqu'ici : mode_calcul_resine_rms pour RMS EcoSky, mode_calcul_portails
   // pour PORTALECO — deux mécanismes séparés qui ne passaient pas à
   // l'échelle). Désormais UNE seule case "Formulaire personnalisé" dans
-  // mes-elements.html ; laquelle des versions codées en dur s'affiche
+  // construire-ma-vitrine.html ; laquelle des versions codées en dur s'affiche
   // dépend de formulaire_personnalise_cle (texte, jamais exposé dans
   // l'interface — posé directement en base par Claude au moment de coder le
   // parcours sur mesure de CET artisan précis). Ajouter un futur parcours
@@ -1275,7 +1275,7 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     // l'ancien parcours à étapes par métier (template.getSteps).
     const steps = parcours ? parcours.getSteps(state) : getStepsBasique(state);
     // Surcharges de texte des questions générales par métier — configurées
-    // par l'artisan dans mes-elements.html (jsonb {clé: nouveau texte}).
+    // par l'artisan dans construire-ma-vitrine.html (jsonb {clé: nouveau texte}).
     // Ne change jamais la clé/le type/les options, seulement le libellé
     // affiché au prospect.
     const surcharges = draftInfo && draftInfo.questions_generales_texte;
@@ -1336,7 +1336,7 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
       // Suffixe de prix par option (ex : "+314€ HT") quand le step précise
       // une prixCategorie — même mécanique que options_multi ci-dessous,
       // lue depuis tarifsPortailsActuels(draftInfo) (grille remplie par
-      // Cyrille dans mes-elements.html). Uniquement utilisé par le parcours
+      // Cyrille dans construire-ma-vitrine.html). Uniquement utilisé par le parcours
       // "portails" pour l'instant.
       const tarifsCategorie = s.prixCategorie ? (tarifsPortailsActuels(draftInfo)[s.prixCategorie] || {}) : null;
       // Cartes avec photo + description + prix de départ (ex : les 2 choix
@@ -1715,7 +1715,7 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
   // par la classification IA (state.produitChoisi, voir wireStepEvents) et
   // la quantité saisie par le prospect (state.quantite), à partir des
   // produits chiffrables configurés par l'artisan lui-même dans
-  // mes-elements.html (prix, unité, minimum).
+  // construire-ma-vitrine.html (prix, unité, minimum).
   function calculerEstimation(){
     // Formulaire personnalisé (voir parcoursPersonnaliseActuel ci-dessus) :
     // calcul entièrement différent, propre au parcours codé en dur de CET
@@ -1778,7 +1778,7 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
   // Récapitulatif détaillé d'une estimation chiffrable — utilisé à la fois
   // pour l'email envoyé à l'artisan (voir enregistrerDemande) et pour
   // l'affichage prospect en mode "devis détaillé" (voir renderResultat,
-  // activé par l'artisan dans mes-elements.html : mode_devis_detaille).
+  // activé par l'artisan dans construire-ma-vitrine.html : mode_devis_detaille).
   function construireRecap(estimation){
     const unitesLabels = { m2:'m²', ml:'ml', m3:'m³', forfait:'forfait' };
     const recap = [{ label:'Prestation', valeur: estimation.produit.nom }];
@@ -1809,7 +1809,7 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
   // "115€ HT/m² × 20m² = 2300€ HT, soit environ 2530€ TTC (TVA 10%) — [note]."
   // Ici généralisée à n'importe quel produit/unité/artisan Skyeco Pro — la
   // "note" reprend les limites que l'artisan a lui-même signalées pour ce
-  // produit (mes-elements.html) au lieu d'un texte codé en dur par métier.
+  // produit (construire-ma-vitrine.html) au lieu d'un texte codé en dur par métier.
   function construirePhraseEstimation(estimation){
     const unitesLabels = { m2:'m²', ml:'ml', m3:'m³' };
     const produit = estimation.produit;
@@ -2114,7 +2114,7 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
   function renderResultat(estimation, leadId){
     let priceBlock, disclaimer;
     // Mode "devis détaillé" — activé par l'artisan lui-même dans
-    // mes-elements.html (case "Présenter le résultat façon devis détaillé",
+    // construire-ma-vitrine.html (case "Présenter le résultat façon devis détaillé",
     // colonne mode_devis_detaille). Désactivé par défaut : sans cette case
     // cochée, le comportement reste le montant unique ci-dessous, inchangé.
     // Formulaire personnalisé (voir parcoursPersonnaliseActuel en haut de

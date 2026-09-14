@@ -176,7 +176,7 @@
       btn.textContent = 'Envoi de votre lien…';
       // L'envoi SMS/email n'est qu'un moyen de secours pour que l'artisan puisse
       // revenir plus tard (autre appareil, lien perdu) — il ne doit JAMAIS bloquer
-      // la suite du parcours : on redirige systématiquement vers mes-elements.html,
+      // la suite du parcours : on redirige systématiquement vers construire-ma-vitrine.html,
       // que l'envoi ait réussi ou non.
       let envoiReussi = false;
       try {
@@ -202,7 +202,7 @@
           </div>`;
 
       setTimeout(() => {
-        window.location.href = '/mes-elements.html?id=' + draftId;
+        window.location.href = '/construire-ma-vitrine.html?id=' + draftId;
       }, 1800);
     });
   }

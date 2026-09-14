@@ -858,7 +858,9 @@
       const rangeFlou = document.getElementById('rangeFlouFond');
       const valeurFlouEl = document.getElementById('valeurFlouFond');
       selectFondSource.value = draft.fond_formulaire_source === 'video' ? 'video' : 'carrousel';
-      const flouInitial = (draft.fond_formulaire_flou != null) ? draft.fond_formulaire_flou : 14;
+      // Défaut abaissé de 14 à 8 le 14/09 (soir), aligné sur apercu.html —
+      // voir son commentaire sur --flou-fond pour le pourquoi.
+      const flouInitial = (draft.fond_formulaire_flou != null) ? draft.fond_formulaire_flou : 8;
       rangeFlou.value = flouInitial;
       valeurFlouEl.textContent = flouInitial + 'px';
       selectFondSource.addEventListener('change', () => {

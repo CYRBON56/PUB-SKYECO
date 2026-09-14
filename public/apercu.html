@@ -255,6 +255,7 @@
           <div id="footerCallbackZone" style="margin-top:10px;">
             <a class="btn-appel-direct" id="btnAppelDirect" style="display:none;" href="#"></a>
             <button class="btn btn-footer-callback" id="btnFooterCallback">📞 Être rappelé</button>
+            <a class="btn-appel-direct" id="btnPrendreRdv" style="display:none; background:#fff; color:var(--brand,#1e6f4c); border:1.5px solid var(--brand,#1e6f4c);" href="#" target="_blank" rel="noopener">📅 Prendre rendez-vous</a>
           </div>
         </div>
       </div>
@@ -957,6 +958,19 @@ async function init(){
     btnAppel.href = 'tel:' + telE164;
     btnAppel.textContent = '📞 ' + draft.telephone;
     btnAppel.style.display = 'inline-flex';
+  }
+
+  // 14/09/2026 : bouton "Prendre rendez-vous" — 3e option de contact à côté
+  // de l'appel direct et du rappel SMS, pour les prospects qui préfèrent
+  // choisir eux-mêmes un créneau précis plutôt qu'attendre un rappel.
+  // /prendre-rdv.html est déjà générique par artisan (créneaux et
+  // réservations rattachés à draft.id via api/creneaux-disponibles.js et
+  // api/reserver-creneau.js) — voir aussi campagne.html qui l'utilise déjà
+  // de la même façon après paiement.
+  {
+    const btnRdv = document.getElementById('btnPrendreRdv');
+    btnRdv.href = '/prendre-rdv.html?id=' + encodeURIComponent(id);
+    btnRdv.style.display = 'inline-flex';
   }
 
   // Bouton catalogue — optionnel, configuré par l'artisan dans

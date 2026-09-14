@@ -67,6 +67,49 @@
   .explication-box strong { color:var(--text); }
   .explication-box .accent { color:var(--accent); font-weight:700; }
 
+  /* Écran de choix "3 options" (14/09/2026) — que doit voir un prospect qui
+     clique sur l'annonce : la vitrine générée par Skyeco (par défaut), le
+     site personnel de l'artisan, ou une vitrine construite sur mesure par
+     Cyrille. Voir api/definir-mode-vitrine.js et le brief projet
+     claude/skyeco-pro-brief-3-choix-vitrine.md. */
+  .choix-vitrine-box {
+    background:#fff; border:1px solid var(--border); border-radius:18px; padding:24px 26px; margin-bottom:20px;
+    box-shadow:0 4px 20px rgba(20,49,42,0.05);
+  }
+  .choix-vitrine-titre { font-size:1.02rem; font-weight:800; margin-bottom:4px; }
+  .choix-vitrine-sous { font-size:0.85rem; color:var(--muted-2); margin-bottom:18px; line-height:1.5; }
+  .choix-options { display:grid; gap:12px; margin-bottom:4px; }
+  .choix-option {
+    display:flex; align-items:flex-start; gap:12px; border:1.5px solid #e2e8e5; border-radius:14px;
+    padding:14px 16px; cursor:pointer; transition:border-color 0.15s ease, background 0.15s ease;
+  }
+  .choix-option:hover { border-color:#c9d8d0; }
+  .choix-option.selected { border-color:var(--brand); background:#f4faf6; }
+  .choix-option input[type="radio"] { margin-top:3px; width:18px; height:18px; accent-color:var(--brand); flex-shrink:0; cursor:pointer; }
+  .choix-option-corps { flex:1; }
+  .choix-option-titre { font-size:0.92rem; font-weight:700; color:var(--text); display:flex; align-items:center; gap:6px; }
+  .choix-option-badge {
+    font-size:0.66rem; font-weight:800; text-transform:uppercase; letter-spacing:0.03em;
+    background:#e8f5ee; color:var(--brand); padding:2px 8px; border-radius:999px;
+  }
+  .choix-option-desc { font-size:0.82rem; color:var(--muted-2); line-height:1.5; margin-top:3px; }
+  .choix-detail { margin-top:12px; padding-top:12px; border-top:1px dashed #e2e8e5; }
+  .choix-detail input[type="text"], .choix-detail textarea {
+    width:100%; font-size:0.9rem; padding:10px 12px; border:1.5px solid #e2e8e5; border-radius:10px;
+    font-family:inherit; color:var(--text);
+  }
+  .choix-detail textarea { resize:vertical; min-height:64px; }
+  .choix-detail input[type="text"]:focus, .choix-detail textarea:focus { outline:none; border-color:var(--brand); }
+  .choix-detail .btn-confirmer-choix {
+    margin-top:10px; background:var(--brand); color:#fff; border:none; border-radius:10px;
+    padding:9px 16px; font-size:0.84rem; font-weight:700; cursor:pointer;
+  }
+  .choix-detail .btn-confirmer-choix:disabled { opacity:0.55; cursor:wait; }
+  .choix-detail-note { font-size:0.78rem; color:var(--muted); margin-top:8px; line-height:1.5; }
+  .choix-statut { font-size:0.8rem; font-weight:700; margin-top:8px; }
+  .choix-statut.ok { color:var(--brand); }
+  .choix-statut.err { color:#c0392b; }
+
   .estimateur-box {
     background:#fff; border:1px solid var(--border); border-radius:18px; padding:26px;
     margin-bottom:28px; box-shadow:0 8px 28px rgba(20,49,42,0.08); position:relative;
@@ -232,6 +275,45 @@
         Ce qui a un coût, c'est de <strong>le mettre en ligne et de le faire vivre</strong> : c'est ça qui vous amène des clients. Concrètement, c'est <span class="accent">Skyeco IA Ads</span> qui rend votre vitrine visible sur Google — et le nombre de clients qui la découvrent dépend directement du budget que vous choisissez d'y consacrer chaque mois.
       </div>
 
+      <div class="choix-vitrine-box">
+        <div class="choix-vitrine-titre">👀 Que doivent voir vos prospects quand ils cliquent sur votre annonce ?</div>
+        <div class="choix-vitrine-sous">Regardez l'aperçu de votre vitrine ci-dessous, puis choisissez ce que l'annonce doit montrer. Même tarif, quel que soit votre choix.</div>
+        <div class="choix-options" id="choixOptions">
+          <label class="choix-option" data-mode="ia">
+            <input type="radio" name="modeVitrine" value="ia">
+            <div class="choix-option-corps">
+              <div class="choix-option-titre">🤖 La vitrine ci-dessous <span class="choix-option-badge">Recommandé</span></div>
+              <div class="choix-option-desc">Celle que vous voyez juste en dessous, générée automatiquement à partir de vos éléments. Formulaire d'estimation, prospects et tableau de bord Skyeco fonctionnent immédiatement.</div>
+            </div>
+          </label>
+          <label class="choix-option" data-mode="site_externe">
+            <input type="radio" name="modeVitrine" value="site_externe">
+            <div class="choix-option-corps">
+              <div class="choix-option-titre">🌐 Mon site actuel</div>
+              <div class="choix-option-desc">L'annonce renvoie directement vers votre site. Attention : sans widget Skyeco installé dessus (à venir), vos prospects ne remonteront pas automatiquement dans votre tableau de bord.</div>
+              <div class="choix-detail" id="detailSiteExterne" style="display:none;">
+                <input type="text" id="inputSiteUrl" placeholder="https://www.votresite.fr">
+                <div class="choix-detail-note">📌 Le widget de capture Skyeco (pour garder vos prospects dans votre tableau de bord même sur votre propre site) arrive bientôt — on vous préviendra dès qu'il est disponible.</div>
+                <button type="button" class="btn-confirmer-choix" id="btnConfirmerSiteExterne">Confirmer cette adresse</button>
+                <div class="choix-statut" id="statutSiteExterne"></div>
+              </div>
+            </div>
+          </label>
+          <label class="choix-option" data-mode="sur_mesure">
+            <input type="radio" name="modeVitrine" value="sur_mesure">
+            <div class="choix-option-corps">
+              <div class="choix-option-titre">🛠️ Vitrine sur mesure par Skyeco</div>
+              <div class="choix-option-desc">Vous préférez qu'on vous la construise nous-mêmes. Décrivez rapidement ce que vous voulez, on vous recontacte sous 24-48h — en attendant, la vitrine générée automatiquement reste diffusée.</div>
+              <div class="choix-detail" id="detailSurMesure" style="display:none;">
+                <textarea id="inputNoteSurMesure" placeholder="Ce que vous aimeriez avoir sur votre vitrine (facultatif)…"></textarea>
+                <button type="button" class="btn-confirmer-choix" id="btnConfirmerSurMesure">Envoyer ma demande</button>
+                <div class="choix-statut" id="statutSurMesure"></div>
+              </div>
+            </div>
+          </label>
+        </div>
+      </div>
+
       <p class="formule-intro">Une formule unique, tout compris. Sans engagement — annulez à tout moment.</p>
 
       <label class="cgv-row">
@@ -276,7 +358,7 @@
 
   async function verifierEtCharger() {
     try {
-      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=id,status,site_valide,email`, {
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=id,status,site_valide,email,mode_vitrine,site_web_existant`, {
         headers: { apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc' }
       });
       const rows = await resp.json();
@@ -321,6 +403,7 @@
           </div>
         `);
         document.getElementById('plansGrid').style.display = 'none';
+        document.querySelector('.choix-vitrine-box').style.display = 'none';
         document.getElementById('btnDemanderValidation').addEventListener('click', async () => {
           const btn = document.getElementById('btnDemanderValidation');
           const note = document.getElementById('noteValidation');
@@ -359,9 +442,142 @@
 
       document.getElementById('vitrineFrame').src = '/apercu.html?id=' + draftId;
       renderPlans(draft.status, rangVitrine);
+      initChoixVitrine(draft);
     } catch (e) {
       document.body.innerHTML = '<div class="loading">Impossible de charger la page pour le moment.</div>';
     }
+  }
+
+  // --- Écran de choix "3 options" (14/09/2026) ---------------------------
+  // État courant : ce qui est enregistré en base pour ce brouillon. Sert à
+  // savoir, quand l'artisan clique sur "Essayer gratuitement"/"Choisir",
+  // si un choix "site existant" a bien été confirmé avec une URL valide —
+  // sinon on ne laisse pas partir une campagne Google Ads sans destination
+  // fiable (voir garde-fou dans demarrerEssaiGratuit/choisirForfait).
+  let modeVitrineConfirme = { mode: 'ia', siteUrlValide: true };
+
+  function initChoixVitrine(draft) {
+    const modeActuel = draft.mode_vitrine || 'ia';
+    modeVitrineConfirme = { mode: modeActuel, siteUrlValide: modeActuel !== 'site_externe' || !!draft.site_web_existant };
+
+    const radios = document.querySelectorAll('#choixOptions input[name="modeVitrine"]');
+    radios.forEach(r => { r.checked = (r.value === modeActuel); });
+    document.querySelectorAll('.choix-option').forEach(opt => {
+      opt.classList.toggle('selected', opt.dataset.mode === modeActuel);
+    });
+    document.getElementById('detailSiteExterne').style.display = (modeActuel === 'site_externe') ? 'block' : 'none';
+    document.getElementById('detailSurMesure').style.display = (modeActuel === 'sur_mesure') ? 'block' : 'none';
+    if (draft.site_web_existant) {
+      document.getElementById('inputSiteUrl').value = draft.site_web_existant;
+    }
+    if (modeActuel === 'site_externe' && draft.site_web_existant) {
+      document.getElementById('statutSiteExterne').textContent = '✓ Adresse enregistrée';
+      document.getElementById('statutSiteExterne').className = 'choix-statut ok';
+    }
+
+    radios.forEach(r => r.addEventListener('change', async () => {
+      document.querySelectorAll('.choix-option').forEach(opt => {
+        opt.classList.toggle('selected', opt.dataset.mode === r.value);
+      });
+      document.getElementById('detailSiteExterne').style.display = (r.value === 'site_externe') ? 'block' : 'none';
+      document.getElementById('detailSurMesure').style.display = (r.value === 'sur_mesure') ? 'block' : 'none';
+
+      if (r.value === 'ia') {
+        // Rien à confirmer — s'enregistre tout de suite, sans champ à remplir.
+        modeVitrineConfirme = { mode: 'ia', siteUrlValide: true };
+        try {
+          await fetch('/api/definir-mode-vitrine', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ draftId, mode: 'ia' }),
+          });
+        } catch (e) { /* pas bloquant — ia est déjà la valeur par défaut en base */ }
+      } else {
+        // site_externe / sur_mesure : en attente de confirmation explicite
+        // via leur bouton respectif, tant qu'ils n'ont pas encore d'URL/note
+        // enregistrée pour CE choix précis.
+        modeVitrineConfirme = { mode: r.value, siteUrlValide: r.value !== 'site_externe' };
+      }
+    }));
+
+    document.getElementById('btnConfirmerSiteExterne').addEventListener('click', async () => {
+      const btn = document.getElementById('btnConfirmerSiteExterne');
+      const statut = document.getElementById('statutSiteExterne');
+      const url = document.getElementById('inputSiteUrl').value.trim();
+      if (!url) {
+        statut.textContent = 'Merci de renseigner l\'adresse de votre site.';
+        statut.className = 'choix-statut err';
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'Enregistrement…';
+      try {
+        const res = await fetch('/api/definir-mode-vitrine', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId, mode: 'site_externe', siteUrl: url }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          modeVitrineConfirme = { mode: 'site_externe', siteUrlValide: true };
+          document.getElementById('inputSiteUrl').value = data.siteUrl || url;
+          statut.textContent = '✓ Adresse enregistrée';
+          statut.className = 'choix-statut ok';
+        } else {
+          statut.textContent = data.error || "Adresse invalide.";
+          statut.className = 'choix-statut err';
+        }
+      } catch (e) {
+        statut.textContent = 'Impossible de contacter le serveur.';
+        statut.className = 'choix-statut err';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Confirmer cette adresse';
+      }
+    });
+
+    document.getElementById('btnConfirmerSurMesure').addEventListener('click', async () => {
+      const btn = document.getElementById('btnConfirmerSurMesure');
+      const statut = document.getElementById('statutSurMesure');
+      const note = document.getElementById('inputNoteSurMesure').value.trim();
+      btn.disabled = true;
+      btn.textContent = 'Envoi…';
+      try {
+        const res = await fetch('/api/definir-mode-vitrine', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId, mode: 'sur_mesure', note }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          modeVitrineConfirme = { mode: 'sur_mesure', siteUrlValide: true };
+          statut.textContent = '✓ Demande envoyée — on vous recontacte sous 24-48h';
+          statut.className = 'choix-statut ok';
+          btn.textContent = 'Demande envoyée';
+        } else {
+          statut.textContent = data.error || "Impossible d'envoyer la demande.";
+          statut.className = 'choix-statut err';
+          btn.disabled = false;
+          btn.textContent = 'Envoyer ma demande';
+        }
+      } catch (e) {
+        statut.textContent = 'Impossible de contacter le serveur.';
+        statut.className = 'choix-statut err';
+        btn.disabled = false;
+        btn.textContent = 'Envoyer ma demande';
+      }
+    });
+  }
+
+  // Bloque le passage au paiement/essai tant qu'un choix "site existant" en
+  // cours de sélection n'a pas été confirmé avec une adresse valide — pour
+  // ne jamais créer une campagne Google Ads sans destination fiable.
+  function choixVitrineEstValide() {
+    if (modeVitrineConfirme.mode === 'site_externe' && !modeVitrineConfirme.siteUrlValide) {
+      alert('Merci de confirmer l\'adresse de votre site (bouton "Confirmer cette adresse") avant de continuer.');
+      return false;
+    }
+    return true;
   }
 
   // Forfait unique (31/08) : auparavant 4 formules (1 à 4), il ne reste que
@@ -469,6 +685,7 @@
       alert('Merci d\'accepter les Conditions Générales de Vente avant de continuer.');
       return;
     }
+    if (!choixVitrineEstValide()) return;
     btn.disabled = true;
     btn.textContent = 'Démarrage…';
     try {
@@ -520,6 +737,7 @@
       alert('Merci d\'accepter les Conditions Générales de Vente avant de continuer.');
       return;
     }
+    if (!choixVitrineEstValide()) return;
     btn.disabled = true;
 
     if (TEST_MODE) {

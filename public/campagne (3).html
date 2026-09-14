@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lancer ma campagne — Skyeco Pro</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f5f8f6; color:#14312a; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
+  .card { background:#fff; border-radius:16px; padding:36px; max-width:460px; width:100%; box-shadow:0 10px 30px rgba(0,0,0,0.08); }
+  h1 { font-size:1.4rem; margin-bottom:8px; }
+  .sub { color:#5b6b64; font-size:0.92rem; margin-bottom:28px; }
+  label { display:block; font-size:0.85rem; font-weight:700; margin-bottom:8px; color:#14312a; }
+  .lien-completer-infos {
+    display:flex; align-items:center; gap:8px; background:#f5f8f6; border:1.5px solid #d7dedb;
+    border-radius:10px; padding:12px 14px; margin-bottom:20px; font-size:0.82rem; color:#3a4a44;
+    text-decoration:none;
+  }
+  .lien-completer-infos:hover { border-color:#1e6f4c; background:#eef5f0; }
+  .lien-completer-infos .icone { font-size:1.1rem; flex-shrink:0; }
+  .lien-completer-infos strong { color:#14312a; }
+  .budget-input-row { display:flex; align-items:center; gap:10px; margin-bottom:24px; }
+  .budget-input-row input {
+    flex:1; font-size:1.6rem; font-weight:800; padding:14px 16px; border:2px solid #d7dedb;
+    border-radius:12px; color:#14312a; text-align:right;
+  }
+  .budget-input-row input:focus { outline:none; border-color:#1e6f4c; }
+  .budget-input-row .unit { font-size:1.4rem; font-weight:800; color:#5b6b64; }
+
+  .estimation-box { background:#eef1f0; border-radius:12px; padding:18px 20px; margin-bottom:12px; }
+  .estimation-box .clics { font-size:1.8rem; font-weight:800; color:#1e6f4c; }
+  .estimation-box .clics-label { font-size:0.85rem; color:#5b6b64; }
+  .estimation-box .detail { font-size:0.8rem; color:#5b6b64; margin-top:8px; }
+
+  .breakdown { font-size:0.8rem; color:#5b6b64; margin-bottom:24px; line-height:1.7; }
+  .breakdown strong { color:#14312a; }
+
+  .consommation-box { background:#fff; border:1.5px solid #d7dedb; border-radius:12px; padding:20px; margin-bottom:24px; }
+  .consommation-box h3 { font-size:0.95rem; margin-bottom:14px; }
+  .conso-bar-track { background:#eef1f0; border-radius:8px; height:10px; overflow:hidden; margin-bottom:10px; }
+  .conso-bar-fill { background:#e8622c; height:100%; transition:width 0.4s ease; }
+  .conso-bar-fill.alerte { background:#c0392b; }
+  .conso-stats { display:flex; justify-content:space-between; font-size:0.82rem; color:#5b6b64; }
+  .conso-stats strong { color:#14312a; }
+  .conso-detail { font-size:0.76rem; color:#8a9891; margin-top:10px; line-height:1.6; }
+
+  .annonce-panel { background:#fff; border:1.5px solid #d7dedb; border-radius:12px; padding:20px; margin-bottom:24px; }
+  .annonce-panel h3 { font-size:0.95rem; margin-bottom:6px; }
+  .annonce-hint { font-size:0.78rem; color:#5b6b64; margin-bottom:16px; line-height:1.5; }
+  .annonce-preview { border:1px solid #d7dedb; border-radius:8px; padding:14px 16px; margin-bottom:18px; font-family:Arial, sans-serif; }
+  .annonce-preview .badge-annonce {
+    display:inline-block; font-size:11px; font-weight:700; color:#1a1a1a; border:1px solid #1a1a1a;
+    border-radius:3px; padding:0 4px; margin-right:6px; vertical-align:middle;
+  }
+  .annonce-preview .domaine-annonce { font-size:14px; color:#006621; vertical-align:middle; }
+  .annonce-preview .titre-annonce { font-size:19px; color:#1a0dab; font-weight:400; margin-top:3px; line-height:1.3; }
+  .annonce-preview .desc-annonce { font-size:13.5px; color:#4d5156; margin-top:4px; line-height:1.5; }
+  .annonce-champ { margin-bottom:12px; }
+  .annonce-champ label { display:flex; justify-content:space-between; font-size:0.78rem; font-weight:700; margin-bottom:5px; color:#14312a; }
+  .annonce-champ label .compteur { font-weight:400; color:#8a9891; }
+  .annonce-champ input, .annonce-champ textarea {
+    width:100%; padding:9px 11px; border:1.5px solid #d7dedb; border-radius:8px; font-size:0.85rem;
+    font-family:inherit; color:#14312a;
+  }
+  .annonce-champ input:focus, .annonce-champ textarea:focus { outline:none; border-color:#1e6f4c; }
+  .annonce-champ textarea { resize:vertical; min-height:50px; }
+  .annonce-champ input.trop-long, .annonce-champ textarea.trop-long { border-color:#c0392b; }
+  .annonce-sauvegarde-note { font-size:0.74rem; color:#8a9891; margin-top:4px; min-height:1em; }
+
+  .cgv-checkbox-row {
+    display:flex; align-items:flex-start; gap:8px; font-size:0.82rem; color:#3a4a44; line-height:1.5;
+    margin-bottom:16px; cursor:pointer;
+  }
+  .cgv-checkbox-row input { width:16px; height:16px; flex-shrink:0; accent-color:#1e6f4c; margin-top:2px; }
+  .cgv-checkbox-row a { color:#1e6f4c; }
+
+  .btn-payer {
+    width:100%; background:#e8622c; color:#fff; border:none; border-radius:12px;
+    padding:16px; font-size:1.02rem; font-weight:700; cursor:pointer;
+  }
+  .btn-payer:disabled { opacity:0.5; cursor:not-allowed; }
+  .btn-payer:hover:not(:disabled) { filter:brightness(1.05); }
+
+  .resilier-link { display:block; text-align:center; margin-top:18px; font-size:0.82rem; color:#8a9891; text-decoration:underline; cursor:pointer; background:none; border:none; }
+  .resilier-link:hover { color:#c0392b; }
+
+  .loading, .error-msg { text-align:center; padding:40px 0; color:#5b6b64; }
+  .error-msg { color:#c0392b; }
+
+  .merci-icone { display:flex; justify-content:center; margin-bottom:14px; font-size:2.6rem; }
+  .merci-bloc { background:#f5f8f6; border-radius:12px; padding:16px 18px; margin:16px 0; font-size:0.86rem; color:#3a4a44; line-height:1.6; }
+  .merci-bloc strong { color:#14312a; }
+  .btn-rdv-merci {
+    display:block; width:100%; text-align:center; background:#1e6f4c; color:#fff; text-decoration:none;
+    border-radius:12px; padding:14px; font-size:0.95rem; font-weight:700; margin-top:6px;
+  }
+  .btn-rdv-merci:hover { filter:brightness(1.05); }
+  .btn-compte-merci {
+    display:block; width:100%; text-align:center; background:#e8622c; color:#fff; text-decoration:none;
+    border-radius:12px; padding:16px; font-size:1rem; font-weight:800; margin-top:22px;
+    box-shadow:0 10px 24px rgba(232,98,44,0.28);
+  }
+  .btn-compte-merci:hover { filter:brightness(1.05); }
+</style>
+</head>
+<body>
+<div class="card" id="app">
+  <div class="loading">Chargement…</div>
+</div>
+
+<script>
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
+  const params = new URLSearchParams(window.location.search);
+  const draftId = params.get('id');
+  const app = document.getElementById('app');
+  // Mode test (usage interne uniquement) : ajouter "&test=1" à l'URL fait
+  // passer le bouton "Payer" par api/simuler-paiement-budget-test.js au lieu
+  // du vrai paiement Stripe — même mécanique que choisir-forfait.html pour
+  // le forfait. Protégé par le mot de passe interne, jamais accessible à un
+  // artisan qui ne le connaît pas.
+  const TEST_MODE = params.get('test') === '1';
+
+  const sessionToken = params.get('admin_token')
+    || sessionStorage.getItem('skyeco_dashboard_token_' + draftId)
+    || sessionStorage.getItem('skyeco_dashboard_token')
+    || null;
+
+  if (!draftId) {
+    app.innerHTML = '<div class="error-msg">Lien invalide — identifiant du site manquant.</div>';
+  } else if (params.get('lance') === '1' && params.get('session_id')) {
+    confirmerEtLancer(params.get('session_id'));
+  } else {
+    render();
+  }
+
+  async function confirmerEtLancer(sessionId) {
+    app.innerHTML = '<div class="loading">Confirmation du paiement et lancement de la campagne…</div>';
+    try {
+      const res = await fetch('/api/confirm-ad-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, draftId })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        app.innerHTML = `<div class="error-msg">${data.error || 'Une erreur est survenue lors de la confirmation.'}</div>`;
+        return;
+      }
+      afficherSucces(data);
+    } catch (e) {
+      app.innerHTML = '<div class="error-msg">Impossible de confirmer le paiement pour le moment.</div>';
+    }
+  }
+
+  function afficherSucces(data) {
+    app.innerHTML = `
+      ${data.test ? '<div style="background:#fff3cd; border:1px solid #ffe08a; color:#7a5b00; font-size:0.8rem; font-weight:700; text-align:center; padding:8px; border-radius:8px; margin-bottom:14px;">🧪 SIMULATION INTERNE — aucun paiement réel, campagne créée en pause comme après un vrai paiement.</div>' : ''}
+      <div class="merci-icone">🎉</div>
+      <h1 style="text-align:center;">Merci, votre campagne est lancée !</h1>
+      <p class="sub" style="text-align:center; margin-bottom:8px;">Votre budget de <strong>${data.budgetActif} €</strong> est actif.</p>
+      ${data.factureUrl ? `<p style="text-align:center; margin-bottom:16px;"><a href="${data.factureUrl}" target="_blank" rel="noopener" style="color:#1e6f4c; font-weight:700; text-decoration:underline;">🧾 Voir ma facture Skyeco</a></p>` : ''}
+      <div class="estimation-box">
+        <div class="detail" style="font-size:0.92rem; color:#14312a;">${data.campagneMessage}</div>
+      </div>
+      <div class="merci-bloc">
+        Un <strong>conseiller Skyeco Pro</strong> va prendre contact avec vous prochainement pour faire le point sur votre mise en place. Vous pouvez aussi choisir vous-même votre créneau dès maintenant :
+      </div>
+      <a class="btn-rdv-merci" href="/prendre-rdv.html?id=${encodeURIComponent(draftId)}">📅 Choisir mon créneau de rendez-vous</a>
+      <div class="merci-bloc">
+        Après vérification de l'éligibilité de votre compte par <strong>Google Ads</strong> et validation de votre vitrine par notre équipe <strong>Skyeco</strong>, votre annonce prendra effet sous <strong>24 heures</strong>.
+      </div>
+      <a class="btn-compte-merci" href="/acces-dashboard.html?id=${encodeURIComponent(draftId)}">🔑 Créer mon identifiant et mot de passe</a>
+    `;
+  }
+
+  function render() {
+    app.innerHTML = `
+      <div style="display:flex; justify-content:center; margin-bottom:18px;">
+        <svg width="72" height="72" viewBox="0 0 24 24"><path fill="#4285F4" d="M12 2l4.5 7.79h-9L12 2z"/><path fill="#34A853" d="M3.5 9.79h9L7.75 22l-4.25-12.21z"/><path fill="#FBBC05" d="M16.5 9.79h4L16.25 22l-4.25-12.21h4.5z"/></svg>
+      </div>
+      <h1 style="text-align:center;">Lancer votre campagne</h1>
+      <p class="sub">Choisissez le montant que vous souhaitez investir ce mois-ci. Le calcul se met à jour automatiquement.</p>
+
+      <div id="consommationSection"></div>
+
+      <label for="budgetInput">Montant à investir</label>
+      <div class="budget-input-row">
+        <input type="number" id="budgetInput" min="100" step="10" value="${Math.max(100, parseInt(params.get('budget'), 10) || 300)}" inputmode="numeric">
+        <span class="unit">€</span>
+      </div>
+
+      <div class="estimation-box" id="estimationBox">
+        <div class="clics" id="clicsValue">—</div>
+        <div class="clics-label">clics estimés</div>
+        <div class="detail" id="estimationDetail"></div>
+      </div>
+      <p style="font-size:0.76rem; color:#8a9891; margin-top:2px;">
+        Ce budget n'est pas garanti sur un mois fixe — il est consommé au rythme réel des clics, plus ou moins vite selon la période.
+      </p>
+
+      <div class="breakdown" id="breakdown"></div>
+
+      <div class="annonce-panel">
+        <h3>🔎 Votre annonce Google Ads</h3>
+        <div class="annonce-hint">Voici à quoi ressemblera votre annonce sur Google. Modifiez les textes si besoin — c'est cette version qui sera utilisée au lancement.</div>
+        <div class="annonce-preview">
+          <div><span class="badge-annonce">Annonce</span><span class="domaine-annonce" id="previewDomaine">app.skyeco.fr</span></div>
+          <div class="titre-annonce" id="previewTitre">—</div>
+          <div class="desc-annonce" id="previewDesc">—</div>
+        </div>
+        <button type="button" id="btnRegenererAnnonce" style="margin:12px 0 18px; background:#fff; color:#1e6f4c; border:1.5px solid #1e6f4c; border-radius:8px; padding:9px 14px; font-size:0.82rem; font-weight:700; cursor:pointer;">🔄 Régénérer depuis mes mots-clés</button>
+        <div class="annonce-champ">
+          <label>Titre 1 <span class="compteur" id="cptTitre1">0/30</span></label>
+          <input type="text" id="annonceTitre1" maxlength="30">
+        </div>
+        <div class="annonce-champ">
+          <label>Titre 2 <span class="compteur" id="cptTitre2">0/30</span></label>
+          <input type="text" id="annonceTitre2" maxlength="30">
+        </div>
+        <div class="annonce-champ">
+          <label>Titre 3 <span class="compteur" id="cptTitre3">0/30</span></label>
+          <input type="text" id="annonceTitre3" maxlength="30">
+        </div>
+        <div class="annonce-champ">
+          <label>Description 1 <span class="compteur" id="cptDesc1">0/90</span></label>
+          <textarea id="annonceDesc1" maxlength="90"></textarea>
+        </div>
+        <div class="annonce-champ">
+          <label>Description 2 <span class="compteur" id="cptDesc2">0/90</span></label>
+          <textarea id="annonceDesc2" maxlength="90"></textarea>
+        </div>
+        <div class="annonce-sauvegarde-note" id="annonceSauvegardeNote"></div>
+      </div>
+
+      <label class="cgv-checkbox-row">
+        <input type="checkbox" id="cgvCampagneCheckbox">
+        <span>J'accepte les <a href="/cgv.html" target="_blank">conditions générales de vente</a>.</span>
+      </label>
+
+      <button class="btn-payer" id="btnPayer" disabled>${TEST_MODE ? '🧪 Simuler le paiement (test) et lancer ma campagne' : 'Payer et lancer ma campagne'}</button>
+      <button class="resilier-link" id="btnPause" type="button">Mettre en pause 1 mois (sans prélèvement)</button>
+      <button class="resilier-link" id="btnResilier" type="button">Résilier mon abonnement</button>
+    `;
+
+    const budgetInput = document.getElementById('budgetInput');
+    const btnPayer = document.getElementById('btnPayer');
+    const cgvCheckbox = document.getElementById('cgvCampagneCheckbox');
+    let debounceTimer = null;
+    let estimationOk = false;
+
+    function majEtatBoutonPayer() {
+      btnPayer.disabled = !estimationOk || !cgvCheckbox.checked;
+    }
+    cgvCheckbox.addEventListener('change', majEtatBoutonPayer);
+
+    let draftMetier = null;
+    let draftZone = null;
+    let draftDepartement = null;
+    let draftEntreprise = null;
+    let draftAnnonceTitres = null;
+    let draftAnnonceDescriptions = null;
+    let motsClesActuels = [];
+
+    function mettreAJourEstimation() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(chargerEstimation, 400);
+    }
+
+    async function chargerEstimation() {
+      const budget = parseFloat(budgetInput.value);
+      if (!budget || budget < 100) {
+        document.getElementById('clicsValue').textContent = '—';
+        document.getElementById('estimationDetail').textContent = 'Montant minimum : 100 €';
+        document.getElementById('breakdown').innerHTML = '';
+        estimationOk = false;
+        majEtatBoutonPayer();
+        return;
+      }
+
+      document.getElementById('clicsValue').textContent = '…';
+
+      try {
+        const res = await fetch('/api/estimate-reach', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ metier: draftMetier, zone: draftZone, departement: draftDepartement, motsCles: motsClesActuels, budget })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          document.getElementById('clicsValue').textContent = data.estimatedClicks !== null ? '≈ ' + data.estimatedClicks : '—';
+          const potentiel = data.totalMonthlyVolume ? ` · Potentiel estimé sur ce mois : ${data.totalMonthlyVolume} clics possibles avec ces mots-clés et cette zone` : '';
+          document.getElementById('estimationDetail').textContent =
+            (data.avgCpcEur ? `CPC moyen estimé : ${data.avgCpcEur} €` : '') + potentiel;
+          document.getElementById('breakdown').innerHTML = (data.budgetNetPub != null)
+            ? `${budget} € TTC · ${data.budgetHT} € HT, dont <strong>${data.budgetNetPub} € réellement en diffusion sur Google Ads</strong> ` +
+              `et ${data.commissionPub} € de frais de pilotage Skyeco IA Ads (${Math.round(data.tauxCommission * 100)}%).`
+            : `Ce budget couvre la gestion de votre campagne et sa diffusion sur Google Ads.`;
+          estimationOk = true;
+          majEtatBoutonPayer();
+          btnPayer.textContent = TEST_MODE
+            ? `🧪 Simuler le paiement (test) de ${budget} € et lancer ma campagne`
+            : `Payer ${budget} € et lancer ma campagne`;
+        } else {
+          document.getElementById('clicsValue').textContent = '—';
+          document.getElementById('estimationDetail').textContent = "Estimation indisponible pour le moment.";
+          estimationOk = false;
+          majEtatBoutonPayer();
+        }
+      } catch (e) {
+        document.getElementById('clicsValue').textContent = '—';
+        document.getElementById('estimationDetail').textContent = "Erreur de connexion.";
+        estimationOk = false;
+        majEtatBoutonPayer();
+      }
+    }
+
+    budgetInput.addEventListener('input', mettreAJourEstimation);
+    chargerConsommation();
+    chargerDraftPuisInitialiser();
+
+    async function chargerDraftPuisInitialiser() {
+      try {
+        const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,metier,zone,departement,mots_cles_choisis,annonce_titres,annonce_descriptions`, {
+          headers: { apikey: SUPABASE_ANON_KEY }
+        });
+        const rows = await resp.json();
+        const draft = rows[0] || {};
+        draftEntreprise = draft.entreprise;
+        draftMetier = draft.metier;
+        draftZone = draft.zone;
+        draftDepartement = draft.departement;
+        if (Array.isArray(draft.mots_cles_choisis)) motsClesActuels = draft.mots_cles_choisis;
+        draftAnnonceTitres = draft.annonce_titres;
+        draftAnnonceDescriptions = draft.annonce_descriptions;
+      } catch (e) { }
+      chargerEstimation();
+      initAnnonce();
+    }
+
+    function genererAnnoncePropos() {
+      const premierMotCle = motsClesActuels[0] || '';
+      const motCleTitre = premierMotCle
+        ? premierMotCle.charAt(0).toUpperCase() + premierMotCle.slice(1)
+        : '';
+      return {
+        titres: [
+          (draftEntreprise || 'Devis gratuit').substring(0, 30),
+          (motCleTitre || 'Estimation gratuite en ligne').substring(0, 30),
+          'Devis sous 24h',
+        ],
+        descriptions: [
+          'Obtenez votre estimation en 2 minutes, sans engagement.',
+          (draftZone ? `Artisan local à ${draftZone} — réponse rapide garantie.` : 'Artisan local — réponse rapide garantie.').substring(0, 90),
+        ],
+      };
+    }
+
+    function initAnnonce() {
+      const champs = {
+        titre1: document.getElementById('annonceTitre1'),
+        titre2: document.getElementById('annonceTitre2'),
+        titre3: document.getElementById('annonceTitre3'),
+        desc1: document.getElementById('annonceDesc1'),
+        desc2: document.getElementById('annonceDesc2'),
+      };
+      const compteurs = {
+        titre1: document.getElementById('cptTitre1'),
+        titre2: document.getElementById('cptTitre2'),
+        titre3: document.getElementById('cptTitre3'),
+        desc1: document.getElementById('cptDesc1'),
+        desc2: document.getElementById('cptDesc2'),
+      };
+      const previewTitre = document.getElementById('previewTitre');
+      const previewDesc = document.getElementById('previewDesc');
+      const sauvegardeNote = document.getElementById('annonceSauvegardeNote');
+
+      const previewDomaine = document.getElementById('previewDomaine');
+      if (previewDomaine && window.location.hostname) previewDomaine.textContent = window.location.hostname;
+
+      const defauts = genererAnnoncePropos();
+      const titresDepart = Array.isArray(draftAnnonceTitres) && draftAnnonceTitres.length ? draftAnnonceTitres : defauts.titres;
+      const descriptionsDepart = Array.isArray(draftAnnonceDescriptions) && draftAnnonceDescriptions.length ? draftAnnonceDescriptions : defauts.descriptions;
+
+      champs.titre1.value = titresDepart[0] || '';
+      champs.titre2.value = titresDepart[1] || '';
+      champs.titre3.value = titresDepart[2] || '';
+      champs.desc1.value = descriptionsDepart[0] || '';
+      champs.desc2.value = descriptionsDepart[1] || '';
+
+      function majApercu() {
+        const titres = [champs.titre1.value, champs.titre2.value, champs.titre3.value].filter(t => t.trim());
+        previewTitre.textContent = titres.length ? titres.join(' | ') : 'Votre titre apparaîtra ici';
+        const descriptions = [champs.desc1.value, champs.desc2.value].filter(d => d.trim());
+        previewDesc.textContent = descriptions.length ? descriptions.join(' ') : 'Votre description apparaîtra ici.';
+      }
+
+      function majCompteur(cle) {
+        const el = champs[cle];
+        compteurs[cle].textContent = `${el.value.length}/${el.maxLength}`;
+        el.classList.toggle('trop-long', el.value.length >= el.maxLength);
+      }
+
+      let sauvegardeTimer = null;
+      async function sauvegarderAnnonce() {
+        const titres = [champs.titre1.value.trim(), champs.titre2.value.trim(), champs.titre3.value.trim()].filter(t => t);
+        const descriptions = [champs.desc1.value.trim(), champs.desc2.value.trim()].filter(d => d);
+        try {
+          await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
+            method: 'PATCH',
+            headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+            body: JSON.stringify({ annonce_titres: titres, annonce_descriptions: descriptions }),
+          });
+          sauvegardeNote.textContent = 'Modifications enregistrées.';
+        } catch (e) {
+          sauvegardeNote.textContent = "Impossible d'enregistrer ces modifications pour le moment.";
+        }
+      }
+
+      Object.keys(champs).forEach((cle) => {
+        champs[cle].addEventListener('input', () => {
+          majApercu();
+          majCompteur(cle);
+          sauvegardeNote.textContent = 'Enregistrement…';
+          clearTimeout(sauvegardeTimer);
+          sauvegardeTimer = setTimeout(sauvegarderAnnonce, 600);
+        });
+        majCompteur(cle);
+      });
+
+      majApercu();
+
+      document.getElementById('btnRegenererAnnonce').addEventListener('click', async () => {
+        const btn = document.getElementById('btnRegenererAnnonce');
+        btn.disabled = true;
+        btn.textContent = '…';
+        try {
+          const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=mots_cles_choisis`, {
+            headers: { apikey: SUPABASE_ANON_KEY }
+          });
+          const rows = await resp.json();
+          if (Array.isArray(rows[0]?.mots_cles_choisis)) motsClesActuels = rows[0].mots_cles_choisis;
+
+          const nouveauxDefauts = genererAnnoncePropos();
+          champs.titre1.value = nouveauxDefauts.titres[0] || '';
+          champs.titre2.value = nouveauxDefauts.titres[1] || '';
+          champs.titre3.value = nouveauxDefauts.titres[2] || '';
+          champs.desc1.value = nouveauxDefauts.descriptions[0] || '';
+          champs.desc2.value = nouveauxDefauts.descriptions[1] || '';
+          Object.keys(champs).forEach(majCompteur);
+          majApercu();
+          sauvegardeNote.textContent = 'Enregistrement…';
+          await sauvegarderAnnonce();
+        } catch (e) {
+          sauvegardeNote.textContent = "Impossible de régénérer pour le moment.";
+        } finally {
+          btn.disabled = false;
+          btn.textContent = '🔄 Régénérer depuis mes mots-clés';
+        }
+      });
+    }
+
+    document.getElementById('btnPause').addEventListener('click', async () => {
+      if (!sessionToken) {
+        alert('Merci de vous connecter à votre tableau de bord pour gérer votre abonnement.');
+        window.location.href = '/acces-dashboard.html?id=' + draftId;
+        return;
+      }
+      if (!confirm("Demander la mise en pause de votre abonnement ?\n\n• Rien ne s'arrête tout de suite.\n• 2 jours avant la fin de votre période déjà payée, vous recevrez un SMS avec un lien à cliquer pour confirmer.\n• C'est seulement à ce moment-là, si vous confirmez, que la pause prend effet.")) {
+        return;
+      }
+      const btn = document.getElementById('btnPause');
+      btn.disabled = true;
+      btn.textContent = 'Enregistrement…';
+      try {
+        const res = await fetch('/api/demander-pause', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId, token: sessionToken })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          alert(data.message);
+          btn.textContent = 'Pause demandée — SMS à venir';
+        } else {
+          alert(data.error || 'Une erreur est survenue.');
+          btn.disabled = false;
+          btn.textContent = 'Mettre en pause 1 mois (sans prélèvement)';
+        }
+      } catch (e) {
+        alert('Impossible de contacter le serveur.');
+        btn.disabled = false;
+        btn.textContent = 'Mettre en pause 1 mois (sans prélèvement)';
+      }
+    });
+
+    document.getElementById('btnResilier').addEventListener('click', async () => {
+      if (!sessionToken) {
+        alert('Merci de vous connecter à votre tableau de bord pour gérer votre abonnement.');
+        window.location.href = '/acces-dashboard.html?id=' + draftId;
+        return;
+      }
+      if (!confirm("Confirmer la résiliation ? Votre vitrine restera active jusqu'à la fin de la période déjà payée, puis se désactivera automatiquement.")) {
+        return;
+      }
+      const btn = document.getElementById('btnResilier');
+      btn.disabled = true;
+      btn.textContent = 'Résiliation en cours…';
+      try {
+        const res = await fetch('/api/cancel-subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId, token: sessionToken })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          alert(data.message);
+          btn.textContent = 'Abonnement annulé';
+        } else {
+          alert(data.error || 'Une erreur est survenue.');
+          btn.disabled = false;
+          btn.textContent = 'Résilier mon abonnement';
+        }
+      } catch (e) {
+        alert('Impossible de contacter le serveur.');
+        btn.disabled = false;
+        btn.textContent = 'Résilier mon abonnement';
+      }
+    });
+
+    async function chargerConsommation() {
+      const section = document.getElementById('consommationSection');
+      try {
+        if (!sessionToken) {
+          section.innerHTML = '';
+          return;
+        }
+        const res = await fetch('/api/get-campaign-spend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draft_id: draftId, token: sessionToken })
+        });
+        const data = await res.json();
+
+        if (!data.success || !data.campagneExiste) {
+          section.innerHTML = '';
+          return;
+        }
+
+        const alerte = data.pourcentageConsomme >= 90 ? 'alerte' : '';
+        section.innerHTML = `
+          <div class="consommation-box">
+            <h3>Consommation de votre budget</h3>
+            <div class="conso-bar-track">
+              <div class="conso-bar-fill ${alerte}" style="width:${data.pourcentageConsomme}%"></div>
+            </div>
+            <div class="conso-stats">
+              <span><strong>${data.consommationAjustee} €</strong> consommés</span>
+              <span><strong>${data.budgetRestant} €</strong> restants sur ${data.budgetPaye} €</span>
+            </div>
+            <div class="conso-detail">
+              ${data.clics} clics · ${data.impressions} impressions ce mois-ci
+            </div>
+          </div>
+        `;
+      } catch (e) {
+        section.innerHTML = '';
+      }
+    }
+
+    btnPayer.addEventListener('click', async () => {
+      const budget = parseFloat(budgetInput.value);
+      btnPayer.disabled = true;
+
+      if (TEST_MODE) {
+        let motDePasseInterne = sessionStorage.getItem('skyeco_admin_internal_pw');
+        if (!motDePasseInterne) {
+          motDePasseInterne = prompt('Mot de passe interne (mode test) :');
+          if (!motDePasseInterne) { btnPayer.disabled = false; return; }
+        }
+        btnPayer.textContent = 'Simulation…';
+        try {
+          const res = await fetch('/api/simuler-paiement-budget-test', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ draftId, budget, motDePasseInterne })
+          });
+          const data = await res.json();
+          if (data.success) {
+            sessionStorage.setItem('skyeco_admin_internal_pw', motDePasseInterne);
+            afficherSucces(data);
+          } else {
+            alert(data.error || 'Simulation impossible.');
+            btnPayer.disabled = false;
+            btnPayer.textContent = '🧪 Simuler le paiement (test) et lancer ma campagne';
+          }
+        } catch (e) {
+          alert('Impossible de contacter le serveur.');
+          btnPayer.disabled = false;
+          btnPayer.textContent = '🧪 Simuler le paiement (test) et lancer ma campagne';
+        }
+        return;
+      }
+
+      btnPayer.textContent = 'Redirection vers le paiement…';
+      try {
+        const res = await fetch('/api/create-ad-budget-checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId, budget })
+        });
+        const data = await res.json();
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          throw new Error(data.error || 'Erreur inconnue');
+        }
+      } catch (e) {
+        alert("Impossible de démarrer le paiement : " + e.message);
+        btnPayer.disabled = false;
+        btnPayer.textContent = `Payer ${budget} € et lancer ma campagne`;
+      }
+    });
+
+  }
+</script>
+<div style="text-align:center; font-size:11px; color:#8a9891; padding:24px 16px 16px; line-height:1.7;">
+  RMS EcoSky (Skyeco Pro) — RÉSINE MARBRE SOL, SASU au capital de 50 000 € — SIRET 939 997 870 00018<br>
+  23 Route de Corn Er Hoet, 56400 Brech — <a href="mailto:infos@ecosky.fr" style="color:#8a9891;">infos@ecosky.fr</a><br>
+  <a href="/mentions-legales.html" style="color:#8a9891;">Mentions légales</a> · <a href="/politique-confidentialite.html" style="color:#8a9891;">Confidentialité</a> · <a href="/cgv.html" style="color:#8a9891;">CGV</a>
+</div>
+<!-- SKYECO_COOKIE_BANNER_START -->
+<div id="skyeco-cookies" style="position:fixed; left:0; right:0; bottom:0; z-index:99999; background:#14202B; color:#F4F7F9; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; box-shadow:0 -6px 24px rgba(0,0,0,0.25); display:none;">
+  <div style="max-width:1000px; margin:0 auto; padding:18px 20px; display:flex; align-items:center; gap:24px; flex-wrap:wrap;">
+    <p style="flex:1; min-width:240px; margin:0; font-size:13.5px; line-height:1.5; color:#C9D6DF;">
+      Nous utilisons des cookies n&#233;cessaires au fonctionnement du site et, avec votre accord, des cookies de mesure d&#8217;audience et de suivi publicitaire (Google Ads) pour am&#233;liorer nos services.
+      <a href="/politique-confidentialite.html" style="color:#E8622C; text-decoration:underline;">En savoir plus</a>
+    </p>
+    <div style="display:flex; gap:10px; flex-shrink:0; flex-wrap:wrap;">
+      <button type="button" onclick="skyecoCookiesChoix('essentiel')" style="background:transparent; border:1px solid rgba(255,255,255,0.35); color:#F4F7F9; padding:10px 16px; font-size:13px; font-weight:600; cursor:pointer; border-radius:4px;">Essentiels uniquement</button>
+      <button type="button" onclick="skyecoCookiesChoix('tous')" style="background:#E8622C; border:1px solid #E8622C; color:#fff; padding:10px 18px; font-size:13px; font-weight:700; cursor:pointer; border-radius:4px;">Tout accepter</button>
+    </div>
+  </div>
+</div>
+<button type="button" id="skyeco-cookies-lien" onclick="skyecoCookiesOuvrir()" aria-label="G&#233;rer mes cookies" style="display:none; position:fixed; left:16px; bottom:16px; z-index:99998; background:#14202B; color:#F4F7F9; border:1px solid rgba(255,255,255,0.25); border-radius:20px; padding:8px 14px; font-size:12px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; cursor:pointer;">&#x1F36A; Cookies</button>
+<script>
+(function(){
+  var CLE = 'skyeco_cookie_consent';
+  function lireChoix(){ try { return JSON.parse(localStorage.getItem(CLE) || 'null'); } catch(e){ return null; } }
+  function appliquerChoix(choix){
+    window.skyecoConsentement = choix;
+  }
+  window.skyecoCookiesChoix = function(niveau){
+    var choix = { niveau: niveau, date: new Date().toISOString() };
+    try { localStorage.setItem(CLE, JSON.stringify(choix)); } catch(e){}
+    var b = document.getElementById('skyeco-cookies'); if(b) b.style.display = 'none';
+    var l = document.getElementById('skyeco-cookies-lien'); if(l) l.style.display = 'block';
+    appliquerChoix(choix);
+  };
+  window.skyecoCookiesOuvrir = function(){
+    var b = document.getElementById('skyeco-cookies'); if(b) b.style.display = 'block';
+    var l = document.getElementById('skyeco-cookies-lien'); if(l) l.style.display = 'none';
+  };
+  document.addEventListener('DOMContentLoaded', function(){
+    var choix = lireChoix();
+    var b = document.getElementById('skyeco-cookies');
+    var l = document.getElementById('skyeco-cookies-lien');
+    if(choix && choix.niveau){
+      if(l) l.style.display = 'block';
+      appliquerChoix(choix);
+    } else if(b){
+      b.style.display = 'block';
+    }
+  });
+})();
+</script>
+<!-- SKYECO_COOKIE_BANNER_END -->
+</body>
+</html>

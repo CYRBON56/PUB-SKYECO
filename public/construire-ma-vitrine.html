@@ -218,13 +218,57 @@
     <div class="progress-label" id="progressLabel">0% complété</div>
   </div>
 
-  <div class="section open" data-section="visuel">
+  <!-- 14/09/2026 : section "Assistant IA" déplacée EN PREMIER et seule
+       ouverte par défaut (mode IA) — retour de Cyrille : la page donnait
+       l'impression d'un remplissage manuel classique (logo/photos/titre en
+       premier) alors que le choix "vitrine générée pour vous" doit d'abord
+       mettre en avant "décris ton activité ou donne un lien". Les sections
+       suivantes (Identité visuelle, Titre, Formulaire) restent disponibles
+       mais repliées — afficherResultatAssistantVitrine() les rouvre déjà
+       automatiquement une fois que l'IA a produit un résultat. -->
+  <div class="section open" data-section="assistant-ia">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">🤖</span>
+        <div>
+          <h2>Construire ma vitrine avec l'IA</h2>
+          <p class="sub">Décris ton activité avec tes mots, ou donne un lien (ton site actuel ou un site qui t'inspire) — l'IA propose des titres, récupère photos/logo si possible, et prépare ton formulaire de devis.</p>
+        </div>
+      </div>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="section-body">
+      <div class="section-body-inner">
+        <label style="margin-top:0;">Décris ton activité en quelques phrases</label>
+        <textarea id="assistantVitrineDescription" rows="4" placeholder="Ex : Je pose des terrasses et plages de piscine en résine EPDM dans le Morbihan depuis 10 ans, surtout pour des particuliers avec piscine. Je travaille aussi sur les allées et les margelles."></textarea>
+
+        <label style="margin-top:14px;">Ou pars d'un lien existant (optionnel)</label>
+        <input type="url" id="assistantVitrineUrl" placeholder="https://..." style="width:100%; box-sizing:border-box; padding:10px 12px; border:1px solid #dde5e1; border-radius:8px; font-size:0.88rem; font-family:inherit;">
+        <div style="display:flex; flex-wrap:wrap; gap:16px; margin-top:8px;">
+          <label style="display:flex; align-items:center; gap:6px; font-weight:400; margin:0; font-size:0.85rem; cursor:pointer;">
+            <input type="radio" name="assistantVitrineUrlMode" id="assistantVitrineUrlModePropre" value="propre_site" checked style="width:auto; margin:0;">
+            C'est mon site actuel
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; font-weight:400; margin:0; font-size:0.85rem; cursor:pointer;">
+            <input type="radio" name="assistantVitrineUrlMode" id="assistantVitrineUrlModeInspiration" value="inspiration" style="width:auto; margin:0;">
+            C'est un site qui m'inspire
+          </label>
+        </div>
+        <p class="hint" style="margin:6px 0 0;">« Mon site actuel » réutilise tes propres textes et photos. « Un site qui m'inspire » ne copie jamais son contenu — l'IA s'inspire seulement de sa structure pour créer un texte 100% nouveau, propre à toi.</p>
+
+        <button type="button" id="btnAssistantVitrineIA" style="margin-top:10px; background:#e8622c; color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:0.85rem; font-weight:700; cursor:pointer;">✨ Construire ma vitrine avec l'IA</button>
+        <div id="assistantVitrineResultat" style="margin-top:12px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" data-section="visuel">
     <div class="section-header">
       <div class="section-title">
         <span class="section-icon">🎨</span>
         <div>
           <h2>Identité visuelle</h2>
-          <p class="sub">Logo, photos, vidéo — ce que tu as sous la main suffit.</p>
+          <p class="sub">Logo, photos, vidéo — l'assistant IA ci-dessus les récupère automatiquement s'il le peut ; ajoute ou remplace ici au besoin.</p>
         </div>
       </div>
       <div style="display:flex; align-items:center; gap:10px;">
@@ -287,42 +331,6 @@
         <label style="margin-top:14px;">Netteté du fond <span id="valeurFlouFond" class="hint" style="display:inline;"></span></label>
         <input type="range" id="rangeFlouFond" min="0" max="30" step="1" style="width:100%;">
         <p class="hint">Tout à gauche = net, tout à droite = très flou. Un fond flou garde le texte du formulaire lisible.</p>
-      </div>
-    </div>
-  </div>
-
-  <div class="section open" data-section="assistant-ia">
-    <div class="section-header">
-      <div class="section-title">
-        <span class="section-icon">🤖</span>
-        <div>
-          <h2>Assistant IA — Construire ma vitrine</h2>
-          <p class="sub">Décris ton activité avec tes mots, l'IA te propose des titres sur-mesure — plus rapide que de tout écrire toi-même.</p>
-        </div>
-      </div>
-      <span class="chevron">▾</span>
-    </div>
-    <div class="section-body">
-      <div class="section-body-inner">
-        <label style="margin-top:0;">Décris ton activité en quelques phrases</label>
-        <textarea id="assistantVitrineDescription" rows="4" placeholder="Ex : Je pose des terrasses et plages de piscine en résine EPDM dans le Morbihan depuis 10 ans, surtout pour des particuliers avec piscine. Je travaille aussi sur les allées et les margelles."></textarea>
-
-        <label style="margin-top:14px;">Ou pars d'un lien existant (optionnel)</label>
-        <input type="url" id="assistantVitrineUrl" placeholder="https://..." style="width:100%; box-sizing:border-box; padding:10px 12px; border:1px solid #dde5e1; border-radius:8px; font-size:0.88rem; font-family:inherit;">
-        <div style="display:flex; flex-wrap:wrap; gap:16px; margin-top:8px;">
-          <label style="display:flex; align-items:center; gap:6px; font-weight:400; margin:0; font-size:0.85rem; cursor:pointer;">
-            <input type="radio" name="assistantVitrineUrlMode" id="assistantVitrineUrlModePropre" value="propre_site" checked style="width:auto; margin:0;">
-            C'est mon site actuel
-          </label>
-          <label style="display:flex; align-items:center; gap:6px; font-weight:400; margin:0; font-size:0.85rem; cursor:pointer;">
-            <input type="radio" name="assistantVitrineUrlMode" id="assistantVitrineUrlModeInspiration" value="inspiration" style="width:auto; margin:0;">
-            C'est un site qui m'inspire
-          </label>
-        </div>
-        <p class="hint" style="margin:6px 0 0;">« Mon site actuel » réutilise tes propres textes et photos. « Un site qui m'inspire » ne copie jamais son contenu — l'IA s'inspire seulement de sa structure pour créer un texte 100% nouveau, propre à toi.</p>
-
-        <button type="button" id="btnAssistantVitrineIA" style="margin-top:10px; background:#e8622c; color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:0.85rem; font-weight:700; cursor:pointer;">✨ Construire ma vitrine avec l'IA</button>
-        <div id="assistantVitrineResultat" style="margin-top:12px;"></div>
       </div>
     </div>
   </div>
@@ -500,15 +508,16 @@
         <div style="display:flex; align-items:flex-start; gap:10px; background:#fff4ec; border:1.5px solid #f0c9a8; border-radius:12px; padding:14px 16px;">
           <input type="checkbox" id="checkFormulairePersonnalise" style="width:auto; margin-top:3px; accent-color:#c9601f;">
           <label for="checkFormulairePersonnalise" style="margin:0; font-weight:700; color:#14312a; cursor:pointer; display:block; width:100%;">
-            Formulaire personnalisé
-            <span style="display:block; font-weight:400; font-size:0.82rem; color:#5b6b64; margin-top:3px;">Remplace le formulaire basique par un parcours de questions et un calcul de prix construits sur mesure pour CETTE vitrine — visible uniquement ici, jamais partagé avec les autres vitrines. Un formulaire personnalisé se construit avec Skyeco, pas depuis cette page : cocher cette case envoie une demande à votre conseiller si rien n'est encore construit pour cette vitrine — en attendant, la vitrine continue d'afficher le formulaire basique.</span>
-            <span id="statusFormulairePersonnalise" style="display:none; margin-top:6px; font-size:0.82rem; font-weight:700; color:#1e6f4c;">✓ Demande envoyée — vous serez recontacté pour construire votre formulaire sur mesure.</span>
+            Formulaire personnalisé avec estimation de prix
+            <span style="display:block; font-weight:400; font-size:0.82rem; color:#5b6b64; margin-top:3px;">Remplace le formulaire basique par un parcours de questions et un calcul de prix construits sur mesure pour CETTE vitrine — visible uniquement ici, jamais partagé avec les autres vitrines. Le calcul de prix reste toujours construit et validé par ton conseiller (jamais activé automatiquement par l'IA) : cocher cette case envoie ta demande et te propose tout de suite un créneau pour le construire ensemble avec un technicien — en attendant ce rendez-vous, la vitrine continue d'afficher le formulaire basique ci-dessus.</span>
+            <span id="statusFormulairePersonnalise" style="display:none; margin-top:6px; font-size:0.82rem; font-weight:700; color:#1e6f4c;">✓ Demande envoyée — réserve ton créneau ci-dessous pour qu'on le construise ensemble.</span>
           </label>
         </div>
         <div id="formulairePersonnaliseDescriptionWrapper" style="display:none; margin-top:10px;">
           <label for="formulairePersonnaliseDescription" style="font-weight:600; font-size:0.85rem; color:#14312a;">Décrivez le formulaire dont vous avez besoin</label>
-          <p class="hint" style="margin:2px 0 6px;">Quelles questions poser à vos prospects, comment calculer le prix (au m², au forfait, par option...) — plus c'est précis, plus vite votre conseiller pourra vous le construire.</p>
+          <p class="hint" style="margin:2px 0 6px;">Quelles questions poser à vos prospects, comment calculer le prix (au m², au forfait, par option...) — plus c'est précis, plus le rendez-vous sera rapide.</p>
           <textarea id="formulairePersonnaliseDescription" rows="4" placeholder="Ex : je veux demander la surface en m² et le type de pose, puis calculer un prix au m² selon le type choisi..."></textarea>
+          <a id="lienRdvFormulairePersonnalise" class="btn-extraire" style="display:none; margin-top:10px; text-decoration:none; text-align:center; background:#1e6f4c; color:#fff;" href="/prendre-rdv.html?id=4fbdb122-9fca-4636-b80c-d9e4abc2542b" target="_blank" rel="noopener">📅 Réserver mon créneau pour le construire avec un technicien</a>
         </div>
 
         <div id="tarifsPortailsSection" style="display:none; margin-top:14px;">
@@ -794,9 +803,17 @@
       const statusFormulairePersonnalise = document.getElementById('statusFormulairePersonnalise');
       const formulairePersonnaliseDescriptionWrapper = document.getElementById('formulairePersonnaliseDescriptionWrapper');
       const formulairePersonnaliseDescription = document.getElementById('formulairePersonnaliseDescription');
+      const lienRdvFormulairePersonnalise = document.getElementById('lienRdvFormulairePersonnalise');
       checkFormulairePersonnalise.checked = draft.formulaire_personnalise === true;
       if (draft.formulaire_personnalise_description) formulairePersonnaliseDescription.value = draft.formulaire_personnalise_description;
       formulairePersonnaliseDescriptionWrapper.style.display = checkFormulairePersonnalise.checked ? 'block' : 'none';
+      // 14/09/2026 : le RDV avec un technicien est proposé tant que le
+      // formulaire personnalisé demandé n'a pas encore été construit
+      // (formulaire_personnalise_cle vide) — une fois construit, plus besoin.
+      if (checkFormulairePersonnalise.checked && !draft.formulaire_personnalise_cle) {
+        statusFormulairePersonnalise.style.display = 'block';
+        lienRdvFormulairePersonnalise.style.display = 'block';
+      }
       formulairePersonnaliseDescription.addEventListener('change', () => {
         sauvegarderChampsImmediat({ formulaire_personnalise_description: formulairePersonnaliseDescription.value.trim() });
       });
@@ -810,8 +827,10 @@
             body: JSON.stringify({ draftId, description: formulairePersonnaliseDescription.value.trim() }),
           }).catch(() => {});
           statusFormulairePersonnalise.style.display = 'block';
+          lienRdvFormulairePersonnalise.style.display = 'block';
         } else {
           statusFormulairePersonnalise.style.display = 'none';
+          lienRdvFormulairePersonnalise.style.display = 'none';
         }
       });
 

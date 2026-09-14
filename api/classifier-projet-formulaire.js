@@ -3,7 +3,7 @@
 // projet (étape "Décrivez votre projet en quelques mots"). Détermine si ce
 // projet est automatiquement chiffrable : correspond-il à l'un des
 // "produits" que l'ARTISAN a lui-même définis à l'avance (colonne
-// produits_chiffrables, remplie depuis mes-elements.html via
+// produits_chiffrables, remplie depuis construire-ma-vitrine.html via
 // api/analyser-produits-chiffrables.js) ?
 //
 // Remplace api/selectionner-questions-formulaire.js (retiré) — même garde-fou

@@ -1,5 +1,5 @@
 // /api/demander-aide-elements.js
-// Bouton "🆘 Besoin d'aide pour remplir mes éléments" dans mes-elements.html
+// Bouton "🆘 Besoin d'aide pour remplir mes éléments" dans construire-ma-vitrine.html
 // — un artisan bloqué ou perdu dans le formulaire clique dessus, ça envoie
 // un SMS+email à Cyrille pour qu'il le recontacte et l'aide à compléter sa
 // vitrine. Peut être cliqué autant de fois que nécessaire (pas de garde-fou
@@ -86,8 +86,8 @@ export default async function handler(req, res) {
     const nomAffiche = entreprise || 'Un artisan';
 
     const coordonnees = [telephone, email].filter(Boolean).join(' — ');
-    const lienElements = `https://www.skyeco.fr/mes-elements.html?id=${draftId}`;
-    const texte = `🆘 ${nomAffiche} demande de l'aide pour remplir ses éléments (mes-elements.html).${coordonnees ? ' Contact : ' + coordonnees + '.' : ''} Sa page : ${lienElements}`;
+    const lienElements = `https://www.skyeco.fr/construire-ma-vitrine.html?id=${draftId}`;
+    const texte = `🆘 ${nomAffiche} demande de l'aide pour remplir ses éléments (construire-ma-vitrine.html).${coordonnees ? ' Contact : ' + coordonnees + '.' : ''} Sa page : ${lienElements}`;
 
     const resultats = await Promise.allSettled([
       envoyerSMS(ADMIN_PHONE, texte),

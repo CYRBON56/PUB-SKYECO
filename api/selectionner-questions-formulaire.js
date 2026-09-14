@@ -2,7 +2,7 @@
 // Appelé par public/apercu.html juste après que le prospect a décrit son
 // projet (étape "Décrivez votre projet en quelques mots"). Sélectionne, PARMI
 // les questions que l'ARTISAN a lui-même validées à l'avance (colonne
-// formulaire_questions_pool, remplie depuis mes-elements.html via
+// formulaire_questions_pool, remplie depuis construire-ma-vitrine.html via
 // api/suggerer-questions-formulaire.js), le sous-ensemble pertinent pour ce
 // projet précis.
 //

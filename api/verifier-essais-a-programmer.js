@@ -76,7 +76,7 @@ export default async function handler(req, res) {
         // 1. Essai déjà terminé -> on bloque la modification (pas l'accès en
         // lecture au dashboard, ni la vitrine, ni la diffusion Google Ads,
         // qui continue tant qu'il reste du budget — voir les blocages de
-        // sauvegarde dans mon-dashboard.html / mes-elements.html).
+        // sauvegarde dans mon-dashboard.html / construire-ma-vitrine.html).
         if (finEssai <= maintenant) {
           await fetch(`${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft.id}`, {
             method: 'PATCH',

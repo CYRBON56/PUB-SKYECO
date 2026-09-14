@@ -1,6 +1,6 @@
 // /api/interpreter-chiffrage.js
 // Interprète, via Claude, la description libre que l'artisan donne de ses prix
-// (mes-elements.html, section "Chiffrage détaillé") et retourne, pour chacun
+// (construire-ma-vitrine.html, section "Chiffrage détaillé") et retourne, pour chacun
 // de ses métiers, l'unité de facturation / le prix unitaire HT / le minimum
 // facturé qu'on peut en déduire — pour pré-remplir le formulaire sans que
 // l'artisan ait à remplir une grille ligne par ligne.

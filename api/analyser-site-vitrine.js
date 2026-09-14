@@ -1,5 +1,5 @@
 // /api/analyser-site-vitrine.js
-// Extension de l'assistant IA "Construire ma vitrine" (mes-elements.html,
+// Extension de l'assistant IA "Construire ma vitrine" (construire-ma-vitrine.html,
 // bloc data-section="assistant-ia") — demandée par Cyrille le 11/09/2026 via
 // un brief technique : au lieu de (ou en plus de) taper une description
 // libre, l'artisan peut coller un lien pour générer titres + brouillon de
@@ -34,7 +34,7 @@
 //
 // Variables d'environnement requises : ANTHROPIC_API_KEY (même clé que
 // generer-vitrine-ia.js). SUPABASE_URL/SUPABASE_ANON_KEY/BUCKET sont repris
-// tels quels de mes-elements.html (clé anon publique, déjà visible
+// tels quels de construire-ma-vitrine.html (clé anon publique, déjà visible
 // côté client dans cette page — même convention que
 // api/generer-image-gamma.js, qui héberge lui aussi des images externes
 // téléchargées côté serveur avec cette même clé).

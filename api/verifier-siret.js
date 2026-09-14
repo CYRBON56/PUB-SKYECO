@@ -13,7 +13,7 @@
 // Le champ "suggestionFranchiseTva" renvoyé ici n'est donc qu'une case
 // PRÉ-COCHÉE à titre d'aide (la plupart des entrepreneurs individuels sont
 // en franchise), jamais une valeur appliquée sans que l'artisan la
-// confirme lui-même dans mes-elements.html.
+// confirme lui-même dans construire-ma-vitrine.html.
 //
 // Requête : POST { siret }
 // Aucune authentification nécessaire (données publiques, pas de données

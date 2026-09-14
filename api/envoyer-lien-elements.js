@@ -1,5 +1,5 @@
 // /api/envoyer-lien-elements.js
-// Envoie par SMS le lien personnalisé vers mes-elements.html à l'artisan
+// Envoie par SMS le lien personnalisé vers construire-ma-vitrine.html à l'artisan
 // concerné, pour qu'il puisse déposer ses vrais éléments (logo, photos,
 // légal, chiffrage).
 //
@@ -66,7 +66,7 @@ export default async function handler(req, res) {
     if (!draft) return res.status(404).json({ success: false, error: 'Site introuvable.' });
     if (!draft.telephone) return res.status(400).json({ success: false, error: "Aucun téléphone enregistré pour ce site." });
 
-    const lien = `${SITE_BASE_URL}/mes-elements.html?id=${draftId}`;
+    const lien = `${SITE_BASE_URL}/construire-ma-vitrine.html?id=${draftId}`;
     const texte = `Bonjour, suite à notre échange, voici le lien pour nous transmettre vos éléments (logo, photos, coordonnées) et construire votre vraie vitrine : ${lien}`;
 
     await envoyerSMS(draft.telephone, texte, draft.twilio_phone_number);

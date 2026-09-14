@@ -1,6 +1,6 @@
 // /api/analyser-produits-chiffrables.js
 // Remplace api/interpreter-chiffrage.js + api/suggerer-questions-formulaire.js
-// (tous deux retirés). Utilisé par mes-elements.html (section "🧮 Produits
+// (tous deux retirés). Utilisé par construire-ma-vitrine.html (section "🧮 Produits
 // chiffrables") : l'artisan décrit librement ce qu'il facture, et l'IA en
 // déduit une liste de "produits" chiffrables — chacun avec son unité de
 // facturation (m²/ml/m³/forfait), un prix et un minimum si déductibles du
@@ -149,7 +149,7 @@ export default async function handler(req, res) {
 
     // Si le profil n'avait aucun métier renseigné, on renvoie celui déduit
     // (le plus fréquent parmi les produits identifiés) pour que
-    // mes-elements.html puisse l'enregistrer sur le profil — sinon ce
+    // construire-ma-vitrine.html puisse l'enregistrer sur le profil — sinon ce
     // blocage reviendrait à chaque nouvelle analyse.
     let metierDeduit = null;
     if (metierAInferer) {

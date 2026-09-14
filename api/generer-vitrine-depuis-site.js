@@ -1,6 +1,6 @@
 // /api/generer-vitrine-depuis-site.js
 // Va chercher le contenu du site web existant d'un artisan (URL fournie
-// dans mes-elements.html, section "Site web existant"), et en tire :
+// dans construire-ma-vitrine.html, section "Site web existant"), et en tire :
 //   - un titre d'accroche pensé pour donner envie de demander un devis
 //     (même esprit que suggerer-titre.js, mais nourri par le vrai contenu
 //     du site plutôt que seulement le métier générique)

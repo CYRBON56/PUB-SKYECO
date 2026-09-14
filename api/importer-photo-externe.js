@@ -1,12 +1,12 @@
 // /api/importer-photo-externe.js
 // Télécharge côté serveur une image trouvée sur le site web existant d'un
 // artisan (voir api/generer-vitrine-depuis-site.js) et la réhéberge sur le
-// bucket Supabase Storage déjà utilisé pour les photos de mes-elements.html
+// bucket Supabase Storage déjà utilisé pour les photos de construire-ma-vitrine.html
 // — nécessaire car le navigateur ne peut pas récupérer directement les
 // octets d'une image sur un domaine externe (CORS) pour la réenvoyer.
 //
 // Ne modifie jamais le brouillon lui-même : renvoie juste l'URL hébergée,
-// c'est le front (mes-elements.html) qui l'ajoute au tableau "photos" et
+// c'est le front (construire-ma-vitrine.html) qui l'ajoute au tableau "photos" et
 // l'enregistre, exactement comme un upload manuel classique.
 //
 // Variables d'environnement requises :

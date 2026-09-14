@@ -1,5 +1,5 @@
 // /api/generer-vitrine-ia.js
-// Assistant IA "construire ma vitrine complète" (mes-elements.html, bloc
+// Assistant IA "construire ma vitrine complète" (construire-ma-vitrine.html, bloc
 // au-dessus de la section "Titre de votre vitrine") — demandé par Cyrille le
 // 10/09/2026. L'artisan décrit son activité avec ses propres mots en
 // quelques phrases libres, et l'IA en tire :

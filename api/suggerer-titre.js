@@ -1,6 +1,6 @@
 // /api/suggerer-titre.js
 // Suggère, via Claude, un titre pour le grand bandeau de la vitrine
-// (mes-elements.html, section "Titre de votre vitrine"), à partir du/des
+// (construire-ma-vitrine.html, section "Titre de votre vitrine"), à partir du/des
 // métier(s) de l'artisan et éventuellement de sa zone d'intervention.
 // Complète les titres pré-écrits déjà proposés (TITRES_PAR_METIER côté
 // front) sans les remplacer — l'artisan choisit ensuite d'utiliser la

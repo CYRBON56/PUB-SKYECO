@@ -1,5 +1,5 @@
 // /api/demander-formulaire-personnalise.js
-// Un artisan coche "Formulaire personnalisé" dans mes-elements.html alors
+// Un artisan coche "Formulaire personnalisé" dans construire-ma-vitrine.html alors
 // qu'aucun parcours sur mesure n'est encore codé pour lui (formulaire_
 // personnalise_cle vide — voir PARCOURS_PERSONNALISES dans apercu.html) :
 // ça envoie un SMS+email à Cyrille pour qu'il le recontacte et construise
@@ -89,7 +89,7 @@ export default async function handler(req, res) {
 
     const coordonnees = [telephone, email].filter(Boolean).join(' — ');
     const lienDashboard = `https://www.skyeco.fr/mon-dashboard.html?id=${draftId}`;
-    const texte = `🔔 ${nomAffiche} a coché "Formulaire personnalisé" (mes-elements.html) — aucun parcours sur mesure codé pour l'instant, sa vitrine reste sur le formulaire basique en attendant.${coordonnees ? ' Contact : ' + coordonnees + '.' : ''}${descriptionTrim ? ' Besoin décrit : "' + descriptionTrim + '".' : ''} Dashboard : ${lienDashboard}`;
+    const texte = `🔔 ${nomAffiche} a coché "Formulaire personnalisé" (construire-ma-vitrine.html) — aucun parcours sur mesure codé pour l'instant, sa vitrine reste sur le formulaire basique en attendant.${coordonnees ? ' Contact : ' + coordonnees + '.' : ''}${descriptionTrim ? ' Besoin décrit : "' + descriptionTrim + '".' : ''} Dashboard : ${lienDashboard}`;
 
     const resultats = await Promise.allSettled([
       envoyerSMS(ADMIN_PHONE, texte),

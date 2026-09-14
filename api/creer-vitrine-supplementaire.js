@@ -12,7 +12,7 @@
 // (sélecteur de site), sans passer par acces-dashboard.html. Comme
 // aujourd'hui, chaque vitrine reste facturée séparément (son propre
 // forfait / abonnement) — cet endpoint ne fait que créer le brouillon, pas
-// l'abonnement : l'artisan continue ensuite vers mes-elements.html puis
+// l'abonnement : l'artisan continue ensuite vers construire-ma-vitrine.html puis
 // contrat.html / choisir-forfait.html pour cette nouvelle vitrine, comme
 // pour une inscription normale.
 //

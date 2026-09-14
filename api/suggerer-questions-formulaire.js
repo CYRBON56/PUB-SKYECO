@@ -1,6 +1,6 @@
 // /api/suggerer-questions-formulaire.js
 // Suggestions de questions de devis générées par IA (Claude) à partir d'une
-// description libre de l'activité de l'artisan. Utilisé par mes-elements.html
+// description libre de l'activité de l'artisan. Utilisé par construire-ma-vitrine.html
 // (section "📋 Créer vos formulaires") : l'artisan coche celles qu'il veut
 // garder dans son "pool" de questions plutôt que de tout écrire lui-même.
 //

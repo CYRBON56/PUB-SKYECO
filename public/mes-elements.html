@@ -551,6 +551,41 @@
     });
   }
 
+  // Mode simplifié (14/09/2026) : quand l'artisan a choisi "Mon site actuel"
+  // ou "Vitrine sur mesure" sur mon-dashboard.html (voir choixVitrineDashboard
+  // / api/definir-mode-vitrine.js), construire la vitrine Skyeco elle-même
+  // (logo/photos, assistant IA, titre, formulaire de tarifs) ne sert à rien :
+  // soit l'annonce pointe directement vers son propre site, soit c'est Skyeco
+  // qui la construira à la main. On ne garde donc que ce qui reste utile pour
+  // activer la campagne : Coordonnées + Informations légales.
+  const mode = params.get('mode') || 'ia';
+  const modeSimplifie = (mode === 'site_externe' || mode === 'sur_mesure');
+  if (modeSimplifie) {
+    ['visuel', 'assistant-ia', 'titre', 'siteweb', 'produits'].forEach(nom => {
+      const section = document.querySelector(`[data-section="${nom}"]`);
+      if (section) section.style.display = 'none';
+    });
+    const btnAvancement = document.getElementById('btnAvancement');
+    if (btnAvancement) btnAvancement.style.display = 'none';
+    const h1 = document.getElementById('titreConstruction');
+    const intro = document.querySelector('.intro');
+    const btnSubmitLabel = document.getElementById('btnSubmit');
+    if (h1) h1.textContent = 'Vos coordonnées et vos informations légales';
+    if (intro) {
+      intro.textContent = mode === 'site_externe'
+        ? "Vos annonces renvoient déjà vers votre site actuel — il ne reste plus qu'à renseigner vos coordonnées et vos informations légales pour activer votre campagne."
+        : "Notre équipe prépare votre vitrine sur mesure — en attendant, renseignez vos coordonnées et vos informations légales pour activer votre campagne.";
+    }
+    if (btnSubmitLabel) btnSubmitLabel.textContent = 'Enregistrer mes informations';
+    if (!verrouAds) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('open'));
+      const sectionCoordonnees = document.querySelector('[data-section="coordonnees"]');
+      const sectionLegal = document.querySelector('[data-section="legal"]');
+      if (sectionCoordonnees) sectionCoordonnees.classList.add('open');
+      if (sectionLegal) sectionLegal.classList.add('open');
+    }
+  }
+
   // Avertit avant de quitter/recharger la page si une sauvegarde (auto ou
   // upload de fichier) est encore en cours — même logique que sur le
   // tableau de bord, pour éviter de perdre une saisie envoyée trop tard.
@@ -595,12 +630,11 @@
   });
 
   function calculerProgression() {
-    const groupes = {
-      visuel: () => !!(logoUrl || photosUrls.length),
-      coordonnees: () => !!(document.getElementById('entreprise').value.trim() && document.getElementById('telephone').value.trim() && document.getElementById('email').value.trim()),
-      legal: () => !!document.getElementById('siret').value.trim(),
-      siteweb: () => !!document.getElementById('siteExistant').value.trim(),
-    };
+    const groupes = {};
+    if (!modeSimplifie) groupes.visuel = () => !!(logoUrl || photosUrls.length);
+    groupes.coordonnees = () => !!(document.getElementById('entreprise').value.trim() && document.getElementById('telephone').value.trim() && document.getElementById('email').value.trim());
+    groupes.legal = () => !!document.getElementById('siret').value.trim();
+    if (!modeSimplifie) groupes.siteweb = () => !!document.getElementById('siteExistant').value.trim();
     let completes = 0;
     Object.entries(groupes).forEach(([nom, verif]) => {
       const rempli = verif();
@@ -1628,7 +1662,7 @@
       msg.textContent = verrouAds
         ? '✓ Tes éléments ont bien été enregistrés. On t\'emmène approvisionner ton compte Google Ads…'
         : versApercuPremierPassage
-        ? '✓ Tes éléments ont bien été enregistrés. On t\'emmène voir ta vitrine…'
+        ? (modeSimplifie ? '✓ Tes informations ont bien été enregistrées. Retour à ton tableau de bord…' : '✓ Tes éléments ont bien été enregistrés. On t\'emmène voir ta vitrine…')
         : '✓ Tes éléments ont bien été enregistrés.';
       msg.style.display = 'block';
       btn.textContent = 'Enregistré ✓';
@@ -1638,7 +1672,7 @@
         }, 1200);
       } else if (versApercuPremierPassage) {
         setTimeout(() => {
-          window.location.href = '/apercu.html?id=' + draftId;
+          window.location.href = modeSimplifie ? '/mon-dashboard.html?id=' + draftId : '/apercu.html?id=' + draftId;
         }, 1500);
       } else {
         setTimeout(() => {

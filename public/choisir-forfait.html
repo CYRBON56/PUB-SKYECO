@@ -388,52 +388,16 @@
         } catch (e) { /* en cas de doute, on garde le tarif normal (rang 1) */ }
       }
 
-      // Verrou remis (02/09) : impossible de choisir une formule (payante
-      // ou essai gratuit) tant que Cyrille n'a pas validé le site depuis
-      // mes-artisans.html — même contrôle refait côté serveur dans
-      // api/create-checkout-session.js et api/demarrer-essai-gratuit.js,
-      // pour ne pas dépendre uniquement de ce blocage d'affichage.
-      if (!draft.site_valide && !TEST_MODE) {
-        document.querySelector('.plans-header').insertAdjacentHTML('beforeend', `
-          <div id="blocageValidation" style="background:#fff4ec; border:1.5px solid #f0c9a8; border-radius:12px; padding:20px; margin-top:18px; text-align:center;">
-            <div style="font-size:1.5rem; margin-bottom:8px;">⏳</div>
-            <p style="margin:0 0 16px; color:#5b4636;">Votre site est en cours de vérification par notre équipe avant de pouvoir être mis en ligne. Vous pourrez choisir votre formule dès qu'il sera validé.</p>
-            <button type="button" id="btnDemanderValidation" style="background:#e8622c; color:#fff; border:none; border-radius:10px; padding:12px 20px; font-size:0.9rem; font-weight:700; cursor:pointer;">🔔 Demander la validation Skyeco</button>
-            <div id="noteValidation" style="font-size:0.82rem; color:#8a6d5a; margin-top:10px;"></div>
-          </div>
-        `);
-        document.getElementById('plansGrid').style.display = 'none';
-        document.querySelector('.choix-vitrine-box').style.display = 'none';
-        document.getElementById('btnDemanderValidation').addEventListener('click', async () => {
-          const btn = document.getElementById('btnDemanderValidation');
-          const note = document.getElementById('noteValidation');
-          btn.disabled = true;
-          btn.textContent = 'Envoi…';
-          try {
-            const r = await fetch('/api/demander-validation-site', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ draftId })
-            });
-            const d = await r.json();
-            note.textContent = d.success ? "✓ L'équipe Skyeco a été prévenue." : (d.error || "Impossible d'envoyer la demande.");
-          } catch (e) {
-            note.textContent = 'Impossible de contacter le serveur.';
-          } finally {
-            btn.disabled = false;
-            btn.textContent = '🔔 Demander la validation Skyeco';
-          }
-        });
-        document.getElementById('vitrineFrame').src = '/apercu.html?id=' + draftId;
-        return;
-      }
-
-      // Le paiement n'est plus bloqué par une validation manuelle préalable :
-      // l'artisan arrive ici juste après avoir déposé ses éléments et peut choisir
-      // sa formule tout de suite, conformément à ce que promet contrat.html
-      // ("nous vérifions ensuite tout et mettons votre vitrine en ligne sous 48h").
-      // La validation (site_valide) reste un simple suivi interne, géré depuis
-      // mes-artisans.html, et n'a plus d'effet bloquant ici.
+      // 14/09/2026 (soir) : le verrou manuel "site_valide" (bloquait le choix
+      // de formule tant que Cyrille n'avait pas validé la fiche à la main
+      // depuis mes-artisans.html) est retiré — désormais l'identité de
+      // l'artisan est déjà vérifiée en amont par la page de connexion
+      // sécurisée + la fiche SIRET/contact/téléphone (voir
+      // acces-dashboard.html et skyeco-pro-inscription-siret.html), donc ce
+      // contrôle manuel supplémentaire n'est plus nécessaire avant paiement.
+      // Même retrait côté serveur dans api/create-checkout-session.js.
+      // site_valide reste en base comme simple suivi interne (mes-artisans.html
+      // peut toujours l'activer/désactiver), mais n'a plus aucun effet bloquant.
       if (TEST_MODE) {
         document.querySelector('.plans-header').insertAdjacentHTML('beforeend',
           '<div style="background:#fff3cd; color:#8a6d1f; border:1px solid #f0d98c; border-radius:10px; padding:10px 14px; font-size:0.82rem; font-weight:700; margin-top:14px;">🧪 Mode test activé — aucun paiement réel ne sera effectué.</div>'

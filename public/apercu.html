@@ -24,6 +24,18 @@
   .image-panel-media img { opacity:0; transition:opacity .8s ease-in-out; }
   .image-panel-media img.active { opacity:1; }
   .image-panel-media::before { content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(20,49,42,0.55) 0%, rgba(20,49,42,0.15) 35%, rgba(20,49,42,0.55) 100%); z-index:1; pointer-events:none; }
+  /* 14/09/2026 (soir) : photos avant/après (draft.photos_avant_apres) —
+     demandé par Cyrille pour remplacer le carrousel générique par de vraies
+     preuves de réalisation quand l'artisan en a renseigné. Remplace le
+     carrousel classique (mêmes conteneur et logique de fondu que les <img>
+     ci-dessus) uniquement quand il y a des paires ; sinon comportement
+     inchangé. */
+  .avant-apres-slide { position:absolute; inset:0; opacity:0; transition:opacity .8s ease-in-out; display:flex; }
+  .avant-apres-slide.active { opacity:1; }
+  .avant-apres-slide .moitie { position:relative; flex:1 1 50%; overflow:hidden; }
+  .avant-apres-slide .moitie img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .avant-apres-slide .moitie .etiquette { position:absolute; left:8px; bottom:8px; z-index:2; background:rgba(15,35,29,0.82); color:#fff; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; padding:4px 10px; border-radius:999px; }
+  .avant-apres-slide .separateur { position:absolute; top:0; bottom:0; left:50%; width:2px; background:rgba(255,255,255,0.6); z-index:2; transform:translateX(-1px); }
   /* Titre accroche — corrigé le 04/09 (Cyrille) : positionné directement
      dans .image-panel (pas dans .image-panel-media) pour que "top:50%" se
      cale sur le milieu de TOUT le panneau, donc pile sur la ligne de
@@ -159,6 +171,11 @@
   .trust-footer .trust-badges { display:flex; justify-content:center; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-size:12px; color:#4a5a54; font-weight:600; }
   .trust-footer .legal-line { color:#14312a; }
   .btn-footer-callback { background:white; border:1.5px solid var(--brand,#1e6f4c); color:#14312a; padding:8px 16px; font-size:12.5px; font-weight:700; border-radius:10px; cursor:pointer; }
+  /* 14/09/2026 (soir) : numéro cliquable, affiché en permanence à côté de
+     "Être rappelé" (voir footerCallbackZone) — demandé par Cyrille : le
+     téléphone doit être systématiquement proposé, pas seulement en texte
+     dans les mentions légales tout en bas de page. */
+  .btn-appel-direct { display:inline-flex; align-items:center; gap:6px; background:var(--brand,#1e6f4c); color:white; padding:8px 16px; font-size:12.5px; font-weight:700; border-radius:10px; text-decoration:none; margin-right:8px; }
 
   /* ---- Vérification SMS du téléphone (étape identité) — même look & feel
      que estimation.html (SalesFlow), couleurs pilotées par --brand pour
@@ -236,6 +253,7 @@
         <div class="trust-footer">
           <div class="legal-line" id="legalLine"></div>
           <div id="footerCallbackZone" style="margin-top:10px;">
+            <a class="btn-appel-direct" id="btnAppelDirect" style="display:none;" href="#"></a>
             <button class="btn btn-footer-callback" id="btnFooterCallback">📞 Être rappelé</button>
           </div>
         </div>
@@ -864,7 +882,7 @@ async function init(){
     // migration verrouiller_colonnes_sensibles_vitrine_drafts, qui retire à
     // anon l'accès à des colonnes sensibles (hash de mot de passe, jetons...)
     // qu'un select=* tenterait de lire et ferait échouer intégralement.
-    `${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${id}&select=adresse_cp,adresse_rue,adresse_ville,assurance_decennale_assureur,assurance_decennale_numero,capital_social,catalogue_fichier_url,catalogue_image_url,catalogue_titre,couleur,description,email,entreprise,fond_formulaire_flou,fond_formulaire_source,forme_juridique,formulaire_personnalise,formulaire_personnalise_cle,formulaire_position,id,logo_url,metier,mode_devis_detaille,photos,portails_tarifs,produits_chiffrables,rcs_ville,siret,status,telephone,titre_hero_choisi,tva_taux,video_url,zone`,
+    `${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${id}&select=adresse_cp,adresse_rue,adresse_ville,assurance_decennale_assureur,assurance_decennale_numero,capital_social,catalogue_fichier_url,catalogue_image_url,catalogue_titre,couleur,description,email,entreprise,fond_formulaire_flou,fond_formulaire_source,forme_juridique,formulaire_personnalise,formulaire_personnalise_cle,formulaire_position,id,logo_url,metier,mode_devis_detaille,photos,photos_avant_apres,portails_tarifs,produits_chiffrables,rcs_ville,siret,status,telephone,titre_hero_choisi,tva_taux,video_url,zone`,
     { headers: { apikey: SUPABASE_ANON_KEY } }
   );
   const rows = await resp.json().catch(() => []);
@@ -927,6 +945,19 @@ async function init(){
     : template.delaiBadge;
   document.getElementById('introText').textContent = draft.description || template.intro;
   document.getElementById('miniBadges').innerHTML = ['✅ Sans engagement','⏱️ Réponse sous 24h','🔒 Données confidentielles'].map(b=>'<span>'+b+'</span>').join('');
+
+  // 14/09/2026 (soir) : numéro cliquable en permanence à côté de "Être
+  // rappelé" — le téléphone n'était visible qu'en texte non cliquable dans
+  // les mentions légales tout en bas de page, alors que la plupart des
+  // visiteurs viennent du mobile depuis l'annonce.
+  if (draft.telephone) {
+    const btnAppel = document.getElementById('btnAppelDirect');
+    const telDigits = String(draft.telephone).replace(/\D/g, '');
+    const telE164 = telDigits.startsWith('0') && telDigits.length === 10 ? '+33' + telDigits.slice(1) : ('+' + telDigits);
+    btnAppel.href = 'tel:' + telE164;
+    btnAppel.textContent = '📞 ' + draft.telephone;
+    btnAppel.style.display = 'inline-flex';
+  }
 
   // Bouton catalogue — optionnel, configuré par l'artisan dans
   // construire-ma-vitrine.html (titre + image de couverture + fichier PDF, voir
@@ -1092,6 +1123,24 @@ async function init(){
       let idxBas=0;
       setInterval(()=>{ imgsCarrouselBas[idxBas].classList.remove('active'); idxBas=(idxBas+1)%imgsCarrouselBas.length; imgsCarrouselBas[idxBas].classList.add('active'); }, 2500);
     }
+  } else if (Array.isArray(draft.photos_avant_apres) && draft.photos_avant_apres.length) {
+    // Photos avant/après : priment sur le carrousel générique quand
+    // l'artisan en a renseigné — nettement plus convaincant qu'une photo
+    // seule pour un prospect qui compare plusieurs artisans.
+    const slides = draft.photos_avant_apres.filter(p => p && p.avant && p.apres).map((p, i) => {
+      const slide = document.createElement('div');
+      slide.className = 'avant-apres-slide' + (i === 0 ? ' active' : '');
+      slide.innerHTML =
+        '<div class="moitie"><img src="' + p.avant + '" alt="Avant"><span class="etiquette">Avant</span></div>' +
+        '<div class="moitie"><img src="' + p.apres + '" alt="Après"><span class="etiquette">Après</span></div>' +
+        '<div class="separateur"></div>';
+      mediaContainer.insertBefore(slide, mediaContainer.firstChild);
+      return slide;
+    });
+    if (slides.length > 1) {
+      let idxAA = 0;
+      setInterval(() => { slides[idxAA].classList.remove('active'); idxAA = (idxAA + 1) % slides.length; slides[idxAA].classList.add('active'); }, 3500);
+    }
   } else {
     const imgs = imagesCarrouselApercu.map((src,i)=>{ const img=document.createElement('img'); img.src=src; if(i===0) img.className='active'; mediaContainer.insertBefore(img, mediaContainer.firstChild); return img; });
     if(imgs.length>1){
@@ -1173,25 +1222,89 @@ async function init(){
       '<div style="max-width:320px; margin:0 auto; text-align:left;">'+
         '<input type="text" id="footerNom" placeholder="Votre nom" style="width:100%; border:1.5px solid #d8e3de; border-radius:10px; padding:10px 12px; font-size:14px; margin-bottom:8px;" />'+
         '<input type="tel" id="footerTel" placeholder="Votre téléphone" style="width:100%; border:1.5px solid #d8e3de; border-radius:10px; padding:10px 12px; font-size:14px; margin-bottom:10px;" />'+
-        '<button class="btn btn-primary" id="btnFooterCallbackConfirm" style="width:100%; padding:10px;">Confirmer</button>'+
+        '<button class="btn btn-primary" id="btnFooterCallbackConfirm" style="width:100%; padding:10px;">Recevoir mon code par SMS</button>'+
+        '<div id="footerCallbackMsg" style="font-size:12.5px; color:#c0392b; margin-top:8px;"></div>'+
       '</div>';
+    // 14/09/2026 (soir) : ajoute une vérification du numéro par SMS avant
+    // d'enregistrer la demande — demandé par Cyrille ("le client devra
+    // confirmer son téléphone"), même exigence que le formulaire complet
+    // (voir wireStepEvents plus bas, étape "identity") mais pour ce
+    // raccourci "Être rappelé" qui n'en avait pas jusqu'ici (numéros
+    // fantaisistes possibles, mauvaise qualité de lead).
     document.getElementById('btnFooterCallbackConfirm').addEventListener('click', async ()=>{
       const nomVal = document.getElementById('footerNom').value.trim();
       const telVal = document.getElementById('footerTel').value.trim();
-      if(!nomVal || telVal.length < 8){ return; }
-      zone.innerHTML = '<div style="font-size:13px; color:#5b6b64;">Envoi en cours…</div>';
+      const msgEl = document.getElementById('footerCallbackMsg');
+      if(!nomVal){ msgEl.textContent = 'Merci de renseigner votre nom.'; return; }
+      if(telVal.replace(/\D/g,'').length < 10){ msgEl.textContent = 'Numéro de téléphone invalide.'; return; }
+      msgEl.textContent = '';
+      const btnConfirm = document.getElementById('btnFooterCallbackConfirm');
+      btnConfirm.disabled = true;
+      btnConfirm.textContent = 'Envoi du code…';
       try {
-        await fetch('/api/notify-nouvelle-demande', {
+        const resp = await fetch('/api/verify-send-code', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ draftId: draft.id, nom: nomVal, telephone: telVal, reponses: { type_demande: 'rappel_rapide_footer' } })
+          body: JSON.stringify({ telephone: telVal })
         });
-        zone.innerHTML = '<div style="font-size:13px; color:#1e6f4c; font-weight:600;">✅ Demande envoyée, on vous rappelle très vite !</div>';
+        const data = await resp.json().catch(()=>({}));
+        if (!resp.ok || !data.success) {
+          msgEl.textContent = data.error || "Impossible d'envoyer le code. Vérifiez le numéro.";
+          btnConfirm.disabled = false;
+          btnConfirm.textContent = 'Recevoir mon code par SMS';
+          return;
+        }
+        afficherEtapeCodeFooter(zone, nomVal, telVal);
       } catch (e) {
-        zone.innerHTML = '<div style="font-size:13px; color:#c0392b;">Impossible d\'envoyer la demande. Réessayez.</div>';
+        msgEl.textContent = "Impossible d'envoyer le code pour le moment. Réessayez.";
+        btnConfirm.disabled = false;
+        btnConfirm.textContent = 'Recevoir mon code par SMS';
       }
     });
   });
+
+  function afficherEtapeCodeFooter(zone, nomVal, telVal){
+    zone.innerHTML =
+      '<div style="max-width:320px; margin:0 auto; text-align:left;">'+
+        '<div style="font-size:12.5px; color:#4a5a54; margin-bottom:8px;">Code envoyé par SMS au ' + escapeHtml(telVal) + '</div>'+
+        '<input type="text" id="footerCode" inputmode="numeric" maxlength="6" placeholder="Code à 6 chiffres" style="width:100%; border:1.5px solid #d8e3de; border-radius:10px; padding:10px 12px; font-size:14px; margin-bottom:10px; letter-spacing:0.2em; text-align:center;" />'+
+        '<button class="btn btn-primary" id="btnFooterCodeConfirm" style="width:100%; padding:10px;">Confirmer et envoyer ma demande</button>'+
+        '<div id="footerCallbackMsg" style="font-size:12.5px; color:#c0392b; margin-top:8px;"></div>'+
+      '</div>';
+    document.getElementById('btnFooterCodeConfirm').addEventListener('click', async ()=>{
+      const codeVal = document.getElementById('footerCode').value.trim();
+      const msgEl = document.getElementById('footerCallbackMsg');
+      if(!codeVal){ msgEl.textContent = 'Merci de saisir le code reçu par SMS.'; return; }
+      const btnCode = document.getElementById('btnFooterCodeConfirm');
+      btnCode.disabled = true;
+      btnCode.textContent = 'Vérification…';
+      try {
+        const resp = await fetch('/api/verify-check-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ telephone: telVal, code: codeVal })
+        });
+        const data = await resp.json().catch(()=>({}));
+        if (!resp.ok || !data.success || !data.verified) {
+          msgEl.textContent = 'Code incorrect, réessayez.';
+          btnCode.disabled = false;
+          btnCode.textContent = 'Confirmer et envoyer ma demande';
+          return;
+        }
+        zone.innerHTML = '<div style="font-size:13px; color:#5b6b64;">Envoi en cours…</div>';
+        await fetch('/api/notify-nouvelle-demande', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId: draft.id, nom: nomVal, telephone: telVal, telephoneVerifie: true, reponses: { type_demande: 'rappel_rapide_footer' } })
+        });
+        zone.innerHTML = '<div style="font-size:13px; color:#1e6f4c; font-weight:600;">✅ Numéro confirmé, demande envoyée — on vous rappelle très vite !</div>';
+      } catch (e) {
+        msgEl.textContent = 'Impossible de vérifier le code pour le moment. Réessayez.';
+        btnCode.disabled = false;
+        btnCode.textContent = 'Confirmer et envoyer ma demande';
+      }
+    });
+  }
 
   // Retour depuis Stripe après paiement : on vérifie et on publie côté serveur.
   const returningSessionId = params.get('session_id');

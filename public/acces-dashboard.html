@@ -118,16 +118,13 @@
   async function connecterEtRediriger(token) {
     sessionStorage.setItem('skyeco_dashboard_token_' + draftId, token);
     sessionStorage.setItem('skyeco_dashboard_token', token);
-    try {
-      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=elements_deposes_le`, {
-        headers: { apikey: SUPABASE_ANON_KEY }
-      });
-      const rows = await resp.json();
-      if (!rows[0]?.elements_deposes_le) {
-        window.location.href = '/construire-ma-vitrine.html?id=' + draftId;
-        return;
-      }
-    } catch (e) { /* en cas de doute, on part sur le comportement habituel ci-dessous */ }
+    // 14/09/2026 : avant, un artisan qui n'avait pas encore déposé ses
+    // éléments était envoyé directement sur construire-ma-vitrine.html — ce
+    // qui l'empêchait de voir l'écran de choix "3 options" du dashboard
+    // (mon-dashboard.html) s'il ne s'était jamais connecté auparavant. On
+    // envoie donc toujours vers mon-dashboard.html désormais : c'est cette
+    // page qui décide (via elements_deposes_le) d'afficher le choix, ou
+    // d'envoyer directement vers la vitrine déjà en place.
     window.location.href = '/mon-dashboard.html?id=' + draftId;
   }
 

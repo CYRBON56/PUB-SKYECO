@@ -2301,12 +2301,20 @@
 
   async function initChoixVitrineDashboard() {
     try {
-      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,mode_vitrine,site_web_existant`, {
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,mode_vitrine,site_web_existant,elements_deposes_le`, {
         headers: { apikey: SUPABASE_ANON_KEY }
       });
       const rows = await resp.json();
       const draft = rows[0];
-      if (!draft || draft.entreprise) return; // déjà onboardé — construire-ma-vitrine.html a déjà été fait
+      // 14/09/2026 : on se base sur elements_deposes_le (posé uniquement quand
+      // l'artisan a enregistré construire-ma-vitrine.html au moins une fois —
+      // même signal que acces-dashboard.html utilise déjà pour ce choix) et
+      // non plus sur "entreprise", car certains parcours d'inscription
+      // (skyeco-ads-inscription.html, skyeco-pro-formulaire-creation.html)
+      // renseignent déjà l'entreprise dès la création du brouillon, avant même
+      // que l'artisan n'ait vu cet écran de choix — avec l'ancien test, la
+      // case ne s'affichait jamais pour ces artisans-là.
+      if (!draft || draft.elements_deposes_le) return; // déjà onboardé — construire-ma-vitrine.html a déjà été fait
 
       const box = document.getElementById('choixVitrineDashboard');
       box.style.display = 'block';

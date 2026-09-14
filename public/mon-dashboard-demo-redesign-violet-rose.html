@@ -696,7 +696,7 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ draftId: nouveauDraftId }),
           }).catch(() => {});
-          window.location.href = '/construire-ma-vitrine.html?id=' + nouveauDraftId;
+          window.location.href = '/mon-dashboard.html?id=' + nouveauDraftId;
         } catch (e) {
           erreurEl.textContent = "Impossible de préparer votre espace pour le moment. Merci de réessayer.";
           erreurEl.style.display = 'block';
@@ -724,7 +724,7 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ draftId })
           }).catch(() => {});
-          window.location.href = '/construire-ma-vitrine.html?id=' + encodeURIComponent(draftId);
+          window.location.href = '/mon-dashboard.html?id=' + encodeURIComponent(draftId);
         } else {
           erreurEl.textContent = data.error || "Impossible de démarrer l'essai pour le moment.";
           erreurEl.style.display = 'block';

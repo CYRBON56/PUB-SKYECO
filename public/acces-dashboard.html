@@ -83,6 +83,30 @@
   const draftId = params.get('id');
   const carte = document.getElementById('carte');
 
+  // 14/09/2026 (soir, v2) : cette page — jusque-là utilisée uniquement une
+  // fois, juste après le premier paiement, pour créer l'identifiant/mot de
+  // passe — sert désormais aussi de VÉRITABLE POINT DE CONNEXION obligatoire
+  // avant deux actions sensibles pour TOUS les artisans : "Mettre en ligne"
+  // (?next=mise-en-ligne) et "Approvisionner" son budget pub (?next=budget),
+  // quel que soit la façon dont ils sont arrivés sur mon-dashboard.html.
+  // Sans "next" (lien historique post-paiement), le comportement d'origine
+  // est inchangé : retour vers mon-dashboard.html.
+  const next = params.get('next'); // 'mise-en-ligne' | 'budget' | null
+  const budgetPourSuite = params.get('budget'); // uniquement utile avec next=budget
+
+  const DESTINATIONS = {
+    'mise-en-ligne': () => '/skyeco-pro-inscription-siret.html?id=' + draftId,
+    'budget': () => '/campagne.html?id=' + draftId + (budgetPourSuite ? '&budget=' + encodeURIComponent(budgetPourSuite) : ''),
+  };
+  function calculerDestination() {
+    return (DESTINATIONS[next] ? DESTINATIONS[next]() : '/mon-dashboard.html?id=' + draftId);
+  }
+  const MESSAGES_CONTEXTE = {
+    'mise-en-ligne': 'avant de mettre votre vitrine en ligne',
+    'budget': 'avant d’approvisionner votre budget publicitaire',
+  };
+  const contexteSuite = MESSAGES_CONTEXTE[next] || null;
+
   if (!draftId) {
     carte.innerHTML = '<div class="loading">Lien invalide — identifiant du site manquant.</div>';
   } else {
@@ -122,10 +146,15 @@
     // éléments était envoyé directement sur construire-ma-vitrine.html — ce
     // qui l'empêchait de voir l'écran de choix "3 options" du dashboard
     // (mon-dashboard.html) s'il ne s'était jamais connecté auparavant. On
-    // envoie donc toujours vers mon-dashboard.html désormais : c'est cette
-    // page qui décide (via elements_deposes_le) d'afficher le choix, ou
-    // d'envoyer directement vers la vitrine déjà en place.
-    window.location.href = '/mon-dashboard.html?id=' + draftId;
+    // envoie donc vers mon-dashboard.html par défaut : c'est cette page qui
+    // décide (via elements_deposes_le) d'afficher le choix, ou d'envoyer
+    // directement vers la vitrine déjà en place.
+    //
+    // 14/09/2026 (soir, v2) : SAUF si cette page a été ouverte avec un
+    // paramètre "next" (voir plus haut) — auquel cas on continue directement
+    // vers l'action pour laquelle l'artisan a dû se reconnecter, au lieu de
+    // le renvoyer sur son tableau de bord pour recliquer une seconde fois.
+    window.location.href = calculerDestination();
   }
 
   async function demarrer() {
@@ -168,7 +197,7 @@
         </svg>
       </div>
       <h1 class="titre-gros">Créer votre mot de passe pour accéder à votre tableau de bord</h1>
-      <p class="sub">Votre tableau de bord Skyeco Pro est prêt. ${emailConnu ? 'Choisissez un mot de passe pour pouvoir y revenir à tout moment.' : 'Renseignez votre email et choisissez un mot de passe pour pouvoir y revenir à tout moment.'}</p>
+      <p class="sub">${contexteSuite ? `Confirmez votre identité ${contexteSuite}. ` : 'Votre tableau de bord Skyeco Pro est prêt. '}${emailConnu ? 'Choisissez un mot de passe pour pouvoir y revenir à tout moment.' : 'Renseignez votre email et choisissez un mot de passe pour pouvoir y revenir à tout moment.'}</p>
       <form id="formCreation">
         <label>Identifiant (votre email)</label>
         <input type="email" id="creationEmail" value="${email || ''}" ${emailConnu ? 'readonly' : 'required placeholder="votre@email.fr"'}>
@@ -234,8 +263,8 @@
   function afficherConnexion(email) {
     carte.innerHTML = `
       <div class="panneau actif" id="panneauConnexion">
-        <h1>Votre tableau de bord</h1>
-        <p class="sub">Connectez-vous avec votre email et votre mot de passe.</p>
+        <h1>${contexteSuite ? 'Connexion sécurisée' : 'Votre tableau de bord'}</h1>
+        <p class="sub">${contexteSuite ? `Confirmez votre identité ${contexteSuite} — connectez-vous avec votre email et votre mot de passe.` : 'Connectez-vous avec votre email et votre mot de passe.'}</p>
         <form id="formConnexion">
           <label>Email</label>
           <input type="email" id="loginEmail" value="${email}" required>

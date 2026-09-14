@@ -113,6 +113,12 @@
   const params = new URLSearchParams(window.location.search);
   const draftId = params.get('id');
   const app = document.getElementById('app');
+  // Mode test (usage interne uniquement) : ajouter "&test=1" à l'URL fait
+  // passer le bouton "Payer" par api/simuler-paiement-budget-test.js au lieu
+  // du vrai paiement Stripe — même mécanique que choisir-forfait.html pour
+  // le forfait. Protégé par le mot de passe interne, jamais accessible à un
+  // artisan qui ne le connaît pas.
+  const TEST_MODE = params.get('test') === '1';
 
   const sessionToken = params.get('admin_token')
     || sessionStorage.getItem('skyeco_dashboard_token_' + draftId)
@@ -140,26 +146,31 @@
         app.innerHTML = `<div class="error-msg">${data.error || 'Une erreur est survenue lors de la confirmation.'}</div>`;
         return;
       }
-      app.innerHTML = `
-        <div class="merci-icone">🎉</div>
-        <h1 style="text-align:center;">Merci, votre campagne est lancée !</h1>
-        <p class="sub" style="text-align:center; margin-bottom:8px;">Votre budget de <strong>${data.budgetActif} €</strong> est actif.</p>
-        ${data.factureUrl ? `<p style="text-align:center; margin-bottom:16px;"><a href="${data.factureUrl}" target="_blank" rel="noopener" style="color:#1e6f4c; font-weight:700; text-decoration:underline;">🧾 Voir ma facture Skyeco</a></p>` : ''}
-        <div class="estimation-box">
-          <div class="detail" style="font-size:0.92rem; color:#14312a;">${data.campagneMessage}</div>
-        </div>
-        <div class="merci-bloc">
-          Un <strong>conseiller Skyeco Pro</strong> va prendre contact avec vous prochainement pour faire le point sur votre mise en place. Vous pouvez aussi choisir vous-même votre créneau dès maintenant :
-        </div>
-        <a class="btn-rdv-merci" href="/prendre-rdv.html?id=${encodeURIComponent(draftId)}">📅 Choisir mon créneau de rendez-vous</a>
-        <div class="merci-bloc">
-          Après vérification de l'éligibilité de votre compte par <strong>Google Ads</strong>, votre annonce prendra effet sous <strong>24 heures</strong>.
-        </div>
-        <a class="btn-compte-merci" href="/acces-dashboard.html?id=${encodeURIComponent(draftId)}">🔑 Créer mon identifiant et mot de passe</a>
-      `;
+      afficherSucces(data);
     } catch (e) {
       app.innerHTML = '<div class="error-msg">Impossible de confirmer le paiement pour le moment.</div>';
     }
+  }
+
+  function afficherSucces(data) {
+    app.innerHTML = `
+      ${data.test ? '<div style="background:#fff3cd; border:1px solid #ffe08a; color:#7a5b00; font-size:0.8rem; font-weight:700; text-align:center; padding:8px; border-radius:8px; margin-bottom:14px;">🧪 SIMULATION INTERNE — aucun paiement réel, campagne créée en pause comme après un vrai paiement.</div>' : ''}
+      <div class="merci-icone">🎉</div>
+      <h1 style="text-align:center;">Merci, votre campagne est lancée !</h1>
+      <p class="sub" style="text-align:center; margin-bottom:8px;">Votre budget de <strong>${data.budgetActif} €</strong> est actif.</p>
+      ${data.factureUrl ? `<p style="text-align:center; margin-bottom:16px;"><a href="${data.factureUrl}" target="_blank" rel="noopener" style="color:#1e6f4c; font-weight:700; text-decoration:underline;">🧾 Voir ma facture Skyeco</a></p>` : ''}
+      <div class="estimation-box">
+        <div class="detail" style="font-size:0.92rem; color:#14312a;">${data.campagneMessage}</div>
+      </div>
+      <div class="merci-bloc">
+        Un <strong>conseiller Skyeco Pro</strong> va prendre contact avec vous prochainement pour faire le point sur votre mise en place. Vous pouvez aussi choisir vous-même votre créneau dès maintenant :
+      </div>
+      <a class="btn-rdv-merci" href="/prendre-rdv.html?id=${encodeURIComponent(draftId)}">📅 Choisir mon créneau de rendez-vous</a>
+      <div class="merci-bloc">
+        Après vérification de l'éligibilité de votre compte par <strong>Google Ads</strong>, votre annonce prendra effet sous <strong>24 heures</strong>.
+      </div>
+      <a class="btn-compte-merci" href="/acces-dashboard.html?id=${encodeURIComponent(draftId)}">🔑 Créer mon identifiant et mot de passe</a>
+    `;
   }
 
   function render() {
@@ -226,7 +237,7 @@
         <span>J'accepte les <a href="/cgv.html" target="_blank">conditions générales de vente</a>.</span>
       </label>
 
-      <button class="btn-payer" id="btnPayer" disabled>Payer et lancer ma campagne</button>
+      <button class="btn-payer" id="btnPayer" disabled>${TEST_MODE ? '🧪 Simuler le paiement (test) et lancer ma campagne' : 'Payer et lancer ma campagne'}</button>
       <button class="resilier-link" id="btnPause" type="button">Mettre en pause 1 mois (sans prélèvement)</button>
       <button class="resilier-link" id="btnResilier" type="button">Résilier mon abonnement</button>
     `;
@@ -287,7 +298,9 @@
             : `Ce budget couvre la gestion de votre campagne et sa diffusion sur Google Ads.`;
           estimationOk = true;
           majEtatBoutonPayer();
-          btnPayer.textContent = `Payer ${budget} € et lancer ma campagne`;
+          btnPayer.textContent = TEST_MODE
+            ? `🧪 Simuler le paiement (test) de ${budget} € et lancer ma campagne`
+            : `Payer ${budget} € et lancer ma campagne`;
         } else {
           document.getElementById('clicsValue').textContent = '—';
           document.getElementById('estimationDetail').textContent = "Estimation indisponible pour le moment.";
@@ -558,6 +571,37 @@
     btnPayer.addEventListener('click', async () => {
       const budget = parseFloat(budgetInput.value);
       btnPayer.disabled = true;
+
+      if (TEST_MODE) {
+        let motDePasseInterne = sessionStorage.getItem('skyeco_admin_internal_pw');
+        if (!motDePasseInterne) {
+          motDePasseInterne = prompt('Mot de passe interne (mode test) :');
+          if (!motDePasseInterne) { btnPayer.disabled = false; return; }
+        }
+        btnPayer.textContent = 'Simulation…';
+        try {
+          const res = await fetch('/api/simuler-paiement-budget-test', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ draftId, budget, motDePasseInterne })
+          });
+          const data = await res.json();
+          if (data.success) {
+            sessionStorage.setItem('skyeco_admin_internal_pw', motDePasseInterne);
+            afficherSucces(data);
+          } else {
+            alert(data.error || 'Simulation impossible.');
+            btnPayer.disabled = false;
+            btnPayer.textContent = '🧪 Simuler le paiement (test) et lancer ma campagne';
+          }
+        } catch (e) {
+          alert('Impossible de contacter le serveur.');
+          btnPayer.disabled = false;
+          btnPayer.textContent = '🧪 Simuler le paiement (test) et lancer ma campagne';
+        }
+        return;
+      }
+
       btnPayer.textContent = 'Redirection vers le paiement…';
       try {
         const res = await fetch('/api/create-ad-budget-checkout', {

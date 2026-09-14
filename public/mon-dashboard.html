@@ -468,6 +468,10 @@
         <span class="panel-tab-icone"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M12 2l4.5 7.79h-9L12 2z"/><path fill="#34A853" d="M3.5 9.79h9L7.75 22l-4.25-12.21z"/><path fill="#FBBC05" d="M16.5 9.79h4L16.25 22l-4.25-12.21h4.5z"/></svg></span>
         <span class="panel-tab-texte">Gérer Google Ads<span class="panel-tab-sous">Ciblage, mots-clés, budget, clics</span></span>
       </button>
+      <button type="button" class="panel-tab" id="tabMeta" data-tab="meta">
+        <span class="panel-tab-icone"><svg width="20" height="20" viewBox="0 0 24 24"><defs><linearGradient id="tabMetaGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4f46e5"/><stop offset="55%" stop-color="#ec4899"/><stop offset="100%" stop-color="#f59e0b"/></linearGradient></defs><circle cx="12" cy="12" r="10" fill="url(#tabMetaGrad)"/><path d="M8.5 16.5V12c0-1.9 1.34-3.3 3.5-3.3s3.5 1.4 3.5 3.3v4.5" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+        <span class="panel-tab-texte">Gérer Meta Ads<span class="panel-tab-sous">Facebook &amp; Instagram, répartition budget</span></span>
+      </button>
       <button type="button" class="panel-tab" id="tabClients" data-tab="clients">
         <span class="panel-tab-icone">👥</span>
         <span class="panel-tab-texte">Gérer les clients<span class="panel-tab-sous">Demandes, devis, signatures</span></span>
@@ -852,6 +856,39 @@
   </div>
   </div>
 
+  <div id="panelMeta" style="display:none;">
+  <div class="ads-section" id="metaSection">
+    <h2 style="display:flex; align-items:center; gap:10px;"><svg width="26" height="26" viewBox="0 0 24 24"><defs><linearGradient id="metaHeaderGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4f46e5"/><stop offset="55%" stop-color="#ec4899"/><stop offset="100%" stop-color="#f59e0b"/></linearGradient></defs><circle cx="12" cy="12" r="10" fill="url(#metaHeaderGrad)"/><path d="M8.5 16.5V12c0-1.9 1.34-3.3 3.5-3.3s3.5 1.4 3.5 3.3v4.5" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg> Pilotage Meta Ads (Facebook / Instagram)</h2>
+    <div class="ads-sub">Votre budget publicitaire déjà payé peut être réparti entre Google Ads et Meta Ads. Par défaut, tout part sur Google Ads — Meta Ads reste désactivé tant que vous ne réglez pas une part ci-dessous.</div>
+
+    <div class="ads-souspanel" id="sectionRepartitionMeta">
+      <h3>Quelle part de votre budget sur Meta Ads ?</h3>
+      <div id="repartitionMetaAffichage" class="zone-affichage">
+        <span id="repartitionMetaValeur">—</span>
+        <button type="button" id="btnModifierRepartitionMeta" class="btn-modifier-zone">✏️ Modifier</button>
+      </div>
+      <div id="repartitionMetaEdition" class="zone-edition" style="display:none; flex-direction:column; align-items:stretch;">
+        <div class="slider-row">
+          <input type="range" id="repartitionMetaSlider" min="0" max="100" step="5" value="0">
+          <span class="slider-value" id="repartitionMetaSliderValue">0% Meta</span>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:12px;">
+          <button type="button" id="btnEnregistrerRepartitionMeta">Enregistrer</button>
+          <button type="button" id="btnAnnulerRepartitionMeta" class="btn-annuler-zone">Annuler</button>
+        </div>
+      </div>
+      <div class="estim-note">Le reste de votre budget (<span id="repartitionGoogleNote">100%</span>) continue d'aller sur Google Ads. Dès que vous réglez une part supérieure à 0%, une campagne Meta Ads est créée automatiquement — en pause, vérifiée avant diffusion, comme pour Google Ads.</div>
+    </div>
+
+    <div class="ads-souspanel" id="sectionStatutMeta">
+      <h3>Statut de votre campagne Meta Ads</h3>
+      <div id="metaStatutContenu" class="estim-note">—</div>
+    </div>
+
+    <div class="empty-msg" id="metaSectionVide" style="display:none; padding:12px 0;">Meta Ads est désactivé pour le moment — réglez une répartition supérieure à 0% ci-dessus pour l'activer.</div>
+  </div>
+  </div>
+
   <div id="panelClients" style="display:none;">
   <div class="liste-panel">
     <div class="liste-header">
@@ -1016,6 +1053,7 @@
     chargerSolde();
     chargerDemandes(tokenCalendrierActuel);
     initPilotageAds();
+    initPilotageMeta();
     initAppelVideo();
     demarrerPresence();
     verifierStatutPause();
@@ -1287,6 +1325,7 @@
     const btnCible = document.querySelector(`.panel-tab[data-tab="${cible}"]`);
     if (btnCible) btnCible.classList.add('active');
     document.getElementById('panelAds').style.display = cible === 'ads' ? '' : 'none';
+    document.getElementById('panelMeta').style.display = cible === 'meta' ? '' : 'none';
     document.getElementById('panelClients').style.display = cible === 'clients' ? '' : 'none';
     document.getElementById('panelReseaux').style.display = cible === 'reseaux' ? '' : 'none';
     document.getElementById('panelCalendrier').style.display = cible === 'calendrier' ? '' : 'none';
@@ -3124,6 +3163,103 @@
       vide.textContent = 'Impossible de charger le détail de la campagne pour le moment.';
       vide.style.display = 'block';
     }
+  }
+
+  // Onglet "Gérer Meta Ads" (14/09/2026) — répartition manuelle du budget déjà
+  // payé entre Google Ads et Meta Ads (Facebook/Instagram), voir
+  // api/definir-repartition-budget-meta.js. Chargé immédiatement au démarrage
+  // du dashboard, comme initPilotageAds(), même si l'onglet n'est pas actif.
+  async function initPilotageMeta() {
+    let repartitionActuelle = 0;
+    let draftMeta = {};
+    try {
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=budget_repartition_meta_pourcent,meta_campaign_id,meta_ads_cree_le,tarif_actif`, {
+        headers: { apikey: SUPABASE_ANON_KEY }
+      });
+      const rows = await resp.json();
+      draftMeta = rows[0] || {};
+      repartitionActuelle = draftMeta.budget_repartition_meta_pourcent || 0;
+    } catch (e) { }
+
+    const affichage = document.getElementById('repartitionMetaAffichage');
+    const edition = document.getElementById('repartitionMetaEdition');
+    const valeurEl = document.getElementById('repartitionMetaValeur');
+    const googleNoteEl = document.getElementById('repartitionGoogleNote');
+    const slider = document.getElementById('repartitionMetaSlider');
+    const sliderValue = document.getElementById('repartitionMetaSliderValue');
+    const btnModifier = document.getElementById('btnModifierRepartitionMeta');
+    const btnEnregistrer = document.getElementById('btnEnregistrerRepartitionMeta');
+    const btnAnnuler = document.getElementById('btnAnnulerRepartitionMeta');
+    const statutEl = document.getElementById('metaStatutContenu');
+    const videEl = document.getElementById('metaSectionVide');
+
+    function rafraichirAffichage() {
+      if (repartitionActuelle > 0) {
+        valeurEl.textContent = `${repartitionActuelle}% Meta Ads / ${100 - repartitionActuelle}% Google Ads`;
+      } else {
+        valeurEl.textContent = 'Meta Ads désactivé (0% — tout part sur Google Ads)';
+      }
+      googleNoteEl.textContent = `${100 - repartitionActuelle}%`;
+      videEl.style.display = repartitionActuelle > 0 ? 'none' : 'block';
+
+      if (repartitionActuelle <= 0) {
+        statutEl.textContent = 'Meta Ads est désactivé pour ce site.';
+      } else if (draftMeta.meta_campaign_id) {
+        const dateCreation = draftMeta.meta_ads_cree_le ? new Date(draftMeta.meta_ads_cree_le).toLocaleDateString('fr-FR') : null;
+        statutEl.textContent = dateCreation
+          ? `✅ Campagne Meta Ads active depuis le ${dateCreation} — créée en pause puis vérifiée avant diffusion par notre équipe.`
+          : '✅ Campagne Meta Ads active — créée en pause puis vérifiée avant diffusion par notre équipe.';
+      } else if (draftMeta.tarif_actif) {
+        statutEl.textContent = "La répartition est enregistrée — la campagne Meta Ads va être créée automatiquement.";
+      } else {
+        statutEl.textContent = 'La répartition est enregistrée — la campagne Meta Ads démarrera dès votre prochain approvisionnement de budget publicitaire.';
+      }
+    }
+    rafraichirAffichage();
+
+    slider.addEventListener('input', () => {
+      sliderValue.textContent = `${slider.value}% Meta`;
+    });
+
+    btnModifier.addEventListener('click', () => {
+      slider.value = repartitionActuelle;
+      sliderValue.textContent = `${repartitionActuelle}% Meta`;
+      affichage.style.display = 'none';
+      edition.style.display = 'flex';
+    });
+
+    btnAnnuler.addEventListener('click', () => {
+      edition.style.display = 'none';
+      affichage.style.display = 'flex';
+    });
+
+    btnEnregistrer.addEventListener('click', async () => {
+      if (bloquerSiEssaiExpire()) return;
+      const nouvellePart = parseInt(slider.value, 10);
+      btnEnregistrer.disabled = true;
+      btnEnregistrer.textContent = '…';
+      demarrerSauvegarde();
+      try {
+        const resp = await fetch('/api/definir-repartition-budget-meta', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId, token: tokenCalendrierActuel, pourcentageMeta: nouvellePart }),
+        });
+        const data = await resp.json();
+        if (!resp.ok || !data.success) throw new Error(data.error || '');
+        repartitionActuelle = nouvellePart;
+        if (data.campagneCreee) draftMeta.meta_campaign_id = draftMeta.meta_campaign_id || 'en_cours';
+        rafraichirAffichage();
+        edition.style.display = 'none';
+        affichage.style.display = 'flex';
+      } catch (e) {
+        alert("Impossible d'enregistrer la répartition pour le moment.");
+      } finally {
+        terminerSauvegarde();
+        btnEnregistrer.disabled = false;
+        btnEnregistrer.textContent = 'Enregistrer';
+      }
+    });
   }
 
   function initZoneCiblee(zoneActuelle, rayonActuel) {

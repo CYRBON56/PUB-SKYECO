@@ -29,6 +29,7 @@
 //   GOOGLE_ADS_ACCOUNT_ID
 
 import crypto from 'crypto';
+import { resoudreUrlDestination } from './_lib/destination-vitrine.js';
 
 const WINDSOR_BASE = 'https://connectors.windsor.ai/google_ads';
 
@@ -169,7 +170,7 @@ export default async function handler(req, res) {
 
   try {
     const draftResp = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=google_ads_ad_group_resource,google_ads_ad_resource,annonce_titres,annonce_descriptions,campagne_diffusion_pausee,entreprise,zone,site_web_existant`,
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=google_ads_ad_group_resource,google_ads_ad_resource,annonce_titres,annonce_descriptions,campagne_diffusion_pausee,entreprise,zone,site_web_existant,mode_vitrine`,
       { headers: supaHeaders }
     );
     const rows = await draftResp.json();
@@ -188,7 +189,11 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, error: '3 titres et 2 descriptions sont requis pour créer une annonce Google Ads valide.' });
     }
 
-    const urlVitrine = `https://app.skyeco.fr/apercu.html?id=${draftId}`;
+    // Destination personnalisable (14/09/2026, voir _lib/destination-vitrine.js) :
+    // pointe vers le site personnel de l'artisan s'il a choisi "site
+    // existant" dans choisir-forfait.html, sinon vers la vitrine Skyeco
+    // comme avant.
+    const urlVitrine = resoudreUrlDestination(draft, draftId);
     // Reprend le statut actuel de la diffusion : si Cyrille a mis la
     // campagne en pause lui-même, la nouvelle annonce démarre en pause aussi
     // — jamais de relance par surprise juste en changeant un texte.

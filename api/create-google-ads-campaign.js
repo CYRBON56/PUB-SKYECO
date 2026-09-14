@@ -53,6 +53,7 @@
 // GOOGLE_ADS_MCC_ID), plus SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY.
 
 import { creerCompteClient, mutate } from './_lib/google-ads-mcc.js';
+import { resoudreUrlDestination } from './_lib/destination-vitrine.js';
 
 const TAUX_COMMISSION = 0.30; // synchronisé avec les autres fichiers (30% depuis le 10/09/2026)
 
@@ -183,7 +184,7 @@ export default async function handler(req, res) {
 
   try {
     const draftResp = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}&select=entreprise,metier,zone,departement,tarif_prix,mots_cles_choisis,annonce_titres,annonce_descriptions,google_ads_campaign_resource,google_ads_ad_group_resource,google_ads_budget_resource,google_ads_client_account_id,campagne_pausee_budget_epuise,site_web_existant`,
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draft_id}&select=entreprise,metier,zone,departement,tarif_prix,mots_cles_choisis,annonce_titres,annonce_descriptions,google_ads_campaign_resource,google_ads_ad_group_resource,google_ads_budget_resource,google_ads_client_account_id,campagne_pausee_budget_epuise,site_web_existant,mode_vitrine`,
       { headers: supaHeaders }
     );
     const draftRows = await draftResp.json();
@@ -333,7 +334,11 @@ export default async function handler(req, res) {
       ? draft.annonce_descriptions.filter(d => typeof d === 'string' && d.trim()).map(d => nettoyerSymbolesInterdits(d).substring(0, 90)).slice(0, 2)
       : [];
 
-    const urlVitrine = `https://app.skyeco.fr/apercu.html?id=${draft_id}`;
+    // Destination personnalisable (14/09/2026, voir _lib/destination-vitrine.js) :
+    // pointe vers le site personnel de l'artisan s'il a choisi "site
+    // existant" dans choisir-forfait.html (mode_vitrine = 'site_externe'),
+    // sinon vers la vitrine Skyeco comme avant.
+    const urlVitrine = resoudreUrlDestination(draft, draft_id);
     const { path1, path2 } = construirePathsAnnonce(draft);
     const [annonceResult] = await mutate(clientAccountId, 'adGroupAds', [{
       create: {

@@ -524,6 +524,80 @@
     <a id="btnMettreEnLigne" href="#" style="background:#7c3aed; color:#fff; border:none; border-radius:10px; padding:10px 18px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap; text-decoration:none; display:inline-block;">Mettre en ligne</a>
   </div>
 
+  <!-- Écran de choix "3 options" (14/09/2026) — présenté dès l'arrivée sur le
+       VRAI dashboard, juste après l'essai gratuit démarré depuis
+       mon-dashboard-demo.html (qui n'a jamais fait passer par mes-elements.html
+       ni choisir-forfait.html) : c'est ici, et pas plus tard, que l'artisan
+       tout juste inscrit doit dire comment il veut sa vitrine. Voir
+       api/definir-mode-vitrine.js et claude/skyeco-pro-brief-3-choix-vitrine.md.
+       Masqué dès que "entreprise" est renseignée (mes-elements.html déjà fait),
+       pour ne pas revenir dessus à chaque visite. -->
+  <style>
+    .cvd-box { background:#fff; border:1.5px solid #7c3aed; border-radius:16px; padding:22px 24px; margin-bottom:22px; }
+    .cvd-titre { font-size:1.05rem; font-weight:800; color:#211a35; margin-bottom:4px; }
+    .cvd-sous { font-size:0.85rem; color:#8a8296; margin-bottom:16px; line-height:1.5; }
+    .cvd-options { display:grid; gap:12px; }
+    .cvd-option { display:flex; align-items:flex-start; gap:12px; border:1.5px solid #ddd6fe; border-radius:14px; padding:14px 16px; cursor:pointer; transition:border-color .15s ease, background .15s ease; }
+    .cvd-option:hover { border-color:#7c3aed; }
+    .cvd-option.selected { border-color:#7c3aed; background:#f5f3ff; }
+    .cvd-option input[type="radio"] { margin-top:3px; width:18px; height:18px; accent-color:#7c3aed; flex-shrink:0; cursor:pointer; }
+    .cvd-option-titre { font-size:0.92rem; font-weight:700; color:#211a35; display:flex; align-items:center; gap:6px; }
+    .cvd-option-badge { font-size:0.66rem; font-weight:800; text-transform:uppercase; letter-spacing:0.03em; background:#f5f3ff; color:#7c3aed; padding:2px 8px; border-radius:999px; }
+    .cvd-option-desc { font-size:0.82rem; color:#8a8296; line-height:1.5; margin-top:3px; }
+    .cvd-detail { margin-top:12px; padding-top:12px; border-top:1px dashed #ddd6fe; }
+    .cvd-detail input[type="text"], .cvd-detail textarea { width:100%; font-size:0.9rem; padding:10px 12px; border:1.5px solid #ddd6fe; border-radius:10px; font-family:inherit; color:#211a35; }
+    .cvd-detail textarea { resize:vertical; min-height:60px; }
+    .cvd-detail input[type="text"]:focus, .cvd-detail textarea:focus { outline:none; border-color:#7c3aed; }
+    .cvd-detail .cvd-btn { margin-top:10px; background:#7c3aed; color:#fff; border:none; border-radius:10px; padding:9px 16px; font-size:0.84rem; font-weight:700; cursor:pointer; }
+    .cvd-detail .cvd-btn:disabled { opacity:.55; cursor:wait; }
+    .cvd-note { font-size:0.78rem; color:#8a8296; margin-top:8px; line-height:1.5; }
+    .cvd-statut { font-size:0.8rem; font-weight:700; margin-top:8px; }
+    .cvd-statut.ok { color:#1e6f4c; }
+    .cvd-statut.err { color:#c0392b; }
+    .cvd-continuer { margin-top:18px; text-align:right; }
+    .cvd-continuer a { display:inline-flex; align-items:center; gap:8px; background:#e8622c; color:#fff; text-decoration:none; border-radius:10px; padding:11px 20px; font-size:0.88rem; font-weight:700; }
+  </style>
+  <div id="choixVitrineDashboard" class="cvd-box" style="display:none;">
+    <div class="cvd-titre">👋 Comment voulez-vous votre vitrine ?</div>
+    <div class="cvd-sous">Avant d'aller plus loin, dites-nous comment vous voulez présenter votre activité à vos prospects. Même tarif, quel que soit votre choix — vous pourrez toujours en changer depuis ce tableau de bord.</div>
+    <div class="cvd-options" id="cvdOptions">
+      <label class="cvd-option" data-mode="ia">
+        <input type="radio" name="cvdMode" value="ia">
+        <div>
+          <div class="cvd-option-titre">🤖 Une vitrine générée pour vous <span class="cvd-option-badge">Recommandé</span></div>
+          <div class="cvd-option-desc">On construit automatiquement votre formulaire vitrine à partir de vos éléments (logo, photos, description). Vous les renseignez à l'étape suivante.</div>
+        </div>
+      </label>
+      <label class="cvd-option" data-mode="site_externe">
+        <input type="radio" name="cvdMode" value="site_externe">
+        <div>
+          <div class="cvd-option-titre">🌐 Mon site actuel</div>
+          <div class="cvd-option-desc">Vos annonces renvoient directement vers votre site existant. Le widget Skyeco (pour garder vos prospects dans ce tableau de bord même sur votre propre site) arrive bientôt.</div>
+          <div class="cvd-detail" id="cvdDetailSiteExterne" style="display:none;">
+            <input type="text" id="cvdInputSiteUrl" placeholder="https://www.votresite.fr">
+            <button type="button" class="cvd-btn" id="cvdBtnConfirmerSiteExterne">Confirmer cette adresse</button>
+            <div class="cvd-statut" id="cvdStatutSiteExterne"></div>
+          </div>
+        </div>
+      </label>
+      <label class="cvd-option" data-mode="sur_mesure">
+        <input type="radio" name="cvdMode" value="sur_mesure">
+        <div>
+          <div class="cvd-option-titre">🛠️ Vitrine sur mesure par Skyeco</div>
+          <div class="cvd-option-desc">Vous préférez qu'on vous la construise nous-mêmes. On vous recontacte sous 24-48h — en attendant, une vitrine générée automatiquement reste utilisée.</div>
+          <div class="cvd-detail" id="cvdDetailSurMesure" style="display:none;">
+            <textarea id="cvdInputNoteSurMesure" placeholder="Ce que vous aimeriez avoir sur votre vitrine (facultatif)…"></textarea>
+            <button type="button" class="cvd-btn" id="cvdBtnConfirmerSurMesure">Envoyer ma demande</button>
+            <div class="cvd-statut" id="cvdStatutSurMesure"></div>
+          </div>
+        </div>
+      </label>
+    </div>
+    <div class="cvd-continuer">
+      <a id="cvdBtnContinuer" href="#">Continuer →</a>
+    </div>
+  </div>
+
   <div id="apercuCampagnes" style="display:none; margin-bottom:22px;">
     <p style="font-size:0.78rem; font-weight:800; text-transform:uppercase; letter-spacing:0.03em; color:#5b6b64; margin-bottom:10px;">Vos vitrines</p>
     <div id="apercuCampagnesTuiles" style="display:flex; gap:12px; flex-wrap:wrap;"></div>
@@ -947,6 +1021,7 @@
     verifierStatutPause();
     chargerZones();
     initPanelTabs();
+    initChoixVitrineDashboard();
     if (window.location.hash === '#calendrier') {
       activerOnglet('calendrier');
       document.getElementById('panelTabs').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -2204,6 +2279,152 @@
         document.body.prepend(banniereEssai);
       }
     } catch (e) { }
+  }
+
+  // --- Écran de choix "3 options" (14/09/2026) ----------------------------
+  // N'est montré que tant que "entreprise" est vide, c'est-à-dire tant que
+  // l'artisan n'a pas encore fait mes-elements.html — donc typiquement juste
+  // après avoir démarré son essai gratuit depuis mon-dashboard-demo.html
+  // (ce parcours n'affiche jamais mes-elements.html ni choisir-forfait.html
+  // avant d'arriver ici). Une fois mes-elements.html complété, entreprise
+  // n'est plus vide et ce bloc ne réapparaît plus. Réutilise le même
+  // endpoint que choisir-forfait.html (api/definir-mode-vitrine.js).
+  let cvdModeConfirme = { mode: 'ia', siteUrlValide: true };
+
+  function cvdChoixEstValide() {
+    if (cvdModeConfirme.mode === 'site_externe' && !cvdModeConfirme.siteUrlValide) {
+      alert('Merci de confirmer l\'adresse de votre site (bouton "Confirmer cette adresse") avant de continuer.');
+      return false;
+    }
+    return true;
+  }
+
+  async function initChoixVitrineDashboard() {
+    try {
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,mode_vitrine,site_web_existant`, {
+        headers: { apikey: SUPABASE_ANON_KEY }
+      });
+      const rows = await resp.json();
+      const draft = rows[0];
+      if (!draft || draft.entreprise) return; // déjà onboardé — mes-elements.html a déjà été fait
+
+      const box = document.getElementById('choixVitrineDashboard');
+      box.style.display = 'block';
+
+      const modeActuel = draft.mode_vitrine || 'ia';
+      cvdModeConfirme = { mode: modeActuel, siteUrlValide: modeActuel !== 'site_externe' || !!draft.site_web_existant };
+
+      const radios = document.querySelectorAll('#cvdOptions input[name="cvdMode"]');
+      radios.forEach(r => { r.checked = (r.value === modeActuel); });
+      document.querySelectorAll('.cvd-option').forEach(opt => opt.classList.toggle('selected', opt.dataset.mode === modeActuel));
+      document.getElementById('cvdDetailSiteExterne').style.display = (modeActuel === 'site_externe') ? 'block' : 'none';
+      document.getElementById('cvdDetailSurMesure').style.display = (modeActuel === 'sur_mesure') ? 'block' : 'none';
+      if (draft.site_web_existant) document.getElementById('cvdInputSiteUrl').value = draft.site_web_existant;
+      if (modeActuel === 'site_externe' && draft.site_web_existant) {
+        document.getElementById('cvdStatutSiteExterne').textContent = '✓ Adresse enregistrée';
+        document.getElementById('cvdStatutSiteExterne').className = 'cvd-statut ok';
+      }
+
+      const majContinuer = () => {
+        document.getElementById('cvdBtnContinuer').href = '/mes-elements.html?id=' + draftId + '&mode=' + cvdModeConfirme.mode;
+      };
+      majContinuer();
+
+      radios.forEach(r => r.addEventListener('change', async () => {
+        document.querySelectorAll('.cvd-option').forEach(opt => opt.classList.toggle('selected', opt.dataset.mode === r.value));
+        document.getElementById('cvdDetailSiteExterne').style.display = (r.value === 'site_externe') ? 'block' : 'none';
+        document.getElementById('cvdDetailSurMesure').style.display = (r.value === 'sur_mesure') ? 'block' : 'none';
+
+        if (r.value === 'ia') {
+          cvdModeConfirme = { mode: 'ia', siteUrlValide: true };
+          try {
+            await fetch('/api/definir-mode-vitrine', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ draftId, mode: 'ia' }),
+            });
+          } catch (e) { /* pas bloquant */ }
+        } else {
+          cvdModeConfirme = { mode: r.value, siteUrlValide: r.value !== 'site_externe' };
+        }
+        majContinuer();
+      }));
+
+      document.getElementById('cvdBtnConfirmerSiteExterne').addEventListener('click', async () => {
+        const btn = document.getElementById('cvdBtnConfirmerSiteExterne');
+        const statut = document.getElementById('cvdStatutSiteExterne');
+        const url = document.getElementById('cvdInputSiteUrl').value.trim();
+        if (!url) {
+          statut.textContent = 'Merci de renseigner l\'adresse de votre site.';
+          statut.className = 'cvd-statut err';
+          return;
+        }
+        btn.disabled = true;
+        btn.textContent = 'Enregistrement…';
+        try {
+          const res = await fetch('/api/definir-mode-vitrine', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ draftId, mode: 'site_externe', siteUrl: url }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            cvdModeConfirme = { mode: 'site_externe', siteUrlValide: true };
+            document.getElementById('cvdInputSiteUrl').value = data.siteUrl || url;
+            statut.textContent = '✓ Adresse enregistrée';
+            statut.className = 'cvd-statut ok';
+          } else {
+            statut.textContent = data.error || 'Adresse invalide.';
+            statut.className = 'cvd-statut err';
+          }
+        } catch (e) {
+          statut.textContent = 'Impossible de contacter le serveur.';
+          statut.className = 'cvd-statut err';
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Confirmer cette adresse';
+          majContinuer();
+        }
+      });
+
+      document.getElementById('cvdBtnConfirmerSurMesure').addEventListener('click', async () => {
+        const btn = document.getElementById('cvdBtnConfirmerSurMesure');
+        const statut = document.getElementById('cvdStatutSurMesure');
+        const note = document.getElementById('cvdInputNoteSurMesure').value.trim();
+        btn.disabled = true;
+        btn.textContent = 'Envoi…';
+        try {
+          const res = await fetch('/api/definir-mode-vitrine', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ draftId, mode: 'sur_mesure', note }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            cvdModeConfirme = { mode: 'sur_mesure', siteUrlValide: true };
+            statut.textContent = '✓ Demande envoyée — on vous recontacte sous 24-48h';
+            statut.className = 'cvd-statut ok';
+            btn.textContent = 'Demande envoyée';
+          } else {
+            statut.textContent = data.error || "Impossible d'envoyer la demande.";
+            statut.className = 'cvd-statut err';
+            btn.disabled = false;
+            btn.textContent = 'Envoyer ma demande';
+          }
+        } catch (e) {
+          statut.textContent = 'Impossible de contacter le serveur.';
+          statut.className = 'cvd-statut err';
+          btn.disabled = false;
+          btn.textContent = 'Envoyer ma demande';
+        } finally {
+          majContinuer();
+        }
+      });
+
+      document.getElementById('cvdBtnContinuer').addEventListener('click', (e) => {
+        if (!cvdChoixEstValide()) e.preventDefault();
+      });
+    } catch (e) { /* le reste du dashboard doit continuer à fonctionner même si ce bloc échoue */ }
   }
 
   document.getElementById('btnReprendreMaintenant').addEventListener('click', async () => {

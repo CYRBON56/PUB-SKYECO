@@ -89,7 +89,7 @@ export default async function handler(req, res) {
 
     const coordonnees = [telephone, email].filter(Boolean).join(' — ');
     const lienDashboard = `https://www.skyeco.fr/mon-dashboard.html?id=${draftId}`;
-    const texte = `🔔 ${nomAffiche} a coché "Formulaire personnalisé" (construire-ma-vitrine.html) — aucun parcours sur mesure codé pour l'instant, sa vitrine reste sur le formulaire basique en attendant.${coordonnees ? ' Contact : ' + coordonnees + '.' : ''}${descriptionTrim ? ' Besoin décrit : "' + descriptionTrim + '".' : ''} Dashboard : ${lienDashboard}`;
+    const texte = `🔔 ${nomAffiche} a coché "Formulaire personnalisé" (construire-ma-vitrine.html) — aucun parcours sur mesure codé pour l'instant, sa vitrine reste sur le formulaire basique en attendant. Un bouton de prise de RDV lui a été proposé directement sur la page (14/09/2026) — il a peut-être déjà réservé un créneau.${coordonnees ? ' Contact : ' + coordonnees + '.' : ''}${descriptionTrim ? ' Besoin décrit : "' + descriptionTrim + '".' : ''} Dashboard : ${lienDashboard}`;
 
     const resultats = await Promise.allSettled([
       envoyerSMS(ADMIN_PHONE, texte),

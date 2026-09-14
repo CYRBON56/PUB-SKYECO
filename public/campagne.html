@@ -167,7 +167,7 @@
       </div>
       <a class="btn-rdv-merci" href="/prendre-rdv.html?id=${encodeURIComponent(draftId)}">📅 Choisir mon créneau de rendez-vous</a>
       <div class="merci-bloc">
-        Après vérification de l'éligibilité de votre compte par <strong>Google Ads</strong>, votre annonce prendra effet sous <strong>24 heures</strong>.
+        Après vérification de l'éligibilité de votre compte par <strong>Google Ads</strong> et validation de votre vitrine par notre équipe <strong>Skyeco</strong>, votre annonce prendra effet sous <strong>24 heures</strong>.
       </div>
       <a class="btn-compte-merci" href="/acces-dashboard.html?id=${encodeURIComponent(draftId)}">🔑 Créer mon identifiant et mot de passe</a>
     `;
@@ -185,7 +185,7 @@
 
       <label for="budgetInput">Montant à investir</label>
       <div class="budget-input-row">
-        <input type="number" id="budgetInput" min="100" step="10" value="${Math.max(100, parseInt(params.get('budget'), 10) || 300)}" inputmode="numeric">
+        <input type="number" id="budgetInput" min="100" step="10" value="${Math.max(100, parseInt(params.get('budget'), 10) || 100)}" inputmode="numeric">
         <span class="unit">€</span>
       </div>
 

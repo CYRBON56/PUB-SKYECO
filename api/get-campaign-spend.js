@@ -181,6 +181,21 @@ export default async function handler(req, res) {
 
     let diffusionPausee = !!draft.campagne_diffusion_pausee;
 
+    // 14/09/2026 (soir) : juste après un approvisionnement, la campagne est
+    // créée en pause côté Google Ads le temps que son compte soit vérifié —
+    // ce qui peut prendre jusqu'à 24h (message affiché une fois sur
+    // campagne.html juste après paiement). Tant qu'elle n'a reçu AUCUN clic
+    // dans les 24h suivant la dernière recharge, on considère qu'elle est
+    // encore en attente de vérification plutôt que de l'afficher comme
+    // "🟢 Active" sur le tableau de bord (ce qui contredirait ce message).
+    // Dès le premier clic réel enregistré, ou passé ce délai de 24h, elle
+    // redevient une campagne active normale.
+    const enAttenteVerification = !!(
+      draft.derniere_recharge_le &&
+      Date.now() - new Date(draft.derniere_recharge_le).getTime() < 24 * 60 * 60 * 1000 &&
+      clics === 0
+    );
+
     if (budgetRestant <= 0 && budgetPaye > 0 && !draft.campagne_pausee_budget_epuise) {
       // Solde épuisé — on met en pause CETTE campagne précisément (même
       // garde-fou que verifier-soldes-bas.js) : les autres sites du compte
@@ -221,6 +236,7 @@ export default async function handler(req, res) {
       budgetRestant,
       pourcentageConsomme,
       diffusionPausee,
+      enAttenteVerification,
     });
   } catch (err) {
     console.error('Erreur get-campaign-spend (Windsor.ai) :', err);

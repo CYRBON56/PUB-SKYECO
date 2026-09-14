@@ -955,7 +955,10 @@
   const DEVIS_BUCKET = 'skyeco-pro-media';
   const params = new URLSearchParams(window.location.search);
   const draftId = params.get('id');
-  document.getElementById('btnApprovisionnerRapide').href = '/campagne.html?id=' + draftId;
+  // 14/09/2026 (soir, v2) : passe par acces-dashboard.html?next=budget —
+  // même page de connexion sécurisée que pour "Mettre en ligne" — avant
+  // d'atteindre campagne.html (où l'argent est réellement engagé).
+  document.getElementById('btnApprovisionnerRapide').href = '/acces-dashboard.html?id=' + draftId + '&next=budget';
   // btnMettreEnLigneAccueil : pas de href fixe ici — voir verifierStatutPause(),
   // qui l'affiche et pointe vers l'inscription (choisir-forfait.html) UNIQUEMENT
   // tant que le compte n'est pas encore opérationnel (statut "preview"), comme
@@ -2298,14 +2301,22 @@
         // vérifié par SMS, email, adresse — nécessaire à la facturation) —
         // cette page existait déjà mais n'était reliée à aucun parcours.
         // Elle redirige elle-même ensuite vers choisir-forfait.html.
-        document.getElementById('btnMettreEnLigne').href = '/skyeco-pro-inscription-siret.html?id=' + draftId;
+        //
+        // 14/09/2026 (soir, v2) : on passe désormais D'ABORD par
+        // acces-dashboard.html?next=mise-en-ligne — une vraie page de
+        // connexion (login si un mot de passe existe déjà, création sinon)
+        // qui confirme l'identité de l'artisan avant de le laisser mettre
+        // sa vitrine en ligne, quel que soit la façon dont il est arrivé
+        // sur ce tableau de bord (lien direct, admin_token, etc.). Cette
+        // page redirige elle-même ensuite vers skyeco-pro-inscription-siret.html.
+        document.getElementById('btnMettreEnLigne').href = '/acces-dashboard.html?id=' + draftId + '&next=mise-en-ligne';
         document.getElementById('banniereMettreEnLigne').style.display = 'flex';
         // Même bouton, en plus visible tout en haut de l'accueil (à côté de
         // "Modifier mes éléments") — reprend la même destination et la même
         // condition ("compte pas encore opérationnel") que la bannière
         // ci-dessus, disparaît de lui-même une fois le forfait choisi.
         const btnAccueil = document.getElementById('btnMettreEnLigneAccueil');
-        btnAccueil.href = '/skyeco-pro-inscription-siret.html?id=' + draftId;
+        btnAccueil.href = '/acces-dashboard.html?id=' + draftId + '&next=mise-en-ligne';
         btnAccueil.style.display = 'inline-flex';
       }
 
@@ -3031,7 +3042,7 @@
       const budgetCalcule = Math.round(budgetHTNecessaire * (1 + TAUX_TVA_INVERSE));
       const budgetNecessaire = Math.max(100, budgetCalcule);
       budgetValue.textContent = budgetCalcule < 100 ? '100 € (minimum)' : '≈ ' + budgetNecessaire + ' € TTC';
-      document.getElementById('btnFondsInverse').href = '/campagne.html?id=' + draftId + '&budget=' + budgetNecessaire;
+      document.getElementById('btnFondsInverse').href = '/acces-dashboard.html?id=' + draftId + '&next=budget&budget=' + budgetNecessaire;
     }
 
     function afficherPotentiel({ succes, erreur, totalMonthlyVolume, estimatedClicks, motsClesPersonnalises }) {

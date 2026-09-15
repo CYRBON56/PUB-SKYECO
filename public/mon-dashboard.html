@@ -950,12 +950,8 @@
       <div class="liste-header">
         <h3 class="calendrier-titre">Appel vidéo avec Cyrille</h3>
       </div>
-      <p class="calendrier-note">Un souci sur votre campagne ou votre vitrine ? Demandez un rendez-vous en visio — Cyrille valide le créneau puis vous appelle directement au moment convenu.</p>
+      <p class="calendrier-note">Un souci sur votre campagne ou votre vitrine ? Demandez un rendez-vous en visio — choisissez un créneau dans l'agenda de Cyrille, il vous appelle directement au moment convenu.</p>
       <button type="button" id="btnDemanderAppelVideo" class="btn-action" style="background:#ec4899;color:#fff;border:none;padding:12px 20px;border-radius:10px;font-weight:700;cursor:pointer;">📅 Demander un appel vidéo</button>
-      <div id="appelVideoBanniere" style="display:none;margin-top:18px;padding:16px 18px;border-radius:12px;background:#fdeceb;border:1.5px solid #ec4899;">
-        <div style="font-weight:800;color:#c0392b;margin-bottom:6px;">🔴 Cyrille vous appelle maintenant</div>
-        <a id="lienRejoindreAppel" href="#" target="_blank" rel="noopener" style="display:inline-block;margin-top:4px;background:#7c3aed;color:#fff;padding:10px 18px;border-radius:9px;font-weight:700;text-decoration:none;">Rejoindre l'appel</a>
-      </div>
     </div>
   </div>
   </div><!-- /dash-main -->
@@ -1756,7 +1752,14 @@
   })();
 
   // --- Onglet "Appel vidéo" (05/09) : demande d'appel côté artisan --------
-  let dernierAppelVuId = null;
+  // 15/09/2026 : sur demande de Cyrille, l'appel "en direct" (bannière
+  // "Cyrille vous appelle maintenant" + sondage toutes les 10s de
+  // api/statut-appel-video, alimenté par la fonctionnalité d'appel WebRTC
+  // en direct côté admin) était peu fiable côté artisan. On ne garde que
+  // la partie qui fonctionne bien : demander un rendez-vous vidéo, qui
+  // passe par l'agenda de Cyrille (prendre-rdv.html, même mécanisme que
+  // tous les autres RDV) — l'artisan choisit son créneau, Cyrille le
+  // rappelle au moment convenu.
   function initAppelVideo() {
     if (draftId === DRAFT_ID_SKYECO_PRO) return;
     document.getElementById('tabAppelVideo').style.display = '';
@@ -1766,34 +1769,6 @@
         + (nomEntreprise ? '&nom=' + encodeURIComponent(nomEntreprise) : '');
       window.open(url, '_blank');
     });
-    verifierAppelEnCours();
-    setInterval(verifierAppelEnCours, 10000);
-  }
-
-  async function verifierAppelEnCours() {
-    if (!tokenCalendrierActuel) return;
-    try {
-      const rep = await fetch('/api/statut-appel-video', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, token: tokenCalendrierActuel }),
-      });
-      if (!rep.ok) return;
-      const data = await rep.json();
-      const banniere = document.getElementById('appelVideoBanniere');
-      const tab = document.getElementById('tabAppelVideo');
-      if (data.enCours && data.roomUrl) {
-        banniere.style.display = '';
-        document.getElementById('lienRejoindreAppel').href = data.roomUrl;
-        if (dernierAppelVuId !== data.rdvId) {
-          tab.querySelector('.panel-tab-icone').textContent = '🔴';
-        }
-        dernierAppelVuId = data.rdvId;
-      } else {
-        banniere.style.display = 'none';
-        tab.querySelector('.panel-tab-icone').textContent = '📹';
-      }
-    } catch (e) { }
   }
 
   let presenceInterval = null;

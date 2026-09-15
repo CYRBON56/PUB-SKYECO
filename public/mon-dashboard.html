@@ -564,6 +564,20 @@
   <div id="choixVitrineDashboard" class="cvd-box" style="display:none;">
     <div class="cvd-titre">👋 Comment voulez-vous votre vitrine ?</div>
     <div class="cvd-sous">Avant d'aller plus loin, dites-nous comment vous voulez présenter votre activité à vos prospects. Même tarif, quel que soit votre choix — vous pourrez toujours en changer depuis ce tableau de bord.</div>
+
+    <!-- 15/09/2026 : on commence par le nom de la vitrine — jusqu'ici
+         rien ne le demandait avant construire-ma-vitrine.html (assez loin
+         dans le formulaire), Cyrille a signalé qu'on ne savait pas où le
+         renseigner. Enregistré directement (colonne entreprise, déjà
+         écrite en clé anonyme ailleurs sur cette page — voir zone/annonce
+         plus bas) dès qu'on quitte le champ, et repris tel quel par
+         construire-ma-vitrine.html ensuite (même colonne). -->
+    <div class="cvd-nom-vitrine" style="margin-bottom:18px;">
+      <label for="cvdInputNomVitrine" style="display:block; font-size:0.85rem; font-weight:700; color:#211a35; margin-bottom:6px;">Nom de votre vitrine (le nom de votre entreprise, tel qu'il apparaîtra à vos prospects)</label>
+      <input type="text" id="cvdInputNomVitrine" placeholder="Ex : RMS EcoSky" style="width:100%; border:1.5px solid #d8e3de; border-radius:10px; padding:11px 14px; font-size:0.9rem;">
+      <div class="cvd-statut" id="cvdStatutNomVitrine"></div>
+    </div>
+
     <div class="cvd-options" id="cvdOptions">
       <label class="cvd-option" data-mode="ia">
         <input type="radio" name="cvdMode" value="ia">
@@ -2356,6 +2370,11 @@
   let cvdModeConfirme = { mode: 'ia', siteUrlValide: true };
 
   function cvdChoixEstValide() {
+    if (!document.getElementById('cvdInputNomVitrine').value.trim()) {
+      alert('Merci de donner un nom à votre vitrine avant de continuer.');
+      document.getElementById('cvdInputNomVitrine').focus();
+      return false;
+    }
     if (cvdModeConfirme.mode === 'site_externe' && !cvdModeConfirme.siteUrlValide) {
       alert('Merci de confirmer l\'adresse de votre site (bouton "Confirmer cette adresse") avant de continuer.');
       return false;
@@ -2382,6 +2401,30 @@
 
       const box = document.getElementById('choixVitrineDashboard');
       box.style.display = 'block';
+
+      const inputNom = document.getElementById('cvdInputNomVitrine');
+      const statutNom = document.getElementById('cvdStatutNomVitrine');
+      inputNom.value = draft.entreprise || '';
+      let nomEnregistre = inputNom.value.trim();
+      inputNom.addEventListener('blur', async () => {
+        const nouveauNom = inputNom.value.trim();
+        if (!nouveauNom || nouveauNom === nomEnregistre) return;
+        statutNom.textContent = 'Enregistrement…';
+        try {
+          const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
+            method: 'PATCH',
+            headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+            body: JSON.stringify({ entreprise: nouveauNom }),
+          });
+          if (!resp.ok) throw new Error();
+          nomEnregistre = nouveauNom;
+          statutNom.textContent = '✓ Enregistré';
+          statutNom.className = 'cvd-statut ok';
+        } catch (e) {
+          statutNom.textContent = "Impossible d'enregistrer pour le moment.";
+          statutNom.className = 'cvd-statut err';
+        }
+      });
 
       const modeActuel = draft.mode_vitrine || 'ia';
       cvdModeConfirme = { mode: modeActuel, siteUrlValide: modeActuel !== 'site_externe' || !!draft.site_web_existant };

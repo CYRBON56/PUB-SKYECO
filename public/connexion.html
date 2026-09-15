@@ -43,6 +43,16 @@
   .retour{ display:block; text-align:center; margin-top:20px; font-size:13px; color:var(--blue); text-decoration:none; }
   .retour:hover{ text-decoration:underline; }
 
+  .liens-secondaires{ text-align:center; margin-top:16px; font-size:13px; }
+  .liens-secondaires a{ color:var(--blue); text-decoration:none; cursor:pointer; }
+  .liens-secondaires a:hover{ text-decoration:underline; }
+
+  .panneau-secondaire{ display:none; }
+  .panneau-secondaire.show{ display:block; }
+  .msg{ font-size:13px; padding:11px 13px; border-radius:2px; margin-top:16px; line-height:1.5; font-weight:600; }
+  .msg.err{ background:#fdeaea; color:#991b1b; }
+  .msg.ok{ background:#eaf1e9; color:#1e6f4c; }
+
   .champ-mdp{ position:relative; }
   .champ-mdp input{ padding-right:44px; }
   .toggle-oeil{
@@ -103,7 +113,35 @@
       <div class="error mono" id="errLogin"></div>
     </form>
 
+    <div class="liens-secondaires">
+      <a id="lienMdpOublie">Mot de passe oublié ?</a> · <a id="lienIdOublie">Identifiant oublié ?</a>
+    </div>
+
     <a class="retour" href="/skyeco-pro-formulaire-creation.html">← Retour à l'accueil</a>
+  </div>
+
+  <div class="panneau-secondaire" id="panneauMdpOublie">
+    <h1>Mot de passe oublié</h1>
+    <p class="hint">Indiquez votre email, vous recevrez un lien par SMS et par email pour en choisir un nouveau.</p>
+    <form id="formMdpOublie">
+      <label for="mdpOublieEmail">Email</label>
+      <input type="email" id="mdpOublieEmail" required autocomplete="username">
+      <button type="submit" class="btn">Recevoir le lien</button>
+    </form>
+    <div id="zoneMsgMdpOublie"></div>
+    <a class="retour" id="retourMdpOublie" href="#">← Retour</a>
+  </div>
+
+  <div class="panneau-secondaire" id="panneauIdOublie">
+    <h1>Identifiant oublié</h1>
+    <p class="hint">Votre identifiant est l'email renseigné à l'inscription. Indiquez votre numéro de téléphone pour vous le faire rappeler par SMS.</p>
+    <form id="formIdOublie">
+      <label for="idOublieTel">Téléphone</label>
+      <input type="tel" id="idOublieTel" required placeholder="06 12 34 56 78">
+      <button type="submit" class="btn">Recevoir un rappel</button>
+    </form>
+    <div id="zoneMsgIdOublie"></div>
+    <a class="retour" id="retourIdOublie" href="#">← Retour</a>
   </div>
 
   <div class="selecteur-sites" id="selecteurSites">
@@ -124,6 +162,72 @@
     input.type = visible ? 'password' : 'text';
     this.classList.toggle('actif', !visible);
     this.setAttribute('aria-label', visible ? 'Afficher le mot de passe' : 'Masquer le mot de passe');
+  });
+
+  // 15/09/2026 : cette page n'avait aucun moyen de récupérer un mot de
+  // passe/identifiant oublié — ajouté sur le même modèle que
+  // acces-dashboard.html (mêmes endpoints api/dashboard-forgot-password et
+  // api/dashboard-rappel-identifiant, déjà en place et utilisés ailleurs).
+  function basculerPanneau(idPanneau) {
+    document.getElementById('formulaireLogin').style.display = 'none';
+    document.getElementById('panneauMdpOublie').classList.remove('show');
+    document.getElementById('panneauIdOublie').classList.remove('show');
+    if (idPanneau) {
+      document.getElementById(idPanneau).classList.add('show');
+    } else {
+      document.getElementById('formulaireLogin').style.display = 'block';
+    }
+  }
+  document.getElementById('lienMdpOublie').addEventListener('click', () => {
+    document.getElementById('mdpOublieEmail').value = document.getElementById('email').value.trim();
+    basculerPanneau('panneauMdpOublie');
+  });
+  document.getElementById('lienIdOublie').addEventListener('click', () => basculerPanneau('panneauIdOublie'));
+  document.getElementById('retourMdpOublie').addEventListener('click', (e) => { e.preventDefault(); basculerPanneau(null); });
+  document.getElementById('retourIdOublie').addEventListener('click', (e) => { e.preventDefault(); basculerPanneau(null); });
+
+  document.getElementById('formMdpOublie').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btnMdp = e.target.querySelector('button');
+    const zoneMsg = document.getElementById('zoneMsgMdpOublie');
+    btnMdp.disabled = true;
+    btnMdp.textContent = 'Envoi…';
+    try {
+      const res = await fetch('/api/dashboard-forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: document.getElementById('mdpOublieEmail').value.trim() }),
+      });
+      const data = await res.json();
+      zoneMsg.innerHTML = `<div class="msg ok">${data.message}</div>`;
+    } catch (err) {
+      zoneMsg.innerHTML = '<div class="msg err">Impossible de contacter le serveur.</div>';
+    } finally {
+      btnMdp.disabled = false;
+      btnMdp.textContent = 'Recevoir le lien';
+    }
+  });
+
+  document.getElementById('formIdOublie').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btnId = e.target.querySelector('button');
+    const zoneMsg = document.getElementById('zoneMsgIdOublie');
+    btnId.disabled = true;
+    btnId.textContent = 'Envoi…';
+    try {
+      const res = await fetch('/api/dashboard-rappel-identifiant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telephone: document.getElementById('idOublieTel').value.trim() }),
+      });
+      const data = await res.json();
+      zoneMsg.innerHTML = `<div class="msg ok">${data.message}</div>`;
+    } catch (err) {
+      zoneMsg.innerHTML = '<div class="msg err">Impossible de contacter le serveur.</div>';
+    } finally {
+      btnId.disabled = false;
+      btnId.textContent = 'Recevoir un rappel';
+    }
   });
 
   form.addEventListener('submit', async (e) => {

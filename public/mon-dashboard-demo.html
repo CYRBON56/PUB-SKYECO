@@ -1020,12 +1020,21 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ draftId: idAUtiliser })
           }).catch(() => {});
-          // Direction le VRAI dashboard, en mode essai — les informations
-          // complètes de l'entreprise (construire-ma-vitrine.html) et le choix d'un
-          // forfait payant ne sont demandés que plus tard, quand l'artisan
-          // veut approvisionner son budget Ads ou connecter ses réseaux
-          // sociaux (voir mon-dashboard.html).
-          window.location.href = '/mon-dashboard.html?id=' + encodeURIComponent(idAUtiliser);
+          // 15/09/2026 : Décision de Cyrille — l'identifiant/mot de passe
+          // du tableau de bord doit être créé dès le démarrage de l'essai
+          // gratuit, PAS conditionné à la mise en ligne payante. L'artisan
+          // doit pouvoir se reconnecter librement pendant tout son mois
+          // d'essai (via connexion.html) sans être jamais passé par
+          // "Mettre en ligne" ; ce n'est qu'à l'expiration de l'essai que
+          // l'accès se bloque et le renvoie vers choisir-forfait.html (déjà
+          // en place, voir api/verifier-essais-a-programmer.js). On envoie
+          // donc vers acces-dashboard.html (sans "next" — destination par
+          // défaut mon-dashboard.html une fois le mot de passe créé) au
+          // lieu d'aller directement sur le vrai dashboard : cette page
+          // détecte déjà qu'aucun mot de passe n'existe pour ce brouillon
+          // tout neuf et affiche directement l'écran de création (email +
+          // mot de passe), sans étape supplémentaire à construire ici.
+          window.location.href = '/acces-dashboard.html?id=' + encodeURIComponent(idAUtiliser);
         } else {
           erreurEl.textContent = data.error || "Impossible de démarrer l'essai pour le moment.";
           erreurEl.style.display = 'block';

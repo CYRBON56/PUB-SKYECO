@@ -890,6 +890,24 @@
     // existe déjà pour ce brouillon — jamais affiché en mode visiteur.
     document.getElementById('lienRetour').href = '/apercu.html?id=' + encodeURIComponent(draftId);
     document.getElementById('lienRetour').style.display = 'inline-flex';
+
+    // 15/09/2026 : compteur de vues démo (visiteurs uniques) affiché dans
+    // mes-artisans.html — voir api/enregistrer-vue-demo.js. Un identifiant
+    // de session est généré une fois par navigateur (sessionStorage) pour
+    // qu'un même visiteur qui recharge la page ne soit pas recompté ; la
+    // table en base a de toute façon une contrainte unique (draft_id,
+    // session_id) en filet de sécurité. Volontairement silencieux en cas
+    // d'échec (jamais bloquant pour l'affichage de la démo).
+    let sessionIdDemo = sessionStorage.getItem('skyeco_demo_session_id');
+    if (!sessionIdDemo) {
+      sessionIdDemo = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2));
+      sessionStorage.setItem('skyeco_demo_session_id', sessionIdDemo);
+    }
+    fetch('/api/enregistrer-vue-demo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ draftId, sessionId: sessionIdDemo }),
+    }).catch(() => {});
   }
 
   // 13/09/2026 : dans le vrai dashboard, cliquer un onglet cache les autres —

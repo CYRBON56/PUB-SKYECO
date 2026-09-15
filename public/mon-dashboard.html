@@ -2284,7 +2284,7 @@
 
   async function verifierStatutPause() {
     try {
-      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=status,essai_gratuit_fin`, {
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=status,essai_gratuit_fin,elements_deposes_le`, {
         headers: { apikey: SUPABASE_ANON_KEY }
       });
       const rows = await resp.json();
@@ -2295,7 +2295,16 @@
         document.getElementById('banniereePause').style.display = 'flex';
       }
 
-      if (statut === 'preview') {
+      // 15/09/2026 : le bouton "Mettre en ligne" ne s'affichait plus JAMAIS
+      // pour un artisan en essai gratuit (statut 'essai') — depuis le
+      // parcours du 07/09 où l'essai démarre AVANT construire-ma-vitrine.html,
+      // ce statut est pourtant le cas normal pour tout le monde après avoir
+      // validé l'essai. Une fois construire-ma-vitrine.html rempli (voir
+      // elements_deposes_le, même signal que l'écran "3 options" utilise
+      // pour disparaître), rien ne proposait plus à l'artisan de passer à
+      // la mise en ligne réelle — trou dans le parcours corrigé ici en
+      // élargissant la condition à ce cas précis.
+      if (statut === 'preview' || (statut === 'essai' && rows[0]?.elements_deposes_le)) {
         // 14/09/2026 (soir) : "Mettre en ligne" passe désormais D'ABORD par
         // skyeco-pro-inscription-siret.html (SIRET, nom, prénom, téléphone
         // vérifié par SMS, email, adresse — nécessaire à la facturation) —

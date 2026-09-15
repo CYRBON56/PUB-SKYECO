@@ -1588,11 +1588,15 @@
       <div style="background:#fff;border-radius:16px;padding:26px 24px;max-width:480px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,0.25);">
         <div style="font-size:1.05rem;font-weight:800;color:#211a35;margin-bottom:14px;">Nouveau post</div>
 
-        <label style="font-size:0.78rem;font-weight:700;color:#211a35;display:block;margin-bottom:4px;">Photo du chantier (URL)</label>
-        <input type="url" id="rsPhotoUrl" placeholder="https://...supabase.co/.../chantier.jpg" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #d8e3de;border-radius:8px;font-size:0.85rem;margin-bottom:10px;">
+        <label style="font-size:0.78rem;font-weight:700;color:#211a35;display:block;margin-bottom:4px;">Photo du chantier</label>
+        <input type="file" id="rsPhotoFile" accept="image/*" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #d8e3de;border-radius:8px;font-size:0.85rem;margin-bottom:4px;">
+        <div id="rsPhotoStatut" style="font-size:0.75rem;color:#8a9891;margin-bottom:10px;"></div>
+        <input type="hidden" id="rsPhotoUrl">
 
-        <label style="font-size:0.78rem;font-weight:700;color:#211a35;display:block;margin-bottom:4px;">Ou vidéo du chantier (URL, optionnel — remplace la photo)</label>
-        <input type="url" id="rsVideoUrl" placeholder="https://...supabase.co/.../chantier.mp4" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #d8e3de;border-radius:8px;font-size:0.85rem;margin-bottom:10px;">
+        <label style="font-size:0.78rem;font-weight:700;color:#211a35;display:block;margin-bottom:4px;">Ou vidéo du chantier (optionnel — remplace la photo)</label>
+        <input type="file" id="rsVideoFile" accept="video/*" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #d8e3de;border-radius:8px;font-size:0.85rem;margin-bottom:4px;">
+        <div id="rsVideoStatut" style="font-size:0.75rem;color:#8a9891;margin-bottom:10px;"></div>
+        <input type="hidden" id="rsVideoUrl">
 
         <label style="font-size:0.78rem;font-weight:700;color:#211a35;display:block;margin-bottom:4px;">Note rapide (optionnel)</label>
         <textarea id="rsNote" placeholder="Ex : terrasse résine 40m2 à Vannes, finition gris anthracite" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #d8e3de;border-radius:8px;font-size:0.85rem;min-height:50px;margin-bottom:10px;font-family:inherit;"></textarea>
@@ -1631,6 +1635,73 @@
     const planifierDate = overlay.querySelector('#rsPlanifierDate');
     const btnValider = overlay.querySelector('#rsValider');
 
+    // 15/09/2026 : sur demande de Cyrille, l'artisan choisit directement un
+    // fichier sur son ordinateur au lieu de devoir coller un lien Supabase
+    // — même mécanisme d'upload que le logo/les photos de
+    // construire-ma-vitrine.html (uploaderFichier), envoyé dès la
+    // sélection du fichier, avant même de cliquer sur "Publier".
+    let rsUploadEnCours = false;
+    async function rsUploaderFichier(file, sousDossier) {
+      const ext = file.name.split('.').pop();
+      const nomFichier = `reseaux-sociaux/${draftId}/${sousDossier}-${Date.now()}.${ext}`;
+      const resp = await fetch(`${SUPABASE_URL}/storage/v1/object/${DEVIS_BUCKET}/${nomFichier}?apikey=${encodeURIComponent(SUPABASE_ANON_KEY)}`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          apikey: SUPABASE_ANON_KEY,
+          'Content-Type': file.type || 'application/octet-stream',
+        },
+        body: file,
+      });
+      if (!resp.ok) {
+        const detail = await resp.text().catch(() => '');
+        throw new Error("Échec de l'envoi du fichier : " + detail);
+      }
+      return `${SUPABASE_URL}/storage/v1/object/public/${DEVIS_BUCKET}/${nomFichier}`;
+    }
+
+    overlay.querySelector('#rsPhotoFile').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      const statutEl = overlay.querySelector('#rsPhotoStatut');
+      if (!file) { statutEl.textContent = ''; return; }
+      rsUploadEnCours = true;
+      statutEl.textContent = 'Envoi en cours…';
+      statutEl.style.color = '#8a9891';
+      try {
+        const url = await rsUploaderFichier(file, 'photo');
+        overlay.querySelector('#rsPhotoUrl').value = url;
+        statutEl.textContent = '✓ Photo envoyée';
+        statutEl.style.color = '#1e6f4c';
+      } catch (err) {
+        statutEl.textContent = "Échec de l'envoi — réessayez.";
+        statutEl.style.color = '#c0392b';
+        overlay.querySelector('#rsPhotoUrl').value = '';
+      } finally {
+        rsUploadEnCours = false;
+      }
+    });
+
+    overlay.querySelector('#rsVideoFile').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      const statutEl = overlay.querySelector('#rsVideoStatut');
+      if (!file) { statutEl.textContent = ''; return; }
+      rsUploadEnCours = true;
+      statutEl.textContent = 'Envoi en cours…';
+      statutEl.style.color = '#8a9891';
+      try {
+        const url = await rsUploaderFichier(file, 'video');
+        overlay.querySelector('#rsVideoUrl').value = url;
+        statutEl.textContent = '✓ Vidéo envoyée';
+        statutEl.style.color = '#1e6f4c';
+      } catch (err) {
+        statutEl.textContent = "Échec de l'envoi — réessayez.";
+        statutEl.style.color = '#c0392b';
+        overlay.querySelector('#rsVideoUrl').value = '';
+      } finally {
+        rsUploadEnCours = false;
+      }
+    });
+
     overlay.querySelector('#rsAnnuler').addEventListener('click', () => overlay.remove());
 
     planifierCheck.addEventListener('change', () => {
@@ -1639,6 +1710,10 @@
     });
 
     btnGenerer.addEventListener('click', async () => {
+      if (rsUploadEnCours) {
+        genereStatut.textContent = "Attendez la fin de l'envoi du fichier avant de continuer.";
+        return;
+      }
       const photoUrl = overlay.querySelector('#rsPhotoUrl').value.trim();
       const note = overlay.querySelector('#rsNote').value.trim();
       if (!photoUrl && !note) {
@@ -1669,6 +1744,10 @@
     });
 
     btnValider.addEventListener('click', async () => {
+      if (rsUploadEnCours) {
+        genereStatut.textContent = "Attendez la fin de l'envoi du fichier avant de continuer.";
+        return;
+      }
       const photoUrl = overlay.querySelector('#rsPhotoUrl').value.trim();
       const videoUrl = overlay.querySelector('#rsVideoUrl').value.trim();
       const legende = legendeEl.value.trim();

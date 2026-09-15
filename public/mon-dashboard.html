@@ -1451,10 +1451,11 @@
       `;
 
       document.getElementById('btnConnecterFacebook').addEventListener('click', () => {
-        if (!window.tarifActifActuel) {
-          window.location.href = '/construire-ma-vitrine.html?id=' + draftId + '&verrou=ads';
-          return;
-        }
+        // 15/09/2026 : sur demande de Cyrille, la connexion des réseaux
+        // sociaux n'est plus verrouillée derrière un forfait payant — un
+        // artisan encore en essai gratuit doit pouvoir brancher ses comptes
+        // dès maintenant (contrairement au budget publicitaire, où de
+        // l'argent est réellement engagé, qui reste verrouillé plus bas).
         // Flux OAuth classique (voir facebook-connect-start.js) — la Page est
         // choisie automatiquement (la première renvoyée par Meta) puis reliée.
         window.location.href = `/api/facebook-connect-start?id=${encodeURIComponent(draftId)}&token=${encodeURIComponent(tokenCalendrierActuel || '')}`;
@@ -1498,19 +1499,14 @@
       }
 
       document.getElementById('btnConnecterTikTok').addEventListener('click', () => {
-        if (!window.tarifActifActuel) {
-          window.location.href = '/construire-ma-vitrine.html?id=' + draftId + '&verrou=ads';
-          return;
-        }
+        // 15/09/2026 : même déverrouillage que Facebook ci-dessus — voir
+        // le commentaire correspondant.
         // Flux OAuth self-service TikTok (voir tiktok-connect-start.js).
         window.location.href = `/api/tiktok-connect-start?id=${encodeURIComponent(draftId)}&token=${encodeURIComponent(tokenCalendrierActuel || '')}`;
       });
 
       document.getElementById('btnConnecterInstagram').addEventListener('click', () => {
-        if (!window.tarifActifActuel) {
-          window.location.href = '/construire-ma-vitrine.html?id=' + draftId + '&verrou=ads';
-          return;
-        }
+        // 15/09/2026 : même déverrouillage que Facebook ci-dessus.
         if (connexion) {
           rsOuvrirOnboarding(true);
         } else {

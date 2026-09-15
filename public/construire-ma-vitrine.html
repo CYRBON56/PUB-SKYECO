@@ -539,6 +539,27 @@
     </div>
   </div>
 
+  <div class="section" data-section="demande-technicien">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">📝</span>
+        <div>
+          <h2>Une question ou une demande précise ?</h2>
+          <p class="sub">Un problème rencontré, une particularité de votre activité, un tarif à revoir... décrivez-le, ça part directement à votre technicien Skyeco.</p>
+        </div>
+      </div>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="section-body">
+      <div class="section-body-inner">
+        <label for="messageTechnicien">Votre message</label>
+        <textarea id="messageTechnicien" rows="4" placeholder="Ex : je n'arrive pas à uploader mon logo, ou j'aimerais ajouter une option spécifique à mon métier..."></textarea>
+        <button type="button" id="btnEnvoyerTechnicien" style="margin-top:10px; background:#e8622c; color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:0.85rem; font-weight:700; cursor:pointer;">📤 Envoyer au technicien</button>
+        <div id="statutMessageTechnicien" style="margin-top:8px; font-size:0.82rem; font-weight:700;"></div>
+      </div>
+    </div>
+  </div>
+
   <button class="btn-submit" id="btnSubmit">Enregistrer mes éléments</button>
   <p class="save-note">Tu peux revenir compléter ce formulaire plus tard, rien n'est perdu.</p>
   <div class="save-msg" id="saveMsg" style="display:none;"></div>
@@ -1673,6 +1694,41 @@
     } finally {
       btn.disabled = false;
       btn.textContent = texteOriginal;
+    }
+  });
+
+  document.getElementById('btnEnvoyerTechnicien').addEventListener('click', async () => {
+    const btnTech = document.getElementById('btnEnvoyerTechnicien');
+    const statutTech = document.getElementById('statutMessageTechnicien');
+    const messageTech = document.getElementById('messageTechnicien').value.trim();
+    if (!messageTech) {
+      statutTech.textContent = 'Merci de décrire votre demande avant de l\'envoyer.';
+      statutTech.style.color = '#c0392b';
+      return;
+    }
+    btnTech.disabled = true;
+    btnTech.textContent = 'Envoi…';
+    try {
+      const res = await fetch('/api/demander-info-technicien', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, message: messageTech }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        statutTech.textContent = '✓ Envoyé — votre technicien va vous recontacter.';
+        statutTech.style.color = '#1e6f4c';
+        document.getElementById('messageTechnicien').value = '';
+      } else {
+        statutTech.textContent = data.error || "Impossible d'envoyer la demande.";
+        statutTech.style.color = '#c0392b';
+      }
+    } catch (e) {
+      statutTech.textContent = 'Impossible de contacter le serveur.';
+      statutTech.style.color = '#c0392b';
+    } finally {
+      btnTech.disabled = false;
+      btnTech.textContent = '📤 Envoyer au technicien';
     }
   });
 

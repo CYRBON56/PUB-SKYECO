@@ -23,7 +23,7 @@
 // (INTERNAL_ACCESS_PASSWORD) déjà utilisé ailleurs dans l'admin.
 //
 // Requête attendue : POST { motDePasseInterne, action, draftId? }
-//   action = 'liste'          -> { success, fiches: [...], demandesParDraftId: {...} }
+//   action = 'liste'          -> { success, fiches: [...], demandesParDraftId: {...}, vuesDemoParDraftId: {...} }
 //   action = 'presence'       -> { success, presence: [{id, dashboard_dernier_ping}] }
 //   action = 'toggle_valide'  -> { success, siteValide } (draftId requis)
 //   action = 'toggle_archive' -> { success, archive } (draftId requis)
@@ -60,16 +60,24 @@ export default async function handler(req, res) {
       // enregistrer une vidéo de démonstration (voir mon-dashboard.html,
       // bouton "🎬 Dashboard de démonstration") — elle ne doit pas polluer
       // les vraies statistiques/la vraie liste d'artisans.
-      const [respFiches, respLeads] = await Promise.all([
+      // skyeco_pro_demo_vues : une ligne par (draft_id, session_id) unique
+      // (voir api/enregistrer-vue-demo.js) -> compter les lignes = compter
+      // les visiteurs uniques, sans avoir à dédupliquer ici.
+      const [respFiches, respLeads, respVuesDemo] = await Promise.all([
         fetch(`${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?select=${COLONNES_LISTE}&est_demo=eq.false&order=created_at.desc`, { headers: supaHeaders }),
         fetch(`${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_leads?select=draft_id`, { headers: supaHeaders }),
+        fetch(`${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_demo_vues?select=draft_id`, { headers: supaHeaders }),
       ]);
       if (!respFiches.ok) throw new Error('Lecture fiches impossible : ' + (await respFiches.text()));
       const lignes = await respFiches.json();
       const leads = respLeads.ok ? await respLeads.json() : [];
+      const vuesDemo = respVuesDemo.ok ? await respVuesDemo.json() : [];
 
       const demandesParDraftId = {};
       leads.forEach((l) => { demandesParDraftId[l.draft_id] = (demandesParDraftId[l.draft_id] || 0) + 1; });
+
+      const vuesDemoParDraftId = {};
+      vuesDemo.forEach((v) => { vuesDemoParDraftId[v.draft_id] = (vuesDemoParDraftId[v.draft_id] || 0) + 1; });
 
       // dashboard_password_hash ne quitte jamais le serveur : on ne renvoie
       // qu'un booléen (c'est tout ce dont la page a besoin pour afficher
@@ -79,7 +87,7 @@ export default async function handler(req, res) {
         compte_cree: !!dashboard_password_hash,
       }));
 
-      return res.status(200).json({ success: true, fiches, demandesParDraftId });
+      return res.status(200).json({ success: true, fiches, demandesParDraftId, vuesDemoParDraftId });
     }
 
     if (action === 'presence') {

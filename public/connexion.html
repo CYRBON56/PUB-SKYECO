@@ -43,6 +43,19 @@
   .retour{ display:block; text-align:center; margin-top:20px; font-size:13px; color:var(--blue); text-decoration:none; }
   .retour:hover{ text-decoration:underline; }
 
+  .champ-mdp{ position:relative; }
+  .champ-mdp input{ padding-right:44px; }
+  .toggle-oeil{
+    position:absolute; right:4px; top:50%; transform:translateY(-50%);
+    width:32px; height:32px; border:none; background:transparent; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; border-radius:6px; color:var(--concrete);
+  }
+  .toggle-oeil:hover{ background:var(--paper); color:var(--blue); }
+  .toggle-oeil svg{ width:20px; height:20px; }
+  .toggle-oeil .icone-barree{ display:none; }
+  .toggle-oeil.actif .icone-oeil{ display:none; }
+  .toggle-oeil.actif .icone-barree{ display:block; }
+
   .selecteur-sites{ display:none; }
   .selecteur-sites.show{ display:block; }
   .site-item{
@@ -71,7 +84,20 @@
       <input type="email" id="email" required autocomplete="username">
 
       <label for="motDePasse">Mot de passe</label>
-      <input type="password" id="motDePasse" required autocomplete="current-password">
+      <div class="champ-mdp">
+        <input type="password" id="motDePasse" required autocomplete="current-password">
+        <button type="button" class="toggle-oeil" data-cible="motDePasse" aria-label="Afficher le mot de passe">
+          <svg class="icone-oeil" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+          <svg class="icone-barree" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M3 3l18 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
 
       <button type="submit" class="btn" id="btnLogin">Se connecter →</button>
       <div class="error mono" id="errLogin"></div>
@@ -91,6 +117,14 @@
   const form = document.getElementById('loginForm');
   const btn = document.getElementById('btnLogin');
   const errEl = document.getElementById('errLogin');
+
+  document.querySelector('.toggle-oeil[data-cible="motDePasse"]').addEventListener('click', function() {
+    const input = document.getElementById('motDePasse');
+    const visible = input.type === 'text';
+    input.type = visible ? 'password' : 'text';
+    this.classList.toggle('actif', !visible);
+    this.setAttribute('aria-label', visible ? 'Afficher le mot de passe' : 'Masquer le mot de passe');
+  });
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();

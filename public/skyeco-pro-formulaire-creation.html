@@ -79,18 +79,25 @@
   .carousel-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 1s ease-in-out; }
   .carousel-img.active{ opacity:1; }
 
-  .explainer-bg-video{ position:relative; max-width:340px; max-height:520px; width:auto; height:auto; display:block; border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.35); }
-  @media(max-width:768px){ .explainer-bg-video{ max-width:260px; max-height:400px; } }
-  .unmute-btn{
-    position:absolute; bottom:16px; left:50%; transform:translateX(-50%);
-    background:var(--orange); color:#fff; border:none; border-radius:999px;
-    padding:10px 20px; font-size:14px; font-weight:700; cursor:pointer;
-    box-shadow:0 6px 20px rgba(0,0,0,0.3); z-index:3;
-    animation: pulseBtn 2s ease-in-out infinite;
+  .accroche-content{
+    position:relative; max-width:420px; text-align:center; padding:28px 24px;
+    background:rgba(20,48,74,0.72); border-radius:16px;
+    backdrop-filter:blur(2px);
   }
-  .unmute-btn:hover{ filter:brightness(1.08); }
-  .unmute-btn.hidden{ display:none; }
-  @keyframes pulseBtn{ 0%,100%{ transform:translateX(-50%) scale(1); } 50%{ transform:translateX(-50%) scale(1.05); } }
+  .accroche-title{
+    font-family:'Big Shoulders Display',Arial,sans-serif; font-weight:800;
+    font-size:38px; line-height:1.12; color:#fff; margin:0 0 18px;
+  }
+  .accroche-title .orange-accent{ color:var(--orange); }
+  .accroche-text{
+    font-size:17px; font-weight:500; line-height:1.5; color:var(--paper);
+    margin:0;
+  }
+  @media(max-width:768px){
+    .accroche-content{ max-width:300px; padding:22px 18px; }
+    .accroche-title{ font-size:28px; }
+    .accroche-text{ font-size:15px; }
+  }
   .video-panel::before{
     content:''; position:absolute; inset:0;
     background-image: repeating-linear-gradient(0deg, rgba(110,151,184,0.06) 0px, transparent 1px, transparent 32px),
@@ -248,10 +255,10 @@
   <div class="shared-carousel-overlay"></div>
 
   <div class="video-panel">
-    <video class="explainer-bg-video" id="explainerVideo" autoplay muted loop playsinline controls>
-      <source src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/puv%20skyeco/video.mp4" type="video/mp4">
-    </video>
-    <button id="unmuteBtn" class="unmute-btn" type="button">🔊 Activer le son</button>
+    <div class="accroche-content">
+      <h2 class="accroche-title">Réunissez tous vos réseaux, votre <span class="orange-accent">publicité</span> et votre <span class="orange-accent">marketing</span>.</h2>
+      <p class="accroche-text">Tout est géré par une intelligence artificielle à votre écoute — conçue et créée pour vous.</p>
+    </div>
   </div>
 
   <div class="form-panel" id="photoCarousel">
@@ -373,18 +380,6 @@
 </div>
 
 <script>
-  // Activer le son de la vidéo au clic (l'autoplay avec son est bloqué par les navigateurs)
-  (function(){
-    const video = document.getElementById('explainerVideo');
-    const btn = document.getElementById('unmuteBtn');
-    if (video && btn) {
-      btn.addEventListener('click', function(){
-        video.muted = false;
-        video.play();
-        btn.classList.add('hidden');
-      });
-    }
-  })();
 (function(){
   // Carrousel photo (panneau droit, fond du formulaire)
   (function initCarousel(){

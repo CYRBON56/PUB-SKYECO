@@ -4,6 +4,29 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Aperçu du dashboard — Skyeco Pro</title>
+
+<!-- Meta Pixel (16/09/2026) — même Pixel que public/index.html (même
+     "METTRE_ID_PIXEL_ICI" à remplacer). Cette page est l'étape où la vraie
+     conversion a lieu (démarrage de l'essai gratuit) — voir l'appel
+     fbq('track', 'CompleteRegistration', ...) plus bas, juste avant la
+     redirection vers acces-dashboard.html. -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', 'METTRE_ID_PIXEL_ICI');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=METTRE_ID_PIXEL_ICI&ev=PageView&noscript=1"
+/></noscript>
+<!-- Fin Meta Pixel -->
+
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f6f5fb; color:#211a35; padding:28px 24px; position:relative; overflow-x:hidden; }
@@ -1022,6 +1045,14 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ draftId: idAUtiliser })
           }).catch(() => {});
+          // Conversion Meta Ads (16/09/2026) : événement standard
+          // "CompleteRegistration" au moment RÉEL où l'essai gratuit
+          // démarre avec succès (pas au clic) — c'est cet événement que la
+          // campagne Meta Ads devra utiliser comme objectif d'optimisation
+          // (Conversions), pas juste le trafic vers la page.
+          if (typeof fbq === 'function') {
+            fbq('track', 'CompleteRegistration', { content_name: 'essai_gratuit_skyeco_ads' });
+          }
           // 15/09/2026 : Décision de Cyrille — l'identifiant/mot de passe
           // du tableau de bord doit être créé dès le démarrage de l'essai
           // gratuit, PAS conditionné à la mise en ligne payante. L'artisan

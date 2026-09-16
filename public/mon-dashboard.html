@@ -564,20 +564,6 @@
   <div id="choixVitrineDashboard" class="cvd-box" style="display:none;">
     <div class="cvd-titre">👋 Comment voulez-vous votre vitrine ?</div>
     <div class="cvd-sous">Avant d'aller plus loin, dites-nous comment vous voulez présenter votre activité à vos prospects. Même tarif, quel que soit votre choix — vous pourrez toujours en changer depuis ce tableau de bord.</div>
-
-    <!-- 15/09/2026 : on commence par le nom de la vitrine — jusqu'ici
-         rien ne le demandait avant construire-ma-vitrine.html (assez loin
-         dans le formulaire), Cyrille a signalé qu'on ne savait pas où le
-         renseigner. Enregistré directement (colonne entreprise, déjà
-         écrite en clé anonyme ailleurs sur cette page — voir zone/annonce
-         plus bas) dès qu'on quitte le champ, et repris tel quel par
-         construire-ma-vitrine.html ensuite (même colonne). -->
-    <div class="cvd-nom-vitrine" style="margin-bottom:18px;">
-      <label for="cvdInputNomVitrine" style="display:block; font-size:0.85rem; font-weight:700; color:#211a35; margin-bottom:6px;">Nom de votre vitrine (le nom de votre entreprise, tel qu'il apparaîtra à vos prospects)</label>
-      <input type="text" id="cvdInputNomVitrine" placeholder="Ex : RMS EcoSky" style="width:100%; border:1.5px solid #d8e3de; border-radius:10px; padding:11px 14px; font-size:0.9rem;">
-      <div class="cvd-statut" id="cvdStatutNomVitrine"></div>
-    </div>
-
     <div class="cvd-options" id="cvdOptions">
       <label class="cvd-option" data-mode="ia">
         <input type="radio" name="cvdMode" value="ia">
@@ -950,8 +936,12 @@
       <div class="liste-header">
         <h3 class="calendrier-titre">Appel vidéo avec Cyrille</h3>
       </div>
-      <p class="calendrier-note">Un souci sur votre campagne ou votre vitrine ? Demandez un rendez-vous en visio — choisissez un créneau dans l'agenda de Cyrille, il vous appelle directement au moment convenu.</p>
+      <p class="calendrier-note">Un souci sur votre campagne ou votre vitrine ? Demandez un rendez-vous en visio — Cyrille valide le créneau puis vous appelle directement au moment convenu.</p>
       <button type="button" id="btnDemanderAppelVideo" class="btn-action" style="background:#ec4899;color:#fff;border:none;padding:12px 20px;border-radius:10px;font-weight:700;cursor:pointer;">📅 Demander un appel vidéo</button>
+      <div id="appelVideoBanniere" style="display:none;margin-top:18px;padding:16px 18px;border-radius:12px;background:#fdeceb;border:1.5px solid #ec4899;">
+        <div style="font-weight:800;color:#c0392b;margin-bottom:6px;">🔴 Cyrille vous appelle maintenant</div>
+        <a id="lienRejoindreAppel" href="#" target="_blank" rel="noopener" style="display:inline-block;margin-top:4px;background:#7c3aed;color:#fff;padding:10px 18px;border-radius:9px;font-weight:700;text-decoration:none;">Rejoindre l'appel</a>
+      </div>
     </div>
   </div>
   </div><!-- /dash-main -->
@@ -1378,7 +1368,7 @@
     content.innerHTML = '<div class="loading">Chargement…</div>';
     try {
       const [connexionResp, postsResp, ficheGoogleResp] = await Promise.all([
-        fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_social_connections?draft_id=eq.${draftId}&select=*`, { headers: { apikey: SUPABASE_ANON_KEY } }),
+        fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_social_connections_public?draft_id=eq.${draftId}&select=*`, { headers: { apikey: SUPABASE_ANON_KEY } }),
         fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_social_posts?draft_id=eq.${draftId}&select=*&order=created_at.desc`, { headers: { apikey: SUPABASE_ANON_KEY } }),
         fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=google_business_location_id`, { headers: { apikey: SUPABASE_ANON_KEY } }),
       ]);
@@ -1451,11 +1441,10 @@
       `;
 
       document.getElementById('btnConnecterFacebook').addEventListener('click', () => {
-        // 15/09/2026 : sur demande de Cyrille, la connexion des réseaux
-        // sociaux n'est plus verrouillée derrière un forfait payant — un
-        // artisan encore en essai gratuit doit pouvoir brancher ses comptes
-        // dès maintenant (contrairement au budget publicitaire, où de
-        // l'argent est réellement engagé, qui reste verrouillé plus bas).
+        if (!window.tarifActifActuel) {
+          window.location.href = '/construire-ma-vitrine.html?id=' + draftId + '&verrou=ads';
+          return;
+        }
         // Flux OAuth classique (voir facebook-connect-start.js) — la Page est
         // choisie automatiquement (la première renvoyée par Meta) puis reliée.
         window.location.href = `/api/facebook-connect-start?id=${encodeURIComponent(draftId)}&token=${encodeURIComponent(tokenCalendrierActuel || '')}`;
@@ -1499,14 +1488,19 @@
       }
 
       document.getElementById('btnConnecterTikTok').addEventListener('click', () => {
-        // 15/09/2026 : même déverrouillage que Facebook ci-dessus — voir
-        // le commentaire correspondant.
+        if (!window.tarifActifActuel) {
+          window.location.href = '/construire-ma-vitrine.html?id=' + draftId + '&verrou=ads';
+          return;
+        }
         // Flux OAuth self-service TikTok (voir tiktok-connect-start.js).
         window.location.href = `/api/tiktok-connect-start?id=${encodeURIComponent(draftId)}&token=${encodeURIComponent(tokenCalendrierActuel || '')}`;
       });
 
       document.getElementById('btnConnecterInstagram').addEventListener('click', () => {
-        // 15/09/2026 : même déverrouillage que Facebook ci-dessus.
+        if (!window.tarifActifActuel) {
+          window.location.href = '/construire-ma-vitrine.html?id=' + draftId + '&verrou=ads';
+          return;
+        }
         if (connexion) {
           rsOuvrirOnboarding(true);
         } else {
@@ -1588,15 +1582,11 @@
       <div style="background:#fff;border-radius:16px;padding:26px 24px;max-width:480px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,0.25);">
         <div style="font-size:1.05rem;font-weight:800;color:#211a35;margin-bottom:14px;">Nouveau post</div>
 
-        <label style="font-size:0.78rem;font-weight:700;color:#211a35;display:block;margin-bottom:4px;">Photo du chantier</label>
-        <input type="file" id="rsPhotoFile" accept="image/*" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #d8e3de;border-radius:8px;font-size:0.85rem;margin-bottom:4px;">
-        <div id="rsPhotoStatut" style="font-size:0.75rem;color:#8a9891;margin-bottom:10px;"></div>
-        <input type="hidden" id="rsPhotoUrl">
+        <label style="font-size:0.78rem;font-weight:700;color:#211a35;display:block;margin-bottom:4px;">Photo du chantier (URL)</label>
+        <input type="url" id="rsPhotoUrl" placeholder="https://...supabase.co/.../chantier.jpg" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #d8e3de;border-radius:8px;font-size:0.85rem;margin-bottom:10px;">
 
-        <label style="font-size:0.78rem;font-weight:700;color:#211a35;display:block;margin-bottom:4px;">Ou vidéo du chantier (optionnel — remplace la photo)</label>
-        <input type="file" id="rsVideoFile" accept="video/*" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #d8e3de;border-radius:8px;font-size:0.85rem;margin-bottom:4px;">
-        <div id="rsVideoStatut" style="font-size:0.75rem;color:#8a9891;margin-bottom:10px;"></div>
-        <input type="hidden" id="rsVideoUrl">
+        <label style="font-size:0.78rem;font-weight:700;color:#211a35;display:block;margin-bottom:4px;">Ou vidéo du chantier (URL, optionnel — remplace la photo)</label>
+        <input type="url" id="rsVideoUrl" placeholder="https://...supabase.co/.../chantier.mp4" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #d8e3de;border-radius:8px;font-size:0.85rem;margin-bottom:10px;">
 
         <label style="font-size:0.78rem;font-weight:700;color:#211a35;display:block;margin-bottom:4px;">Note rapide (optionnel)</label>
         <textarea id="rsNote" placeholder="Ex : terrasse résine 40m2 à Vannes, finition gris anthracite" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #d8e3de;border-radius:8px;font-size:0.85rem;min-height:50px;margin-bottom:10px;font-family:inherit;"></textarea>
@@ -1635,73 +1625,6 @@
     const planifierDate = overlay.querySelector('#rsPlanifierDate');
     const btnValider = overlay.querySelector('#rsValider');
 
-    // 15/09/2026 : sur demande de Cyrille, l'artisan choisit directement un
-    // fichier sur son ordinateur au lieu de devoir coller un lien Supabase
-    // — même mécanisme d'upload que le logo/les photos de
-    // construire-ma-vitrine.html (uploaderFichier), envoyé dès la
-    // sélection du fichier, avant même de cliquer sur "Publier".
-    let rsUploadEnCours = false;
-    async function rsUploaderFichier(file, sousDossier) {
-      const ext = file.name.split('.').pop();
-      const nomFichier = `reseaux-sociaux/${draftId}/${sousDossier}-${Date.now()}.${ext}`;
-      const resp = await fetch(`${SUPABASE_URL}/storage/v1/object/${DEVIS_BUCKET}/${nomFichier}?apikey=${encodeURIComponent(SUPABASE_ANON_KEY)}`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-          apikey: SUPABASE_ANON_KEY,
-          'Content-Type': file.type || 'application/octet-stream',
-        },
-        body: file,
-      });
-      if (!resp.ok) {
-        const detail = await resp.text().catch(() => '');
-        throw new Error("Échec de l'envoi du fichier : " + detail);
-      }
-      return `${SUPABASE_URL}/storage/v1/object/public/${DEVIS_BUCKET}/${nomFichier}`;
-    }
-
-    overlay.querySelector('#rsPhotoFile').addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      const statutEl = overlay.querySelector('#rsPhotoStatut');
-      if (!file) { statutEl.textContent = ''; return; }
-      rsUploadEnCours = true;
-      statutEl.textContent = 'Envoi en cours…';
-      statutEl.style.color = '#8a9891';
-      try {
-        const url = await rsUploaderFichier(file, 'photo');
-        overlay.querySelector('#rsPhotoUrl').value = url;
-        statutEl.textContent = '✓ Photo envoyée';
-        statutEl.style.color = '#1e6f4c';
-      } catch (err) {
-        statutEl.textContent = "Échec de l'envoi — réessayez.";
-        statutEl.style.color = '#c0392b';
-        overlay.querySelector('#rsPhotoUrl').value = '';
-      } finally {
-        rsUploadEnCours = false;
-      }
-    });
-
-    overlay.querySelector('#rsVideoFile').addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      const statutEl = overlay.querySelector('#rsVideoStatut');
-      if (!file) { statutEl.textContent = ''; return; }
-      rsUploadEnCours = true;
-      statutEl.textContent = 'Envoi en cours…';
-      statutEl.style.color = '#8a9891';
-      try {
-        const url = await rsUploaderFichier(file, 'video');
-        overlay.querySelector('#rsVideoUrl').value = url;
-        statutEl.textContent = '✓ Vidéo envoyée';
-        statutEl.style.color = '#1e6f4c';
-      } catch (err) {
-        statutEl.textContent = "Échec de l'envoi — réessayez.";
-        statutEl.style.color = '#c0392b';
-        overlay.querySelector('#rsVideoUrl').value = '';
-      } finally {
-        rsUploadEnCours = false;
-      }
-    });
-
     overlay.querySelector('#rsAnnuler').addEventListener('click', () => overlay.remove());
 
     planifierCheck.addEventListener('change', () => {
@@ -1710,10 +1633,6 @@
     });
 
     btnGenerer.addEventListener('click', async () => {
-      if (rsUploadEnCours) {
-        genereStatut.textContent = "Attendez la fin de l'envoi du fichier avant de continuer.";
-        return;
-      }
       const photoUrl = overlay.querySelector('#rsPhotoUrl').value.trim();
       const note = overlay.querySelector('#rsNote').value.trim();
       if (!photoUrl && !note) {
@@ -1744,10 +1663,6 @@
     });
 
     btnValider.addEventListener('click', async () => {
-      if (rsUploadEnCours) {
-        genereStatut.textContent = "Attendez la fin de l'envoi du fichier avant de continuer.";
-        return;
-      }
       const photoUrl = overlay.querySelector('#rsPhotoUrl').value.trim();
       const videoUrl = overlay.querySelector('#rsVideoUrl').value.trim();
       const legende = legendeEl.value.trim();
@@ -1827,14 +1742,7 @@
   })();
 
   // --- Onglet "Appel vidéo" (05/09) : demande d'appel côté artisan --------
-  // 15/09/2026 : sur demande de Cyrille, l'appel "en direct" (bannière
-  // "Cyrille vous appelle maintenant" + sondage toutes les 10s de
-  // api/statut-appel-video, alimenté par la fonctionnalité d'appel WebRTC
-  // en direct côté admin) était peu fiable côté artisan. On ne garde que
-  // la partie qui fonctionne bien : demander un rendez-vous vidéo, qui
-  // passe par l'agenda de Cyrille (prendre-rdv.html, même mécanisme que
-  // tous les autres RDV) — l'artisan choisit son créneau, Cyrille le
-  // rappelle au moment convenu.
+  let dernierAppelVuId = null;
   function initAppelVideo() {
     if (draftId === DRAFT_ID_SKYECO_PRO) return;
     document.getElementById('tabAppelVideo').style.display = '';
@@ -1844,6 +1752,34 @@
         + (nomEntreprise ? '&nom=' + encodeURIComponent(nomEntreprise) : '');
       window.open(url, '_blank');
     });
+    verifierAppelEnCours();
+    setInterval(verifierAppelEnCours, 10000);
+  }
+
+  async function verifierAppelEnCours() {
+    if (!tokenCalendrierActuel) return;
+    try {
+      const rep = await fetch('/api/statut-appel-video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel }),
+      });
+      if (!rep.ok) return;
+      const data = await rep.json();
+      const banniere = document.getElementById('appelVideoBanniere');
+      const tab = document.getElementById('tabAppelVideo');
+      if (data.enCours && data.roomUrl) {
+        banniere.style.display = '';
+        document.getElementById('lienRejoindreAppel').href = data.roomUrl;
+        if (dernierAppelVuId !== data.rdvId) {
+          tab.querySelector('.panel-tab-icone').textContent = '🔴';
+        }
+        dernierAppelVuId = data.rdvId;
+      } else {
+        banniere.style.display = 'none';
+        tab.querySelector('.panel-tab-icone').textContent = '📹';
+      }
+    } catch (e) { }
   }
 
   let presenceInterval = null;
@@ -2348,7 +2284,7 @@
 
   async function verifierStatutPause() {
     try {
-      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=status,essai_gratuit_fin,elements_deposes_le`, {
+      const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=status,essai_gratuit_fin`, {
         headers: { apikey: SUPABASE_ANON_KEY }
       });
       const rows = await resp.json();
@@ -2359,16 +2295,7 @@
         document.getElementById('banniereePause').style.display = 'flex';
       }
 
-      // 15/09/2026 : le bouton "Mettre en ligne" ne s'affichait plus JAMAIS
-      // pour un artisan en essai gratuit (statut 'essai') — depuis le
-      // parcours du 07/09 où l'essai démarre AVANT construire-ma-vitrine.html,
-      // ce statut est pourtant le cas normal pour tout le monde après avoir
-      // validé l'essai. Une fois construire-ma-vitrine.html rempli (voir
-      // elements_deposes_le, même signal que l'écran "3 options" utilise
-      // pour disparaître), rien ne proposait plus à l'artisan de passer à
-      // la mise en ligne réelle — trou dans le parcours corrigé ici en
-      // élargissant la condition à ce cas précis.
-      if (statut === 'preview' || (statut === 'essai' && rows[0]?.elements_deposes_le)) {
+      if (statut === 'preview') {
         // 14/09/2026 (soir) : "Mettre en ligne" passe désormais D'ABORD par
         // skyeco-pro-inscription-siret.html (SIRET, nom, prénom, téléphone
         // vérifié par SMS, email, adresse — nécessaire à la facturation) —
@@ -2420,11 +2347,6 @@
   let cvdModeConfirme = { mode: 'ia', siteUrlValide: true };
 
   function cvdChoixEstValide() {
-    if (!document.getElementById('cvdInputNomVitrine').value.trim()) {
-      alert('Merci de donner un nom à votre vitrine avant de continuer.');
-      document.getElementById('cvdInputNomVitrine').focus();
-      return false;
-    }
     if (cvdModeConfirme.mode === 'site_externe' && !cvdModeConfirme.siteUrlValide) {
       alert('Merci de confirmer l\'adresse de votre site (bouton "Confirmer cette adresse") avant de continuer.');
       return false;
@@ -2451,30 +2373,6 @@
 
       const box = document.getElementById('choixVitrineDashboard');
       box.style.display = 'block';
-
-      const inputNom = document.getElementById('cvdInputNomVitrine');
-      const statutNom = document.getElementById('cvdStatutNomVitrine');
-      inputNom.value = draft.entreprise || '';
-      let nomEnregistre = inputNom.value.trim();
-      inputNom.addEventListener('blur', async () => {
-        const nouveauNom = inputNom.value.trim();
-        if (!nouveauNom || nouveauNom === nomEnregistre) return;
-        statutNom.textContent = 'Enregistrement…';
-        try {
-          const resp = await fetch(`https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`, {
-            method: 'PATCH',
-            headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-            body: JSON.stringify({ entreprise: nouveauNom }),
-          });
-          if (!resp.ok) throw new Error();
-          nomEnregistre = nouveauNom;
-          statutNom.textContent = '✓ Enregistré';
-          statutNom.className = 'cvd-statut ok';
-        } catch (e) {
-          statutNom.textContent = "Impossible d'enregistrer pour le moment.";
-          statutNom.className = 'cvd-statut err';
-        }
-      });
 
       const modeActuel = draft.mode_vitrine || 'ia';
       cvdModeConfirme = { mode: modeActuel, siteUrlValide: modeActuel !== 'site_externe' || !!draft.site_web_existant };

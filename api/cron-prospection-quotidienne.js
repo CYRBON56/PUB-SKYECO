@@ -1,10 +1,14 @@
 // /api/cron-prospection-quotidienne.js
 //
-// Déclenché automatiquement une fois par jour par Vercel Cron (voir vercel.json),
-// entre 8h et 10h heure française. Appelle exactement le même endpoint que le
-// bouton "Envoyer ce lot" de prospects-paysagiste.html — même logique d'envoi
-// progressif, mêmes garde-fous (quota Resend, marquage obsolète, etc.), juste
-// sans clic manuel.
+// Déclenché automatiquement toutes les 30 minutes par Vercel Cron (voir vercel.json),
+// entre 6h et 19h UTC (~8h-21h heure française l'été, 7h-20h l'hiver). Appelle
+// exactement le même endpoint que le bouton "Envoyer ce lot" de
+// prospects-paysagiste.html — même logique d'envoi progressif, mêmes garde-fous
+// (quota Resend, marquage obsolète, etc.), juste sans clic manuel.
+//
+// Envoi volontairement étalé en petits lots (30 toutes les 30 min, ~26 lots/jour
+// pendant la plage horaire) plutôt qu'un seul gros lot le matin, pour limiter le
+// risque d'être repéré comme spam par les filtres email (Gmail, Outlook, etc.).
 //
 // Variables d'environnement requises sur Vercel :
 //   SKYECO_PROSPECTION_PASSWORD   -> même mot de passe que le portail "Accès réservé"
@@ -13,7 +17,7 @@
 //                                      cette URL contre un déclenchement externe)
 
 const SITE_BASE = 'https://pub-skyeco-23ue.vercel.app';
-const TAILLE_LOT = 250; // dans la fourchette 200-300 demandée
+const TAILLE_LOT = 30; // petit lot, envoyé toutes les 30 min plutôt qu'un seul gros lot
 
 const SUJET_PAR_DEFAUT = "2 minutes pour voir comment Skyeco IA Ads gère vos pubs à votre place";
 

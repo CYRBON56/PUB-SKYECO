@@ -6,6 +6,31 @@
 <title>Skyeco Pro — Des devis chiffrés, pas des clics.</title>
 <meta name="description" content="Skyeco Pro pilote vos campagnes Google Ads, capte vos prospects avec une estimation en ligne, les relance par SMS et gère vos devis avec signature électronique.">
 <link rel="icon" href="/skyeco-icon-devis.svg" type="image/svg+xml">
+
+<!-- Meta Pixel (16/09/2026) — page d'atterrissage des pubs Meta Ads pour
+     Skyeco Ads (le SaaS, pas la résine). REMPLACER "METTRE_ID_PIXEL_ICI"
+     par le vrai ID du Pixel une fois créé dans Meta Events Manager, sous le
+     Business Manager dédié à "Skyeco Ads" (pas celui d'Ecosky/RMS EcoSky).
+     Le suivi de la conversion réelle (essai gratuit démarré) est posé sur
+     public/mon-dashboard-demo.html, pas ici — cette page ne fait que
+     compter les visites (PageView), normal pour une landing page. -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', 'METTRE_ID_PIXEL_ICI');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=METTRE_ID_PIXEL_ICI&ev=PageView&noscript=1"
+/></noscript>
+<!-- Fin Meta Pixel -->
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">

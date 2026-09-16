@@ -111,7 +111,8 @@ async function toggleCollecte() {
 
       lots++; nouveaux += data.nouvellesEnBase; emails += data.emailsTrouves;
       majStats();
-      log(`${data.combo.metier} (${data.combo.codeApe}) — dép. ${data.combo.departement}, page ${data.page} : ${data.nouvellesEnBase} nouvelles, ${data.emailsTrouves} emails${data.comboTermine ? ' — croisement terminé' : ''}`);
+      const alerte = data.sireneErreur ? ` ⚠️ ${data.sireneErreur}` : '';
+      log(`${data.combo.metier} (${data.combo.codeApe}) — dép. ${data.combo.departement}, page ${data.page} : ${data.entreprisesDansLot} reçues de SIRENE, ${data.nouvellesEnBase} nouvelles, ${data.emailsTrouves} emails${data.comboTermine ? ' — croisement terminé' : ''}${alerte}`);
     } catch (err) {
       log('❌ Erreur réseau : ' + err.message + ' — nouvelle tentative dans 5s.');
       await new Promise((r) => setTimeout(r, 5000));

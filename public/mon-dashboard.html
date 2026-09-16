@@ -503,6 +503,7 @@
       <button type="button" class="btn-elements" id="btnMesRdv" style="background:#fff; color:#7c3aed; border:1.5px solid #7c3aed;">📅 Mes rendez-vous</button>
       <a class="btn-elements" id="btnMesDevis" href="#" style="background:#fff; color:#7c3aed; border:1.5px solid #7c3aed;">📄 Devis &amp; factures</a>
       <a class="btn-elements" id="btnElements" href="#">✏️ Modifier mes éléments</a>
+      <button type="button" id="btnInstallerTelephone" style="background:#fff; color:#7c3aed; border:1.5px solid #7c3aed;" class="btn-elements">📲 Installer sur mon téléphone</button>
       <a class="btn-elements" id="btnMettreEnLigneAccueil" href="#" style="background:#e8622c; display:none;">🚀 Mettre en ligne</a>
     </div>
   </div>
@@ -4558,6 +4559,85 @@
       navigator.serviceWorker.register('/sw.js').catch(() => {});
     });
   }
+</script>
+
+<script>
+  // "Installer sur mon téléphone" : envoie par SMS un lien qui ouvre
+  // directement CE dashboard sur le téléphone de l'artisan (via un jeton
+  // admin signé côté serveur, voir api/envoyer-lien-installation.js),
+  // avec ?installer=1 pour déclencher ensuite le bandeau d'installation.
+  (function() {
+    const btn = document.getElementById('btnInstallerTelephone');
+    if (!btn) return;
+    btn.addEventListener('click', async () => {
+      if (!tokenCalendrierActuel) return;
+      const texteOriginal = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Envoi du SMS…';
+      try {
+        const res = await fetch('/api/envoyer-lien-installation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId, token: tokenCalendrierActuel }),
+        });
+        const data = await res.json();
+        btn.textContent = data.success ? '✓ SMS envoyé' : (data.error || "Échec de l'envoi");
+      } catch (e) {
+        btn.textContent = 'Impossible de contacter le serveur';
+      } finally {
+        setTimeout(() => { btn.disabled = false; btn.textContent = texteOriginal; }, 3000);
+      }
+    });
+  })();
+
+  // Bandeau "Ajouter à l'écran d'accueil", affiché seulement quand on arrive
+  // via le lien SMS ci-dessus (?installer=1) — évite de l'imposer à chaque
+  // visite normale du dashboard. Android/Chrome propose un vrai bouton
+  // d'installation native (beforeinstallprompt) ; iOS/Safari n'a pas cet
+  // événement, on y affiche donc des instructions manuelles (partage ->
+  // sur l'écran d'accueil), seule méthode possible sur iOS.
+  (function() {
+    const params2 = new URLSearchParams(window.location.search);
+    if (params2.get('installer') !== '1') return;
+
+    let eventInstallDiffere = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      eventInstallDiffere = e;
+      const btnInstaller = document.getElementById('btnInstallBanniereAction');
+      if (btnInstaller) btnInstaller.style.display = 'inline-block';
+    });
+
+    const estIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const dejaInstalle = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    if (dejaInstalle) return;
+
+    const banniere = document.createElement('div');
+    banniere.style.cssText = 'position:fixed; left:14px; right:14px; bottom:14px; z-index:10010; background:#211a35; color:#fff; border-radius:14px; padding:16px 18px; box-shadow:0 10px 30px rgba(0,0,0,0.35); font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width:420px; margin:0 auto;';
+    banniere.innerHTML = estIOS
+      ? `<div style="font-weight:800; margin-bottom:6px;">📲 Installez Skyeco Pro sur votre téléphone</div>
+         <div style="font-size:0.85rem; line-height:1.5; opacity:0.9; margin-bottom:10px;">Appuyez sur le bouton Partager <strong>⬆️</strong> en bas de l'écran, puis sur <strong>« Sur l'écran d'accueil »</strong>.</div>
+         <button id="btnFermerBanniereInstall" style="background:rgba(255,255,255,0.15); color:#fff; border:none; border-radius:9px; padding:8px 14px; font-weight:700; cursor:pointer; font-size:0.82rem;">Compris</button>`
+      : `<div style="font-weight:800; margin-bottom:6px;">📲 Installez Skyeco Pro sur votre téléphone</div>
+         <div style="font-size:0.85rem; line-height:1.5; opacity:0.9; margin-bottom:10px;">Un raccourci sur votre écran d'accueil, comme une vraie application.</div>
+         <div style="display:flex; gap:10px;">
+           <button id="btnInstallBanniereAction" style="display:none; background:#7c3aed; color:#fff; border:none; border-radius:9px; padding:8px 14px; font-weight:700; cursor:pointer; font-size:0.82rem;">Installer maintenant</button>
+           <button id="btnFermerBanniereInstall" style="background:rgba(255,255,255,0.15); color:#fff; border:none; border-radius:9px; padding:8px 14px; font-weight:700; cursor:pointer; font-size:0.82rem;">Plus tard</button>
+         </div>`;
+    document.body.appendChild(banniere);
+
+    banniere.querySelector('#btnFermerBanniereInstall').addEventListener('click', () => banniere.remove());
+    const btnAction = banniere.querySelector('#btnInstallBanniereAction');
+    if (btnAction) {
+      btnAction.addEventListener('click', async () => {
+        if (!eventInstallDiffere) return;
+        eventInstallDiffere.prompt();
+        await eventInstallDiffere.userChoice;
+        eventInstallDiffere = null;
+        banniere.remove();
+      });
+    }
+  })();
 </script>
 
 </body>

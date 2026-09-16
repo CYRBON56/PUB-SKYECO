@@ -302,13 +302,21 @@
     btn.disabled = true;
     btn.textContent = 'Envoi…';
     try {
+      const codePostal = document.getElementById('codePostal').value.trim();
       const resp = await fetch('/api/marketplace-capture-lead', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nom, prenom, telephone, telephoneVerifie, email,
           commune: document.getElementById('commune').value.trim(),
-          codePostal: document.getElementById('codePostal').value.trim(),
+          codePostal,
+          // Cette page est dédiée à la résine/EPDM dans le Morbihan — le
+          // département est déduit du code postal saisi (repli sur 56 si
+          // absent/incomplet) plutôt que codé en dur, pour rester correct
+          // même si un visiteur saisit un code postal d'un département voisin.
+          metier: 'resine',
+          departement: codePostal.length >= 2 ? codePostal.slice(0, 2) : '56',
+          zoneRegion: 'Bretagne',
           typeProjet: projetChoisi,
           surfaceM2: document.getElementById('surfaceM2').value ? parseFloat(document.getElementById('surfaceM2').value) : null,
           budgetIndicatif: document.getElementById('budgetIndicatif').value || null,

@@ -917,6 +917,23 @@
       <h3 style="display:flex; align-items:center; gap:9px;"><span style="font-size:1.1rem;">🎯</span>Leads Skyeco</h3>
     </div>
     <p style="color:#666; font-size:0.85rem; margin:-6px 0 16px;">Des prospects captés directement par Skyeco (pas depuis votre propre vitrine), vendus en exclusivité — une fois débloqué, un contact n'est plus proposé à personne d'autre et apparaît directement dans "Gérer les clients".</p>
+    <div id="marketplacePrefsPanel" style="display:none; background:#f7f8f9; border:1.5px solid #e4e7ea; border-radius:12px; padding:14px 16px; margin-bottom:16px;">
+      <button type="button" id="btnTogglePrefsMarketplace" style="background:none; border:none; padding:0; color:#14304A; font-weight:700; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; gap:6px;">
+        <span id="iconePrefsMarketplace">⚙️</span> Personnaliser mes préférences (métiers / départements)
+      </button>
+      <div id="marketplacePrefsForm" style="display:none; margin-top:12px;">
+        <div id="marketplacePrefsSourceInfo" style="font-size:0.8rem; color:#666; margin-bottom:10px;"></div>
+        <div style="font-size:0.8rem; font-weight:700; color:#3a4a43; margin-bottom:6px;">Métiers pour lesquels je veux voir des contacts</div>
+        <div id="marketplacePrefsMetiers" style="display:flex; flex-wrap:wrap; gap:8px 14px; margin-bottom:14px;"></div>
+        <div style="font-size:0.8rem; font-weight:700; color:#3a4a43; margin-bottom:6px;">Départements (ex : 56, 29, 44 — séparés par une virgule)</div>
+        <input type="text" id="marketplacePrefsDepartements" placeholder="56, 29" style="width:100%; max-width:320px; padding:8px 10px; border:1px solid #d5dbe0; border-radius:8px; font-size:0.85rem; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+          <button type="button" id="btnEnregistrerPrefsMarketplace" style="background:#14304A; color:#fff; border:none; border-radius:9px; padding:9px 16px; font-weight:700; font-size:0.82rem; cursor:pointer;">Enregistrer mes préférences</button>
+          <button type="button" id="btnReinitialiserPrefsMarketplace" style="background:none; border:1px solid #d5dbe0; color:#556; border-radius:9px; padding:9px 16px; font-weight:600; font-size:0.82rem; cursor:pointer;">Revenir à mon activité (vitrine)</button>
+          <span id="marketplacePrefsStatut" style="font-size:0.8rem; color:#2f7d4f;"></span>
+        </div>
+      </div>
+    </div>
     <div id="marketplaceContent"><div class="loading">Chargement…</div></div>
   </div>
   </div>
@@ -1382,6 +1399,21 @@
   // api/marketplace-leads-disponibles.js / marketplace-reserver-lead.js /
   // marketplace-confirmer-achat.js et claude/skyeco-pro-brief-marketplace-leads.md
   // côté suivi projet. Pilote limité au métier résine/EPDM dans le Morbihan.
+  // Mêmes libellés que METIER_LABELS dans api/analyser-site-vitrine.js —
+  // gardés en phase manuellement (pas d'import possible côté front statique).
+  const METIER_LABELS_MARKETPLACE = {
+    paysagiste: 'Paysagiste',
+    piscine: 'Pose piscine',
+    tonte: 'Tonte et coupe',
+    terrasse: 'Terrasse',
+    paysagiste_concepteur: 'Paysagiste concepteur',
+    arboriste: 'Arboriste élagueur',
+    espaces_verts: "Entretien d'espaces verts",
+    resine: 'Revêtement en résine',
+    autre: 'Autre',
+  };
+  let dernierePrefsMarketplace = null;
+
   async function chargerLeadsMarketplace() {
     const content = document.getElementById('marketplaceContent');
     content.innerHTML = '<div class="loading">Chargement…</div>';
@@ -1396,28 +1428,35 @@
         content.innerHTML = '<div class="empty-msg">Impossible de charger les contacts pour le moment.</div>';
         return;
       }
+
+      // Panneau de préférences visible dès qu'on a un profil (même inéligible) —
+      // ça permet à un artisan sans métier/zone renseigné sur sa vitrine de se
+      // configurer lui-même plutôt que de rester bloqué.
+      afficherPanneauPrefsMarketplace(data);
+
       if (!data.eligible) {
         content.innerHTML = `
           <div class="empty-msg">
             <span class="empty-icone">🎯</span>
-            <strong>Bientôt dans votre secteur</strong>
-            <div style="margin-top:8px; max-width:440px; margin-left:auto; margin-right:auto;">Les contacts Skyeco (prospects captés directement par nos soins, vendus en exclusivité) sont pour l'instant réservés au pilote résine de sol / EPDM dans le Morbihan — l'extension à d'autres métiers et zones viendra ensuite.</div>
+            <strong>Aucun métier/département configuré pour l'instant</strong>
+            <div style="margin-top:8px; max-width:440px; margin-left:auto; margin-right:auto;">Renseignez votre activité et votre zone d'intervention ci-dessus (ou dans les infos de votre vitrine) pour voir apparaître ici les contacts Skyeco correspondants.</div>
           </div>`;
         return;
       }
       if (!data.leads.length) {
+        const libellesMetiers = (data.preferences.metiers || []).map(m => METIER_LABELS_MARKETPLACE[m] || m).join(', ');
         content.innerHTML = `
           <div class="empty-msg">
             <span class="empty-icone">🎯</span>
             <strong>Aucun contact disponible pour le moment</strong>
-            <div style="margin-top:8px;">De nouveaux prospects résine/EPDM dans le Morbihan apparaîtront ici dès qu'ils seront captés — revenez bientôt.</div>
+            <div style="margin-top:8px;">De nouveaux prospects${libellesMetiers ? ' (' + escaperHtml(libellesMetiers) + ')' : ''} dans votre secteur apparaîtront ici dès qu'ils seront captés — revenez bientôt.</div>
           </div>`;
         return;
       }
       content.innerHTML = data.leads.map(l => `
         <div style="border:1px solid #e2e2e2; border-radius:12px; padding:16px 18px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;">
           <div>
-            <strong>${escaperHtml(l.type_projet || 'Projet résine')}</strong> — ${escaperHtml(l.commune || l.code_postal || 'Morbihan')}
+            <strong>${escaperHtml(l.type_projet || METIER_LABELS_MARKETPLACE[l.metier] || 'Projet')}</strong> — ${escaperHtml(l.commune || l.code_postal || '')}
             ${l.surface_m2 ? `<br><span style="color:#666; font-size:0.85rem;">Surface indicative : ${escaperHtml(String(l.surface_m2))} m²</span>` : ''}
             ${l.budget_indicatif ? `<br><span style="color:#666; font-size:0.85rem;">Budget indicatif : ${escaperHtml(l.budget_indicatif)}</span>` : ''}
             <br><span style="color:#999; font-size:0.78rem;">Reçu le ${new Date(l.created_at).toLocaleDateString('fr-FR')}</span>
@@ -1429,6 +1468,87 @@
       content.innerHTML = '<div class="empty-msg">Erreur de chargement.</div>';
     }
   }
+
+  function afficherPanneauPrefsMarketplace(data) {
+    dernierePrefsMarketplace = data;
+    const panel = document.getElementById('marketplacePrefsPanel');
+    panel.style.display = '';
+
+    const metiersVitrine = Array.isArray(data.metierVitrine) ? data.metierVitrine : [];
+    const metiersActifs = (data.preferences && data.preferences.metiers) || [];
+    const departementsActifs = (data.preferences && data.preferences.departements) || [];
+    const personnalisees = !!(data.preferences && data.preferences.personnalisees);
+
+    const infoDiv = document.getElementById('marketplacePrefsSourceInfo');
+    infoDiv.textContent = personnalisees
+      ? 'Vous utilisez des préférences personnalisées (différentes de votre vitrine).'
+      : (metiersVitrine.length
+        ? "Par défaut, on se base sur l'activité et la zone déclarées sur votre vitrine."
+        : "Aucune activité/zone n'est encore déclarée sur votre vitrine — configurez vos préférences ci-dessous.");
+
+    const zoneMetiers = document.getElementById('marketplacePrefsMetiers');
+    zoneMetiers.innerHTML = Object.entries(METIER_LABELS_MARKETPLACE).map(([valeur, libelle]) => `
+      <label style="display:flex; align-items:center; gap:6px; font-size:0.83rem; cursor:pointer;">
+        <input type="checkbox" value="${valeur}" ${metiersActifs.includes(valeur) ? 'checked' : ''}> ${escaperHtml(libelle)}
+      </label>
+    `).join('');
+
+    document.getElementById('marketplacePrefsDepartements').value = departementsActifs.join(', ');
+  }
+
+  async function enregistrerPrefsMarketplace() {
+    const btn = document.getElementById('btnEnregistrerPrefsMarketplace');
+    const statut = document.getElementById('marketplacePrefsStatut');
+    const metiers = Array.from(document.querySelectorAll('#marketplacePrefsMetiers input:checked')).map(i => i.value);
+    const departements = document.getElementById('marketplacePrefsDepartements').value
+      .split(',').map(d => d.trim()).filter(Boolean);
+
+    btn.disabled = true;
+    statut.style.color = '#2f7d4f';
+    statut.textContent = 'Enregistrement…';
+    try {
+      const resp = await fetch('/api/marketplace-definir-preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, metiers, departements }),
+      });
+      const data = await resp.json();
+      if (!data.success) {
+        statut.style.color = '#c0392b';
+        statut.textContent = data.error || 'Erreur — réessayez.';
+        return;
+      }
+      statut.textContent = 'Préférences enregistrées ✓';
+      chargerLeadsMarketplace();
+    } catch (e) {
+      statut.style.color = '#c0392b';
+      statut.textContent = 'Erreur — réessayez.';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function reinitialiserPrefsMarketplace() {
+    document.querySelectorAll('#marketplacePrefsMetiers input').forEach(i => { i.checked = false; });
+    document.getElementById('marketplacePrefsDepartements').value = '';
+    await enregistrerPrefsMarketplace();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const btnToggle = document.getElementById('btnTogglePrefsMarketplace');
+    const btnSave = document.getElementById('btnEnregistrerPrefsMarketplace');
+    const btnReset = document.getElementById('btnReinitialiserPrefsMarketplace');
+    if (btnToggle) {
+      btnToggle.addEventListener('click', () => {
+        const form = document.getElementById('marketplacePrefsForm');
+        const ouvert = form.style.display !== 'none';
+        form.style.display = ouvert ? 'none' : '';
+        document.getElementById('iconePrefsMarketplace').textContent = ouvert ? '⚙️' : '🔽';
+      });
+    }
+    if (btnSave) btnSave.addEventListener('click', enregistrerPrefsMarketplace);
+    if (btnReset) btnReset.addEventListener('click', reinitialiserPrefsMarketplace);
+  });
 
   function escaperHtml(texte) {
     const div = document.createElement('div');

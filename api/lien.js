@@ -59,6 +59,10 @@ export default async function handler(req, res) {
           destination = (destinationEnregistree && /^https?:\/\//i.test(destinationEnregistree))
             ? destinationEnregistree
             : DESTINATION_PROSPECTION_ARTISANS;
+          // Transmet l'identité du prospect (clic_token) à la première page
+          // du tunnel, pour que tracking-visites.js puisse la reprendre et
+          // la conserver tout au long du parcours (voir statistiques-visites.html).
+          destination += (destination.includes('?') ? '&' : '?') + 'pid=' + encodeURIComponent(p);
           await fetch(`${process.env.SUPABASE_URL}/rest/v1/prospects_paysagiste?id=eq.${encodeURIComponent(prospectPaysagiste.id)}`, {
             method: "PATCH",
             headers: { ...supaHeaders, "Content-Type": "application/json", Prefer: "return=minimal" },

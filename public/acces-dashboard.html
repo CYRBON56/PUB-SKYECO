@@ -180,13 +180,16 @@
   }
 
   function afficherCreation(email) {
-    // 12/09/2026 : depuis que l'essai gratuit ne demande plus l'email au
-    // départ (seulement le téléphone, vérifié par SMS — voir
-    // mon-dashboard-demo.html), cet email peut arriver vide ici. Le champ
-    // était en lecture seule (readonly), pensé pour un email déjà connu —
-    // resté vide ET readonly, il empêchait tout simplement l'artisan de le
-    // renseigner (case grisée, impossible d'écrire dedans). Il devient donc
-    // modifiable quand aucun email n'est encore connu.
+    // 16/09/2026 : Cyrille souhaite ne plus faire "inventer" un mot de passe
+    // à l'artisan au tout début de l'essai gratuit — trop de friction à ce
+    // stade. Le mot de passe est désormais généré automatiquement côté
+    // client (l'artisan n'a rien à taper ni à retenir) ; il pourra toujours
+    // le réinitialiser via "mot de passe oublié" (SMS) s'il en a besoin plus
+    // tard. L'API /api/dashboard-set-password n'a pas changé : elle reçoit
+    // simplement ce mot de passe généré au lieu d'un mot de passe choisi.
+    // L'email reste demandé UNIQUEMENT s'il n'est pas déjà connu (ce qui est
+    // le cas le plus fréquent : la plupart des essais démarrent depuis un
+    // lien email où le prospect est déjà identifié).
     const emailConnu = !!(email && email.trim());
     carte.innerHTML = `
       <div class="icone-cadenas">
@@ -196,66 +199,52 @@
           <circle cx="12" cy="15.5" r="1.6" fill="#1e6f4c"/>
         </svg>
       </div>
-      <h1 class="titre-gros">Créer votre mot de passe pour accéder à votre tableau de bord</h1>
-      <p class="sub">${contexteSuite ? `Confirmez votre identité ${contexteSuite}. ` : 'Votre tableau de bord Skyeco Pro est prêt. '}${emailConnu ? 'Choisissez un mot de passe pour pouvoir y revenir à tout moment.' : 'Renseignez votre email et choisissez un mot de passe pour pouvoir y revenir à tout moment.'}</p>
+      <h1 class="titre-gros">Votre tableau de bord est prêt</h1>
+      <p class="sub">${contexteSuite ? `Confirmez votre identité ${contexteSuite}.` : 'Accédez-y en un clic — vous pourrez le retrouver à tout moment.'}</p>
       <form id="formCreation">
-        <label>Identifiant (votre email)</label>
-        <input type="email" id="creationEmail" value="${email || ''}" ${emailConnu ? 'readonly' : 'required placeholder="votre@email.fr"'}>
-        <label>Mot de passe</label>
-        <div class="champ-mdp">
-          <input type="password" id="mdp1" minlength="8" required placeholder="8 caractères minimum">
-          ${boutonOeil('mdp1')}
-        </div>
-        <label>Confirmez le mot de passe</label>
-        <div class="champ-mdp">
-          <input type="password" id="mdp2" minlength="8" required>
-          ${boutonOeil('mdp2')}
-        </div>
-        <button class="btn-principal" type="submit">Créer mon accès</button>
+        ${emailConnu ? '' : `
+        <label>Votre email</label>
+        <input type="email" id="creationEmail" required placeholder="votre@email.fr">
+        `}
+        <button class="btn-principal" type="submit">Accéder à mon tableau de bord →</button>
       </form>
       <div id="zoneMsg"></div>
+      <p style="font-size:0.76rem;color:#8a9691;text-align:center;margin-top:16px;line-height:1.5;">Un accès a été créé automatiquement pour vous. Besoin de vous reconnecter plus tard depuis un autre appareil ? Utilisez « Mot de passe oublié » ci-dessous.</p>
     `;
-    attacherToggleOeil('mdp1');
-    attacherToggleOeil('mdp2');
     document.getElementById('formCreation').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const emailSaisi = document.getElementById('creationEmail').value.trim();
-      const mdp1 = document.getElementById('mdp1').value;
-      const mdp2 = document.getElementById('mdp2').value;
+      const emailSaisi = emailConnu ? email : document.getElementById('creationEmail').value.trim();
       const zoneMsg = document.getElementById('zoneMsg');
       const btn = e.target.querySelector('button');
       if (!emailSaisi) {
         zoneMsg.innerHTML = '<div class="msg err">Merci de renseigner votre email.</div>';
         return;
       }
-      if (mdp1 !== mdp2) {
-        zoneMsg.innerHTML = '<div class="msg err">Les deux mots de passe ne correspondent pas.</div>';
-        return;
-      }
       btn.disabled = true;
-      btn.textContent = 'Création…';
+      btn.textContent = 'Préparation de votre accès…';
+      // Généré automatiquement — l'artisan n'a rien à choisir ni à retenir.
+      const motDePasseGenere = (window.crypto && crypto.randomUUID)
+        ? crypto.randomUUID().replace(/-/g, '').slice(0, 14)
+        : Math.random().toString(36).slice(2, 16) + Math.random().toString(36).slice(2, 8);
       try {
         const res = await fetch('/api/dashboard-set-password', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          // email envoyé en plus du mot de passe : nécessaire quand il
-          // n'était pas déjà connu (voir emailConnu ci-dessus) pour que
-          // l'API l'enregistre sur ce brouillon avant de créer le compte.
-          body: JSON.stringify({ draftId, motDePasse: mdp1, email: emailConnu ? undefined : emailSaisi })
+          body: JSON.stringify({ draftId, motDePasse: motDePasseGenere, email: emailConnu ? undefined : emailSaisi })
         });
         const data = await res.json();
         if (data.success) {
           zoneMsg.innerHTML = '<div class="msg ok">✓ Accès créé, redirection…</div>';
-          setTimeout(() => connecterEtRediriger(data.token), 900);
+          setTimeout(() => connecterEtRediriger(data.token), 700);
         } else {
           zoneMsg.innerHTML = `<div class="msg err">${data.error || 'Une erreur est survenue.'}</div>`;
           btn.disabled = false;
-          btn.textContent = 'Créer mon accès';
+          btn.textContent = 'Accéder à mon tableau de bord →';
         }
       } catch (e) {
         zoneMsg.innerHTML = '<div class="msg err">Impossible de contacter le serveur.</div>';
         btn.disabled = false;
-        btn.textContent = 'Créer mon accès';
+        btn.textContent = 'Accéder à mon tableau de bord →';
       }
     });
   }

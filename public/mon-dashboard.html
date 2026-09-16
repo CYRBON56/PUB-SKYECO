@@ -476,6 +476,10 @@
         <span class="panel-tab-icone">👥</span>
         <span class="panel-tab-texte">Gérer les clients<span class="panel-tab-sous">Demandes, devis, signatures</span></span>
       </button>
+      <button type="button" class="panel-tab" id="tabMarketplace" data-tab="marketplace">
+        <span class="panel-tab-icone">🎯</span>
+        <span class="panel-tab-texte">Leads Skyeco<span class="panel-tab-sous">Contacts exclusifs à débloquer</span></span>
+      </button>
       <button type="button" class="panel-tab" id="tabReseaux" data-tab="reseaux">
         <span class="panel-tab-icone">📱</span>
         <span class="panel-tab-texte">Réseaux sociaux<span class="panel-tab-sous">Publication Instagram &amp; Facebook</span></span>
@@ -907,6 +911,16 @@
   </div>
   </div>
 
+  <div id="panelMarketplace" style="display:none;">
+  <div class="liste-panel">
+    <div class="liste-header">
+      <h3 style="display:flex; align-items:center; gap:9px;"><span style="font-size:1.1rem;">🎯</span>Leads Skyeco</h3>
+    </div>
+    <p style="color:#666; font-size:0.85rem; margin:-6px 0 16px;">Des prospects captés directement par Skyeco (pas depuis votre propre vitrine), vendus en exclusivité — une fois débloqué, un contact n'est plus proposé à personne d'autre et apparaît directement dans "Gérer les clients".</p>
+    <div id="marketplaceContent"><div class="loading">Chargement…</div></div>
+  </div>
+  </div>
+
   <div id="panelReseaux" style="display:none;">
   <div class="liste-panel">
     <div class="liste-header">
@@ -1081,6 +1095,7 @@
       activerOnglet('reseaux');
       document.getElementById('panelTabs').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+    confirmerAchatMarketplaceSiRetour();
     if (!adminToken) {
       chargerSitesCompte(token);
       chargerApercuCampagnes(token);
@@ -1340,6 +1355,7 @@
     document.getElementById('panelAds').style.display = cible === 'ads' ? '' : 'none';
     document.getElementById('panelMeta').style.display = cible === 'meta' ? '' : 'none';
     document.getElementById('panelClients').style.display = cible === 'clients' ? '' : 'none';
+    document.getElementById('panelMarketplace').style.display = cible === 'marketplace' ? '' : 'none';
     document.getElementById('panelReseaux').style.display = cible === 'reseaux' ? '' : 'none';
     document.getElementById('panelCalendrier').style.display = cible === 'calendrier' ? '' : 'none';
     document.getElementById('panelAppelVideo').style.display = cible === 'appelvideo' ? '' : 'none';
@@ -1355,6 +1371,128 @@
       chargerDemandes(tokenCalendrierActuel);
       chargerStats();
     }
+    if (cible === 'marketplace') {
+      chargerLeadsMarketplace();
+    }
+  }
+
+  // --- Onglet "Leads Skyeco" (marketplace, 16/09/2026) ---------------------
+  // Catalogue de contacts captés et financés directement par Skyeco (pas par
+  // l'artisan), vendus à l'unité et en exclusivité — voir
+  // api/marketplace-leads-disponibles.js / marketplace-reserver-lead.js /
+  // marketplace-confirmer-achat.js et claude/skyeco-pro-brief-marketplace-leads.md
+  // côté suivi projet. Pilote limité au métier résine/EPDM dans le Morbihan.
+  async function chargerLeadsMarketplace() {
+    const content = document.getElementById('marketplaceContent');
+    content.innerHTML = '<div class="loading">Chargement…</div>';
+    try {
+      const resp = await fetch('/api/marketplace-leads-disponibles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel }),
+      });
+      const data = await resp.json();
+      if (!data.success) {
+        content.innerHTML = '<div class="empty-msg">Impossible de charger les contacts pour le moment.</div>';
+        return;
+      }
+      if (!data.eligible) {
+        content.innerHTML = `
+          <div class="empty-msg">
+            <span class="empty-icone">🎯</span>
+            <strong>Bientôt dans votre secteur</strong>
+            <div style="margin-top:8px; max-width:440px; margin-left:auto; margin-right:auto;">Les contacts Skyeco (prospects captés directement par nos soins, vendus en exclusivité) sont pour l'instant réservés au pilote résine de sol / EPDM dans le Morbihan — l'extension à d'autres métiers et zones viendra ensuite.</div>
+          </div>`;
+        return;
+      }
+      if (!data.leads.length) {
+        content.innerHTML = `
+          <div class="empty-msg">
+            <span class="empty-icone">🎯</span>
+            <strong>Aucun contact disponible pour le moment</strong>
+            <div style="margin-top:8px;">De nouveaux prospects résine/EPDM dans le Morbihan apparaîtront ici dès qu'ils seront captés — revenez bientôt.</div>
+          </div>`;
+        return;
+      }
+      content.innerHTML = data.leads.map(l => `
+        <div style="border:1px solid #e2e2e2; border-radius:12px; padding:16px 18px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;">
+          <div>
+            <strong>${escaperHtml(l.type_projet || 'Projet résine')}</strong> — ${escaperHtml(l.commune || l.code_postal || 'Morbihan')}
+            ${l.surface_m2 ? `<br><span style="color:#666; font-size:0.85rem;">Surface indicative : ${escaperHtml(String(l.surface_m2))} m²</span>` : ''}
+            ${l.budget_indicatif ? `<br><span style="color:#666; font-size:0.85rem;">Budget indicatif : ${escaperHtml(l.budget_indicatif)}</span>` : ''}
+            <br><span style="color:#999; font-size:0.78rem;">Reçu le ${new Date(l.created_at).toLocaleDateString('fr-FR')}</span>
+          </div>
+          <button type="button" onclick="acheterLeadMarketplace('${l.id}', this)" style="background:#E8622C; color:#fff; border:none; border-radius:10px; padding:10px 16px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap;">Débloquer ce contact — ${(l.prix_cts / 100).toFixed(2)}€</button>
+        </div>
+      `).join('');
+    } catch (e) {
+      content.innerHTML = '<div class="empty-msg">Erreur de chargement.</div>';
+    }
+  }
+
+  function escaperHtml(texte) {
+    const div = document.createElement('div');
+    div.textContent = texte == null ? '' : String(texte);
+    return div.innerHTML;
+  }
+
+  async function acheterLeadMarketplace(leadId, btn) {
+    btn.disabled = true;
+    const texteOriginal = btn.textContent;
+    btn.textContent = 'Redirection…';
+    try {
+      const resp = await fetch('/api/marketplace-reserver-lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, leadId }),
+      });
+      const data = await resp.json();
+      if (!data.success) {
+        alert(data.error || "Ce contact n'est plus disponible.");
+        chargerLeadsMarketplace();
+        return;
+      }
+      window.location.href = data.url;
+    } catch (e) {
+      alert('Erreur — réessayez.');
+      btn.disabled = false;
+      btn.textContent = texteOriginal;
+    }
+  }
+
+  // Après retour de Stripe Checkout (succès ou annulation) — voir
+  // success_url / cancel_url dans api/marketplace-reserver-lead.js.
+  async function confirmerAchatMarketplaceSiRetour() {
+    const sessionId = params.get('marketplace_session_id');
+    const annule = params.get('marketplace_annule');
+    if (!sessionId && !annule) return;
+
+    const urlPropre = new URL(window.location.href);
+    urlPropre.searchParams.delete('marketplace_session_id');
+    urlPropre.searchParams.delete('marketplace_annule');
+    window.history.replaceState({}, '', urlPropre.toString() + '#marketplace');
+    activerOnglet('marketplace');
+    document.getElementById('panelTabs').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    if (annule) return; // rien à confirmer, l'artisan a annulé le paiement
+
+    try {
+      const resp = await fetch('/api/marketplace-confirmer-achat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, sessionId }),
+      });
+      const data = await resp.json();
+      if (data.success) {
+        alert(data.message || 'Contact débloqué avec succès !');
+        chargerDemandes(tokenCalendrierActuel);
+      } else {
+        alert(data.error || "Le paiement n'a pas pu être confirmé — contactez le support si le montant a bien été débité.");
+      }
+    } catch (e) {
+      alert('Erreur de confirmation — contactez le support si le montant a bien été débité.');
+    }
+    chargerLeadsMarketplace();
   }
 
   function initPanelTabs() {

@@ -139,9 +139,21 @@ export default async function handler(req, res) {
 
     const { code_ape: codeApe, departement } = combo;
 
-    const url = `https://recherche-entreprises.api.gouv.fr/search?activite_principale=${codeApe}&departement=${departement}&page=${combo.page_courante}&per_page=25&minimal=true`;
+    // L'API attend le code APE au format "43.21A" (avec le point), pas
+    // "4321A" — sans ça elle renvoie systématiquement 0 résultat, ce qui
+    // explique le "0 nouvelles entreprises" partout observé le 16/09.
+    const codeApeAvecPoint = codeApe.replace(/^(\d{2})(\d{2})([A-Z])$/, '$1.$2$3');
+
+    const url = `https://recherche-entreprises.api.gouv.fr/search?activite_principale=${codeApeAvecPoint}&departement=${departement}&page=${combo.page_courante}&per_page=25&minimal=true`;
     const sireneResp = await fetch(url, { headers: { Accept: 'application/json' } });
-    const sireneData = sireneResp.ok ? await sireneResp.json() : { results: [] };
+    let sireneErreur = null;
+    let sireneData = { results: [] };
+    if (sireneResp.ok) {
+      sireneData = await sireneResp.json();
+    } else {
+      sireneErreur = `SIRENE a répondu ${sireneResp.status} : ${(await sireneResp.text()).slice(0, 200)}`;
+      console.error('collecte-batiment-batch, appel SIRENE échoué:', sireneErreur);
+    }
     const lot = sireneData.results || [];
 
     let nouvellesEnBase = 0;
@@ -216,6 +228,7 @@ export default async function handler(req, res) {
       nouvellesEnBase,
       emailsTrouves,
       comboTermine: termine,
+      sireneErreur, // null si tout s'est bien passé — sinon, la vraie cause à regarder
     });
   } catch (err) {
     console.error('collecte-batiment-batch error:', err);

@@ -4,7 +4,7 @@
 //
 // Entrée (POST JSON) : { postId }
 
-import { publierPost } from "../lib/social-publish.js";
+import { publierPost } from "./social-publish.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {

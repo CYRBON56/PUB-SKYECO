@@ -7,7 +7,7 @@
 //   SUPABASE_SERVICE_ROLE_KEY
 //   CRON_SECRET   - protège l'endpoint (Vercel Cron envoie ce secret en header)
 
-import { publierPost } from "../lib/social-publish.js";
+import { publierPost } from "./social-publish.js";
 
 export default async function handler(req, res) {
   // Vercel Cron ajoute automatiquement ce header quand CRON_SECRET est défini

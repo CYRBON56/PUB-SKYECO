@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Statistiques des visites — Skyeco Ads Admin</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background:#f2f4f1; color:#14312a; padding:36px 28px 60px;
+  }
+  .wrap { max-width:1180px; margin:0 auto; }
+  .top-header { display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+  h1 { font-size:1.6rem; font-weight:800; letter-spacing:-0.01em; }
+  .sub { font-size:0.9rem; color:#6b7a72; margin-top:4px; }
+  a.retour { font-size:0.85rem; color:#1e6f4c; font-weight:700; text-decoration:none; }
+
+  .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-bottom:24px; }
+  .stat-card { background:#fff; border-radius:16px; padding:18px 20px; box-shadow:0 1px 2px rgba(20,49,42,0.04), 0 6px 20px rgba(20,49,42,0.05); }
+  .stat-card .valeur { font-size:1.7rem; font-weight:800; line-height:1; }
+  .stat-card .label { font-size:0.76rem; color:#8a9891; margin-top:6px; font-weight:600; }
+
+  .section-titre { font-size:1.05rem; font-weight:800; margin:30px 0 12px; }
+
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media (max-width:900px) { .grid-2 { grid-template-columns:1fr; } }
+
+  .carte { background:#fff; border-radius:18px; padding:6px 0; box-shadow:0 1px 2px rgba(20,49,42,0.04), 0 6px 24px rgba(20,49,42,0.06); overflow:hidden; }
+  table { width:100%; border-collapse:collapse; }
+  th { text-align:left; padding:12px 18px; background:#fafaf7; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.04em; color:#8a9891; font-weight:700; border-bottom:1px solid #eef1ec; }
+  td { padding:11px 18px; border-top:1px solid #f2f4f0; font-size:0.85rem; vertical-align:top; }
+
+  .badge-anonyme { font-size:0.7rem; color:#8a9891; font-weight:600; }
+  .badge-identifie { font-size:0.7rem; font-weight:700; padding:3px 10px; border-radius:999px; background:#eaf4ef; color:#1e6f4c; display:inline-block; }
+  .parcours { font-size:0.78rem; color:#4a5850; line-height:1.6; }
+  .parcours .p { display:inline-block; background:#f0f1ec; border-radius:6px; padding:2px 8px; margin:2px 3px 0 0; }
+  .parcours .duree { color:#8a9891; font-size:0.72rem; }
+  .date-cell { color:#8a9891; font-size:0.8rem; white-space:nowrap; }
+
+  select { padding:9px 14px; border:1.5px solid #e0e5df; border-radius:10px; font-size:0.85rem; background:#fff; }
+  #chargement { padding:40px; text-align:center; color:#8a9891; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top-header">
+    <div>
+      <h1>👀 Statistiques des visites</h1>
+      <div class="sub">Qui entre dans le tunnel Skyeco Ads, ce qu'il regarde, combien de temps il reste.</div>
+    </div>
+    <div>
+      <select id="filtreJours" onchange="charger()">
+        <option value="7">7 derniers jours</option>
+        <option value="30" selected>30 derniers jours</option>
+        <option value="90">90 derniers jours</option>
+      </select>
+      &nbsp; <a class="retour" href="/mes-artisans.html">← Retour au tableau de bord</a>
+    </div>
+  </div>
+
+  <div id="chargement">Chargement…</div>
+  <div id="contenu" style="display:none;">
+    <div class="stats-row" id="statsRow"></div>
+
+    <div class="grid-2">
+      <div>
+        <div class="section-titre">Pages les plus vues</div>
+        <div class="carte">
+          <table>
+            <thead><tr><th>Page</th><th>Vues</th><th>Temps moyen</th></tr></thead>
+            <tbody id="tbodyPages"></tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <div class="section-titre">Où les visiteurs décrochent</div>
+        <div class="carte">
+          <table>
+            <thead><tr><th>Dernière page vue</th><th>Sessions</th></tr></thead>
+            <tbody id="tbodySorties"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-titre">Sessions récentes (parcours détaillé)</div>
+    <div class="carte">
+      <table>
+        <thead><tr><th>Qui</th><th>Parcours</th><th>Dernière activité</th></tr></thead>
+        <tbody id="tbodySessions"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+function formaterDuree(s) {
+  if (s === null || s === undefined) return '';
+  if (s < 60) return s + 's';
+  return Math.floor(s / 60) + 'min ' + (s % 60) + 's';
+}
+function formaterDate(iso) {
+  return new Date(iso).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+}
+function echapper(v) {
+  return String(v || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function charger() {
+  let motDePasseInterne = sessionStorage.getItem('skyeco_admin_internal_pw');
+  if (!motDePasseInterne) {
+    motDePasseInterne = prompt('Mot de passe interne (admin) :');
+    if (!motDePasseInterne) return;
+  }
+  const jours = document.getElementById('filtreJours').value;
+  document.getElementById('chargement').style.display = 'block';
+  document.getElementById('contenu').style.display = 'none';
+
+  const resp = await fetch(`/api/stats-visites?motDePasseInterne=${encodeURIComponent(motDePasseInterne)}&jours=${jours}`);
+  const data = await resp.json();
+  if (!resp.ok || !data.success) {
+    sessionStorage.removeItem('skyeco_admin_internal_pw');
+    document.getElementById('chargement').textContent = 'Mot de passe incorrect ou erreur — rechargez la page pour réessayer.';
+    return;
+  }
+  sessionStorage.setItem('skyeco_admin_internal_pw', motDePasseInterne);
+
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-card"><div class="valeur">${data.totalSessions}</div><div class="label">Sessions (${data.fenetreJours}j)</div></div>
+    <div class="stat-card"><div class="valeur">${data.totalVues}</div><div class="label">Pages vues au total</div></div>
+    <div class="stat-card"><div class="valeur">${data.sessionsIdentifiees}</div><div class="label">Sessions identifiées</div></div>
+  `;
+
+  document.getElementById('tbodyPages').innerHTML = data.pages.map(p => `
+    <tr><td>${echapper(p.page)}</td><td>${p.vues}</td><td>${p.dureeMoyenneSecondes !== null ? formaterDuree(p.dureeMoyenneSecondes) : '—'}</td></tr>
+  `).join('') || '<tr><td colspan="3">Aucune donnée pour cette période.</td></tr>';
+
+  document.getElementById('tbodySorties').innerHTML = data.sorties.map(s => `
+    <tr><td>${echapper(s.page)}</td><td>${s.sessionsTerminantIci}</td></tr>
+  `).join('') || '<tr><td colspan="2">Aucune donnée pour cette période.</td></tr>';
+
+  document.getElementById('tbodySessions').innerHTML = data.sessions.map(s => {
+    const qui = s.identite
+      ? `<span class="badge-identifie">${echapper(s.identite.nom_entreprise || s.identite.email)}</span><br><span class="badge-anonyme">${echapper(s.identite.ville || '')} ${echapper(s.identite.metier || '')}</span>`
+      : `<span class="badge-anonyme">Anonyme</span>`;
+    const parcours = s.pages.map(p => `<span class="p">${echapper(p.page)} <span class="duree">${p.duree_secondes !== null ? formaterDuree(p.duree_secondes) : '…'}</span></span>`).join('');
+    return `<tr><td>${qui}</td><td class="parcours">${parcours}</td><td class="date-cell">${formaterDate(s.derniere_visite)}</td></tr>`;
+  }).join('') || '<tr><td colspan="3">Aucune visite pour cette période.</td></tr>';
+
+  document.getElementById('chargement').style.display = 'none';
+  document.getElementById('contenu').style.display = 'block';
+}
+charger();
+</script>
+</body>
+</html>

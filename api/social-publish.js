@@ -334,19 +334,40 @@ export async function publierPost(postId) {
       const createData = await createRes.json();
       if (!createData.id) throw new Error(JSON.stringify(createData));
       creationId = createData.id;
+
+      // Même une photo doit être téléchargée et traitée par Instagram avant
+      // de pouvoir être publiée — publier tout de suite après la création
+      // du container donne parfois "Media ID is not available / please wait
+      // a moment" (code 9007 / subcode 2207027), constaté le 16/09. On
+      // attend donc status_code=FINISHED comme pour une vidéo (généralement
+      // quasi immédiat pour une photo, d'où un délai max court).
+      await attendreVideoPrete(creationId, accessToken, 30);
     }
 
-    // 3. Publier le container préparé.
-    const publishRes = await fetch(
-      `https://graph.instagram.com/v21.0/${igUserId}/media_publish`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ creation_id: creationId, access_token: accessToken }),
+    // 3. Publier le container préparé — avec une petite tolérance de
+    // réessai : même après avoir attendu FINISHED, Instagram répond parfois
+    // encore "media not ready" une ou deux secondes de plus (erreur que Meta
+    // classe pourtant "is_transient: false", mais qui se résorbe seule).
+    let publishData;
+    for (let tentative = 1; tentative <= 3; tentative++) {
+      const publishRes = await fetch(
+        `https://graph.instagram.com/v21.0/${igUserId}/media_publish`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ creation_id: creationId, access_token: accessToken }),
+        }
+      );
+      publishData = await publishRes.json();
+      if (publishData.id) break;
+
+      const pasEncorePret = publishData?.error?.error_subcode === 2207027;
+      if (pasEncorePret && tentative < 3) {
+        await new Promise((r) => setTimeout(r, 4000));
+        continue;
       }
-    );
-    const publishData = await publishRes.json();
-    if (!publishData.id) throw new Error(JSON.stringify(publishData));
+      throw new Error(JSON.stringify(publishData));
+    }
 
     // 4. En plus d'Instagram, publier sur la Page Facebook, la fiche Google
     // Business Profile et/ou le compte TikTok si connectés — sans jamais

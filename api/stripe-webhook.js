@@ -227,13 +227,25 @@ export default async function handler(req, res) {
       case 'customer.subscription.updated': {
         // Capture les changements de statut (ex: passage en "active" après
         // une période d'essai, ou réactivation après annulation programmée).
+        //
+        // 16/09/2026 : quand une résiliation vient d'être programmée via
+        // api/cancel-subscription.js (cancel_at_period_end: true), le statut
+        // Stripe brut ("active"/"trialing") ne change PAS avant la fin
+        // réelle de la période — sans ce cas particulier, cet événement
+        // (déclenché par notre propre appel stripe.subscriptions.update)
+        // écraserait immédiatement le "resiliation_programmee" qu'on vient
+        // de poser, et l'artisan ne verrait plus nulle part que sa
+        // résiliation est bien prise en compte.
         const subscription = event.data.object;
+        const nouveauStatut = subscription.cancel_at_period_end
+          ? 'resiliation_programmee'
+          : subscription.status;
         await fetch(
           `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?stripe_subscription_id=eq.${subscription.id}`,
           {
             method: 'PATCH',
             headers: { ...supaHeaders, Prefer: 'return=minimal' },
-            body: JSON.stringify({ subscription_status: subscription.status }),
+            body: JSON.stringify({ subscription_status: nouveauStatut }),
           }
         );
         break;

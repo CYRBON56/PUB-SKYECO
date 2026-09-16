@@ -1008,6 +1008,15 @@
 
   const DRAFT_ID_SKYECO_PRO = '4fbdb122-9fca-4636-b80c-d9e4abc2542b';
 
+  // 16/09/2026 : la connexion Instagram/Facebook passe par l'app Meta
+  // Marketing/Business, actuellement en mode "Développement" (App Review en
+  // cours) — seul le compte Meta de Cyrille peut réellement s'y connecter.
+  // Tant que ce n'est pas approuvé, un vrai artisan qui cliquerait
+  // "Connecter Instagram" tomberait sur une erreur Meta incompréhensible.
+  // Un seul flag à repasser à true le jour où l'App Review Meta est validée
+  // (voir claude/skyeco-pro-guide-meta-app-review.md côté suivi projet).
+  const META_SOCIAL_DISPONIBLE_POUR_TOUS = false;
+
   if (!draftId) {
     document.body.innerHTML = '<div class="loading">Lien invalide — identifiant du site manquant.</div>';
   } else {
@@ -1366,6 +1375,23 @@
   // /api/social-* qui restent à développer.
   async function chargerReseauxSociaux() {
     const content = document.getElementById('reseauxContent');
+
+    // Voir META_SOCIAL_DISPONIBLE_POUR_TOUS ci-dessus : tant que l'App
+    // Review Meta n'est pas validée, on montre un état "bientôt disponible"
+    // plutôt que de laisser un artisan tenter une connexion qui échouera.
+    if (!META_SOCIAL_DISPONIBLE_POUR_TOUS && draftId !== DRAFT_ID_SKYECO_PRO) {
+      content.innerHTML = `
+        <div class="empty-msg" style="text-align:center; padding:36px 20px;">
+          <span class="empty-icone" style="font-size:2rem; display:block; margin-bottom:10px;">🚧</span>
+          <strong style="display:block; margin-bottom:6px; color:#211a35;">Bientôt disponible</strong>
+          <span style="color:#6b7a72; font-size:0.88rem; max-width:380px; display:inline-block;">
+            La publication automatique sur Instagram et Facebook est en cours de validation auprès de Meta.
+            Cette fonctionnalité s'activera automatiquement sur votre compte dès que ce sera fait — aucune action de votre part n'est nécessaire.
+          </span>
+        </div>`;
+      return;
+    }
+
     content.innerHTML = '<div class="loading">Chargement…</div>';
     try {
       const [connexionResp, postsResp, ficheGoogleResp] = await Promise.all([
@@ -2730,7 +2756,22 @@
       document.getElementById('btnVoirClientsArchives').style.display = leadsData.some(l => l.archive) || leadsAffiches.length ? 'inline-block' : 'none';
 
       if (!leadsAffiches.length) {
-        content.innerHTML = '<div class="empty-msg"><span class="empty-icone">📭</span>Aucune demande reçue pour l\'instant.</div>';
+        // 16/09/2026 : avant, ce message générique s'affichait même juste
+        // après le démarrage de l'essai gratuit, avant que la vitrine ou la
+        // campagne existent — un nouvel artisan pouvait croire que "rien ne
+        // marche" alors que c'est simplement trop tôt. On explique la
+        // situation réelle selon l'avancement de son dossier.
+        const campagnePasEncoreLancee = statutDraftActuel === 'essai' || statutDraftActuel === 'preview' || !statutDraftActuel;
+        content.innerHTML = campagnePasEncoreLancee
+          ? `<div class="empty-msg" style="text-align:left; max-width:480px; margin:0 auto; padding:28px 20px;">
+              <span class="empty-icone" style="font-size:1.8rem; display:block; margin-bottom:10px; text-align:center;">🚀</span>
+              <strong style="display:block; margin-bottom:8px; color:#211a35; text-align:center;">C'est normal, il n'y a encore rien à voir ici</strong>
+              <span style="color:#6b7a72; font-size:0.87rem; line-height:1.6; display:block;">
+                Tant que votre vitrine n'est pas construite et votre campagne pas encore lancée, aucune demande ne peut arriver — vos futurs clients n'ont pas encore de page à visiter.
+                Dès que votre campagne sera en ligne (onglet <strong>Gérer Google Ads</strong>), vos premières demandes apparaîtront automatiquement ici, et vous serez aussi prévenu par SMS et email à chaque nouvelle demande.
+              </span>
+            </div>`
+          : '<div class="empty-msg"><span class="empty-icone">📭</span>Aucune demande reçue pour l\'instant — vous serez prévenu par SMS et email dès la première.</div>';
         return;
       }
 

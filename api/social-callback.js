@@ -69,10 +69,29 @@ export default async function handler(req, res) {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: params,
     });
-    const shortData = await shortRes.json();
+    // Important : on lit le corps en texte brut avant de le parser en JSON.
+    // Meta renvoie "user_id" comme un NOMBRE JSON (pas une chaîne) sur cet
+    // endpoint, or ces identifiants font 17 chiffres — au-delà de la limite
+    // de précision exacte des nombres JavaScript (Number.MAX_SAFE_INTEGER,
+    // ~16 chiffres). JSON.parse() arrondirait alors silencieusement le
+    // dernier chiffre à la valeur "double" représentable la plus proche,
+    // ce qui corrompt l'identifiant (constaté le 16/09 : ...105331 devenait
+    // ...105332, un compte Instagram différent/inexistant pour l'app → toute
+    // publication échouait avec "Object with ID ... does not exist"). On
+    // extrait donc user_id directement depuis le texte brut, comme chaîne.
+    const shortText = await shortRes.text();
+    let shortData;
+    try {
+      shortData = JSON.parse(shortText);
+    } catch (e) {
+      throw new Error("Réponse OAuth illisible : " + shortText.slice(0, 500));
+    }
     if (!shortData.access_token) {
       throw new Error("Échange du code OAuth échoué : " + JSON.stringify(shortData));
     }
+    const userIdMatch = shortText.match(/"user_id"\s*:\s*"?(\d+)"?/);
+    const igUserId = userIdMatch ? userIdMatch[1] : String(shortData.user_id);
+
     // 2. Échanger contre un token longue durée (~60 jours).
     const longRes = await fetch(
       `https://graph.instagram.com/access_token` +
@@ -84,19 +103,11 @@ export default async function handler(req, res) {
     const accessToken = longData.access_token || shortData.access_token;
     const expiresInSec = longData.expires_in || 60 * 24 * 60 * 60; // repli 60 jours
 
-    // 3. Récupérer le nom d'utilisateur ET l'id "officiel" pour l'affichage.
-    // Important : le user_id renvoyé par l'échange OAuth court-terme
-    // (ci-dessus) peut différer de l'id renvoyé ici par /me, alors que les
-    // deux désignent le même compte — bug/quirk connu de l'API "Instagram
-    // API with Instagram Login". C'est CET id (celui de /me) qu'attendent
-    // les endpoints graph.instagram.com/{ig-user-id}/media et
-    // /media_publish : utiliser l'autre provoque une erreur "Object with ID
-    // ... does not exist" (code 100, subcode 33) à chaque publication.
+    // 3. Récupérer le nom d'utilisateur pour l'affichage.
     const meRes = await fetch(
-      `https://graph.instagram.com/v21.0/me?fields=id,username&access_token=${encodeURIComponent(accessToken)}`
+      `https://graph.instagram.com/v21.0/me?fields=username&access_token=${encodeURIComponent(accessToken)}`
     );
     const meData = await meRes.json();
-    const igUserId = meData.id || shortData.user_id; // repli si /me échoue exceptionnellement
 
     // 4. Enregistrer la connexion (upsert sur draft_id).
     const expiresAt = new Date(Date.now() + (expiresInSec - 5 * 24 * 60 * 60) * 1000).toISOString(); // marge de 5 jours

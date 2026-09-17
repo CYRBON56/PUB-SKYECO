@@ -72,14 +72,14 @@
   // avec d'éventuels anciens liens déjà envoyés, mais sans effet). L'id "3"
   // ci-dessous est celui utilisé côté Supabase/Stripe pour cette offre.
   const ID_FORFAIT = 3;
-  // Remise de lancement 1ère année (31/08) : 39,90€ HT/mois pendant 12 mois,
-  // puis retour automatique à 79,90€ HT/mois. Gérée côté paiement par un
-  // coupon Stripe (api/create-checkout-session.js) — ici, uniquement l'affichage.
+  // 17/09/2026 (soir) : tarif fixe de 39,90€ HT/mois, sans remise temporaire
+  // ni retour à un tarif plus élevé après 12 mois — remplace l'ancienne
+  // remise 1ère année (31/08 : 39,90€ pendant 12 mois, puis 79,90€). Gérée
+  // côté paiement par api/create-checkout-session.js — ici, uniquement
+  // l'affichage.
   const FORFAIT = {
     nom: 'Skyeco Pro',
-    prixHT: 79.90,
-    prixPromoHT: 39.90,
-    dureePromoMois: 12,
+    prixHT: 39.90,
     inclus: [
       'Mise en service complète de votre formulaire vitrine en ligne',
       'Connexion et paramétrage de votre campagne Google Ads',
@@ -106,7 +106,6 @@
 
   function afficherContrat(forfait){
     const prixTTC = (forfait.prixHT * 1.2).toFixed(2);
-    const prixPromoTTC = (forfait.prixPromoHT * 1.2).toFixed(2);
     document.getElementById('contenu').innerHTML = `
       <div class="eyebrow">Votre contrat</div>
       <h1>Récapitulatif du forfait ${forfait.nom}</h1>
@@ -114,14 +113,8 @@
 
       <div class="prix-box">
         <div class="prix-nom">Forfait ${forfait.nom}</div>
-        <div class="promo-tile">
-          <div class="promo-tile-label">Offre de<br>lancement</div>
-          <div class="promo-tile-percent">-50%</div>
-          <div class="promo-tile-duree">1ère année</div>
-        </div>
-        <div class="prix-montant">${forfait.prixPromoHT.toFixed(2)} € <span>HT / mois</span></div>
-        <div class="prix-ttc">soit ${prixPromoTTC} € TTC / mois, pendant ${forfait.dureePromoMois} mois</div>
-        <div class="prix-apres">Puis ${forfait.prixHT.toFixed(2)} € HT/mois (soit ${prixTTC} € TTC/mois)</div>
+        <div class="prix-montant">${forfait.prixHT.toFixed(2)} € <span>HT / mois</span></div>
+        <div class="prix-ttc">soit ${prixTTC} € TTC / mois</div>
       </div>
 
       <div class="section-titre">Ce qui est inclus</div>
@@ -255,6 +248,5 @@
 })();
 </script>
 <!-- SKYECO_COOKIE_BANNER_END -->
-<script src="/tracking-visites.js"></script>
 </body>
 </html>

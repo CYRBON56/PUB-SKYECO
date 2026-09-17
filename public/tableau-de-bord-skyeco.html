@@ -89,7 +89,10 @@
   const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
 
-  const PRIX_FORFAIT = { 1: 39.90, 2: 59.90, 3: 79.90, 4: 99.90 };
+  // 17/09/2026 (soir) : forfait 3 passé à un tarif fixe de 39,90€ HT/mois
+  // (voir api/create-checkout-session.js) — mis à jour ici pour que le MRR
+  // estimé reflète le montant réellement facturé aux abonnés du forfait 3.
+  const PRIX_FORFAIT = { 1: 39.90, 2: 59.90, 3: 39.90, 4: 99.90 };
   const NOMS_FORFAIT = { 1: 'Vitrine simple', 2: 'Vitrine + Dashboard', 3: 'Relances SMS + devis', 4: 'Vitrine référencée' };
 
   let dernieresDonnees = { drafts: [], totalLeads: 0 };

@@ -4,30 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Aperçu du dashboard — Skyeco Pro</title>
-
-<!-- Meta Pixel (16/09/2026) — même Pixel "Skyeco Ads" que public/index.html
-     (ID 1099338643049950, créé le 16/09/2026 dans Meta Events Manager,
-     Business Manager "RMS"). Cette page est l'étape où la vraie conversion
-     a lieu (démarrage de l'essai gratuit) — voir l'appel
-     fbq('track', 'CompleteRegistration', ...) plus bas, juste avant la
-     redirection vers acces-dashboard.html. -->
-<script>
-!function(f,b,e,v,n,t,s)
-{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-n.queue=[];t=b.createElement(e);t.async=!0;
-t.src=v;s=b.getElementsByTagName(e)[0];
-s.parentNode.insertBefore(t,s)}(window, document,'script',
-'https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', '1099338643049950');
-fbq('track', 'PageView');
-</script>
-<noscript><img height="1" width="1" style="display:none"
-src="https://www.facebook.com/tr?id=1099338643049950&ev=PageView&noscript=1"
-/></noscript>
-<!-- Fin Meta Pixel -->
-
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f6f5fb; color:#211a35; padding:28px 24px; position:relative; overflow-x:hidden; }
@@ -502,7 +478,6 @@ src="https://www.facebook.com/tr?id=1099338643049950&ev=PageView&noscript=1"
       <span>Consommé : <strong>126 €</strong></span>
       <span>Restant : <strong>174 €</strong> / 300 €</span>
     </div>
-    <div class="estim-note">À titre d'exemple : sur les 6 derniers mois, ce budget a généré 112 demandes de devis, 24 devis signés et 17 rendez-vous pris.</div>
     <button class="btn-pause-demo">⏸️ Mettre en pause la diffusion</button>
     <button type="button" id="btnApprovisionnerDemo" style="display:inline-flex; align-items:center; gap:8px; background:#7c3aed; color:#fff; border:none; text-decoration:none; border-radius:10px; padding:11px 18px; font-size:0.85rem; font-weight:700; margin-left:10px; cursor:pointer;">💳 Approvisionner mon budget</button>
   </div>
@@ -533,16 +508,15 @@ src="https://www.facebook.com/tr?id=1099338643049950&ev=PageView&noscript=1"
     <div class="ads-souspanel explicable" data-explain-title="✨ Mots-clés" data-explain="On identifie automatiquement les recherches Google les plus fréquentes pour votre métier, pour que votre annonce apparaisse au bon moment, pour la bonne recherche.">
       <h3>✨ Quels mots-clés pour votre annonce ?</h3>
       <div class="motscles-liste">
-        <div class="motscle-item"><input type="checkbox" checked disabled><span class="motscle-texte">devis chantier morbihan</span><span class="motscle-potentiel-badge">≈ 320 recherches/mois</span></div>
-        <div class="motscle-item"><input type="checkbox" checked disabled><span class="motscle-texte">artisan pas cher vannes</span><span class="motscle-potentiel-badge">≈ 210 recherches/mois</span></div>
-        <div class="motscle-item"><input type="checkbox" checked disabled><span class="motscle-texte">devis gratuit rapide</span><span class="motscle-potentiel-badge">≈ 90 recherches/mois</span></div>
-        <div class="motscle-item"><input type="checkbox" disabled><span class="motscle-texte">intervention copropriété</span><span class="motscle-potentiel-badge faible">aucune recherche connue</span></div>
+        <div class="motscle-item"><input type="checkbox" checked disabled><span class="motscle-texte">aménagement extérieur paysagiste</span><span class="motscle-potentiel-badge">≈ 320 recherches/mois</span></div>
+        <div class="motscle-item"><input type="checkbox" checked disabled><span class="motscle-texte">devis paysagiste</span><span class="motscle-potentiel-badge">≈ 210 recherches/mois</span></div>
+        <div class="motscle-item"><input type="checkbox" checked disabled><span class="motscle-texte">paysagiste prix</span><span class="motscle-potentiel-badge">≈ 90 recherches/mois</span></div>
+        <div class="motscle-item"><input type="checkbox" disabled><span class="motscle-texte">entretien jardin copropriété</span><span class="motscle-potentiel-badge faible">aucune recherche connue</span></div>
       </div>
       <button type="button" class="btn-rafraichir-demo">🔄 Rafraîchir l'estimation de clics</button>
       <div class="motscles-potentiel">
         <div class="chiffre">≈ 79 clics/mois possibles</div>
         <div class="detail">Avec ces mots-clés dans votre zone, pour un budget de 300 € — coût par clic moyen estimé : 1,50 €.</div>
-        <div class="detail" style="margin-top:6px;">Soit, à titre d'exemple, environ 15 à 20 nouvelles demandes de devis par mois pour ce budget.</div>
       </div>
     </div>
 
@@ -608,10 +582,10 @@ src="https://www.facebook.com/tr?id=1099338643049950&ev=PageView&noscript=1"
     <div class="ads-souspanel explicable" data-explain-title="🔎 Recherches réelles" data-explain="Différent des mots-clés ciblés : ce sont les recherches Google exactes qui ont déclenché votre annonce — utile pour repérer de nouvelles formulations à cibler, ou des recherches hors sujet à exclure.">
       <h3>Ce que les internautes tapent vraiment</h3>
       <div class="zones-liste">
-        <div class="zone-ligne"><div class="zone-nom" title="devis chantier morbihan">devis chantier morbihan</div><div class="zone-barre-track"><div class="zone-barre-fill" style="width:100%;"></div></div><div class="zone-clics">18 clics</div></div>
-        <div class="zone-ligne"><div class="zone-nom" title="artisan pas cher vannes">artisan pas cher vannes</div><div class="zone-barre-track"><div class="zone-barre-fill" style="width:61%;"></div></div><div class="zone-clics">11 clics</div></div>
-        <div class="zone-ligne"><div class="zone-nom" title="prix intervention rapide">prix intervention rapide</div><div class="zone-barre-track"><div class="zone-barre-fill" style="width:39%;"></div></div><div class="zone-clics">7 clics</div></div>
-        <div class="zone-ligne"><div class="zone-nom" title="devis gratuit sous 48h">devis gratuit sous 48h</div><div class="zone-barre-track"><div class="zone-barre-fill" style="width:33%;"></div></div><div class="zone-clics">6 clics</div></div>
+        <div class="zone-ligne"><div class="zone-nom" title="devis terrasse résine morbihan">devis terrasse résine morbihan</div><div class="zone-barre-track"><div class="zone-barre-fill" style="width:100%;"></div></div><div class="zone-clics">18 clics</div></div>
+        <div class="zone-ligne"><div class="zone-nom" title="paysagiste pas cher vannes">paysagiste pas cher vannes</div><div class="zone-barre-track"><div class="zone-barre-fill" style="width:61%;"></div></div><div class="zone-clics">11 clics</div></div>
+        <div class="zone-ligne"><div class="zone-nom" title="prix pose clôture aluminium">prix pose clôture aluminium</div><div class="zone-barre-track"><div class="zone-barre-fill" style="width:39%;"></div></div><div class="zone-clics">7 clics</div></div>
+        <div class="zone-ligne"><div class="zone-nom" title="aménagement extérieur devis gratuit">aménagement extérieur devis gratuit</div><div class="zone-barre-track"><div class="zone-barre-fill" style="width:33%;"></div></div><div class="zone-clics">6 clics</div></div>
       </div>
     </div>
 
@@ -673,7 +647,7 @@ src="https://www.facebook.com/tr?id=1099338643049950&ev=PageView&noscript=1"
         <button type="button" class="btn-toggle-coach-demo">⏸️ Mettre en pause</button>
       </div>
       <div class="coaching-ia-action-demo">✓ 1 action appliquée automatiquement par le coach — détails ci-dessous.</div>
-      <div class="coaching-ia-reponse-demo">Votre budget quotidien est presque toujours consommé avant midi : vous perdez probablement des clics l'après-midi. J'ai augmenté l'enchère maximale sur « devis chantier morbihan » de 1,50 € à 1,80 € pour capter plus de clics sur ce mot-clé qui convertit bien chez vous.</div>
+      <div class="coaching-ia-reponse-demo">Votre budget quotidien est presque toujours consommé avant midi : vous perdez probablement des clics l'après-midi. J'ai augmenté l'enchère maximale sur « devis paysagiste » de 1,50 € à 1,80 € pour capter plus de clics sur ce mot-clé qui convertit bien chez vous.</div>
       <div class="coaching-chat-demo">
         <div class="coaching-bulle-demo artisan">Pourquoi mon budget part si vite le matin ?</div>
         <div class="coaching-bulle-demo coach">C'est le créneau 10h-12h : c'est là que vos clients cherchent le plus. C'est un bon signe — c'est votre créneau le plus rentable, je le laisse actif en priorité.</div>
@@ -710,7 +684,7 @@ src="https://www.facebook.com/tr?id=1099338643049950&ev=PageView&noscript=1"
     <div class="rdv-liste">
       <div class="rdv-card">
         <div class="rdv-quand"><div class="rdv-jour">Lun. 01 sept.</div><div class="rdv-heure">09:00</div></div>
-        <div class="rdv-infos"><div class="rdv-nom">M. Le Roux</div><div class="rdv-type">Estimation chantier — Vannes</div></div>
+        <div class="rdv-infos"><div class="rdv-nom">M. Le Roux</div><div class="rdv-type">Estimation terrasse résine — Vannes</div></div>
         <div class="rdv-source">Réservé en ligne</div>
       </div>
       <div class="rdv-card">
@@ -742,7 +716,7 @@ src="https://www.facebook.com/tr?id=1099338643049950&ev=PageView&noscript=1"
     <div class="devis-card">
       <div class="devis-icone">📄</div>
       <div class="devis-infos">
-        <div class="devis-nom">Mme Le Bris — Rénovation extérieure</div>
+        <div class="devis-nom">Mme Le Bris — Aménagement paysager</div>
         <div class="devis-montant">Devis : 5 680 € TTC — envoyé le 19/08</div>
       </div>
       <div class="devis-actions">
@@ -792,17 +766,17 @@ src="https://www.facebook.com/tr?id=1099338643049950&ev=PageView&noscript=1"
       <button class="rs-btn-demo">Connecter TikTok</button>
     </div>
     <div class="rs-row-demo">
-      <div class="rs-thumb-demo" style="background:linear-gradient(135deg,#f9a8d4,#ec4899); display:flex; align-items:center; justify-content:center; font-size:1.3rem;">🏗️</div>
+      <div class="rs-thumb-demo" style="background:linear-gradient(135deg,#f9a8d4,#ec4899); display:flex; align-items:center; justify-content:center; font-size:1.3rem;">🏡</div>
       <div style="flex:1;">
-        <div class="rs-caption-demo">« Nouveau chantier livré cette semaine à Brech ✨ Travail soigné, dans les délais, sans mauvaise surprise... »</div>
+        <div class="rs-caption-demo">« Nouvelle terrasse en résine EPDM livrée cette semaine à Brech ✨ Étanche, antidérapante et sans entretien... »</div>
         <div class="rs-meta-demo">Publié il y a 2 jours sur Instagram + Facebook — légende générée par l'IA</div>
       </div>
       <span class="rs-pill-demo">Publié</span>
     </div>
     <div class="rs-row-demo">
-      <div class="rs-thumb-demo" style="background:linear-gradient(135deg,#c4b5fd,#7c3aed); display:flex; align-items:center; justify-content:center; font-size:1.3rem;">🛠️</div>
+      <div class="rs-thumb-demo" style="background:linear-gradient(135deg,#c4b5fd,#7c3aed); display:flex; align-items:center; justify-content:center; font-size:1.3rem;">🌳</div>
       <div style="flex:1;">
-        <div class="rs-caption-demo">« Avant / après : rénovation complète d'un chantier à Pluvigner 🔧 »</div>
+        <div class="rs-caption-demo">« Avant / après : aménagement paysager complet à Pluvigner 🌿 »</div>
         <div class="rs-meta-demo">Planifié pour demain 9h</div>
       </div>
       <span class="rs-pill-demo" style="background:#f5f3ff;color:#7c3aed;">Planifié</span>
@@ -822,7 +796,7 @@ src="https://www.facebook.com/tr?id=1099338643049950&ev=PageView&noscript=1"
     <div class="rdv-liste">
       <div class="rdv-card">
         <div class="rdv-quand"><div class="rdv-jour">Lun. 01 sept.</div><div class="rdv-heure">09:00</div></div>
-        <div class="rdv-infos"><div class="rdv-nom">M. Le Roux</div><div class="rdv-type">Estimation chantier — Vannes</div></div>
+        <div class="rdv-infos"><div class="rdv-nom">M. Le Roux</div><div class="rdv-type">Estimation terrasse résine — Vannes</div></div>
         <div class="rdv-source">Réservé en ligne</div>
       </div>
       <div class="rdv-card">
@@ -853,8 +827,7 @@ src="https://www.facebook.com/tr?id=1099338643049950&ev=PageView&noscript=1"
         <ul>
           <li><span class="puce">✓</span><span>Votre formulaire vitrine en ligne, créé et hébergé pour vous</span></li>
           <li><span class="puce">✓</span><span>Votre tableau de bord de suivi, comme celui que vous venez de voir</span></li>
-          <li><span class="puce">✓</span><span>La gestion automatisée de vos campagnes Google Ads et Meta Ads par un coach IA — il surveille et ajuste vos annonces pour vous</span></li>
-          <li><span class="puce">✓</span><span>La publication automatique de vos chantiers sur Instagram, Facebook, TikTok et votre fiche Google Business</span></li>
+          <li><span class="puce">✓</span><span>La gestion automatisée de votre campagne Google Ads par un coach IA — il surveille et ajuste vos annonces pour vous</span></li>
           <li><span class="puce">✓</span><span>Le suivi de chaque prospect, de l'annonce jusqu'au devis final</span></li>
           <li><span class="puce">✓</span><span>L'envoi automatique de SMS et d'email à vos prospects</span></li>
           <li><span class="puce">✓</span><span>Vos devis générés avec signature électronique, directement depuis le téléphone du client</span></li>
@@ -865,8 +838,30 @@ src="https://www.facebook.com/tr?id=1099338643049950&ev=PageView&noscript=1"
       <!-- 09/09/2026 : bloc "Ce qui n'est pas inclus" retiré sur demande de
            Cyrille (10/09/2026) — CTA simplifié en un seul bouton. -->
 
+      <label style="display:flex; align-items:flex-start; gap:8px; font-size:0.82rem; color:#433a54; line-height:1.5; margin-bottom:16px; cursor:pointer;">
+        <input type="checkbox" id="cguEssaiCheckbox" style="margin-top:2px; width:16px; height:16px; flex-shrink:0; accent-color:#7c3aed;">
+        <span>J'accepte les <a href="/cgv.html" target="_blank" style="color:#7c3aed;">conditions générales de vente</a>.</span>
+      </label>
+
+      <!-- Vérification téléphone : ajoutée après les CGV, avant de démarrer
+           l'essai — l'artisan arrive ensuite directement sur son VRAI
+           dashboard (voir script plus bas), pas sur construire-ma-vitrine.html. -->
+      <div id="blocTelephoneEssai">
+        <label for="telephoneEssai" style="display:block; font-size:0.82rem; font-weight:700; color:#211a35; margin-bottom:6px;">Votre numéro de téléphone</label>
+        <input type="tel" id="telephoneEssai" inputmode="numeric" placeholder="Ex : 06 12 34 56 78">
+        <div class="sms-block" id="smsBlock">
+          <p>Vérifiez votre numéro pour confirmer votre demande — un SMS avec un code va vous être envoyé.</p>
+          <button type="button" class="btn-sms" id="btnEnvoyerCode" disabled>Vérifier mon numéro par SMS</button>
+          <div class="sms-code-row" id="smsCodeRow" style="display:none;">
+            <input type="text" id="smsCode" inputmode="numeric" maxlength="6" placeholder="Code reçu">
+            <button type="button" class="btn-sms" id="btnVerifierCode">Valider</button>
+          </div>
+          <div class="sms-status" id="smsStatus"></div>
+        </div>
+      </div>
+
       <div id="essaiErreur" style="color:#c0392b; font-size:0.82rem; margin-bottom:10px; display:none;"></div>
-      <button type="button" id="btnDemarrerEssai" style="width:100%; background:#7c3aed; color:#fff; border:none; border-radius:10px; padding:14px; font-size:0.96rem; font-weight:700; cursor:pointer;">Démarrer mon essai gratuit →</button>
+      <button type="button" id="btnDemarrerEssai" style="width:100%; background:#7c3aed; color:#fff; border:none; border-radius:10px; padding:14px; font-size:0.96rem; font-weight:700; cursor:pointer;" disabled>Démarrer mon essai gratuit →</button>
     </div>
   </div>
   </div><!-- /dash-main -->
@@ -895,24 +890,6 @@ src="https://www.facebook.com/tr?id=1099338643049950&ev=PageView&noscript=1"
     // existe déjà pour ce brouillon — jamais affiché en mode visiteur.
     document.getElementById('lienRetour').href = '/apercu.html?id=' + encodeURIComponent(draftId);
     document.getElementById('lienRetour').style.display = 'inline-flex';
-
-    // 15/09/2026 : compteur de vues démo (visiteurs uniques) affiché dans
-    // mes-artisans.html — voir api/enregistrer-vue-demo.js. Un identifiant
-    // de session est généré une fois par navigateur (sessionStorage) pour
-    // qu'un même visiteur qui recharge la page ne soit pas recompté ; la
-    // table en base a de toute façon une contrainte unique (draft_id,
-    // session_id) en filet de sécurité. Volontairement silencieux en cas
-    // d'échec (jamais bloquant pour l'affichage de la démo).
-    let sessionIdDemo = sessionStorage.getItem('skyeco_demo_session_id');
-    if (!sessionIdDemo) {
-      sessionIdDemo = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2));
-      sessionStorage.setItem('skyeco_demo_session_id', sessionIdDemo);
-    }
-    fetch('/api/enregistrer-vue-demo', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ draftId, sessionId: sessionIdDemo }),
-    }).catch(() => {});
   }
 
   // 13/09/2026 : dans le vrai dashboard, cliquer un onglet cache les autres —
@@ -933,12 +910,88 @@ src="https://www.facebook.com/tr?id=1099338643049950&ev=PageView&noscript=1"
     btn.addEventListener('click', () => activerOngletDemo(btn.dataset.tabDemo));
   });
 
-  // 15/09/2026 : sur demande de Cyrille, plus aucune validation ne bloque
-  // le démarrage de l'essai gratuit — l'artisan peut cliquer "Démarrer mon
-  // essai gratuit" directement, sans numéro de téléphone (bloc téléphone +
-  // vérification SMS retiré de la page) et sans case CGV (retirée elle
-  // aussi le même jour, avec le lien vers /cgv.html).
+  // --- Vérification téléphone avant de démarrer l'essai --------------------
+  let telephoneVerifie = false;
   let telephoneActuel = '';
+  const telEl = document.getElementById('telephoneEssai');
+  const btnEnvoyerCode = document.getElementById('btnEnvoyerCode');
+  const smsCodeRow = document.getElementById('smsCodeRow');
+  const smsCodeInput = document.getElementById('smsCode');
+  const btnVerifierCode = document.getElementById('btnVerifierCode');
+  const smsStatusEl = document.getElementById('smsStatus');
+  const cguCheckbox = document.getElementById('cguEssaiCheckbox');
+  const btnDemarrerEssai = document.getElementById('btnDemarrerEssai');
+
+  function isTelephoneValid(raw) {
+    const digits = raw.replace(/\D/g, '');
+    return /^0\d{9}$/.test(digits);
+  }
+  function majBoutonDemarrerEssai() {
+    btnDemarrerEssai.disabled = !(cguCheckbox.checked && telephoneVerifie);
+  }
+  cguCheckbox.addEventListener('change', majBoutonDemarrerEssai);
+
+  telEl.addEventListener('input', () => {
+    let digits = telEl.value.replace(/\D/g, '').slice(0, 10);
+    telEl.value = digits.replace(/(\d{2})(?=\d)/g, '$1 ').trim();
+    telephoneActuel = telEl.value;
+    telephoneVerifie = false;
+    smsCodeRow.style.display = 'none';
+    smsStatusEl.textContent = '';
+    smsStatusEl.className = 'sms-status';
+    btnEnvoyerCode.style.display = 'inline-block';
+    btnEnvoyerCode.textContent = 'Vérifier mon numéro par SMS';
+    btnEnvoyerCode.disabled = !isTelephoneValid(digits);
+    majBoutonDemarrerEssai();
+  });
+
+  btnEnvoyerCode.addEventListener('click', async () => {
+    btnEnvoyerCode.disabled = true;
+    smsStatusEl.textContent = 'Envoi du code…';
+    smsStatusEl.className = 'sms-status';
+    try {
+      const res = await fetch('/api/verify-send-code', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telephone: telephoneActuel }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Erreur lors de l'envoi.");
+      smsCodeRow.style.display = 'flex';
+      smsStatusEl.textContent = 'Code envoyé par SMS.';
+      smsStatusEl.className = 'sms-status ok';
+    } catch (err) {
+      smsStatusEl.textContent = err.message;
+      smsStatusEl.className = 'sms-status error';
+    } finally {
+      btnEnvoyerCode.disabled = false;
+    }
+  });
+
+  btnVerifierCode.addEventListener('click', async () => {
+    btnVerifierCode.disabled = true;
+    smsStatusEl.textContent = 'Vérification…';
+    smsStatusEl.className = 'sms-status';
+    try {
+      const res = await fetch('/api/verify-check-code', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telephone: telephoneActuel, code: smsCodeInput.value.trim() }),
+      });
+      const data = await res.json();
+      if (!data.success || !data.verified) throw new Error(data.error || 'Code invalide.');
+      telephoneVerifie = true;
+      btnEnvoyerCode.style.display = 'none';
+      smsCodeRow.style.display = 'none';
+      smsStatusEl.textContent = '✓ Numéro vérifié.';
+      smsStatusEl.className = 'sms-status ok';
+    } catch (err) {
+      telephoneVerifie = false;
+      smsStatusEl.textContent = err.message;
+      smsStatusEl.className = 'sms-status error';
+    } finally {
+      btnVerifierCode.disabled = false;
+      majBoutonDemarrerEssai();
+    }
+  });
 
   if (draftId || visiteurMode) {
     document.getElementById('introFunnel').style.display = 'block';
@@ -982,17 +1035,26 @@ src="https://www.facebook.com/tr?id=1099338643049950&ev=PageView&noscript=1"
     document.getElementById('sousTexteBanniere').textContent = 'Données fictives sur 6 mois — voici à quoi ressemblera votre vrai tableau de bord';
     document.getElementById('ctaFunnel').style.display = 'block';
 
-    // Clic sur "Démarrer mon essai gratuit" : plus aucune validation
-    // requise (15/09/2026) — ni CGV cochées ni téléphone vérifié. Plus de
-    // formulaire d'entreprise à cette étape non plus (déplacé au moment où
-    // l'artisan veut approvisionner son budget Ads ou connecter ses réseaux
-    // sociaux, sur construire-ma-vitrine.html) — on démarre l'essai (1
+    // Clic sur "Démarrer mon essai gratuit" : CGV + téléphone vérifié
+    // suffisent. Plus de formulaire d'entreprise à cette étape (déplacé au
+    // moment où l'artisan veut approvisionner son budget Ads ou connecter
+    // ses réseaux sociaux, sur construire-ma-vitrine.html) — on démarre l'essai (1
     // mois, sans engagement, sans carte bancaire) et on l'envoie directement
     // sur son VRAI tableau de bord.
     document.getElementById('btnDemarrerEssai').addEventListener('click', async () => {
       const btn = document.getElementById('btnDemarrerEssai');
       const erreurEl = document.getElementById('essaiErreur');
       erreurEl.style.display = 'none';
+      if (!document.getElementById('cguEssaiCheckbox').checked) {
+        erreurEl.textContent = "Merci d'accepter les conditions générales de vente pour continuer.";
+        erreurEl.style.display = 'block';
+        return;
+      }
+      if (!telephoneVerifie) {
+        erreurEl.textContent = "Merci de vérifier votre numéro de téléphone pour continuer.";
+        erreurEl.style.display = 'block';
+        return;
+      }
 
       let idAUtiliser = draftId;
 
@@ -1046,29 +1108,12 @@ src="https://www.facebook.com/tr?id=1099338643049950&ev=PageView&noscript=1"
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ draftId: idAUtiliser })
           }).catch(() => {});
-          // Conversion Meta Ads (16/09/2026) : événement standard
-          // "CompleteRegistration" au moment RÉEL où l'essai gratuit
-          // démarre avec succès (pas au clic) — c'est cet événement que la
-          // campagne Meta Ads devra utiliser comme objectif d'optimisation
-          // (Conversions), pas juste le trafic vers la page.
-          if (typeof fbq === 'function') {
-            fbq('track', 'CompleteRegistration', { content_name: 'essai_gratuit_skyeco_ads' });
-          }
-          // 15/09/2026 : Décision de Cyrille — l'identifiant/mot de passe
-          // du tableau de bord doit être créé dès le démarrage de l'essai
-          // gratuit, PAS conditionné à la mise en ligne payante. L'artisan
-          // doit pouvoir se reconnecter librement pendant tout son mois
-          // d'essai (via connexion.html) sans être jamais passé par
-          // "Mettre en ligne" ; ce n'est qu'à l'expiration de l'essai que
-          // l'accès se bloque et le renvoie vers choisir-forfait.html (déjà
-          // en place, voir api/verifier-essais-a-programmer.js). On envoie
-          // donc vers acces-dashboard.html (sans "next" — destination par
-          // défaut mon-dashboard.html une fois le mot de passe créé) au
-          // lieu d'aller directement sur le vrai dashboard : cette page
-          // détecte déjà qu'aucun mot de passe n'existe pour ce brouillon
-          // tout neuf et affiche directement l'écran de création (email +
-          // mot de passe), sans étape supplémentaire à construire ici.
-          window.location.href = '/acces-dashboard.html?id=' + encodeURIComponent(idAUtiliser);
+          // Direction le VRAI dashboard, en mode essai — les informations
+          // complètes de l'entreprise (construire-ma-vitrine.html) et le choix d'un
+          // forfait payant ne sont demandés que plus tard, quand l'artisan
+          // veut approvisionner son budget Ads ou connecter ses réseaux
+          // sociaux (voir mon-dashboard.html).
+          window.location.href = '/mon-dashboard.html?id=' + encodeURIComponent(idAUtiliser);
         } else {
           erreurEl.textContent = data.error || "Impossible de démarrer l'essai pour le moment.";
           erreurEl.style.display = 'block';
@@ -1329,6 +1374,5 @@ src="https://www.facebook.com/tr?id=1099338643049950&ev=PageView&noscript=1"
 })();
 </script>
 <!-- SKYECO_COOKIE_BANNER_END -->
-<script src="/tracking-visites.js"></script>
 </body>
 </html>

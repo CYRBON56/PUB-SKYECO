@@ -549,13 +549,15 @@
   // aux nouveaux clients. L'id "3" est conservé côté code (create-checkout-session,
   // simuler-paiement-test, Supabase) pour rester cohérent avec les abonnements
   // déjà en cours sur d'anciens forfaits, qui ne sont pas concernés par ce changement.
-  // Remise 1ère année (31/08) : 39,90€ HT/mois pendant 12 mois
-  // (au lieu de 79,90€), puis retour automatique au tarif normal. Gérée côté
-  // paiement par un coupon Stripe (api/create-checkout-session.js) — ici,
-  // uniquement l'affichage.
+  // 17/09/2026 (soir) : sur demande de Cyrille, tarif fixe de 39,90€ HT/mois,
+  // sans remise temporaire ni retour à un tarif plus élevé après 12 mois —
+  // remplace l'ancienne remise 1ère année (31/08 : 39,90€ pendant 12 mois,
+  // puis 79,90€). Gérée côté paiement par api/create-checkout-session.js
+  // (le coupon Stripe n'est plus appliqué à ce forfait) — ici, uniquement
+  // l'affichage.
   const FORFAITS = [
     {
-      id: 3, nom: 'Skyeco Pro', prix: '79,90', prixPromo: '39,90', dureePromoMois: 12, recommande: false,
+      id: 3, nom: 'Skyeco Pro', prix: '39,90', prixPromo: null, dureePromoMois: null, recommande: false,
       features: [
         'Formulaire vitrine en ligne',
         'Réception SMS + email (vous et vos prospects)',
@@ -613,7 +615,7 @@
           ${f.aVenir.map(t => `<li class="a-venir"><span class="check">—</span><span>${t}</span></li>`).join('')}
         </ul>
         ${dejaEssaye ? `
-          <button class="btn-choisir" data-plan="${f.id}">Profiter de l'offre -50%</button>
+          <button class="btn-choisir" data-plan="${f.id}">${f.prixPromo ? "Profiter de l'offre -50%" : 'Passer au forfait payant'}</button>
           <div class="btn-securise">🔒 Paiement sécurisé via Stripe</div>
         ` : `
           <button class="btn-essai-gratuit" data-plan="${f.id}">Essayer gratuitement 1 mois</button>
@@ -816,6 +818,5 @@
 })();
 </script>
 <!-- SKYECO_COOKIE_BANNER_END -->
-<script src="/tracking-visites.js"></script>
 </body>
 </html>

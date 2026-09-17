@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin — Campagne nationale Skyeco Ads</title>
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#14304A;
+    --navy-light:#1F4468;
+    --orange:#E8622C;
+    --orange-light:#F2895C;
+    --ok:#3E8E5A;
+    --ok-bg:#E7F3EB;
+    --concrete:#5B6268;
+    --concrete-bg:#EEF0F1;
+    --amber:#B4790A;
+    --amber-bg:#FBF1DE;
+    --ink:#1B242C;
+    --ink-muted:#5B6572;
+    --surface:#FFFFFF;
+    --surface-alt:#F5F7F9;
+    --border:#DEE3E7;
+    --radius:12px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--surface-alt);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{
+    font-family:'Big Shoulders Display', sans-serif;
+    letter-spacing:0.01em;
+    margin:0;
+  }
+  code, .mono{ font-family:'IBM Plex Mono', monospace; }
+
+  /* ---------- Gate mot de passe ---------- */
+  #gate{
+    position:fixed; inset:0; background:var(--navy);
+    display:flex; align-items:center; justify-content:center; z-index:50;
+  }
+  #gate .carte{
+    background:var(--surface); border-radius:var(--radius); padding:36px 32px;
+    width:min(360px, 90vw); box-shadow:0 24px 60px rgba(0,0,0,0.35);
+  }
+  #gate h1{ font-size:22px; color:var(--navy); margin-bottom:6px; text-transform:uppercase;}
+  #gate p{ font-size:13px; color:var(--ink-muted); margin:0 0 20px; }
+  #gate input{
+    width:100%; padding:12px 14px; border:1px solid var(--border); border-radius:8px;
+    font-size:15px; margin-bottom:12px; font-family:inherit;
+  }
+  #gate button{
+    width:100%; padding:12px 14px; border:none; border-radius:8px;
+    background:var(--orange); color:#fff; font-weight:600; font-size:15px; cursor:pointer;
+  }
+  #gate button:hover{ background:var(--orange-light); }
+  #gate .erreur{ color:#B3261E; font-size:13px; margin-top:10px; display:none; }
+
+  /* ---------- Layout général ---------- */
+  #app{ display:none; max-width:1080px; margin:0 auto; padding:28px 20px 80px; }
+  header.entete{
+    background:var(--navy); color:#fff; border-radius:var(--radius);
+    padding:22px 26px; margin-bottom:22px;
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px;
+  }
+  header.entete h1{ font-size:26px; text-transform:uppercase; }
+  header.entete .sous-titre{ font-size:13px; color:#B9C8D6; margin-top:4px; font-family:'IBM Plex Sans'; }
+  header.entete .campagne-id{ font-size:12px; color:#8FA7BE; }
+
+  section.bloc{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:22px 24px; margin-bottom:18px;
+  }
+  section.bloc h2{
+    font-size:19px; color:var(--navy); text-transform:uppercase; margin-bottom:14px;
+    display:flex; align-items:center; gap:10px; justify-content:space-between; flex-wrap:wrap;
+  }
+  .desc{ font-size:13px; color:var(--ink-muted); margin:-6px 0 14px; line-height:1.5; }
+
+  /* ---------- Badges de statut ---------- */
+  .badge{
+    display:inline-flex; align-items:center; gap:6px; padding:4px 11px; border-radius:999px;
+    font-size:12px; font-weight:600; white-space:nowrap;
+  }
+  .badge .point{ width:7px; height:7px; border-radius:50%; }
+  .badge.actif{ background:var(--ok-bg); color:var(--ok); }
+  .badge.actif .point{ background:var(--ok); }
+  .badge.pause{ background:var(--concrete-bg); color:var(--concrete); }
+  .badge.pause .point{ background:var(--concrete); }
+  .badge.inconnu{ background:var(--amber-bg); color:var(--amber); }
+  .badge.inconnu .point{ background:var(--amber); }
+
+  /* ---------- Interrupteurs ---------- */
+  .ligne-toggle{ display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; }
+  .switch{ position:relative; display:inline-block; width:46px; height:26px; flex-shrink:0; }
+  .switch input{ opacity:0; width:0; height:0; }
+  .glissiere{
+    position:absolute; cursor:pointer; inset:0; background:var(--concrete);
+    border-radius:999px; transition:.15s;
+  }
+  .glissiere:before{
+    content:""; position:absolute; height:20px; width:20px; left:3px; bottom:3px;
+    background:#fff; border-radius:50%; transition:.15s;
+  }
+  input:checked + .glissiere{ background:var(--ok); }
+  input:checked + .glissiere:before{ transform:translateX(20px); }
+  input:disabled + .glissiere{ opacity:0.5; cursor:not-allowed; }
+
+  /* ---------- Budget ---------- */
+  .budget-ligne{ display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap; }
+  .budget-actuel{ font-family:'Big Shoulders Display'; font-size:36px; color:var(--navy); line-height:1; }
+  .budget-actuel span{ font-size:15px; color:var(--ink-muted); font-family:'IBM Plex Sans'; }
+  #form-budget{ display:flex; gap:8px; align-items:center; margin-top:14px; flex-wrap:wrap; }
+  input[type="number"], input[type="text"], select{
+    padding:9px 11px; border:1px solid var(--border); border-radius:8px; font-size:14px; font-family:inherit;
+  }
+  .btn{
+    padding:9px 16px; border-radius:8px; border:none; font-weight:600; font-size:14px;
+    cursor:pointer; font-family:inherit;
+  }
+  .btn-primaire{ background:var(--orange); color:#fff; }
+  .btn-primaire:hover{ background:var(--orange-light); }
+  .btn-secondaire{ background:var(--surface-alt); color:var(--navy); border:1px solid var(--border); }
+  .btn-secondaire:hover{ background:var(--concrete-bg); }
+  .btn-danger-toggle{ background:var(--navy); color:#fff; }
+  .btn:disabled{ opacity:0.55; cursor:not-allowed; }
+
+  /* ---------- Groupes d'annonces ---------- */
+  .groupe{ border:1px solid var(--border); border-radius:10px; padding:16px 18px; margin-bottom:14px; }
+  .groupe:last-child{ margin-bottom:0; }
+  .groupe-entete{ display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:10px;}
+  .groupe-entete h3{ font-size:17px; color:var(--ink); text-transform:none; }
+  .puces{ display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; }
+  .puce{ background:var(--surface-alt); border:1px solid var(--border); border-radius:999px; padding:3px 10px; font-size:12px; color:var(--ink-muted); }
+  .annonce-actuelle{ font-size:12.5px; color:var(--ink-muted); margin-top:8px; word-break:break-all; }
+  .annonce-actuelle .mono{ color:var(--navy); }
+  details.anciennes{ margin-top:8px; }
+  details.anciennes summary{ font-size:12px; color:var(--ink-muted); cursor:pointer; }
+  details.anciennes .mono{ font-size:11.5px; color:var(--concrete); display:block; margin-top:4px; }
+
+  table{ width:100%; border-collapse:collapse; margin-top:10px; font-size:13px; }
+  th, td{ text-align:left; padding:7px 9px; border-bottom:1px solid var(--border); }
+  th{ color:var(--ink-muted); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:0.03em; }
+  td.num{ font-family:'IBM Plex Mono'; text-align:right; }
+  th.num{ text-align:right; }
+  .vide{ font-size:12.5px; color:var(--ink-muted); font-style:italic; padding:10px 0; }
+
+  /* ---------- Graphique heures ---------- */
+  .chart-heures{ display:flex; align-items:flex-end; gap:3px; height:110px; margin-top:6px; }
+  .barre-heure{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; }
+  .barre-heure .rect{
+    width:100%; max-width:16px; background:var(--navy-light); border-radius:4px 4px 0 0; min-height:2px;
+  }
+  .barre-heure .label{ font-size:9px; color:var(--ink-muted); margin-top:4px; font-family:'IBM Plex Mono'; }
+
+  /* ---------- Exclure un terme ---------- */
+  #form-exclure{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:12px; }
+  #form-exclure input[type="text"]{ flex:1; min-width:180px; }
+
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--navy); color:#fff; padding:12px 20px; border-radius:8px; font-size:13.5px;
+    opacity:0; pointer-events:none; transition:.2s; z-index:60; max-width:90vw; text-align:center;
+  }
+  .toast.erreur{ background:#7A2A22; }
+  .toast.visible{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  .avertissement{
+    background:var(--amber-bg); color:#7A5300; border:1px solid #EFD9A0; border-radius:8px;
+    padding:10px 14px; font-size:12.5px; margin-bottom:14px; line-height:1.5;
+  }
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="carte">
+    <h1>Accès admin</h1>
+    <p>Dashboard réservé — campagne nationale Skyeco Ads.</p>
+    <input type="password" id="mdp" placeholder="Mot de passe interne" autocomplete="current-password" />
+    <button id="btn-connexion">Entrer</button>
+    <div class="erreur" id="gate-erreur">Mot de passe incorrect.</div>
+  </div>
+</div>
+
+<div id="app">
+
+  <header class="entete">
+    <div>
+      <h1>Campagne nationale — Skyeco Ads</h1>
+      <div class="sous-titre">Recrutement d'artisans BTP · Google Ads · compte ECOSKY by RMS (784-990-3984)</div>
+      <div class="campagne-id mono">Campagne id : 24267076996</div>
+    </div>
+    <span class="badge inconnu" id="badge-campagne"><span class="point"></span> —</span>
+  </header>
+
+  <section class="bloc" id="bloc-avertissement" style="display:none;">
+    <div class="avertissement" id="texte-avertissement"></div>
+  </section>
+
+  <section class="bloc">
+    <h2>Diffusion &amp; budget</h2>
+    <div class="desc">
+      Interrupteur maître : active ou met en pause la campagne ET ses 3 groupes ET leurs 3 annonces en cours en une seule fois
+      (les 3 niveaux doivent toujours être alignés pour que la diffusion soit réellement visible).
+    </div>
+    <div class="ligne-toggle" style="margin-bottom:18px;">
+      <div>
+        <strong>Diffusion de la campagne</strong>
+        <div class="desc" style="margin:2px 0 0;">Active/pause la campagne entière (3 groupes + 3 annonces).</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="toggle-campagne" />
+        <span class="glissiere"></span>
+      </label>
+    </div>
+
+    <div class="budget-ligne">
+      <div class="budget-actuel" id="budget-actuel">— <span>€/jour</span></div>
+    </div>
+    <form id="form-budget">
+      <input type="number" id="nouveau-budget" min="1" step="0.5" placeholder="Nouveau budget (€/jour)" style="width:200px;" />
+      <button type="submit" class="btn btn-primaire">Mettre à jour le budget</button>
+    </form>
+  </section>
+
+  <section class="bloc">
+    <h2>Les 3 groupes d'annonces</h2>
+    <div class="desc">
+      Chaque groupe peut être piloté indépendamment. L'annonce affichée est celle actuellement en cours
+      (destination retenue le 17/09 : <span class="mono">skyeco-pro-formulaire-creation.html</span>) — les annonces
+      des essais précédents restent visibles en pause dans l'historique repliable, à titre de traçabilité.
+    </div>
+    <div id="liste-groupes"></div>
+  </section>
+
+  <section class="bloc">
+    <h2>Clics par heure de la journée</h2>
+    <div class="desc" id="desc-heures">Répartition des clics sur 24h, toutes annonces confondues (90 derniers jours).</div>
+    <div class="chart-heures" id="chart-heures"></div>
+  </section>
+
+  <section class="bloc">
+    <h2>Termes de recherche réels</h2>
+    <div class="desc" id="desc-termes">
+      Les recherches qui ont réellement déclenché une annonce (distinct des mots-clés ci-dessus, qui sont en requête large/expression).
+      Un terme hors sujet peut être exclu directement au niveau de la campagne.
+    </div>
+    <div id="tableau-termes"></div>
+    <form id="form-exclure">
+      <input type="text" id="terme-a-exclure" placeholder="Terme à exclure (ex: emploi artisan gratuit)" />
+      <select id="niveau-exclusion">
+        <option value="campagne">Toute la campagne</option>
+      </select>
+      <button type="submit" class="btn btn-secondaire">Exclure ce terme</button>
+    </form>
+  </section>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  'use strict';
+
+  var ENDPOINT = '/api/admin-campagne-nationale.js';
+  var CLE_STOCKAGE = 'skyeco_admin_national_mdp';
+  var CLE_ETAT_LOCAL = 'skyeco_admin_national_etat_local';
+
+  var mdpActuel = null;
+  var dernierEtat = null; // dernière réponse "details" reçue
+
+  // --- État local optimiste (statut de diffusion) --------------------
+  // Windsor.ai (Google Ads) ne remonte le statut ENABLED/PAUSED réel de la
+  // campagne/des groupes/des annonces qu'une fois qu'ils ont généré au
+  // moins une statistique — avant la toute première activation, ce champ
+  // est simplement absent de tous les rapports (comportement confirmé en
+  // direct, documenté dans _lib/campagne-nationale.js). En attendant, ce
+  // dashboard retient donc dans le navigateur la dernière action réussie
+  // depuis CET écran, pour afficher un badge cohérent plutôt que "inconnu"
+  // à chaque rechargement. Dès que Google Ads renverra un vrai statut
+  // (après activation réelle), il prend le dessus sur cette valeur locale.
+  function lireEtatLocal(){
+    try { return JSON.parse(localStorage.getItem(CLE_ETAT_LOCAL) || '{}'); } catch(e){ return {}; }
+  }
+  function ecrireEtatLocal(patch){
+    var etat = lireEtatLocal();
+    Object.assign(etat, patch);
+    try { localStorage.setItem(CLE_ETAT_LOCAL, JSON.stringify(etat)); } catch(e){}
+  }
+
+  function toast(msg, estErreur){
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast visible' + (estErreur ? ' erreur' : '');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(function(){ t.className = 'toast'; }, 4200);
+  }
+
+  function appeler(action, params){
+    var body = Object.assign({ motDePasseInterne: mdpActuel, action: action }, params || {});
+    return fetch(ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }).then(function(r){ return r.json().then(function(d){ return { ok: r.ok, data: d }; }); });
+  }
+
+  // ---------------- Connexion ----------------
+  var elGate = document.getElementById('gate');
+  var elApp = document.getElementById('app');
+  var elMdp = document.getElementById('mdp');
+  var elGateErreur = document.getElementById('gate-erreur');
+
+  function tenterConnexion(mdp){
+    mdpActuel = mdp;
+    appeler('details').then(function(res){
+      if (res.ok && res.data && res.data.success) {
+        try { sessionStorage.setItem(CLE_STOCKAGE, mdp); } catch(e){}
+        elGate.style.display = 'none';
+        elApp.style.display = 'block';
+        appliquerDetails(res.data);
+      } else {
+        mdpActuel = null;
+        elGateErreur.style.display = 'block';
+      }
+    }).catch(function(){
+      mdpActuel = null;
+      elGateErreur.style.display = 'block';
+    });
+  }
+
+  document.getElementById('btn-connexion').addEventListener('click', function(){
+    elGateErreur.style.display = 'none';
+    var v = elMdp.value.trim();
+    if (v) tenterConnexion(v);
+  });
+  elMdp.addEventListener('keydown', function(e){ if (e.key === 'Enter') document.getElementById('btn-connexion').click(); });
+
+  (function tenterSessionExistante(){
+    var v;
+    try { v = sessionStorage.getItem(CLE_STOCKAGE); } catch(e){ v = null; }
+    if (v) tenterConnexion(v);
+  })();
+
+  // ---------------- Rendu ----------------
+  function badgeStatut(actif){
+    if (actif === true) return '<span class="badge actif"><span class="point"></span> Actif</span>';
+    if (actif === false) return '<span class="badge pause"><span class="point"></span> En pause</span>';
+    return '<span class="badge inconnu"><span class="point"></span> Statut inconnu</span>';
+  }
+  // Applique un statut sur un badge déjà présent dans le DOM (id fixe) sans
+  // jamais reconstruire son ouverture de balise à la main — l'ancienne
+  // version faisait un .replace('badge ', ...) sur le HTML de badgeStatut(),
+  // ce qui cassait l'attribut class (ex: class="badge  id="x" inconnu",
+  // invalide) et faisait perdre le fond coloré de la pastille.
+  function appliquerBadge(el, actif){
+    el.className = 'badge ' + (actif === true ? 'actif' : actif === false ? 'pause' : 'inconnu');
+    el.innerHTML = '<span class="point"></span> ' + (actif === true ? 'Actif' : actif === false ? 'En pause' : 'Statut inconnu');
+  }
+
+  function appliquerDetails(data){
+    dernierEtat = data;
+    var etatLocal = lireEtatLocal();
+
+    // Bandeau d'avertissement si Windsor.ai n'a encore aucune donnée
+    // (cas normal avant la toute première activation réelle).
+    var live = data.lectureLive || {};
+    var elAvert = document.getElementById('bloc-avertissement');
+    var elAvertTexte = document.getElementById('texte-avertissement');
+    if (!live.motsCles && !live.termesRecherche) {
+      elAvert.style.display = 'block';
+      elAvertTexte.textContent = "Aucune donnée de performance remontée par Windsor.ai pour l'instant — normal tant que la campagne n'a jamais servi une impression. Le statut affiché (Actif/En pause) reflète la dernière action faite depuis ce dashboard ; vérifiez dans l'interface Google Ads avant toute activation définitive.";
+    } else {
+      elAvert.style.display = 'none';
+    }
+
+    // Badge + interrupteur campagne
+    var actifCampagne = etatLocal.campagne;
+    appliquerBadge(document.getElementById('badge-campagne'), actifCampagne);
+    var toggleCampagne = document.getElementById('toggle-campagne');
+    toggleCampagne.checked = !!actifCampagne;
+
+    // Budget
+    var budgetEl = document.getElementById('budget-actuel');
+    if (data.budget && data.budget.budget_amount != null) {
+      budgetEl.innerHTML = Number(data.budget.budget_amount).toFixed(2) + ' <span>€/jour</span>';
+    } else {
+      budgetEl.innerHTML = (data.campagne.budgetQuotidienEurosCreation || '—') + ' <span>€/jour (valeur de création — pas encore confirmée par Google Ads)</span>';
+    }
+
+    // Groupes
+    var conteneur = document.getElementById('liste-groupes');
+    conteneur.innerHTML = '';
+    data.groupes.forEach(function(g){
+      var actifGroupe = etatLocal['groupe_' + g.id];
+      var div = document.createElement('div');
+      div.className = 'groupe';
+
+      var puces = g.motsCles.map(function(m){ return '<span class="puce">' + escapeHtml(m) + '</span>'; }).join('');
+
+      var tableauPerf = '';
+      if (g.performanceMotsCles && g.performanceMotsCles.length) {
+        tableauPerf = '<table><thead><tr><th>Mot-clé</th><th>Correspondance</th><th class="num">Clics</th><th class="num">Coût</th></tr></thead><tbody>' +
+          g.performanceMotsCles.map(function(m){
+            return '<tr><td>' + escapeHtml(m.texte) + '</td><td>' + escapeHtml(m.matchType) + '</td><td class="num">' + m.clics + '</td><td class="num">' + m.coutEuros.toFixed(2) + ' €</td></tr>';
+          }).join('') + '</tbody></table>';
+      } else {
+        tableauPerf = '<div class="vide">Pas encore de clics enregistrés sur ce groupe.</div>';
+      }
+
+      var anciennes = (g.anciennesAnnonces || []).map(function(a){
+        return '<span class="mono">annonce ' + a.adId + ' → ' + escapeHtml(a.urlFinale) + '</span>';
+      }).join('');
+
+      div.innerHTML =
+        '<div class="groupe-entete">' +
+          '<h3>' + escapeHtml(g.nom) + '</h3>' +
+          '<div style="display:flex; align-items:center; gap:12px;">' +
+            badgeStatut(actifGroupe) +
+            '<label class="switch"><input type="checkbox" class="toggle-groupe" data-groupe="' + g.id + '" ' + (actifGroupe ? 'checked' : '') + '><span class="glissiere"></span></label>' +
+          '</div>' +
+        '</div>' +
+        '<div class="puces">' + puces + '</div>' +
+        '<div class="annonce-actuelle">Annonce en cours → <span class="mono">' + escapeHtml(g.adActuel.urlFinale) + '</span></div>' +
+        (anciennes ? '<details class="anciennes"><summary>Annonces des essais précédents (en pause, historique)</summary>' + anciennes + '</details>' : '') +
+        tableauPerf;
+
+      conteneur.appendChild(div);
+    });
+
+    // Graphique clics par heure
+    var chart = document.getElementById('chart-heures');
+    chart.innerHTML = '';
+    var maxClic = Math.max.apply(null, data.clicsParHeure.concat([1]));
+    data.clicsParHeure.forEach(function(c, h){
+      var col = document.createElement('div');
+      col.className = 'barre-heure';
+      var hauteur = Math.max(2, Math.round((c / maxClic) * 88));
+      col.innerHTML = '<div class="rect" style="height:' + hauteur + 'px" title="' + h + 'h : ' + c + ' clic(s)"></div><div class="label">' + h + '</div>';
+      chart.appendChild(col);
+    });
+    if (data.clicsParHeure.every(function(c){ return c === 0; })) {
+      document.getElementById('desc-heures').textContent = "Pas encore de clics enregistrés — le graphique restera à zéro tant que la campagne n'a pas commencé à diffuser.";
+    }
+
+    // Termes de recherche
+    var elTermes = document.getElementById('tableau-termes');
+    if (data.termesRecherche && data.termesRecherche.length) {
+      elTermes.innerHTML = '<table><thead><tr><th>Terme recherché</th><th>Statut</th><th class="num">Clics</th><th class="num">Coût</th><th></th></tr></thead><tbody>' +
+        data.termesRecherche.map(function(t){
+          return '<tr><td>' + escapeHtml(t.texte) + '</td><td>' + escapeHtml(t.statut) + '</td><td class="num">' + t.clics + '</td><td class="num">' + t.coutEuros.toFixed(2) + ' €</td>' +
+            '<td><button class="btn btn-secondaire btn-exclure-rapide" data-terme="' + escapeAttr(t.texte) + '" style="padding:4px 10px; font-size:12px;">Exclure</button></td></tr>';
+        }).join('') + '</tbody></table>';
+    } else {
+      elTermes.innerHTML = '<div class="vide">Pas encore de terme de recherche enregistré.</div>';
+    }
+
+    // Options du sélecteur d'exclusion (campagne + chaque groupe)
+    var select = document.getElementById('niveau-exclusion');
+    var valeurCourante = select.value;
+    select.innerHTML = '<option value="campagne">Toute la campagne</option>' +
+      data.groupes.map(function(g){ return '<option value="groupe:' + g.id + '">Groupe : ' + escapeHtml(g.nom) + '</option>'; }).join('');
+    if ([].slice.call(select.options).some(function(o){ return o.value === valeurCourante; })) select.value = valeurCourante;
+
+    attacherEvenementsDynamiques();
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
+  function escapeAttr(s){ return escapeHtml(s).replace(/"/g, '&quot;'); }
+
+  function attacherEvenementsDynamiques(){
+    document.querySelectorAll('.toggle-groupe').forEach(function(input){
+      input.addEventListener('change', function(){
+        var groupeId = input.dataset.groupe;
+        var activer = input.checked;
+        var groupe = dernierEtat.groupes.find(function(g){ return g.id === groupeId; });
+        if (!confirm((activer ? 'Activer' : 'Mettre en pause') + ' le groupe "' + groupe.nom + '" (et son annonce en cours) ?')) {
+          input.checked = !activer;
+          return;
+        }
+        input.disabled = true;
+        appeler('toggle_groupe', { adGroupId: groupeId, activer: activer }).then(function(res){
+          input.disabled = false;
+          if (res.data && res.data.success) {
+            var patch = {}; patch['groupe_' + groupeId] = activer;
+            ecrireEtatLocal(patch);
+            toast(res.data.message);
+            appliquerDetails(dernierEtat);
+          } else {
+            input.checked = !activer;
+            toast((res.data && res.data.error) || 'Échec de la mise à jour.', true);
+          }
+        });
+      });
+    });
+
+    document.querySelectorAll('.btn-exclure-rapide').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var terme = btn.dataset.terme;
+        if (!confirm('Exclure "' + terme + '" au niveau de toute la campagne ?')) return;
+        btn.disabled = true;
+        appeler('exclure_terme', { texte: terme, niveau: 'campagne' }).then(function(res){
+          btn.disabled = false;
+          if (res.data && res.data.success) { toast(res.data.message); rafraichir(); }
+          else toast((res.data && res.data.error) || 'Échec.', true);
+        });
+      });
+    });
+  }
+
+  document.getElementById('toggle-campagne').addEventListener('change', function(){
+    var input = this;
+    var activer = input.checked;
+    if (!confirm((activer ? 'ACTIVER' : 'METTRE EN PAUSE') + ' toute la campagne nationale (3 groupes + 3 annonces) ?')) {
+      input.checked = !activer;
+      return;
+    }
+    input.disabled = true;
+    appeler('toggle_campagne', { activer: activer }).then(function(res){
+      input.disabled = false;
+      if (res.data && res.data.success) {
+        ecrireEtatLocal({ campagne: activer });
+        toast(res.data.message);
+        rafraichir();
+      } else {
+        input.checked = !activer;
+        toast((res.data && res.data.error) || 'Échec de la mise à jour.', true);
+      }
+    });
+  });
+
+  document.getElementById('form-budget').addEventListener('submit', function(e){
+    e.preventDefault();
+    var val = document.getElementById('nouveau-budget').value;
+    if (!val || Number(val) <= 0) return;
+    if (!confirm('Régler le budget quotidien à ' + Number(val).toFixed(2) + ' € ?')) return;
+    var btn = e.target.querySelector('button');
+    btn.disabled = true;
+    appeler('definir_budget', { montantEuros: Number(val) }).then(function(res){
+      btn.disabled = false;
+      if (res.data && res.data.success) { toast(res.data.message); document.getElementById('nouveau-budget').value=''; rafraichir(); }
+      else toast((res.data && res.data.error) || 'Échec.', true);
+    });
+  });
+
+  document.getElementById('form-exclure').addEventListener('submit', function(e){
+    e.preventDefault();
+    var texte = document.getElementById('terme-a-exclure').value.trim();
+    if (!texte) return;
+    var niveauVal = document.getElementById('niveau-exclusion').value;
+    var params = { texte: texte };
+    if (niveauVal.indexOf('groupe:') === 0) {
+      params.niveau = 'groupe';
+      params.adGroupId = niveauVal.split(':')[1];
+    } else {
+      params.niveau = 'campagne';
+    }
+    var btn = e.target.querySelector('button');
+    btn.disabled = true;
+    appeler('exclure_terme', params).then(function(res){
+      btn.disabled = false;
+      if (res.data && res.data.success) { toast(res.data.message); document.getElementById('terme-a-exclure').value=''; rafraichir(); }
+      else toast((res.data && res.data.error) || 'Échec.', true);
+    });
+  });
+
+  function rafraichir(){
+    appeler('details').then(function(res){
+      if (res.data && res.data.success) appliquerDetails(res.data);
+    });
+  }
+})();
+</script>
+</body>
+</html>

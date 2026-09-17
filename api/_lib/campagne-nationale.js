@@ -136,11 +136,22 @@ export async function executerAction(action, params) {
 // une lecture vide ou en échec ne doit jamais empêcher le reste du
 // dashboard de s'afficher (voir le commentaire en tête de fichier sur le
 // cas normal "campagne jamais servie").
+//
+// IMPORTANT (bug corrigé le 17/09/2026 soir) : cette fonction n'envoyait
+// jusqu'ici AUCUN paramètre de compte à Windsor.ai, en comptant sur le fait
+// que le filtre campaign_id suffirait à isoler la bonne campagne. Vérifié en
+// direct : pour certains rapports (notamment le contenu réel des annonces —
+// titres/descriptions), Windsor.ai renvoie un tableau VIDE sans le paramètre
+// `accounts` explicite, même quand la campagne a des données, alors que le
+// même appel avec `accounts=784-990-3984` renvoie bien les lignes attendues.
+// Le paramètre est donc désormais toujours envoyé, ce qui n'a pas changé le
+// résultat des rapports qui fonctionnaient déjà (budget, mots-clés) mais a
+// débloqué celui du contenu des annonces.
 export async function interrogerWindsor(fields, datePreset = 'last_90d') {
   try {
     const filtre = encodeURIComponent(JSON.stringify([['campaign_id', 'eq', CAMPAGNE.id]]));
     const champs = Array.isArray(fields) ? fields.join(',') : fields;
-    const url = `${WINDSOR_BASE}?api_key=${process.env.WINDSOR_API_KEY}&fields=${champs}&filter=${filtre}&date_preset=${datePreset}`;
+    const url = `${WINDSOR_BASE}?api_key=${process.env.WINDSOR_API_KEY}&accounts=${encodeURIComponent(GOOGLE_ADS_ACCOUNT_ID)}&fields=${champs}&filter=${filtre}&date_preset=${datePreset}`;
     const resp = await fetch(url);
     const data = await resp.json();
     if (!resp.ok) return { ok: false, lignes: [], erreur: data?.message || JSON.stringify(data) };

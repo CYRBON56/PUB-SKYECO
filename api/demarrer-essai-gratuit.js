@@ -20,7 +20,32 @@
 //   essai_rappel_sms_envoye boolean default false
 //   forfait_choisi        int
 //
-// Variables d'environnement requises : SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+// Variables d'environnement requises : SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
+//   DASHBOARD_SESSION_SECRET
+//
+// 17/09/2026 (soir) : depuis que mon-dashboard-demo.html ne demande plus
+// aucune coordonnée (ni téléphone, ni email) avant de démarrer l'essai, un
+// artisan qui arrivait directement sur mon-dashboard.html juste après ce
+// clic se faisait immédiatement rediriger vers acces-dashboard.html, qui
+// LUI DEMANDAIT UN EMAIL pour créer un compte — exactement la barrière que
+// Cyrille voulait supprimer, simplement déplacée d'un écran. On renvoie
+// donc ici un jeton de session signé (même format que
+// dashboard-admin-token.js : rôle "admin", scopé à ce seul draftId — pas
+// besoin d'email ni de mot de passe), que mon-dashboard-demo.html stocke
+// avant de rediriger. Longue durée (90 jours, largement au-delà des 30
+// jours d'essai) pour que l'artisan puisse revenir sur son tableau de bord
+// depuis le même navigateur sans qu'on lui redemande quoi que ce soit tant
+// qu'il n'a pas lui-même choisi de "Mettre en ligne" (où un vrai compte —
+// email + mot de passe — est alors créé, voir dashboard-set-password.js).
+import crypto from 'crypto';
+
+function signerTokenAutoConnexion(draftId) {
+  const dureeSecondes = 60 * 60 * 24 * 90; // 90 jours
+  const exp = Math.floor(Date.now() / 1000) + dureeSecondes;
+  const payload = `${draftId}.admin.${exp}`;
+  const sig = crypto.createHmac('sha256', process.env.DASHBOARD_SESSION_SECRET).update(payload).digest('hex');
+  return Buffer.from(`${payload}.${sig}`).toString('base64url');
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -50,7 +75,7 @@ export default async function handler(req, res) {
       return res.status(404).json({ success: false, error: 'Brouillon introuvable' });
     }
     if (draft.essai_gratuit_fin) {
-      return res.status(200).json({ success: true, essaiFin: draft.essai_gratuit_fin, dejaDemarre: true });
+      return res.status(200).json({ success: true, essaiFin: draft.essai_gratuit_fin, dejaDemarre: true, token: signerTokenAutoConnexion(draftId) });
     }
 
     const maintenant = new Date();
@@ -81,7 +106,7 @@ export default async function handler(req, res) {
       return res.status(404).json({ success: false, error: 'Brouillon introuvable' });
     }
 
-    return res.status(200).json({ success: true, essaiFin: finEssai.toISOString() });
+    return res.status(200).json({ success: true, essaiFin: finEssai.toISOString(), token: signerTokenAutoConnexion(draftId) });
   } catch (err) {
     console.error('Erreur demarrer-essai-gratuit :', err);
     return res.status(500).json({ success: false, error: err.message });

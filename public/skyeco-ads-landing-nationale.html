@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skyeco Ads — Google Ads, prospects et devis en ligne pour artisans du BTP</title>
+<meta name="description" content="Skyeco Ads pilote vos Google Ads, capte vos prospects et envoie vos devis avec signature électronique. Essai gratuit 30 jours, sans engagement, sans carte bancaire.">
+<link rel="icon" href="/skyeco-icon-ads.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!--
+  Suivi de conversion Google Ads — À COMPLÉTER par Cyrille avant la mise en ligne des annonces.
+  1) Dans Google Ads : Objectifs > Conversions > Nouvelle action de conversion > Site web,
+     nommée par ex. "Essai gratuit démarré (Skyeco Ads)".
+  2) Récupérer l'ID (AW-XXXXXXXXXX) et le libellé de conversion (XXXXXXXXXXXXX).
+  3) Coller l'ID ci-dessous à la place de AW-XXXXXXXXXX (site tag global — active le remarketing
+     et le suivi de base sur CETTE page).
+  4) L'événement de conversion réel ("essai démarré") doit être posé sur mon-dashboard-demo.html,
+     au moment où /api/demarrer-essai-gratuit répond success:true — pas ici, et pas au clic sur
+     un bouton — exactement comme pour le pixel Meta (CompleteRegistration). Voir le brief
+     "Google Ads — campagne nationale Skyeco Pro" pour le détail.
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-XXXXXXXXXX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'AW-XXXXXXXXXX');
+</script>
+-->
+
+<style>
+  :root{
+    --navy:#14304A; --blue:#2C5F8A; --blue-light:#6E97B8;
+    --paper:#F4F7F9; --paper-line:#DCE4E9; --orange:#E8622C; --orange-dark:#C74F20;
+    --concrete:#5B6268; --white:#FFFFFF; --ok:#3E8E5A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'IBM Plex Sans',sans-serif; background:var(--paper); color:var(--navy);
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  a{ color:inherit; }
+  :focus-visible{outline:3px solid var(--orange); outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){ *{transition-duration:.001ms !important; animation-duration:.001ms !important;} }
+
+  .split-layout{ display:flex; min-height:100vh; position:relative; }
+  .shared-carousel-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 1.2s ease-in-out; z-index:0; }
+  .shared-carousel-img.active{ opacity:1; }
+  .shared-carousel-overlay{ position:absolute; inset:0; background:linear-gradient(rgba(20,48,74,0.35), rgba(20,48,74,0.42)); z-index:1; }
+
+  .page-logo{
+    position:fixed; top:20px; left:20px; z-index:200;
+    display:flex; align-items:center; gap:8px;
+    background:var(--paper,#F4F7F9); border-radius:12px; padding:6px 14px 6px 6px;
+    box-shadow:0 3px 14px rgba(0,0,0,0.28);
+  }
+  .page-logo img{ height:30px; width:30px; display:block; border-radius:7px; }
+  .page-logo-text{ font-family:'Big Shoulders Display',Arial,sans-serif; font-weight:800; font-size:16px; color:var(--navy,#14304A); letter-spacing:0.3px; }
+  .page-logo-text .orange-accent{ color:var(--orange,#E8622C); }
+  .page-logo-text .page-logo-pro{ font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:10.5px; letter-spacing:1px; color:var(--concrete,#5B6268); vertical-align:1px; }
+
+  .fixed-actions-topright{
+    position:fixed; top:20px; right:20px; z-index:200;
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end;
+    max-width:calc(100vw - 40px);
+  }
+  .btn-etre-rappele-fixe {
+    display:flex; align-items:center; gap:6px;
+    background:var(--orange,#E8622C); color:#fff; text-decoration:none;
+    border-radius:999px; padding:10px 18px; font-size:13px; font-weight:700;
+    box-shadow:0 3px 14px rgba(0,0,0,0.28); white-space:nowrap;
+  }
+  .btn-etre-rappele-fixe:hover{ filter:brightness(1.05); }
+  @media (max-width:600px){ .btn-etre-rappele-fixe{ padding:9px 14px; font-size:12px; } }
+  @media(max-width:768px){
+    .page-logo{ top:12px; left:12px; padding:5px 10px 5px 5px; }
+    .page-logo img{ height:24px; width:24px; }
+    .page-logo-text{ font-size:13px; }
+    .fixed-actions-topright{ top:12px; right:12px; }
+  }
+
+  .video-panel{
+    flex:1 1 50%; position:relative; display:flex; flex-direction:column;
+    align-items:flex-start; justify-content:flex-start; padding:32px 32px 32px 12px; overflow:hidden;
+    z-index:2;
+  }
+  .video-panel::before{
+    content:''; position:absolute; inset:0;
+    background-image: repeating-linear-gradient(0deg, rgba(110,151,184,0.06) 0px, transparent 1px, transparent 32px),
+                       repeating-linear-gradient(90deg, rgba(110,151,184,0.06) 0px, transparent 1px, transparent 32px);
+    pointer-events:none;
+  }
+  .accroche-content{
+    position:relative; z-index:2; max-width:520px; margin-top:64px; text-align:left; padding:24px 20px;
+    background:rgba(20,48,74,0.72); border-radius:16px;
+    backdrop-filter:blur(2px);
+  }
+  .accroche-title{
+    font-family:'Big Shoulders Display',Arial,sans-serif; font-weight:800;
+    font-size:32px; line-height:1.15; color:#fff; margin:0 0 16px;
+  }
+  .accroche-title .orange-accent{ color:var(--orange); }
+  .accroche-text{ font-size:17px; font-weight:500; line-height:1.5; color:var(--paper); margin:0; }
+  @media(max-width:768px){
+    .accroche-content{ max-width:300px; margin-top:0; padding:22px 18px; text-align:center; }
+    .accroche-title{ font-size:28px; }
+    .accroche-text{ font-size:15px; }
+  }
+
+  .form-panel{ flex:1 1 50%; position:relative; display:flex; align-items:center; justify-content:center; padding:24px; overflow:hidden; z-index:2; }
+  .card{ width:100%; max-width:480px; position:relative; z-index:1; }
+
+  .splash-view{ background:var(--white); border:1px solid var(--paper-line); padding:48px 36px; text-align:center; max-height:100vh; overflow-y:auto; }
+  .splash-logo{ height:56px; display:block; margin:0 auto 22px; }
+  .splash-eyebrow{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--orange); letter-spacing:.09em; margin-bottom:10px; }
+  .splash-title{ font-family:'Big Shoulders Display',sans-serif; font-weight:900; font-size:32px; color:var(--navy); line-height:1.08; }
+  .splash-tagline{ color:var(--concrete); font-size:15.5px; line-height:1.55; max-width:420px; margin:16px auto 26px; }
+  .btn-splash{ display:inline-block; font-size:16px; padding:16px 30px; box-shadow:0 8px 24px rgba(232,98,44,0.28); text-decoration:none; }
+  @media(max-width:480px){ .splash-view{ padding:36px 20px; } .splash-title{ font-size:26px; } }
+
+  .splash-benefices{ list-style:none; text-align:left; max-width:420px; margin:0 auto 28px; display:flex; flex-direction:column; gap:16px; }
+  .splash-benefices li{ display:flex; align-items:flex-start; gap:13px; font-size:14px; line-height:1.48; color:var(--concrete); }
+  .splash-benefices li strong{ color:var(--navy); font-weight:700; }
+  .splash-benefice-icone{ flex:0 0 auto; width:34px; height:34px; border-radius:10px; background:var(--paper); display:flex; align-items:center; justify-content:center; font-size:16px; }
+  @media(max-width:480px){ .splash-benefices{ gap:13px; } .splash-benefices li{ font-size:13.5px; } }
+
+  .btn{ font-family:'IBM Plex Sans',sans-serif; font-weight:600; font-size:14.5px; padding:13px 24px; border:2px solid transparent; cursor:pointer; }
+  .btn-primary{ background:var(--orange); color:var(--white); }
+  .btn-primary:hover{ background:var(--orange-dark); }
+
+  .rassurance-row{ display:flex; flex-wrap:wrap; justify-content:center; gap:8px 18px; margin:4px auto 28px; max-width:420px; }
+  .rassurance-item{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--blue); letter-spacing:.02em; }
+
+  .preuve-sociale{ margin:0 auto 30px; max-width:420px; padding:14px 16px; background:var(--paper); border-left:3px solid var(--orange); text-align:left; font-size:13px; color:var(--concrete); line-height:1.5; }
+  .preuve-sociale strong{ color:var(--navy); }
+
+  .faq{ text-align:left; max-width:440px; margin:8px auto 0; }
+  .faq-item{ border-top:1px solid var(--paper-line); padding:14px 0; }
+  .faq-q{ font-weight:700; font-size:14px; color:var(--navy); margin-bottom:6px; }
+  .faq-a{ font-size:13.5px; color:var(--concrete); line-height:1.5; }
+
+  .lp-footer{ margin-top:34px; padding-top:18px; border-top:1px solid var(--paper-line); font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--concrete); line-height:1.7; }
+
+  @media(max-width:768px){
+    .split-layout{ flex-direction:column; }
+    .video-panel{ padding:24px; align-items:center; justify-content:center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-logo">
+  <img src="/skyeco-icon-ads.svg" alt="">
+  <span class="page-logo-text">SKY<span class="orange-accent">ECO</span> <span class="page-logo-pro">IA ADS</span></span>
+</div>
+
+<div class="fixed-actions-topright">
+  <a class="btn-etre-rappele-fixe" href="/prendre-rdv.html?id=4fbdb122-9fca-4636-b80c-d9e4abc2542b" target="_blank" rel="noopener">📞 Être rappelé</a>
+</div>
+
+<div class="split-layout">
+
+  <div class="video-panel">
+    <img class="shared-carousel-img active" src="data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMTYwMCAxMDAwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8ZGVmcz4KICA8bGluZWFyR3JhZGllbnQgaWQ9ImJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+CiAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMTQzMDRBIi8+CiAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMyQzVGOEEiLz4KICA8L2xpbmVhckdyYWRpZW50PgogIDxwYXR0ZXJuIGlkPSJncmlkIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiPgogICAgPHBhdGggZD0iTTQwIDAgTDAgMCAwIDQwIiBmaWxsPSJub25lIiBzdHJva2U9IiM2RTk3QjgiIHN0cm9rZS1vcGFjaXR5PSIwLjE0IiBzdHJva2Utd2lkdGg9IjEiLz4KICA8L3BhdHRlcm4+CiAgCjwvZGVmcz4KPHJlY3Qgd2lkdGg9IjE2MDAiIGhlaWdodD0iMTAwMCIgZmlsbD0idXJsKCNiZykiLz4KPHJlY3Qgd2lkdGg9IjE2MDAiIGhlaWdodD0iMTAwMCIgZmlsbD0idXJsKCNncmlkKSIvPgoKPGNpcmNsZSBjeD0iODAwIiBjeT0iNDAwIiByPSIyMzAiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuMDYiLz4KPGc+CiAgPHJlY3QgeD0iNjMwIiB5PSIyMzAiIHdpZHRoPSIzNDAiIGhlaWdodD0iMzAwIiByeD0iMjIiIGZpbGw9IiNGRkZGRkYiLz4KICA8cmVjdCB4PSI2NjgiIHk9IjQyMCIgd2lkdGg9IjM0IiBoZWlnaHQ9IjcwIiByeD0iNiIgZmlsbD0iI0ZCQkMwNSIvPgogIDxyZWN0IHg9IjcxNiIgeT0iMzgwIiB3aWR0aD0iMzQiIGhlaWdodD0iMTEwIiByeD0iNiIgZmlsbD0iI0VBNDMzNSIvPgogIDxyZWN0IHg9Ijc2NCIgeT0iMzQwIiB3aWR0aD0iMzQiIGhlaWdodD0iMTUwIiByeD0iNiIgZmlsbD0iIzM0QTg1MyIvPgogIDxyZWN0IHg9IjgxMiIgeT0iMjkwIiB3aWR0aD0iMzQiIGhlaWdodD0iMjAwIiByeD0iNiIgZmlsbD0iIzQyODVGNCIvPgogIDxyZWN0IHg9Ijg2MCIgeT0iMjYwIiB3aWR0aD0iMzQiIGhlaWdodD0iMjMwIiByeD0iNiIgZmlsbD0iI0U4NjIyQyIvPgogIDx0ZXh0IHg9IjgwMCIgeT0iMjcwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iJ0lCTSBQbGV4IE1vbm8nLG1vbm9zcGFjZSIgZm9udC13ZWlnaHQ9IjcwMCIgZm9udC1zaXplPSIyMCIgZmlsbD0iIzE0MzA0QSI+KzQyIGNsaWNzIGNlIG1vaXMtY2k8L3RleHQ+CjwvZz4KCjx0ZXh0IHg9IjgwMCIgeT0iNzQwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iJ0JpZyBTaG91bGRlcnMgRGlzcGxheScsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9IjgwMCIgZm9udC1zaXplPSI1MiIgZmlsbD0iI0ZGRkZGRiI+R29vZ2xlIEFkcyBwaWxvdCYjMjMzOzwvdGV4dD4KPHRleHQgeD0iODAwIiB5PSI3ODYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSInSUJNIFBsZXggU2FucycsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9IjUwMCIgZm9udC1zaXplPSIyNyIgZmlsbD0iI0Y0RjdGOSIgb3BhY2l0eT0iMC44OCI+Vm9zIGNhbXBhZ25lcyBzdXJ2ZWlsbCYjMjMzO2VzIGV0IGFqdXN0JiMyMzM7ZWVzIHBvdXIgdm91cy48L3RleHQ+Cjwvc3ZnPg==" alt="Google Ads piloté">
+    <img class="shared-carousel-img" src="data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMTYwMCAxMDAwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8ZGVmcz4KICA8bGluZWFyR3JhZGllbnQgaWQ9ImJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+CiAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMTQzMDRBIi8+CiAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMyQzVGOEEiLz4KICA8L2xpbmVhckdyYWRpZW50PgogIDxwYXR0ZXJuIGlkPSJncmlkIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiPgogICAgPHBhdGggZD0iTTQwIDAgTDAgMCAwIDQwIiBmaWxsPSJub25lIiBzdHJva2U9IiM2RTk3QjgiIHN0cm9rZS1vcGFjaXR5PSIwLjE0IiBzdHJva2Utd2lkdGg9IjEiLz4KICA8L3BhdHRlcm4+CiAgCjwvZGVmcz4KPHJlY3Qgd2lkdGg9IjE2MDAiIGhlaWdodD0iMTAwMCIgZmlsbD0idXJsKCNiZykiLz4KPHJlY3Qgd2lkdGg9IjE2MDAiIGhlaWdodD0iMTAwMCIgZmlsbD0idXJsKCNncmlkKSIvPgoKPGNpcmNsZSBjeD0iODAwIiBjeT0iNDAwIiByPSIyMzAiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuMDYiLz4KPGc+CiAgPHJlY3QgeD0iNjIwIiB5PSIyNDAiIHdpZHRoPSIzNjAiIGhlaWdodD0iMzIwIiByeD0iMzQiIGZpbGw9IiNGRkZGRkYiLz4KICA8cmVjdCB4PSI2NDgiIHk9IjI4OCIgd2lkdGg9IjMwNCIgaGVpZ2h0PSI2MCIgcng9IjE2IiBmaWxsPSIjRjRGN0Y5Ii8+CiAgPHRleHQgeD0iNjY4IiB5PSIzMjYiIGZvbnQtZmFtaWx5PSInSUJNIFBsZXggU2FucycsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9IjYwMCIgZm9udC1zaXplPSIyMiIgZmlsbD0iIzE0MzA0QSI+Vm90cmUgZGV2aXMgZXN0IHByJiMyMzQ7dCAmIzEyODE5Njs8L3RleHQ+CiAgPHJlY3QgeD0iNzAwIiB5PSIzNjYiIHdpZHRoPSIyNTIiIGhlaWdodD0iNjAiIHJ4PSIxNiIgZmlsbD0iI0U4NjIyQyIvPgogIDx0ZXh0IHg9IjcyMCIgeT0iNDA0IiBmb250LWZhbWlseT0iJ0lCTSBQbGV4IFNhbnMnLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZvbnQtc2l6ZT0iMjIiIGZpbGw9IiNGRkZGRkYiPlJEViBjb25maXJtJiMyMzM7IGpldWRpIDEwaCAmIzk5ODk7PC90ZXh0PgogIDxjaXJjbGUgY3g9IjcwMiIgY3k9IjQ3MCIgcj0iMTAiIGZpbGw9IiM2RTk3QjgiIG9wYWNpdHk9IjAuNiIvPgogIDxjaXJjbGUgY3g9IjczOCIgY3k9IjQ3MCIgcj0iMTAiIGZpbGw9IiM2RTk3QjgiIG9wYWNpdHk9IjAuNiIvPgogIDxjaXJjbGUgY3g9Ijc3NCIgY3k9IjQ3MCIgcj0iMTAiIGZpbGw9IiM2RTk3QjgiIG9wYWNpdHk9IjAuNiIvPgo8L2c+Cgo8dGV4dCB4PSI4MDAiIHk9Ijc0MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IidCaWcgU2hvdWxkZXJzIERpc3BsYXknLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSI4MDAiIGZvbnQtc2l6ZT0iNTIiIGZpbGw9IiNGRkZGRkYiPlNNUyBhdXRvbWF0aXF1ZXM8L3RleHQ+Cjx0ZXh0IHg9IjgwMCIgeT0iNzg2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iJ0lCTSBQbGV4IFNhbnMnLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSI1MDAiIGZvbnQtc2l6ZT0iMjciIGZpbGw9IiNGNEY3RjkiIG9wYWNpdHk9IjAuODgiPlZvcyBwcm9zcGVjdHMgcmVsYW5jJiMyMzM7cyBzYW5zIHkgcGVuc2VyLjwvdGV4dD4KPC9zdmc+" alt="SMS automatiques">
+    <div class="shared-carousel-overlay"></div>
+    <div class="accroche-content">
+      <h2 class="accroche-title">Google Ads, <span class="orange-accent">prospects</span> et <span class="orange-accent">devis</span>, sur pilote automatique.</h2>
+      <p class="accroche-text">Une IA à votre écoute, conçue pour les artisans du BTP.</p>
+    </div>
+  </div>
+
+  <div class="form-panel">
+    <div class="card">
+      <div class="splash-view">
+        <img class="splash-logo" src="/skyeco-logo-ads-compact.svg" alt="Skyeco IA Ads">
+        <div class="splash-eyebrow mono">LOGICIEL POUR ARTISANS DU BTP</div>
+        <h1 class="splash-title">Fini d'acheter des leads ailleurs.</h1>
+        <p class="splash-tagline">Skyeco Ads pilote vos Google Ads, capte vos prospects sur votre propre page vitrine et envoie vos devis avec signature électronique — un seul outil, une IA qui surveille tout à votre place.</p>
+
+        <ul class="splash-benefices">
+          <li>
+            <span class="splash-benefice-icone">🎯</span>
+            <div><strong>Vos Google Ads pilotées et coachées automatiquement</strong> — mots-clés choisis pour votre métier et votre secteur, budget maîtrisé, campagnes ajustées chaque jour.</div>
+          </li>
+          <li>
+            <span class="splash-benefice-icone">🖼️</span>
+            <div><strong>Votre propre page vitrine</strong> — carrousel photo et formulaire d'estimation, pour convertir vos visiteurs en prospects qualifiés.</div>
+          </li>
+          <li>
+            <span class="splash-benefice-icone">📲</span>
+            <div><strong>Vos prospects suivis par email et SMS</strong> — relances automatiques, aucune demande n'est oubliée.</div>
+          </li>
+          <li>
+            <span class="splash-benefice-icone">✍️</span>
+            <div><strong>Vos devis envoyés avec signature électronique</strong> — par email et SMS, en quelques clics.</div>
+          </li>
+          <li>
+            <span class="splash-benefice-icone">🧰</span>
+            <div><strong>Adapté à votre métier</strong> — résine, clôtures et portails, terrassement, assainissement, paysage… le suivi s'ajuste à votre activité.</div>
+          </li>
+        </ul>
+
+        <div style="display:flex; flex-direction:column; gap:12px; max-width:340px; margin:0 auto;">
+          <a id="lienEssaiGratuit" class="btn btn-primary btn-splash" href="/mon-dashboard-demo.html?visiteur=1&src=google_ads" style="width:100%; text-align:center;">🚀 Démarrer mon essai gratuit →</a>
+          <a href="/connexion.html" style="width:100%; text-align:center; display:inline-block; background:var(--white); color:var(--navy); border:2px solid var(--paper-line); padding:14px 24px; border-radius:0; font-size:15px; font-weight:600; text-decoration:none;">Déjà inscrit ? Se connecter</a>
+        </div>
+
+        <div class="rassurance-row">
+          <span class="rassurance-item mono">✓ 30 JOURS GRATUITS</span>
+          <span class="rassurance-item mono">✓ SANS ENGAGEMENT</span>
+          <span class="rassurance-item mono">✓ SANS CARTE BANCAIRE</span>
+        </div>
+
+        <div class="preuve-sociale">
+          <strong>Construit par un artisan, pour des artisans.</strong> RMS EcoSky (résine EPDM, VRD/BTP, Morbihan) utilise Skyeco Ads au quotidien sur ses propres campagnes avant de le proposer à d'autres entreprises du bâtiment.
+        </div>
+
+        <div class="faq">
+          <div class="faq-item">
+            <div class="faq-q">Faut-il déjà avoir un compte Google Ads&nbsp;?</div>
+            <div class="faq-a">Non. Skyeco Ads crée et pilote la campagne pour vous ; vous gardez la main sur le budget et pouvez tout suivre depuis votre tableau de bord.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q">Est-ce que je m'engage sur la durée&nbsp;?</div>
+            <div class="faq-a">Non — l'essai de 30 jours est gratuit, sans engagement et sans carte bancaire.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q">Qui surveille mes annonces au quotidien&nbsp;?</div>
+            <div class="faq-a">Une IA suit vos campagnes chaque jour et corrige ce qui sous-performe — vous gardez un œil sur tout, sans plus rien faire à la main.</div>
+          </div>
+        </div>
+
+        <div class="lp-footer">
+          RMS EcoSky — SIRET 939 997 870 00018 — 23 route de Corn er Hoet, 56400 Brech<br>
+          06 45 68 83 94 · infos@ecosky.fr
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const imgs = Array.from(document.querySelectorAll('.shared-carousel-img'));
+  if(imgs.length <= 1) return;
+  let idx = 0;
+  setInterval(()=>{
+    imgs[idx].classList.remove('active');
+    idx = (idx + 1) % imgs.length;
+    imgs[idx].classList.add('active');
+  }, 4000);
+})();
+</script>
+
+</body>
+</html>

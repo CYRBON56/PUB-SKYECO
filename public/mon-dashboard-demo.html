@@ -356,18 +356,8 @@
   .forfait-inclus li { font-size:0.82rem; color:#433a54; line-height:1.5; display:flex; gap:8px; align-items:flex-start; }
   .forfait-inclus li .puce { color:#7c3aed; font-weight:800; flex-shrink:0; }
 
-  /* Vérification téléphone (ajouté) */
-  .sms-block { margin:14px 0 6px; padding:14px; background:#f6f5fb; border:1px solid #ede9fe; border-radius:10px; }
-  .sms-block p { font-size:12.5px; color:#8a8296; margin-bottom:10px; line-height:1.4; }
-  .btn-sms { background:#EEF4F0; color:#2C5F8A; border:1.5px solid #2C5F8A; padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; border-radius:8px; }
-  .btn-sms:hover:not(:disabled) { background:#2C5F8A; color:#fff; }
-  .btn-sms:disabled { opacity:.5; cursor:not-allowed; }
-  .sms-code-row { display:flex; gap:8px; margin-top:10px; }
-  .sms-code-row input { flex:1; letter-spacing:.3em; text-align:center; margin:0; border:1.5px solid #ddd6fe; border-radius:8px; padding:10px 12px; font-size:1rem; }
-  .sms-status { margin-top:8px; font-size:12.5px; }
-  .sms-status.ok { color:#3E8E5A; font-weight:600; }
-  .sms-status.error { color:#c0392b; }
-  #telephoneEssai { width:100%; border:1.5px solid #ddd6fe; padding:12px 14px; font-family:inherit; font-size:14.5px; color:#211a35; background:#faf8ff; border-radius:8px; margin-bottom:0; }
+  /* 17/09/2026 : bloc de vérification téléphone par SMS retiré de cette page
+     (voir plus bas dans le corps du document) — CSS associé supprimé. */
 </style>
 </head>
 <body>
@@ -843,22 +833,23 @@
         <span>J'accepte les <a href="/cgv.html" target="_blank" style="color:#7c3aed;">conditions générales de vente</a>.</span>
       </label>
 
-      <!-- Vérification téléphone : ajoutée après les CGV, avant de démarrer
-           l'essai — l'artisan arrive ensuite directement sur son VRAI
-           dashboard (voir script plus bas), pas sur construire-ma-vitrine.html. -->
-      <div id="blocTelephoneEssai">
-        <label for="telephoneEssai" style="display:block; font-size:0.82rem; font-weight:700; color:#211a35; margin-bottom:6px;">Votre numéro de téléphone</label>
-        <input type="tel" id="telephoneEssai" inputmode="numeric" placeholder="Ex : 06 12 34 56 78">
-        <div class="sms-block" id="smsBlock">
-          <p>Vérifiez votre numéro pour confirmer votre demande — un SMS avec un code va vous être envoyé.</p>
-          <button type="button" class="btn-sms" id="btnEnvoyerCode" disabled>Vérifier mon numéro par SMS</button>
-          <div class="sms-code-row" id="smsCodeRow" style="display:none;">
-            <input type="text" id="smsCode" inputmode="numeric" maxlength="6" placeholder="Code reçu">
-            <button type="button" class="btn-sms" id="btnVerifierCode">Valider</button>
-          </div>
-          <div class="sms-status" id="smsStatus"></div>
-        </div>
-      </div>
+      <!-- 17/09/2026 (soir) : sur demande explicite de Cyrille ("il ne faut
+           rien mettre comme barrière, ni demande de téléphone ni de mail,
+           tant que l'artisan n'a pas mis en ligne"), le bloc de vérification
+           du numéro de téléphone par SMS qui se trouvait ici a été retiré.
+           Il ne reste plus aucune information à saisir avant de démarrer
+           l'essai gratuit, à part accepter les CGV ci-dessus : un clic sur
+           "Démarrer mon essai gratuit" suffit désormais. Le téléphone (et
+           l'email) seront demandés plus tard dans le parcours, au moment de
+           "Mettre en ligne" (voir skyeco-pro-inscription-siret.html, qui
+           utilise encore /api/verify-send-code et /api/verify-check-code —
+           ces deux endpoints restent donc en place, seulement plus appelés
+           depuis cette page). Conséquence acceptée : tant que l'artisan n'a
+           pas fourni son numéro, le SMS/email de bienvenue
+           (envoyer-bienvenue-essai.js) et le rappel SMS de fin d'essai
+           (verifier-essais-a-programmer.js) ne peuvent pas lui être envoyés
+           — les deux gèrent déjà ce cas sans erreur (ils n'envoient que si
+           un téléphone/email est renseigné). -->
 
       <div id="essaiErreur" style="color:#c0392b; font-size:0.82rem; margin-bottom:10px; display:none;"></div>
       <button type="button" id="btnDemarrerEssai" style="width:100%; background:#7c3aed; color:#fff; border:none; border-radius:10px; padding:14px; font-size:0.96rem; font-weight:700; cursor:pointer;" disabled>Démarrer mon essai gratuit →</button>
@@ -910,88 +901,17 @@
     btn.addEventListener('click', () => activerOngletDemo(btn.dataset.tabDemo));
   });
 
-  // --- Vérification téléphone avant de démarrer l'essai --------------------
-  let telephoneVerifie = false;
-  let telephoneActuel = '';
-  const telEl = document.getElementById('telephoneEssai');
-  const btnEnvoyerCode = document.getElementById('btnEnvoyerCode');
-  const smsCodeRow = document.getElementById('smsCodeRow');
-  const smsCodeInput = document.getElementById('smsCode');
-  const btnVerifierCode = document.getElementById('btnVerifierCode');
-  const smsStatusEl = document.getElementById('smsStatus');
+  // --- Démarrage de l'essai : plus aucune barrière que les CGV -------------
+  // 17/09/2026 (soir) : la vérification du numéro de téléphone par SMS qui
+  // bloquait ce bouton a été retirée sur demande de Cyrille. Le bouton ne
+  // dépend plus que de la case CGV.
   const cguCheckbox = document.getElementById('cguEssaiCheckbox');
   const btnDemarrerEssai = document.getElementById('btnDemarrerEssai');
 
-  function isTelephoneValid(raw) {
-    const digits = raw.replace(/\D/g, '');
-    return /^0\d{9}$/.test(digits);
-  }
   function majBoutonDemarrerEssai() {
-    btnDemarrerEssai.disabled = !(cguCheckbox.checked && telephoneVerifie);
+    btnDemarrerEssai.disabled = !cguCheckbox.checked;
   }
   cguCheckbox.addEventListener('change', majBoutonDemarrerEssai);
-
-  telEl.addEventListener('input', () => {
-    let digits = telEl.value.replace(/\D/g, '').slice(0, 10);
-    telEl.value = digits.replace(/(\d{2})(?=\d)/g, '$1 ').trim();
-    telephoneActuel = telEl.value;
-    telephoneVerifie = false;
-    smsCodeRow.style.display = 'none';
-    smsStatusEl.textContent = '';
-    smsStatusEl.className = 'sms-status';
-    btnEnvoyerCode.style.display = 'inline-block';
-    btnEnvoyerCode.textContent = 'Vérifier mon numéro par SMS';
-    btnEnvoyerCode.disabled = !isTelephoneValid(digits);
-    majBoutonDemarrerEssai();
-  });
-
-  btnEnvoyerCode.addEventListener('click', async () => {
-    btnEnvoyerCode.disabled = true;
-    smsStatusEl.textContent = 'Envoi du code…';
-    smsStatusEl.className = 'sms-status';
-    try {
-      const res = await fetch('/api/verify-send-code', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telephone: telephoneActuel }),
-      });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error || "Erreur lors de l'envoi.");
-      smsCodeRow.style.display = 'flex';
-      smsStatusEl.textContent = 'Code envoyé par SMS.';
-      smsStatusEl.className = 'sms-status ok';
-    } catch (err) {
-      smsStatusEl.textContent = err.message;
-      smsStatusEl.className = 'sms-status error';
-    } finally {
-      btnEnvoyerCode.disabled = false;
-    }
-  });
-
-  btnVerifierCode.addEventListener('click', async () => {
-    btnVerifierCode.disabled = true;
-    smsStatusEl.textContent = 'Vérification…';
-    smsStatusEl.className = 'sms-status';
-    try {
-      const res = await fetch('/api/verify-check-code', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telephone: telephoneActuel, code: smsCodeInput.value.trim() }),
-      });
-      const data = await res.json();
-      if (!data.success || !data.verified) throw new Error(data.error || 'Code invalide.');
-      telephoneVerifie = true;
-      btnEnvoyerCode.style.display = 'none';
-      smsCodeRow.style.display = 'none';
-      smsStatusEl.textContent = '✓ Numéro vérifié.';
-      smsStatusEl.className = 'sms-status ok';
-    } catch (err) {
-      telephoneVerifie = false;
-      smsStatusEl.textContent = err.message;
-      smsStatusEl.className = 'sms-status error';
-    } finally {
-      btnVerifierCode.disabled = false;
-      majBoutonDemarrerEssai();
-    }
-  });
 
   if (draftId || visiteurMode) {
     document.getElementById('introFunnel').style.display = 'block';
@@ -1050,19 +970,16 @@
         erreurEl.style.display = 'block';
         return;
       }
-      if (!telephoneVerifie) {
-        erreurEl.textContent = "Merci de vérifier votre numéro de téléphone pour continuer.";
-        erreurEl.style.display = 'block';
-        return;
-      }
 
       let idAUtiliser = draftId;
 
-      // Mode visiteur (pas encore de brouillon) : on crée un brouillon avec
-      // le téléphone déjà vérifié (sans SIRET ni autres infos à ce stade —
-      // ces informations sont demandées plus tard, dans construire-ma-vitrine.html,
-      // quand l'artisan veut approvisionner son budget ou connecter ses
-      // réseaux sociaux).
+      // Mode visiteur (pas encore de brouillon) : on crée un brouillon sans
+      // aucune coordonnée (ni téléphone, ni email, ni SIRET) — 17/09/2026,
+      // sur demande de Cyrille, aucune information n'est demandée avant que
+      // l'artisan ait mis sa vitrine en ligne. Ces informations sont
+      // demandées plus tard, dans construire-ma-vitrine.html / au moment de
+      // "Mettre en ligne", quand l'artisan veut approvisionner son budget ou
+      // connecter ses réseaux sociaux.
       if (!idAUtiliser) {
         btn.disabled = true;
         btn.textContent = 'Préparation de votre espace…';
@@ -1075,7 +992,7 @@
               'Content-Type': 'application/json',
               Prefer: 'return=representation',
             },
-            body: JSON.stringify([{ entreprise: '', telephone: telephoneActuel, email: '', status: 'preview' }]),
+            body: JSON.stringify([{ entreprise: '', telephone: '', email: '', status: 'preview' }]),
           });
           const rows = await res.json();
           if (!res.ok || !rows[0]?.id) throw new Error(rows?.message || "Impossible de préparer votre espace.");

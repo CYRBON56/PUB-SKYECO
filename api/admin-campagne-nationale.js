@@ -170,7 +170,15 @@ async function lireDetails() {
   // statistiques). Une lecture qui échoue n'empêche jamais les autres de
   // s'afficher.
   const [budgetLecture, motsClesLecture, negatifsLecture, termesLecture, heuresLecture, annoncesLecture, journal] = await Promise.all([
-    interrogerWindsor(['campaign_id', 'campaign', 'campaign_budget_status', 'budget_amount']),
+    // campaign_primary_status / _reasons : le VRAI statut de diffusion côté
+    // Google Ads (ENABLED/PAUSED/... + pourquoi), à ne pas confondre avec
+    // campaign_budget_status (qui ne dit que si le BUDGET est actif). Ajouté
+    // le 17/09 (soir) suite à une remarque justifiée de Cyrille : le badge du
+    // dashboard reflétait jusqu'ici seulement le dernier bouton cliqué dans
+    // CE dashboard (mémorisé dans le navigateur), pas la réalité de Google
+    // Ads — deux choses qui peuvent diverger (ex : action manuelle faite
+    // directement dans Google Ads, échec silencieux d'un appel précédent).
+    interrogerWindsor(['campaign_id', 'campaign', 'campaign_budget_status', 'budget_amount', 'campaign_primary_status', 'campaign_primary_status_reasons']),
     interrogerWindsor(['ad_group_id', 'keyword_criterion_id', 'keyword_text', 'keyword_match_type', 'keyword_status', 'clicks', 'cost']),
     interrogerWindsor(['campaign_criterion_keyword_text', 'campaign_criterion_keyword_match_type', 'campaign_criterion_negative']),
     interrogerWindsor(['ad_group_id', 'search_term_view_search_term', 'search_term_view_status', 'clicks', 'cost']),
@@ -212,6 +220,22 @@ async function lireDetails() {
     .filter((n) => n.texte);
 
   const budget = budgetLecture.lignes[0] || null;
+
+  // Statut réel de diffusion (voir commentaire sur la lecture ci-dessus).
+  // campaign_primary_status_reasons revient sous forme de chaîne JSON
+  // (ex: '["CAMPAIGN_PAUSED", "MOST_ADS_UNDER_REVIEW"]') — jamais laisser un
+  // format inattendu casser toute la réponse.
+  let raisonsStatutReel = [];
+  try {
+    raisonsStatutReel = JSON.parse(budget?.campaign_primary_status_reasons || '[]');
+    if (!Array.isArray(raisonsStatutReel)) raisonsStatutReel = [];
+  } catch (e) {
+    raisonsStatutReel = [];
+  }
+  const statutReelCampagne = {
+    primaryStatus: budget?.campaign_primary_status || null,
+    raisons: raisonsStatutReel,
+  };
 
   const groupes = GROUPES_ANNONCES.map((g) => {
     const perf = motsClesLecture.lignes.filter((r) => String(r.ad_group_id) === g.id);
@@ -279,6 +303,7 @@ async function lireDetails() {
   return {
     campagne: CAMPAGNE,
     budget, // null tant qu'aucune donnée de budget n'est encore remontée
+    statutReelCampagne,
     groupes,
     termesRecherche,
     clicsParHeure,

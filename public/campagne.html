@@ -292,10 +292,12 @@
           const potentiel = data.totalMonthlyVolume ? ` · Potentiel estimé sur ce mois : ${data.totalMonthlyVolume} clics possibles avec ces mots-clés et cette zone` : '';
           document.getElementById('estimationDetail').textContent =
             (data.avgCpcEur ? `CPC moyen estimé : ${data.avgCpcEur} €` : '') + potentiel;
-          document.getElementById('breakdown').innerHTML = (data.budgetNetPub != null)
-            ? `${budget} € TTC · ${data.budgetHT} € HT, dont <strong>${data.budgetNetPub} € réellement en diffusion sur Google Ads</strong> ` +
-              `et ${data.commissionPub} € de frais de pilotage Skyeco IA Ads (${Math.round(data.tauxCommission * 100)}%).`
-            : `Ce budget couvre la gestion de votre campagne et sa diffusion sur Google Ads.`;
+          // 17/09/2026 (soir) : sur demande de Cyrille, on n'affiche plus le
+          // détail "dont X € en diffusion / Y € de frais de pilotage (30%)"
+          // — la commission de service reste appliquée normalement côté
+          // serveur (voir api/estimate-reach.js et api/confirm-ad-payment.js),
+          // seul cet écran n'en parle plus à l'artisan.
+          document.getElementById('breakdown').innerHTML = `${budget} € TTC · ${data.budgetHT} € HT`;
           estimationOk = true;
           majEtatBoutonPayer();
           btnPayer.textContent = TEST_MODE

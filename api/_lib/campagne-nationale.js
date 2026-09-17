@@ -53,6 +53,41 @@ export const CAMPAGNE = {
 // l'historique de chaque groupe (Windsor.ai n'a pas d'action de
 // suppression d'annonce) mais ne doivent normalement plus être touchées —
 // gardées ici uniquement pour référence/traçabilité dans le dashboard.
+// Contenu réel des annonces (titres/descriptions), tel que créé dans Google
+// Ads le 17/09/2026 — identique sur les 3 groupes à ce stade (voir section 5
+// du brief). Vérifié en direct auprès de Windsor.ai le 17/09 au soir (un
+// appel isolé a bien renvoyé ces mêmes titres/descriptions), MAIS Windsor ne
+// synchronise pas encore le contenu au niveau annonce pour cette campagne de
+// façon fiable tant qu'elle n'a jamais servi une impression (vérifié aussi :
+// les autres campagnes du même compte, elles actives, remontent bien leurs
+// annonces — ce n'est donc pas un bug de lecture côté dashboard, c'est
+// Windsor qui n'a pas encore ce niveau de détail synchronisé pour une
+// campagne en pause/jamais diffusée). En attendant, ce contenu configuré sert
+// de repli fiable pour l'aperçu du dashboard ; dès que Windsor renverra une
+// lecture live (après activation réelle), elle prendra le dessus.
+const CONTENU_ANNONCE_A = {
+  titres: [
+    "Fini d'acheter des leads",
+    'Google Ads pour artisans BTP',
+    'Vos prospects, sans y penser',
+    'Essai gratuit 30 jours',
+    'Sans engagement, sans CB',
+    'Skyeco Ads — logiciel BTP',
+    'Devis signés en ligne',
+    '1 outil pour tout gérer',
+    'Piloté par une IA dédiée',
+    'Fait par un artisan, pour vous',
+  ],
+  descriptions: [
+    'Skyeco Ads pilote vos Google Ads, capte vos prospects et envoie vos devis en ligne.',
+    'Essai gratuit 30 jours, sans engagement, sans carte bancaire. 2 minutes pour démarrer.',
+    'Une IA surveille vos campagnes chaque jour et corrige ce qui ne marche pas.',
+    "Construit par un artisan du BTP, testé sur ses propres chantiers avant d'être proposé.",
+  ],
+  chemin1: '',
+  chemin2: '',
+};
+
 export const GROUPES_ANNONCES = [
   {
     id: '200459739339',
@@ -67,6 +102,7 @@ export const GROUPES_ANNONCES = [
     adActuel: {
       adId: '825035540572',
       urlFinale: 'https://pub-skyeco-23ue.vercel.app/skyeco-pro-formulaire-creation.html',
+      contenuConfigure: CONTENU_ANNONCE_A,
     },
     anciennesAnnonces: [
       { adId: '824993580879', urlFinale: 'skyeco-ads-landing-nationale.html (abandonnée)' },
@@ -85,6 +121,7 @@ export const GROUPES_ANNONCES = [
     adActuel: {
       adId: '825035542456',
       urlFinale: 'https://pub-skyeco-23ue.vercel.app/skyeco-pro-formulaire-creation.html',
+      contenuConfigure: CONTENU_ANNONCE_A,
     },
     anciennesAnnonces: [
       { adId: '825033983698', urlFinale: 'skyeco-ads-landing-nationale.html (abandonnée)' },
@@ -103,6 +140,7 @@ export const GROUPES_ANNONCES = [
     adActuel: {
       adId: '825121013708',
       urlFinale: 'https://pub-skyeco-23ue.vercel.app/skyeco-pro-formulaire-creation.html',
+      contenuConfigure: CONTENU_ANNONCE_A,
     },
     anciennesAnnonces: [
       { adId: '825033965752', urlFinale: 'skyeco-ads-landing-nationale.html (abandonnée)' },

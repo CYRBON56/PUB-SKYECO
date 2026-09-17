@@ -225,6 +225,13 @@
   .apercu-annonce .apercu-desc{ color:#4D5156; font-size:13.5px; line-height:1.4; font-family:Arial, sans-serif; }
   .apercu-annonce-vide{ font-size:12.5px; color:var(--ink-muted); font-style:italic; margin-top:8px; }
   .apercu-note{ font-size:11px; color:var(--ink-muted); margin-top:6px; font-style:italic; }
+
+  /* ---------- Note statut réel Google Ads ---------- */
+  #note-statut-reel{
+    background:var(--amber-bg); color:#7A5300; border:1px solid #EFD9A0; border-radius:8px;
+    padding:9px 13px; font-size:12.5px; margin-bottom:14px; line-height:1.5;
+  }
+  #note-statut-reel.ok{ background:var(--ok-bg); color:#245C39; border-color:#BEE0CB; }
 </style>
 </head>
 <body>
@@ -286,6 +293,7 @@
       Interrupteur maître : active ou met en pause la campagne ET ses 3 groupes ET leurs 3 annonces en cours en une seule fois
       (les 3 niveaux doivent toujours être alignés pour que la diffusion soit réellement visible).
     </div>
+    <div id="note-statut-reel" style="display:none;"></div>
     <div class="ligne-toggle" style="margin-bottom:18px;">
       <div>
         <strong>Diffusion de la campagne</strong>
@@ -472,6 +480,46 @@
     if (actif === false) return '<span class="badge pause"><span class="point"></span> En pause</span>';
     return '<span class="badge inconnu"><span class="point"></span> Statut inconnu</span>';
   }
+
+  // Traduit le VRAI statut Google Ads (campaign_primary_status) — à ne pas
+  // confondre avec l'ancien statut "optimiste" mémorisé dans le navigateur
+  // (voir lireEtatLocal plus haut), qui ne reflétait que le dernier bouton
+  // cliqué DANS ce dashboard, pas la réalité côté Google Ads. Cyrille a eu
+  // raison de faire remarquer que "marqué actif" ne veut pas dire "en ligne" :
+  // ce statut réel corrige ça dès qu'il est disponible.
+  function traduireStatutPrincipal(statut){
+    var table = {
+      ENABLED: { actif: true, label: 'Actif' },
+      PAUSED: { actif: false, label: 'En pause' },
+      ENDED: { actif: false, label: 'Terminée' },
+      REMOVED: { actif: false, label: 'Supprimée' },
+      PENDING: { actif: false, label: 'En attente' },
+      NOT_ELIGIBLE: { actif: false, label: 'Non éligible' },
+      LIMITED: { actif: true, label: 'Limitée' },
+      MISCONFIGURED: { actif: false, label: 'Mal configurée' },
+    };
+    return table[statut] || null;
+  }
+
+  function traduireRaisonStatut(raison){
+    var table = {
+      CAMPAIGN_PAUSED: 'la campagne est en pause',
+      CAMPAIGN_PENDING: 'la campagne est programmée pour démarrer plus tard',
+      CAMPAIGN_ENDED: 'la date de fin de la campagne est dépassée',
+      CAMPAIGN_REMOVED: 'la campagne a été supprimée',
+      CAMPAIGN_DRAFT: 'la campagne est encore à l\'état de brouillon',
+      MOST_ADS_UNDER_REVIEW: 'la plupart des annonces sont encore en cours de vérification par Google',
+      HAS_ADS_DISAPPROVED: 'au moins une annonce a été refusée par Google',
+      MOST_ADS_DISAPPROVED: 'la plupart des annonces ont été refusées par Google',
+      NO_ADS: 'aucune annonce active dans cette campagne',
+      ADS_PAUSED: 'les annonces sont en pause',
+      AD_GROUPS_PAUSED: "tous les groupes d'annonces sont en pause",
+      NO_AD_GROUPS: "aucun groupe d'annonces actif",
+      BUDGET_CONSTRAINED: 'la diffusion est limitée par le budget',
+      PAYMENT_ISSUE: 'un problème de paiement bloque la diffusion',
+    };
+    return table[raison] || String(raison).toLowerCase().replace(/_/g, ' ');
+  }
   // Applique un statut sur un badge déjà présent dans le DOM (id fixe) sans
   // jamais reconstruire son ouverture de balise à la main — l'ancienne
   // version faisait un .replace('badge ', ...) sur le HTML de badgeStatut(),
@@ -493,16 +541,44 @@
     var elAvertTexte = document.getElementById('texte-avertissement');
     if (!live.motsCles && !live.termesRecherche) {
       elAvert.style.display = 'block';
-      elAvertTexte.textContent = "Aucune donnée de performance remontée par Windsor.ai pour l'instant — normal tant que la campagne n'a jamais servi une impression. Le statut affiché (Actif/En pause) reflète la dernière action faite depuis ce dashboard ; vérifiez dans l'interface Google Ads avant toute activation définitive.";
+      elAvertTexte.textContent = "Aucune donnée de performance (clics, mots-clés, termes de recherche) remontée par Windsor.ai pour l'instant — normal tant que la campagne n'a jamais servi une impression. Le statut de diffusion affiché en haut est en revanche le vrai statut Google Ads quand il est disponible (voir la note sous l'interrupteur de diffusion) ; vérifiez malgré tout dans l'interface Google Ads avant toute décision importante.";
     } else {
       elAvert.style.display = 'none';
     }
 
-    // Badge + interrupteur campagne
-    var actifCampagne = etatLocal.campagne;
-    appliquerBadge(document.getElementById('badge-campagne'), actifCampagne);
+    // Badge + interrupteur campagne — priorité au VRAI statut Google Ads
+    // (data.statutReelCampagne) quand il est disponible ; repli sur le
+    // dernier bouton cliqué dans ce dashboard (etatLocal) seulement si
+    // Google Ads ne renvoie encore rien.
+    var badgeEl = document.getElementById('badge-campagne');
     var toggleCampagne = document.getElementById('toggle-campagne');
-    toggleCampagne.checked = !!actifCampagne;
+    var elNoteStatutReel = document.getElementById('note-statut-reel');
+    var statutReel = data.statutReelCampagne || {};
+    var infosStatut = statutReel.primaryStatus ? traduireStatutPrincipal(statutReel.primaryStatus) : null;
+
+    if (infosStatut) {
+      appliquerBadge(badgeEl, infosStatut.actif);
+      toggleCampagne.checked = !!infosStatut.actif;
+    } else {
+      var actifCampagne = etatLocal.campagne;
+      appliquerBadge(badgeEl, actifCampagne);
+      toggleCampagne.checked = !!actifCampagne;
+    }
+
+    if (statutReel.raisons && statutReel.raisons.length) {
+      var estSain = statutReel.primaryStatus === 'ENABLED' && statutReel.raisons.length === 0;
+      elNoteStatutReel.className = estSain ? 'ok' : '';
+      elNoteStatutReel.style.display = 'block';
+      elNoteStatutReel.textContent = 'Statut réel Google Ads : ' + statutReel.raisons.map(traduireRaisonStatut).join(', ') + '.';
+    } else if (infosStatut) {
+      elNoteStatutReel.className = infosStatut.actif ? 'ok' : '';
+      elNoteStatutReel.style.display = 'block';
+      elNoteStatutReel.textContent = infosStatut.actif
+        ? 'Statut réel Google Ads : la campagne est bien active, sans blocage signalé.'
+        : 'Statut réel Google Ads : la campagne n\'est pas active (' + infosStatut.label.toLowerCase() + ').';
+    } else {
+      elNoteStatutReel.style.display = 'none';
+    }
 
     // Budget
     var budgetEl = document.getElementById('budget-actuel');

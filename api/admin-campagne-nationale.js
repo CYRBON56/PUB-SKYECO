@@ -169,14 +169,42 @@ async function lireDetails() {
   // un tableau vide (sauf le budget, qui a son propre rapport non lié aux
   // statistiques). Une lecture qui échoue n'empêche jamais les autres de
   // s'afficher.
-  const [budgetLecture, motsClesLecture, negatifsLecture, termesLecture, heuresLecture, journal] = await Promise.all([
+  const [budgetLecture, motsClesLecture, negatifsLecture, termesLecture, heuresLecture, annoncesLecture, journal] = await Promise.all([
     interrogerWindsor(['campaign_id', 'campaign', 'campaign_budget_status', 'budget_amount']),
     interrogerWindsor(['ad_group_id', 'keyword_criterion_id', 'keyword_text', 'keyword_match_type', 'keyword_status', 'clicks', 'cost']),
     interrogerWindsor(['campaign_criterion_keyword_text', 'campaign_criterion_keyword_match_type', 'campaign_criterion_negative']),
     interrogerWindsor(['ad_group_id', 'search_term_view_search_term', 'search_term_view_status', 'clicks', 'cost']),
     interrogerWindsor(['hour_of_day', 'clicks']),
+    // Contenu réel des annonces (titres/descriptions/chemins d'affichage tels
+    // que configurés dans Google Ads) — sert à afficher un aperçu fidèle de
+    // l'annonce dans le dashboard (demande de Cyrille : voir les annonces
+    // "comme sur Internet", pas juste l'URL de destination et l'id).
+    interrogerWindsor([
+      'ad_group_id', 'ad_id',
+      'ad_responsive_search_ad_headlines_combined_text',
+      'ad_responsive_search_ad_descriptions_combined_text',
+      'ad_responsive_search_ad_path1',
+      'ad_responsive_search_ad_path2',
+    ]),
     lireJournalRecent(30),
   ]);
+
+  // Une ligne par annonce suffit (le rapport peut renvoyer plusieurs lignes
+  // identiques si joint à des statistiques quotidiennes) — on garde la
+  // première rencontrée par ad_id.
+  const contenuParAdId = new Map();
+  for (const ligne of annoncesLecture.lignes) {
+    const id = ligne.ad_id;
+    if (!id || contenuParAdId.has(String(id))) continue;
+    const titres = (ligne.ad_responsive_search_ad_headlines_combined_text || '').split('|').map((s) => s.trim()).filter(Boolean);
+    const descriptions = (ligne.ad_responsive_search_ad_descriptions_combined_text || '').split('|').map((s) => s.trim()).filter(Boolean);
+    contenuParAdId.set(String(id), {
+      titres,
+      descriptions,
+      chemin1: ligne.ad_responsive_search_ad_path1 || '',
+      chemin2: ligne.ad_responsive_search_ad_path2 || '',
+    });
+  }
 
   const negatifsCampagne = negatifsLecture.lignes
     .filter((l) => l.campaign_criterion_negative === true || l.campaign_criterion_negative === 'true')
@@ -208,7 +236,10 @@ async function lireDetails() {
       id: g.id,
       nom: g.nom,
       motsCles: g.motsCles,
-      adActuel: g.adActuel,
+      adActuel: {
+        ...g.adActuel,
+        contenu: contenuParAdId.get(String(g.adActuel.adId)) || null,
+      },
       anciennesAnnonces: g.anciennesAnnonces,
       performanceMotsCles: [...motsClesParId.values()]
         .map((m) => ({ ...m, coutEuros: +m.coutEuros.toFixed(2) }))
@@ -255,6 +286,7 @@ async function lireDetails() {
       negatifs: negatifsLecture.ok,
       termesRecherche: termesLecture.ok,
       clicsParHeure: heuresLecture.ok,
+      annonces: annoncesLecture.ok,
     },
   };
 }

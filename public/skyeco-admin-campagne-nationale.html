@@ -208,6 +208,23 @@
   /* ---------- Ajouter un mot-clé (par groupe) ---------- */
   .form-ajouter-mc{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-top:10px; }
   .form-ajouter-mc input[type="text"]{ flex:1; min-width:150px; }
+
+  /* ---------- Aperçu d'annonce façon Google ---------- */
+  .apercu-annonce{
+    background:#fff; border:1px solid var(--border); border-radius:8px;
+    padding:12px 14px; margin-top:10px; font-family:Arial, sans-serif;
+  }
+  .apercu-annonce .apercu-label{
+    display:inline-block; background:#EFEFEF; color:#4D5156; font-size:11px; font-weight:700;
+    border-radius:3px; padding:1px 5px; margin-right:6px; font-family:Arial, sans-serif;
+  }
+  .apercu-annonce .apercu-url{ color:#202124; font-size:13px; display:inline-flex; align-items:center; gap:4px; }
+  .apercu-annonce .apercu-titre{
+    color:#1A0DAB; font-size:18px; line-height:1.3; margin:3px 0 2px; font-family:Arial, sans-serif;
+  }
+  .apercu-annonce .apercu-desc{ color:#4D5156; font-size:13.5px; line-height:1.4; font-family:Arial, sans-serif; }
+  .apercu-annonce-vide{ font-size:12.5px; color:var(--ink-muted); font-style:italic; margin-top:8px; }
+  .apercu-note{ font-size:11px; color:var(--ink-muted); margin-top:6px; font-style:italic; }
 </style>
 </head>
 <body>
@@ -418,6 +435,34 @@
   })();
 
   // ---------------- Rendu ----------------
+
+  // Reconstitue un aperçu fidèle de l'annonce telle qu'elle apparaît dans
+  // les résultats Google (titre + URL affichée + description) à partir du
+  // contenu réel remonté par Windsor.ai (titres/descriptions/chemins
+  // configurés dans Google Ads) — plutôt que de n'afficher que l'URL de
+  // destination et l'id technique de l'annonce.
+  function construireApercuAnnonce(adActuel){
+    var domaine = '';
+    try { domaine = new URL(adActuel.urlFinale).hostname.replace(/^www\./, ''); } catch(e) { domaine = adActuel.urlFinale; }
+
+    var contenu = adActuel.contenu;
+    if (!contenu || !contenu.titres || !contenu.titres.length) {
+      return '<div class="apercu-annonce-vide">Contenu de l\'annonce (titres/descriptions) pas encore disponible depuis Google Ads.</div>';
+    }
+
+    var chemin = [contenu.chemin1, contenu.chemin2].filter(Boolean).join('/');
+    var urlAffichee = domaine + (chemin ? ' › ' + chemin : '');
+    var titre = contenu.titres.slice(0, 3).join(' | ');
+    var description = contenu.descriptions.slice(0, 2).join(' ');
+
+    return '<div class="apercu-annonce">' +
+      '<div><span class="apercu-label">Annonce</span><span class="apercu-url">' + escapeHtml(urlAffichee) + '</span></div>' +
+      '<div class="apercu-titre">' + escapeHtml(titre) + '</div>' +
+      '<div class="apercu-desc">' + escapeHtml(description) + '</div>' +
+      '</div>' +
+      '<div class="apercu-note">Aperçu approximatif — Google fait tourner différentes combinaisons de titres/descriptions parmi celles configurées, l\'annonce réelle peut varier légèrement.</div>';
+  }
+
   function badgeStatut(actif){
     if (actif === true) return '<span class="badge actif"><span class="point"></span> Actif</span>';
     if (actif === false) return '<span class="badge pause"><span class="point"></span> En pause</span>';
@@ -496,7 +541,8 @@
           '</div>' +
         '</div>' +
         '<div class="puces">' + puces + '</div>' +
-        '<div class="annonce-actuelle">Annonce en cours → <span class="mono">' + escapeHtml(g.adActuel.urlFinale) + '</span></div>' +
+        '<div class="annonce-actuelle">Destination → <span class="mono">' + escapeHtml(g.adActuel.urlFinale) + '</span></div>' +
+        construireApercuAnnonce(g.adActuel) +
         (anciennes ? '<details class="anciennes"><summary>Annonces des essais précédents (en pause, historique)</summary>' + anciennes + '</details>' : '') +
         tableauPerf +
         '<form class="form-ajouter-mc" data-groupe="' + g.id + '">' +

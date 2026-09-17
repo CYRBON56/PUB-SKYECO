@@ -476,10 +476,6 @@
         <span class="panel-tab-icone">👥</span>
         <span class="panel-tab-texte">Gérer les clients<span class="panel-tab-sous">Demandes, devis, signatures</span></span>
       </button>
-      <button type="button" class="panel-tab" id="tabMarketplace" data-tab="marketplace">
-        <span class="panel-tab-icone">🎯</span>
-        <span class="panel-tab-texte">Leads Skyeco<span class="panel-tab-sous">Contacts exclusifs à débloquer</span></span>
-      </button>
       <button type="button" class="panel-tab" id="tabReseaux" data-tab="reseaux">
         <span class="panel-tab-icone">📱</span>
         <span class="panel-tab-texte">Réseaux sociaux<span class="panel-tab-sous">Publication Instagram &amp; Facebook</span></span>
@@ -911,33 +907,6 @@
   </div>
   </div>
 
-  <div id="panelMarketplace" style="display:none;">
-  <div class="liste-panel">
-    <div class="liste-header">
-      <h3 style="display:flex; align-items:center; gap:9px;"><span style="font-size:1.1rem;">🎯</span>Leads Skyeco</h3>
-    </div>
-    <p style="color:#666; font-size:0.85rem; margin:-6px 0 16px;">Des prospects captés directement par Skyeco (pas depuis votre propre vitrine), vendus en exclusivité — une fois débloqué, un contact n'est plus proposé à personne d'autre et apparaît directement dans "Gérer les clients".</p>
-    <div id="marketplacePrefsPanel" style="display:none; background:#f7f8f9; border:1.5px solid #e4e7ea; border-radius:12px; padding:14px 16px; margin-bottom:16px;">
-      <button type="button" id="btnTogglePrefsMarketplace" style="background:none; border:none; padding:0; color:#14304A; font-weight:700; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; gap:6px;">
-        <span id="iconePrefsMarketplace">⚙️</span> Personnaliser mes préférences (métiers / départements)
-      </button>
-      <div id="marketplacePrefsForm" style="display:none; margin-top:12px;">
-        <div id="marketplacePrefsSourceInfo" style="font-size:0.8rem; color:#666; margin-bottom:10px;"></div>
-        <div style="font-size:0.8rem; font-weight:700; color:#3a4a43; margin-bottom:6px;">Métiers pour lesquels je veux voir des contacts</div>
-        <div id="marketplacePrefsMetiers" style="display:flex; flex-wrap:wrap; gap:8px 14px; margin-bottom:14px;"></div>
-        <div style="font-size:0.8rem; font-weight:700; color:#3a4a43; margin-bottom:6px;">Départements (ex : 56, 29, 44 — séparés par une virgule)</div>
-        <input type="text" id="marketplacePrefsDepartements" placeholder="56, 29" style="width:100%; max-width:320px; padding:8px 10px; border:1px solid #d5dbe0; border-radius:8px; font-size:0.85rem; margin-bottom:12px;">
-        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-          <button type="button" id="btnEnregistrerPrefsMarketplace" style="background:#14304A; color:#fff; border:none; border-radius:9px; padding:9px 16px; font-weight:700; font-size:0.82rem; cursor:pointer;">Enregistrer mes préférences</button>
-          <button type="button" id="btnReinitialiserPrefsMarketplace" style="background:none; border:1px solid #d5dbe0; color:#556; border-radius:9px; padding:9px 16px; font-weight:600; font-size:0.82rem; cursor:pointer;">Revenir à mon activité (vitrine)</button>
-          <span id="marketplacePrefsStatut" style="font-size:0.8rem; color:#2f7d4f;"></span>
-        </div>
-      </div>
-    </div>
-    <div id="marketplaceContent"><div class="loading">Chargement…</div></div>
-  </div>
-  </div>
-
   <div id="panelReseaux" style="display:none;">
   <div class="liste-panel">
     <div class="liste-header">
@@ -1039,15 +1008,6 @@
 
   const DRAFT_ID_SKYECO_PRO = '4fbdb122-9fca-4636-b80c-d9e4abc2542b';
 
-  // 16/09/2026 : la connexion Instagram/Facebook passe par l'app Meta
-  // Marketing/Business, actuellement en mode "Développement" (App Review en
-  // cours) — seul le compte Meta de Cyrille peut réellement s'y connecter.
-  // Tant que ce n'est pas approuvé, un vrai artisan qui cliquerait
-  // "Connecter Instagram" tomberait sur une erreur Meta incompréhensible.
-  // Un seul flag à repasser à true le jour où l'App Review Meta est validée
-  // (voir claude/skyeco-pro-guide-meta-app-review.md côté suivi projet).
-  const META_SOCIAL_DISPONIBLE_POUR_TOUS = false;
-
   if (!draftId) {
     document.body.innerHTML = '<div class="loading">Lien invalide — identifiant du site manquant.</div>';
   } else {
@@ -1112,7 +1072,6 @@
       activerOnglet('reseaux');
       document.getElementById('panelTabs').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-    confirmerAchatMarketplaceSiRetour();
     if (!adminToken) {
       chargerSitesCompte(token);
       chargerApercuCampagnes(token);
@@ -1372,7 +1331,6 @@
     document.getElementById('panelAds').style.display = cible === 'ads' ? '' : 'none';
     document.getElementById('panelMeta').style.display = cible === 'meta' ? '' : 'none';
     document.getElementById('panelClients').style.display = cible === 'clients' ? '' : 'none';
-    document.getElementById('panelMarketplace').style.display = cible === 'marketplace' ? '' : 'none';
     document.getElementById('panelReseaux').style.display = cible === 'reseaux' ? '' : 'none';
     document.getElementById('panelCalendrier').style.display = cible === 'calendrier' ? '' : 'none';
     document.getElementById('panelAppelVideo').style.display = cible === 'appelvideo' ? '' : 'none';
@@ -1388,231 +1346,6 @@
       chargerDemandes(tokenCalendrierActuel);
       chargerStats();
     }
-    if (cible === 'marketplace') {
-      chargerLeadsMarketplace();
-    }
-  }
-
-  // --- Onglet "Leads Skyeco" (marketplace, 16/09/2026) ---------------------
-  // Catalogue de contacts captés et financés directement par Skyeco (pas par
-  // l'artisan), vendus à l'unité et en exclusivité — voir
-  // api/marketplace-leads-disponibles.js / marketplace-reserver-lead.js /
-  // marketplace-confirmer-achat.js et claude/skyeco-pro-brief-marketplace-leads.md
-  // côté suivi projet. Pilote limité au métier résine/EPDM dans le Morbihan.
-  // Mêmes libellés que METIER_LABELS dans api/analyser-site-vitrine.js —
-  // gardés en phase manuellement (pas d'import possible côté front statique).
-  const METIER_LABELS_MARKETPLACE = {
-    paysagiste: 'Paysagiste',
-    piscine: 'Pose piscine',
-    tonte: 'Tonte et coupe',
-    terrasse: 'Terrasse',
-    paysagiste_concepteur: 'Paysagiste concepteur',
-    arboriste: 'Arboriste élagueur',
-    espaces_verts: "Entretien d'espaces verts",
-    resine: 'Revêtement en résine',
-    autre: 'Autre',
-  };
-  let dernierePrefsMarketplace = null;
-
-  async function chargerLeadsMarketplace() {
-    const content = document.getElementById('marketplaceContent');
-    content.innerHTML = '<div class="loading">Chargement…</div>';
-    try {
-      const resp = await fetch('/api/marketplace-leads-disponibles', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, token: tokenCalendrierActuel }),
-      });
-      const data = await resp.json();
-      if (!data.success) {
-        content.innerHTML = '<div class="empty-msg">Impossible de charger les contacts pour le moment.</div>';
-        return;
-      }
-
-      // Panneau de préférences visible dès qu'on a un profil (même inéligible) —
-      // ça permet à un artisan sans métier/zone renseigné sur sa vitrine de se
-      // configurer lui-même plutôt que de rester bloqué.
-      afficherPanneauPrefsMarketplace(data);
-
-      if (!data.eligible) {
-        content.innerHTML = `
-          <div class="empty-msg">
-            <span class="empty-icone">🎯</span>
-            <strong>Aucun métier/département configuré pour l'instant</strong>
-            <div style="margin-top:8px; max-width:440px; margin-left:auto; margin-right:auto;">Renseignez votre activité et votre zone d'intervention ci-dessus (ou dans les infos de votre vitrine) pour voir apparaître ici les contacts Skyeco correspondants.</div>
-          </div>`;
-        return;
-      }
-      if (!data.leads.length) {
-        const libellesMetiers = (data.preferences.metiers || []).map(m => METIER_LABELS_MARKETPLACE[m] || m).join(', ');
-        content.innerHTML = `
-          <div class="empty-msg">
-            <span class="empty-icone">🎯</span>
-            <strong>Aucun contact disponible pour le moment</strong>
-            <div style="margin-top:8px;">De nouveaux prospects${libellesMetiers ? ' (' + escaperHtml(libellesMetiers) + ')' : ''} dans votre secteur apparaîtront ici dès qu'ils seront captés — revenez bientôt.</div>
-          </div>`;
-        return;
-      }
-      content.innerHTML = data.leads.map(l => `
-        <div style="border:1px solid #e2e2e2; border-radius:12px; padding:16px 18px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;">
-          <div>
-            <strong>${escaperHtml(l.type_projet || METIER_LABELS_MARKETPLACE[l.metier] || 'Projet')}</strong> — ${escaperHtml(l.commune || l.code_postal || '')}
-            ${l.surface_m2 ? `<br><span style="color:#666; font-size:0.85rem;">Surface indicative : ${escaperHtml(String(l.surface_m2))} m²</span>` : ''}
-            ${l.budget_indicatif ? `<br><span style="color:#666; font-size:0.85rem;">Budget indicatif : ${escaperHtml(l.budget_indicatif)}</span>` : ''}
-            <br><span style="color:#999; font-size:0.78rem;">Reçu le ${new Date(l.created_at).toLocaleDateString('fr-FR')}</span>
-          </div>
-          <button type="button" onclick="acheterLeadMarketplace('${l.id}', this)" style="background:#E8622C; color:#fff; border:none; border-radius:10px; padding:10px 16px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap;">Débloquer ce contact — ${(l.prix_cts / 100).toFixed(2)}€</button>
-        </div>
-      `).join('');
-    } catch (e) {
-      content.innerHTML = '<div class="empty-msg">Erreur de chargement.</div>';
-    }
-  }
-
-  function afficherPanneauPrefsMarketplace(data) {
-    dernierePrefsMarketplace = data;
-    const panel = document.getElementById('marketplacePrefsPanel');
-    panel.style.display = '';
-
-    const metiersVitrine = Array.isArray(data.metierVitrine) ? data.metierVitrine : [];
-    const metiersActifs = (data.preferences && data.preferences.metiers) || [];
-    const departementsActifs = (data.preferences && data.preferences.departements) || [];
-    const personnalisees = !!(data.preferences && data.preferences.personnalisees);
-
-    const infoDiv = document.getElementById('marketplacePrefsSourceInfo');
-    infoDiv.textContent = personnalisees
-      ? 'Vous utilisez des préférences personnalisées (différentes de votre vitrine).'
-      : (metiersVitrine.length
-        ? "Par défaut, on se base sur l'activité et la zone déclarées sur votre vitrine."
-        : "Aucune activité/zone n'est encore déclarée sur votre vitrine — configurez vos préférences ci-dessous.");
-
-    const zoneMetiers = document.getElementById('marketplacePrefsMetiers');
-    zoneMetiers.innerHTML = Object.entries(METIER_LABELS_MARKETPLACE).map(([valeur, libelle]) => `
-      <label style="display:flex; align-items:center; gap:6px; font-size:0.83rem; cursor:pointer;">
-        <input type="checkbox" value="${valeur}" ${metiersActifs.includes(valeur) ? 'checked' : ''}> ${escaperHtml(libelle)}
-      </label>
-    `).join('');
-
-    document.getElementById('marketplacePrefsDepartements').value = departementsActifs.join(', ');
-  }
-
-  async function enregistrerPrefsMarketplace() {
-    const btn = document.getElementById('btnEnregistrerPrefsMarketplace');
-    const statut = document.getElementById('marketplacePrefsStatut');
-    const metiers = Array.from(document.querySelectorAll('#marketplacePrefsMetiers input:checked')).map(i => i.value);
-    const departements = document.getElementById('marketplacePrefsDepartements').value
-      .split(',').map(d => d.trim()).filter(Boolean);
-
-    btn.disabled = true;
-    statut.style.color = '#2f7d4f';
-    statut.textContent = 'Enregistrement…';
-    try {
-      const resp = await fetch('/api/marketplace-definir-preferences', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, metiers, departements }),
-      });
-      const data = await resp.json();
-      if (!data.success) {
-        statut.style.color = '#c0392b';
-        statut.textContent = data.error || 'Erreur — réessayez.';
-        return;
-      }
-      statut.textContent = 'Préférences enregistrées ✓';
-      chargerLeadsMarketplace();
-    } catch (e) {
-      statut.style.color = '#c0392b';
-      statut.textContent = 'Erreur — réessayez.';
-    } finally {
-      btn.disabled = false;
-    }
-  }
-
-  async function reinitialiserPrefsMarketplace() {
-    document.querySelectorAll('#marketplacePrefsMetiers input').forEach(i => { i.checked = false; });
-    document.getElementById('marketplacePrefsDepartements').value = '';
-    await enregistrerPrefsMarketplace();
-  }
-
-  document.addEventListener('DOMContentLoaded', () => {
-    const btnToggle = document.getElementById('btnTogglePrefsMarketplace');
-    const btnSave = document.getElementById('btnEnregistrerPrefsMarketplace');
-    const btnReset = document.getElementById('btnReinitialiserPrefsMarketplace');
-    if (btnToggle) {
-      btnToggle.addEventListener('click', () => {
-        const form = document.getElementById('marketplacePrefsForm');
-        const ouvert = form.style.display !== 'none';
-        form.style.display = ouvert ? 'none' : '';
-        document.getElementById('iconePrefsMarketplace').textContent = ouvert ? '⚙️' : '🔽';
-      });
-    }
-    if (btnSave) btnSave.addEventListener('click', enregistrerPrefsMarketplace);
-    if (btnReset) btnReset.addEventListener('click', reinitialiserPrefsMarketplace);
-  });
-
-  function escaperHtml(texte) {
-    const div = document.createElement('div');
-    div.textContent = texte == null ? '' : String(texte);
-    return div.innerHTML;
-  }
-
-  async function acheterLeadMarketplace(leadId, btn) {
-    btn.disabled = true;
-    const texteOriginal = btn.textContent;
-    btn.textContent = 'Redirection…';
-    try {
-      const resp = await fetch('/api/marketplace-reserver-lead', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, leadId }),
-      });
-      const data = await resp.json();
-      if (!data.success) {
-        alert(data.error || "Ce contact n'est plus disponible.");
-        chargerLeadsMarketplace();
-        return;
-      }
-      window.location.href = data.url;
-    } catch (e) {
-      alert('Erreur — réessayez.');
-      btn.disabled = false;
-      btn.textContent = texteOriginal;
-    }
-  }
-
-  // Après retour de Stripe Checkout (succès ou annulation) — voir
-  // success_url / cancel_url dans api/marketplace-reserver-lead.js.
-  async function confirmerAchatMarketplaceSiRetour() {
-    const sessionId = params.get('marketplace_session_id');
-    const annule = params.get('marketplace_annule');
-    if (!sessionId && !annule) return;
-
-    const urlPropre = new URL(window.location.href);
-    urlPropre.searchParams.delete('marketplace_session_id');
-    urlPropre.searchParams.delete('marketplace_annule');
-    window.history.replaceState({}, '', urlPropre.toString() + '#marketplace');
-    activerOnglet('marketplace');
-    document.getElementById('panelTabs').scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-    if (annule) return; // rien à confirmer, l'artisan a annulé le paiement
-
-    try {
-      const resp = await fetch('/api/marketplace-confirmer-achat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, token: tokenCalendrierActuel, sessionId }),
-      });
-      const data = await resp.json();
-      if (data.success) {
-        alert(data.message || 'Contact débloqué avec succès !');
-        chargerDemandes(tokenCalendrierActuel);
-      } else {
-        alert(data.error || "Le paiement n'a pas pu être confirmé — contactez le support si le montant a bien été débité.");
-      }
-    } catch (e) {
-      alert('Erreur de confirmation — contactez le support si le montant a bien été débité.');
-    }
-    chargerLeadsMarketplace();
   }
 
   function initPanelTabs() {
@@ -1633,23 +1366,6 @@
   // /api/social-* qui restent à développer.
   async function chargerReseauxSociaux() {
     const content = document.getElementById('reseauxContent');
-
-    // Voir META_SOCIAL_DISPONIBLE_POUR_TOUS ci-dessus : tant que l'App
-    // Review Meta n'est pas validée, on montre un état "bientôt disponible"
-    // plutôt que de laisser un artisan tenter une connexion qui échouera.
-    if (!META_SOCIAL_DISPONIBLE_POUR_TOUS && draftId !== DRAFT_ID_SKYECO_PRO) {
-      content.innerHTML = `
-        <div class="empty-msg" style="text-align:center; padding:36px 20px;">
-          <span class="empty-icone" style="font-size:2rem; display:block; margin-bottom:10px;">🚧</span>
-          <strong style="display:block; margin-bottom:6px; color:#211a35;">Bientôt disponible</strong>
-          <span style="color:#6b7a72; font-size:0.88rem; max-width:380px; display:inline-block;">
-            La publication automatique sur Instagram et Facebook est en cours de validation auprès de Meta.
-            Cette fonctionnalité s'activera automatiquement sur votre compte dès que ce sera fait — aucune action de votre part n'est nécessaire.
-          </span>
-        </div>`;
-      return;
-    }
-
     content.innerHTML = '<div class="loading">Chargement…</div>';
     try {
       const [connexionResp, postsResp, ficheGoogleResp] = await Promise.all([
@@ -2658,7 +2374,22 @@
         document.getElementById('banniereePause').style.display = 'flex';
       }
 
-      if (statut === 'preview') {
+      if (statut === 'preview' || statut === 'essai') {
+        // 17/09/2026 : bug remonté par Cyrille — après le changement du 07/09
+        // qui fait démarrer l'essai gratuit DÈS l'inscription (voir
+        // api/demarrer-essai-gratuit.js), un artisan tout juste inscrit a
+        // directement le statut "essai", et ne passe plus JAMAIS par
+        // "preview". Ce bloc ne se déclenchant qu'au statut "preview", le
+        // bouton "Mettre en ligne" n'apparaissait donc plus du tout pour un
+        // artisan en essai gratuit (vérifié en base : brouillons de test du
+        // 17/09, éléments déjà déposés, statut "essai") — alors que ces
+        // artisans-là n'ont pourtant jamais réellement lancé leur campagne
+        // (ça, c'est api/confirm-ad-payment.js qui s'en charge, plus tard).
+        // On déclenche donc maintenant ce bloc aussi au statut "essai" : le
+        // bouton reste utile tant que le forfait payant n'a pas été
+        // confirmé, et redevient sans objet dès que le statut passe à
+        // "published" (plus de condition "essai" à ce moment-là).
+        //
         // 14/09/2026 (soir) : "Mettre en ligne" passe désormais D'ABORD par
         // skyeco-pro-inscription-siret.html (SIRET, nom, prénom, téléphone
         // vérifié par SMS, email, adresse — nécessaire à la facturation) —
@@ -3014,22 +2745,7 @@
       document.getElementById('btnVoirClientsArchives').style.display = leadsData.some(l => l.archive) || leadsAffiches.length ? 'inline-block' : 'none';
 
       if (!leadsAffiches.length) {
-        // 16/09/2026 : avant, ce message générique s'affichait même juste
-        // après le démarrage de l'essai gratuit, avant que la vitrine ou la
-        // campagne existent — un nouvel artisan pouvait croire que "rien ne
-        // marche" alors que c'est simplement trop tôt. On explique la
-        // situation réelle selon l'avancement de son dossier.
-        const campagnePasEncoreLancee = statutDraftActuel === 'essai' || statutDraftActuel === 'preview' || !statutDraftActuel;
-        content.innerHTML = campagnePasEncoreLancee
-          ? `<div class="empty-msg" style="text-align:left; max-width:480px; margin:0 auto; padding:28px 20px;">
-              <span class="empty-icone" style="font-size:1.8rem; display:block; margin-bottom:10px; text-align:center;">🚀</span>
-              <strong style="display:block; margin-bottom:8px; color:#211a35; text-align:center;">C'est normal, il n'y a encore rien à voir ici</strong>
-              <span style="color:#6b7a72; font-size:0.87rem; line-height:1.6; display:block;">
-                Tant que votre vitrine n'est pas construite et votre campagne pas encore lancée, aucune demande ne peut arriver — vos futurs clients n'ont pas encore de page à visiter.
-                Dès que votre campagne sera en ligne (onglet <strong>Gérer Google Ads</strong>), vos premières demandes apparaîtront automatiquement ici, et vous serez aussi prévenu par SMS et email à chaque nouvelle demande.
-              </span>
-            </div>`
-          : '<div class="empty-msg"><span class="empty-icone">📭</span>Aucune demande reçue pour l\'instant — vous serez prévenu par SMS et email dès la première.</div>';
+        content.innerHTML = '<div class="empty-msg"><span class="empty-icone">📭</span>Aucune demande reçue pour l\'instant.</div>';
         return;
       }
 

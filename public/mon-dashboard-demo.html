@@ -1019,12 +1019,33 @@
           // 08/09/2026 : SMS + email de bienvenue avec le lien du tableau de
           // bord, demandé par Cyrille — déclenché en "fire and forget" pour
           // ne jamais retarder la redirection, même si l'envoi échoue ou
-          // prend du temps.
+          // prend du temps. 17/09/2026 (soir) : comme le brouillon n'a plus
+          // ni téléphone ni email à ce stade, cet appel n'enverra rien pour
+          // l'instant (envoyer-bienvenue-essai.js gère déjà ce cas sans
+          // erreur) — gardé quand même pour le jour où l'artisan aura
+          // renseigné l'un ou l'autre plus tard dans son parcours.
           fetch('/api/envoyer-bienvenue-essai', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ draftId: idAUtiliser })
           }).catch(() => {});
+          // 17/09/2026 (soir) : sans ce jeton, mon-dashboard.html (voir
+          // verifierAccesPuisCharger) ne trouve aucune session et redirige
+          // aussitôt vers acces-dashboard.html, qui demande alors un email
+          // pour créer un compte — exactement la barrière que Cyrille a
+          // demandé de supprimer avant "Mettre en ligne". On stocke donc ce
+          // jeton (renvoyé par /api/demarrer-essai-gratuit, valable 90 jours,
+          // scopé à ce seul site) dans sessionStorage ET localStorage, pour
+          // que l'artisan retrouve directement son tableau de bord sans
+          // rien saisir, y compris s'il revient plus tard depuis le même
+          // navigateur après l'avoir fermé.
+          if (data.token) {
+            try {
+              sessionStorage.setItem('skyeco_dashboard_token_' + idAUtiliser, data.token);
+              sessionStorage.setItem('skyeco_dashboard_token', data.token);
+              localStorage.setItem('skyeco_dashboard_token_' + idAUtiliser, data.token);
+            } catch (e) {}
+          }
           // Direction le VRAI dashboard, en mode essai — les informations
           // complètes de l'entreprise (construire-ma-vitrine.html) et le choix d'un
           // forfait payant ne sont demandés que plus tard, quand l'artisan

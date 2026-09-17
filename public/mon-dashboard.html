@@ -1016,9 +1016,23 @@
 
   async function verifierAccesPuisCharger() {
     const adminToken = params.get('admin_token');
-    const token = adminToken
+    // 17/09/2026 (soir) : ajout d'un repli sur localStorage, en plus de
+    // sessionStorage — le jeton posé par mon-dashboard-demo.html au moment
+    // de "Démarrer mon essai gratuit" y est stocké pour survivre à une
+    // fermeture du navigateur, afin qu'un artisan qui revient plus tard sur
+    // son tableau de bord (même appareil) ne se fasse pas renvoyer vers
+    // acces-dashboard.html — qui lui demanderait un email — avant d'avoir
+    // lui-même choisi de "Mettre en ligne".
+    let token = adminToken
       || sessionStorage.getItem('skyeco_dashboard_token_' + draftId)
       || sessionStorage.getItem('skyeco_dashboard_token');
+    let depuisLocalStorage = false;
+    if (!token) {
+      try {
+        token = localStorage.getItem('skyeco_dashboard_token_' + draftId);
+        depuisLocalStorage = !!token;
+      } catch (e) {}
+    }
 
     if (!token) {
       window.location.href = '/acces-dashboard.html?id=' + draftId;
@@ -1035,10 +1049,11 @@
       if (!data.valid) {
         sessionStorage.removeItem('skyeco_dashboard_token_' + draftId);
         sessionStorage.removeItem('skyeco_dashboard_token');
+        try { localStorage.removeItem('skyeco_dashboard_token_' + draftId); } catch (e) {}
         window.location.href = '/acces-dashboard.html?id=' + draftId;
         return;
       }
-      if (!adminToken) {
+      if (!adminToken || depuisLocalStorage) {
         sessionStorage.setItem('skyeco_dashboard_token_' + draftId, token);
         sessionStorage.setItem('skyeco_dashboard_token', token);
       }

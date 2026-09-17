@@ -596,7 +596,15 @@
   // tout le monde d'autre (premier passage), seul le bouton d'essai gratuit
   // est visible — le paiement direct n'est plus proposé en premier choix.
   function renderPlans(statutActuel, rangVitrine) {
-    const dejaEssaye = statutActuel === 'essai' || statutActuel === 'essai_expire';
+    // 17/09/2026 (soir) : sur demande de Cyrille, un artisan dont l'essai
+    // gratuit est encore EN COURS ('essai') ne doit plus voir le bouton de
+    // paiement — ça revenait à lui redemander une carte alors qu'il n'a pas
+    // fini son mois gratuit. Seul un essai réellement TERMINÉ
+    // ('essai_expire', voir api/verifier-essais-a-programmer.js) déclenche
+    // le paiement. Pendant l'essai en cours, on l'envoie simplement démarrer
+    // la diffusion de sa vitrine (voir essaiEnCours ci-dessous).
+    const dejaEssaye = statutActuel === 'essai_expire';
+    const essaiEnCours = statutActuel === 'essai';
     // À partir de la 3e vitrine du compte, tarif "vitrine supplémentaire"
     // (03/09) — sinon le forfait normal, inchangé.
     const forfaitsAffiches = (rangVitrine >= 3) ? [FORFAIT_VITRINE_SUPPLEMENTAIRE] : FORFAITS;
@@ -625,8 +633,9 @@
           <button class="btn-choisir" data-plan="${f.id}">${f.prixPromo ? 'Mettre en ligne (-50%)' : 'Mettre en ligne'}</button>
           <div class="btn-securise">🔒 Paiement sécurisé via Stripe</div>
         ` : `
-          <button class="btn-essai-gratuit" data-plan="${f.id}">Essayer gratuitement 1 mois</button>
-          <div class="btn-essai-sub">Sans carte bancaire — rappel par SMS avant la fin</div>
+          ${essaiEnCours ? `<div class="plan-note-ads">Votre essai gratuit est toujours en cours, aucune carte n'est demandée. Vous pouvez dès maintenant commencer la diffusion de votre vitrine pour attirer des prospects.</div>` : ''}
+          <button class="btn-essai-gratuit" data-plan="${f.id}">${essaiEnCours ? 'Commencer la diffusion →' : 'Essayer gratuitement 1 mois'}</button>
+          <div class="btn-essai-sub">${essaiEnCours ? 'Sans carte bancaire' : 'Sans carte bancaire — rappel par SMS avant la fin'}</div>
           <div style="display:flex; align-items:center; justify-content:center; gap:6px; margin-top:10px; font-size:0.76rem; color:#8a9891;">
             <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M12 2l4.5 7.79h-9L12 2z"/><path fill="#34A853" d="M3.5 9.79h9L7.75 22l-4.25-12.21z"/><path fill="#FBBC05" d="M16.5 9.79h4L16.25 22l-4.25-12.21h4.5z"/></svg>
             Diffusion via Google Ads dès l'activation
@@ -659,6 +668,12 @@
       return;
     }
     if (!choixVitrineEstValide()) return;
+    // 17/09/2026 (soir) : le libellé du bouton dépend désormais du statut
+    // ('Commencer la diffusion →' si l'essai est déjà en cours, sinon
+    // 'Essayer gratuitement 1 mois') — on capture le texte affiché plutôt
+    // que de le re-coder en dur, pour que les messages d'erreur ci-dessous
+    // remettent le bon texte.
+    const texteInitial = btn.textContent;
     btn.disabled = true;
     btn.textContent = 'Démarrage…';
     try {
@@ -696,12 +711,12 @@
       } else {
         alert(data.error || 'Impossible de démarrer l\'essai gratuit.');
         btn.disabled = false;
-        btn.textContent = 'Essayer gratuitement 1 mois';
+        btn.textContent = texteInitial;
       }
     } catch (e) {
       alert('Impossible de contacter le serveur.');
       btn.disabled = false;
-      btn.textContent = 'Essayer gratuitement 1 mois';
+      btn.textContent = texteInitial;
     }
   }
 

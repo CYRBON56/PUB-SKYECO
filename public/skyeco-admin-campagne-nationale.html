@@ -455,12 +455,16 @@
     var titre = contenu.titres.slice(0, 3).join(' | ');
     var description = contenu.descriptions.slice(0, 2).join(' ');
 
+    var note = adActuel.contenuEnDirect
+      ? 'Aperçu approximatif — Google fait tourner différentes combinaisons de titres/descriptions parmi celles configurées, l\'annonce réelle peut varier légèrement.'
+      : 'Aperçu basé sur le contenu configuré dans Google Ads (pas encore une lecture en direct — normal tant que la campagne n\'a jamais diffusé). Il se mettra à jour automatiquement une fois l\'annonce active.';
+
     return '<div class="apercu-annonce">' +
       '<div><span class="apercu-label">Annonce</span><span class="apercu-url">' + escapeHtml(urlAffichee) + '</span></div>' +
       '<div class="apercu-titre">' + escapeHtml(titre) + '</div>' +
       '<div class="apercu-desc">' + escapeHtml(description) + '</div>' +
       '</div>' +
-      '<div class="apercu-note">Aperçu approximatif — Google fait tourner différentes combinaisons de titres/descriptions parmi celles configurées, l\'annonce réelle peut varier légèrement.</div>';
+      '<div class="apercu-note">' + escapeHtml(note) + '</div>';
   }
 
   function badgeStatut(actif){

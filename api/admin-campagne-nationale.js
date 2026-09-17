@@ -238,7 +238,12 @@ async function lireDetails() {
       motsCles: g.motsCles,
       adActuel: {
         ...g.adActuel,
-        contenu: contenuParAdId.get(String(g.adActuel.adId)) || null,
+        // Priorité à la lecture live Windsor.ai ; repli sur le contenu tel
+        // que configuré à la création si Windsor n'a pas encore synchronisé
+        // ce niveau de détail pour cette campagne (voir le commentaire sur
+        // CONTENU_ANNONCE_A dans _lib/campagne-nationale.js).
+        contenu: contenuParAdId.get(String(g.adActuel.adId)) || g.adActuel.contenuConfigure || null,
+        contenuEnDirect: contenuParAdId.has(String(g.adActuel.adId)),
       },
       anciennesAnnonces: g.anciennesAnnonces,
       performanceMotsCles: [...motsClesParId.values()]

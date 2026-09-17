@@ -24,8 +24,43 @@
 // Variables d'environnement requises :
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 //   DASHBOARD_SESSION_SECRET (chaîne aléatoire longue, à définir dans Vercel)
+//   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER, ADMIN_PHONE
+//
+// 17/09/2026 (soir) : sur demande de Cyrille, un SMS lui est désormais
+// envoyé à chaque première création de mot de passe (peu importe le point
+// d'entrée — "Mettre en ligne", "Approvisionner", ou une première connexion
+// depuis un lien direct — tous passent par ce même endpoint, appelé une
+// seule fois par compte). Calqué sur le mécanisme déjà utilisé dans
+// api/demander-formulaire-personnalise.js (même helper envoyerSMS).
+// Best-effort : un échec d'envoi SMS ne doit jamais empêcher la création du
+// compte de l'artisan.
 
 import crypto from 'crypto';
+
+const ADMIN_PHONE = process.env.ADMIN_PHONE || '';
+
+function toE164(rawPhone) {
+  const digits = String(rawPhone || '').replace(/\D/g, '');
+  if (digits.startsWith('33') && digits.length === 11) return '+' + digits;
+  if (digits.startsWith('0') && digits.length === 10) return '+33' + digits.slice(1);
+  return rawPhone;
+}
+
+async function envoyerSMS(to, body) {
+  if (!to) throw new Error('ADMIN_PHONE est vide');
+  const sid = process.env.TWILIO_ACCOUNT_SID;
+  const token = process.env.TWILIO_AUTH_TOKEN;
+  const from = process.env.TWILIO_FROM_NUMBER;
+  const resp = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+    method: 'POST',
+    headers: {
+      Authorization: 'Basic ' + Buffer.from(`${sid}:${token}`).toString('base64'),
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({ To: toE164(to), From: from, Body: body }),
+  });
+  if (!resp.ok) throw new Error(`Twilio a répondu ${resp.status} : ${await resp.text()}`);
+}
 
 function hasherMotDePasse(motDePasse) {
   const sel = crypto.randomBytes(16).toString('hex');
@@ -62,7 +97,7 @@ export default async function handler(req, res) {
 
   try {
     const draftResp = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=id,email`,
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=id,email,entreprise,telephone,dashboard_password_hash`,
       { headers: supaHeaders }
     );
     const rows = await draftResp.json();
@@ -114,6 +149,23 @@ export default async function handler(req, res) {
         );
       } catch (e) {
         console.error('Propagation mot de passe aux autres sites échouée (non bloquant) :', e);
+      }
+    }
+
+    // SMS à Cyrille — uniquement sur une VRAIE première création (pas une
+    // réinitialisation), pour ne pas le notifier à chaque reset de mot de
+    // passe qu'il ferait lui-même depuis mes-artisans.html. Best-effort :
+    // ne bloque jamais la réponse de succès envoyée à l'artisan.
+    const estPremiereCreation = !draft.dashboard_password_hash;
+    if (estPremiereCreation) {
+      const nomAffiche = draft.entreprise || 'Un artisan';
+      const coordonnees = [draft.telephone, emailFinal].filter(Boolean).join(' — ');
+      const lienDashboard = `https://www.skyeco.fr/mon-dashboard.html?id=${draftId}`;
+      const texte = `🔔 ${nomAffiche} vient de créer son mot de passe et d'accéder à son tableau de bord Skyeco Pro pour la première fois.${coordonnees ? ' Contact : ' + coordonnees + '.' : ''} Dashboard : ${lienDashboard}`;
+      try {
+        await envoyerSMS(ADMIN_PHONE, texte);
+      } catch (e) {
+        console.error('Échec envoi SMS dashboard-set-password (non bloquant) :', e);
       }
     }
 

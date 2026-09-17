@@ -177,6 +177,37 @@
     background:var(--amber-bg); color:#7A5300; border:1px solid #EFD9A0; border-radius:8px;
     padding:10px 14px; font-size:12.5px; margin-bottom:14px; line-height:1.5;
   }
+
+  /* ---------- KPI vue d'ensemble ---------- */
+  .kpi-grille{ display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:12px; }
+  .kpi-carte{ background:var(--surface-alt); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
+  .kpi-carte .kpi-valeur{ font-family:'Big Shoulders Display'; font-size:28px; color:var(--navy); line-height:1; }
+  .kpi-carte .kpi-label{ font-size:11.5px; color:var(--ink-muted); text-transform:uppercase; letter-spacing:0.03em; margin-top:4px; }
+
+  /* ---------- Coach IA ---------- */
+  .synthese-ia{
+    background:var(--surface-alt); border-left:4px solid var(--orange); border-radius:8px;
+    padding:16px 18px; font-size:14px; line-height:1.6; white-space:pre-wrap;
+  }
+  .synthese-ia-date{ font-size:11.5px; color:var(--ink-muted); margin-top:10px; }
+  .synthese-vide{ font-size:13px; color:var(--ink-muted); font-style:italic; }
+  #btn-lancer-ia{ margin-top:14px; }
+  #btn-lancer-ia.chargement{ opacity:0.7; cursor:wait; }
+  details.journal-ia{ margin-top:16px; }
+  details.journal-ia summary{ font-size:13px; color:var(--navy); cursor:pointer; font-weight:600; }
+  .journal-item{ border-bottom:1px solid var(--border); padding:10px 0; font-size:13px; }
+  .journal-item:last-child{ border-bottom:none; }
+  .journal-item .journal-titre{ font-weight:600; color:var(--ink); }
+  .journal-item .journal-date{ font-size:11px; color:var(--ink-muted); margin-top:2px; }
+  .journal-item .journal-contenu{ margin-top:3px; color:var(--ink-muted); }
+
+  /* ---------- Mots-clés négatifs ---------- */
+  .negatifs-liste{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .negatif-puce{ background:#F7E9E5; border:1px solid #E9C9BC; color:#8A3B1F; border-radius:999px; padding:3px 10px; font-size:12px; }
+
+  /* ---------- Ajouter un mot-clé (par groupe) ---------- */
+  .form-ajouter-mc{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-top:10px; }
+  .form-ajouter-mc input[type="text"]{ flex:1; min-width:150px; }
 </style>
 </head>
 <body>
@@ -204,6 +235,32 @@
 
   <section class="bloc" id="bloc-avertissement" style="display:none;">
     <div class="avertissement" id="texte-avertissement"></div>
+  </section>
+
+  <section class="bloc">
+    <h2>Vue d'ensemble</h2>
+    <div class="desc">Lecture rapide de la campagne, tous groupes confondus (90 derniers jours).</div>
+    <div class="kpi-grille" id="kpi-grille"></div>
+  </section>
+
+  <section class="bloc">
+    <h2>Coach IA — synthèse quotidienne
+      <button class="btn btn-primaire" id="btn-lancer-ia" type="button">Lancer l'analyse maintenant</button>
+    </h2>
+    <div class="desc">
+      Une IA lit chaque jour la campagne (mots-clés, clics, termes de recherche, budget) et agit directement dans des
+      limites de sécurité fixées à l'avance : elle peut exclure ou ajouter des mots-clés et ajuster le budget quotidien
+      (jamais plus du double ni moins de la moitié en un passage, toujours entre 5€ et 60€/jour), mais n'a pas accès à
+      l'interrupteur marche/arrêt de la campagne, des groupes ou des annonces — cette décision reste toujours manuelle,
+      via les interrupteurs de ce dashboard.
+    </div>
+    <div class="synthese-ia" id="synthese-ia">
+      <span class="synthese-vide">Aucune synthèse pour l'instant — cliquez sur « Lancer l'analyse maintenant » pour la première.</span>
+    </div>
+    <details class="journal-ia">
+      <summary>Journal des actions de l'IA</summary>
+      <div id="journal-ia"></div>
+    </details>
   </section>
 
   <section class="bloc">
@@ -240,6 +297,14 @@
       des essais précédents restent visibles en pause dans l'historique repliable, à titre de traçabilité.
     </div>
     <div id="liste-groupes"></div>
+  </section>
+
+  <section class="bloc">
+    <h2>Mots-clés exclus (négatifs)</h2>
+    <div class="desc">
+      Recherches bloquées sur toute la campagne (les 3 groupes) — ajoutées manuellement ou par le coach IA.
+    </div>
+    <div id="liste-negatifs"></div>
   </section>
 
   <section class="bloc">
@@ -433,10 +498,65 @@
         '<div class="puces">' + puces + '</div>' +
         '<div class="annonce-actuelle">Annonce en cours → <span class="mono">' + escapeHtml(g.adActuel.urlFinale) + '</span></div>' +
         (anciennes ? '<details class="anciennes"><summary>Annonces des essais précédents (en pause, historique)</summary>' + anciennes + '</details>' : '') +
-        tableauPerf;
+        tableauPerf +
+        '<form class="form-ajouter-mc" data-groupe="' + g.id + '">' +
+          '<input type="text" class="nouveau-mot-cle" placeholder="Nouveau mot-clé" />' +
+          '<select class="nouveau-mot-cle-type">' +
+            '<option value="PHRASE">Expression</option>' +
+            '<option value="BROAD">Requête large</option>' +
+            '<option value="EXACT">Exact</option>' +
+          '</select>' +
+          '<button type="submit" class="btn btn-secondaire">Ajouter</button>' +
+        '</form>';
 
       conteneur.appendChild(div);
     });
+
+    // KPI vue d'ensemble
+    var clicsTotal = 0, coutTotal = 0, motsClesActifs = 0;
+    data.groupes.forEach(function(g){
+      (g.performanceMotsCles || []).forEach(function(m){ clicsTotal += m.clics; coutTotal += m.coutEuros; });
+      motsClesActifs += (g.motsCles || []).length;
+    });
+    var kpiGrille = document.getElementById('kpi-grille');
+    kpiGrille.innerHTML =
+      '<div class="kpi-carte"><div class="kpi-valeur">' + clicsTotal + '</div><div class="kpi-label">Clics (90j)</div></div>' +
+      '<div class="kpi-carte"><div class="kpi-valeur">' + coutTotal.toFixed(2) + ' €</div><div class="kpi-label">Coût (90j)</div></div>' +
+      '<div class="kpi-carte"><div class="kpi-valeur">' + motsClesActifs + '</div><div class="kpi-label">Mots-clés configurés</div></div>' +
+      '<div class="kpi-carte"><div class="kpi-valeur">' + ((data.negatifsCampagne || []).length) + '</div><div class="kpi-label">Mots-clés exclus</div></div>';
+
+    // Synthèse IA du jour
+    var elSynthese = document.getElementById('synthese-ia');
+    if (data.derniereSynthese && data.derniereSynthese.contenu) {
+      elSynthese.innerHTML = escapeHtml(data.derniereSynthese.contenu) +
+        '<div class="synthese-ia-date">' + formaterDate(data.derniereSynthese.cree_le) + '</div>';
+    } else {
+      elSynthese.innerHTML = '<span class="synthese-vide">Aucune synthèse pour l\'instant — cliquez sur « Lancer l\'analyse maintenant » pour la première.</span>';
+    }
+
+    // Journal des actions IA
+    var elJournal = document.getElementById('journal-ia');
+    if (data.actionsIA && data.actionsIA.length) {
+      elJournal.innerHTML = data.actionsIA.map(function(a){
+        return '<div class="journal-item">' +
+          '<div class="journal-titre">' + escapeHtml(a.titre || a.action_type || 'Action') + '</div>' +
+          '<div class="journal-date">' + formaterDate(a.cree_le) + '</div>' +
+          '<div class="journal-contenu">' + escapeHtml(a.contenu || '') + '</div>' +
+        '</div>';
+      }).join('');
+    } else {
+      elJournal.innerHTML = '<div class="vide">Aucune action appliquée par l\'IA pour l\'instant.</div>';
+    }
+
+    // Mots-clés négatifs (campagne)
+    var elNegatifs = document.getElementById('liste-negatifs');
+    if (data.negatifsCampagne && data.negatifsCampagne.length) {
+      elNegatifs.innerHTML = '<div class="negatifs-liste">' +
+        data.negatifsCampagne.map(function(n){ return '<span class="negatif-puce">' + escapeHtml(n.texte) + '</span>'; }).join('') +
+        '</div>';
+    } else {
+      elNegatifs.innerHTML = '<div class="vide">Aucun mot-clé exclu pour l\'instant.</div>';
+    }
 
     // Graphique clics par heure
     var chart = document.getElementById('chart-heures');
@@ -482,6 +602,14 @@
   }
   function escapeAttr(s){ return escapeHtml(s).replace(/"/g, '&quot;'); }
 
+  function formaterDate(iso){
+    if (!iso) return '';
+    try {
+      var d = new Date(iso);
+      return d.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    } catch(e) { return iso; }
+  }
+
   function attacherEvenementsDynamiques(){
     document.querySelectorAll('.toggle-groupe').forEach(function(input){
       input.addEventListener('change', function(){
@@ -520,7 +648,45 @@
         });
       });
     });
+
+    document.querySelectorAll('.form-ajouter-mc').forEach(function(form){
+      form.addEventListener('submit', function(e){
+        e.preventDefault();
+        var groupeId = form.dataset.groupe;
+        var texte = form.querySelector('.nouveau-mot-cle').value.trim();
+        var matchType = form.querySelector('.nouveau-mot-cle-type').value;
+        if (!texte) return;
+        var btn = form.querySelector('button');
+        btn.disabled = true;
+        appeler('ajouter_mot_cle', { adGroupId: groupeId, texte: texte, matchType: matchType }).then(function(res){
+          btn.disabled = false;
+          if (res.data && res.data.success) { toast(res.data.message); rafraichir(); }
+          else toast((res.data && res.data.error) || 'Échec.', true);
+        });
+      });
+    });
   }
+
+  document.getElementById('btn-lancer-ia').addEventListener('click', function(){
+    var btn = this;
+    btn.disabled = true;
+    btn.classList.add('chargement');
+    var texteInitial = btn.textContent;
+    btn.textContent = "Analyse en cours…";
+    toast("Analyse IA en cours — cela peut prendre plusieurs dizaines de secondes.");
+    appeler('lancer_analyse_ia').then(function(res){
+      btn.disabled = false;
+      btn.classList.remove('chargement');
+      btn.textContent = texteInitial;
+      if (res.data && res.data.success) { toast(res.data.message); rafraichir(); }
+      else toast((res.data && res.data.error) || 'Échec de l\'analyse.', true);
+    }).catch(function(){
+      btn.disabled = false;
+      btn.classList.remove('chargement');
+      btn.textContent = texteInitial;
+      toast('Échec de l\'analyse (délai dépassé ou erreur réseau).', true);
+    });
+  });
 
   document.getElementById('toggle-campagne').addEventListener('change', function(){
     var input = this;

@@ -215,6 +215,12 @@
 
   .btn-securise { text-align:center; font-size:0.76rem; color:var(--muted); margin-top:12px; }
 
+  /* 17/09/2026 (soir) : note ajoutée sur demande de Cyrille — le bouton de
+     paiement est devenu "Mettre en ligne", il faut donc expliquer juste
+     au-dessus que l'abonnement seul ne suffit pas à capter des prospects :
+     il faut ensuite alimenter le compte publicitaire. */
+  .plan-note-ads { font-size:0.78rem; color:var(--muted); line-height:1.5; margin-bottom:12px; text-align:center; }
+
   .btn-essai-gratuit {
     width:100%; background:linear-gradient(135deg, #f0a878 0%, var(--accent) 55%, var(--accent-dark) 100%);
     color:#fff; border:none; border-radius:12px;
@@ -615,7 +621,8 @@
           ${f.aVenir.map(t => `<li class="a-venir"><span class="check">—</span><span>${t}</span></li>`).join('')}
         </ul>
         ${dejaEssaye ? `
-          <button class="btn-choisir" data-plan="${f.id}">${f.prixPromo ? "Profiter de l'offre -50%" : 'Passer au forfait payant'}</button>
+          <div class="plan-note-ads">Une fois abonné, il faudra alimenter votre compte publicitaire pour que votre annonce se lance, capte vos prospects et fasse vivre votre tableau de bord.</div>
+          <button class="btn-choisir" data-plan="${f.id}">${f.prixPromo ? 'Mettre en ligne (-50%)' : 'Mettre en ligne'}</button>
           <div class="btn-securise">🔒 Paiement sécurisé via Stripe</div>
         ` : `
           <button class="btn-essai-gratuit" data-plan="${f.id}">Essayer gratuitement 1 mois</button>
@@ -699,6 +706,7 @@
   }
 
   async function choisirForfait(plan, btn) {
+    const texteBoutonDefaut = plan === FORFAIT_VITRINE_SUPPLEMENTAIRE.id ? 'Mettre en ligne (-50%)' : 'Mettre en ligne';
     if (!document.getElementById('checkCgv').checked) {
       alert('Merci d\'accepter les Conditions Générales de Vente avant de continuer.');
       return;
@@ -735,12 +743,12 @@
           sessionStorage.removeItem('skyeco_admin_internal_pw');
           alert(data.error || 'Mot de passe interne incorrect.');
           btn.disabled = false;
-          btn.textContent = 'Profiter de l\'offre -50%';
+          btn.textContent = texteBoutonDefaut;
         }
       } catch (e) {
         alert('Impossible de contacter le serveur.');
         btn.disabled = false;
-        btn.textContent = 'Profiter de l\'offre -50%';
+        btn.textContent = texteBoutonDefaut;
       }
       return;
     }
@@ -761,7 +769,7 @@
     } catch (e) {
       alert("Impossible de démarrer le paiement : " + e.message);
       btn.disabled = false;
-      btn.textContent = 'Profiter de l\'offre -50%';
+      btn.textContent = texteBoutonDefaut;
     }
   }
 </script>

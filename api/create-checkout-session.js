@@ -107,8 +107,8 @@ export default async function handler(req, res) {
     const prixReduitHT = ((forfait.centimesHT - remiseCentimesHT) / 100).toFixed(2);
 
     const description = avecRemise
-      ? `Sans engagement — vous arrêtez quand vous voulez. Prix HT : ${(forfait.centimesHT / 100).toFixed(2)} € — TVA 20% incluse. Prix spécial artisan : ${prixReduitHT} € HT/mois pendant les 12 premiers mois, puis ${(forfait.centimesHT / 100).toFixed(2)} € HT/mois. Votre formulaire vitrine en ligne, mis à jour et actif chaque mois.`
-      : `Sans engagement — vous arrêtez quand vous voulez. ${(forfait.centimesHT / 100).toFixed(2)} € HT/mois — TVA 20% incluse, sans remise temporaire ni changement de tarif dans le temps. Votre formulaire vitrine en ligne, mis à jour et actif chaque mois.`;
+      ? `1er mois offert, puis sans engagement — vous arrêtez quand vous voulez. Prix HT : ${(forfait.centimesHT / 100).toFixed(2)} € — TVA 20% incluse. Prix spécial artisan : ${prixReduitHT} € HT/mois pendant les 12 premiers mois, puis ${(forfait.centimesHT / 100).toFixed(2)} € HT/mois. Votre formulaire vitrine en ligne, mis à jour et actif chaque mois.`
+      : `1er mois offert, puis sans engagement — vous arrêtez quand vous voulez. ${(forfait.centimesHT / 100).toFixed(2)} € HT/mois — TVA 20% incluse, sans remise temporaire ni changement de tarif dans le temps. Votre formulaire vitrine en ligne, mis à jour et actif chaque mois.`;
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
@@ -136,6 +136,16 @@ export default async function handler(req, res) {
       ...(avecRemise ? { discounts: [{ coupon: COUPON_REMISE_ID }] } : {}),
       metadata: { draft_id: draftId, plan: String(plan || 1) },
       subscription_data: {
+        // 17/09/2026 (soir) : "le premier mois est gratuit" — jusqu'ici,
+        // s'abonner via ce endpoint débitait la carte immédiatement, alors
+        // même qu'un artisan qui vient de "Mettre en ligne" peut être en
+        // plein milieu de son essai gratuit sans CB (statut 'essai', voir
+        // mon-dashboard-demo.html) : il aurait payé tout de suite EN PLUS de
+        // son mois gratuit en cours. Un essai Stripe de 30 jours sur
+        // l'abonnement lui-même règle ça : la carte est enregistrée mais
+        // jamais débitée avant J+30, qu'il ait ou non déjà démarré un essai
+        // par ailleurs.
+        trial_period_days: 30,
         metadata: { draft_id: draftId, plan: String(plan || 1) },
       },
       success_url: `${origin}/apercu.html?id=${draftId}&session_id={CHECKOUT_SESSION_ID}`,

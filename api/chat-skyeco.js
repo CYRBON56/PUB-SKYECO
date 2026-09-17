@@ -24,7 +24,7 @@ LA FORMULE (prix HT/mois, sans engagement) — une seule formule, tout compris :
 - Formulaire vitrine en ligne + tableau de bord complet pour piloter la publicité (clics, coûts, mots-clés).
 - Visualisation détaillée des demandes de devis reçues + possibilité d'envoyer un SMS pour proposer un rendez-vous.
 - Envoi de devis avec signature électronique par SMS + relances automatiques avec offres.
-- Tarif : 39,90€ HT/mois pendant les 12 premiers mois (offre de lancement, appliquée automatiquement), puis 79,90€ HT/mois ensuite.
+- Tarif : 39,90€ HT/mois, sans engagement, tarif fixe (pas d'augmentation après une période initiale).
 
 POINTS IMPORTANTS :
 - La création du site est gratuite dans tous les cas — l'abonnement démarre seulement une fois que l'artisan valide sa vraie vitrine.

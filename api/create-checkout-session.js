@@ -16,35 +16,46 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 // enregistrées sur les abonnements existants d'anciens forfaits (1/2/4),
 // qui ne sont pas concernés par ce changement et ne passent plus par ce
 // endpoint de toute façon.
+//
+// 17/09/2026 (soir) : sur demande de Cyrille, le forfait 3 (offre standard)
+// passe à un tarif FIXE de 39,90€ HT/mois, sans remise temporaire ni retour
+// à un tarif plus élevé après 12 mois — 39,90€ HT/mois à vie. Le coupon
+// COUPON_REMISE_ID ci-dessous n'est donc plus appliqué au forfait 3, mais
+// reste utilisé tel quel pour le forfait 5 (vitrine supplémentaire, 3e
+// vitrine et suivantes d'un même compte), dont la structure remise
+// 59,90€→99,90€ n'a pas été touchée par cette demande — à confirmer avec
+// Cyrille si le même changement (tarif fixe, sans remise) doit s'y appliquer
+// aussi.
 const TAUX_TVA = 0.20;
 const FORFAITS = {
-  3: { nom: 'Skyeco Pro — Vitrine + Dashboard + Relances & devis signés', centimesHT: 7990 },
+  3: { nom: 'Skyeco Pro — Vitrine + Dashboard + Relances & devis signés', centimesHT: 3990 },
   // Tarif de la 3e vitrine (et suivantes) d'un même compte (03/09) : un
   // artisan qui gère déjà 2 vitrines paie 99,90€ HT/mois pour toute
-  // vitrine supplémentaire, au lieu de 79,90€ — mais garde la même remise
-  // fixe de lancement (40€ HT/mois pendant 12 mois, le même COUPON_REMISE_ID
-  // ci-dessous, réutilisé tel quel car le montant de la remise est
-  // identique : 79,90-39,90 = 99,90-59,90 = 40€ HT) donc démarre à 59,90€ HT
-  // pendant 12 mois. Le rang de la vitrine (1ère/2e vs 3e+) est déterminé
-  // côté page (choisir-forfait.html, comptage des vitrines du compte par
-  // email) et transmis ici via "plan" — jamais recalculé côté serveur ici,
-  // mais la commission de 30% sur le budget pub (TAUX_COMMISSION,
+  // vitrine supplémentaire, avec la remise de lancement (COUPON_REMISE_ID
+  // ci-dessous) ramenant le prix à 59,90€ HT/mois pendant 12 mois. Le rang
+  // de la vitrine (1ère/2e vs 3e+) est déterminé côté page
+  // (choisir-forfait.html, comptage des vitrines du compte par email) et
+  // transmis ici via "plan" — jamais recalculé côté serveur ici, mais la
+  // commission de 30% sur le budget pub (TAUX_COMMISSION,
   // api/estimate-reach.js et api/create-google-ads-campaign.js) ne dépend
   // pas du forfait choisi et reste donc inchangée quel que soit le plan.
   5: { nom: 'Skyeco Pro — Vitrine supplémentaire (3e vitrine et suivantes)', centimesHT: 9990 },
 };
 
-// Remise de lancement 1ère année (31/08) : offre permanente pour tout
-// nouveau client — 39,90€ HT/mois pendant 12 mois (soit 40€ HT/mois de
-// remise), puis retour automatique à 79,90€ HT/mois à partir du 13e mois.
-// Gérée nativement par un coupon Stripe "repeating" sur 12 mois : Stripe
-// applique et retire la remise tout seul, aucune action de notre part au
-// bout d'un an. Le montant du coupon est exprimé en TTC (4800 centimes,
-// soit 48€ TTC = 40€ HT) car nos prix n'utilisent pas le calcul de taxe
-// Stripe — la TVA est déjà intégrée dans unit_amount ci-dessous.
+// Remise de lancement 1ère année — ne s'applique plus qu'au forfait 5
+// (vitrine supplémentaire) depuis le 17/09/2026 : 40€ HT/mois de remise
+// pendant 12 mois, puis retour automatique à 99,90€ HT/mois à partir du 13e
+// mois. Gérée nativement par un coupon Stripe "repeating" sur 12 mois :
+// Stripe applique et retire la remise tout seul, aucune action de notre
+// part au bout d'un an. Le montant du coupon est exprimé en TTC (4800
+// centimes, soit 48€ TTC = 40€ HT) car nos prix n'utilisent pas le calcul
+// de taxe Stripe — la TVA est déjà intégrée dans unit_amount ci-dessous.
 const COUPON_REMISE_ID = 'skyeco-remise-1ere-annee';
 const REMISE_DUREE_MOIS = 12;
 const REMISE_MONTANT_CENTIMES_TTC = 4800;
+// Seuls les forfaits listés ici gardent la remise temporaire ; le forfait 3
+// est désormais à prix fixe (voir note ci-dessus).
+const PLANS_AVEC_REMISE = [5];
 
 async function assurerCouponRemise() {
   try {
@@ -82,16 +93,22 @@ export default async function handler(req, res) {
   // choisir-forfait.html, pour la même raison : l'identité est désormais
   // vérifiée en amont par la page de connexion + la fiche SIRET/téléphone.
 
+  const planId = plan || 3;
   const forfait = FORFAITS[plan] || FORFAITS[3]; // Forfait unique par défaut si non précisé
+  const avecRemise = PLANS_AVEC_REMISE.includes(Number(planId));
 
   const origin = req.headers.origin || `https://${req.headers.host}`;
 
   try {
-    await assurerCouponRemise();
+    if (avecRemise) await assurerCouponRemise();
 
     const centimesTTC = Math.round(forfait.centimesHT * (1 + TAUX_TVA));
     const remiseCentimesHT = Math.round(REMISE_MONTANT_CENTIMES_TTC / (1 + TAUX_TVA));
     const prixReduitHT = ((forfait.centimesHT - remiseCentimesHT) / 100).toFixed(2);
+
+    const description = avecRemise
+      ? `Sans engagement — vous arrêtez quand vous voulez. Prix HT : ${(forfait.centimesHT / 100).toFixed(2)} € — TVA 20% incluse. Prix spécial artisan : ${prixReduitHT} € HT/mois pendant les 12 premiers mois, puis ${(forfait.centimesHT / 100).toFixed(2)} € HT/mois. Votre formulaire vitrine en ligne, mis à jour et actif chaque mois.`
+      : `Sans engagement — vous arrêtez quand vous voulez. ${(forfait.centimesHT / 100).toFixed(2)} € HT/mois — TVA 20% incluse, sans remise temporaire ni changement de tarif dans le temps. Votre formulaire vitrine en ligne, mis à jour et actif chaque mois.`;
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
@@ -109,14 +126,14 @@ export default async function handler(req, res) {
               // dans la vue repliée du récapitulatif de paiement (visible
               // seulement en cliquant sur la flèche pour dérouler) — la mettre
               // en premier garantit qu'elle apparaît sans avoir à déplier.
-              description: `Sans engagement — vous arrêtez quand vous voulez. Prix HT : ${(forfait.centimesHT / 100).toFixed(2)} € — TVA 20% incluse. Prix spécial artisan : ${prixReduitHT} € HT/mois pendant les 12 premiers mois, puis ${(forfait.centimesHT / 100).toFixed(2)} € HT/mois. Votre formulaire vitrine en ligne, mis à jour et actif chaque mois.`,
+              description,
               images: ['https://www.skyeco.fr/skyeco-google-ads-carre.png'],
             },
           },
           quantity: 1,
         },
       ],
-      discounts: [{ coupon: COUPON_REMISE_ID }],
+      ...(avecRemise ? { discounts: [{ coupon: COUPON_REMISE_ID }] } : {}),
       metadata: { draft_id: draftId, plan: String(plan || 1) },
       subscription_data: {
         metadata: { draft_id: draftId, plan: String(plan || 1) },

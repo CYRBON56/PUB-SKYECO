@@ -15,6 +15,8 @@
 // exige le mot de passe interne, par cohérence et simplicité.
 //
 // Variables d'environnement requises : WINDSOR_API_KEY, INTERNAL_ACCESS_PASSWORD
+// (+ celles de coach-national-core.js pour l'action 'lancer_analyse_ia' :
+// ANTHROPIC_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
 import {
   CAMPAGNE,
@@ -24,6 +26,7 @@ import {
   interrogerWindsor,
   eurosVersMicros,
 } from './_lib/campagne-nationale.js';
+import { lancerAnalyseEtAgir, lireJournalRecent } from './_lib/coach-national-core.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -120,6 +123,36 @@ export default async function handler(req, res) {
         return res.status(200).json({ success: true, message: `"${propre}" exclu au niveau de toute la campagne.` });
       }
 
+      case 'ajouter_mot_cle': {
+        const { adGroupId, texte, matchType } = req.body;
+        const groupe = trouverGroupe(adGroupId);
+        if (!groupe) return res.status(400).json({ success: false, error: "Groupe d'annonces inconnu." });
+        const propre = (texte || '').trim();
+        if (!propre) return res.status(400).json({ success: false, error: 'Mot-clé manquant.' });
+        const mt = ['BROAD', 'PHRASE', 'EXACT'].includes(matchType) ? matchType : 'PHRASE';
+        await executerAction('push_keywords', {
+          ad_group_id: groupe.id,
+          keywords: [{ text: propre, match_type: mt }],
+          status: 'enabled',
+        });
+        return res.status(200).json({ success: true, message: `Mot-clé "${propre}" ajouté au groupe "${groupe.nom}".` });
+      }
+
+      // Lance manuellement le coach IA (mêmes garde-fous et mêmes 3 outils
+      // que le passage automatique quotidien, voir coach-national-core.js) —
+      // bouton "Lancer l'analyse maintenant" du dashboard. Peut être
+      // relativement lent (plusieurs allers-retours avec Claude) : c'est
+      // normal, pas une erreur si la réponse met quelques secondes.
+      case 'lancer_analyse_ia': {
+        const resultat = await lancerAnalyseEtAgir();
+        return res.status(200).json({
+          success: true,
+          message: resultat.actionsAppliquees > 0
+            ? `Analyse terminée : ${resultat.actionsAppliquees} action(s) appliquée(s). Synthèse mise à jour.`
+            : 'Analyse terminée, aucune action appliquée cette fois. Synthèse mise à jour.',
+        });
+      }
+
       default:
         return res.status(400).json({ success: false, error: 'Action inconnue.' });
     }
@@ -136,12 +169,19 @@ async function lireDetails() {
   // un tableau vide (sauf le budget, qui a son propre rapport non lié aux
   // statistiques). Une lecture qui échoue n'empêche jamais les autres de
   // s'afficher.
-  const [budgetLecture, motsClesLecture, termesLecture, heuresLecture] = await Promise.all([
+  const [budgetLecture, motsClesLecture, negatifsLecture, termesLecture, heuresLecture, journal] = await Promise.all([
     interrogerWindsor(['campaign_id', 'campaign', 'campaign_budget_status', 'budget_amount']),
     interrogerWindsor(['ad_group_id', 'keyword_criterion_id', 'keyword_text', 'keyword_match_type', 'keyword_status', 'clicks', 'cost']),
+    interrogerWindsor(['campaign_criterion_keyword_text', 'campaign_criterion_keyword_match_type', 'campaign_criterion_negative']),
     interrogerWindsor(['ad_group_id', 'search_term_view_search_term', 'search_term_view_status', 'clicks', 'cost']),
     interrogerWindsor(['hour_of_day', 'clicks']),
+    lireJournalRecent(30),
   ]);
+
+  const negatifsCampagne = negatifsLecture.lignes
+    .filter((l) => l.campaign_criterion_negative === true || l.campaign_criterion_negative === 'true')
+    .map((l) => ({ texte: l.campaign_criterion_keyword_text, matchType: l.campaign_criterion_keyword_match_type }))
+    .filter((n) => n.texte);
 
   const budget = budgetLecture.lignes[0] || null;
 
@@ -206,9 +246,13 @@ async function lireDetails() {
     groupes,
     termesRecherche,
     clicsParHeure,
+    negatifsCampagne,
+    derniereSynthese: journal.derniereSynthese,
+    actionsIA: journal.actions,
     lectureLive: {
       budget: budgetLecture.ok,
       motsCles: motsClesLecture.ok,
+      negatifs: negatifsLecture.ok,
       termesRecherche: termesLecture.ok,
       clicsParHeure: heuresLecture.ok,
     },

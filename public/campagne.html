@@ -345,9 +345,15 @@
       const motCleTitre = premierMotCle
         ? premierMotCle.charAt(0).toUpperCase() + premierMotCle.slice(1)
         : '';
+      // 17/09/2026 (soir) : sur demande de Cyrille, le nom de l'entreprise
+      // doit apparaître dans l'annonce sous la forme "Skyeco : <nom>" —
+      // porte la marque Skyeco tout en personnalisant par artisan. Tronqué à
+      // 30 caractères (limite Google Ads sur un titre) : c'est la fin du nom
+      // d'entreprise qui saute en premier si trop long, jamais le préfixe.
+      const titre1 = `Skyeco : ${draftEntreprise || 'Devis gratuit'}`.substring(0, 30);
       return {
         titres: [
-          (draftEntreprise || 'Devis gratuit').substring(0, 30),
+          titre1,
           (motCleTitre || 'Estimation gratuite en ligne').substring(0, 30),
           'Devis sous 24h',
         ],

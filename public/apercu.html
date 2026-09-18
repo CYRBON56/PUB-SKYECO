@@ -1398,7 +1398,18 @@ async function init(){
 }
 
 function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
-  const state = { step:0 };
+  // _focusOK (18/09, Cyrille) : le tout premier rendu de l'étape 0 se
+  // déclenche automatiquement (juste après le chargement des données), donc
+  // AVANT toute interaction du visiteur. Or plusieurs types de question
+  // ci-dessous font un .focus() automatique sur leur champ — ce qui, sur
+  // mobile, fait immédiatement défiler la page jusqu'au champ et masque le
+  // panneau titre qu'on veut montrer en premier (voir le fix order:1/2 sur
+  // .image-panel plus haut). On bloque donc l'autofocus tant que le visiteur
+  // n'a pas lui-même déclenché un changement d'étape (Suivant/Retour/choix
+  // d'une option) ; ensuite, l'autofocus est réactivé normalement (le
+  // défilement est alors attendu, puisque provoqué par une action du
+  // visiteur qui a déjà vu le titre).
+  const state = { step:0, _focusOK:false };
   const cardEl = document.getElementById('card');
   const progressEl = document.getElementById('progress');
 
@@ -1665,7 +1676,7 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
   function wireStepEvents(s, steps){
     if(s.type==='choice'){
       cardEl.querySelectorAll('.option').forEach(el=>{
-        el.addEventListener('click',()=>{ state[s.key]=el.dataset.val; renderProgress(); renderStep(); });
+        el.addEventListener('click',()=>{ state[s.key]=el.dataset.val; state._focusOK=true; renderProgress(); renderStep(); });
         // Aperçu au survol — uniquement quand l'étape définit une image pour
         // cette option (voir s.images, ex : type_portail). Ne fait rien sur
         // les étapes qui n'en ont pas encore (remplissage, couleur…).
@@ -1677,18 +1688,18 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     } else if(s.type==='number'){
       const input=document.getElementById('inputNum');
       input.addEventListener('input',()=>{ state[s.key]=input.value; document.getElementById('btnNext').disabled=!canProceed(s); });
-      input.focus();
+      if(state._focusOK) input.focus();
     } else if(s.type==='location'){
       const ville=document.getElementById('inputVille'), cp=document.getElementById('inputCP');
       ville.addEventListener('input',()=>{ state.ville=ville.value; });
       cp.addEventListener('input',()=>{ state.code_postal=cp.value; document.getElementById('btnNext').disabled=!canProceed(s); });
-      ville.focus();
+      if(state._focusOK) ville.focus();
     } else if(s.type==='adresse'){
       const rue=document.getElementById('inputAdresseRue'), cp=document.getElementById('inputAdresseCp'), ville=document.getElementById('inputAdresseVille');
       rue.addEventListener('input',()=>{ state.adresse_rue=rue.value; });
       cp.addEventListener('input',()=>{ state.adresse_cp=cp.value; document.getElementById('btnNext').disabled=!canProceed(s); });
       ville.addEventListener('input',()=>{ state.adresse_ville=ville.value; document.getElementById('btnNext').disabled=!canProceed(s); });
-      rue.focus();
+      if(state._focusOK) rue.focus();
     } else if(s.type==='identity'){
       const nom=document.getElementById('inputNom'), prenom=document.getElementById('inputPrenom'), tel=document.getElementById('inputTel'), email=document.getElementById('inputEmail');
       [nom,prenom,email].forEach(el=>{ el.addEventListener('input',()=>{ state.nom=nom.value; state.prenom=prenom.value; state.email=email.value; document.getElementById('btnNext').disabled=!canProceed(s); }); });
@@ -1805,25 +1816,25 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
         document.getElementById('btnNext').disabled = !canProceed(s);
       });
 
-      nom.focus();
+      if(state._focusOK) nom.focus();
     } else if(s.type==='textarea'){
       const ta=document.getElementById('inputTextarea');
       ta.addEventListener('input',()=>{ state[s.key]=ta.value; });
-      ta.focus();
+      if(state._focusOK) ta.focus();
       if(s.dictable) initMicApercu(ta);
     } else if(s.type==='nombre_perso' || s.type==='texte_perso'){
       const input=document.getElementById('inputPerso');
       input.addEventListener('input',()=>{ state[s.key]=input.value; });
-      input.focus();
+      if(state._focusOK) input.focus();
     } else if(s.type==='case_perso'){
-      cardEl.querySelectorAll('.option').forEach(el=>{ el.addEventListener('click',()=>{ state[s.key]=(el.dataset.val==='oui'); renderProgress(); renderStep(); }); });
+      cardEl.querySelectorAll('.option').forEach(el=>{ el.addEventListener('click',()=>{ state[s.key]=(el.dataset.val==='oui'); state._focusOK=true; renderProgress(); renderStep(); }); });
     } else if(s.type==='options_multi'){
       if(!state[s.key]) state[s.key] = {};
       cardEl.querySelectorAll('input[type=checkbox][data-val]').forEach(cb=>{
         cb.addEventListener('change', ()=>{ state[s.key][cb.dataset.val] = cb.checked; });
       });
     }
-    document.getElementById('btnBack').addEventListener('click',()=>{ if(state.step>0){ state.step-=1; renderProgress(); renderStep(); } });
+    document.getElementById('btnBack').addEventListener('click',()=>{ if(state.step>0){ state.step-=1; state._focusOK=true; renderProgress(); renderStep(); } });
     document.getElementById('btnNext').addEventListener('click', async ()=>{
       if(!canProceed(s)) return;
       // Juste après que le prospect a décrit son projet : si l'artisan a
@@ -1866,7 +1877,7 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
           }
         }
       }
-      if(state.step<steps.length-1){ state.step+=1; renderProgress(); renderStep(); }
+      if(state.step<steps.length-1){ state.step+=1; state._focusOK=true; renderProgress(); renderStep(); }
       else {
         enregistrerDemande();
       }

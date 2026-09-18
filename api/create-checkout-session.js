@@ -19,43 +19,41 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 //
 // 17/09/2026 (soir) : sur demande de Cyrille, le forfait 3 (offre standard)
 // passe à un tarif FIXE de 39,90€ HT/mois, sans remise temporaire ni retour
-// à un tarif plus élevé après 12 mois — 39,90€ HT/mois à vie. Le coupon
-// COUPON_REMISE_ID ci-dessous n'est donc plus appliqué au forfait 3, mais
-// reste utilisé tel quel pour le forfait 5 (vitrine supplémentaire, 3e
-// vitrine et suivantes d'un même compte), dont la structure remise
-// 59,90€→99,90€ n'a pas été touchée par cette demande — à confirmer avec
-// Cyrille si le même changement (tarif fixe, sans remise) doit s'y appliquer
-// aussi.
+// à un tarif plus élevé après 12 mois — 39,90€ HT/mois à vie.
+//
+// 18/09/2026 : même changement appliqué aux forfaits "vitrine
+// supplémentaire" — Cyrille a retiré la remise de lancement (-50%,
+// 99,90€→59,90€) partout. Deux tarifs fixes désormais, sans coupon ni
+// palier temporaire :
+//   - forfait 5 : 3e ET 4e vitrine du compte → 59,90€ HT/mois, à vie.
+//   - forfait 6 (nouveau) : 5e ET 6e vitrine du compte (et au-delà, faute
+//     d'indication contraire de Cyrille) → 79,90€ HT/mois, à vie.
+// Le coupon COUPON_REMISE_ID / PLANS_AVEC_REMISE ci-dessous ne s'applique
+// donc plus à aucun forfait ; le mécanisme est laissé en place (inutilisé)
+// au cas où une future remise de lancement serait réintroduite.
 const TAUX_TVA = 0.20;
 const FORFAITS = {
   3: { nom: 'Skyeco Pro — Vitrine + Dashboard + Relances & devis signés', centimesHT: 3990 },
-  // Tarif de la 3e vitrine (et suivantes) d'un même compte (03/09) : un
-  // artisan qui gère déjà 2 vitrines paie 99,90€ HT/mois pour toute
-  // vitrine supplémentaire, avec la remise de lancement (COUPON_REMISE_ID
-  // ci-dessous) ramenant le prix à 59,90€ HT/mois pendant 12 mois. Le rang
-  // de la vitrine (1ère/2e vs 3e+) est déterminé côté page
+  // Rang de la vitrine (1ère/2e vs 3e/4e vs 5e/6e+) déterminé côté page
   // (choisir-forfait.html, comptage des vitrines du compte par email) et
   // transmis ici via "plan" — jamais recalculé côté serveur ici, mais la
   // commission de 30% sur le budget pub (TAUX_COMMISSION,
   // api/estimate-reach.js et api/create-google-ads-campaign.js) ne dépend
   // pas du forfait choisi et reste donc inchangée quel que soit le plan.
-  5: { nom: 'Skyeco Pro — Vitrine supplémentaire (3e vitrine et suivantes)', centimesHT: 9990 },
+  5: { nom: 'Skyeco Pro — Vitrine supplémentaire (3e et 4e vitrine)', centimesHT: 5990 },
+  6: { nom: 'Skyeco Pro — Vitrine supplémentaire (5e et 6e vitrine et suivantes)', centimesHT: 7990 },
 };
 
-// Remise de lancement 1ère année — ne s'applique plus qu'au forfait 5
-// (vitrine supplémentaire) depuis le 17/09/2026 : 40€ HT/mois de remise
-// pendant 12 mois, puis retour automatique à 99,90€ HT/mois à partir du 13e
-// mois. Gérée nativement par un coupon Stripe "repeating" sur 12 mois :
-// Stripe applique et retire la remise tout seul, aucune action de notre
-// part au bout d'un an. Le montant du coupon est exprimé en TTC (4800
-// centimes, soit 48€ TTC = 40€ HT) car nos prix n'utilisent pas le calcul
-// de taxe Stripe — la TVA est déjà intégrée dans unit_amount ci-dessous.
+// Remise de lancement — plus utilisée par aucun forfait depuis le 18/09/2026
+// (voir note ci-dessus), mécanisme conservé inactif pour une éventuelle
+// remise future. Le montant du coupon est exprimé en TTC (4800 centimes,
+// soit 48€ TTC = 40€ HT) car nos prix n'utilisent pas le calcul de taxe
+// Stripe — la TVA est déjà intégrée dans unit_amount ci-dessous.
 const COUPON_REMISE_ID = 'skyeco-remise-1ere-annee';
 const REMISE_DUREE_MOIS = 12;
 const REMISE_MONTANT_CENTIMES_TTC = 4800;
-// Seuls les forfaits listés ici gardent la remise temporaire ; le forfait 3
-// est désormais à prix fixe (voir note ci-dessus).
-const PLANS_AVEC_REMISE = [5];
+// Aucun forfait ne garde de remise temporaire (voir note du 18/09 ci-dessus).
+const PLANS_AVEC_REMISE = [];
 
 async function assurerCouponRemise() {
   try {

@@ -20,9 +20,10 @@
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 //   INTERNAL_ACCESS_PASSWORD
 
-// id 5 (03/09) : tarif de la 3e vitrine (et suivantes) d'un même compte —
-// voir api/create-checkout-session.js pour le détail du prix.
-const PLANS_VALIDES = [1, 2, 3, 4, 5];
+// id 5 (03/09) : tarif de la 3e/4e vitrine d'un même compte. id 6 (18/09) :
+// tarif de la 5e/6e vitrine et suivantes — voir api/create-checkout-session.js
+// pour le détail des prix.
+const PLANS_VALIDES = [1, 2, 3, 4, 5, 6];
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {

@@ -14,7 +14,15 @@
      second panneau dédié qui affiche la photo du produit survolé dans le
      formulaire (voir "Aperçu au survol" ci-dessous). */
   .image-panel { flex:1 1 45%; position:relative; overflow:hidden; background:var(--brand-dark,#14312a); display:flex; flex-direction:column; order:2; }
-  .image-panel-media { position:relative; flex:1 1 50%; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+  /* Restructuration du 18/09/2026 (demande de Cyrille) : le panneau visuel
+     empile maintenant 3 blocs dans l'ordre de lecture naturel — titre en
+     haut, carrousel/vidéo au milieu, descriptif de l'activité (texte saisi
+     par l'artisan dans "Décris ton activité", colonne draft.description) en
+     bas. Avant cette date, le titre flottait en position absolute par-dessus
+     le milieu du panneau (voir l'ancienne règle .image-panel-title
+     conservée en commentaire plus bas) — remplacé par un bloc en flux normal
+     comme les deux autres. */
+  .image-panel-media { position:relative; flex:1 1 auto; min-height:0; overflow:hidden; display:flex; align-items:center; justify-content:center; }
   /* object-fit:contain (pas cover) — corrigé le 04/09 : depuis que ce
      panneau ne fait plus que la moitié de la hauteur, "cover" zoomait/
      rognait trop l'image pour remplir le cadre. "contain" affiche la photo
@@ -36,15 +44,27 @@
   .avant-apres-slide .moitie img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
   .avant-apres-slide .moitie .etiquette { position:absolute; left:8px; bottom:8px; z-index:2; background:rgba(15,35,29,0.82); color:#fff; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; padding:4px 10px; border-radius:999px; }
   .avant-apres-slide .separateur { position:absolute; top:0; bottom:0; left:50%; width:2px; background:rgba(255,255,255,0.6); z-index:2; transform:translateX(-1px); }
-  /* Titre accroche — corrigé le 04/09 (Cyrille) : positionné directement
-     dans .image-panel (pas dans .image-panel-media) pour que "top:50%" se
-     cale sur le milieu de TOUT le panneau, donc pile sur la ligne de
-     séparation entre la vidéo (en haut) et l'aperçu au survol (en bas),
-     plutôt que centré seulement dans la moitié vidéo. Un fond semi-
-     transparent garde le texte lisible quel que soit ce qu'il y a
-     derrière (photo claire ou fond sombre de l'aperçu). */
-  .image-panel-title { position:absolute; top:50%; left:32px; right:32px; transform:translateY(-50%); z-index:5; color:#fff; font-size:clamp(1.2rem,2.2vw,1.8rem); font-weight:700; line-height:1.25; text-align:center; text-shadow:0 2px 12px rgba(0,0,0,0.35); background:rgba(15,35,29,0.72); backdrop-filter:blur(4px); padding:16px 20px; border-radius:14px; pointer-events:none; }
-  @media (max-width:800px){ .image-panel-title{ font-size:1.05rem; left:20px; right:20px; padding:10px 14px; } }
+  /* Titre accroche — repositionné le 18/09/2026 (Cyrille : "le titre en
+     haut, le carrousel au milieu") : bloc normal en haut du panneau, plus
+     un overlay flottant par-dessus le milieu (l'ancienne règle centrait le
+     texte sur "top:50%" par-dessus la vidéo/l'aperçu — voir l'historique
+     du 04/09 dans le commentaire de .image-panel-media juste au-dessus).
+     Le fond semi-transparent est gardé : le panneau est sombre (--brand-dark)
+     mais un artisan peut avoir un titre long, autant garantir la lisibilité. */
+  .image-panel-title { position:relative; z-index:5; flex:0 0 auto; color:#fff; font-size:clamp(1.15rem,2.1vw,1.7rem); font-weight:700; line-height:1.25; text-align:center; text-shadow:0 2px 12px rgba(0,0,0,0.35); background:rgba(15,35,29,0.55); padding:14px 20px 10px; }
+  @media (max-width:800px){ .image-panel-title{ font-size:1rem; padding:10px 16px 8px; } }
+  /* Descriptif des chantiers/de l'activité — nouveau bloc du 18/09/2026, en
+     bas du panneau visuel. Réutilise exactement le même texte que
+     draft.description (voir #introText côté formulaire) : l'artisan ne
+     ressaisit rien, "Décris ton activité en quelques phrases" dans
+     construire-ma-vitrine.html alimente maintenant les deux emplacements.
+     line-clamp à 3 lignes pour ne jamais pousser le carrousel : un texte
+     très long reste lisible mais coupé proprement (voir aussi la coupure de
+     secours par mot dans le JS si le texte n'a pas d'espaces). Masqué (via
+     JS, display:none) quand l'artisan n'a rien renseigné, plutôt que
+     d'afficher un texte générique qui ne parlerait pas de ses chantiers. */
+  .image-panel-description { position:relative; z-index:5; flex:0 0 auto; color:rgba(255,255,255,0.92); font-size:14px; line-height:1.5; text-align:center; padding:12px 22px 16px; background:linear-gradient(0deg, rgba(15,35,29,0.85) 0%, rgba(15,35,29,0.55) 100%); display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+  @media (max-width:800px){ .image-panel-description{ font-size:12.5px; padding:8px 16px 12px; -webkit-line-clamp:2; } }
 
   /* Aperçu au survol d'une option du formulaire (ex : "OneSlide" dans le
      parcours portails) — occupe la moitié basse du panneau visuel, à côté
@@ -73,7 +93,7 @@
      option de l'étape en cours n'a de photo à montrer au survol (voir
      s.images / aDesApercusAuSurvol dans runWizard) — la moitié haute
      (vidéo/carrousel) prend alors toute la hauteur du panneau. */
-  .image-panel.pas-de-survol .image-panel-media { flex:1 1 100%; }
+  .image-panel.pas-de-survol .image-panel-media { flex:1 1 auto; }
   .image-panel.pas-de-survol .image-panel-preview { display:none; }
   .form-panel { flex:1 1 55%; position:relative; display:flex; align-items:stretch; justify-content:center; padding:20px 24px; overflow:hidden; order:1; }
   /* Position du formulaire (gauche/droite) — configurée par l'artisan dans
@@ -105,8 +125,14 @@
      (order:2) sur cette largeur, quelle que soit la position choisie par
      l'artisan (gauche/droite ne veut plus dire grand-chose une fois empilé)
      — pour qu'on arrive bien en haut de la page directement sur le titre. */
-  @media (max-width:800px){ .split-layout{ flex-direction:column; height:100vh; overflow:hidden; } .image-panel{ flex:0 0 150px; order:1; } .form-panel{ padding:12px 16px; order:2; } .split-layout.formulaire-droite .image-panel{ order:1; } .split-layout.formulaire-droite .form-panel{ order:2; } }
-  @media (max-width:480px){ .image-panel{ flex:0 0 110px; } .form-panel{ padding:10px 14px; } .header-block{ padding:10px 14px; margin-bottom:10px; } h1{ font-size:19px; margin:4px 0 6px; } .eyebrow{ font-size:11px; } .sub{ font-size:14px; margin-bottom:0; line-height:1.45; } .card{ padding:16px; } .question{ font-size:17px; margin-bottom:14px; line-height:1.35; } .option{ padding:14px 16px; font-size:15.5px; } .progress{ margin-bottom:12px; } input[type="text"],input[type="tel"],input[type="email"],input[type="number"]{ font-size:16px; padding:13px 14px; margin-bottom:10px; } label.field-label{ font-size:14px; } .nav-row{ flex-wrap:wrap; margin-top:16px; } button.btn{ font-size:15px; padding:13px 16px; } .btn-primary{ flex:1 1 100%; order:1; } .btn-ghost{ order:2; padding:8px 0; font-size:14px; } .trust-footer{ margin-top:10px; padding-top:10px; } .trust-badges-row{ display:none !important; } }
+  /* Hauteur du panneau visuel mobile relevée le 18/09/2026 (150px -> 40vh) :
+     avant, elle ne laissait de la place qu'au titre + à la vidéo/carrousel ;
+     le nouveau bloc .image-panel-description (voir plus haut) a besoin d'un
+     peu d'espace en plus pour rester lisible. 40vh garde une majorité de
+     l'écran pour le formulaire en dessous (form-panel, flex:1 1 auto donc
+     prend tout le reste), quelle que soit la hauteur de l'appareil. */
+  @media (max-width:800px){ .split-layout{ flex-direction:column; height:100vh; overflow:hidden; } .image-panel{ flex:0 0 40vh; order:1; } .form-panel{ padding:12px 16px; order:2; } .split-layout.formulaire-droite .image-panel{ order:1; } .split-layout.formulaire-droite .form-panel{ order:2; } }
+  @media (max-width:480px){ .image-panel{ flex:0 0 36vh; } .form-panel{ padding:10px 14px; } .header-block{ padding:10px 14px; margin-bottom:10px; } h1{ font-size:19px; margin:4px 0 6px; } .eyebrow{ font-size:11px; } .sub{ font-size:14px; margin-bottom:0; line-height:1.45; } .card{ padding:16px; } .question{ font-size:17px; margin-bottom:14px; line-height:1.35; } .option{ padding:14px 16px; font-size:15.5px; } .progress{ margin-bottom:12px; } input[type="text"],input[type="tel"],input[type="email"],input[type="number"]{ font-size:16px; padding:13px 14px; margin-bottom:10px; } label.field-label{ font-size:14px; } .nav-row{ flex-wrap:wrap; margin-top:16px; } button.btn{ font-size:15px; padding:13px 16px; } .btn-primary{ flex:1 1 100%; order:1; } .btn-ghost{ order:2; padding:8px 0; font-size:14px; } .trust-footer{ margin-top:10px; padding-top:10px; } .trust-badges-row{ display:none !important; } }
 
   .wrap { max-width:480px; width:100%; height:100%; margin:0; padding:0; display:flex; flex-direction:column; }
   .middle-scroll { flex:1 1 auto; overflow-y:auto; min-height:0; padding-right:2px; }
@@ -240,8 +266,9 @@
 <div id="appRoot" style="display:none;">
   <div class="split-layout">
     <div class="image-panel" id="heroImagePanel">
-      <div class="image-panel-media" id="heroImageMedia"></div>
       <div class="image-panel-title" id="heroTitle"></div>
+      <div class="image-panel-media" id="heroImageMedia"></div>
+      <div class="image-panel-description" id="heroDescription"></div>
       <div class="image-panel-preview" id="heroPreviewHalf">
         <div class="hover-preview-placeholder" id="heroPreviewPlaceholder">Survolez une option du formulaire pour voir à quoi ça ressemble</div>
       </div>
@@ -902,7 +929,7 @@ async function init(){
     // migration verrouiller_colonnes_sensibles_vitrine_drafts, qui retire à
     // anon l'accès à des colonnes sensibles (hash de mot de passe, jetons...)
     // qu'un select=* tenterait de lire et ferait échouer intégralement.
-    `${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${id}&select=adresse_cp,adresse_rue,adresse_ville,assurance_decennale_assureur,assurance_decennale_numero,capital_social,catalogue_fichier_url,catalogue_image_url,catalogue_titre,couleur,description,email,entreprise,fond_formulaire_flou,fond_formulaire_source,forme_juridique,formulaire_personnalise,formulaire_personnalise_cle,formulaire_position,id,logo_url,metier,mode_devis_detaille,photos,photos_avant_apres,portails_tarifs,produits_chiffrables,rcs_ville,siret,status,telephone,titre_hero_choisi,tva_taux,video_url,zone`,
+    `${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${id}&select=adresse_cp,adresse_rue,adresse_ville,assurance_decennale_assureur,assurance_decennale_numero,capital_social,catalogue_fichier_url,catalogue_image_url,catalogue_titre,couleur,couleur_fond_vitrine,description,email,entreprise,fond_formulaire_flou,fond_formulaire_source,forme_juridique,formulaire_personnalise,formulaire_personnalise_cle,formulaire_position,id,logo_url,metier,mode_devis_detaille,photos,photos_avant_apres,portails_tarifs,produits_chiffrables,rcs_ville,siret,status,telephone,titre_hero_choisi,tva_taux,video_url,zone`,
     { headers: { apikey: SUPABASE_ANON_KEY } }
   );
   const rows = await resp.json().catch(() => []);
@@ -921,7 +948,12 @@ async function init(){
 
   document.documentElement.style.setProperty('--brand', brandColor);
   document.documentElement.style.setProperty('--brand-tint', brandColor + '1A');
-  document.documentElement.style.setProperty('--brand-dark', '#14312a');
+  // 18/09/2026 : couleur de fond de la vitrine (bandeau titre + descriptif,
+  // fond du panneau image) désormais choisie par l'artisan (colonne
+  // couleur_fond_vitrine, ajoutée à cette occasion) au lieu d'être fixée en
+  // dur — '#14312a' reste la valeur par défaut pour les brouillons existants
+  // qui n'ont pas encore cette colonne renseignée.
+  document.documentElement.style.setProperty('--brand-dark', draft.couleur_fond_vitrine || '#14312a');
 
   // Niveau de flou du fond décoratif derrière le formulaire (curseur "Netteté
   // du fond" dans construire-ma-vitrine.html, colonne fond_formulaire_flou, 0-30px,
@@ -956,6 +988,18 @@ async function init(){
     const logoEl = document.getElementById('logoArtisan');
     logoEl.src = draft.logo_url;
     logoEl.style.display = 'block';
+  }
+
+  // 18/09/2026 : restructuration de la vitrine (titre en haut, carrousel au
+  // milieu, descriptif des chantiers en bas). draft.description est du texte
+  // libre saisi par l'artisan : on l'échappe avant de l'injecter, et on
+  // masque le bloc s'il est vide plutôt que d'afficher un texte par défaut
+  // (contrairement à #introText côté formulaire, qui a un fallback template).
+  const heroDescEl = document.getElementById('heroDescription');
+  if (draft.description) {
+    heroDescEl.innerHTML = escapeHtml(draft.description);
+  } else {
+    heroDescEl.style.display = 'none';
   }
 
   document.getElementById('eyebrow').textContent = draft.entreprise + ' — ' + template.eyebrow;

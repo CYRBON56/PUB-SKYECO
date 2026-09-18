@@ -92,6 +92,38 @@
   .btn-appeler-maintenant { background:#c0392b; color:#fff; }
   .btn-appeler-maintenant:hover { filter:brightness(1.08); }
 
+  /* 18/09/2026 (soir) : bandeau "en ce moment sur le site", en haut du
+     tableau — demande de Cyrille pour repérer d'un coup d'œil qui a son
+     dashboard ouvert À L'INSTANT T, sans avoir à chercher la pastille
+     "En ligne" (voir .badge-en-ligne ci-dessus) au milieu des actions de
+     chaque ligne. Même donnée, même seuil de 90s (voir estEnLigne) ; se
+     met à jour toutes les 30s comme la pastille (voir rafraichirPresence).
+     Placé au-dessus du bandeau "nouveaux essais" : plus urgent/actionnable
+     (on peut appeler la personne MAINTENANT pendant qu'elle regarde). */
+  .bandeau-en-ligne {
+    background:#eaf9f0; border:1.5px solid #1e6f4c; border-radius:14px;
+    padding:14px 20px; margin-bottom:20px; display:none;
+  }
+  .bandeau-en-ligne .titre { font-weight:800; font-size:0.9rem; color:#14312a; margin-bottom:8px; }
+  .bandeau-en-ligne ul { list-style:none; display:flex; flex-direction:column; gap:7px; }
+  .bandeau-en-ligne li { font-size:0.85rem; color:#3a4a44; display:flex; align-items:center; gap:8px; }
+  .bandeau-en-ligne a { color:#1e6f4c; font-weight:700; text-decoration:none; }
+  .bandeau-en-ligne a:hover { text-decoration:underline; }
+  .pastille-pulse {
+    display:inline-block; width:9px; height:9px; border-radius:50%; background:#1e6f4c;
+    flex-shrink:0; animation:pulseEnLigne 1.8s infinite;
+  }
+  @keyframes pulseEnLigne {
+    0% { box-shadow:0 0 0 0 rgba(30,111,76,0.55); }
+    70% { box-shadow:0 0 0 8px rgba(30,111,76,0); }
+    100% { box-shadow:0 0 0 0 rgba(30,111,76,0); }
+  }
+  .btn-appeler-mini {
+    background:#e8622c; color:#fff; border:none; border-radius:6px; padding:3px 10px;
+    font-size:0.72rem; font-weight:700; cursor:pointer;
+  }
+  .btn-appeler-mini:hover { filter:brightness(1.08); }
+
   .loading, .empty { text-align:center; padding:60px; color:#8a9891; font-size:0.92rem; }
   .feedback { font-size:0.74rem; margin-top:5px; font-weight:600; }
   .feedback.ok { color:#1e6f4c; }
@@ -129,9 +161,12 @@
       <a href="/prospects-paysagiste.html" class="btn-action" style="text-decoration:none; display:inline-block;">📧 Prospection artisans</a>
       <a href="https://claude.ai/code/artifact/80cb5690-3826-4354-ab07-38ab46ea3345" target="_blank" rel="noopener" class="btn-action" style="text-decoration:none; display:inline-block;" title="Tous les SMS envoyés par la plateforme : déclencheur, fichier source et destinataire pour chaque flux.">📲 Guide des flux SMS</a>
       <a href="https://claude.ai/code/artifact/58c1adbd-92f5-45e1-ac6d-96563276870e" target="_blank" rel="noopener" class="btn-action" style="text-decoration:none; display:inline-block;" title="Tous les emails envoyés par la plateforme : déclencheur, sujet, fichier source et destinataire pour chaque flux.">📧 Guide des flux Email</a>
-      <a href="/statistiques-visites.html" class="btn-action" style="text-decoration:none; display:inline-block;" title="Qui entre dans le tunnel, quelles pages il regarde, combien de temps il reste.">👀 Statistiques des visites</a>
-      <a href="/collecte-batiment.html" class="btn-action" style="text-decoration:none; display:inline-block;" title="Collecte nationale SIRENE + email des professionnels du bâtiment.">🏗️ Collecte pros bâtiment</a>
     </div>
+  </div>
+
+  <div class="bandeau-en-ligne" id="bandeauEnLigne">
+    <div class="titre">🟢 En ce moment sur le site</div>
+    <ul id="listeEnLigne"></ul>
   </div>
 
   <div class="bandeau-nouveaux-essais" id="bandeauNouveauxEssais">
@@ -167,7 +202,6 @@
   let toutesLesFiches = [];
   let vueArchives = false;
   let demandesParDraftId = {};
-  let vuesDemoParDraftId = {};
 
   // Mot de passe interne (admin) : demandé une seule fois par session de
   // navigateur, conservé en sessionStorage pour les appels suivants — même
@@ -223,12 +257,11 @@
       if (!data.success) throw new Error(data.error || 'échec');
       toutesLesFiches = data.fiches;
       demandesParDraftId = data.demandesParDraftId || {};
-      vuesDemoParDraftId = data.vuesDemoParDraftId || {};
       afficherStats(toutesLesFiches);
+      afficherEnLigneMaintenant(toutesLesFiches);
       afficherNouveauxEssais(toutesLesFiches);
       afficherVueActuelle();
       afficherCompteursDemandes();
-      afficherCompteursVuesDemo();
     } catch (e) {
       document.getElementById('contenu').innerHTML = '<div class="empty">Impossible de charger la liste pour le moment.</div>';
     }
@@ -259,14 +292,34 @@
         badge.style.display = enLigne ? '' : 'none';
         btn.style.display = enLigne ? '' : 'none';
       });
+      afficherEnLigneMaintenant(toutesLesFiches);
     } catch (e) { /* silencieux */ }
+  }
+
+  // 18/09/2026 (soir) : bandeau "en ce moment sur le site" — voir le
+  // commentaire CSS de .bandeau-en-ligne pour le pourquoi. Rappelé à la
+  // fois au chargement (chargerFiches) et à chaque rafraîchissement de
+  // présence (rafraichirPresence, toutes les 30s), pour rester à jour sans
+  // recharger toute la liste. N'inclut jamais les fiches archivées.
+  function afficherEnLigneMaintenant(fichesToutes) {
+    const bandeau = document.getElementById('bandeauEnLigne');
+    const liste = document.getElementById('listeEnLigne');
+    const enLigneMaintenant = fichesToutes.filter(f => !f.archive && estEnLigne(f));
+    if (!enLigneMaintenant.length) { bandeau.style.display = 'none'; return; }
+    bandeau.style.display = 'block';
+    liste.innerHTML = enLigneMaintenant.map(f => `
+      <li>
+        <span class="pastille-pulse"></span>
+        <a href="#" onclick="event.preventDefault(); document.getElementById('recherche').value='${(f.entreprise||'').replace(/'/g, "\\'")}'; document.getElementById('recherche').dispatchEvent(new Event('input'));">${f.entreprise || 'Sans nom'}</a>
+        ${f.telephone ? `<button type="button" class="btn-appeler-mini" data-id="${f.id}" onclick="appelerMaintenant(this)">📹 Appeler maintenant</button>` : ''}
+      </li>
+    `).join('');
   }
 
   function afficherVueActuelle() {
     const fichesVue = toutesLesFiches.filter(f => vueArchives ? f.archive : !f.archive);
     afficherTableau(fichesVue);
     afficherCompteursDemandes();
-    afficherCompteursVuesDemo();
   }
 
   // Nombre de demandes reçues par artisan — déjà renvoyé groupé par
@@ -276,18 +329,6 @@
     Object.entries(demandesParDraftId).forEach(([draftId, n]) => {
       const el = document.getElementById('demandes-' + draftId);
       if (el) el.textContent = `📩 ${n} demande${n > 1 ? 's' : ''}`;
-    });
-  }
-
-  // 15/09/2026 : compteur de visiteurs uniques du tableau de bord démo
-  // (mon-dashboard-demo.html?id=<draftId>), envoyé par le prospect/artisan
-  // lorsqu'il regarde sa démo — voir api/enregistrer-vue-demo.js. Compté
-  // en visiteurs uniques (par session navigateur), pas en nombre de
-  // chargements de page.
-  function afficherCompteursVuesDemo() {
-    Object.entries(vuesDemoParDraftId).forEach(([draftId, n]) => {
-      const el = document.getElementById('vues-demo-' + draftId);
-      if (el) el.textContent = `👀 ${n} vue${n > 1 ? 's' : ''} démo`;
     });
   }
 
@@ -393,7 +434,6 @@
                     ${f.compte_cree ? '<span class="badge-compte-cree">✓ Compte créé</span>' : '<span class="badge-compte-absent">Compte pas encore créé</span>'}
                     <span class="badge-en-ligne" id="en-ligne-${f.id}" style="display:${estEnLigne(f) ? '' : 'none'};">En ligne</span>
                     <span class="badge-compteur-demandes" id="demandes-${f.id}"></span>
-                    <span class="badge-compteur-demandes" id="vues-demo-${f.id}"></span>
                   </div>
                 </td>
               </tr>

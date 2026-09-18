@@ -76,6 +76,22 @@
      d'afficher un texte générique qui ne parlerait pas de ses chantiers. */
   .image-panel-description { position:relative; z-index:5; flex:0 0 auto; color:rgba(255,255,255,0.92); font-size:14px; line-height:1.5; text-align:center; padding:12px 22px 16px; background:linear-gradient(0deg, rgba(15,35,29,0.85) 0%, rgba(15,35,29,0.55) 100%); display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
   @media (max-width:800px){ .image-panel-description{ font-size:12.5px; padding:8px 16px 12px; -webkit-line-clamp:2; } }
+  /* Liste de prestations en rotation — demandé par Cyrille le 18/09/2026
+     (soir) : sous le carrousel, une phrase à la fois ("Vous avez besoin
+     d'un devis de <produit> ?"), qui change automatiquement toutes les
+     3,2s — pas un bandeau défilant comme celui de la vidéo de présentation
+     (choix explicite : moins chargé visuellement dans un panneau déjà
+     dense). draft.produits_vitrine (liste de libellés courts saisis dans
+     construire-ma-vitrine.html) ; masqué si vide (voir le JS dans init()).
+     Toutes les phrases sont superposées dans LA MÊME cellule de grille
+     (grid-row/grid-column:1 sur chacune) : la grille dimensionne
+     automatiquement la ligne sur la phrase la plus haute, sans avoir besoin
+     de mesurer quoi que ce soit en JS — un fondu enchaîné (opacity) passe
+     de l'une à l'autre sans que le panneau ne "saute" en hauteur. */
+  .image-panel-produits { position:relative; z-index:5; flex:0 0 auto; display:grid; padding:10px 22px; background:rgba(15,35,29,0.4); }
+  .image-panel-produits .produit-phrase { grid-row:1; grid-column:1; align-self:center; opacity:0; transition:opacity .6s ease-in-out; color:#fff; font-size:15px; font-weight:700; line-height:1.4; text-align:center; }
+  .image-panel-produits .produit-phrase.active { opacity:1; }
+  @media (max-width:800px){ .image-panel-produits{ padding:6px 16px; } .image-panel-produits .produit-phrase{ font-size:12.5px; } }
 
   /* Aperçu au survol d'une option du formulaire (ex : "OneSlide" dans le
      parcours portails) — occupe la moitié basse du panneau visuel, à côté
@@ -279,6 +295,7 @@
     <div class="image-panel" id="heroImagePanel">
       <div class="image-panel-title" id="heroTitle"></div>
       <div class="image-panel-media" id="heroImageMedia"></div>
+      <div class="image-panel-produits" id="heroProduits"></div>
       <div class="image-panel-description" id="heroDescription"></div>
       <div class="image-panel-preview" id="heroPreviewHalf">
         <div class="hover-preview-placeholder" id="heroPreviewPlaceholder">Survolez une option du formulaire pour voir à quoi ça ressemble</div>
@@ -954,7 +971,7 @@ async function init(){
     // migration verrouiller_colonnes_sensibles_vitrine_drafts, qui retire à
     // anon l'accès à des colonnes sensibles (hash de mot de passe, jetons...)
     // qu'un select=* tenterait de lire et ferait échouer intégralement.
-    `${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${id}&select=adresse_cp,adresse_rue,adresse_ville,assurance_decennale_assureur,assurance_decennale_numero,capital_social,catalogue_fichier_url,catalogue_image_url,catalogue_titre,couleur,couleur_fond_vitrine,description,email,entreprise,fond_formulaire_flou,fond_formulaire_source,forme_juridique,formulaire_personnalise,formulaire_personnalise_cle,formulaire_position,id,logo_url,metier,mode_devis_detaille,photos,photos_avant_apres,portails_tarifs,produits_chiffrables,rcs_ville,siret,status,telephone,titre_hero_choisi,tva_taux,video_url,zone`,
+    `${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${id}&select=adresse_cp,adresse_rue,adresse_ville,assurance_decennale_assureur,assurance_decennale_numero,capital_social,catalogue_fichier_url,catalogue_image_url,catalogue_titre,couleur,couleur_fond_vitrine,description,email,entreprise,fond_formulaire_flou,fond_formulaire_source,forme_juridique,formulaire_personnalise,formulaire_personnalise_cle,formulaire_position,id,logo_url,metier,mode_devis_detaille,photos,photos_avant_apres,portails_tarifs,produits_chiffrables,produits_vitrine,rcs_ville,siret,status,telephone,titre_hero_choisi,tva_taux,video_url,zone`,
     { headers: { apikey: SUPABASE_ANON_KEY } }
   );
   const rows = await resp.json().catch(() => []);
@@ -1025,6 +1042,34 @@ async function init(){
     heroDescEl.innerHTML = escapeHtml(draft.description);
   } else {
     heroDescEl.style.display = 'none';
+  }
+
+  // 18/09/2026 (soir) : liste de prestations (draft.produits_vitrine, ex :
+  // "petite maçonnerie", "allée carrossable"...) affichée une par une, en
+  // rotation automatique ("Vous avez besoin d'un devis de <produit> ?"),
+  // entre le carrousel et le descriptif. Choix explicite de Cyrille : une
+  // seule phrase à la fois plutôt qu'un bandeau défilant (voir le
+  // commentaire CSS de .image-panel-produits) — masqué entièrement si
+  // l'artisan n'a rien renseigné.
+  const heroProduitsEl = document.getElementById('heroProduits');
+  const produitsVitrine = Array.isArray(draft.produits_vitrine)
+    ? draft.produits_vitrine.map(p => (p || '').trim()).filter(Boolean)
+    : [];
+  if (produitsVitrine.length) {
+    heroProduitsEl.innerHTML = produitsVitrine.map((p, i) =>
+      '<span class="produit-phrase' + (i === 0 ? ' active' : '') + '">Vous avez besoin d\'un devis de ' + escapeHtml(p) + ' ?</span>'
+    ).join('');
+    if (produitsVitrine.length > 1) {
+      let indexProduitActif = 0;
+      setInterval(() => {
+        const phrases = heroProduitsEl.querySelectorAll('.produit-phrase');
+        phrases[indexProduitActif].classList.remove('active');
+        indexProduitActif = (indexProduitActif + 1) % phrases.length;
+        phrases[indexProduitActif].classList.add('active');
+      }, 3200);
+    }
+  } else {
+    heroProduitsEl.style.display = 'none';
   }
 
   document.getElementById('eyebrow').textContent = draft.entreprise + ' — ' + template.eyebrow;

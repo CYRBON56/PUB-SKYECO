@@ -21,7 +21,7 @@
 const MODELE_CLAUDE = 'claude-sonnet-4-6';
 
 function construirePrompt(brief, texteActuel) {
-  return `Tu écris, pour Cyrille Bon (dirigeant d'EcoSky by RMS, une entreprise du BTP en Bretagne), un email de prospection B2B destiné à d'AUTRES artisans du BTP (paysagistes, maçons, électriciens, plombiers...) pour leur vendre son propre outil marketing : Skyeco Pro (gestion Google Ads + Meta Ads, suivi des demandes clients, devis, le tout depuis un seul tableau de bord, pensé par un artisan pour des artisans).
+  return `Tu écris, pour Cyrille Bon (dirigeant d'EcoSky by RMS, une entreprise du BTP en Bretagne), un email de prospection B2B destiné à d'AUTRES artisans du BTP (paysagistes, maçons, électriciens, plombiers...) pour leur vendre son propre outil marketing : Skyeco Pro (gestion Google Ads, suivi des demandes clients, devis, le tout depuis un seul tableau de bord, pensé par un artisan pour des artisans).
 
 Ton du message : direct, crédible, écrit par un artisan à un autre artisan (pas une agence marketing) — jamais survendu, pas de superlatifs creux ("révolutionnaire", "incontournable"...), des phrases courtes.
 

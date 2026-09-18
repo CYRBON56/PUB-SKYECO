@@ -2,13 +2,17 @@
 //
 // Simule l'approvisionnement du budget publicitaire (campagne.html) SANS
 // passer par Stripe — pour tester tout le tunnel essai gratuit → forfait →
-// budget → campagne Google/Meta Ads réellement créée, sans dépenser un
-// centime ni entrer de carte bancaire nulle part.
+// budget → campagne Google Ads réellement créée, sans dépenser un centime ni
+// entrer de carte bancaire nulle part.
 //
 // Reproduit EXACTEMENT la même logique que api/confirm-ad-payment.js (même
-// calcul TVA, mêmes champs mis à jour, même déclenchement des campagnes
-// Google Ads et Meta Ads) — seule différence : aucun appel à Stripe, le
-// montant "payé" est directement celui fourni dans la requête.
+// calcul TVA, mêmes champs mis à jour, même déclenchement de la campagne
+// Google Ads) — seule différence : aucun appel à Stripe, le montant "payé"
+// est directement celui fourni dans la requête.
+//
+// 17/09/2026 : Meta Ads (Facebook/Instagram) est retiré de Skyeco Pro — le
+// déclenchement de create-meta-ads-campaign.js qui existait ici a été
+// supprimé, ainsi que la colonne budget_repartition_meta_pourcent.
 //
 // Protégé par le même mot de passe interne que les autres outils de test
 // (simuler-paiement-test.js pour le forfait, verify-test-bypass.js pour le
@@ -17,10 +21,10 @@
 // contient "&test=1".
 //
 // ⚠️ Comme pour simuler-paiement-test.js : le budget est bien marqué actif
-// et une VRAIE campagne Google/Meta Ads est créée (en pause) via les
-// endpoints habituels — utile pour tester le parcours de bout en bout, pas
-// pour tester la facturation elle-même (pas de session Stripe, pas de
-// facture générée, factureUrl/facturePdfUrl toujours null ici).
+// et une VRAIE campagne Google Ads est créée (en pause) via les endpoints
+// habituels — utile pour tester le parcours de bout en bout, pas pour
+// tester la facturation elle-même (pas de session Stripe, pas de facture
+// générée, factureUrl/facturePdfUrl toujours null ici).
 //
 // Requête attendue : POST { draftId, budget, motDePasseInterne }
 //   - budget : montant TTC (même sens que sur campagne.html — le montant
@@ -62,9 +66,8 @@ export default async function handler(req, res) {
 
   try {
     let statutActuel = null;
-    let repartitionMetaPourcent = 0;
     const statutResp = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=id,status,budget_repartition_meta_pourcent`,
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=id,status`,
       { headers: supaHeaders }
     );
     const statutRows = await statutResp.json();
@@ -72,7 +75,6 @@ export default async function handler(req, res) {
       return res.status(404).json({ success: false, error: 'Site introuvable.' });
     }
     statutActuel = statutRows[0].status || null;
-    repartitionMetaPourcent = statutRows[0].budget_repartition_meta_pourcent || 0;
 
     const champsAMettreAJour = {
       tarif_actif: true,
@@ -118,25 +120,6 @@ export default async function handler(req, res) {
       console.error('[TEST] Erreur appel création campagne Google Ads :', campagneErr);
     }
 
-    let campagneMeta = null;
-    if (repartitionMetaPourcent > 0) {
-      try {
-        const campagneMetaResp = await fetch(`${origin}/api/create-meta-ads-campaign`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ draft_id: draftId }),
-        });
-        const campagneMetaData = await campagneMetaResp.json();
-        if (campagneMetaResp.ok) {
-          campagneMeta = campagneMetaData;
-        } else {
-          console.error('[TEST] Campagne Meta Ads non créée automatiquement :', JSON.stringify(campagneMetaData));
-        }
-      } catch (campagneMetaErr) {
-        console.error('[TEST] Erreur appel création campagne Meta Ads :', campagneMetaErr);
-      }
-    }
-
     return res.status(200).json({
       success: true,
       test: true,
@@ -146,7 +129,6 @@ export default async function handler(req, res) {
       campagneMessage: campagne?.success
         ? "Votre campagne a été créée en pause — elle sera vérifiée avant diffusion."
         : "Budget enregistré, mais la campagne n'a pas pu être créée automatiquement.",
-      metaCampagneCreee: repartitionMetaPourcent > 0 ? !!campagneMeta?.success : null,
       factureUrl: null,
       facturePdfUrl: null,
     });

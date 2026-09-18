@@ -4,12 +4,11 @@
 // campagne Google Ads (via create-google-ads-campaign.js) — c'est le "et la
 // campagne se met en route" demandé : aucune étape manuelle après paiement.
 //
-// 14/09/2026 : déclenche aussi create-meta-ads-campaign.js en parallèle,
-// UNIQUEMENT si l'artisan a réglé une répartition Meta Ads > 0% depuis
-// mon-dashboard.html (voir api/definir-repartition-budget-meta.js) — par
-// défaut budget_repartition_meta_pourcent vaut 0 (Meta Ads désactivé), donc
-// ce changement ne modifie rien pour les artisans existants tant qu'ils
-// n'ont pas activé Meta Ads eux-mêmes.
+// 17/09/2026 : Meta Ads (Facebook/Instagram) est retiré de Skyeco Pro sur
+// décision de Cyrille — Skyeco Pro ne pilote plus que Google Ads. Le
+// déclenchement de create-meta-ads-campaign.js (14/09/2026) qui existait ici
+// a été supprimé, ainsi que la colonne budget_repartition_meta_pourcent qui
+// le pilotait.
 //
 // Le montant payé par l'artisan (session.metadata.budget) est TTC (ex. 100€).
 // Skyeco IA Ads facture ce montant avec TVA à 20% (voir modèle de facturation),
@@ -77,18 +76,14 @@ export default async function handler(req, res) {
     // Statut actuel du site — sert à décider si on démarre l'essai du
     // forfait (voir plus bas) sans écraser une situation déjà plus avancée
     // (abonnement payant actif, essai déjà en cours ou déjà expiré).
-    // budget_repartition_meta_pourcent sert à décider si on déclenche aussi
-    // Meta Ads (voir plus bas, 14/09/2026).
     let statutActuel = null;
-    let repartitionMetaPourcent = 0;
     try {
       const statutResp = await fetch(
-        `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=status,budget_repartition_meta_pourcent`,
+        `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=status`,
         { headers: supaHeaders }
       );
       const statutRows = await statutResp.json();
       statutActuel = statutRows[0]?.status || null;
-      repartitionMetaPourcent = statutRows[0]?.budget_repartition_meta_pourcent || 0;
     } catch (statutErr) {
       console.error('Erreur lecture statut avant paiement Ads :', statutErr);
     }
@@ -142,29 +137,6 @@ export default async function handler(req, res) {
       console.error('Erreur appel création campagne :', campagneErr);
     }
 
-    // 3. Si l'artisan a activé Meta Ads (répartition > 0%), déclenche aussi
-    // create-meta-ads-campaign.js — même appel serveur-à-serveur, en plus de
-    // (pas à la place de) Google Ads : le pourcentage restant reste sur
-    // Google Ads (voir create-meta-ads-campaign.js pour le calcul du budget).
-    let campagneMeta = null;
-    if (repartitionMetaPourcent > 0) {
-      try {
-        const campagneMetaResp = await fetch(`${origin}/api/create-meta-ads-campaign`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ draft_id: draftId }),
-        });
-        const campagneMetaData = await campagneMetaResp.json();
-        if (campagneMetaResp.ok) {
-          campagneMeta = campagneMetaData;
-        } else {
-          console.error('Campagne Meta Ads non créée automatiquement :', JSON.stringify(campagneMetaData));
-        }
-      } catch (campagneMetaErr) {
-        console.error('Erreur appel création campagne Meta Ads :', campagneMetaErr);
-      }
-    }
-
     return res.status(200).json({
       success: true,
       budgetPayeTTC: budgetTTC,
@@ -173,7 +145,6 @@ export default async function handler(req, res) {
       campagneMessage: campagne?.success
         ? "Votre campagne a été créée en pause — elle sera vérifiée avant diffusion."
         : "Budget enregistré, mais la campagne n'a pas pu être créée automatiquement. Notre équipe s'en occupe.",
-      metaCampagneCreee: repartitionMetaPourcent > 0 ? !!campagneMeta?.success : null,
       factureUrl,
       facturePdfUrl,
     });

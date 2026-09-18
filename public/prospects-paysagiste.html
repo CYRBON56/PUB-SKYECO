@@ -58,6 +58,24 @@
   .btn-danger{ background:#fff; border-color:#c0392b; color:#c0392b; }
   .btn-danger:hover{ background:#fdecec; }
 
+  /* "En ce moment sur le site" (18/09/2026) : bandeau listant les prospects
+     dont le ping (voir api/ping-presence-prospect.js) date de moins de 3 min —
+     ils ont ouvert le lien de tracking de l'email et ont la page d'inscription
+     ouverte en ce moment. Rafraîchi toutes les 30s (voir rafraichirPresence). */
+  .bandeau-en-ligne{ background:#eaf5ef; border:1.5px solid var(--ok); padding:14px 18px; margin-bottom:16px; display:none; }
+  .bandeau-en-ligne .titre{ font-weight:800; font-size:13px; color:var(--navy); margin-bottom:8px; }
+  .bandeau-en-ligne ul{ list-style:none; display:flex; flex-direction:column; gap:6px; }
+  .bandeau-en-ligne li{ font-size:13px; color:var(--navy); display:flex; align-items:center; gap:8px; }
+  .pastille-pulse{
+    display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--ok);
+    flex-shrink:0; animation:pulseEnLigne 1.8s infinite;
+  }
+  @keyframes pulseEnLigne{
+    0%{ box-shadow:0 0 0 0 rgba(62,142,90,0.55); }
+    70%{ box-shadow:0 0 0 8px rgba(62,142,90,0); }
+    100%{ box-shadow:0 0 0 0 rgba(62,142,90,0); }
+  }
+
   .stats{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
   .stat{ background:var(--paper); border:1px solid var(--paper-line); padding:10px 14px; min-width:110px; cursor:pointer; }
   .stat.active{ border-color:var(--orange); background:#FDF3EF; }
@@ -182,6 +200,11 @@
   <div class="panel">
     <h2>Prospects</h2>
     <p class="hint">Vue d'ensemble et recherche. Cliquez une statistique pour filtrer.</p>
+
+    <div class="bandeau-en-ligne" id="bandeauEnLigne">
+      <div class="titre">🟢 En ce moment sur le site</div>
+      <ul id="listeEnLigne"></ul>
+    </div>
 
     <div class="stats" id="stats"></div>
 
@@ -669,8 +692,35 @@
   document.getElementById('searchNom').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('btnSearch').click(); });
   document.getElementById('searchMetier').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('btnSearch').click(); });
 
-  function refreshAll(){ loadStats(); loadTable(); }
-  function init(){ refreshAll(); }
+  // ---------- "En ce moment sur le site" ----------
+  function afficherEnLigne(presence){
+    const bandeau = document.getElementById('bandeauEnLigne');
+    const liste = document.getElementById('listeEnLigne');
+    if (!presence || !presence.length){ bandeau.style.display = 'none'; return; }
+    bandeau.style.display = 'block';
+    liste.innerHTML = presence.map(p => `
+      <li>
+        <span class="pastille-pulse"></span>
+        <a href="#" onclick="event.preventDefault(); document.getElementById('searchNom').value='${(p.nom_entreprise||'').replace(/'/g, "\\'")}'; document.getElementById('btnSearch').click();">${p.nom_entreprise || 'Sans nom'}</a>
+      </li>
+    `).join('');
+  }
+
+  async function rafraichirPresence(){
+    // Ne redemande jamais le mot de passe en tâche de fond — un onglet
+    // resté ouvert ne doit pas faire réapparaître le portail toutes les 30s.
+    if (sessionStorage.getItem('skyeco_prospection_ok') !== '1' || !internalPassword) return;
+    try{
+      const { presence } = await appelerAdmin('presence');
+      afficherEnLigne(presence);
+    } catch(err){ /* silencieux : un ping de présence raté ne doit pas gêner la page */ }
+  }
+
+  function refreshAll(){ loadStats(); loadTable(); rafraichirPresence(); }
+  function init(){
+    refreshAll();
+    setInterval(() => { if (document.visibilityState === 'visible') rafraichirPresence(); }, 30000);
+  }
 
   if (sessionStorage.getItem('skyeco_prospection_ok') === '1' && internalPassword) init();
 })();

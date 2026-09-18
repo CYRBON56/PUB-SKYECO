@@ -379,6 +379,30 @@
 
   const TEST_MODE = new URLSearchParams(window.location.search).get('test') === '1';
 
+  // Présence "en ce moment sur le site" pour le suivi de prospection par
+  // email (voir api/ping-presence-prospect.js et api/lien.js) : quand cette
+  // page est ouverte via le lien de tracking envoyé par email, ?pp=<id>
+  // identifie le prospect et on ping toutes les 30s tant que l'onglet est
+  // visible (18/09/2026, demande de Cyrille).
+  (function(){
+    const prospectId = new URLSearchParams(window.location.search).get('pp');
+    if (!prospectId) return;
+    function envoyerPingProspect() {
+      fetch('/api/ping-presence-prospect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prospectId }),
+      }).catch(() => {});
+    }
+    envoyerPingProspect();
+    setInterval(() => {
+      if (document.visibilityState === 'visible') envoyerPingProspect();
+    }, 30000);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') envoyerPingProspect();
+    });
+  })();
+
   async function uploadToStorage(file, prefix){
     if(!supabaseClient) throw new Error('Service de stockage indisponible.');
     const ext = file.name.split('.').pop();

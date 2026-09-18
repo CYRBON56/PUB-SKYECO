@@ -7,7 +7,18 @@
 <style>
   * { box-sizing: border-box; }
   body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color:#14312a; }
-  .split-layout { display:flex; height:100vh; overflow:hidden; }
+  /* Bug corrigé le 18/09/2026 (soir) : le bandeau "aperçu" (#previewBanner,
+     visible tant que le mini-site n'est pas publié) est en position:fixed
+     et ne réserve aucune place dans le flux — il flottait donc PAR-DESSUS
+     le haut de la page. Sans conséquence tant que le titre de la vitrine
+     était centré au milieu du panneau (voir historique de .image-panel-title
+     plus bas), mais depuis qu'il est passé tout en haut du panneau (même
+     demande du 18/09), le bandeau le cachait complètement en mode aperçu —
+     exactement l'endroit où Cyrille teste avant publication. --preview-banner-height
+     est posée en JS (ajusterHauteurBandeauApercu) à la hauteur réelle du
+     bandeau (variable selon la largeur d'écran, le texte pouvant passer sur
+     plusieurs lignes) ; 0px par défaut quand le bandeau n'est pas affiché. */
+  .split-layout { display:flex; height:calc(100vh - var(--preview-banner-height, 0px)); margin-top:var(--preview-banner-height, 0px); overflow:hidden; }
   /* Panneau visuel de droite (ou de gauche, voir formulaire-droite plus bas)
      — depuis le 04/09 coupé en deux moitiés empilées à la demande de
      Cyrille : en haut la vidéo/le carrousel de photos habituel, en bas un
@@ -131,7 +142,7 @@
      peu d'espace en plus pour rester lisible. 40vh garde une majorité de
      l'écran pour le formulaire en dessous (form-panel, flex:1 1 auto donc
      prend tout le reste), quelle que soit la hauteur de l'appareil. */
-  @media (max-width:800px){ .split-layout{ flex-direction:column; height:100vh; overflow:hidden; } .image-panel{ flex:0 0 40vh; order:1; } .form-panel{ padding:12px 16px; order:2; } .split-layout.formulaire-droite .image-panel{ order:1; } .split-layout.formulaire-droite .form-panel{ order:2; } }
+  @media (max-width:800px){ .split-layout{ flex-direction:column; height:calc(100vh - var(--preview-banner-height, 0px)); overflow:hidden; } .image-panel{ flex:0 0 40vh; order:1; } .form-panel{ padding:12px 16px; order:2; } .split-layout.formulaire-droite .image-panel{ order:1; } .split-layout.formulaire-droite .form-panel{ order:2; } }
   @media (max-width:480px){ .image-panel{ flex:0 0 36vh; } .form-panel{ padding:10px 14px; } .header-block{ padding:10px 14px; margin-bottom:10px; } h1{ font-size:19px; margin:4px 0 6px; } .eyebrow{ font-size:11px; } .sub{ font-size:14px; margin-bottom:0; line-height:1.45; } .card{ padding:16px; } .question{ font-size:17px; margin-bottom:14px; line-height:1.35; } .option{ padding:14px 16px; font-size:15.5px; } .progress{ margin-bottom:12px; } input[type="text"],input[type="tel"],input[type="email"],input[type="number"]{ font-size:16px; padding:13px 14px; margin-bottom:10px; } label.field-label{ font-size:14px; } .nav-row{ flex-wrap:wrap; margin-top:16px; } button.btn{ font-size:15px; padding:13px 16px; } .btn-primary{ flex:1 1 100%; order:1; } .btn-ghost{ order:2; padding:8px 0; font-size:14px; } .trust-footer{ margin-top:10px; padding-top:10px; } .trust-badges-row{ display:none !important; } }
 
   .wrap { max-width:480px; width:100%; height:100%; margin:0; padding:0; display:flex; flex-direction:column; }
@@ -916,6 +927,20 @@ function escapeHtml(valeur) {
   return String(valeur == null ? '' : valeur).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 }
 
+// Bug corrigé le 18/09/2026 (soir) — voir le commentaire sur .split-layout
+// dans le <style> ci-dessus pour le pourquoi. Mesure la hauteur réelle du
+// bandeau "aperçu" (variable selon la largeur d'écran et son texte, qui
+// peut passer sur 1 à 4 lignes) et la pose en variable CSS pour que le
+// panneau visuel (et son titre, désormais en haut) ne soit plus caché
+// dessous. Appelée à chaque fois que le bandeau est affiché ou que son
+// contenu change, plus une fois au redimensionnement de la fenêtre.
+function ajusterHauteurBandeauApercu(){
+  const banner = document.getElementById('previewBanner');
+  const visible = banner && getComputedStyle(banner).display !== 'none';
+  document.documentElement.style.setProperty('--preview-banner-height', visible ? banner.offsetHeight + 'px' : '0px');
+}
+window.addEventListener('resize', ajusterHauteurBandeauApercu);
+
 async function init(){
   const params = new URLSearchParams(window.location.search);
   const id = params.get('id');
@@ -1273,6 +1298,10 @@ async function init(){
     document.getElementById('previewBanner').style.display = 'flex';
     document.getElementById('btnRetourDashboard').href = '/mon-dashboard.html?id=' + draft.id;
     document.getElementById('btnRetourElements').href = '/construire-ma-vitrine.html?id=' + draft.id;
+    // requestAnimationFrame : on mesure une fois le bandeau réellement peint
+    // (son display:flex vient d'être posé la ligne au-dessus), sinon
+    // offsetHeight peut encore renvoyer l'ancienne valeur (0, display:none).
+    requestAnimationFrame(ajusterHauteurBandeauApercu);
   }
   if(draft.status === 'en_pause'){
     document.getElementById('appRoot').innerHTML =
@@ -1401,6 +1430,7 @@ async function init(){
   // Retour depuis Stripe après paiement : on vérifie et on publie côté serveur.
   const returningSessionId = params.get('session_id');
   if (returningSessionId) {
+    document.getElementById('previewBanner').style.display = 'flex';
     document.getElementById('previewBanner').innerHTML =
       '<span>⏳ Vérification du paiement en cours…</span>';
     try {
@@ -1434,9 +1464,14 @@ async function init(){
         '<span>⚠️ Impossible de vérifier le paiement pour le moment.</span>';
     }
   } else if (params.get('paiement') === 'annule') {
+    document.getElementById('previewBanner').style.display = 'flex';
     document.getElementById('previewBanner').innerHTML =
       '<span>Paiement annulé — vous pouvez réessayer quand vous voulez.</span>';
   }
+  // Le texte du bandeau ci-dessus peut changer sa hauteur (1 à 2 lignes
+  // selon le message et la largeur d'écran) — on remesure après coup, une
+  // fois le nouveau contenu peint (voir ajusterHauteurBandeauApercu).
+  requestAnimationFrame(ajusterHauteurBandeauApercu);
 
   runWizard(template, brandColor, draft.id, tvaTaux, draft);
 }

@@ -31,6 +31,9 @@
 //                         -> uniquement les prospects ayant pingé dans les 3 dernières
 //                            minutes (voir api/ping-presence-prospect.js) — "en ce
 //                            moment sur le site" dans prospects-paysagiste.html (18/09)
+//   action = 'historique'-> { motDePasseInterne, action:'historique', prospectId }
+//                         -> { success, visites: [{page, entered_at, last_seen_at}] }
+//                            pages consultées + temps resté, voir prospects_paysagiste_visites
 //
 // Variables d'environnement requises : SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
 // INTERNAL_ACCESS_PASSWORD
@@ -119,6 +122,16 @@ export default async function handler(req, res) {
       if (!resp.ok) throw new Error('Lecture présence impossible : ' + (await resp.text()));
       const presence = await resp.json();
       return res.status(200).json({ success: true, presence });
+    }
+
+    if (action === 'historique') {
+      const { prospectId } = req.body || {};
+      if (!prospectId) return res.status(400).json({ success: false, error: 'prospectId manquant' });
+      const url = `${process.env.SUPABASE_URL}/rest/v1/prospects_paysagiste_visites?prospect_id=eq.${encodeURIComponent(prospectId)}&select=page,entered_at,last_seen_at&order=entered_at.desc&limit=200`;
+      const resp = await fetch(url, { headers: supaHeaders });
+      if (!resp.ok) throw new Error('Lecture historique impossible : ' + (await resp.text()));
+      const visites = await resp.json();
+      return res.status(200).json({ success: true, visites });
     }
 
     if (action === 'import_lot') {

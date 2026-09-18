@@ -284,29 +284,6 @@
   .relance-row:last-child { border-bottom:none; }
   .btn-relance-demo { background:#ec4899; color:#fff; font-size:0.68rem; font-weight:700; padding:4px 10px; border-radius:999px; border:none; white-space:nowrap; }
 
-  /* 13/09/2026 : aperçu "Réseaux sociaux" (publication auto Instagram/Facebook/
-     Google/TikTok), pour montrer cette fonctionnalité dès la démo du tunnel —
-     mêmes classes/couleurs que le vrai dashboard (mon-dashboard.html, section
-     "Réseaux sociaux" : .rs-status, .rs-btn, .rs-row, .rs-thumb, .rs-pill). */
-  .rs-panel-demo { background:#fff; border-radius:14px; padding:20px; margin-bottom:16px; }
-  .rs-panel-demo h3 { font-size:0.9rem; }
-  .rs-panel-demo .liste-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
-  .btn-nouveau-post-demo { background:#7c3aed; color:#fff; border:none; padding:8px 15px; border-radius:9px; font-size:0.78rem; font-weight:700; cursor:default; white-space:nowrap; }
-  .rs-status-demo { display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:13px 0; border-top:1px solid #eef1f0; }
-  .rs-status-demo:first-of-type { border-top:none; }
-  .rs-status-dot-demo { width:10px; height:10px; border-radius:50%; background:#7c3aed; flex-shrink:0; }
-  .rs-status-dot-demo.off { background:#ec4899; }
-  .rs-status-texte-demo { flex:1; min-width:200px; }
-  .rs-status-texte-demo strong { display:block; color:#211a35; font-size:0.85rem; margin-bottom:2px; }
-  .rs-status-texte-demo span { font-size:0.74rem; color:#8a9891; }
-  .rs-btn-demo { background:#7c3aed; color:#fff; border:none; padding:10px 16px; border-radius:10px; font-size:0.78rem; font-weight:700; cursor:default; white-space:nowrap; }
-  .rs-btn-demo.secondary { background:#fff; color:#7c3aed; border:1.5px solid #7c3aed; }
-  .rs-row-demo { display:flex; align-items:center; gap:14px; padding:12px 0; border-top:1px solid #eef1f0; }
-  .rs-thumb-demo { width:48px; height:48px; border-radius:8px; flex-shrink:0; }
-  .rs-caption-demo { font-size:0.82rem; color:#211a35; line-height:1.4; }
-  .rs-meta-demo { font-size:0.72rem; color:#8a9891; margin-top:3px; }
-  .rs-pill-demo { font-size:0.68rem; font-weight:700; padding:3px 9px; border-radius:999px; background:#e4eef4; color:#2c5f8a; white-space:nowrap; flex-shrink:0; }
-
   /* Zones cliquables "ça explique ce que c'est" */
   .explicable { cursor:help; border-radius:14px; transition:box-shadow 0.15s ease, outline-color 0.15s ease; outline:2px solid transparent; outline-offset:2px; }
   .explicable:hover { outline-color:#7c3aed; }
@@ -388,10 +365,6 @@
       <button type="button" class="panel-tab" data-tab-demo="clients">
         <span class="panel-tab-icone">👥</span>
         <span class="panel-tab-texte">Gérer les clients<span class="panel-tab-sous">Demandes, devis, signatures</span></span>
-      </button>
-      <button type="button" class="panel-tab" data-tab-demo="reseaux">
-        <span class="panel-tab-icone">📱</span>
-        <span class="panel-tab-texte">Réseaux sociaux<span class="panel-tab-sous">Publication Instagram &amp; Facebook</span></span>
       </button>
       <button type="button" class="panel-tab" data-tab-demo="calendrier">
         <span class="panel-tab-icone">📅</span>
@@ -729,52 +702,6 @@
   </div>
   </div>
 
-  <div id="panelReseauxDemo">
-  <div class="rs-panel-demo explicable" data-explain-title="📱 Réseaux sociaux" data-explain="Envoyez la photo d'un chantier terminé, l'IA rédige la légende et les hashtags, et le post part automatiquement sur Instagram, Facebook, votre fiche Google et TikTok en même temps — sans jongler entre les applications.">
-    <div class="liste-header">
-      <h3>Réseaux sociaux</h3>
-      <button class="btn-nouveau-post-demo">+ Nouveau post</button>
-    </div>
-    <div class="rs-status-demo">
-      <span class="rs-status-dot-demo"></span>
-      <div class="rs-status-texte-demo"><strong>Instagram connecté — @rms_ecosky</strong><span>Publication automatique activée</span></div>
-      <button class="rs-btn-demo secondary">Gérer la connexion</button>
-    </div>
-    <div class="rs-status-demo">
-      <span class="rs-status-dot-demo"></span>
-      <div class="rs-status-texte-demo"><strong>Facebook connecté — RMS EcoSky</strong><span>Vos posts sont aussi publiés automatiquement sur cette Page.</span></div>
-      <button class="rs-btn-demo secondary">Gérer la connexion</button>
-    </div>
-    <div class="rs-status-demo">
-      <span class="rs-status-dot-demo"></span>
-      <div class="rs-status-texte-demo"><strong>Fiche Google connectée</strong><span>Vos posts y apparaissent aussi — utile pour votre référencement local.</span></div>
-      <button class="rs-btn-demo secondary" disabled>Connectée ✓</button>
-    </div>
-    <div class="rs-status-demo">
-      <span class="rs-status-dot-demo off"></span>
-      <div class="rs-status-texte-demo"><strong>TikTok non connecté</strong><span>Connectez votre compte pour que vos posts y soient aussi publiés.</span></div>
-      <button class="rs-btn-demo">Connecter TikTok</button>
-    </div>
-    <div class="rs-row-demo">
-      <div class="rs-thumb-demo" style="background:linear-gradient(135deg,#f9a8d4,#ec4899); display:flex; align-items:center; justify-content:center; font-size:1.3rem;">🏡</div>
-      <div style="flex:1;">
-        <div class="rs-caption-demo">« Nouvelle terrasse en résine EPDM livrée cette semaine à Brech ✨ Étanche, antidérapante et sans entretien... »</div>
-        <div class="rs-meta-demo">Publié il y a 2 jours sur Instagram + Facebook — légende générée par l'IA</div>
-      </div>
-      <span class="rs-pill-demo">Publié</span>
-    </div>
-    <div class="rs-row-demo">
-      <div class="rs-thumb-demo" style="background:linear-gradient(135deg,#c4b5fd,#7c3aed); display:flex; align-items:center; justify-content:center; font-size:1.3rem;">🌳</div>
-      <div style="flex:1;">
-        <div class="rs-caption-demo">« Avant / après : aménagement paysager complet à Pluvigner 🌿 »</div>
-        <div class="rs-meta-demo">Planifié pour demain 9h</div>
-      </div>
-      <span class="rs-pill-demo" style="background:#f5f3ff;color:#7c3aed;">Planifié</span>
-    </div>
-    <div class="estim-note">Chaque photo de chantier envoyée devient un post prêt à publier — légende et hashtags proposés automatiquement par l'IA, modifiables avant envoi.</div>
-  </div>
-  </div>
-
   <div id="panelCalendrierDemo">
   <div class="liste-panel explicable" data-explain-title="📅 Mon calendrier" data-explain="Vos prospects réservent eux-mêmes un rendez-vous sur les créneaux que vous avez ouverts — vous pouvez aussi bloquer un créneau en un clic quand vous n'êtes pas disponible.">
     <h3>Mon calendrier</h3>
@@ -885,12 +812,12 @@
   }
 
   // 13/09/2026 : dans le vrai dashboard, cliquer un onglet cache les autres —
-  // mais ici, en démo, on veut au contraire TOUT montrer (réseaux connectés,
-  // graphique des heures, villes des clics, coach IA...) pour que le prospect
-  // ne rate aucun argument de vente en ne cliquant que sur un seul onglet.
-  // Les 4 sections restent donc toutes affichées, empilées comme avant ; les
+  // mais ici, en démo, on veut au contraire TOUT montrer (villes des clics,
+  // coach IA...) pour que le prospect ne rate aucun argument de vente en ne
+  // cliquant que sur un seul onglet.
+  // Les sections restent donc toutes affichées, empilées comme avant ; les
   // onglets de la barre latérale servent seulement à y sauter directement.
-  const ANCRES_ONGLETS_DEMO = { ads: 'panelAdsDemo', clients: 'panelClientsDemo', reseaux: 'panelReseauxDemo', calendrier: 'panelCalendrierDemo' };
+  const ANCRES_ONGLETS_DEMO = { ads: 'panelAdsDemo', clients: 'panelClientsDemo', calendrier: 'panelCalendrierDemo' };
   function activerOngletDemo(cible) {
     document.querySelectorAll('#panelTabsDemo .panel-tab').forEach(b => b.classList.remove('active'));
     const btnCible = document.querySelector(`#panelTabsDemo .panel-tab[data-tab-demo="${cible}"]`);
@@ -955,10 +882,10 @@
     // Clic sur "Démarrer mon essai gratuit" : plus aucune condition à
     // vérifier ici (17/09/2026 soir — CGV et téléphone retirés de cet
     // écran). Plus de formulaire d'entreprise à cette étape (déplacé au
-    // moment où l'artisan veut approvisionner son budget Ads ou connecter
-    // ses réseaux sociaux, sur construire-ma-vitrine.html) — on démarre l'essai (1
-    // mois, sans engagement, sans carte bancaire) et on l'envoie directement
-    // sur son VRAI tableau de bord.
+    // moment où l'artisan veut approvisionner son budget Ads, sur
+    // construire-ma-vitrine.html) — on démarre l'essai (1 mois, sans
+    // engagement, sans carte bancaire) et on l'envoie directement sur son
+    // VRAI tableau de bord.
     document.getElementById('btnDemarrerEssai').addEventListener('click', async () => {
       const btn = document.getElementById('btnDemarrerEssai');
       const erreurEl = document.getElementById('essaiErreur');
@@ -971,8 +898,7 @@
       // sur demande de Cyrille, aucune information n'est demandée avant que
       // l'artisan ait mis sa vitrine en ligne. Ces informations sont
       // demandées plus tard, dans construire-ma-vitrine.html / au moment de
-      // "Mettre en ligne", quand l'artisan veut approvisionner son budget ou
-      // connecter ses réseaux sociaux.
+      // "Mettre en ligne", quand l'artisan veut approvisionner son budget.
       if (!idAUtiliser) {
         btn.disabled = true;
         btn.textContent = 'Préparation de votre espace…';

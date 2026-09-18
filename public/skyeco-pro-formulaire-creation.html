@@ -72,32 +72,25 @@
     .fixed-actions-topright{ top:12px; right:12px; }
   }
   .video-panel{
-    flex:1.35 1 0; position:relative; display:flex; flex-direction:column;
-    align-items:flex-start; justify-content:flex-start; padding:32px 32px 32px 12px; overflow:hidden;
-    z-index:2; background:#0b1f33;
+    flex:1 1 50%; position:relative; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; padding:32px; overflow:hidden;
+    z-index:2;
   }
   .carousel-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 1s ease-in-out; }
   .carousel-img.active{ opacity:1; }
 
-  .accroche-content{
-    position:relative; z-index:2; max-width:520px; margin-top:64px; text-align:left; padding:24px 20px;
-    background:rgba(20,48,74,0.72); border-radius:16px;
-    backdrop-filter:blur(2px);
+  .explainer-bg-video{ position:relative; max-width:340px; max-height:520px; width:auto; height:auto; display:block; border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.35); }
+  @media(max-width:768px){ .explainer-bg-video{ max-width:260px; max-height:400px; } }
+  .unmute-btn{
+    position:absolute; bottom:16px; left:50%; transform:translateX(-50%);
+    background:var(--orange); color:#fff; border:none; border-radius:999px;
+    padding:10px 20px; font-size:14px; font-weight:700; cursor:pointer;
+    box-shadow:0 6px 20px rgba(0,0,0,0.3); z-index:3;
+    animation: pulseBtn 2s ease-in-out infinite;
   }
-  .accroche-title{
-    font-family:'Big Shoulders Display',Arial,sans-serif; font-weight:800;
-    font-size:32px; line-height:1.15; color:#fff; margin:0 0 16px;
-  }
-  .accroche-title .orange-accent{ color:var(--orange); }
-  .accroche-text{
-    font-size:17px; font-weight:500; line-height:1.5; color:var(--paper);
-    margin:0;
-  }
-  @media(max-width:768px){
-    .accroche-content{ max-width:300px; margin-top:0; padding:22px 18px; text-align:center; }
-    .accroche-title{ font-size:28px; }
-    .accroche-text{ font-size:15px; }
-  }
+  .unmute-btn:hover{ filter:brightness(1.08); }
+  .unmute-btn.hidden{ display:none; }
+  @keyframes pulseBtn{ 0%,100%{ transform:translateX(-50%) scale(1); } 50%{ transform:translateX(-50%) scale(1.05); } }
   .video-panel::before{
     content:''; position:absolute; inset:0;
     background-image: repeating-linear-gradient(0deg, rgba(110,151,184,0.06) 0px, transparent 1px, transparent 32px),
@@ -105,7 +98,7 @@
     pointer-events:none;
   }
 
-  .form-panel{ flex:1 1 0; position:relative; display:flex; align-items:center; justify-content:center; padding:24px; overflow:hidden; z-index:2; }
+  .form-panel{ flex:1 1 50%; position:relative; display:flex; align-items:center; justify-content:center; padding:24px; overflow:hidden; z-index:2; }
   .form-bg-overlay{ position:absolute; inset:0; z-index:-1; background:rgba(244,247,249,0.55); }
   .carousel-caption{
     position:absolute; left:20px; bottom:20px; z-index:1; max-width:260px;
@@ -227,7 +220,7 @@
   @media(max-width:900px){ .metier-grid{grid-template-columns:1fr;} }
   @media(max-width:768px){
     .split-layout{ flex-direction:column; }
-    .video-panel{ padding:24px; align-items:center; justify-content:center; }
+    .video-panel{ padding:24px; }
     header.top{ margin:0; }
   }
 </style>
@@ -244,14 +237,25 @@
 </div>
 
 <div class="split-layout">
+  <img class="shared-carousel-img active" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/1-terrasse-mobilier-noir.jpg" alt="">
+  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/2-terrasse-mobilier-violet.jpg" alt="">
+  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/3-piscine-motif-tortue.jpg" alt="">
+  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/4-motif-geometrique.jpg" alt="">
+  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/5-piscine-beige.jpg" alt="">
+  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/6-piscine-pool-house.jpg" alt="">
+  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/7-piscine-jardin.jpg" alt="">
+  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/8-escalier-terrasse.jpg" alt="">
+  <div class="shared-carousel-overlay"></div>
 
-<div class="video-panel" style="padding:0;">
-  <video autoplay muted playsinline controls preload="metadata" style="position:absolute; inset:0; width:100%; height:100%; object-fit:contain; z-index:0; background:#0b1f33;">
-    <source src="/skyeco-video-demo.mp4" type="video/mp4">
-  </video>
-</div>
+  <div class="video-panel">
+    <video class="explainer-bg-video" id="explainerVideo" autoplay muted loop playsinline controls>
+      <source src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/puv%20skyeco/video.mp4" type="video/mp4">
+    </video>
+    <button id="unmuteBtn" class="unmute-btn" type="button">🔊 Activer le son</button>
+  </div>
 
   <div class="form-panel" id="photoCarousel">
+    <div class="carousel-caption">Des extérieurs pensés pour durer.</div>
     <div class="card">
       <div id="splashView" class="splash-view">
         <img class="splash-logo" src="/skyeco-logo-ads-compact.svg" alt="Skyeco IA Ads">
@@ -262,10 +266,6 @@
           <li>
             <span class="splash-benefice-icone">🎯</span>
             <div><strong>Vos Google Ads pilotées et coachées automatiquement</strong> — mots-clés choisis pour votre métier, suivi quotidien, correction des campagnes qui sous-performent.</div>
-          </li>
-          <li>
-            <span class="splash-benefice-icone">📱</span>
-            <div><strong>Vos réseaux sociaux gérés automatiquement</strong> — envoyez une photo de chantier, l'IA rédige la légende et les hashtags, et publie sur Instagram (Facebook bientôt disponible) à l'heure de votre choix.</div>
           </li>
           <li>
             <span class="splash-benefice-icone">🖼️</span>
@@ -369,6 +369,18 @@
 </div>
 
 <script>
+  // Activer le son de la vidéo au clic (l'autoplay avec son est bloqué par les navigateurs)
+  (function(){
+    const video = document.getElementById('explainerVideo');
+    const btn = document.getElementById('unmuteBtn');
+    if (video && btn) {
+      btn.addEventListener('click', function(){
+        video.muted = false;
+        video.play();
+        btn.classList.add('hidden');
+      });
+    }
+  })();
 (function(){
   // Carrousel photo (panneau droit, fond du formulaire)
   (function initCarousel(){
@@ -379,7 +391,7 @@
       imgs[idx].classList.remove('active');
       idx = (idx + 1) % imgs.length;
       imgs[idx].classList.add('active');
-    }, 4000);
+    }, 2500);
   })();
 
   const steps = Array.from(document.querySelectorAll('.panel'));
@@ -731,6 +743,5 @@
 })();
 </script>
 <!-- SKYECO_COOKIE_BANNER_END -->
-<script src="/tracking-visites.js"></script>
 </body>
 </html>

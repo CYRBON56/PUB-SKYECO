@@ -26,9 +26,6 @@
   @media (prefers-reduced-motion: reduce){ *{transition-duration:.001ms !important; animation-duration:.001ms !important;} }
 
   .split-layout{ display:flex; min-height:100vh; position:relative; }
-  .shared-carousel-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 1.2s ease-in-out; z-index:0; }
-  .shared-carousel-img.active{ opacity:1; }
-  .shared-carousel-overlay{ position:absolute; inset:0; background:linear-gradient(rgba(20,48,74,0.35), rgba(20,48,74,0.42)); z-index:1; }
 
   .page-logo{
     position:fixed; top:20px; left:20px; z-index:200;
@@ -73,14 +70,12 @@
   }
   .video-panel{
     flex:1 1 50%; position:relative; display:flex; flex-direction:column;
-    align-items:center; justify-content:center; padding:32px; overflow:hidden;
-    z-index:2;
+    align-items:center; justify-content:center; padding:0; overflow:hidden;
+    z-index:2; background:var(--navy);
   }
-  .carousel-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 1s ease-in-out; }
-  .carousel-img.active{ opacity:1; }
 
-  .explainer-bg-video{ position:relative; max-width:340px; max-height:520px; width:auto; height:auto; display:block; border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.35); }
-  @media(max-width:768px){ .explainer-bg-video{ max-width:260px; max-height:400px; } }
+  .explainer-bg-video{ position:relative; width:100%; height:100%; display:block; object-fit:contain; }
+  @media(max-width:768px){ .explainer-bg-video{ height:auto; max-height:60vh; } }
   .unmute-btn{
     position:absolute; bottom:16px; left:50%; transform:translateX(-50%);
     background:var(--orange); color:#fff; border:none; border-radius:999px;
@@ -98,15 +93,7 @@
     pointer-events:none;
   }
 
-  .form-panel{ flex:1 1 50%; position:relative; display:flex; align-items:center; justify-content:center; padding:24px; overflow:hidden; z-index:2; }
-  .form-bg-overlay{ position:absolute; inset:0; z-index:-1; background:rgba(244,247,249,0.55); }
-  .carousel-caption{
-    position:absolute; left:20px; bottom:20px; z-index:1; max-width:260px;
-    background:rgba(20,48,74,0.78); color:var(--paper,#F4F7F9);
-    font-family:'IBM Plex Sans',sans-serif; font-weight:600; font-size:13px; line-height:1.4;
-    padding:9px 14px; border-radius:10px;
-  }
-  @media(max-width:768px){ .carousel-caption{ font-size:12px; padding:7px 12px; left:14px; bottom:14px; } }
+  .form-panel{ flex:1 1 50%; position:relative; display:flex; align-items:center; justify-content:center; padding:24px; overflow:hidden; z-index:2; background:var(--paper); }
   .card{ width:100%; max-width:480px; position:relative; z-index:1; }
 
   header.top{ background:var(--navy); color:var(--white); padding:22px 28px; margin:-24px -24px 0; }
@@ -237,16 +224,6 @@
 </div>
 
 <div class="split-layout">
-  <img class="shared-carousel-img active" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/1-terrasse-mobilier-noir.jpg" alt="">
-  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/2-terrasse-mobilier-violet.jpg" alt="">
-  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/3-piscine-motif-tortue.jpg" alt="">
-  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/4-motif-geometrique.jpg" alt="">
-  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/5-piscine-beige.jpg" alt="">
-  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/6-piscine-pool-house.jpg" alt="">
-  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/7-piscine-jardin.jpg" alt="">
-  <img class="shared-carousel-img" src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/8-escalier-terrasse.jpg" alt="">
-  <div class="shared-carousel-overlay"></div>
-
   <div class="video-panel">
     <video class="explainer-bg-video" id="explainerVideo" autoplay muted loop playsinline controls>
       <source src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/puv%20skyeco/video.mp4" type="video/mp4">
@@ -254,8 +231,7 @@
     <button id="unmuteBtn" class="unmute-btn" type="button">🔊 Activer le son</button>
   </div>
 
-  <div class="form-panel" id="photoCarousel">
-    <div class="carousel-caption">Des extérieurs pensés pour durer.</div>
+  <div class="form-panel">
     <div class="card">
       <div id="splashView" class="splash-view">
         <img class="splash-logo" src="/skyeco-logo-ads-compact.svg" alt="Skyeco IA Ads">
@@ -382,18 +358,6 @@
     }
   })();
 (function(){
-  // Carrousel photo (panneau droit, fond du formulaire)
-  (function initCarousel(){
-    const imgs = Array.from(document.querySelectorAll('.shared-carousel-img'));
-    if(imgs.length <= 1) return;
-    let idx = 0;
-    setInterval(()=>{
-      imgs[idx].classList.remove('active');
-      idx = (idx + 1) % imgs.length;
-      imgs[idx].classList.add('active');
-    }, 2500);
-  })();
-
   const steps = Array.from(document.querySelectorAll('.panel'));
   const stepLabels = ['Vos informations'];
   let current = 0;

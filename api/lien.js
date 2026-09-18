@@ -56,13 +56,15 @@ export default async function handler(req, res) {
         const prospectPaysagiste = rowsPaysagiste && rowsPaysagiste[0];
         if (prospectPaysagiste) {
           const destinationEnregistree = prospectPaysagiste.lien_clic_destination;
+          // Quand la destination est la page d'inscription par défaut (celle que
+          // Cyrille contrôle, cf. api/ping-presence-prospect.js), on lui passe
+          // l'id du prospect en query string pour permettre le ping de présence
+          // ("en ce moment sur le site" dans prospects-paysagiste.html, 18/09).
+          // Une destination personnalisée (vidéo externe type Loom/YouTube)
+          // n'est pas modifiée : ce n'est pas une page que Cyrille contrôle.
           destination = (destinationEnregistree && /^https?:\/\//i.test(destinationEnregistree))
             ? destinationEnregistree
-            : DESTINATION_PROSPECTION_ARTISANS;
-          // Transmet l'identité du prospect (clic_token) à la première page
-          // du tunnel, pour que tracking-visites.js puisse la reprendre et
-          // la conserver tout au long du parcours (voir statistiques-visites.html).
-          destination += (destination.includes('?') ? '&' : '?') + 'pid=' + encodeURIComponent(p);
+            : `${DESTINATION_PROSPECTION_ARTISANS}?pp=${encodeURIComponent(prospectPaysagiste.id)}`;
           await fetch(`${process.env.SUPABASE_URL}/rest/v1/prospects_paysagiste?id=eq.${encodeURIComponent(prospectPaysagiste.id)}`, {
             method: "PATCH",
             headers: { ...supaHeaders, "Content-Type": "application/json", Prefer: "return=minimal" },

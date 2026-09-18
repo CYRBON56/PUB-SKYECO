@@ -27,11 +27,15 @@
 //                         -> upsert par email ; { success, count }
 //   action = 'ajouter'   -> { motDePasseInterne, action:'ajouter', contact: {...} }
 //                         -> upsert d'un seul contact ; { success }
+//   action = 'presence'  -> { success, presence: [{id, nom_entreprise, dernier_ping}] }
+//                         -> uniquement les prospects ayant pingé dans les 3 dernières
+//                            minutes (voir api/ping-presence-prospect.js) — "en ce
+//                            moment sur le site" dans prospects-paysagiste.html (18/09)
 //
 // Variables d'environnement requises : SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
 // INTERNAL_ACCESS_PASSWORD
 
-const COLONNES_LISTE = 'id,nom_entreprise,metier,famille_metier,ville,departement,telephone,email,email_envoye,email_ouvert,lien_clique,opt_out,bounced';
+const COLONNES_LISTE = 'id,nom_entreprise,metier,famille_metier,ville,departement,telephone,email,email_envoye,email_ouvert,lien_clique,opt_out,bounced,dernier_ping';
 
 const FILTRES = {
   tous: {},
@@ -106,6 +110,15 @@ export default async function handler(req, res) {
       const total = parseInt(contentRange.split('/')[1], 10) || rows.length;
 
       return res.status(200).json({ success: true, rows, total });
+    }
+
+    if (action === 'presence') {
+      const seuil = new Date(Date.now() - 3 * 60 * 1000).toISOString();
+      const url = `${process.env.SUPABASE_URL}/rest/v1/prospects_paysagiste?select=id,nom_entreprise,dernier_ping&dernier_ping=gte.${seuil}&order=dernier_ping.desc&limit=50`;
+      const resp = await fetch(url, { headers: supaHeaders });
+      if (!resp.ok) throw new Error('Lecture présence impossible : ' + (await resp.text()));
+      const presence = await resp.json();
+      return res.status(200).json({ success: true, presence });
     }
 
     if (action === 'import_lot') {

@@ -339,6 +339,17 @@
         <label style="margin-top:14px;">Netteté du fond <span id="valeurFlouFond" class="hint" style="display:inline;"></span></label>
         <input type="range" id="rangeFlouFond" min="0" max="30" step="1" style="width:100%;">
         <p class="hint">Tout à gauche = net, tout à droite = très flou. Un fond flou garde le texte du formulaire lisible.</p>
+
+        <!-- 18/09/2026 : couleur de fond de la vitrine (bandeau titre + descriptif
+             des chantiers, fond du panneau image) — demandée par Cyrille pour que
+             chaque artisan puisse personnaliser sa vitrine au-delà du vert par
+             défaut. Voir apercu.html, --brand-dark. -->
+        <label style="margin-top:18px;">Couleur de fond de la vitrine</label>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <input type="color" id="inputCouleurFondVitrine" style="width:56px; height:40px; padding:2px; border-radius:8px; cursor:pointer;">
+          <span id="valeurCouleurFondVitrine" class="hint" style="display:inline;"></span>
+        </div>
+        <p class="hint">S'affiche derrière le titre et le descriptif de tes chantiers, sur ta vitrine (photo/vidéo).</p>
       </div>
     </div>
   </div>
@@ -535,27 +546,6 @@
             <div id="tarifsPortailsGrille"></div>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="section" data-section="demande-technicien">
-    <div class="section-header">
-      <div class="section-title">
-        <span class="section-icon">📝</span>
-        <div>
-          <h2>Une question ou une demande précise ?</h2>
-          <p class="sub">Un problème rencontré, une particularité de votre activité, un tarif à revoir... décrivez-le, ça part directement à votre technicien Skyeco.</p>
-        </div>
-      </div>
-      <span class="chevron">▾</span>
-    </div>
-    <div class="section-body">
-      <div class="section-body-inner">
-        <label for="messageTechnicien">Votre message</label>
-        <textarea id="messageTechnicien" rows="4" placeholder="Ex : je n'arrive pas à uploader mon logo, ou j'aimerais ajouter une option spécifique à mon métier..."></textarea>
-        <button type="button" id="btnEnvoyerTechnicien" style="margin-top:10px; background:#e8622c; color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:0.85rem; font-weight:700; cursor:pointer;">📤 Envoyer au technicien</button>
-        <div id="statutMessageTechnicien" style="margin-top:8px; font-size:0.82rem; font-weight:700;"></div>
       </div>
     </div>
   </div>
@@ -892,6 +882,18 @@
       });
       rangeFlou.addEventListener('change', () => {
         sauvegarderChampsImmediat({ fond_formulaire_flou: parseInt(rangeFlou.value, 10) });
+      });
+
+      const inputCouleurFond = document.getElementById('inputCouleurFondVitrine');
+      const valeurCouleurFondEl = document.getElementById('valeurCouleurFondVitrine');
+      const couleurFondInitiale = draft.couleur_fond_vitrine || '#14312a';
+      inputCouleurFond.value = couleurFondInitiale;
+      valeurCouleurFondEl.textContent = couleurFondInitiale;
+      inputCouleurFond.addEventListener('input', () => {
+        valeurCouleurFondEl.textContent = inputCouleurFond.value;
+      });
+      inputCouleurFond.addEventListener('change', () => {
+        sauvegarderChampsImmediat({ couleur_fond_vitrine: inputCouleurFond.value });
       });
 
       if (draft.photos && draft.photos.length) {
@@ -1697,41 +1699,6 @@
     }
   });
 
-  document.getElementById('btnEnvoyerTechnicien').addEventListener('click', async () => {
-    const btnTech = document.getElementById('btnEnvoyerTechnicien');
-    const statutTech = document.getElementById('statutMessageTechnicien');
-    const messageTech = document.getElementById('messageTechnicien').value.trim();
-    if (!messageTech) {
-      statutTech.textContent = 'Merci de décrire votre demande avant de l\'envoyer.';
-      statutTech.style.color = '#c0392b';
-      return;
-    }
-    btnTech.disabled = true;
-    btnTech.textContent = 'Envoi…';
-    try {
-      const res = await fetch('/api/demander-info-technicien', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, message: messageTech }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        statutTech.textContent = '✓ Envoyé — votre technicien va vous recontacter.';
-        statutTech.style.color = '#1e6f4c';
-        document.getElementById('messageTechnicien').value = '';
-      } else {
-        statutTech.textContent = data.error || "Impossible d'envoyer la demande.";
-        statutTech.style.color = '#c0392b';
-      }
-    } catch (e) {
-      statutTech.textContent = 'Impossible de contacter le serveur.';
-      statutTech.style.color = '#c0392b';
-    } finally {
-      btnTech.disabled = false;
-      btnTech.textContent = '📤 Envoyer au technicien';
-    }
-  });
-
   document.getElementById('btnSubmit').addEventListener('click', async () => {
     if (draftStatutActuel === 'essai_expire') {
       if (confirm("Votre essai gratuit est terminé — passez à une formule payante pour continuer à modifier votre vitrine.\n\nVoir les formules maintenant ?")) {
@@ -1956,6 +1923,5 @@
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') envoyerMessage(); });
 })();
 </script>
-<script src="/tracking-visites.js"></script>
 </body>
 </html>

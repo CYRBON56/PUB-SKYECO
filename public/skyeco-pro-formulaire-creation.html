@@ -379,19 +379,25 @@
 
   const TEST_MODE = new URLSearchParams(window.location.search).get('test') === '1';
 
-  // Présence "en ce moment sur le site" pour le suivi de prospection par
-  // email (voir api/ping-presence-prospect.js et api/lien.js) : quand cette
-  // page est ouverte via le lien de tracking envoyé par email, ?pp=<id>
-  // identifie le prospect et on ping toutes les 30s tant que l'onglet est
-  // visible (18/09/2026, demande de Cyrille).
+  // Présence + historique de visite pour le suivi de prospection par email
+  // (voir api/ping-presence-prospect.js et api/lien.js) : quand cette page
+  // est ouverte via le lien de tracking envoyé par email, ?pp=<id> identifie
+  // l'artisan démarché. On mémorise cet id en sessionStorage pour qu'il
+  // survive une navigation vers mon-dashboard-demo.html ("Faire un essai
+  // gratuit", voir le même bloc là-bas) puis un retour ici sur l'étape
+  // d'inscription (?etape=inscription, sans le ?pp dans l'URL) — et on ping
+  // toutes les 30s tant que l'onglet est visible (18/09/2026, demande de
+  // Cyrille : voir quelles pages un artisan a consultées et combien de temps
+  // il est resté).
   (function(){
-    const prospectId = new URLSearchParams(window.location.search).get('pp');
+    const prospectId = new URLSearchParams(window.location.search).get('pp') || sessionStorage.getItem('skyeco_pp_id');
     if (!prospectId) return;
+    try { sessionStorage.setItem('skyeco_pp_id', prospectId); } catch (e) {}
     function envoyerPingProspect() {
       fetch('/api/ping-presence-prospect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prospectId }),
+        body: JSON.stringify({ prospectId, page: window.location.pathname }),
       }).catch(() => {});
     }
     envoyerPingProspect();

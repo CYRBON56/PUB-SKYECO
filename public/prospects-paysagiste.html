@@ -645,10 +645,17 @@
     return out;
   }
 
+  // Lignes actuellement affichées, indexées par id — sert à retrouver
+  // l'entreprise/l'email d'un prospect au clic sur "Historique" sans
+  // redemander la ligne au serveur (18/09/2026).
+  let lignesActuelles = {};
+
   function renderTable(rows){
+    lignesActuelles = {};
+    rows.forEach(p => { lignesActuelles[p.id] = p; });
     if(!rows.length){ document.getElementById('tableContainer').innerHTML = '<div class="empty">Aucun prospect pour ce filtre.</div>'; return; }
     let html = '<table><thead><tr>' +
-      '<th>Entreprise</th><th>Métier</th><th>Famille</th><th>Ville</th><th>Dép.</th><th>Téléphone</th><th>Email</th><th>Statut</th>' +
+      '<th>Entreprise</th><th>Métier</th><th>Famille</th><th>Ville</th><th>Dép.</th><th>Téléphone</th><th>Email</th><th>Statut</th><th></th>' +
       '</tr></thead><tbody>';
     rows.forEach(p => {
       html += `<tr>
@@ -660,11 +667,59 @@
         <td>${p.telephone || '—'}</td>
         <td>${p.email || '—'}</td>
         <td>${badge(p)}</td>
+        <td>${p.lien_clique ? `<button type="button" class="btn btn-ghost" style="padding:4px 9px; font-size:11.5px;" onclick="voirHistorique('${p.id}')">🕘 Historique</button>` : ''}</td>
       </tr>`;
     });
     html += '</tbody></table>';
     document.getElementById('tableContainer').innerHTML = html;
   }
+
+  // ---------- Historique des pages visitées (par artisan ayant cliqué) ----------
+  function formaterDuree(ms){
+    const minutes = Math.round(ms / 60000);
+    if (minutes < 1) return '< 1 min';
+    if (minutes < 60) return minutes + ' min';
+    const h = Math.floor(minutes / 60), m = minutes % 60;
+    return h + ' h' + (m ? ' ' + m + ' min' : '');
+  }
+
+  window.voirHistorique = async function(prospectId){
+    const p = lignesActuelles[prospectId] || {};
+    const fenetre = window.open('', '_blank');
+    if(!fenetre){ alert('Le navigateur a bloqué l\'ouverture — autorisez les popups pour ce site puis réessayez.'); return; }
+    fenetre.document.write(
+      '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Historique — ' + (p.nom_entreprise || 'Prospect') + '</title>' +
+      '<style>body{font-family:Arial,Helvetica,sans-serif;background:#f4f7f9;margin:0;padding:30px;color:#14304A;}' +
+      '.cadre{max-width:640px;margin:0 auto;background:#fff;border:1px solid #dce4e9;padding:22px;}' +
+      'h1{font-size:17px;margin:0 0 4px;}.sub{font-size:12.5px;color:#5b6268;margin-bottom:16px;}' +
+      'table{width:100%;border-collapse:collapse;font-size:13px;}th{text-align:left;font-size:10.5px;text-transform:uppercase;color:#5b6268;padding:6px 8px;border-bottom:2px solid #dce4e9;}' +
+      'td{padding:7px 8px;border-bottom:1px solid #dce4e9;}.loading{color:#5b6268;}</style></head><body>' +
+      '<div class="cadre"><h1>' + (p.nom_entreprise || 'Prospect') + '</h1>' +
+      '<div class="sub">' + (p.email || '—') + (p.telephone ? ' · ' + p.telephone : '') + '</div>' +
+      '<div id="contenu" class="loading">Chargement…</div></div></body></html>'
+    );
+    fenetre.document.close();
+
+    try{
+      const { visites } = await appelerAdmin('historique', { prospectId });
+      const contenu = fenetre.document.getElementById('contenu');
+      if(!contenu) return; // la popup a pu être fermée entre-temps
+      if(!visites || !visites.length){
+        contenu.textContent = 'Aucune page visitée enregistrée pour l\'instant (le clic a eu lieu, mais la page de destination n\'a pas encore renvoyé de ping — normal si le clic est très récent, ou si la destination était une vidéo externe).';
+        return;
+      }
+      let html = '<table><thead><tr><th>Page</th><th>Arrivée</th><th>Temps resté</th></tr></thead><tbody>';
+      visites.forEach(v => {
+        const duree = new Date(v.last_seen_at).getTime() - new Date(v.entered_at).getTime();
+        html += '<tr><td>' + v.page + '</td><td>' + new Date(v.entered_at).toLocaleString('fr-FR') + '</td><td>' + formaterDuree(duree) + '</td></tr>';
+      });
+      html += '</tbody></table>';
+      contenu.outerHTML = html;
+    } catch(err){
+      const contenu = fenetre.document.getElementById('contenu');
+      if(contenu) contenu.textContent = 'Erreur : ' + err.message;
+    }
+  };
 
   function renderPager(){
     const pagerEl = document.getElementById('pager');

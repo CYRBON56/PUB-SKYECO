@@ -802,6 +802,33 @@
   // information. Il ne remplit le formulaire d'inscription que s'il clique
   // sur "Démarrer mon essai gratuit" depuis ici.
   const visiteurMode = params.get('visiteur') === '1';
+
+  // Historique de visite pour le suivi de prospection par email (voir
+  // api/ping-presence-prospect.js et le même bloc dans
+  // skyeco-pro-formulaire-creation.html) : un artisan démarché arrivé via
+  // le lien de tracking peut cliquer "Faire un essai gratuit" depuis la
+  // page d'inscription et atterrir ici — sessionStorage porte son id d'une
+  // page à l'autre puisque l'URL de ce lien ne contient pas ?pp= (18/09/2026,
+  // demande de Cyrille).
+  (function(){
+    const prospectId = sessionStorage.getItem('skyeco_pp_id');
+    if (!prospectId) return;
+    function envoyerPingProspect() {
+      fetch('/api/ping-presence-prospect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prospectId, page: window.location.pathname }),
+      }).catch(() => {});
+    }
+    envoyerPingProspect();
+    setInterval(() => {
+      if (document.visibilityState === 'visible') envoyerPingProspect();
+    }, 30000);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') envoyerPingProspect();
+    });
+  })();
+
   const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
   if (draftId) {

@@ -1,6 +1,6 @@
 // /api/admin-campagne-nationale.js
 // Dashboard ADMIN (Cyrille uniquement) pour piloter la campagne Google Ads
-// NATIONALE de recrutement d'artisans BTP (campagne id 24267076996, compte
+// NATIONALE de recrutement d'artisans BTP (campagne id 24264767225, compte
 // 784-990-3984) — distinct du dashboard artisan (mon-dashboard.html) qui
 // gère les campagnes PAR ARTISAN pour les clients de Skyeco Ads. Cette
 // campagne n'est rattachée à aucun draftId/compte artisan : pas de token

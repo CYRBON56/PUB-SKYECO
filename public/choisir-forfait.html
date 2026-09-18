@@ -580,11 +580,17 @@
     }
   ];
 
-  // Tarif de la 3e vitrine (et suivantes) d'un même compte (03/09, voir
-  // api/create-checkout-session.js pour le détail du calcul de la remise) —
-  // mêmes prestations que le forfait normal, prix différent uniquement.
+  // Tarifs des vitrines supplémentaires d'un même compte (03/09, revus le
+  // 18/09 sur demande de Cyrille : plus de remise de lancement, deux
+  // paliers à tarif fixe — voir api/create-checkout-session.js) — mêmes
+  // prestations que le forfait normal, prix différent uniquement.
   const FORFAIT_VITRINE_SUPPLEMENTAIRE = {
-    id: 5, nom: 'Skyeco Pro', prix: '99,90', prixPromo: '59,90', dureePromoMois: 12, recommande: false,
+    id: 5, nom: 'Skyeco Pro', prix: '59,90', prixPromo: null, dureePromoMois: null, recommande: false,
+    features: FORFAITS[0].features,
+    aVenir: []
+  };
+  const FORFAIT_VITRINE_SUPPLEMENTAIRE_2 = {
+    id: 6, nom: 'Skyeco Pro', prix: '79,90', prixPromo: null, dureePromoMois: null, recommande: false,
     features: FORFAITS[0].features,
     aVenir: []
   };
@@ -606,8 +612,11 @@
     const dejaEssaye = statutActuel === 'essai_expire';
     const essaiEnCours = statutActuel === 'essai';
     // À partir de la 3e vitrine du compte, tarif "vitrine supplémentaire"
-    // (03/09) — sinon le forfait normal, inchangé.
-    const forfaitsAffiches = (rangVitrine >= 3) ? [FORFAIT_VITRINE_SUPPLEMENTAIRE] : FORFAITS;
+    // (03/09) — 3e/4e vitrine à 59,90€, 5e/6e et suivantes à 79,90€ (18/09) —
+    // sinon le forfait normal, inchangé.
+    const forfaitsAffiches = (rangVitrine >= 5) ? [FORFAIT_VITRINE_SUPPLEMENTAIRE_2]
+      : (rangVitrine >= 3) ? [FORFAIT_VITRINE_SUPPLEMENTAIRE]
+      : FORFAITS;
     const grid = document.getElementById('plansGrid');
     grid.innerHTML = forfaitsAffiches.map(f => `
       <div class="plan-card ${f.recommande ? 'recommande' : ''}">
@@ -721,7 +730,9 @@
   }
 
   async function choisirForfait(plan, btn) {
-    const texteBoutonDefaut = plan === FORFAIT_VITRINE_SUPPLEMENTAIRE.id ? 'Mettre en ligne (-50%)' : 'Mettre en ligne';
+    // 18/09/2026 : plus aucun forfait n'a de remise de lancement (voir notes
+    // ci-dessus) — texte de bouton uniforme.
+    const texteBoutonDefaut = 'Mettre en ligne';
     if (!document.getElementById('checkCgv').checked) {
       alert('Merci d\'accepter les Conditions Générales de Vente avant de continuer.');
       return;

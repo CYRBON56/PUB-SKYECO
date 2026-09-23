@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portails aluminium autoportés — RMS EcoSky | Devis livraison et pose</title>
+<meta name="description" content="Portails aluminium autoportés haut de gamme, fourniture et pose par RMS EcoSky en Bretagne. Design, sur mesure, sans rail au sol. Demandez votre devis.">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Portails aluminium autoportés — RMS EcoSky">
+<meta property="og:description" content="Portails aluminium autoportés haut de gamme, fourniture et pose par RMS EcoSky en Bretagne.">
+<meta property="og:image" content="https://www.skyeco.fr/images/portail-anthracite-lattes-montagne.jpg">
+<meta name="theme-color" content="#14181A">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root{
+    --sable: #C7A579;
+    --sable-clair: #E4D3B4;
+    --ardoise: #2E3532;
+    --ardoise-2: #465049;
+    --nuit: #14181A;
+    --sauge: #5C7A5E;
+    --sauge-clair: #7C9A7E;
+    --ivoire: #F5F2EB;
+    --ivoire-2: #EBE5D8;
+    --blanc: #FFFDF9;
+
+    --display: 'Fraunces', serif;
+    --texte: 'Public Sans', sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+
+    --border-w: 6px;
+    --radius: 22px;
+    --max: 1180px;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family: var(--texte);
+    background: var(--ivoire);
+    color: var(--ardoise);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  img{max-width:100%; display:block;}
+  a{color:inherit;}
+  ::selection{ background: var(--sable); color: var(--nuit); }
+
+  .wrap{ max-width: var(--max); margin:0 auto; padding: 0 28px; }
+  .eyebrow{
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--sauge);
+    display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::before{ content:''; width:22px; height:2px; background: var(--sauge); display:inline-block; }
+  h1,h2,h3{ font-family: var(--display); font-weight: 600; line-height: 1.08; color: var(--nuit); }
+  h1{ font-size: clamp(2.2rem, 5vw, 3.6rem); font-weight: 500; letter-spacing: -0.01em; }
+  h2{ font-size: clamp(1.7rem, 3vw, 2.3rem); }
+  h3{ font-size: 1.2rem; }
+  p.lead{ font-size: 1.1rem; color: var(--ardoise-2); max-width: 56ch; }
+
+  .resin-card{ background: var(--blanc); border: var(--border-w) solid var(--nuit); border-radius: var(--radius); position: relative; }
+
+  header.site{
+    background: var(--ivoire);
+    border-bottom: 2px solid var(--nuit);
+    padding: 22px 0;
+  }
+  header.site .wrap{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+  .logo-text{ font-family: var(--display); font-size:1.3rem; color: var(--nuit); text-decoration:none; }
+  .header-phone{ font-family: var(--mono); font-size:0.85rem; text-decoration:none; color: var(--nuit); display:flex; align-items:center; gap:8px; }
+
+  .btn{
+    font-family: var(--texte); font-weight:600; font-size:0.95rem;
+    padding: 14px 26px; border-radius: 999px;
+    border: 2px solid var(--nuit);
+    background: var(--nuit); color: var(--ivoire);
+    text-decoration:none; display:inline-flex; align-items:center; gap:8px;
+    transition: transform 0.18s ease, background 0.18s ease, color 0.18s ease;
+    cursor:pointer;
+  }
+  .btn:hover{ background: var(--sauge); border-color: var(--sauge); transform: translateY(-2px); }
+  .btn:disabled{ opacity:0.6; cursor:default; transform:none; }
+
+  .gate-grid{ display:grid; grid-template-columns: repeat(3, 1fr); gap:22px; margin-top:50px; }
+  .gate-frame{ border: var(--border-w) solid var(--nuit); border-radius: var(--radius); overflow:hidden; aspect-ratio: 4/3; background: var(--nuit); }
+  .gate-frame img{ width:100%; height:100%; object-fit:cover; display:block; }
+  @media (max-width: 860px){ .gate-grid{ grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px){ .gate-grid{ grid-template-columns: 1fr; } }
+
+  .field label{ font-family: var(--mono); font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase; color: var(--sauge); }
+  .field input, .field select, .field textarea{
+    width:100%; margin-top:8px; padding:12px 14px; border:2px solid var(--ardoise-2); border-radius:10px;
+    font-family: var(--texte); font-size:0.95rem; background: var(--ivoire); color: var(--ardoise);
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{ outline:none; border-color: var(--sauge); }
+
+  footer.site{ background: var(--nuit); color: var(--ivoire-2); margin-top: 100px; padding: 40px 0; text-align:center; }
+  footer.site a{ color: var(--sable); text-decoration:none; }
+  footer.site .legal{ font-family: var(--mono); font-size:0.7rem; color: rgba(255,255,255,0.5); margin-top:14px; }
+
+  @media (max-width: 860px){
+    #devis-portail{ grid-template-columns: 1fr !important; }
+    #pourquoi-autoporte{ grid-template-columns: 1fr !important; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <a href="https://www.ecosky.fr" class="logo-text">RMS EcoSky</a>
+    <a href="tel:0645688394" class="header-phone">📞 06 45 68 83 94</a>
+  </div>
+</header>
+
+<main>
+
+  <!-- HERO -->
+  <section class="wrap" style="padding: 60px 0 30px;">
+    <p class="eyebrow">Portails aluminium · Fourniture et pose</p>
+    <h1 style="margin-top:16px; max-width:20ch;">Des portails autoportés, design et haut de gamme.</h1>
+    <p class="lead" style="margin-top:18px;">RMS EcoSky sélectionne des gammes de portails aluminium autoportés — sans rail au sol, sans motorisation enterrée — pour un rendu net et une pose adaptée à tous les terrains, y compris en pente ou sur gravier. Fourniture et pose par notre équipe, du relevé de côtes à la mise en service.</p>
+    <a href="#devis-portail" class="btn" style="margin-top:28px;">Demander un devis</a>
+  </section>
+
+  <!-- POURQUOI AUTOPORTÉ -->
+  <section id="pourquoi-autoporte" class="wrap" style="padding: 30px 0 20px; display:grid; grid-template-columns: repeat(3, 1fr); gap:24px;">
+    <div class="resin-card" style="padding:28px;">
+      <div class="eyebrow">Autoporté</div>
+      <h3 style="margin-top:12px; font-size:1.15rem;">Sans rail au sol</h3>
+      <p style="margin-top:10px; color:var(--ardoise-2); font-size:0.92rem;">Le portail se déplace sur son propre châssis porteur : pas de rail encastré dans le sol, pas de gravier ou de feuilles qui s'y coincent, pas de gel qui bloque le mécanisme l'hiver.</p>
+    </div>
+    <div class="resin-card" style="padding:28px;">
+      <div class="eyebrow">Design</div>
+      <h3 style="margin-top:12px; font-size:1.15rem;">Sur mesure</h3>
+      <p style="margin-top:10px; color:var(--ardoise-2); font-size:0.92rem;">Plein, ajouré, à lames, motifs découpés : chaque portail est configuré selon votre façade, dans un large choix de teintes RAL.</p>
+    </div>
+    <div class="resin-card" style="padding:28px;">
+      <div class="eyebrow">Grande qualité</div>
+      <h3 style="margin-top:12px; font-size:1.15rem;">Aluminium premium</h3>
+      <p style="margin-top:10px; color:var(--ardoise-2); font-size:0.92rem;">Structure aluminium thermolaquée, sans entretien, sans rouille — motorisation et automatismes intégrés selon vos besoins d'accès.</p>
+    </div>
+  </section>
+
+  <!-- GALERIE -->
+  <section class="wrap" style="padding: 60px 0 20px;">
+    <p class="eyebrow">Réalisations récentes</p>
+    <h2 style="margin-top:14px; max-width:22ch;">Quelques portails posés par nos équipes.</h2>
+    <div class="gate-grid">
+      <div class="gate-frame"><img src="images/portail-blanc-decoupe-ajouree-pierre.jpg" alt="Portail coulissant blanc à motif ajouré, sur piliers en pierre" loading="lazy"></div>
+      <div class="gate-frame"><img src="images/portail-anthracite-lattes-montagne.jpg" alt="Portail battant anthracite à lattes, environnement montagnard" loading="lazy"></div>
+      <div class="gate-frame"><img src="images/portail-anthracite-plein-double-battant.jpg" alt="Portail battant anthracite plein avec éclairage intégré" loading="lazy"></div>
+      <div class="gate-frame"><img src="images/portail-anthracite-plein-eclairage.jpg" alt="Portail coulissant anthracite à claire-voie" loading="lazy"></div>
+      <div class="gate-frame"><img src="images/portail-marron-croix-occitane.jpg" alt="Portail coulissant marron avec motif croix occitane découpé" loading="lazy"></div>
+      <div class="gate-frame"><img src="images/portail-anthracite-feuillage-decoupe-bucher.jpg" alt="Portail coulissant anthracite à motif feuillage découpé" loading="lazy"></div>
+      <div class="gate-frame"><img src="images/portail-blanc-persienne-claire-voie.jpg" alt="Portail coulissant blanc à claire-voie persienne" loading="lazy"></div>
+      <div class="gate-frame"><img src="images/portail-anthracite-lattes-digicode.jpg" alt="Portail battant anthracite à lattes avec digicode" loading="lazy"></div>
+      <div class="gate-frame"><img src="images/portail-anthracite-lattes-persienne.jpg" alt="Portail battant à double vantail, teinte grise, claire-voie haute" loading="lazy"></div>
+      <div class="gate-frame"><img src="images/portail-blanc-persienne-double-pilier.jpg" alt="Portail battant blanc à claire-voie entre piliers maçonnés" loading="lazy"></div>
+    </div>
+  </section>
+
+  <!-- FORMULAIRE -->
+  <section class="wrap" id="devis-portail" style="padding: 80px 0 100px; display:grid; grid-template-columns: 0.9fr 1.1fr; gap:56px; align-items:start;">
+    <div>
+      <p class="eyebrow">Votre projet de portail</p>
+      <h2 style="margin-top:16px; max-width:18ch;">Demande de devis — livraison et pose.</h2>
+      <p class="lead" style="margin-top:16px;">Décrivez votre entrée et vos contraintes de terrain : nous revenons vers vous avec une proposition adaptée, fourniture et pose comprises.</p>
+      <div style="margin-top:36px; display:flex; flex-direction:column; gap:22px;">
+        <div>
+          <div class="eyebrow">Zone d'intervention</div>
+          <p style="margin-top:8px;">Un rayon de 40 km autour de Brech — Vannes, Auray, Lorient, Pontivy.</p>
+        </div>
+        <div>
+          <div class="eyebrow">Email</div>
+          <p style="margin-top:8px;"><a href="mailto:infos@ecosky.fr" style="text-decoration:underline;">infos@ecosky.fr</a></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="resin-card" style="padding:40px;">
+      <form id="formPortail" style="display:flex; flex-direction:column; gap:18px;">
+        <div class="field">
+          <label for="prenom">Prénom</label>
+          <input id="prenom" name="prenom" type="text" required>
+        </div>
+        <div class="field">
+          <label for="nom">Nom</label>
+          <input id="nom" name="nom" type="text" required>
+        </div>
+        <div class="field">
+          <label for="telephone">Téléphone</label>
+          <input id="telephone" name="telephone" type="tel" required>
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email">
+        </div>
+        <div class="field">
+          <label for="adresse">Adresse du chantier</label>
+          <input id="adresse" name="adresse" type="text" placeholder="Rue, code postal, ville" required>
+        </div>
+        <div class="field">
+          <label for="type_portail">Type de portail souhaité</label>
+          <select id="type_portail" name="type_portail">
+            <option value="Coulissant autoporté">Coulissant autoporté</option>
+            <option value="Battant">Battant</option>
+            <option value="Je ne sais pas encore">Je ne sais pas encore</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="message">Votre projet</label>
+          <textarea id="message" name="message" rows="4" placeholder="Largeur d'ouverture souhaitée, style, contraintes de terrain..."></textarea>
+        </div>
+        <button type="submit" class="btn" id="btnEnvoyer" style="align-self:flex-start;">Envoyer ma demande</button>
+        <p id="formMsg" style="font-size:0.85rem; color:var(--ardoise-2); min-height:1.2em;">Réponse sous 48h. Aucun tarif n'est communiqué sur cette page : chaque projet est chiffré après relevé de côtes.</p>
+      </form>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div style="font-family:var(--display); font-size:1.3rem; color:var(--blanc);">RMS EcoSky</div>
+    <p style="margin-top:8px; font-size:0.9rem;">23 route de Corn er Hoet, 56400 Brech · <a href="mailto:infos@ecosky.fr">infos@ecosky.fr</a> · <a href="tel:0645688394">06 45 68 83 94</a></p>
+    <p class="legal">© RMS EcoSky — SIRET 939 997 870 00018 — APE 4399D</p>
+  </div>
+</footer>
+
+<script>
+  const DRAFT_ID = '89338dcc-a009-4815-a769-f0bede180f37';
+
+  document.getElementById('formPortail').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnEnvoyer');
+    const msg = document.getElementById('formMsg');
+    const f = e.target;
+
+    const prenom = f.prenom.value.trim();
+    const nom = f.nom.value.trim();
+    const telephone = f.telephone.value.trim();
+    const email = f.email.value.trim();
+    const adresse = f.adresse.value.trim();
+    const typePortail = f.type_portail.value;
+    const message = f.message.value.trim();
+
+    btn.disabled = true;
+    btn.textContent = 'Envoi en cours…';
+    msg.style.color = 'var(--ardoise-2)';
+    msg.textContent = 'Envoi en cours…';
+
+    try {
+      const resp = await fetch('/api/notify-nouvelle-demande', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          draftId: DRAFT_ID,
+          prenom: prenom,
+          nom: nom,
+          telephone: telephone,
+          email: email || null,
+          reponses: {
+            adresse: adresse,
+            type_portail: typePortail,
+            message: message,
+            produit: 'Portail aluminium autoporté'
+          },
+          recap: [
+            { label: 'Produit', valeur: 'Portail aluminium autoporté' },
+            { label: 'Adresse du chantier', valeur: adresse },
+            { label: 'Type de portail', valeur: typePortail },
+            { label: 'Projet', valeur: message || 'Non précisé' }
+          ]
+        })
+      });
+      const data = await resp.json();
+      if (!resp.ok || !data.success) {
+        throw new Error(data.error || "Votre demande n'a pas pu être envoyée.");
+      }
+      f.style.display = 'none';
+      msg.style.color = 'var(--sauge)';
+      msg.textContent = '✓ Merci ! Votre demande a bien été reçue. Un conseiller vous recontacte sous 48h.';
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = 'Envoyer ma demande';
+      msg.style.color = '#b04242';
+      msg.textContent = "Une erreur est survenue. Vous pouvez aussi nous écrire directement à infos@ecosky.fr ou appeler au 06 45 68 83 94.";
+    }
+  });
+</script>
+
+</body>
+</html>

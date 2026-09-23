@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact — RMS EcoSky</title>
+<meta name="description" content="Contactez RMS EcoSky, artisan résine EPDM et VRD à Brech, Morbihan.">
+<link rel="stylesheet" href="styles.css">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#14181A">
+<link rel="apple-touch-icon" href="images/icon-192.png">
+</head>
+<body>
+
+<header class="site">
+  <nav class="wrap">
+    <a href="index.html" class="logo"><img src="images/logo.png" alt="RMS EcoSky"></a>
+    <ul class="navlinks" id="navlinks">
+      <li><a href="index.html">Accueil</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="portails.html">Portails</a></li>
+      <li><a href="realisations.html">Réalisations</a></li>
+      <li><a href="contact.html" class="active">Contact</a></li>
+      <li><a class="btn" href="https://salesflow-ecosky.vercel.app/estimation.html" target="_blank" rel="noopener">Devis gratuit</a></li>
+    </ul>
+    <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+  </nav>
+</header>
+
+<main>
+  <section class="wrap" style="padding: 64px 0 60px; display:grid; grid-template-columns: 0.9fr 1.1fr; gap:56px;">
+    <div>
+      <p class="eyebrow">Contact</p>
+      <h1 style="margin-top:16px;">Parlons de votre terrain.</h1>
+      <p class="lead" style="margin-top:16px;">Pour un chiffrage précis et rapide, le formulaire de devis en ligne reste le plus efficace. Pour toute autre question, écrivez-nous directement.</p>
+
+      <div style="margin-top:44px; display:flex; flex-direction:column; gap:24px;">
+        <div>
+          <div class="eyebrow">Adresse</div>
+          <p style="margin-top:8px;">23 route de Corn er Hoet<br>56400 Brech, Bretagne</p>
+        </div>
+        <div>
+          <div class="eyebrow">Email</div>
+          <p style="margin-top:8px;"><a href="mailto:infos@ecosky.fr" style="text-decoration:underline;">infos@ecosky.fr</a></p>
+        </div>
+        <div>
+          <div class="eyebrow">Zone d'intervention</div>
+          <p style="margin-top:8px;">Un rayon de 40 km autour de Brech — Vannes, Auray, Lorient, Pontivy.</p>
+        </div>
+      </div>
+
+      <a class="btn" style="margin-top:40px;" href="https://salesflow-ecosky.vercel.app/estimation.html" target="_blank" rel="noopener">Ouvrir le formulaire de devis</a>
+    </div>
+
+    <div class="resin-card" style="padding:40px;">
+      <h3>Message rapide</h3>
+      <p style="margin-top:8px; color:var(--ardoise-2); font-size:0.92rem;">Pour une demande de devis chiffré, préférez le formulaire dédié ci-dessus — plus rapide pour vous comme pour nous.</p>
+      <form action="mailto:infos@ecosky.fr" method="post" enctype="text/plain" style="margin-top:28px; display:flex; flex-direction:column; gap:18px;">
+        <div>
+          <label class="eyebrow" for="nom">Nom</label>
+          <input id="nom" name="nom" type="text" required style="width:100%; margin-top:8px; padding:12px 14px; border:2px solid var(--ardoise-2); border-radius:10px; font-family:var(--texte); font-size:0.95rem; background:var(--ivoire);">
+        </div>
+        <div>
+          <label class="eyebrow" for="email">Email</label>
+          <input id="email" name="email" type="email" required style="width:100%; margin-top:8px; padding:12px 14px; border:2px solid var(--ardoise-2); border-radius:10px; font-family:var(--texte); font-size:0.95rem; background:var(--ivoire);">
+        </div>
+        <div>
+          <label class="eyebrow" for="message">Votre projet</label>
+          <textarea id="message" name="message" rows="4" required style="width:100%; margin-top:8px; padding:12px 14px; border:2px solid var(--ardoise-2); border-radius:10px; font-family:var(--texte); font-size:0.95rem; background:var(--ivoire); resize:vertical;"></textarea>
+        </div>
+        <button type="submit" class="btn" style="align-self:flex-start;">Envoyer le message</button>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div>
+      <div class="foot-logo">RMS EcoSky</div>
+      <p style="max-width:34ch; font-size:0.92rem;">Résine EPDM et aménagements extérieurs. 23 route de Corn er Hoet, 56400 Brech.</p>
+    </div>
+    <div>
+      <h4>Navigation</h4>
+      <p style="display:flex; flex-direction:column; gap:10px;">
+        <a href="services.html">Services</a>
+        <a href="realisations.html">Réalisations</a>
+        <a href="contact.html">Contact</a>
+      </p>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <p style="display:flex; flex-direction:column; gap:10px;">
+        <a href="mailto:infos@ecosky.fr">infos@ecosky.fr</a>
+        <a href="https://salesflow-ecosky.vercel.app/estimation.html" target="_blank" rel="noopener">Devis en ligne</a>
+      </p>
+    </div>
+  </div>
+  <div class="wrap legal">
+    <span>© RMS EcoSky — SIRET 939 997 870 00018</span>
+    <span>APE 4399D</span>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>

@@ -12,7 +12,16 @@
 <meta property="og:image" content="https://www.skyeco.fr/images/portail-anthracite-lattes-montagne.jpg">
 <meta name="theme-color" content="#14181A">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+  /* display=optional (au lieu de swap) : la page n'attend jamais la police
+     pour s'afficher, et surtout elle ne "rebascule" jamais dessus après
+     coup si elle arrive en retard — ce ré-affichage tardif est ce qui
+     décalait tout le contenu vers le bas (le texte de secours et Fraunces
+     n'ont pas exactement la même largeur/hauteur de caractères). Avec
+     "optional", si la police n'est pas prête très vite, on garde
+     simplement la police de secours pour toute la visite : plus léger et
+     plus stable, au prix (rare) de ne pas voir Fraunces sur une connexion
+     très lente. */
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=optional');
 
   :root{
     --sable: #C7A579;

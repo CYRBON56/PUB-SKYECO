@@ -19,6 +19,13 @@
      bandeau (variable selon la largeur d'écran, le texte pouvant passer sur
      plusieurs lignes) ; 0px par défaut quand le bandeau n'est pas affiché. */
   .split-layout { display:flex; height:calc(100vh - var(--preview-banner-height, 0px)); margin-top:var(--preview-banner-height, 0px); overflow:hidden; }
+  /* 23/09/2026 : sur mobile, 100vh compte la barre d'adresse de Safari comme
+     de la hauteur visible alors qu'elle ne l'est pas forcément — la page
+     débordait donc en dessous de l'écran réel (overflow:hidden coupait le
+     bas, dont la question en cours). 100dvh (hauteur de la fenêtre VRAIMENT
+     visible) corrige ça ; ignoré sans effet par les navigateurs qui ne le
+     connaissent pas, qui gardent la règle 100vh ci-dessus. */
+  .split-layout { height:calc(100dvh - var(--preview-banner-height, 0px)); }
   /* Panneau visuel de droite (ou de gauche, voir formulaire-droite plus bas)
      — depuis le 04/09 coupé en deux moitiés empilées à la demande de
      Cyrille : en haut la vidéo/le carrousel de photos habituel, en bas un
@@ -159,6 +166,7 @@
      l'écran pour le formulaire en dessous (form-panel, flex:1 1 auto donc
      prend tout le reste), quelle que soit la hauteur de l'appareil. */
   @media (max-width:800px){ .split-layout{ flex-direction:column; height:calc(100vh - var(--preview-banner-height, 0px)); overflow:hidden; } .image-panel{ flex:0 0 40vh; order:1; } .form-panel{ padding:12px 16px; order:2; } .split-layout.formulaire-droite .image-panel{ order:1; } .split-layout.formulaire-droite .form-panel{ order:2; } }
+  @media (max-width:800px){ .split-layout{ height:calc(100dvh - var(--preview-banner-height, 0px)); } }
   @media (max-width:480px){ .image-panel{ flex:0 0 36vh; } .form-panel{ padding:10px 14px; } .header-block{ padding:10px 14px; margin-bottom:10px; } h1{ font-size:19px; margin:4px 0 6px; } .eyebrow{ font-size:11px; } .sub{ font-size:14px; margin-bottom:0; line-height:1.45; } .card{ padding:16px; } .question{ font-size:17px; margin-bottom:14px; line-height:1.35; } .option{ padding:14px 16px; font-size:15.5px; } .progress{ margin-bottom:12px; } input[type="text"],input[type="tel"],input[type="email"],input[type="number"]{ font-size:16px; padding:13px 14px; margin-bottom:10px; } label.field-label{ font-size:14px; } .nav-row{ flex-wrap:wrap; margin-top:16px; } button.btn{ font-size:15px; padding:13px 16px; } .btn-primary{ flex:1 1 100%; order:1; } .btn-ghost{ order:2; padding:8px 0; font-size:14px; } .trust-footer{ margin-top:10px; padding-top:10px; } .trust-badges-row{ display:none !important; } }
 
   .wrap { max-width:480px; width:100%; height:100%; margin:0; padding:0; display:flex; flex-direction:column; }
@@ -1618,10 +1626,20 @@ function runWizard(template, brandColor, draftId, tvaTaux, draftInfo){
     // Mode compact du bandeau d'intro dès la 2e question (voir CSS
     // .header-block.compact) — laisse le plus de place possible à la
     // question courante pour limiter le défilement.
+    // 23/09/2026 : sur petit mobile, le bandeau (logo + accroche + badge
+    // "devis gratuit" + badge catalogue) + le panneau vidéo (40vh) + le pied
+    // de page (mentions + boutons rappel) pouvaient à eux seuls remplir tout
+    // l'écran, ne laissant aucune place visible pour la 1ère question — le
+    // visiteur avait alors l'impression que la page était figée / que rien
+    // n'était cliquable. On force donc le mode compact dès la 1ère question
+    // sur mobile (pas seulement à partir de state.step>0) pour garantir que
+    // la question + ses boutons de réponse sont visibles sans avoir à
+    // deviner qu'il faut faire défiler une petite zone.
+    const compactForce = state.step > 0 || window.innerWidth <= 480;
     const headerBlockEl = document.querySelector('.header-block');
-    if(headerBlockEl) headerBlockEl.classList.toggle('compact', state.step > 0);
+    if(headerBlockEl) headerBlockEl.classList.toggle('compact', compactForce);
     const miniBadgesEl = document.getElementById('miniBadges');
-    if(miniBadgesEl) miniBadgesEl.classList.toggle('compact', state.step > 0);
+    if(miniBadgesEl) miniBadgesEl.classList.toggle('compact', compactForce);
     let html = '<div class="step-label">Étape '+(state.step+1)+' sur '+steps.length+'</div>';
     html += '<div class="question">'+s.question+'</div>';
     // Note informative optionnelle sous la question (ex : précision sur le

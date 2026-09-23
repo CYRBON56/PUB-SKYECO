@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portails aluminium autoportés — RMS EcoSky | Devis livraison et pose</title>
+<meta name="description" content="Portails aluminium autoportés haut de gamme, fourniture et pose par RMS EcoSky en Bretagne. Design, sur mesure, sans rail au sol. Demandez votre devis.">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Portails aluminium autoportés — RMS EcoSky">
+<meta property="og:description" content="Portails aluminium autoportés haut de gamme, fourniture et pose par RMS EcoSky en Bretagne.">
+<meta property="og:image" content="https://www.skyeco.fr/images/portail-anthracite-lattes-montagne.jpg">
+<meta name="theme-color" content="#14181A">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root{
+    --sable: #C7A579;
+    --sable-clair: #E4D3B4;
+    --ardoise: #2E3532;
+    --ardoise-2: #465049;
+    --nuit: #14181A;
+    --sauge: #5C7A5E;
+    --sauge-clair: #7C9A7E;
+    --ivoire: #F5F2EB;
+    --ivoire-2: #EBE5D8;
+    --blanc: #FFFDF9;
+
+    --display: 'Fraunces', serif;
+    --texte: 'Public Sans', sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+
+    --border-w: 6px;
+    --radius: 22px;
+    --max: 1180px;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family: var(--texte);
+    background: var(--ivoire);
+    color: var(--ardoise);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  img{max-width:100%; display:block;}
+  a{color:inherit;}
+  ::selection{ background: var(--sable); color: var(--nuit); }
+
+  .wrap{ max-width: var(--max); margin:0 auto; padding: 0 28px; }
+  .eyebrow{
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--sauge);
+    display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::before{ content:''; width:22px; height:2px; background: var(--sauge); display:inline-block; }
+  h1,h2,h3{ font-family: var(--display); font-weight: 600; line-height: 1.08; color: var(--nuit); }
+  h1{ font-size: clamp(2.2rem, 5vw, 3.6rem); font-weight: 500; letter-spacing: -0.01em; }
+  h2{ font-size: clamp(1.7rem, 3vw, 2.3rem); }
+  h3{ font-size: 1.2rem; }
+  p.lead{ font-size: 1.1rem; color: var(--ardoise-2); max-width: 56ch; }
+
+  .resin-card{ background: var(--blanc); border: var(--border-w) solid var(--nuit); border-radius: var(--radius); position: relative; }
+
+  header.site{
+    background: var(--ivoire);
+    border-bottom: 2px solid var(--nuit);
+    padding: 22px 0;
+  }
+  header.site .wrap{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+  .logo-text{ font-family: var(--display); font-size:1.3rem; color: var(--nuit); text-decoration:none; }
+  .header-phone{ font-family: var(--mono); font-size:0.85rem; text-decoration:none; color: var(--nuit); display:flex; align-items:center; gap:8px; }
+
+  .btn{
+    font-family: var(--texte); font-weight:600; font-size:0.95rem;
+    padding: 14px 26px; border-radius: 999px;
+    border: 2px solid var(--nuit);
+    background: var(--nuit); color: var(--ivoire);
+    text-decoration:none; display:inline-flex; align-items:center; gap:8px;
+    transition: transform 0.18s ease, background 0.18s ease, color 0.18s ease;
+    cursor:pointer;
+  }
+  .btn:hover{ background: var(--sauge); border-color: var(--sauge); transform: translateY(-2px); }
+  .btn:disabled{ opacity:0.6; cursor:default; transform:none; }
+  .btn-outline{ background: transparent; color: var(--nuit); }
+  .btn-outline:hover{ background: var(--nuit); color: var(--ivoire); border-color: var(--nuit); }
+  .hero-actions{ display:flex; flex-wrap:wrap; gap:14px; margin-top:28px; }
+
+  .gate-grid{ display:grid; grid-template-columns: repeat(3, 1fr); gap:22px; margin-top:50px; }
+  .gate-frame{ border: var(--border-w) solid var(--nuit); border-radius: var(--radius); overflow:hidden; aspect-ratio: 4/3; background: var(--nuit); }
+  .gate-frame img{ width:100%; height:100%; object-fit:cover; display:block; }
+  @media (max-width: 860px){ .gate-grid{ grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px){ .gate-grid{ grid-template-columns: 1fr; } }
+
+  .field label{ font-family: var(--mono); font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase; color: var(--sauge); }
+  .field input, .field select, .field textarea{
+    width:100%; margin-top:8px; padding:12px 14px; border:2px solid var(--ardoise-2); border-radius:10px;
+    font-family: var(--texte); font-size:0.95rem; background: var(--ivoire); color: var(--ardoise);
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{ outline:none; border-color: var(--sauge); }
+
+  footer.site{ background: var(--nuit); color: var(--ivoire-2); margin-top: 100px; padding: 40px 0; text-align:center; }
+  footer.site a{ color: var(--sable); text-decoration:none; }
+  footer.site .legal{ font-family: var(--mono); font-size:0.7rem; color: rgba(255,255,255,0.5); margin-top:14px; }
+
+  /* ---- Configurateur de prix ---- */
+  .config-grid{ display:grid; grid-template-columns: repeat(2, 1fr); gap:16px 18px; }
+  .config-grid .field.full{ grid-column: 1 / -1; }
+  .check-row{ display:flex; align-items:flex-start; gap:10px; padding:10px 0; }
+  .check-row input[type="checkbox"]{ width:18px; height:18px; margin-top:2px; accent-color: var(--sauge); flex-shrink:0; }
+  .check-row label{ font-size:0.88rem; color: var(--ardoise-2); font-family: var(--texte); text-transform:none; letter-spacing:normal; }
+  .check-row .note{ display:block; font-size:0.78rem; color: var(--sauge); margin-top:2px; }
+  .options-box{ border-top:2px dashed var(--ivoire-2); margin-top:8px; padding-top:8px; }
+  .prix-box{
+    margin-top:8px; padding:22px; border-radius:14px; background: var(--nuit); color: var(--ivoire);
+  }
+  .prix-box .prix-eyebrow{ font-family: var(--mono); font-size:0.68rem; letter-spacing:0.12em; text-transform:uppercase; color: var(--sable-clair); }
+  .prix-box .prix-ttc{ font-family: var(--display); font-size:2.1rem; margin-top:6px; color: var(--blanc); }
+  .prix-box .prix-detail{ font-size:0.8rem; color: var(--ivoire-2); margin-top:6px; line-height:1.6; }
+  .prix-box .prix-indispo{ font-size:0.88rem; color: var(--sable-clair); }
+  fieldset{ border:none; padding:0; margin:0; }
+  fieldset legend{ padding:0; margin-bottom:6px; }
+
+  @media (max-width: 860px){
+    #configLayout{ grid-template-columns: 1fr !important; }
+    #pourquoi-autoporte{ grid-template-columns: 1fr !important; }
+    .config-grid{ grid-template-columns: 1fr !important; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <a href="https://www.ecosky.fr" class="logo-text">RMS EcoSky</a>
+    <a href="tel:0645688394" class="header-phone">📞 06 45 68 83 94</a>
+  </div>
+</header>
+
+<main>
+
+  <!-- HERO -->
+  <section class="wrap" style="padding: 60px 0 30px;">
+    <p class="eyebrow">Portails aluminium · Fourniture et pose</p>
+    <h1 style="margin-top:16px; max-width:20ch;">Des portails autoportés, design et haut de gamme.</h1>
+    <p class="lead" style="margin-top:18px;">RMS EcoSky sélectionne des gammes de portails aluminium autoportés — sans rail au sol, sans motorisation enterrée — pour un rendu net et une pose adaptée à tous les terrains, y compris en pente ou sur gravier. Fourniture et pose par notre équipe, du relevé de côtes à la mise en service.</p>
+    <div class="hero-actions">
+      <a href="#devis-portail" class="btn">Calculer votre devis</a>
+      <a href="#galerie" class="btn btn-outline">Voir le catalogue</a>
+      <a href="#video" class="btn btn-outline">Voir la vidéo</a>
+    </div>
+  </section>
+
+  <!-- POURQUOI AUTOPORTÉ -->
+  <section id="pourquoi-autoporte" class="wrap" style="padding: 30px 0 20px; display:grid; grid-template-columns: repeat(3, 1fr); gap:24px;">
+    <div class="resin-card" style="padding:28px;">
+      <div class="eyebrow">Autoporté</div>
+      <h3 style="margin-top:12px; font-size:1.15rem;">Sans rail au sol</h3>
+      <p style="margin-top:10px; color:var(--ardoise-2); font-size:0.92rem;">Le portail se déplace sur son propre châssis porteur : pas de rail encastré dans le sol, pas de gravier ou de feuilles qui s'y coincent, pas de gel qui bloque le mécanisme l'hiver.</p>
+    </div>
+    <div class="resin-card" style="padding:28px;">
+      <div class="eyebrow">Design</div>
+      <h3 style="margin-top:12px; font-size:1.15rem;">Sur mesure</h3>
+      <p style="margin-top:10px; color:var(--ardoise-2); font-size:0.92rem;">Plein, ajouré, à lames, motifs découpés : chaque portail est configuré selon votre façade, dans un large choix de teintes RAL.</p>
+    </div>
+    <div class="resin-card" style="padding:28px;">
+      <div class="eyebrow">Grande qualité</div>
+      <h3 style="margin-top:12px; font-size:1.15rem;">Aluminium premium</h3>
+      <p style="margin-top:10px; color:var(--ardoise-2); font-size:0.92rem;">Structure aluminium thermolaquée, sans entretien, sans rouille — motorisation et automatismes intégrés selon vos besoins d'accès.</p>
+    </div>
+  </section>
+
+  <!-- VIDÉO -->
+  <section id="video" class="wrap" style="padding: 30px 0 20px; scroll-margin-top: 24px;">
+    <p class="eyebrow">En vidéo</p>
+    <h2 style="margin-top:14px; max-width:24ch;">Découvrez nos portails autoportés en vidéo.</h2>
+    <div class="resin-card" style="margin-top:28px; overflow:hidden; padding:0;">
+      <div style="position:relative; width:100%; aspect-ratio:16/9; background:var(--nuit);">
+        <iframe
+          src="https://www.youtube-nocookie.com/embed/Uoi06CNGgf8?rel=0&modestbranding=1&iv_load_policy=3"
+          title="Portails aluminium autoportés — RMS EcoSky"
+          style="position:absolute; inset:0; width:100%; height:100%; border:0;"
+          loading="lazy"
+          referrerpolicy="strict-origin-when-cross-origin"
+          allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowfullscreen>
+        </iframe>
+      </div>
+    </div>
+    <p style="margin-top:12px; font-size:0.85rem; color:var(--ardoise-2);">
+      La vidéo ne s'affiche pas ? <a href="https://www.youtube.com/watch?v=Uoi06CNGgf8" target="_blank" rel="noopener" style="text-decoration:underline;">Regardez-la directement sur YouTube</a>.
+    </p>
+  </section>
+
+  <!-- GALERIE / CATALOGUE -->
+  <section id="galerie" class="wrap" style="padding: 60px 0 20px; scroll-margin-top: 24px;">
+    <p class="eyebrow">Réalisations récentes</p>
+    <h2 style="margin-top:14px; max-width:22ch;">Quelques portails posés par nos équipes.</h2>
+    <div class="gate-grid">
+      <div class="gate-frame"><img src="images/portail-blanc-decoupe-ajouree-pierre.jpg" alt="Portail coulissant blanc à motif ajouré, sur piliers en pierre" loading="lazy"></div>
+      <div class="gate-frame"><img src="images/portail-anthracite-lattes-montagne.jpg" alt="Portail battant anthracite à lattes, environnement montagnard" loading="lazy"></div>
+      <div class="gate-frame"><img src="images/portail-anthracite-plein-double-battant.jpg" alt="Portail battant anthracite plein avec éclairage intégré" loading="lazy"></div>
+      <div class="gate-frame"><img src="images/portail-anthracite-plein-eclairage.jpg" alt="Portail coulissant anthracite à claire-voie" loading="lazy"></div>
+      <div class="gate-frame"><img src="images/portail-marron-croix-occitane.jpg" alt="Portail coulissant marron avec motif croix occitane découpé" loading="lazy"></div>
+      <div class="gate-frame"><img src="images/portail-anthracite-feuillage-decoupe-bucher.jpg" alt="Portail coulissant anthracite à motif feuillage découpé" loading="lazy"></div>
+      <div class="gate-frame"><img src="images/portail-blanc-persienne-claire-voie.jpg" alt="Portail coulissant blanc à claire-voie persienne" loading="lazy"></div>
+      <div class="gate-frame"><img src="images/portail-anthracite-lattes-digicode.jpg" alt="Portail battant anthracite à lattes avec digicode" loading="lazy"></div>
+      <div class="gate-frame"><img src="images/portail-anthracite-lattes-persienne.jpg" alt="Portail battant à double vantail, teinte grise, claire-voie haute" loading="lazy"></div>
+      <div class="gate-frame"><img src="images/portail-blanc-persienne-double-pilier.jpg" alt="Portail battant blanc à claire-voie entre piliers maçonnés" loading="lazy"></div>
+    </div>
+  </section>
+
+  <!-- CONFIGURATEUR + FORMULAIRE -->
+  <section class="wrap" id="devis-portail" style="padding: 80px 0 100px;">
+    <p class="eyebrow">Votre projet de portail</p>
+    <h2 style="margin-top:16px; max-width:26ch;">Configurez votre portail et obtenez un tarif indicatif.</h2>
+    <p class="lead" style="margin-top:16px;">Sélectionnez vos dimensions et options ci-dessous : le tarif s'actualise en direct, à partir de nos grilles fournisseur. Le prix ferme est confirmé après relevé de côtes sur place.</p>
+
+    <div id="configLayout" style="margin-top:44px; display:grid; grid-template-columns: 1.15fr 0.85fr; gap:56px; align-items:start;">
+
+      <div class="resin-card" style="padding:36px;">
+        <form id="formPortail">
+
+          <h3 style="font-size:1.05rem; margin-bottom:18px;">1. Type et dimensions</h3>
+          <div class="config-grid">
+            <div class="field full">
+              <label for="type_portail">Type de portail</label>
+              <select id="type_portail" name="type_portail">
+                <option value="coulissant_autoporte">Coulissant autoporté (sans rail au sol)</option>
+                <option value="battant">Battant (2 vantaux battants)</option>
+                <option value="coulissant_double">Double coulissant (2 vantaux coulissants)</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="blocDimensionsAutoporte" class="config-grid" style="margin-top:16px;">
+            <div class="field">
+              <label for="largeur">Largeur de passage</label>
+              <select id="largeur" name="largeur"></select>
+            </div>
+            <div class="field">
+              <label for="lame">Type de lames</label>
+              <select id="lame" name="lame"></select>
+            </div>
+            <div class="field">
+              <label for="style">Gamme / finition</label>
+              <select id="style" name="style"></select>
+            </div>
+            <div class="field">
+              <label for="hauteur">Hauteur du portail</label>
+              <select id="hauteur" name="hauteur"></select>
+            </div>
+            <div class="field full check-row" style="padding-top:0;">
+              <input type="checkbox" id="compact" name="compact">
+              <label for="compact">Espace latéral réduit une fois le portail ouvert (modèle à encombrement compact)
+                <span class="note">Change le châssis utilisé pour les largeurs 3,00 à 4,00 m — utile si peu de dégagement le long de la clôture.</span>
+              </label>
+            </div>
+          </div>
+
+          <p id="noteAutrePortail" style="display:none; margin-top:16px; font-size:0.9rem; color:var(--ardoise-2);">
+            Les dimensions de votre portail seront définies avec vous après votre demande — précisez vos contraintes (largeur de baie, terrain, etc.) dans le champ « Précisions sur votre projet » ci-dessous.
+          </p>
+
+          <div class="options-box">
+            <h3 style="font-size:1.05rem; margin-bottom:12px;">2. Options</h3>
+            <div class="check-row">
+              <input type="checkbox" id="portillon" name="portillon">
+              <label for="portillon">Ajouter un portillon piéton assorti
+                <span class="note">Largeur de baie ~1,12 à 1,30 m selon pose — même gamme et finition que le portail.</span>
+              </label>
+            </div>
+            <div class="check-row">
+              <input type="checkbox" id="peinture" name="peinture">
+              <label for="peinture">Teinte RAL spéciale (hors 7016 texturé gris et 9010 texturé blanc)</label>
+            </div>
+            <div class="check-row">
+              <input type="checkbox" id="opt_digicode" name="opt_digicode">
+              <label for="opt_digicode">Digicode</label>
+            </div>
+            <div class="check-row">
+              <input type="checkbox" id="opt_interphone" name="opt_interphone">
+              <label for="opt_interphone">Interphone</label>
+            </div>
+            <div class="check-row">
+              <input type="checkbox" id="opt_visiophone" name="opt_visiophone">
+              <label for="opt_visiophone">Visiophone</label>
+            </div>
+            <div class="check-row">
+              <input type="checkbox" id="opt_telecommande" name="opt_telecommande">
+              <label for="opt_telecommande">Télécommande supplémentaire</label>
+            </div>
+            <div class="check-row">
+              <input type="checkbox" id="opt_relais" name="opt_relais">
+              <label for="opt_relais">Relais d'éclairage</label>
+            </div>
+            <div class="check-row" id="rowGache" style="display:none;">
+              <input type="checkbox" id="opt_gache" name="opt_gache">
+              <label for="opt_gache">Gâche électrique pour le portillon</label>
+            </div>
+            <div class="check-row">
+              <input type="checkbox" id="opt_bouton" name="opt_bouton">
+              <label for="opt_bouton">Bouton poussoir</label>
+            </div>
+          </div>
+
+          <div class="options-box">
+            <h3 style="font-size:1.05rem; margin-bottom:10px;">3. Pose et TVA</h3>
+            <fieldset>
+              <legend class="eyebrow">Votre logement</legend>
+              <div class="check-row">
+                <input type="radio" name="age_batiment" id="age_ancien" value="ancien" checked>
+                <label for="age_ancien">Construction achevée depuis plus de 2 ans (TVA 10%)</label>
+              </div>
+              <div class="check-row">
+                <input type="radio" name="age_batiment" id="age_neuf" value="neuf">
+                <label for="age_neuf">Construction neuve ou de moins de 2 ans (TVA 20%)</label>
+              </div>
+            </fieldset>
+          </div>
+
+          <div class="prix-box" id="prixBox">
+            <div class="prix-eyebrow">Estimation indicative</div>
+            <div class="prix-ttc" id="prixTTC">—</div>
+            <div class="prix-detail" id="prixDetail"></div>
+          </div>
+
+          <h3 style="font-size:1.05rem; margin:26px 0 14px;">4. Vos coordonnées</h3>
+          <div class="config-grid">
+            <div class="field">
+              <label for="prenom">Prénom</label>
+              <input id="prenom" name="prenom" type="text" required>
+            </div>
+            <div class="field">
+              <label for="nom">Nom</label>
+              <input id="nom" name="nom" type="text" required>
+            </div>
+            <div class="field">
+              <label for="telephone">Téléphone</label>
+              <input id="telephone" name="telephone" type="tel" required>
+            </div>
+            <div class="field">
+              <label for="email">Email</label>
+              <input id="email" name="email" type="email">
+            </div>
+            <div class="field full">
+              <label for="adresse">Adresse du chantier</label>
+              <input id="adresse" name="adresse" type="text" placeholder="Rue, code postal, ville" required>
+            </div>
+            <div class="field full">
+              <label for="message">Précisions sur votre projet</label>
+              <textarea id="message" name="message" rows="3" placeholder="Contraintes de terrain, couleur RAL souhaitée, accès chantier..."></textarea>
+            </div>
+          </div>
+
+          <button type="submit" class="btn" id="btnEnvoyer" style="align-self:flex-start; margin-top:22px;">Envoyer ma demande</button>
+          <p id="formMsg" style="font-size:0.85rem; color:var(--ardoise-2); min-height:1.2em; margin-top:14px;">Réponse sous 48h. Tarif indicatif avant relevé de côtes — le prix ferme est confirmé après visite technique.</p>
+        </form>
+      </div>
+
+      <div>
+        <div style="display:flex; flex-direction:column; gap:22px;">
+          <div>
+            <div class="eyebrow">Ce qui est inclus</div>
+            <p style="margin-top:8px;">Portail avec piliers complets et gabarit de pose, livraison comprise, plus la pose par notre équipe.</p>
+          </div>
+          <div>
+            <div class="eyebrow">Zone d'intervention</div>
+            <p style="margin-top:8px;">Un rayon de 40 km autour de Brech — Vannes, Auray, Lorient, Pontivy.</p>
+          </div>
+          <div>
+            <div class="eyebrow">Email</div>
+            <p style="margin-top:8px;"><a href="mailto:infos@ecosky.fr" style="text-decoration:underline;">infos@ecosky.fr</a></p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div style="font-family:var(--display); font-size:1.3rem; color:var(--blanc);">RMS EcoSky</div>
+    <p style="margin-top:8px; font-size:0.9rem;">23 route de Corn er Hoet, 56400 Brech · <a href="mailto:infos@ecosky.fr">infos@ecosky.fr</a> · <a href="tel:0645688394">06 45 68 83 94</a></p>
+    <p class="legal">© RMS EcoSky — SIRET 939 997 870 00018 — APE 4399D</p>
+  </div>
+</footer>
+
+<script>
+  const DRAFT_ID = '89338dcc-a009-4815-a769-f0bede180f37';
+
+  // Grilles tarifaires publiques Portaleco (TTC, 20% de TVA déjà incluse),
+  // extraites du tarif fournisseur en vigueur au 01/03/2026. CT01/CT02/CT03
+  // correspondent aux 3 gammes de châssis autoportés du fournisseur ;
+  // CT02_TOLE est la variante tôle pleine du châssis compact (CT02).
+  const TARIFS = {"CT01":{"widths":[3000,3500,4000,4500],"Lames120":{"Lameline":{"1246":{"3000":3850.88,"3500":4087.98,"4000":3300.28,"4500":4400.38},"1486":{"3000":3998.6,"3500":4351.7,"4000":4909.9,"4500":5448.8},"1605":{"3000":4190.84,"3500":4608.43,"4000":5189.63,"4500":5703.68},"1725":{"3000":4383.1,"3500":4865.16,"4000":5469.36,"4500":5985.58},"1845":{"3000":4715.06,"3500":5326.03,"4000":5961.96,"4500":6246.92}},"Decoline":{"1246":{"3000":3896.81,"3500":4033.34,"4000":4381.96,"4500":4719.28},"1486":{"3000":4044.59,"3500":4509.73,"4000":5006.03,"4500":5519.29},"1605":{"3000":4243.55,"3500":4720.55,"4000":5236.99,"4500":5721.25},"1725":{"3000":4442.52,"3500":4931.38,"4000":5467.96,"4500":5923.22},"1845":{"3000":4777.9,"3500":5513.5,"4000":6086.53,"4500":6336.35}},"Clairline":{"1246":{"3000":3855.62,"3500":3990.9,"4000":4325.09,"4500":4659.23},"1486":{"3000":4003.37,"3500":4463.56,"4000":4942.81,"4500":5336.62},"1605":{"3000":4201.1,"3500":4673.12,"4000":5172.19,"4500":5595.14},"1725":{"3000":5853.68,"3500":4882.69,"4000":5401.57,"4500":5853.68},"1845":{"3000":4731.71,"3500":5344.91,"4000":5894.36,"4500":6263.66}},"Laserline Verticale":{"1246":{"3000":4350.41,"3500":4486.94,"4000":4835.56,"4500":5393.98},"1486":{"3000":4498.19,"3500":4963.33,"4000":5459.63,"4500":5972.89},"1605":{"3000":4697.15,"3500":5174.15,"4000":5609.59,"4500":6174.85},"1725":{"3000":4896.12,"3500":5384.98,"4000":5921.56,"4500":6376.82},"1845":{"3000":5231.5,"3500":5967.1,"4000":6540.13,"4500":6789.95}}},"Lames200":{"Lameline":{"1288":{"3000":3793.2,"3500":4135.44,"4000":4563.49,"4500":4952.66},"1488":{"3000":4132.4,"3500":4596.32,"4000":5059.36,"4500":5620.2},"1688":{"3000":4615.5,"3500":5100.79,"4000":5717.81,"4500":5987.0},"1888":{"3000":5126.17,"3500":5749.24,"4000":6054.64,"4500":6366.11}},"Decoline":{"1288":{"3000":3847.21,"3500":3194.55,"4000":4565.29,"4500":5029.06},"1488":{"3000":4189.79,"3500":4551.48,"4000":5065.62,"4500":5704.25},"1688":{"3000":4576.51,"3500":5068.73,"4000":5744.39,"4500":6086.7},"1888":{"3000":4971.52,"3500":5720.68,"4000":6079.68,"4500":6467.99}},"Clairline":{"1288":{"3000":3768.66,"3500":4108.62,"4000":4449.86,"4500":4904.29},"1488":{"3000":4106.34,"3500":4460.65,"4000":5051.44,"4500":5566.99},"1688":{"3000":4488.12,"3500":5081.84,"4000":5607.17,"4500":5946.34},"1888":{"3000":4992.96,"3500":5612.66,"4000":5939.3,"4500":6324.52}},"Laserline Verticale":{"1288":{"3000":4300.81,"3500":4648.15,"4000":5018.89,"4500":5482.66},"1488":{"3000":4643.39,"3500":5005.08,"4000":5519.22,"4500":6157.85},"1688":{"3000":5030.11,"3500":5522.33,"4000":6197.99,"4500":6540.3},"1888":{"3000":5425.13,"3500":6174.28,"4000":6533.28,"4500":6921.59}}}},"CT02":{"widths":[3000,3500,4000],"Lames120":{"Lameline":{"1246":{"3000":4166.21,"3500":4181.09,"4000":4527.9},"1486":{"3000":4400.32,"3500":4448.62,"4000":4958.08},"1605":{"3000":4500.24,"3500":4699.01,"4000":5229.22},"1725":{"3000":4600.15,"3500":4949.41,"4000":5500.34},"1845":{"3000":4834.51,"3500":5484.56,"4000":6212.48}},"Decoline":{"1246":{"3000":4133.6,"3500":4180.68,"4000":4449.72},"1486":{"3000":4259.57,"3500":4611.22,"4000":5019.29},"1605":{"3000":4430.7,"3500":4799.03,"4000":5297.52},"1725":{"3000":4601.84,"3500":4986.84,"4000":5575.74},"1845":{"3000":4836.25,"3500":5525.64,"4000":6296.75}},"Clairline":{"1246":{"3000":4103.18,"3500":4150.24,"4000":4408.56},"1486":{"3000":4229.12,"3500":4443.29,"4000":4973.88},"1605":{"3000":4329.88,"3500":4698.2,"4000":5250.68},"1725":{"3000":4430.6,"3500":4953.14,"4000":5527.48},"1845":{"3000":4803.66,"3500":5488.67,"4000":6242.82}},"Laserline Verticale":{"1246":{"3000":4716.8,"3500":4763.88,"4000":5032.92},"1486":{"3000":4842.77,"3500":5194.42,"4000":5602.49},"1605":{"3000":5013.9,"3500":5382.23,"4000":5880.72},"1725":{"3000":5185.04,"3500":5570.04,"4000":6158.94},"1845":{"3000":5419.45,"3500":6108.84,"4000":6879.95}},"Laserline Horizontale":{"1246":{"3000":4652.0,"3500":4699.08,"4000":4968.12},"1486":{"3000":4777.97,"3500":5129.62,"4000":5537.69},"1605":{"3000":4949.1,"3500":5317.43,"4000":5815.92},"1725":{"3000":5120.24,"3500":5505.24,"4000":6094.14},"1845":{"3000":5354.65,"3500":6191.3,"4000":6815.15}}},"Lames200":{"Lameline":{"1288":{"3000":4177.43,"3500":4175.87,"4000":4568.1},"1488":{"3000":4274.68,"3500":4601.74,"4000":5260.09},"1688":{"3000":4682.06,"3500":5163.49,"4000":5718.47},"1888":{"3000":5064.1,"3500":5829.23,"4000":6428.64}},"Decoline":{"1288":{"3000":4155.41,"3500":4221.58,"4000":4639.62},"1488":{"3000":4268.27,"3500":4743.73,"4000":5199.26},"1688":{"3000":4705.43,"3500":5166.77,"4000":5815.26},"1888":{"3000":5179.75,"3500":5881.45,"4000":6379.26}},"Clairline":{"1288":{"3000":4085.22,"3500":4160.7,"4000":4554.48},"1488":{"3000":4198.1,"3500":4542.2,"4000":5105.63},"1688":{"3000":4630.25,"3500":5095.03,"4000":5713.08},"1888":{"3000":4956.4,"3500":5803.19,"4000":6271.4}},"Laserline Verticale":{"1288":{"3000":4738.61,"3500":4804.78,"4000":5222.82},"1488":{"3000":4851.47,"3500":5326.93,"4000":5782.46},"1688":{"3000":5288.63,"3500":5746.97,"4000":6398.46},"1888":{"3000":5762.95,"3500":6464.65,"4000":6962.46}},"Laserline Horizontale":{"1288":{"3000":4673.81,"3500":4739.98,"4000":5158.02},"1488":{"3000":4786.67,"3500":5262.13,"4000":5717.66},"1688":{"3000":5223.83,"3500":5685.17,"4000":6333.66},"1888":{"3000":5698.15,"3500":6399.85,"4000":6897.66}}}},"CT02_TOLE":{"widths":[3000,3500],"styles":{"Lameline":{"1246":{"3000":3941.61,"3500":3985.16},"1486":{"3000":3986.12,"3500":4021.79},"1605":{"3000":4048.69,"3500":4113.66},"1725":{"3000":null,"3500":null}},"Decoline":{"1246":{"3000":3884.78,"3500":3942.74},"1486":{"3000":3940.48,"3500":4149.97},"1605":{"3000":3994.3,"3500":4226.58},"1725":{"3000":4071.97,"3500":4460.05}},"Clairline":{"1246":{"3000":2894.03,"3500":2937.5},"1486":{"3000":2935.8,"3500":3092.09},"1605":{"3000":2976.16,"3500":3259.99},"1725":{"3000":3034.42,"3500":3436.74}},"Laserline Verticale":{"1246":{"3000":4467.98,"3500":4525.94},"1486":{"3000":4523.68,"3500":4733.17},"1605":{"3000":4577.5,"3500":4809.78},"1725":{"3000":4655.17,"3500":5043.25}},"Laserline Horizontale":{"1246":{"3000":4403.18,"3500":4461.14},"1486":{"3000":4458.88,"3500":4668.37},"1605":{"3000":4512.07,"3500":4744.98},"1725":{"3000":4590.37,"3500":4978.45}}}},"CT03":{"widths":[4500,5000,5500,6000],"Lames120":{"Lameline":{"1246":{"4500":4807.38,"5000":5328.14,"5500":5856.12,"6000":6391.16},"1486":{"4500":5548.88,"5000":6098.32,"5500":6479.93,"6000":6866.8},"1605":{"4500":5988.31,"5000":6370.58,"5500":6764.16,"6000":7163.04},"1725":{"4500":6427.72,"5000":6642.84,"5500":7048.4,"6000":7456.31},"1845":{"4500":6778.14,"5000":6999.49,"5500":7416.37,"6000":7838.68}},"Decoline":{"1246":{"4500":5039.33,"5000":5400.07,"5500":5935.51,"6000":6478.01},"1486":{"4500":5620.85,"5000":6177.71,"5500":6564.29,"6000":6956.09},"1605":{"4500":5984.58,"5000":6466.3,"5500":6770.78,"6000":7175.02},"1725":{"4500":6348.31,"5000":6754.9,"5500":6977.28,"6000":7393.96},"1845":{"4500":6890.2,"5000":7114.93,"5500":7538.62,"6000":7967.7}},"Clairline":{"1246":{"4500":4971.94,"5000":5327.69,"5500":5855.64,"6000":6390.61},"1486":{"4500":5548.44,"5000":6097.84,"5500":6479.4,"6000":6866.23},"1605":{"4500":5909.69,"5000":6291.94,"5500":6685.91,"6000":7085.16},"1725":{"4500":6270.91,"5000":6486.04,"5500":6892.42,"6000":7304.08},"1845":{"4500":6807.83,"5000":7030.08,"5500":7448.75,"6000":7872.83}},"Laserline Verticale":{"1246":{"4500":5622.53,"5000":5983.27,"5500":6518.71,"6000":7061.21},"1486":{"4500":6204.05,"5000":6709.91,"5500":7147.49,"6000":7539.29},"1605":{"4500":6567.78,"5000":7049.5,"5500":7353.98,"6000":7758.22},"1725":{"4500":6931.51,"5000":7338.1,"5500":7560.48,"6000":7977.16},"1845":{"4500":7473.4,"5000":7698.13,"5500":8121.82,"6000":8550.9}}},"Lames200":{"Lameline":{"1288":{"4500":5212.81,"5000":5743.51,"5500":6112.09,"6000":6485.82},"1488":{"4500":5947.46,"5000":6503.7,"5500":6713.58,"6000":7104.78},"1688":{"4500":6561.3,"5000":6959.77,"5500":7179.07,"6000":7587.8},"1888":{"4500":7087.84,"5000":7313.72,"5500":7738.76,"6000":8169.3}},"Decoline":{"1288":{"4500":5298.82,"5000":5838.73,"5500":6213.46,"6000":6593.33},"1488":{"4500":6042.67,"5000":6429.02,"5500":6821.08,"6000":7218.42},"1688":{"4500":6692.84,"5000":6911.24,"5500":7322.57,"6000":7739.26},"1888":{"4500":7026.14,"5000":7453.25,"5500":7687.12,"6000":8324.74}},"Clairline":{"1288":{"4500":5161.34,"5000":5686.52,"5500":6051.42,"6000":6421.49},"1488":{"4500":5890.48,"5000":6441.19,"5500":6649.24,"6000":7036.76},"1688":{"4500":6530.83,"5000":6744.31,"5500":7145.82,"6000":7552.72},"1888":{"4500":6864.12,"5000":7281.4,"5500":7510.38,"6000":8133.25}},"Laserline Verticale":{"1288":{"4500":5882.02,"5000":6421.93,"5500":6796.66,"6000":7176.53},"1488":{"4500":6625.87,"5000":7012.22,"5500":7404.28,"6000":7801.62},"1688":{"4500":7276.04,"5000":7494.44,"5500":7905.77,"6000":8322.46},"1888":{"4500":7609.34,"5000":8036.45,"5500":8270.32,"6000":8907.94}}}},"PORTILLON_HT":{"Lameline":1293.41,"Decoline":1293.41,"Clairline":1293.41,"Laserline Verticale":1617.41,"Laserline Horizontale":1617.41},"OPTIONS_HT":{"Digicode":171.04,"Interphone":187.21,"Visiophone":855.18,"Telecommande supplementaire":48.32,"Relais eclairage TECMOTION":142.5,"Gache electrique (portillon)":100.54,"Bouton poussoir":28.5},"PLUS_VALUE_PEINTURE_HT":313.44};
+
+  const POSE_HT = 1500; // forfait pose demandé par Cyrille, en plus du produit
+  const LARGEURS = [3000,3500,4000,4500,5000,5500,6000];
+  const STYLES_STANDARD = ["Lameline","Decoline","Clairline","Laserline Verticale"];
+  const STYLES_COMPACT = ["Lameline","Decoline","Clairline","Laserline Verticale","Laserline Horizontale"];
+  const HAUTEURS = {
+    Lames120: [1246,1486,1605,1725,1845],
+    Lames200: [1288,1488,1688,1888],
+    Tole: [1246,1486,1605,1725]
+  };
+  const fmtM = mm => (mm/1000).toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' m';
+  const fmtEUR = v => v.toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
+
+  const elTypePortail = document.getElementById('type_portail');
+  const elBlocDimensionsAutoporte = document.getElementById('blocDimensionsAutoporte');
+  const elNoteAutrePortail = document.getElementById('noteAutrePortail');
+  const elLargeur = document.getElementById('largeur');
+  const elLame = document.getElementById('lame');
+  const elStyle = document.getElementById('style');
+  const elHauteur = document.getElementById('hauteur');
+  const elCompact = document.getElementById('compact');
+  const elPortillon = document.getElementById('portillon');
+  const elGacheRow = document.getElementById('rowGache');
+  const elPrixTTC = document.getElementById('prixTTC');
+  const elPrixDetail = document.getElementById('prixDetail');
+
+  const LABEL_TYPE_PORTAIL = {
+    coulissant_autoporte: 'Portail coulissant autoporté',
+    battant: 'Portail battant',
+    coulissant_double: 'Portail double coulissant'
+  };
+  function estAutoporte(){ return elTypePortail.value === 'coulissant_autoporte'; }
+
+  function largeurEligibleCompact(l){ return [3000,3500,4000].includes(l); }
+  function largeurEligibleTole(l, compact){ return compact && [3000,3500].includes(l); }
+
+  function fillSelect(el, items){
+    el.innerHTML = items.map(it => `<option value="${it.value}">${it.label}</option>`).join('');
+  }
+
+  function rebuildLargeurs(){
+    fillSelect(elLargeur, LARGEURS.map(l => ({ value:l, label: fmtM(l) })));
+  }
+
+  function rebuildLames(){
+    const l = Number(elLargeur.value);
+    const compact = elCompact.checked;
+    const items = [
+      { value:'Lames120', label:'Lames 120 mm' },
+      { value:'Lames200', label:'Lames 200 mm' }
+    ];
+    if (largeurEligibleTole(l, compact)) items.push({ value:'Tole', label:'Tôle pleine (occultant)' });
+    fillSelect(elLame, items);
+  }
+
+  function rebuildStyles(){
+    const l = Number(elLargeur.value);
+    const compact = elCompact.checked && largeurEligibleCompact(l);
+    const lame = elLame.value;
+    const styles = (lame === 'Tole' || compact) ? STYLES_COMPACT : STYLES_STANDARD;
+    fillSelect(elStyle, styles.map(s => ({ value:s, label:s })));
+  }
+
+  function rebuildHauteurs(){
+    const lame = elLame.value;
+    fillSelect(elHauteur, HAUTEURS[lame].map(h => ({ value:h, label: fmtM(h) })));
+  }
+
+  function getPrixTTCProduit(){
+    const l = Number(elLargeur.value);
+    const h = Number(elHauteur.value);
+    const lame = elLame.value;
+    const style = elStyle.value;
+    const compact = elCompact.checked && largeurEligibleCompact(l);
+
+    let table;
+    if (lame === 'Tole') {
+      table = TARIFS.CT02_TOLE.styles[style];
+    } else if (compact) {
+      table = TARIFS.CT02[lame][style];
+    } else if (l <= 4500) {
+      table = TARIFS.CT01[lame][style];
+    } else {
+      table = TARIFS.CT03[lame][style];
+    }
+    if (!table || !table[h]) return null;
+    const v = table[h][l];
+    return (v === undefined) ? null : v;
+  }
+
+  function optionsChoisies(){
+    const opts = [];
+    if (document.getElementById('opt_digicode').checked) opts.push(['Digicode', TARIFS.OPTIONS_HT['Digicode']]);
+    if (document.getElementById('opt_interphone').checked) opts.push(['Interphone', TARIFS.OPTIONS_HT['Interphone']]);
+    if (document.getElementById('opt_visiophone').checked) opts.push(['Visiophone', TARIFS.OPTIONS_HT['Visiophone']]);
+    if (document.getElementById('opt_telecommande').checked) opts.push(['Télécommande supplémentaire', TARIFS.OPTIONS_HT['Telecommande supplementaire']]);
+    if (document.getElementById('opt_relais').checked) opts.push(["Relais d'éclairage", TARIFS.OPTIONS_HT['Relais eclairage TECMOTION']]);
+    if (elPortillon.checked && document.getElementById('opt_gache').checked) opts.push(['Gâche électrique (portillon)', TARIFS.OPTIONS_HT['Gache electrique (portillon)']]);
+    if (document.getElementById('opt_bouton').checked) opts.push(['Bouton poussoir', TARIFS.OPTIONS_HT['Bouton poussoir']]);
+    return opts;
+  }
+
+  function onTypePortailChange(){
+    const autoporte = estAutoporte();
+    elBlocDimensionsAutoporte.style.display = autoporte ? '' : 'none';
+    elNoteAutrePortail.style.display = autoporte ? 'none' : 'block';
+    calculer();
+  }
+
+  function calculer(){
+    elGacheRow.style.display = elPortillon.checked ? 'flex' : 'none';
+    if (!elPortillon.checked) document.getElementById('opt_gache').checked = false;
+
+    if (!estAutoporte()) {
+      elPrixTTC.textContent = 'Sur devis';
+      elPrixTTC.classList.add('prix-indispo');
+      elPrixDetail.textContent = "Ce type de portail est chiffré sur mesure — nous vous recontactons avec un tarif après votre demande.";
+      return null;
+    }
+
+    const prixTTCProduit = getPrixTTCProduit();
+    if (prixTTCProduit === null) {
+      elPrixTTC.textContent = 'Nous consulter';
+      elPrixTTC.classList.add('prix-indispo');
+      elPrixDetail.textContent = "Cette combinaison de dimensions n'est pas dans la grille standard — nous vous répondrons avec un chiffrage manuel.";
+      return null;
+    }
+    elPrixTTC.classList.remove('prix-indispo');
+
+    const htProduit = prixTTCProduit / 1.20;
+    const style = elStyle.value;
+    const htPortillon = elPortillon.checked ? TARIFS.PORTILLON_HT[style] : 0;
+    const opts = optionsChoisies();
+    const htOptions = opts.reduce((s, o) => s + o[1], 0);
+    let htPeinture = 0;
+    if (document.getElementById('peinture').checked) {
+      htPeinture = TARIFS.PLUS_VALUE_PEINTURE_HT * (elPortillon.checked ? 2 : 1);
+    }
+    const htTotal = htProduit + htPortillon + htOptions + htPeinture + POSE_HT;
+    const neuf = document.getElementById('age_neuf').checked;
+    const tauxTVA = neuf ? 0.20 : 0.10;
+    const ttcTotal = htTotal * (1 + tauxTVA);
+
+    elPrixTTC.textContent = fmtEUR(ttcTotal) + ' TTC';
+    elPrixDetail.innerHTML = `Dont pose : ${fmtEUR(POSE_HT)} HT. Total HT : ${fmtEUR(htTotal)} — TVA ${Math.round(tauxTVA*100)}%.`;
+
+    return { prixTTCProduit, htProduit, htPortillon, htOptions, htPeinture, htTotal, tauxTVA, ttcTotal, opts };
+  }
+
+  function onLargeurChange(){ rebuildLames(); rebuildStyles(); rebuildHauteurs(); calculer(); }
+  function onLameChange(){ rebuildStyles(); rebuildHauteurs(); calculer(); }
+
+  elTypePortail.addEventListener('change', onTypePortailChange);
+  elLargeur.addEventListener('change', onLargeurChange);
+  elCompact.addEventListener('change', onLargeurChange);
+  elLame.addEventListener('change', onLameChange);
+  elStyle.addEventListener('change', calculer);
+  elHauteur.addEventListener('change', calculer);
+  elPortillon.addEventListener('change', calculer);
+  document.getElementById('peinture').addEventListener('change', calculer);
+  ['opt_digicode','opt_interphone','opt_visiophone','opt_telecommande','opt_relais','opt_gache','opt_bouton'].forEach(id => {
+    document.getElementById(id).addEventListener('change', calculer);
+  });
+  document.getElementById('age_ancien').addEventListener('change', calculer);
+  document.getElementById('age_neuf').addEventListener('change', calculer);
+
+  // Init
+  rebuildLargeurs();
+  elLargeur.value = 3500;
+  rebuildLames();
+  rebuildStyles();
+  rebuildHauteurs();
+  elHauteur.value = 1486;
+  calculer();
+
+  document.getElementById('formPortail').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnEnvoyer');
+    const msg = document.getElementById('formMsg');
+    const f = e.target;
+
+    const prenom = f.prenom.value.trim();
+    const nom = f.nom.value.trim();
+    const telephone = f.telephone.value.trim();
+    const email = f.email.value.trim();
+    const adresse = f.adresse.value.trim();
+    const message = f.message.value.trim();
+
+    const calc = calculer();
+    const autoporte = estAutoporte();
+    const compact = autoporte && elCompact.checked && largeurEligibleCompact(Number(elLargeur.value));
+
+    const recap = [
+      { label: 'Type de portail', valeur: LABEL_TYPE_PORTAIL[elTypePortail.value] },
+      { label: 'Adresse du chantier', valeur: adresse },
+      ...(autoporte ? [
+        { label: 'Gamme', valeur: elStyle.value },
+        { label: 'Lames', valeur: elLame.options[elLame.selectedIndex].text },
+        { label: 'Largeur de passage', valeur: fmtM(Number(elLargeur.value)) + (compact ? ' (compact)' : '') },
+        { label: 'Hauteur', valeur: fmtM(Number(elHauteur.value)) },
+      ] : []),
+      { label: 'Portillon assorti', valeur: elPortillon.checked ? 'Oui' : 'Non' },
+      { label: 'Teinte RAL spéciale', valeur: document.getElementById('peinture').checked ? 'Oui' : 'Non' },
+      { label: 'Options', valeur: calc && calc.opts.length ? calc.opts.map(o => o[0]).join(', ') : 'Aucune' },
+      { label: 'TVA applicable', valeur: document.getElementById('age_neuf').checked ? '20% (construction neuve/-2 ans)' : '10% (+2 ans)' },
+      { label: 'Estimation indicative', valeur: calc ? fmtEUR(calc.ttcTotal) + ' TTC (HT ' + fmtEUR(calc.htTotal) + ')' : 'Sur devis — non chiffrable en ligne pour ce type de portail' },
+      { label: 'Précisions du client', valeur: message || 'Non précisé' }
+    ];
+
+    btn.disabled = true;
+    btn.textContent = 'Envoi en cours…';
+    msg.style.color = 'var(--ardoise-2)';
+    msg.textContent = 'Envoi en cours…';
+
+    try {
+      const resp = await fetch('/api/notify-nouvelle-demande', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          draftId: DRAFT_ID,
+          prenom: prenom,
+          nom: nom,
+          telephone: telephone,
+          email: email || null,
+          reponses: { adresse: adresse, message: message, produit: LABEL_TYPE_PORTAIL[elTypePortail.value], recap: recap },
+          recap: recap,
+          estimationTexte: calc ? `Estimation indicative : ${fmtEUR(calc.ttcTotal)} TTC (pose incluse, hors relevé de côtes définitif).` : null
+        })
+      });
+      const data = await resp.json();
+      if (!resp.ok || !data.success) {
+        throw new Error(data.error || "Votre demande n'a pas pu être envoyée.");
+      }
+      f.style.display = 'none';
+      msg.style.color = 'var(--sauge)';
+      msg.textContent = '✓ Merci ! Votre demande a bien été reçue. Un conseiller vous recontacte sous 48h.';
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = 'Envoyer ma demande';
+      msg.style.color = '#b04242';
+      msg.textContent = "Une erreur est survenue. Vous pouvez aussi nous écrire directement à infos@ecosky.fr ou appeler au 06 45 68 83 94.";
+    }
+  });
+</script>
+
+</body>
+</html>

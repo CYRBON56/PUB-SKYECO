@@ -21,6 +21,8 @@
 //   'produits_importer_catalogue' { draftId, token, remplacer? }  -- pré-remplit skyeco_pro_produits avec le catalogue BTP (123 refs) ; remplacer:true réimporte en écrasant l'ancien import
 //   'devis_envoyer_email' { draftId, token, devisId, pdfBase64 }  -- envoie le PDF (généré côté navigateur) par email au client via Resend
 //   'devis_envoyer_sms_signature' { draftId, token, devisId }     -- envoie un SMS avec lien de signature (nécessite sms_signature_actif=true sur le compte)
+//   'devis_ajouter_media'  { draftId, token, devisId, fichierBase64, contentType, type? } -- ajoute une photo/vidéo de chantier (max ~3,5 Mo, limite Vercel)
+//   'devis_supprimer_media' { draftId, token, devisId, url }      -- retire une photo/vidéo de la liste (le fichier reste dans le bucket)
 //
 // Important (rappel legal, voir sql-creation-devis.sql) : cet outil ne suit
 // JAMAIS le paiement/encaissement d'une facture — uniquement la generation
@@ -45,6 +47,14 @@ import { CATALOGUE_BTP } from './_lib/catalogue-btp.js';
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const SITE_BASE_URL = 'https://www.skyeco.fr';
+
+// Photos/vidéos de chantier attachées à un devis (24/09/2026) — même bucket
+// que le reste des médias Skyeco Pro (construire-ma-vitrine.html, etc.).
+// Limite basse volontaire : les fonctions Vercel refusent les corps de
+// requête au-delà d'environ 4,5 Mo, donc une vidéo doit rester courte/légère
+// (l'artisan est prévenu côté interface).
+const MEDIA_BUCKET = 'skyeco-pro-media';
+const MEDIA_TAILLE_MAX_OCTETS = 3.5 * 1024 * 1024;
 
 function supaHeaders(extra = {}) {
   return {
@@ -320,7 +330,7 @@ export default async function handler(req, res) {
         const { leadId } = req.body;
         const filtreLead = leadId ? `&lead_id=eq.${leadId}` : '';
         const resp = await fetch(
-          `${SUPABASE_URL}/rest/v1/skyeco_pro_devis?draft_id=eq.${draftId}${filtreLead}&select=id,type,statut,numero,client_nom,client_email,client_telephone,total_ttc,devis_origine_id,lead_id,created_at,envoye_email_le,signe_le&order=created_at.desc`,
+          `${SUPABASE_URL}/rest/v1/skyeco_pro_devis?draft_id=eq.${draftId}${filtreLead}&select=id,type,statut,numero,client_nom,client_email,client_telephone,total_ttc,devis_origine_id,lead_id,created_at,envoye_email_le,signe_le,medias&order=created_at.desc`,
           { headers: supaHeaders() }
         );
         const documents = await resp.json();
@@ -615,6 +625,92 @@ export default async function handler(req, res) {
         );
 
         return res.status(200).json({ success: true, lien });
+      }
+
+      case 'devis_ajouter_media': {
+        const { devisId, fichierBase64, contentType, type } = req.body;
+        if (!devisId || !fichierBase64 || !contentType) {
+          return res.status(400).json({ success: false, error: 'Paramètres manquants.' });
+        }
+        const estImage = contentType.startsWith('image/');
+        const estVideo = contentType.startsWith('video/');
+        if (!estImage && !estVideo) {
+          return res.status(400).json({ success: false, error: "Seuls les photos et vidéos sont acceptées." });
+        }
+
+        let buffer;
+        try {
+          buffer = Buffer.from(fichierBase64, 'base64');
+        } catch (e) {
+          return res.status(400).json({ success: false, error: 'Fichier invalide.' });
+        }
+        if (buffer.length > MEDIA_TAILLE_MAX_OCTETS) {
+          return res.status(400).json({
+            success: false,
+            error: estVideo
+              ? 'Vidéo trop volumineuse (max ~3,5 Mo — gardez un clip court et en basse résolution).'
+              : 'Photo trop volumineuse (max ~3,5 Mo).',
+          });
+        }
+
+        // Vérifie que ce devis appartient bien à ce compte avant d'écrire.
+        const devisRows = await fetch(
+          `${SUPABASE_URL}/rest/v1/skyeco_pro_devis?id=eq.${devisId}&draft_id=eq.${draftId}&select=id,medias`,
+          { headers: supaHeaders() }
+        ).then(r => r.json());
+        if (!devisRows.length) return res.status(404).json({ success: false, error: 'Document introuvable.' });
+        const devisActuel = devisRows[0];
+
+        const ext = (contentType.split('/')[1] || (estVideo ? 'mp4' : 'jpg')).split(';')[0].replace(/[^a-z0-9]/gi, '') || 'bin';
+        const nomFichier = `devis-medias/${draftId}/${devisId}/${Date.now()}-${Math.round(Math.random() * 1e6)}.${ext}`;
+
+        const uploadResp = await fetch(
+          `${SUPABASE_URL}/storage/v1/object/${MEDIA_BUCKET}/${nomFichier}`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${SERVICE_KEY}`,
+              apikey: SERVICE_KEY,
+              'Content-Type': contentType,
+            },
+            body: buffer,
+          }
+        );
+        if (!uploadResp.ok) {
+          const detail = await uploadResp.text().catch(() => '');
+          throw new Error("Échec de l'envoi vers le stockage : " + detail);
+        }
+
+        const url = `${SUPABASE_URL}/storage/v1/object/public/${MEDIA_BUCKET}/${nomFichier}`;
+        const nouveauMedia = { url, type: estVideo ? 'video' : 'photo', ajouteLe: new Date().toISOString() };
+        const medias = [...(devisActuel.medias || []), nouveauMedia];
+
+        await fetch(
+          `${SUPABASE_URL}/rest/v1/skyeco_pro_devis?id=eq.${devisId}`,
+          { method: 'PATCH', headers: supaHeaders(), body: JSON.stringify({ medias }) }
+        );
+
+        return res.status(200).json({ success: true, medias });
+      }
+
+      case 'devis_supprimer_media': {
+        const { devisId, url } = req.body;
+        if (!devisId || !url) return res.status(400).json({ success: false, error: 'Paramètres manquants.' });
+
+        const devisRows = await fetch(
+          `${SUPABASE_URL}/rest/v1/skyeco_pro_devis?id=eq.${devisId}&draft_id=eq.${draftId}&select=id,medias`,
+          { headers: supaHeaders() }
+        ).then(r => r.json());
+        if (!devisRows.length) return res.status(404).json({ success: false, error: 'Document introuvable.' });
+        const medias = (devisRows[0].medias || []).filter(m => m.url !== url);
+
+        await fetch(
+          `${SUPABASE_URL}/rest/v1/skyeco_pro_devis?id=eq.${devisId}`,
+          { method: 'PATCH', headers: supaHeaders(), body: JSON.stringify({ medias }) }
+        );
+        // Le fichier reste dans le bucket (comme les autres médias du site) —
+        // pas de suppression du stockage ici, cohérent avec le reste du projet.
+        return res.status(200).json({ success: true, medias });
       }
 
       default:

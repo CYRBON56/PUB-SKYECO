@@ -421,6 +421,18 @@
   .preview-actions .btn{flex:1;}
   .logo-preview-row{display:flex;align-items:center;gap:12px;margin-top:8px;}
   .logo-preview-row img{max-height:48px;max-width:120px;border:1px solid #ddd;border-radius:6px;padding:4px;}
+
+  .sync-banner{
+    display:none; align-items:center; gap:12px; justify-content:space-between;
+    background:#EAF2ED; border:1px solid #2C6E49; border-radius:12px;
+    padding:12px 14px; margin:0 0 16px; font-size:14px; color:#14312a;
+  }
+  .sync-banner.show{display:flex;}
+  .sync-banner .txt{flex:1;}
+  .sync-banner .actions{display:flex;gap:8px;flex-shrink:0;}
+  .sync-banner button{border:none;border-radius:8px;padding:8px 12px;font-weight:700;font-size:13px;cursor:pointer;}
+  .sync-banner .btn-envoyer{background:#2C6E49;color:#fff;}
+  .sync-banner .btn-plustard{background:transparent;color:#5b6b64;}
 </style>
 </head>
 <body>
@@ -439,6 +451,14 @@
 </header>
 
 <main>
+
+  <div class="sync-banner no-print" id="syncBanner">
+    <div class="txt">🌐 Connexion retrouvée — envoyer ce devis vers votre dashboard ?</div>
+    <div class="actions">
+      <button class="btn-plustard" id="btnSyncPlusTard">Plus tard</button>
+      <button class="btn-envoyer" id="btnSyncEnvoyer">Envoyer</button>
+    </div>
+  </div>
 
   <div class="card search-card">
     <h2>1. Dicter ou taper le produit</h2>
@@ -488,6 +508,17 @@
   <div class="card">
     <h2>2. Devis en cours <span class="badge-count" id="lineCount">0</span></h2>
     <div id="devisLines"></div>
+  </div>
+
+  <div class="card" id="mediasCard">
+    <h2>3. Photos / vidéo du chantier <span class="badge-count" id="mediaCount">0</span></h2>
+    <div class="search-hint" style="margin-bottom:10px;">Pour vous souvenir du chantier plus tard — restent sur cet appareil. Une photo (compressée automatiquement) ou une courte vidéo (2 Mo max) à la fois.</div>
+    <div id="galerieMediasChantier" style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px;"></div>
+    <label class="btn btn-secondary" style="display:inline-block; text-align:center; cursor:pointer; margin:0;">
+      📷 Ajouter une photo / vidéo
+      <input type="file" id="inputMediaChantier" accept="image/*,video/*" style="display:none;">
+    </label>
+    <div id="msgMediaChantier" class="search-hint" style="margin-top:8px;"></div>
   </div>
 
 </main>
@@ -602,7 +633,10 @@ const CATALOGUE = [{"code": "TER-001", "metier": "Terrassement", "designation": 
 const LS_KEYS = {
   settings: 'estimbtp_settings',
   overrides: 'estimbtp_price_overrides',
-  devis: 'estimbtp_devis_courant'
+  devis: 'estimbtp_devis_courant',
+  medias: 'estimbtp_medias_courant',
+  dernierEnvoiHash: 'estimbtp_dernier_envoi_hash',
+  bannerIgnoreeHash: 'estimbtp_banner_ignoree_hash'
 };
 
 function loadJSON(key, fallback){
@@ -616,6 +650,7 @@ function saveJSON(key, val){
 let settings = loadJSON(LS_KEYS.settings, { nom:'', coord:'', logo:'', client:'', clientTelephone:'', clientEmail:'', clientAdresse:'', tvaDefaut:'0.20', dashboardLink:'', draftId:'' });
 let overrides = loadJSON(LS_KEYS.overrides, {}); // code -> prix perso
 let devis = loadJSON(LS_KEYS.devis, []); // [{code,designation,unite,qte,prixU,tva,dims}]
+let mediasChantier = loadJSON(LS_KEYS.medias, []); // [{id,type:'photo'|'video',dataUrl,ajouteLe}]
 
 /* ===================== UTILITAIRES ===================== */
 function strip(s){
@@ -818,6 +853,7 @@ document.getElementById('ps-add').addEventListener('click', ()=>{
 function renderDevis(){
   const wrap = document.getElementById('devisLines');
   document.getElementById('lineCount').textContent = devis.length;
+  if(typeof verifierPropositionSync === 'function') verifierPropositionSync();
   if(devis.length===0){
     wrap.innerHTML = '<div class="devis-empty">Aucune ligne pour l\'instant.<br>Dictez un produit ci-dessus pour commencer.</div>';
   } else {
@@ -891,11 +927,14 @@ function renderTotals(){
 }
 
 document.getElementById('btnClear').addEventListener('click', ()=>{
-  if(devis.length===0) return;
-  if(confirm('Effacer le devis en cours et repartir de zéro ?')){
+  if(devis.length===0 && mediasChantier.length===0) return;
+  if(confirm('Effacer le devis en cours (et ses photos/vidéo) pour repartir de zéro ?')){
     devis = [];
     saveJSON(LS_KEYS.devis, devis);
     renderDevis();
+    mediasChantier = [];
+    saveJSON(LS_KEYS.medias, mediasChantier);
+    renderMediasChantier();
   }
 });
 
@@ -989,7 +1028,14 @@ function buildTextSummary(){
 /* ===================== VERS MON DASHBOARD SKYECO PRO ===================== */
 const UNITE_VERS_DASHBOARD = { 'm²':'m2', 'm³':'m3', 'mL':'ml', 'u':'unite', 'h':'heure', 'jour':'jour', 'forfait':'forfait', 'forfait/an':'forfait' };
 
-document.getElementById('btnVersDashboard').addEventListener('click', ()=>{
+function hashDevisActuel(){
+  // Simple empreinte du contenu du devis en cours, pour savoir si ce qui est
+  // affiché a déjà été envoyé vers le dashboard (évite de proposer d'envoyer
+  // deux fois le même devis, ou de re-proposer après un envoi manuel).
+  try{ return JSON.stringify(devis); }catch(e){ return String(Date.now()); }
+}
+
+function envoyerVersDashboard(){
   if(devis.length===0){ toast('Ajoutez au moins une ligne'); return; }
   if(!settings.draftId){
     toast('⚠️ Configurez d\'abord votre lien dashboard dans Réglages');
@@ -1016,8 +1062,49 @@ document.getElementById('btnVersDashboard').addEventListener('click', ()=>{
     toast('Erreur lors de la préparation du transfert');
     return;
   }
+  try{ localStorage.setItem(LS_KEYS.dernierEnvoiHash, hashDevisActuel()); }catch(e){}
   const lien = `https://app.skyeco.fr/mes-devis.html?id=${encodeURIComponent(settings.draftId)}&import=${encodeURIComponent(encode)}`;
   window.location.href = lien;
+}
+
+document.getElementById('btnVersDashboard').addEventListener('click', envoyerVersDashboard);
+
+/* ===================== BANNIÈRE "CONNEXION RETROUVÉE" ===================== */
+// L'appli reste utilisable hors connexion (c'est tout son intérêt sur
+// chantier). Dès qu'elle détecte à nouveau une connexion internet, si un
+// devis en cours n'a pas encore été envoyé vers le dashboard et que le lien
+// du dashboard est configuré, on le propose en un seul geste — plutôt que de
+// forcer l'artisan à retrouver le bouton lui-même. Ce n'est pas un envoi
+// automatique invisible (voir explication donnée à Cyrille : ça nécessiterait
+// de faire confiance à un identifiant seul, le même type de faille déjà
+// corrigée ailleurs dans ce projet) — l'artisan garde la main via "Envoyer".
+let bannerSyncIgnoreeCetteConnexion = false;
+
+function verifierPropositionSync(){
+  const banner = document.getElementById('syncBanner');
+  if(!navigator.onLine || devis.length===0 || !settings.draftId || bannerSyncIgnoreeCetteConnexion){
+    banner.classList.remove('show');
+    return;
+  }
+  const hashActuel = hashDevisActuel();
+  const dernierEnvoi = localStorage.getItem(LS_KEYS.dernierEnvoiHash) || '';
+  if(hashActuel === dernierEnvoi){
+    banner.classList.remove('show');
+    return;
+  }
+  banner.classList.add('show');
+}
+
+// On ne réagit pas seulement à un vrai changement de connexion : on revérifie
+// aussi à chaque ligne ajoutée/modifiée (via renderDevis), mais la bannière
+// n'est retentée qu'une fois par période de connexion — "Plus tard" la
+// masque jusqu'à la prochaine reconnexion, pas jusqu'au prochain caractère tapé.
+window.addEventListener('online', ()=>{ bannerSyncIgnoreeCetteConnexion = false; verifierPropositionSync(); });
+window.addEventListener('offline', ()=>{ bannerSyncIgnoreeCetteConnexion = false; });
+document.getElementById('btnSyncEnvoyer').addEventListener('click', envoyerVersDashboard);
+document.getElementById('btnSyncPlusTard').addEventListener('click', ()=>{
+  bannerSyncIgnoreeCetteConnexion = true;
+  document.getElementById('syncBanner').classList.remove('show');
 });
 
 document.getElementById('btnShare').addEventListener('click', async ()=>{
@@ -1127,10 +1214,125 @@ document.getElementById('btnRetirerLogo').addEventListener('click', ()=>{
   toast('Logo retiré');
 });
 
+/* ===================== PHOTOS / VIDEO DU CHANTIER ===================== */
+// Ajouté le 24/09/2026 — la demande d'origine de Cyrille : pouvoir prendre une
+// photo ou une courte vidéo du chantier avec le téléphone, directement dans
+// l'appli, pour s'en souvenir plus tard. Ça reste 100% local sur l'appareil
+// (comme le reste de cette appli hors-ligne) : pas d'envoi automatique vers
+// le dashboard pour l'instant (les photos/vidéos sont trop lourdes pour
+// passer par le même lien que le devis — voir le bouton "📷 Photos" dans
+// Mes devis pour les rajouter une fois sur l'ordinateur, si besoin).
+function renderMediasChantier(){
+  const galerie = document.getElementById('galerieMediasChantier');
+  document.getElementById('mediaCount').textContent = mediasChantier.length;
+  galerie.innerHTML = '';
+  mediasChantier.forEach((m)=>{
+    const div = document.createElement('div');
+    div.style.cssText = 'position:relative; border-radius:8px; overflow:hidden; background:#eef1f3; aspect-ratio:1;';
+    div.innerHTML = m.type === 'video'
+      ? `<video src="${m.dataUrl}" style="width:100%; height:100%; object-fit:cover;" muted></video>`
+      : `<img src="${m.dataUrl}" style="width:100%; height:100%; object-fit:cover;" alt="Photo chantier">`;
+    const btnSuppr = document.createElement('button');
+    btnSuppr.textContent = '✕';
+    btnSuppr.type = 'button';
+    btnSuppr.style.cssText = 'position:absolute; top:4px; right:4px; background:rgba(0,0,0,.6); color:#fff; border:none; border-radius:50%; width:22px; height:22px; cursor:pointer; font-size:12px; line-height:1;';
+    btnSuppr.addEventListener('click', ()=>{
+      mediasChantier = mediasChantier.filter(x=>x.id!==m.id);
+      saveJSON(LS_KEYS.medias, mediasChantier);
+      renderMediasChantier();
+    });
+    div.appendChild(btnSuppr);
+    galerie.appendChild(div);
+  });
+}
+
+function compresserImageChantier(fichier, maxLargeur, qualite){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = (ev)=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const echelle = Math.min(1, maxLargeur / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * echelle);
+        canvas.height = Math.round(img.height * echelle);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', qualite));
+      };
+      img.onerror = reject;
+      img.src = ev.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(fichier);
+  });
+}
+
+function lireFichierEnDataUrl(fichier){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=>resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(fichier);
+  });
+}
+
+document.getElementById('inputMediaChantier').addEventListener('change', async (e)=>{
+  const fichier = e.target.files && e.target.files[0];
+  if(!fichier) return;
+  const msg = document.getElementById('msgMediaChantier');
+  const estVideo = fichier.type.startsWith('video/');
+  const estImage = fichier.type.startsWith('image/');
+  if(!estVideo && !estImage){
+    msg.textContent = '⚠️ Choisissez une photo ou une vidéo.';
+    e.target.value = '';
+    return;
+  }
+  if(estVideo && fichier.size > 2 * 1024 * 1024){
+    msg.textContent = '⚠️ Vidéo trop volumineuse pour être gardée sur le téléphone (max ~2 Mo) — filmez un clip plus court ou en plus basse résolution.';
+    e.target.value = '';
+    return;
+  }
+  msg.textContent = estImage ? 'Compression…' : 'Enregistrement…';
+  try{
+    const dataUrl = estImage
+      ? await compresserImageChantier(fichier, 1280, 0.7)
+      : await lireFichierEnDataUrl(fichier);
+    mediasChantier.push({ id: Date.now() + '-' + Math.round(Math.random()*1e6), type: estVideo ? 'video' : 'photo', dataUrl, ajouteLe: new Date().toISOString() });
+    saveJSON(LS_KEYS.medias, mediasChantier);
+    renderMediasChantier();
+    msg.textContent = '✅ Ajouté — reste sur cet appareil.';
+    e.target.value = '';
+  }catch(err){
+    // Le plus probable ici : le stockage du téléphone est plein (quota du
+    // navigateur dépassé). On prévient clairement plutôt que de perdre la
+    // photo en silence.
+    msg.textContent = "⚠️ Impossible d'enregistrer (mémoire du téléphone pleine ?) — essayez de supprimer une ancienne photo d'abord.";
+    e.target.value = '';
+  }
+});
+
+renderMediasChantier();
+
 /* ===================== SERVICE WORKER ===================== */
+// Corrigé le 24/09/2026 : avant, une mise à jour mettait à jour le cache en
+// coulisses mais ne s'affichait qu'au 2e chargement de la page (voir
+// sw-estimateur.js). Ici, dès qu'une nouvelle version du service worker
+// prend le contrôle, on recharge automatiquement la page une fois pour
+// afficher tout de suite le dernier correctif, sans action de l'artisan.
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('/sw-estimateur.js').catch(()=>{});
+    navigator.serviceWorker.register('/sw-estimateur.js').then((reg)=>{
+      // Vérifie activement s'il existe une version plus récente côté
+      // serveur (utile si l'appli reste ouverte longtemps sans être
+      // rechargée manuellement, par ex. laissée en tâche de fond).
+      reg.update().catch(()=>{});
+    }).catch(()=>{});
+  });
+  let dejaRecharge = false;
+  navigator.serviceWorker.addEventListener('controllerchange', ()=>{
+    if (dejaRecharge) return;
+    dejaRecharge = true;
+    window.location.reload();
   });
 }
 

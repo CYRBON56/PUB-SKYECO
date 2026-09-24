@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kit Pro Artisan BTP — Devis conforme + visuels réseaux sociaux</title>
+<meta name="description" content="Un modèle de devis conforme aux mentions légales 2026 + un kit complet de visuels réseaux sociaux, prêts à personnaliser. Téléchargement immédiat.">
+<style>
+  :root{
+    --navy:#1F3A5F; --navy-dark:#14283F; --orange:#E07A2C; --orange-dark:#C4661F;
+    --gray:#666; --lightgray:#F2F2F2; --line:#E4E4E4; --ink:#222;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'Segoe UI', Calibri, Arial, sans-serif; color:var(--ink); background:#fff; line-height:1.55;}
+  h1,h2,h3{font-family:Cambria, Georgia, 'Times New Roman', serif; color:var(--navy); margin:0 0 .4em;}
+  a{color:inherit;}
+  .wrap{max-width:1080px; margin:0 auto; padding:0 24px;}
+  .btn{display:inline-block; padding:16px 34px; border-radius:999px; font-weight:700; font-size:17px; text-decoration:none; cursor:pointer; border:none;}
+  .btn-orange{background:var(--orange); color:#fff;}
+  .btn-orange:hover{background:var(--orange-dark);}
+  .btn-navy{background:var(--navy); color:#fff;}
+  .muted{color:var(--gray); font-size:15px;}
+
+  /* Header */
+  header{padding:18px 0; border-bottom:1px solid var(--line);}
+  header .wrap{display:flex; align-items:center; justify-content:space-between;}
+  .brand{font-family:Cambria, Georgia, serif; font-weight:700; font-size:20px; color:var(--navy);}
+  .brand span{color:var(--orange);}
+  header nav a{margin-left:22px; font-size:15px; color:var(--navy); text-decoration:none; font-weight:600;}
+
+  /* Hero */
+  .hero{padding:64px 0 40px; background:linear-gradient(180deg, #F7F9FC 0%, #FFFFFF 100%);}
+  .hero .grid{display:grid; grid-template-columns:1.1fr .9fr; gap:48px; align-items:center;}
+  .kicker{display:inline-block; background:#FDECD9; color:var(--orange-dark); font-weight:700; font-size:13px; letter-spacing:.03em; padding:6px 14px; border-radius:999px; margin-bottom:18px;}
+  .hero h1{font-size:40px; line-height:1.18; margin-bottom:18px;}
+  .hero p.lead{font-size:18px; color:#444; margin-bottom:28px; max-width:52ch;}
+  .hero-cta-row{display:flex; align-items:center; gap:18px; flex-wrap:wrap;}
+  .hero-visual{position:relative;}
+  .hero-visual img{width:100%; border-radius:14px; box-shadow:0 18px 40px rgba(31,58,95,.18); display:block;}
+  .hero-visual .tag{position:absolute; bottom:-16px; left:-16px; background:var(--navy); color:#fff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:10px; box-shadow:0 8px 20px rgba(0,0,0,.2);}
+
+  /* Trust bar */
+  .trust{padding:22px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line);}
+  .trust .wrap{display:flex; justify-content:space-between; flex-wrap:wrap; gap:16px; font-size:14px; color:var(--gray); font-weight:600;}
+
+  /* Section titles */
+  .section{padding:64px 0;}
+  .section h2{font-size:30px; text-align:center; margin-bottom:10px;}
+  .section .sub{text-align:center; color:var(--gray); font-size:16px; max-width:56ch; margin:0 auto 44px;}
+
+  /* Problem/solution */
+  .cols2{display:grid; grid-template-columns:1fr 1fr; gap:28px;}
+  .card{background:var(--lightgray); border-radius:14px; padding:28px;}
+  .card h3{font-size:19px; margin-bottom:12px;}
+  .card ul{margin:0; padding-left:20px; color:#444; font-size:15px;}
+  .card li{margin-bottom:8px;}
+  .card.bad{background:#FBEEEE;}
+  .card.bad h3{color:#B5433A;}
+  .card.good{background:#EAF2ED;}
+  .card.good h3{color:#2C6E49;}
+
+  /* Contents / gallery */
+  .gallery{display:grid; grid-template-columns:repeat(4, 1fr); gap:18px;}
+  .gallery figure{margin:0; background:var(--lightgray); border-radius:12px; overflow:hidden; border:1px solid var(--line);}
+  .gallery img{width:100%; display:block;}
+  .gallery figcaption{padding:10px 12px; font-size:13px; font-weight:600; color:var(--navy);}
+  .gallery .tall{grid-row:span 2;}
+
+  .content-list{display:grid; grid-template-columns:1fr 1fr; gap:32px; margin-top:48px;}
+  .content-list .block h3{font-size:18px; display:flex; align-items:center; gap:10px;}
+  .content-list .num{display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; background:var(--navy); color:#fff; font-size:14px; font-weight:700;}
+  .content-list ul{color:#444; font-size:15px; padding-left:20px; margin-top:10px;}
+  .content-list li{margin-bottom:6px;}
+
+  /* Pricing */
+  .pricing{background:var(--navy); color:#fff; padding:70px 0; text-align:center;}
+  .pricing h2{color:#fff;}
+  .price-card{max-width:420px; margin:32px auto 0; background:#fff; color:var(--ink); border-radius:18px; padding:38px 32px; box-shadow:0 20px 50px rgba(0,0,0,.25);}
+  .price-card .name{font-weight:700; color:var(--navy); font-size:18px; margin-bottom:6px;}
+  .price-card .amount{font-size:52px; font-weight:800; color:var(--navy); font-family:Cambria, serif;}
+  .price-card .amount sup{font-size:22px; top:-1.2em;}
+  .price-card .amount small{font-size:16px; font-weight:600; color:var(--gray);}
+  .price-card ul{text-align:left; margin:22px 0; padding:0; list-style:none; font-size:15px; color:#333;}
+  .price-card li{padding:7px 0 7px 28px; position:relative;}
+  .price-card li:before{content:"✓"; position:absolute; left:0; color:var(--orange); font-weight:800;}
+  .price-card .btn{width:100%; text-align:center; margin-top:6px;}
+  .price-note{margin-top:16px; font-size:13px; color:#CFE0F5;}
+  .guarantee{margin-top:28px; font-size:14px; color:#CFE0F5;}
+
+  /* FAQ */
+  .faq-item{border-bottom:1px solid var(--line); padding:20px 0;}
+  .faq-item h3{font-size:17px; margin-bottom:8px; color:var(--navy);}
+  .faq-item p{margin:0; color:#444; font-size:15px;}
+
+  footer{background:#F7F7F7; padding:34px 0; margin-top:20px;}
+  footer .wrap{display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px; font-size:13px; color:var(--gray);}
+  footer a{color:var(--gray); text-decoration:underline;}
+
+  @media (max-width: 860px){
+    .hero .grid{grid-template-columns:1fr;}
+    .cols2{grid-template-columns:1fr;}
+    .gallery{grid-template-columns:repeat(2,1fr);}
+    .content-list{grid-template-columns:1fr !important;}
+    .hero h1{font-size:30px;}
+    .trust .wrap{justify-content:center; text-align:center;}
+  }
+  @media (max-width: 480px){
+    header .wrap{flex-direction:column; align-items:flex-start; gap:8px;}
+    header nav a{margin-left:0; margin-right:16px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="brand">Kit Pro <span>Artisan BTP</span></div>
+    <nav>
+      <a href="#contenu">Le contenu</a>
+      <a href="#prix">Tarif</a>
+      <a href="#faq">Questions</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap grid">
+    <div>
+      <span class="kicker">POUR LES ARTISANS &amp; ENTREPRISES DU BÂTIMENT</span>
+      <h1>Des devis conformes, des visuels pros et une appli pour chiffrer sur le chantier</h1>
+      <p class="lead">Un modèle de devis à jour des mentions légales 2026, un kit complet de visuels pour vos réseaux sociaux (avant/après, avis clients, offres, réalisations), et une application pour chiffrer vos devis directement sur le chantier, depuis votre téléphone. Vous remplissez les blancs, vous êtes prêt à envoyer et à publier.</p>
+      <div class="hero-cta-row">
+        <a href="#prix" class="btn btn-orange">Voir le kit — 29 €</a>
+        <span class="muted">Téléchargement immédiat après paiement</span>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <img src="images/kit-pro-artisan-btp/apercu-devis.jpg" alt="Aperçu du modèle de devis professionnel">
+      <div class="tag">14 mentions légales incluses</div>
+    </div>
+  </div>
+</section>
+
+<div class="trust">
+  <div class="wrap">
+    <div>✔ Conforme à l'arrêté du 24 janvier 2017</div>
+    <div>✔ Compatible Word, PowerPoint &amp; Canva</div>
+    <div>✔ Fichiers 100 % éditables, sans logiciel payant</div>
+    <div>✔ Livraison automatique par email</div>
+  </div>
+</div>
+
+<section class="section">
+  <div class="wrap">
+    <h2>Un devis approximatif ou une story amateur coûtent plus cher qu'on ne le pense</h2>
+    <p class="sub">Entre les chantiers, il ne reste jamais le temps de soigner ses documents commerciaux ou sa communication. Résultat :</p>
+    <div class="cols2">
+      <div class="card bad">
+        <h3>Sans le bon outil</h3>
+        <ul>
+          <li>Un devis fait à la va-vite, avec des mentions légales oubliées (jusqu'à 15 000 € d'amende en cas de contrôle)</li>
+          <li>Des posts Instagram/Facebook improvisés, sans cohérence visuelle</li>
+          <li>Des heures perdues à retaper la même trame à chaque client</li>
+          <li>Une image « artisanale » qui ne reflète pas votre sérieux</li>
+        </ul>
+      </div>
+      <div class="card good">
+        <h3>Avec le Kit Pro Artisan BTP</h3>
+        <ul>
+          <li>Un devis clair, complet et conforme, prêt en quelques minutes</li>
+          <li>Des visuels au design soigné pour publier sans effort de conception</li>
+          <li>Une image de marque cohérente sur tous vos supports</li>
+          <li>Plus de temps consacré à vos chantiers, moins à l'administratif</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="contenu" style="background:var(--lightgray);">
+  <div class="wrap">
+    <h2>Ce que contient le kit</h2>
+    <p class="sub">Trois outils complémentaires : deux fichiers Word/PowerPoint que vous modifiez comme vous voulez, et une application accessible directement depuis un lien, sans rien installer.</p>
+
+    <div class="gallery">
+      <figure><img src="images/kit-pro-artisan-btp/apercu-avant-apres.jpg" alt="Modèle de post avant/après"><figcaption>Avant / Après chantier</figcaption></figure>
+      <figure><img src="images/kit-pro-artisan-btp/apercu-avis-client.jpg" alt="Modèle d'avis client"><figcaption>Avis client</figcaption></figure>
+      <figure><img src="images/kit-pro-artisan-btp/apercu-offre.jpg" alt="Modèle d'offre promotionnelle"><figcaption>Offre spéciale</figcaption></figure>
+      <figure><img src="images/kit-pro-artisan-btp/apercu-chantier-termine.jpg" alt="Modèle chantier terminé"><figcaption>Chantier terminé</figcaption></figure>
+    </div>
+
+    <div class="content-list" style="grid-template-columns:repeat(3,1fr);">
+      <div class="block">
+        <h3><span class="num">1</span> Modèle de devis professionnel (.docx)</h3>
+        <ul>
+          <li>Les 14 mentions obligatoires 2026 déjà en place (SIRET, RM, assurances décennale &amp; RC pro, TVA par taux, médiateur…)</li>
+          <li>Tableau de prestations prêt à remplir avec calcul HT/TTC</li>
+          <li>Zone signature « Bon pour accord » conforme</li>
+          <li>Une page guide expliquant chaque mention</li>
+          <li>2 pages, modifiable dans Word ou LibreOffice</li>
+        </ul>
+      </div>
+      <div class="block">
+        <h3><span class="num">2</span> Kit de visuels réseaux sociaux (.pptx)</h3>
+        <ul>
+          <li>7 modèles au format carré 1080×1080 (posts Instagram/Facebook)</li>
+          <li>6 modèles au format story 1080×1920</li>
+          <li>Avant/après, avis clients, présentation, réalisations, offres, chantier terminé</li>
+          <li>Modifiable dans PowerPoint <strong>ou directement dans Canva</strong> (import de fichier PowerPoint)</li>
+          <li>Une charte simple et professionnelle, à personnaliser avec votre logo et vos couleurs</li>
+        </ul>
+      </div>
+      <div class="block">
+        <h3><span class="num">3</span> Application de chiffrage sur chantier</h3>
+        <ul>
+          <li>Catalogue de 123 postes BTP avec prix repères (terrassement, maçonnerie, VRD, assainissement, clôtures/portails, revêtements de sol, espaces verts)</li>
+          <li>Calcul automatique des surfaces/volumes (m², m³, mètres linéaires)</li>
+          <li>Fonctionne directement depuis un lien, même hors connexion une fois ouverte une première fois</li>
+          <li>Aucune installation ni compte nécessaire</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <h2>Comment ça marche</h2>
+    <div class="content-list" style="grid-template-columns:repeat(3,1fr);">
+      <div class="block"><h3><span class="num">1</span> Vous commandez</h3><p class="muted">Paiement sécurisé par carte bancaire, en une fois — aucun abonnement.</p></div>
+      <div class="block"><h3><span class="num">2</span> Vous recevez</h3><p class="muted">Un email automatique avec vos fichiers, en quelques minutes.</p></div>
+      <div class="block"><h3><span class="num">3</span> Vous personnalisez</h3><p class="muted">Vous remplacez les textes entre crochets et vos photos, c'est prêt.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="pricing" id="prix">
+  <div class="wrap">
+    <h2>Un seul tarif, tout inclus</h2>
+    <p style="color:#CFE0F5;">Pas d'abonnement, pas de frais cachés — vous payez une fois, le kit est à vous.</p>
+    <div class="price-card">
+      <div class="name">Kit Pro Artisan BTP</div>
+      <div class="amount">29<sup>€</sup> <small>TTC</small></div>
+      <ul>
+        <li>Modèle de devis conforme 2026 (.docx)</li>
+        <li>Kit visuels réseaux sociaux — 13 modèles (.pptx)</li>
+        <li>Application de chiffrage sur chantier (accès illimité par lien)</li>
+        <li>Guide d'utilisation inclus</li>
+        <li>Fichiers et lien livrés par email, à vie</li>
+        <li>Mises à jour futures offertes</li>
+      </ul>
+      <a href="#" id="btn-checkout" class="btn btn-orange">Je commande mon kit</a>
+      <div class="price-note">Paiement sécurisé par carte bancaire (Stripe)</div>
+    </div>
+    <div class="guarantee">Un souci avec vos fichiers ? Écrivez-nous, on répond vite.</div>
+  </div>
+</section>
+
+<section class="section" id="faq">
+  <div class="wrap" style="max-width:760px;">
+    <h2>Questions fréquentes</h2>
+    <div class="faq-item">
+      <h3>Dans quel logiciel puis-je modifier les fichiers ?</h3>
+      <p>Le devis s'ouvre dans Word ou LibreOffice. Le kit de visuels s'ouvre dans PowerPoint, et peut aussi être importé directement dans Canva (menu Créer un design > Importer un fichier).</p>
+    </div>
+    <div class="faq-item">
+      <h3>Le modèle de devis est-il vraiment conforme à la réglementation ?</h3>
+      <p>Il reprend les 14 mentions obligatoires prévues par l'arrêté du 24 janvier 2017 sur l'information des consommateurs par les professionnels du bâtiment. Il reste un outil : en cas de doute sur votre situation particulière (régime de TVA, assurances), rapprochez-vous de votre expert-comptable ou de votre assureur.</p>
+    </div>
+    <div class="faq-item">
+      <h3>Puis-je utiliser ce kit pour plusieurs métiers du BTP ?</h3>
+      <p>Oui — les modèles sont conçus pour être génériques (maçonnerie, terrassement, VRD, clôtures, portails, revêtements de sol…) : vous adaptez simplement les textes à votre activité.</p>
+    </div>
+    <div class="faq-item">
+      <h3>Comment je reçois mes fichiers ?</h3>
+      <p>Immédiatement après le paiement, un email automatique vous envoie les liens de téléchargement ainsi que le lien vers l'application de chiffrage. Pensez à vérifier vos spams si vous ne le voyez pas sous 10 minutes.</p>
+    </div>
+    <div class="faq-item">
+      <h3>Comment j'accède à l'application de chiffrage, je dois la télécharger sur un store ?</h3>
+      <p>Non, ce n'est pas une application à télécharger sur l'App Store ou le Play Store : c'est une page web que vous ouvrez depuis le lien reçu par email, sur votre téléphone ou votre ordinateur. Vous pouvez ensuite l'ajouter à l'écran d'accueil de votre téléphone (comme une vraie application) pour la retrouver facilement, et elle continue de fonctionner même sans connexion internet une fois ouverte une première fois.</p>
+    </div>
+    <div class="faq-item">
+      <h3>Y a-t-il un engagement ou un abonnement ?</h3>
+      <p>Non. C'est un paiement unique de 29 € TTC. Les fichiers sont à vous, sans limite de durée.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>© 2026 Kit Pro Artisan BTP — Tous droits réservés</div>
+    <div><a href="mailto:contact@ecosky.fr">Nous contacter</a></div>
+  </div>
+</footer>
+
+<script>
+  document.getElementById('btn-checkout').addEventListener('click', async function (e) {
+    e.preventDefault();
+    const btn = e.currentTarget;
+    const texteOriginal = btn.textContent;
+    btn.textContent = 'Chargement…';
+    btn.style.pointerEvents = 'none';
+    try {
+      const resp = await fetch('/api/create-checkout-kit-pro', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      const data = await resp.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.error || 'Erreur inconnue');
+      }
+    } catch (err) {
+      alert("Une erreur est survenue, merci de réessayer dans un instant ou de nous contacter directement.");
+      btn.textContent = texteOriginal;
+      btn.style.pointerEvents = 'auto';
+    }
+  });
+</script>
+
+</body>
+</html>

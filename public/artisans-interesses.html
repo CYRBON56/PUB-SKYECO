@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Qui s'intéresse ? — Skyeco IA Ads</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#14304A; --blue:#2C5F8A; --blue-light:#6E97B8;
+    --paper:#F4F7F9; --paper-line:#DCE4E9; --orange:#E8622C; --orange-dark:#C74F20;
+    --concrete:#5B6268; --white:#FFFFFF; --ok:#3E8E5A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{ font-family:'IBM Plex Sans',sans-serif; background:var(--paper); color:var(--navy); -webkit-font-smoothing:antialiased; }
+  .mono{ font-family:'IBM Plex Mono',monospace; }
+
+  #gate{ position:fixed; inset:0; background:var(--navy); display:flex; align-items:center; justify-content:center; z-index:100; }
+  #gate .box{ background:var(--white); padding:32px; width:100%; max-width:340px; }
+  #gate h1{ font-family:'Big Shoulders Display',sans-serif; font-weight:900; font-size:20px; margin-bottom:14px; }
+  #gate input{ width:100%; border:1.5px solid var(--paper-line); padding:12px 14px; font-size:14.5px; margin-bottom:10px; }
+  #gate button{ width:100%; background:var(--orange); color:#fff; border:none; padding:12px; font-weight:700; cursor:pointer; }
+  #gate .err{ color:#c0392b; font-size:12.5px; margin-top:8px; display:none; }
+
+  header{ background:var(--navy); color:var(--white); padding:20px 28px; }
+  .logo{ font-family:'Big Shoulders Display',sans-serif; font-weight:900; font-size:18px; display:flex; align-items:center; gap:8px; }
+  .logo .dot{ width:8px; height:8px; background:var(--orange); display:inline-block; }
+  header .sub{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--blue-light); margin-top:4px; }
+  header .btn-back{ display:inline-block; margin-top:10px; padding:8px 14px; border:1.5px solid var(--blue-light); color:#fff; font-size:12.5px; font-weight:700; text-decoration:none; }
+  header .btn-back:hover{ background:rgba(255,255,255,0.12); border-color:#fff; }
+
+  .wrap{ max-width:1200px; margin:0 auto; padding:24px 20px 60px; }
+  .panel{ background:var(--white); border:1px solid var(--paper-line); padding:20px; margin-bottom:20px; }
+  .panel h2{ font-family:'Big Shoulders Display',sans-serif; font-weight:800; font-size:17px; margin-bottom:6px; }
+  .panel .hint{ font-size:13px; color:var(--concrete); margin-bottom:14px; }
+
+  .stats{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+  .stat{ background:var(--paper); border:1px solid var(--paper-line); padding:10px 14px; min-width:130px; }
+  .stat .n{ font-family:'Big Shoulders Display',sans-serif; font-weight:900; font-size:20px; color:var(--navy); }
+  .stat .l{ font-size:11px; color:var(--concrete); }
+
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  th{ text-align:left; font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--concrete); padding:8px 10px; border-bottom:2px solid var(--paper-line); white-space:nowrap; }
+  td{ padding:9px 10px; border-bottom:1px solid var(--paper-line); vertical-align:middle; }
+  tr:hover td{ background:var(--paper); }
+  .table-wrap{ overflow-x:auto; }
+  .loading, .empty{ text-align:center; padding:40px; color:var(--concrete); font-size:13.5px; }
+
+  .nom{ font-weight:700; }
+  .sub-ligne{ font-size:11.5px; color:var(--concrete); margin-top:1px; }
+
+  .statut{ display:flex; align-items:center; gap:7px; white-space:nowrap; }
+  .pastille-pulse{
+    display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--ok);
+    flex-shrink:0; animation:pulseEnLigne 1.8s infinite;
+  }
+  .pastille-off{ display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--paper-line); flex-shrink:0; }
+  @keyframes pulseEnLigne{
+    0%{ box-shadow:0 0 0 0 rgba(62,142,90,0.55); }
+    70%{ box-shadow:0 0 0 8px rgba(62,142,90,0); }
+    100%{ box-shadow:0 0 0 0 rgba(62,142,90,0); }
+  }
+  .en-ligne-texte{ color:var(--ok); font-weight:700; }
+
+  .btn{ font-weight:700; font-size:12.5px; padding:7px 12px; border:1.5px solid var(--paper-line); background:#fff; color:var(--navy); cursor:pointer; white-space:nowrap; }
+  .btn:hover{ border-color:var(--blue); }
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="box">
+    <h1>Accès réservé</h1>
+    <input type="password" id="gatePassword" placeholder="Mot de passe">
+    <button id="gateBtn">Entrer</button>
+    <div class="err" id="gateErr">Mot de passe incorrect.</div>
+  </div>
+</div>
+
+<header>
+  <div class="logo"><span class="dot"></span>SKYECO&nbsp;ADS</div>
+  <div class="sub">QUI S'INTÉRESSE — ARTISANS AYANT CLIQUÉ SUR LE MAIL</div>
+  <a class="btn-back" href="/prospects-paysagiste.html">&larr; Retour à la prospection</a>
+</header>
+
+<div class="wrap">
+
+  <div class="panel">
+    <h2>Intérêt des artisans démarchés</h2>
+    <p class="hint">Uniquement les artisans ayant cliqué sur le lien du mail. Triés : en ligne maintenant en premier, puis activité la plus récente. Rafraîchi automatiquement toutes les 30 secondes.</p>
+
+    <div class="stats" id="stats">
+      <div class="stat"><div class="n" id="statTotal">…</div><div class="l">Ont cliqué</div></div>
+      <div class="stat"><div class="n" id="statEnLigne">…</div><div class="l">En ligne maintenant</div></div>
+      <div class="stat"><div class="n" id="statAvecVisite">…</div><div class="l">Avec pages suivies</div></div>
+    </div>
+
+    <div class="table-wrap">
+      <div id="tableContainer"><div class="loading">CHARGEMENT…</div></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  // ---------- Portail mot de passe (partagé avec prospects-paysagiste.html) ----------
+  const gate = document.getElementById('gate');
+  let internalPassword = sessionStorage.getItem('skyeco_prospection_pwd') || '';
+  if (sessionStorage.getItem('skyeco_prospection_ok') === '1' && internalPassword) {
+    gate.style.display = 'none';
+  }
+  document.getElementById('gateBtn').addEventListener('click', submitGate);
+  document.getElementById('gatePassword').addEventListener('keydown', e => { if (e.key === 'Enter') submitGate(); });
+  async function submitGate(){
+    const pwd = document.getElementById('gatePassword').value;
+    const errEl = document.getElementById('gateErr');
+    try{
+      const res = await fetch('/api/verify-internal-password', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ password: pwd })
+      });
+      const data = await res.json();
+      if(data.success){
+        sessionStorage.setItem('skyeco_prospection_ok', '1');
+        sessionStorage.setItem('skyeco_prospection_pwd', pwd);
+        internalPassword = pwd;
+        gate.style.display = 'none';
+        init();
+      } else {
+        errEl.textContent = data.error || 'Mot de passe incorrect.';
+        errEl.style.display = 'block';
+      }
+    } catch(err){
+      errEl.textContent = 'Erreur de connexion.';
+      errEl.style.display = 'block';
+    }
+  }
+
+  async function appelerAdmin(action, extra){
+    const resp = await fetch('/api/prospects-paysagiste-admin', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ motDePasseInterne: internalPassword, action, ...extra })
+    });
+    const data = await resp.json().catch(()=>({ success:false, error:'Réponse invalide du serveur.' }));
+    if(!data.success) throw new Error(data.error || 'Erreur serveur.');
+    return data;
+  }
+
+  // ---------- Formatage ----------
+  function formaterDuree(ms){
+    const minutes = Math.round(ms / 60000);
+    if (minutes < 1) return '< 1 min';
+    if (minutes < 60) return minutes + ' min';
+    const h = Math.floor(minutes / 60), m = minutes % 60;
+    return h + ' h' + (m ? ' ' + m + ' min' : '');
+  }
+
+  function ilYA(dateIso){
+    if (!dateIso) return '—';
+    const ms = Date.now() - new Date(dateIso).getTime();
+    if (ms < 60000) return 'à l\'instant';
+    const minutes = Math.round(ms / 60000);
+    if (minutes < 60) return 'il y a ' + minutes + ' min';
+    const heures = Math.round(minutes / 60);
+    if (heures < 24) return 'il y a ' + heures + ' h';
+    const jours = Math.round(heures / 24);
+    return 'il y a ' + jours + ' j';
+  }
+
+  // ---------- Popup détail des pages vues (à partir des données déjà chargées) ----------
+  window.voirDetail = function(prospectId){
+    const p = prospectsActuels[prospectId];
+    if (!p) return;
+    const fenetre = window.open('', '_blank');
+    if(!fenetre){ alert('Le navigateur a bloqué l\'ouverture — autorisez les popups pour ce site puis réessayez.'); return; }
+    let corps;
+    if (!p.pages || !p.pages.length) {
+      corps = '<p style="color:#5b6268;">Aucune page visitée enregistrée pour l\'instant (le clic a eu lieu, mais la page de destination n\'a pas encore renvoyé de ping — normal si le clic est très récent, ou si la destination était une vidéo externe).</p>';
+    } else {
+      corps = '<table><thead><tr><th>Page</th><th>Arrivée</th><th>Temps resté</th></tr></thead><tbody>';
+      p.pages.forEach(v => {
+        const duree = new Date(v.last_seen_at).getTime() - new Date(v.entered_at).getTime();
+        corps += '<tr><td>' + v.page + '</td><td>' + new Date(v.entered_at).toLocaleString('fr-FR') + '</td><td>' + formaterDuree(duree) + '</td></tr>';
+      });
+      corps += '</tbody></table>';
+    }
+    fenetre.document.write(
+      '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Détail — ' + (p.nom_entreprise || 'Prospect') + '</title>' +
+      '<style>body{font-family:Arial,Helvetica,sans-serif;background:#f4f7f9;margin:0;padding:30px;color:#14304A;}' +
+      '.cadre{max-width:640px;margin:0 auto;background:#fff;border:1px solid #dce4e9;padding:22px;}' +
+      'h1{font-size:17px;margin:0 0 4px;}.sub{font-size:12.5px;color:#5b6268;margin-bottom:16px;}' +
+      'table{width:100%;border-collapse:collapse;font-size:13px;}th{text-align:left;font-size:10.5px;text-transform:uppercase;color:#5b6268;padding:6px 8px;border-bottom:2px solid #dce4e9;}' +
+      'td{padding:7px 8px;border-bottom:1px solid #dce4e9;}</style></head><body>' +
+      '<div class="cadre"><h1>' + (p.nom_entreprise || 'Prospect') + '</h1>' +
+      '<div class="sub">' + (p.email || '—') + (p.telephone ? ' · ' + p.telephone : '') + '</div>' +
+      corps + '</div></body></html>'
+    );
+    fenetre.document.close();
+  };
+
+  // ---------- Chargement + rendu ----------
+  let prospectsActuels = {};
+
+  function renderTable(prospects){
+    prospectsActuels = {};
+    prospects.forEach(p => { prospectsActuels[p.id] = p; });
+
+    document.getElementById('statTotal').textContent = prospects.length;
+    document.getElementById('statEnLigne').textContent = prospects.filter(p => p.en_ligne).length;
+    document.getElementById('statAvecVisite').textContent = prospects.filter(p => p.nb_visites > 0).length;
+
+    if (!prospects.length){
+      document.getElementById('tableContainer').innerHTML = '<div class="empty">Aucun artisan n\'a encore cliqué sur le lien du mail.</div>';
+      return;
+    }
+
+    let html = '<table><thead><tr>' +
+      '<th>Entreprise</th><th>Statut</th><th>Pages vues</th><th>Temps total passé</th><th>Dernière activité</th><th></th>' +
+      '</tr></thead><tbody>';
+    prospects.forEach(p => {
+      const statutHtml = p.en_ligne
+        ? '<span class="statut"><span class="pastille-pulse"></span><span class="en-ligne-texte">En ligne</span></span>'
+        : '<span class="statut"><span class="pastille-off"></span>' + ilYA(p.derniere_activite) + '</span>';
+      html += `<tr>
+        <td>
+          <div class="nom">${p.nom_entreprise || '—'}</div>
+          <div class="sub-ligne">${p.metier || '—'}${p.ville ? ' · ' + p.ville : ''}</div>
+        </td>
+        <td>${statutHtml}</td>
+        <td>${p.nb_visites} visite${p.nb_visites > 1 ? 's' : ''}${p.pages_distinctes ? ' · ' + p.pages_distinctes + ' page' + (p.pages_distinctes > 1 ? 's' : '') + ' différente' + (p.pages_distinctes > 1 ? 's' : '') : ''}</td>
+        <td>${p.temps_total_ms ? formaterDuree(p.temps_total_ms) : '—'}</td>
+        <td>${ilYA(p.derniere_activite)}</td>
+        <td><button type="button" class="btn" onclick="voirDetail('${p.id}')">🕘 Détail</button></td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    document.getElementById('tableContainer').innerHTML = html;
+  }
+
+  async function charger(){
+    try{
+      const { prospects } = await appelerAdmin('interet');
+      renderTable(prospects || []);
+    } catch(err){
+      document.getElementById('tableContainer').innerHTML = '<div class="empty">Erreur de chargement : ' + err.message + '</div>';
+    }
+  }
+
+  function init(){
+    charger();
+    setInterval(() => { if (document.visibilityState === 'visible') charger(); }, 30000);
+  }
+
+  if (sessionStorage.getItem('skyeco_prospection_ok') === '1' && internalPassword) init();
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "Estimateur BTP",
+  "short_name": "Estimateur BTP",
+  "description": "Calculez un devis chantier en quelques secondes, directement chez le client.",
+  "start_url": "/estimateur-btp.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f4f6f8",
+  "theme_color": "#14304A",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/estimateur-btp-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/estimateur-btp-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

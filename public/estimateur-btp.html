@@ -421,18 +421,6 @@
   .preview-actions .btn{flex:1;}
   .logo-preview-row{display:flex;align-items:center;gap:12px;margin-top:8px;}
   .logo-preview-row img{max-height:48px;max-width:120px;border:1px solid #ddd;border-radius:6px;padding:4px;}
-
-  .sync-banner{
-    display:none; align-items:center; gap:12px; justify-content:space-between;
-    background:#EAF2ED; border:1px solid #2C6E49; border-radius:12px;
-    padding:12px 14px; margin:0 0 16px; font-size:14px; color:#14312a;
-  }
-  .sync-banner.show{display:flex;}
-  .sync-banner .txt{flex:1;}
-  .sync-banner .actions{display:flex;gap:8px;flex-shrink:0;}
-  .sync-banner button{border:none;border-radius:8px;padding:8px 12px;font-weight:700;font-size:13px;cursor:pointer;}
-  .sync-banner .btn-envoyer{background:#2C6E49;color:#fff;}
-  .sync-banner .btn-plustard{background:transparent;color:#5b6b64;}
 </style>
 </head>
 <body>
@@ -451,14 +439,6 @@
 </header>
 
 <main>
-
-  <div class="sync-banner no-print" id="syncBanner">
-    <div class="txt">🌐 Connexion retrouvée — envoyer ce devis vers votre dashboard ?</div>
-    <div class="actions">
-      <button class="btn-plustard" id="btnSyncPlusTard">Plus tard</button>
-      <button class="btn-envoyer" id="btnSyncEnvoyer">Envoyer</button>
-    </div>
-  </div>
 
   <div class="card search-card">
     <h2>1. Dicter ou taper le produit</h2>
@@ -622,9 +602,7 @@ const CATALOGUE = [{"code": "TER-001", "metier": "Terrassement", "designation": 
 const LS_KEYS = {
   settings: 'estimbtp_settings',
   overrides: 'estimbtp_price_overrides',
-  devis: 'estimbtp_devis_courant',
-  dernierEnvoiHash: 'estimbtp_dernier_envoi_hash',
-  bannerIgnoreeHash: 'estimbtp_banner_ignoree_hash'
+  devis: 'estimbtp_devis_courant'
 };
 
 function loadJSON(key, fallback){
@@ -840,7 +818,6 @@ document.getElementById('ps-add').addEventListener('click', ()=>{
 function renderDevis(){
   const wrap = document.getElementById('devisLines');
   document.getElementById('lineCount').textContent = devis.length;
-  if(typeof verifierPropositionSync === 'function') verifierPropositionSync();
   if(devis.length===0){
     wrap.innerHTML = '<div class="devis-empty">Aucune ligne pour l\'instant.<br>Dictez un produit ci-dessus pour commencer.</div>';
   } else {
@@ -1012,14 +989,7 @@ function buildTextSummary(){
 /* ===================== VERS MON DASHBOARD SKYECO PRO ===================== */
 const UNITE_VERS_DASHBOARD = { 'm²':'m2', 'm³':'m3', 'mL':'ml', 'u':'unite', 'h':'heure', 'jour':'jour', 'forfait':'forfait', 'forfait/an':'forfait' };
 
-function hashDevisActuel(){
-  // Simple empreinte du contenu du devis en cours, pour savoir si ce qui est
-  // affiché a déjà été envoyé vers le dashboard (évite de proposer d'envoyer
-  // deux fois le même devis, ou de re-proposer après un envoi manuel).
-  try{ return JSON.stringify(devis); }catch(e){ return String(Date.now()); }
-}
-
-function envoyerVersDashboard(){
+document.getElementById('btnVersDashboard').addEventListener('click', ()=>{
   if(devis.length===0){ toast('Ajoutez au moins une ligne'); return; }
   if(!settings.draftId){
     toast('⚠️ Configurez d\'abord votre lien dashboard dans Réglages');
@@ -1046,49 +1016,8 @@ function envoyerVersDashboard(){
     toast('Erreur lors de la préparation du transfert');
     return;
   }
-  try{ localStorage.setItem(LS_KEYS.dernierEnvoiHash, hashDevisActuel()); }catch(e){}
   const lien = `https://app.skyeco.fr/mes-devis.html?id=${encodeURIComponent(settings.draftId)}&import=${encodeURIComponent(encode)}`;
   window.location.href = lien;
-}
-
-document.getElementById('btnVersDashboard').addEventListener('click', envoyerVersDashboard);
-
-/* ===================== BANNIÈRE "CONNEXION RETROUVÉE" ===================== */
-// L'appli reste utilisable hors connexion (c'est tout son intérêt sur
-// chantier). Dès qu'elle détecte à nouveau une connexion internet, si un
-// devis en cours n'a pas encore été envoyé vers le dashboard et que le lien
-// du dashboard est configuré, on le propose en un seul geste — plutôt que de
-// forcer l'artisan à retrouver le bouton lui-même. Ce n'est pas un envoi
-// automatique invisible (voir explication donnée à Cyrille : ça nécessiterait
-// de faire confiance à un identifiant seul, le même type de faille déjà
-// corrigée ailleurs dans ce projet) — l'artisan garde la main via "Envoyer".
-let bannerSyncIgnoreeCetteConnexion = false;
-
-function verifierPropositionSync(){
-  const banner = document.getElementById('syncBanner');
-  if(!navigator.onLine || devis.length===0 || !settings.draftId || bannerSyncIgnoreeCetteConnexion){
-    banner.classList.remove('show');
-    return;
-  }
-  const hashActuel = hashDevisActuel();
-  const dernierEnvoi = localStorage.getItem(LS_KEYS.dernierEnvoiHash) || '';
-  if(hashActuel === dernierEnvoi){
-    banner.classList.remove('show');
-    return;
-  }
-  banner.classList.add('show');
-}
-
-// On ne réagit pas seulement à un vrai changement de connexion : on revérifie
-// aussi à chaque ligne ajoutée/modifiée (via renderDevis), mais la bannière
-// n'est retentée qu'une fois par période de connexion — "Plus tard" la
-// masque jusqu'à la prochaine reconnexion, pas jusqu'au prochain caractère tapé.
-window.addEventListener('online', ()=>{ bannerSyncIgnoreeCetteConnexion = false; verifierPropositionSync(); });
-window.addEventListener('offline', ()=>{ bannerSyncIgnoreeCetteConnexion = false; });
-document.getElementById('btnSyncEnvoyer').addEventListener('click', envoyerVersDashboard);
-document.getElementById('btnSyncPlusTard').addEventListener('click', ()=>{
-  bannerSyncIgnoreeCetteConnexion = true;
-  document.getElementById('syncBanner').classList.remove('show');
 });
 
 document.getElementById('btnShare').addEventListener('click', async ()=>{

@@ -148,8 +148,8 @@ export default async function handler(req, res) {
       // Largement suffisant tant que la base de clics reste de cet ordre de
       // grandeur — à revoir (pagination ou requête RPC groupée) si un jour
       // Cyrille dépasse ce volume de clics.
-      const colonnes = 'id,nom_entreprise,metier,ville,departement,telephone,email,clic_date,nb_clics,dernier_ping,email_ouvert';
-      const urlProspects = `${process.env.SUPABASE_URL}/rest/v1/prospects_paysagiste?select=${colonnes}&lien_clique=eq.true&order=clic_date.desc&limit=300`;
+      const colonnes = 'id,nom_entreprise,metier,ville,departement,telephone,email,clicked_at,nb_clics,dernier_ping,email_ouvert';
+      const urlProspects = `${process.env.SUPABASE_URL}/rest/v1/prospects_paysagiste?select=${colonnes}&lien_clique=eq.true&order=clicked_at.desc&limit=300`;
       const respProspects = await fetch(urlProspects, { headers: supaHeaders });
       if (!respProspects.ok) throw new Error('Lecture prospects impossible : ' + (await respProspects.text()));
       const prospects = await respProspects.json();
@@ -179,7 +179,7 @@ export default async function handler(req, res) {
         const pagesDistinctes = new Set(mesVisites.map((v) => v.page)).size;
         const derniereActivite = mesVisites.length
           ? mesVisites.reduce((max, v) => (v.last_seen_at > max ? v.last_seen_at : max), mesVisites[0].last_seen_at)
-          : p.clic_date || null;
+          : p.clicked_at || null;
         const enLigne = !!p.dernier_ping && new Date(p.dernier_ping).getTime() > seuilEnLigne;
 
         return {
@@ -190,7 +190,7 @@ export default async function handler(req, res) {
           departement: p.departement,
           telephone: p.telephone,
           email: p.email,
-          clic_date: p.clic_date,
+          clicked_at: p.clicked_at,
           nb_clics: p.nb_clics,
           email_ouvert: p.email_ouvert,
           en_ligne: enLigne,

@@ -169,6 +169,22 @@
   </div>
 </div>
 
+<!-- Modal photos/vidéos de chantier -->
+<div class="modal-overlay" id="modalMedias">
+  <div class="modal" style="max-width:560px;">
+    <h2 style="margin-bottom:6px;">📷 Photos &amp; vidéos du chantier</h2>
+    <div class="hint" style="margin-bottom:14px;">Pour vous souvenir du chantier plus tard. Une photo/vidéo à la fois, 3,5 Mo max (gardez les vidéos courtes et légères).</div>
+    <input type="hidden" id="mediasDevisId">
+    <div id="galerieMedias" style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px;"></div>
+    <div class="vide" id="videMedias" style="display:none;">Aucune photo ni vidéo pour l'instant.</div>
+    <input type="file" id="inputMedia" accept="image/*,video/*" style="margin-bottom:10px;">
+    <div id="msgMedias" class="hint"></div>
+    <div style="display:flex; gap:10px; margin-top:14px;">
+      <button class="btn btn-secondaire" id="btnFermerMedias">Fermer</button>
+    </div>
+  </div>
+</div>
+
 <script>
   const SUPABASE_URL = 'https://wklddwumirkdjkbxvzyj.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
@@ -418,6 +434,8 @@
       let actions = `<button class="btn btn-secondaire btn-petit" onclick="telechargerPdf('${d.id}')">Télécharger</button>`;
       if (d.client_email) actions += ` <button class="btn btn-secondaire btn-petit" onclick="envoyerParEmail('${d.id}')">📧 Email</button>`;
       if (entreprise.sms_signature_actif && d.client_telephone && !d.signe_le) actions += ` <button class="btn btn-secondaire btn-petit" onclick="envoyerPourSignature('${d.id}')">✍️ Signature SMS</button>`;
+      const nbMedias = (d.medias || []).length;
+      actions += ` <button class="btn btn-secondaire btn-petit" onclick="ouvrirMedias('${d.id}')">📷 Photos${nbMedias ? ' (' + nbMedias + ')' : ''}</button>`;
       if (d.type === 'devis') {
         actions += ` <button class="btn btn-secondaire btn-petit" onclick="ouvrirDevis('${d.id}')">Modifier</button>`;
         actions += ` <button class="btn btn-orange btn-petit" onclick="transformerEnFacture('${d.id}')">→ Facture</button>`;
@@ -702,6 +720,88 @@
       bouton.disabled = false; bouton.textContent = texteInitial;
     }
   };
+
+  // ---------- Photos / vidéos de chantier ----------
+  let mediasEnCours = [];
+
+  function rendreGalerieMedias() {
+    const galerie = document.getElementById('galerieMedias');
+    const vide = document.getElementById('videMedias');
+    galerie.innerHTML = '';
+    vide.style.display = mediasEnCours.length ? 'none' : 'block';
+    mediasEnCours.forEach((m) => {
+      const div = document.createElement('div');
+      div.style.cssText = 'position:relative; border-radius:8px; overflow:hidden; background:#f4f6f5; aspect-ratio:1;';
+      div.innerHTML = m.type === 'video'
+        ? `<video src="${m.url}" style="width:100%; height:100%; object-fit:cover;" muted></video>`
+        : `<img src="${m.url}" style="width:100%; height:100%; object-fit:cover;" alt="Photo chantier">`;
+      const btnSuppr = document.createElement('button');
+      btnSuppr.textContent = '✕';
+      btnSuppr.style.cssText = 'position:absolute; top:4px; right:4px; background:rgba(0,0,0,0.55); color:#fff; border:none; border-radius:50%; width:22px; height:22px; cursor:pointer; font-size:12px;';
+      btnSuppr.onclick = () => supprimerMedia(m.url);
+      div.appendChild(btnSuppr);
+      galerie.appendChild(div);
+    });
+  }
+
+  window.ouvrirMedias = function (devisId) {
+    const doc = documentsCache.find(d => d.id === devisId);
+    mediasEnCours = (doc && doc.medias) || [];
+    document.getElementById('mediasDevisId').value = devisId;
+    document.getElementById('msgMedias').textContent = '';
+    document.getElementById('inputMedia').value = '';
+    rendreGalerieMedias();
+    document.getElementById('modalMedias').classList.add('actif');
+  };
+
+  document.getElementById('btnFermerMedias').addEventListener('click', () => {
+    document.getElementById('modalMedias').classList.remove('actif');
+  });
+
+  document.getElementById('inputMedia').addEventListener('change', async (e) => {
+    const fichier = e.target.files && e.target.files[0];
+    if (!fichier) return;
+    const devisId = document.getElementById('mediasDevisId').value;
+    const msg = document.getElementById('msgMedias');
+    msg.textContent = 'Envoi en cours…';
+    try {
+      const fichierBase64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1] || '');
+        reader.onerror = reject;
+        reader.readAsDataURL(fichier);
+      });
+      const data = await appelerApi('devis_ajouter_media', {
+        devisId,
+        fichierBase64,
+        contentType: fichier.type,
+        type: fichier.type.startsWith('video/') ? 'video' : 'photo',
+      });
+      mediasEnCours = data.medias || [];
+      rendreGalerieMedias();
+      const doc = documentsCache.find(d => d.id === devisId);
+      if (doc) doc.medias = mediasEnCours;
+      msg.textContent = '✅ Ajouté';
+      e.target.value = '';
+      chargerDevis(); // met à jour le compteur sur le bouton, sans fermer le modal
+    } catch (err) {
+      msg.textContent = '⚠️ ' + err.message;
+    }
+  });
+
+  async function supprimerMedia(url) {
+    const devisId = document.getElementById('mediasDevisId').value;
+    try {
+      const data = await appelerApi('devis_supprimer_media', { devisId, url });
+      mediasEnCours = data.medias || [];
+      rendreGalerieMedias();
+      const doc = documentsCache.find(d => d.id === devisId);
+      if (doc) doc.medias = mediasEnCours;
+      chargerDevis();
+    } catch (err) {
+      alert('Erreur : ' + err.message);
+    }
+  }
 
   function construirePdf(d) {
     const { jsPDF } = window.jspdf;

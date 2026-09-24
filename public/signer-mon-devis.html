@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Votre devis</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background:#f4f1ea; margin:0; padding:0; color:#1a2e24; }
+  .wrap { max-width:560px; margin:0 auto; padding:28px 18px 60px; }
+  .header { text-align:center; margin-bottom:22px; }
+  .header h1 { font-size:1.3rem; color:#14312a; margin:0 0 6px; }
+  .header p { font-size:0.9rem; color:#5b6b64; margin:0; }
+  .card { background:#fff; border-radius:16px; padding:22px; box-shadow:0 4px 20px rgba(20,49,42,0.08); margin-bottom:18px; }
+  table.lignes { width:100%; border-collapse:collapse; font-size:0.84rem; margin-bottom:6px; }
+  table.lignes th { text-align:left; color:#8a9891; font-size:0.68rem; text-transform:uppercase; padding:5px 4px; border-bottom:1px solid #eef2ef; }
+  table.lignes td { padding:7px 4px; border-bottom:1px solid #f4f6f5; }
+  .totaux { text-align:right; margin-top:14px; font-size:0.88rem; color:#3a4a43; }
+  .totaux strong { font-size:1.1rem; color:#14312a; }
+  .signature-box { margin-top:20px; }
+  .signature-check { display:flex; align-items:flex-start; gap:10px; font-size:0.88rem; color:#3a4a43; margin-bottom:16px; }
+  .signature-check input { margin-top:3px; width:18px; height:18px; flex-shrink:0; }
+  .btn-signer { width:100%; background:#1e6f4c; color:#fff; border:none; border-radius:12px; padding:16px; font-size:1rem; font-weight:700; cursor:pointer; }
+  .btn-signer:disabled { background:#a9b7b0; cursor:not-allowed; }
+  .msg { text-align:center; font-size:0.85rem; margin-top:12px; }
+  .msg.erreur { color:#c0392b; }
+  .msg.ok { color:#1e6f4c; }
+  .signe-badge { text-align:center; padding:28px 18px; }
+  .signe-badge .check { font-size:3rem; margin-bottom:10px; }
+  .signe-badge h2 { color:#1e6f4c; margin:0 0 8px; }
+  .signe-badge p { color:#5b6b64; font-size:0.9rem; }
+  .loading, .invalide { text-align:center; padding:60px 20px; color:#5b6b64; }
+  .num-doc { text-align:center; font-size:0.78rem; color:#8a9891; margin-top:-14px; margin-bottom:18px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div id="contenu" class="loading">Chargement de votre devis…</div>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('t');
+  const contenu = document.getElementById('contenu');
+
+  if (!token) {
+    contenu.innerHTML = '<div class="invalide">Lien invalide.</div>';
+  } else {
+    charger();
+  }
+
+  async function charger() {
+    try {
+      const resp = await fetch('/api/signer-mon-devis?t=' + encodeURIComponent(token));
+      const data = await resp.json();
+      if (!resp.ok || !data.success) {
+        contenu.innerHTML = `<div class="invalide">${escapeHtml(data.error || 'Ce lien de devis est invalide ou a expiré.')}</div>`;
+        return;
+      }
+      afficher(data);
+    } catch (e) {
+      contenu.innerHTML = '<div class="invalide">Impossible de charger votre devis pour le moment. Réessayez dans un instant.</div>';
+    }
+  }
+
+  const fmt = n => (Number(n) || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+
+  const UNITE_LABEL = { m2: 'm²', m3: 'm³', ml: 'mL', forfait: 'forfait', heure: 'h', unite: 'u', jour: 'j' };
+
+  function tableauLignes(lignes) {
+    return `<table class="lignes">
+      <thead><tr><th>Désignation</th><th>Qté</th><th>PU HT</th><th>Total HT</th></tr></thead>
+      <tbody>${(lignes || []).map(l => `
+        <tr>
+          <td>${escapeHtml(l.nom)}</td>
+          <td>${l.quantite} ${UNITE_LABEL[l.unite] || l.unite}</td>
+          <td>${fmt(l.prix_unitaire_ht)}</td>
+          <td>${fmt((l.quantite || 0) * (l.prix_unitaire_ht || 0))}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  }
+
+  function blocTotaux(data) {
+    if (data.franchiseTva) {
+      return `<div class="totaux"><div style="font-size:0.75rem;color:#8a9891;">TVA non applicable, art. 293 B du CGI</div><strong>Total : ${fmt(data.totalHt)}</strong></div>`;
+    }
+    return `<div class="totaux">Total HT : ${fmt(data.totalHt)}<br>TVA : ${fmt(data.totalTva)}<br><strong>Total TTC : ${fmt(data.totalTtc)}</strong></div>`;
+  }
+
+  function afficher(data) {
+    const libelle = data.type === 'facture' ? 'facture' : 'devis';
+    const libelleMaj = data.type === 'facture' ? 'Facture' : 'Devis';
+
+    if (data.statut === 'signe') {
+      const date = data.signeLe ? new Date(data.signeLe).toLocaleDateString('fr-FR') : '';
+      contenu.innerHTML = `
+        <div class="header">
+          <h1>${escapeHtml(data.entreprise)}</h1>
+          <p>${data.clientNom ? 'Bonjour ' + escapeHtml(data.clientNom) : ''}</p>
+        </div>
+        <div class="card signe-badge">
+          <div class="check">✅</div>
+          <h2>${libelleMaj} accepté${data.type === 'facture' ? 'e' : ''}</h2>
+          <p>Vous avez confirmé ce ${libelle}${date ? ' le ' + date : ''}. ${escapeHtml(data.entreprise)} a été notifié et reviendra vers vous pour la suite.</p>
+        </div>
+        <div class="card">
+          <div class="num-doc" style="margin-top:0;">N° ${escapeHtml(data.numero)}</div>
+          ${tableauLignes(data.lignes)}
+          ${blocTotaux(data)}
+        </div>
+      `;
+      return;
+    }
+
+    contenu.innerHTML = `
+      <div class="header">
+        <h1>${escapeHtml(data.entreprise)}</h1>
+        <p>${data.clientNom ? 'Bonjour ' + escapeHtml(data.clientNom) + ', voici votre ' + libelle + '.' : 'Voici votre ' + libelle + '.'}</p>
+      </div>
+      <div class="num-doc">N° ${escapeHtml(data.numero)}</div>
+      <div class="card">
+        ${tableauLignes(data.lignes)}
+        ${blocTotaux(data)}
+        <div class="signature-box">
+          <label class="signature-check">
+            <input type="checkbox" id="caseAccord">
+            <span>Je confirme avoir lu et j'accepte ce ${libelle} de ${escapeHtml(data.entreprise)}.</span>
+          </label>
+          <button class="btn-signer" id="btnSigner" disabled>✅ J'accepte ce ${libelle}</button>
+          <div id="msgSignature" class="msg"></div>
+        </div>
+      </div>
+    `;
+
+    const caseAccord = document.getElementById('caseAccord');
+    const btnSigner = document.getElementById('btnSigner');
+    caseAccord.addEventListener('change', () => { btnSigner.disabled = !caseAccord.checked; });
+
+    btnSigner.addEventListener('click', async () => {
+      btnSigner.disabled = true;
+      btnSigner.textContent = 'Enregistrement…';
+      const msg = document.getElementById('msgSignature');
+      try {
+        const resp = await fetch('/api/signer-mon-devis', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token }),
+        });
+        const result = await resp.json();
+        if (!resp.ok || !result.success) {
+          msg.textContent = result.error || "La signature n'a pas pu être enregistrée.";
+          msg.className = 'msg erreur';
+          btnSigner.disabled = false;
+          btnSigner.textContent = `✅ J'accepte ce ${libelle}`;
+          return;
+        }
+        afficher({ ...data, statut: 'signe', signeLe: result.signeLe });
+      } catch (e) {
+        msg.textContent = 'Erreur de connexion — réessayez.';
+        msg.className = 'msg erreur';
+        btnSigner.disabled = false;
+        btnSigner.textContent = `✅ J'accepte ce ${libelle}`;
+      }
+    });
+  }
+
+  function escapeHtml(str) {
+    return String(str || '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  }
+</script>
+</body>
+</html>

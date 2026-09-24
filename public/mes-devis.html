@@ -69,8 +69,12 @@
   <div class="card">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
       <h2 style="margin:0;">📦 Catalogue produits</h2>
-      <button class="btn btn-secondaire btn-petit" id="btnAjouterProduit">+ Ajouter un produit</button>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-secondaire btn-petit" id="btnImporterCatalogueBtp">📥 Importer le catalogue BTP</button>
+        <button class="btn btn-secondaire btn-petit" id="btnAjouterProduit">+ Ajouter un produit</button>
+      </div>
     </div>
+    <div class="hint" style="margin-bottom:10px;">Le catalogue BTP ajoute d'un coup 123 prestations courantes (terrassement, maçonnerie, VRD, ANC, clôtures, revêtements, espaces verts) avec prix de référence — à ajuster, enrichir ou supprimer ensuite librement.</div>
     <table id="tableProduits">
       <thead><tr><th>Nom</th><th>Unité</th><th>Prix HT</th><th>TVA</th><th></th></tr></thead>
       <tbody id="corpsProduits"></tbody>
@@ -136,9 +140,16 @@
     </div>
 
     <div class="lignes-devis">
+      <label style="margin-top:16px;">Ajouter depuis le catalogue</label>
+      <div style="position:relative;">
+        <input type="text" id="rechercheProduit" placeholder="Dicter ou taper un produit (ex : muret parpaing, fosse septique…)" autocomplete="off">
+        <div id="suggestionsProduit" style="position:absolute; z-index:10; left:0; right:0; top:100%; background:#fff; border:1px solid #dde5e1; border-radius:0 0 10px 10px; box-shadow:0 8px 20px rgba(20,49,42,0.12); max-height:260px; overflow-y:auto;"></div>
+      </div>
+      <div id="dimensionsProduit"></div>
+
       <label style="margin-top:16px;">Lignes</label>
       <div id="corpsLignes"></div>
-      <button class="btn btn-secondaire btn-petit" id="btnAjouterLigne" type="button">+ Ajouter une ligne</button>
+      <button class="btn btn-secondaire btn-petit" id="btnAjouterLigne" type="button">+ Ajouter une ligne manuelle</button>
     </div>
 
     <div class="totaux" id="blocTotauxNormal">
@@ -164,6 +175,7 @@
   const params = new URLSearchParams(window.location.search);
   const draftId = params.get('id');
   const leadId = params.get('leadId') || null;
+  const importPwaBrut = params.get('import') || null; // devis importé depuis le calculateur BTP (PWA), voir traiterImportPwa()
   document.getElementById('lienRetour').href = '/mon-dashboard.html?id=' + draftId;
 
   let token = null;
@@ -177,24 +189,83 @@
     verifierAccesPuisCharger();
   }
 
+  function lienConnexionAvecRetour() {
+    // Préserve le devis en attente d'import (venant de la PWA) à travers
+    // l'étape de connexion obligatoire, via acces-dashboard.html?next=devis.
+    const suffixe = importPwaBrut ? '&next=devis&import=' + encodeURIComponent(importPwaBrut) : '';
+    return '/acces-dashboard.html?id=' + draftId + suffixe;
+  }
+
   async function verifierAccesPuisCharger() {
     const adminToken = params.get('admin_token');
     token = adminToken || sessionStorage.getItem('skyeco_dashboard_token_' + draftId) || sessionStorage.getItem('skyeco_dashboard_token');
-    if (!token) { window.location.href = '/acces-dashboard.html?id=' + draftId; return; }
+    if (!token) { window.location.href = lienConnexionAvecRetour(); return; }
 
     const res = await fetch('/api/dashboard-verify-session', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ draftId, token })
     });
     const data = await res.json();
-    if (!data.valid) { window.location.href = '/acces-dashboard.html?id=' + draftId; return; }
+    if (!data.valid) { window.location.href = lienConnexionAvecRetour(); return; }
 
     await chargerEntreprise();
     if (leadId) await chargerLeadInfos();
     await Promise.all([chargerProduits(), chargerDevis()]);
     afficherBanniereClient();
+    proposerImportPwa();
     document.getElementById('chargement').style.display = 'none';
     document.getElementById('app').style.display = 'block';
   }
+
+  // ---------- Import depuis le calculateur BTP (PWA hors-ligne) ----------
+  function proposerImportPwa() {
+    if (!importPwaBrut) return;
+    let payload;
+    try {
+      payload = JSON.parse(decodeURIComponent(escape(atob(importPwaBrut))));
+    } catch (e) {
+      return; // lien corrompu — on ignore silencieusement plutôt que de bloquer la page
+    }
+    if (!payload || !Array.isArray(payload.lignes) || !payload.lignes.length) return;
+
+    const bandeau = document.createElement('div');
+    bandeau.style.cssText = 'background:#fff4e9; color:#c74f20; padding:12px 16px; border-radius:10px; font-size:0.85rem; font-weight:700; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;';
+    bandeau.innerHTML = `
+      <span>📲 Un devis créé sur le calculateur mobile (${payload.lignes.length} ligne${payload.lignes.length > 1 ? 's' : ''}) est prêt à être récupéré ici.</span>
+      <span style="display:flex; gap:8px;">
+        <button class="btn btn-orange btn-petit" id="btnImporterPwa" type="button">Importer</button>
+        <button class="btn btn-secondaire btn-petit" id="btnIgnorerPwa" type="button">Ignorer</button>
+      </span>`;
+    document.querySelector('#app .header').insertAdjacentElement('afterend', bandeau);
+
+    function nettoyerUrl() {
+      const p = new URLSearchParams(window.location.search);
+      p.delete('import');
+      history.replaceState(null, '', window.location.pathname + '?' + p.toString());
+    }
+    document.getElementById('btnIgnorerPwa').addEventListener('click', () => { bandeau.remove(); nettoyerUrl(); });
+    document.getElementById('btnImporterPwa').addEventListener('click', () => {
+      document.getElementById('titreModalDevis').textContent = 'Nouveau devis (importé du calculateur mobile)';
+      document.getElementById('devisId').value = '';
+      document.getElementById('clientNom').value = payload.clientNom || '';
+      document.getElementById('clientTelephone').value = payload.clientTelephone || '';
+      document.getElementById('clientEmail').value = payload.clientEmail || '';
+      document.getElementById('clientAdresse').value = payload.clientAdresse || '';
+      lignesEnCours = payload.lignes.map(l => ({
+        produitId: null,
+        nom: l.nom || '',
+        description: '',
+        quantite: Number(l.quantite) || 1,
+        unite: UNITES_VALIDES.has(l.unite) ? l.unite : 'forfait',
+        prixUnitaireHt: Number(l.prixUnitaireHt) || 0,
+        tvaTaux: Number(l.tvaTaux) || (entreprise.franchise_tva ? 0 : (entreprise.tva_taux || 20)),
+      }));
+      rendreLignes();
+      document.getElementById('modalDevis').classList.add('actif');
+      bandeau.remove();
+      nettoyerUrl();
+    });
+  }
+  const UNITES_VALIDES = new Set(['m2', 'ml', 'm3', 'forfait', 'heure', 'unite', 'jour']);
 
   async function chargerLeadInfos() {
     try {
@@ -220,7 +291,7 @@
   }
 
   async function chargerEntreprise() {
-    const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,logo_url,telephone,email,adresse_rue,adresse_cp,adresse_ville,siret,forme_juridique,capital_social,rcs_ville,assurance_decennale_assureur,assurance_decennale_numero,tva_taux,franchise_tva`, {
+    const resp = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,logo_url,telephone,email,adresse_rue,adresse_cp,adresse_ville,siret,forme_juridique,capital_social,rcs_ville,assurance_decennale_assureur,assurance_decennale_numero,tva_taux,franchise_tva,sms_signature_actif`, {
       headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }
     });
     const rows = await resp.json();
@@ -274,6 +345,34 @@
     document.getElementById('produitTva').value = p ? p.tva_taux : '20';
     document.getElementById('modalProduit').classList.add('actif');
   };
+  document.getElementById('btnImporterCatalogueBtp').addEventListener('click', async () => {
+    try {
+      const data = await appelerApi('produits_importer_catalogue', {});
+      await chargerProduits();
+      toastSimple(`✅ ${data.nbImportes} prestations importées dans votre catalogue.`);
+    } catch (e) {
+      if (e.message === 'catalogue_deja_importe') {
+        if (confirm('Le catalogue BTP a déjà été importé. Le réimporter écrasera vos éventuelles modifications sur ces lignes (vos produits ajoutés à la main ne sont jamais touchés). Continuer ?')) {
+          try {
+            const data = await appelerApi('produits_importer_catalogue', { remplacer: true });
+            await chargerProduits();
+            toastSimple(`✅ ${data.nbImportes} prestations réimportées.`);
+          } catch (e2) { alert('Erreur : ' + e2.message); }
+        }
+      } else {
+        alert('Erreur : ' + e.message);
+      }
+    }
+  });
+
+  function toastSimple(msg) {
+    const t = document.createElement('div');
+    t.textContent = msg;
+    t.style.cssText = 'position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#14312a; color:#fff; padding:10px 18px; border-radius:999px; font-size:0.85rem; z-index:99; box-shadow:0 4px 14px rgba(0,0,0,.25);';
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2600);
+  }
+
   document.getElementById('btnAjouterProduit').addEventListener('click', () => ouvrirProduit(null));
   document.getElementById('btnAnnulerProduit').addEventListener('click', () => document.getElementById('modalProduit').classList.remove('actif'));
   document.getElementById('btnSauverProduit').addEventListener('click', async () => {
@@ -314,13 +413,17 @@
       const tr = document.createElement('tr');
       const badgeType = d.type === 'facture' ? '<span class="badge badge-facture">Facture</span>' : '<span class="badge badge-devis">Devis</span>';
       const badgeStatut = d.statut === 'brouillon' ? ' <span class="badge badge-brouillon">brouillon</span>' : '';
+      const badgeEnvoye = d.envoye_email_le ? ' <span class="badge" style="background:#eaf1ee;color:#1e6f4c;">📧 envoyé</span>' : '';
+      const badgeSigne = d.signe_le ? ' <span class="badge" style="background:#eaf1ee;color:#1e6f4c;">✍️ signé</span>' : '';
       let actions = `<button class="btn btn-secondaire btn-petit" onclick="telechargerPdf('${d.id}')">Télécharger</button>`;
+      if (d.client_email) actions += ` <button class="btn btn-secondaire btn-petit" onclick="envoyerParEmail('${d.id}')">📧 Email</button>`;
+      if (entreprise.sms_signature_actif && d.client_telephone && !d.signe_le) actions += ` <button class="btn btn-secondaire btn-petit" onclick="envoyerPourSignature('${d.id}')">✍️ Signature SMS</button>`;
       if (d.type === 'devis') {
         actions += ` <button class="btn btn-secondaire btn-petit" onclick="ouvrirDevis('${d.id}')">Modifier</button>`;
         actions += ` <button class="btn btn-orange btn-petit" onclick="transformerEnFacture('${d.id}')">→ Facture</button>`;
         actions += ` <button class="btn btn-danger btn-petit" onclick="supprimerDevis('${d.id}')">Suppr.</button>`;
       }
-      tr.innerHTML = `<td>${d.numero}</td><td>${badgeType}${badgeStatut}</td><td>${echapper(d.client_nom || '—')}</td><td>${fmt(d.total_ttc)}</td><td class="actions-ligne">${actions}</td>`;
+      tr.innerHTML = `<td>${d.numero}</td><td>${badgeType}${badgeStatut}${badgeEnvoye}${badgeSigne}</td><td>${echapper(d.client_nom || '—')}</td><td>${fmt(d.total_ttc)}</td><td class="actions-ligne">${actions}</td>`;
       corps.appendChild(tr);
     });
   }
@@ -354,6 +457,112 @@
       corps.appendChild(div);
     });
     recalculerTotaux();
+  }
+
+  // ---------- Recherche floue dans le catalogue (dictée/tapée) ----------
+  function stripAccents(s) {
+    return (s || '').toString().normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  }
+  function scoreProduit(p, tokens) {
+    const hay = stripAccents([p.nom, p.description, p.alias, p.metier, p.code].filter(Boolean).join(' '));
+    let score = 0;
+    for (const tok of tokens) {
+      if (!tok) continue;
+      if (hay.includes(tok)) {
+        score += hay.startsWith(tok) ? 3 : 1;
+        if (stripAccents(p.nom).includes(tok)) score += 2;
+      } else {
+        score -= 0.5;
+      }
+    }
+    return score;
+  }
+
+  const UNITE_LABEL = { m2: 'm²', m3: 'm³', ml: 'mL', forfait: 'forfait', heure: 'h', unite: 'u', jour: 'j' };
+
+  const rechercheProduit = document.getElementById('rechercheProduit');
+  const suggestionsProduit = document.getElementById('suggestionsProduit');
+  rechercheProduit.addEventListener('input', () => {
+    const q = stripAccents(rechercheProduit.value).trim();
+    document.getElementById('dimensionsProduit').innerHTML = '';
+    if (!q) { suggestionsProduit.innerHTML = ''; return; }
+    const tokens = q.split(/\s+/).filter(Boolean);
+    const resultats = produitsCache.map(p => ({ p, score: scoreProduit(p, tokens) }))
+      .filter(r => r.score > 0).sort((a, b) => b.score - a.score).slice(0, 8);
+    if (!resultats.length) {
+      suggestionsProduit.innerHTML = '<div style="padding:12px; font-size:0.82rem; color:#8a9891;">Aucun produit trouvé — importez le catalogue BTP ci-dessus, ou ajoutez ce produit manuellement.</div>';
+      return;
+    }
+    suggestionsProduit.innerHTML = resultats.map(r => `
+      <div class="sugg-produit" data-id="${r.p.id}" style="padding:10px 12px; border-bottom:1px solid #f4f6f5; cursor:pointer; display:flex; justify-content:space-between; gap:10px;">
+        <div>
+          <div style="font-weight:700; font-size:0.85rem;">${echapper(r.p.nom)}</div>
+          <div style="font-size:0.74rem; color:#8a9891;">${r.p.code ? r.p.code + ' · ' : ''}${r.p.metier || ''}</div>
+        </div>
+        <div style="font-weight:700; font-size:0.85rem; white-space:nowrap;">${fmt(r.p.prix_ht)}<span style="font-weight:400; color:#8a9891;">/${UNITE_LABEL[r.p.unite] || r.p.unite}</span></div>
+      </div>`).join('');
+    suggestionsProduit.querySelectorAll('.sugg-produit').forEach(el => {
+      el.addEventListener('click', () => choisirProduitRecherche(el.dataset.id));
+    });
+  });
+
+  function champsDimensions(unite) {
+    if (unite === 'm2') return [{ id: 'dimL', label: 'Longueur (m)' }, { id: 'dimP', label: 'Largeur (m)' }];
+    if (unite === 'm3') return [{ id: 'dimL', label: 'Longueur (m)' }, { id: 'dimP', label: 'Largeur (m)' }, { id: 'dimH', label: 'Hauteur (m)' }];
+    if (unite === 'ml') return [{ id: 'dimL', label: 'Longueur (m)' }];
+    return [];
+  }
+
+  function choisirProduitRecherche(produitId) {
+    const p = produitsCache.find(x => x.id === produitId);
+    if (!p) return;
+    suggestionsProduit.innerHTML = '';
+    rechercheProduit.value = '';
+    const champs = champsDimensions(p.unite);
+    const zone = document.getElementById('dimensionsProduit');
+
+    if (!champs.length) {
+      // Pas de dimensions à calculer (forfait/heure/unité/jour) : quantité = 1 par défaut, éditable ensuite dans la ligne.
+      lignesEnCours.push({ produitId: p.id, nom: p.nom, description: p.description || '', quantite: 1, unite: p.unite, prixUnitaireHt: p.prix_ht, tvaTaux: entreprise.franchise_tva ? 0 : p.tva_taux });
+      rendreLignes();
+      return;
+    }
+
+    zone.innerHTML = `
+      <div style="background:#f4f1ea; border-radius:10px; padding:12px; margin-top:8px;">
+        <div style="font-weight:700; font-size:0.85rem; margin-bottom:8px;">${echapper(p.nom)} — dimensions</div>
+        <div style="display:grid; grid-template-columns:repeat(${champs.length}, 1fr); gap:8px;">
+          ${champs.map(c => `<div><label style="margin-top:0;">${c.label}</label><input type="number" id="${c.id}" step="0.01" min="0" inputmode="decimal"></div>`).join('')}
+        </div>
+        <div id="dimResultat" style="font-size:0.82rem; color:#1e6f4c; font-weight:700; margin-top:8px;"></div>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button class="btn btn-orange btn-petit" id="btnAjouterAvecDim" type="button" disabled>+ Ajouter au devis</button>
+          <button class="btn btn-secondaire btn-petit" id="btnAnnulerDim" type="button">Annuler</button>
+        </div>
+      </div>`;
+
+    function recalcDim() {
+      const L = parseFloat(document.getElementById('dimL')?.value) || 0;
+      const P = parseFloat(document.getElementById('dimP')?.value) || 0;
+      const H = parseFloat(document.getElementById('dimH')?.value) || 0;
+      let qte = 0, txt = '';
+      if (p.unite === 'm2' && L && P) { qte = L * P; txt = `= ${qte.toFixed(2)} m² (${L} × ${P})`; }
+      else if (p.unite === 'm3' && L && P && H) { qte = L * P * H; txt = `= ${qte.toFixed(2)} m³ (${L} × ${P} × ${H})`; }
+      else if (p.unite === 'ml' && L) { qte = L; txt = `= ${qte.toFixed(2)} mL`; }
+      document.getElementById('dimResultat').textContent = txt;
+      document.getElementById('btnAjouterAvecDim').disabled = !(qte > 0);
+      return qte;
+    }
+    champs.forEach(c => document.getElementById(c.id).addEventListener('input', recalcDim));
+
+    document.getElementById('btnAnnulerDim').addEventListener('click', () => { zone.innerHTML = ''; });
+    document.getElementById('btnAjouterAvecDim').addEventListener('click', () => {
+      const qte = recalcDim();
+      if (!(qte > 0)) return;
+      lignesEnCours.push({ produitId: p.id, nom: p.nom, description: p.description || '', quantite: Math.round(qte * 100) / 100, unite: p.unite, prixUnitaireHt: p.prix_ht, tvaTaux: entreprise.franchise_tva ? 0 : p.tva_taux });
+      rendreLignes();
+      zone.innerHTML = '';
+    });
   }
 
   window.choisirProduitLigne = function (i, produitId) {
@@ -452,15 +661,49 @@
     catch (e) { alert('Erreur : ' + e.message); }
   };
 
-  // ---------- PDF (généré et téléchargé directement dans le navigateur) ----------
+  // ---------- PDF (généré directement dans le navigateur) ----------
   window.telechargerPdf = async function (id) {
     try {
       const data = await appelerApi('devis_get', { devisId: id });
-      genererPdf(data.document);
+      construirePdf(data.document).save(`${data.document.type}-${data.document.numero}.pdf`);
     } catch (e) { alert('Erreur : ' + e.message); }
   };
 
-  function genererPdf(d) {
+  window.envoyerParEmail = async function (id) {
+    const bouton = event.target;
+    const texteInitial = bouton.textContent;
+    bouton.disabled = true; bouton.textContent = 'Envoi…';
+    try {
+      const data = await appelerApi('devis_get', { devisId: id });
+      const doc = construirePdf(data.document);
+      const pdfBase64 = doc.output('datauristring').split('base64,')[1];
+      await appelerApi('devis_envoyer_email', { devisId: id, pdfBase64 });
+      await chargerDevis();
+      toastSimple(`✅ Envoyé par email à ${data.document.client_email}`);
+    } catch (e) {
+      alert('Erreur : ' + e.message);
+      bouton.disabled = false; bouton.textContent = texteInitial;
+    }
+  };
+
+  window.envoyerPourSignature = async function (id) {
+    const bouton = event.target;
+    const texteInitial = bouton.textContent;
+    bouton.disabled = true; bouton.textContent = 'Envoi…';
+    try {
+      await appelerApi('devis_envoyer_sms_signature', { devisId: id });
+      await chargerDevis();
+      toastSimple('✅ SMS de signature envoyé au client');
+    } catch (e) {
+      const msg = e.message === 'signature_sms_non_active'
+        ? "La signature par SMS n'est pas activée sur ce compte pour l'instant — contactez le support Skyeco Pro."
+        : 'Erreur : ' + e.message;
+      alert(msg);
+      bouton.disabled = false; bouton.textContent = texteInitial;
+    }
+  };
+
+  function construirePdf(d) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const estFacture = d.type === 'facture';
@@ -537,7 +780,7 @@
 
     if (y > 275) { doc.addPage(); y = 20; }
 
-    doc.save(`${estFacture ? 'facture' : 'devis'}-${d.numero}.pdf`);
+    return doc;
   }
 </script>
 </body>

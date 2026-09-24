@@ -91,12 +91,17 @@
   // quel que soit la façon dont ils sont arrivés sur mon-dashboard.html.
   // Sans "next" (lien historique post-paiement), le comportement d'origine
   // est inchangé : retour vers mon-dashboard.html.
-  const next = params.get('next'); // 'mise-en-ligne' | 'budget' | null
+  const next = params.get('next'); // 'mise-en-ligne' | 'budget' | 'devis' | null
   const budgetPourSuite = params.get('budget'); // uniquement utile avec next=budget
+  // 24/09/2026 : payload d'un devis créé hors-ligne dans le calculateur BTP
+  // (PWA estimateur-btp.html) — transporté tel quel à travers la connexion
+  // obligatoire, pour être proposé à l'import une fois sur mes-devis.html.
+  const importPourSuite = params.get('import'); // uniquement utile avec next=devis
 
   const DESTINATIONS = {
     'mise-en-ligne': () => '/skyeco-pro-inscription-siret.html?id=' + draftId,
     'budget': () => '/campagne.html?id=' + draftId + (budgetPourSuite ? '&budget=' + encodeURIComponent(budgetPourSuite) : ''),
+    'devis': () => '/mes-devis.html?id=' + draftId + (importPourSuite ? '&import=' + encodeURIComponent(importPourSuite) : ''),
   };
   function calculerDestination() {
     return (DESTINATIONS[next] ? DESTINATIONS[next]() : '/mon-dashboard.html?id=' + draftId);
@@ -104,6 +109,7 @@
   const MESSAGES_CONTEXTE = {
     'mise-en-ligne': 'avant de mettre votre vitrine en ligne',
     'budget': 'avant d’approvisionner votre budget publicitaire',
+    'devis': 'avant d’accéder à vos devis',
   };
   const contexteSuite = MESSAGES_CONTEXTE[next] || null;
 

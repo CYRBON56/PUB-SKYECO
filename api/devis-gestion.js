@@ -50,11 +50,13 @@ const SITE_BASE_URL = 'https://www.skyeco.fr';
 
 // Photos/vidéos de chantier attachées à un devis (24/09/2026) — même bucket
 // que le reste des médias Skyeco Pro (construire-ma-vitrine.html, etc.).
-// Limite basse volontaire : les fonctions Vercel refusent les corps de
-// requête au-delà d'environ 4,5 Mo, donc une vidéo doit rester courte/légère
-// (l'artisan est prévenu côté interface).
+// IMPORTANT (bug corrigé le 24/09/2026) : par défaut, Vercel n'accepte que
+// 1 Mo de corps de requête JSON — un base64 photo dépasse ça immédiatement
+// et la requête échoue AVANT même d'atteindre ce code. Il faut relever cette
+// limite explicitement (export const config plus bas), sans dépasser le
+// plafond réel de la plateforme (~4,5 Mo) — d'où une marge de sécurité.
 const MEDIA_BUCKET = 'skyeco-pro-media';
-const MEDIA_TAILLE_MAX_OCTETS = 3.5 * 1024 * 1024;
+const MEDIA_TAILLE_MAX_OCTETS = 2.5 * 1024 * 1024; // fichier décodé ; ~3,3 Mo une fois en base64 + JSON, sous la limite de 4 Mo ci-dessous
 
 function supaHeaders(extra = {}) {
   return {
@@ -254,6 +256,13 @@ async function envoyerEmailAvecPJ({ to, replyTo, entrepriseNom, sujet, html, pdf
   }
   return resp.json();
 }
+
+// Relève la limite par défaut de Vercel (1 Mo) pour accepter les photos/
+// vidéos envoyées en base64 par 'devis_ajouter_media' — sans dépasser le
+// plafond réel de la plateforme (~4,5 Mo). Voir MEDIA_TAILLE_MAX_OCTETS.
+export const config = {
+  api: { bodyParser: { sizeLimit: '4mb' } },
+};
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {

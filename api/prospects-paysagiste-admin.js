@@ -34,6 +34,14 @@
 //   action = 'historique'-> { motDePasseInterne, action:'historique', prospectId }
 //                         -> { success, visites: [{page, entered_at, last_seen_at}] }
 //                            pages consultées + temps resté, voir prospects_paysagiste_visites
+//   action = 'interet'   -> { success, prospects: [{..., en_ligne, nb_visites,
+//                            pages_distinctes, temps_total_ms, derniere_activite, pages:[...]}] }
+//                         -> tous les prospects avec lien_clique=true, avec l'agrégat de leur
+//                            historique de visite (prospects_paysagiste_visites) — page dédiée
+//                            artisans-interesses.html (24/09/2026, demande de Cyrille) pour
+//                            repérer qui montre de l'intérêt sans ouvrir un popup par artisan.
+//                            Triés : en ligne maintenant d'abord, puis activité la plus récente.
+//                            Limité aux 300 clics les plus récents (voir commentaire dans le code).
 //
 // Variables d'environnement requises : SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
 // INTERNAL_ACCESS_PASSWORD
@@ -132,6 +140,75 @@ export default async function handler(req, res) {
       if (!resp.ok) throw new Error('Lecture historique impossible : ' + (await resp.text()));
       const visites = await resp.json();
       return res.status(200).json({ success: true, visites });
+    }
+
+    if (action === 'interet') {
+      // Limité à 300 : au-delà, l'URL "in.(id1,id2,...)" pour récupérer les
+      // visites de tout ce monde en un seul appel deviendrait trop longue.
+      // Largement suffisant tant que la base de clics reste de cet ordre de
+      // grandeur — à revoir (pagination ou requête RPC groupée) si un jour
+      // Cyrille dépasse ce volume de clics.
+      const colonnes = 'id,nom_entreprise,metier,ville,departement,telephone,email,clic_date,nb_clics,dernier_ping,email_ouvert';
+      const urlProspects = `${process.env.SUPABASE_URL}/rest/v1/prospects_paysagiste?select=${colonnes}&lien_clique=eq.true&order=clic_date.desc&limit=300`;
+      const respProspects = await fetch(urlProspects, { headers: supaHeaders });
+      if (!respProspects.ok) throw new Error('Lecture prospects impossible : ' + (await respProspects.text()));
+      const prospects = await respProspects.json();
+
+      if (!prospects.length) return res.status(200).json({ success: true, prospects: [] });
+
+      const ids = prospects.map((p) => p.id);
+      const urlVisites = `${process.env.SUPABASE_URL}/rest/v1/prospects_paysagiste_visites?prospect_id=in.(${ids.join(',')})&select=prospect_id,page,entered_at,last_seen_at&order=entered_at.desc`;
+      const respVisites = await fetch(urlVisites, { headers: supaHeaders });
+      if (!respVisites.ok) throw new Error('Lecture visites impossible : ' + (await respVisites.text()));
+      const visites = await respVisites.json();
+
+      const visitesParProspect = new Map();
+      visites.forEach((v) => {
+        if (!visitesParProspect.has(v.prospect_id)) visitesParProspect.set(v.prospect_id, []);
+        visitesParProspect.get(v.prospect_id).push(v);
+      });
+
+      const seuilEnLigne = Date.now() - 3 * 60 * 1000; // même seuil que l'action "presence"
+
+      const resultats = prospects.map((p) => {
+        const mesVisites = visitesParProspect.get(p.id) || [];
+        const tempsTotalMs = mesVisites.reduce(
+          (somme, v) => somme + Math.max(0, new Date(v.last_seen_at) - new Date(v.entered_at)),
+          0
+        );
+        const pagesDistinctes = new Set(mesVisites.map((v) => v.page)).size;
+        const derniereActivite = mesVisites.length
+          ? mesVisites.reduce((max, v) => (v.last_seen_at > max ? v.last_seen_at : max), mesVisites[0].last_seen_at)
+          : p.clic_date || null;
+        const enLigne = !!p.dernier_ping && new Date(p.dernier_ping).getTime() > seuilEnLigne;
+
+        return {
+          id: p.id,
+          nom_entreprise: p.nom_entreprise,
+          metier: p.metier,
+          ville: p.ville,
+          departement: p.departement,
+          telephone: p.telephone,
+          email: p.email,
+          clic_date: p.clic_date,
+          nb_clics: p.nb_clics,
+          email_ouvert: p.email_ouvert,
+          en_ligne: enLigne,
+          dernier_ping: p.dernier_ping,
+          nb_visites: mesVisites.length,
+          pages_distinctes: pagesDistinctes,
+          temps_total_ms: tempsTotalMs,
+          derniere_activite: derniereActivite,
+          pages: mesVisites.slice(0, 50),
+        };
+      });
+
+      resultats.sort((a, b) => {
+        if (a.en_ligne !== b.en_ligne) return a.en_ligne ? -1 : 1;
+        return new Date(b.derniere_activite || 0) - new Date(a.derniere_activite || 0);
+      });
+
+      return res.status(200).json({ success: true, prospects: resultats });
     }
 
     if (action === 'import_lot') {

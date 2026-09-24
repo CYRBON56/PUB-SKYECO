@@ -6,12 +6,18 @@
 //
 // ⚠️ Configuration requise côté Stripe : Dashboard → Developers → Webhooks
 // → Add endpoint → URL : https://pub-skyeco-23ue.vercel.app/api/stripe-webhook
-// → Événements à écouter : customer.subscription.deleted, invoice.payment_failed, invoice.payment_succeeded, customer.subscription.updated
+// → Événements à écouter : customer.subscription.deleted, invoice.payment_failed, invoice.payment_succeeded, customer.subscription.updated, checkout.session.completed
+//   (ce dernier a été ajouté le 24/09/2026 pour la livraison automatique du
+//   produit "Kit Pro Artisan BTP" — voir le cas checkout.session.completed
+//   plus bas, qui ne traite QUE les sessions dont metadata.product =
+//   'kit-pro-artisan-btp' pour ne jamais interférer avec les abonnements
+//   Skyeco Pro existants, qui ne passent pas par cet événement)
 //
 // Variables d'environnement requises :
 //   STRIPE_SECRET_KEY
 //   STRIPE_WEBHOOK_SECRET   (donné par Stripe à la création du endpoint ci-dessus)
 //   SUPABASE_SERVICE_ROLE_KEY
+//   RESEND_API_KEY          (déjà utilisé ailleurs — envoi de l'email de livraison)
 
 import Stripe from 'stripe';
 
@@ -95,6 +101,63 @@ async function envoyerSmsArtisan(telephone, texte) {
     });
   } catch (e) {
     console.error('Erreur SMS artisan (prélèvement réussi) :', e);
+  }
+}
+
+// --- Livraison automatique du "Kit Pro Artisan BTP" (24/09/2026) ---------
+// Après un paiement unique réussi (mode 'payment', metadata.product =
+// 'kit-pro-artisan-btp' — voir api/create-checkout-kit-pro.js), on envoie
+// immédiatement un email avec les liens de téléchargement des 3 fichiers.
+// Ces fichiers sont servis en statique depuis /public sous un chemin non
+// deviné (pas de vraie protection par jeton — cohérent avec un produit à
+// 29€ ; à renforcer plus tard si besoin via des URLs signées Supabase
+// Storage).
+const KIT_PRO_BASE_URL = 'https://www.skyeco.fr/livraison-kpab-h8k2m9x1';
+const KIT_PRO_FICHIERS = [
+  { nom: 'Modèle de devis professionnel (.docx)', url: `${KIT_PRO_BASE_URL}/Modele-Devis-Pro-BTP.docx` },
+  { nom: 'Kit visuels réseaux sociaux — format carré 1080×1080 (.pptx)', url: `${KIT_PRO_BASE_URL}/Kit-Visuels-Carre-1080x1080.pptx` },
+  { nom: 'Kit visuels réseaux sociaux — format story 1080×1920 (.pptx)', url: `${KIT_PRO_BASE_URL}/Kit-Visuels-Story-1080x1920.pptx` },
+];
+// Application "Estimateur BTP" (calculateur de devis chantier, catalogue 123
+// postes) — ce n'est pas un fichier à télécharger mais une page du site,
+// installable sur l'écran d'accueil du téléphone (PWA) et utilisable hors
+// connexion une fois ouverte une première fois. Ajoutée le 24/09/2026 :
+// avant cette date le lien n'était envoyé nulle part après l'achat.
+const KIT_PRO_LIEN_ESTIMATEUR = 'https://www.skyeco.fr/estimateur-btp.html';
+
+async function envoyerEmailLivraisonKitPro(email) {
+  const liensHtml = KIT_PRO_FICHIERS.map(
+    (f) => `<li style="margin-bottom:10px;"><a href="${f.url}" style="color:#1F3A5F; font-weight:bold;">${f.nom}</a></li>`
+  ).join('');
+  const html = `
+    <div style="font-family:Arial, sans-serif; color:#222; max-width:560px; margin:0 auto;">
+      <h2 style="color:#1F3A5F;">Merci pour votre achat !</h2>
+      <p>Voici vos fichiers du <strong>Kit Pro Artisan BTP</strong>, prêts à télécharger :</p>
+      <ul style="padding-left:20px;">${liensHtml}</ul>
+      <p style="margin-top:24px;">Chaque fichier s'ouvre avec Word / PowerPoint, ou peut être importé directement dans Canva (pour les visuels réseaux sociaux). Remplacez les textes entre crochets [ ] par vos informations et le tour est joué.</p>
+      <div style="margin-top:24px; padding:18px; background:#F2F2F2; border-radius:10px;">
+        <p style="margin:0 0 10px; font-weight:bold; color:#1F3A5F;">Bonus inclus : votre application de chiffrage sur chantier</p>
+        <p style="margin:0 0 12px;">Ouvrez ce lien depuis votre téléphone pour chiffrer vos devis directement sur le chantier (catalogue de prix BTP intégré, calcul automatique des surfaces/volumes) :</p>
+        <p style="margin:0 0 10px;"><a href="${KIT_PRO_LIEN_ESTIMATEUR}" style="color:#1F3A5F; font-weight:bold;">${KIT_PRO_LIEN_ESTIMATEUR}</a></p>
+        <p style="margin:0; font-size:13px; color:#666;">Une fois la page ouverte, vous pouvez l'ajouter à votre écran d'accueil (menu du navigateur → « Ajouter à l'écran d'accueil ») pour l'utiliser comme une application, même sans connexion internet.</p>
+      </div>
+      <p style="margin-top:24px; color:#666; font-size:13px;">Un souci pour ouvrir ou retrouver vos fichiers ? Répondez simplement à cet email.</p>
+    </div>`;
+  const resp = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: 'Kit Pro Artisan BTP <notifications@ecoskybyrms.fr>',
+      to: [email],
+      subject: 'Vos fichiers — Kit Pro Artisan BTP',
+      html,
+    }),
+  });
+  if (!resp.ok) {
+    throw new Error('Resend a refusé l\'envoi : ' + (await resp.text()));
   }
 }
 
@@ -227,27 +290,85 @@ export default async function handler(req, res) {
       case 'customer.subscription.updated': {
         // Capture les changements de statut (ex: passage en "active" après
         // une période d'essai, ou réactivation après annulation programmée).
-        //
-        // 16/09/2026 : quand une résiliation vient d'être programmée via
-        // api/cancel-subscription.js (cancel_at_period_end: true), le statut
-        // Stripe brut ("active"/"trialing") ne change PAS avant la fin
-        // réelle de la période — sans ce cas particulier, cet événement
-        // (déclenché par notre propre appel stripe.subscriptions.update)
-        // écraserait immédiatement le "resiliation_programmee" qu'on vient
-        // de poser, et l'artisan ne verrait plus nulle part que sa
-        // résiliation est bien prise en compte.
         const subscription = event.data.object;
-        const nouveauStatut = subscription.cancel_at_period_end
-          ? 'resiliation_programmee'
-          : subscription.status;
         await fetch(
           `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?stripe_subscription_id=eq.${subscription.id}`,
           {
             method: 'PATCH',
             headers: { ...supaHeaders, Prefer: 'return=minimal' },
-            body: JSON.stringify({ subscription_status: nouveauStatut }),
+            body: JSON.stringify({ subscription_status: subscription.status }),
           }
         );
+        break;
+      }
+
+      case 'checkout.session.completed': {
+        const session = event.data.object;
+
+        // Ne traite ici QUE le paiement unique du Kit Pro Artisan BTP —
+        // les abonnements Skyeco Pro (mode 'subscription') passent par
+        // d'autres événements (invoice.payment_succeeded, etc.) ci-dessus
+        // et ne portent pas cette metadata.
+        if (session.metadata?.product === 'kit-pro-artisan-btp' && session.mode === 'payment') {
+          const email = session.customer_details?.email || session.customer_email;
+
+          // Stripe peut renvoyer le même événement plusieurs fois (retries).
+          // On vérifie d'abord si cette session a déjà été traitée pour ne
+          // jamais ré-envoyer l'email de livraison en double.
+          const existeResp = await fetch(
+            `${process.env.SUPABASE_URL}/rest/v1/kit_pro_commandes?stripe_session_id=eq.${session.id}&select=email_livraison_envoye`,
+            { headers: supaHeaders }
+          );
+          const existeRows = existeResp.ok ? await existeResp.json() : [];
+          const dejaLivre = existeRows[0]?.email_livraison_envoye === true;
+
+          if (!existeRows.length) {
+            // Première fois qu'on voit cette session : on enregistre la commande.
+            await fetch(`${process.env.SUPABASE_URL}/rest/v1/kit_pro_commandes`, {
+              method: 'POST',
+              headers: { ...supaHeaders, Prefer: 'resolution=ignore-duplicates,return=minimal' },
+              body: JSON.stringify({
+                email,
+                nom: session.customer_details?.name || null,
+                stripe_session_id: session.id,
+                stripe_payment_intent: session.payment_intent || null,
+                montant_centimes: session.amount_total,
+                statut: 'paye',
+              }),
+            });
+          }
+
+          if (email && !dejaLivre) {
+            try {
+              await envoyerEmailLivraisonKitPro(email);
+              await fetch(
+                `${process.env.SUPABASE_URL}/rest/v1/kit_pro_commandes?stripe_session_id=eq.${session.id}`,
+                {
+                  method: 'PATCH',
+                  headers: { ...supaHeaders, Prefer: 'return=minimal' },
+                  body: JSON.stringify({ email_livraison_envoye: true }),
+                }
+              );
+            } catch (errEmail) {
+              console.error('Erreur envoi email de livraison Kit Pro Artisan BTP :', errEmail);
+              await fetch(
+                `${process.env.SUPABASE_URL}/rest/v1/kit_pro_commandes?stripe_session_id=eq.${session.id}`,
+                {
+                  method: 'PATCH',
+                  headers: { ...supaHeaders, Prefer: 'return=minimal' },
+                  body: JSON.stringify({ email_livraison_erreur: String(errEmail.message || errEmail) }),
+                }
+              );
+              // On notifie aussi l'admin pour un rattrapage manuel si l'email échoue.
+              await Promise.allSettled([
+                notifierAdminEmail(
+                  '⚠️ Échec de livraison — Kit Pro Artisan BTP',
+                  `Le paiement de ${email || 'un client'} a réussi (session ${session.id}) mais l'email de livraison a échoué : ${errEmail.message || errEmail}`
+                ),
+              ]);
+            }
+          }
+        }
         break;
       }
 

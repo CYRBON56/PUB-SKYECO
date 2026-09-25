@@ -113,7 +113,7 @@
       gap:20px;
       align-items:start;
     }
-    /* Bandeaux (reprise de connexion) : sur toute la largeur,
+    /* Bandeaux (essai gratuit, reprise de connexion) : sur toute la largeur,
        au-dessus des 2 colonnes — sans ça, l'emplacement grid libre le plus
        proche (calculé automatiquement) les fait atterrir n'importe où, par
        exemple à la place de la fiche produit repliée. */
@@ -493,10 +493,12 @@
   .sync-banner .btn-envoyer{background:#2C6E49;color:#fff;}
   .sync-banner .btn-plustard{background:transparent;color:#5b6b64;}
 
-  /* Accès payant — achat unique et fixe de 29,90€ HT, sans essai ni
-     abonnement (25/09/2026). L'appli reste entièrement cachée (appWrapper)
-     tant qu'on n'a pas décidé, côté script, que l'email connu a déjà payé —
-     voir le bloc JS "ACCÈS / ACHAT / PAIEMENT" tout en bas du script. */
+  /* Accès payant — 2 jours d'essai gratuit puis achat unique et fixe de
+     29,90€ HT (PAS un abonnement qui se renouvelle tout seul — revu deux
+     fois le 25/09/2026, essai confirmé conservé par Cyrille). L'appli reste
+     entièrement cachée (appWrapper) tant qu'on n'a pas décidé, côté script,
+     que l'email connu a un essai en cours ou a déjà payé — voir le bloc JS
+     "ACCÈS / ESSAI / ACHAT" tout en bas du script. */
   #accessGate{
     position:fixed; inset:0; z-index:9999;
     background:linear-gradient(135deg,var(--navy),var(--navy-dark));
@@ -522,6 +524,23 @@
   #accessGate .gate-prix{font-size:30px;font-weight:800;color:var(--orange);margin:8px 0 0;}
   #accessGate .gate-prix small{font-size:13px;font-weight:600;color:var(--text-mut);}
 
+  .trial-banner{
+    background:var(--yellow-bg);
+    border:1px solid #f0d98a;
+    border-radius:10px;
+    padding:10px 12px;
+    font-size:13px;
+    color:#7a5c00;
+    margin-bottom:14px;
+    display:none;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .trial-banner button{
+    border:none;background:var(--navy);color:#fff;border-radius:8px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;
+  }
+
   /* Historique des devis (25/09/2026) */
   .history-item{
     display:flex;align-items:center;justify-content:space-between;gap:10px;
@@ -544,12 +563,20 @@
     <div id="gateEmailStep">
       <h2>🧮 Estimateur BTP</h2>
       <p>Calculateur de devis chantier — catalogue de prix BTP intégré, utilisable même hors connexion sur un chantier isolé.</p>
+      <div class="gate-essai-ligne">2 jours d'essai gratuit, sans carte bancaire.</div>
+      <input type="email" id="gateEmailInput" placeholder="Votre email" autocomplete="email" inputmode="email">
+      <button class="btn btn-primary" id="gateEmailBtn" style="width:100%;">Démarrer mon essai gratuit</button>
+      <div class="gate-err" id="gateEmailErr"></div>
+      <div class="gate-mini">Déjà commencé ? Ressaisissez simplement le même email pour retrouver votre accès.</div>
+    </div>
+    <div id="gatePaywallStep" style="display:none;">
+      <h2>Votre essai gratuit est terminé</h2>
+      <p>Continuez à chiffrer vos devis en 30 secondes, sur chantier comme au bureau.</p>
       <div class="gate-prix">29,90 € <small>HT</small></div>
       <p style="margin-top:6px;">Achat unique — pas d'abonnement, pas de prélèvement récurrent.</p>
-      <input type="email" id="gateEmailInput" placeholder="Votre email" autocomplete="email" inputmode="email" style="margin-top:12px;">
-      <button class="btn btn-primary" id="gateEmailBtn" style="width:100%;">Acheter maintenant</button>
-      <div class="gate-err" id="gateEmailErr"></div>
-      <div class="gate-mini">Déjà acheté ? Ressaisissez simplement le même email pour retrouver votre accès.</div>
+      <button class="btn btn-primary" id="gatePaywallBtn" style="width:100%;margin-top:6px;">Acheter maintenant</button>
+      <div class="gate-err" id="gatePaywallErr"></div>
+      <div class="gate-mini">Vous avez déjà payé et voyez quand même cet écran ? Attendez quelques secondes et rechargez la page.</div>
     </div>
   </div>
 </div>
@@ -574,6 +601,11 @@
 </div>
 
 <main>
+
+  <div class="trial-banner no-print" id="trialBanner">
+    <div class="txt">🎁 Essai gratuit en cours.</div>
+    <button id="btnTrialAcheter">Acheter maintenant</button>
+  </div>
 
   <div class="sync-banner no-print" id="syncBanner">
     <div class="txt">🌐 Connexion retrouvée — envoyer ce devis vers votre dashboard ?</div>
@@ -1710,7 +1742,7 @@ if('serviceWorker' in navigator){
   // self.clients.claim() dans "activate". Sans cette vérification, un tout
   // nouveau visiteur se voyait rechargé automatiquement 1 seconde environ
   // après l'ouverture de l'appli — parfois en pleine saisie de son email
-  // pour lancer l'achat, ce qui pouvait faire croire à un bug
+  // pour démarrer l'essai gratuit, ce qui pouvait faire croire à un bug
   // ("l'email a disparu"). On ne recharge donc que si la page était déjà
   // pilotée par un ancien service worker (vraie mise à jour en cours
   // d'utilisation) — jamais lors de la toute première installation, où la
@@ -1737,13 +1769,16 @@ renderMetierChips();
 renderDevis();
 updateEntrepriseLabel();
 
-/* ===================== ACCÈS / ACHAT / PAIEMENT (25/09/2026) =====================
-   L'Estimateur BTP est payant — 29,90€ HT, ACHAT UNIQUE et FIXE, sans essai
-   ni abonnement (revu le 25/09/2026 : il n'y a plus de période d'essai, ni de
-   prélèvement récurrent). Tout se joue sur un simple email, stocké ici en
-   local (LS_ACCES) pour que l'appli reste utilisable hors connexion sur un
-   chantier une fois l'achat confirmé : on ne revérifie en ligne qu'en tâche
-   de fond, jamais de façon bloquante.
+/* ===================== ACCÈS / ESSAI / ACHAT (25/09/2026) =====================
+   L'Estimateur BTP donne 2 jours d'essai gratuit, sans carte bancaire, puis
+   demande un ACHAT UNIQUE et FIXE de 29,90€ HT — jamais un abonnement qui se
+   renouvelle tout seul (revu deux fois le 25/09/2026 : Cyrille a d'abord
+   demandé de retirer l'essai en même temps que l'abonnement, puis a précisé
+   que seul l'abonnement récurrent devait disparaître — l'essai reste bien
+   présent). Tout se joue sur un simple email, stocké ici en local
+   (LS_ACCES) pour que l'appli reste utilisable hors connexion sur un
+   chantier une fois l'essai démarré ou l'achat confirmé : on ne revérifie en
+   ligne qu'en tâche de fond, jamais de façon bloquante.
    Les personnes ayant déjà acheté le "Kit Pro Artisan BTP" (qui incluait ce
    lien en bonus avant ce changement) reçoivent un accès illimité automatique
    — voir api/estimateur-btp-essai.js.
@@ -1755,22 +1790,40 @@ updateEntrepriseLabel();
 function decidersEtatAcces(acces){
   if (!acces || !acces.email) return 'gate';
   if (acces.abonnement_actif) return 'app';
-  return 'gate';
+  if (acces.essai_fin && new Date(acces.essai_fin).getTime() > Date.now()) return 'app';
+  return 'paywall';
 }
 
 function appliquerEtatAcces(etat, acces){
   const gate = document.getElementById('accessGate');
   const wrapper = document.getElementById('appWrapper');
+  const emailStep = document.getElementById('gateEmailStep');
+  const paywallStep = document.getElementById('gatePaywallStep');
+  const banner = document.getElementById('trialBanner');
 
   if (etat === 'app'){
     gate.style.display = 'none';
     wrapper.style.display = 'block';
+    if (banner){
+      if (acces && !acces.abonnement_actif && acces.essai_fin){
+        const joursRestants = Math.max(0, Math.ceil((new Date(acces.essai_fin).getTime() - Date.now()) / 86400000));
+        banner.style.display = 'flex';
+        banner.querySelector('.txt').textContent = `🎁 Essai gratuit : encore ${joursRestants} jour${joursRestants > 1 ? 's' : ''}.`;
+      } else {
+        banner.style.display = 'none';
+      }
+    }
   } else {
     gate.style.display = 'flex';
     wrapper.style.display = 'none';
+    emailStep.style.display = (etat === 'gate') ? 'block' : 'none';
+    paywallStep.style.display = (etat === 'paywall') ? 'block' : 'none';
   }
 }
 
+// Paiement unique de 29,90€ HT (achat fixe, jamais un abonnement) — appelé
+// soit depuis l'écran "essai terminé", soit depuis le bandeau d'essai pour
+// payer plus tôt.
 async function demarrerAchat(email){
   const resp = await fetch('/api/estimateur-btp-checkout', {
     method: 'POST',
@@ -2211,10 +2264,7 @@ document.getElementById('btnNouveauProduitCatalogue').addEventListener('click', 
   ouvrirCreationPoste('', 'catalogue');
 });
 
-// Bouton "Acheter maintenant" : vérifie d'abord si cet email a déjà un accès
-// (achat précédent, ou Kit Pro Artisan BTP en bonus) — si oui, ouvre
-// directement l'appli sans repasser par le paiement ; sinon, enchaîne sur
-// Stripe pour le paiement unique de 29,90€ HT.
+// Bouton "Démarrer mon essai gratuit"
 document.getElementById('gateEmailBtn').addEventListener('click', async () => {
   const input = document.getElementById('gateEmailInput');
   const err = document.getElementById('gateEmailErr');
@@ -2236,27 +2286,51 @@ document.getElementById('gateEmailBtn').addEventListener('click', async () => {
     });
     const data = await resp.json();
     if (!resp.ok || !data.success) throw new Error(data.error || 'Erreur inconnue');
-
-    if (data.abonnement_actif){
-      accesCourant = { email: data.email, abonnement_actif: data.abonnement_actif, source: data.source };
-      saveJSON(LS_ACCES, accesCourant);
-      appliquerEtatAcces(decidersEtatAcces(accesCourant), accesCourant);
-      appliquerReglagesRecus(data);
-      synchroniserApresConnexion();
-    } else {
-      btn.textContent = 'Redirection…';
-      await demarrerAchat(email);
-    }
+    accesCourant = { email: data.email, essai_fin: data.essai_fin, abonnement_actif: data.abonnement_actif, source: data.source };
+    saveJSON(LS_ACCES, accesCourant);
+    appliquerEtatAcces(decidersEtatAcces(accesCourant), accesCourant);
+    appliquerReglagesRecus(data);
+    synchroniserApresConnexion();
   }catch(e){
-    err.textContent = "Impossible de continuer — vérifiez votre connexion et réessayez.";
+    err.textContent = "Impossible de démarrer l'essai — vérifiez votre connexion et réessayez.";
     err.style.display = 'block';
   }finally{
     btn.disabled = false;
-    btn.textContent = 'Acheter maintenant';
+    btn.textContent = 'Démarrer mon essai gratuit';
   }
 });
 document.getElementById('gateEmailInput').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') document.getElementById('gateEmailBtn').click();
+});
+
+// Bouton "Acheter maintenant" (écran "essai terminé") — paiement unique de
+// 29,90€ HT, jamais un abonnement.
+document.getElementById('gatePaywallBtn').addEventListener('click', async () => {
+  const err = document.getElementById('gatePaywallErr');
+  const btn = document.getElementById('gatePaywallBtn');
+  err.style.display = 'none';
+  if (!accesCourant || !accesCourant.email) return;
+  btn.disabled = true;
+  btn.textContent = 'Redirection…';
+  try{
+    await demarrerAchat(accesCourant.email);
+  }catch(e){
+    err.textContent = "Impossible d'ouvrir la page de paiement — réessayez.";
+    err.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Acheter maintenant';
+  }
+});
+
+// Bouton "Acheter maintenant" du petit bandeau (pendant l'essai, pour payer
+// plus tôt)
+document.getElementById('btnTrialAcheter').addEventListener('click', async () => {
+  if (!accesCourant || !accesCourant.email) return;
+  try{
+    await demarrerAchat(accesCourant.email);
+  }catch(e){
+    toast("Impossible d'ouvrir la page de paiement — réessayez.");
+  }
 });
 
 // Retour depuis Stripe (?paiement=ok) : revérifie tout de suite le statut
@@ -2275,7 +2349,7 @@ document.getElementById('gateEmailInput').addEventListener('keydown', (e) => {
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (data && data.success){
-          accesCourant = { email, abonnement_actif: data.abonnement_actif, source: data.source };
+          accesCourant = { email, essai_fin: data.essai_fin, abonnement_actif: data.abonnement_actif, source: data.source };
           saveJSON(LS_ACCES, accesCourant);
           appliquerEtatAcces(decidersEtatAcces(accesCourant), accesCourant);
           appliquerReglagesRecus(data);
@@ -2294,7 +2368,7 @@ if (accesCourant && accesCourant.email && navigator.onLine){
     .then(r => r.ok ? r.json() : null)
     .then(data => {
       if (data && data.success){
-        accesCourant = { email: accesCourant.email, abonnement_actif: data.abonnement_actif, source: data.source };
+        accesCourant = { email: accesCourant.email, essai_fin: data.essai_fin, abonnement_actif: data.abonnement_actif, source: data.source };
         saveJSON(LS_ACCES, accesCourant);
         appliquerEtatAcces(decidersEtatAcces(accesCourant), accesCourant);
         appliquerReglagesRecus(data);

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
 <title>Estimateur BTP — Chiffrez vos devis chantier en 30 secondes | Skyeco</title>
-<meta name="description" content="L'application qui calcule vos devis chantier sur place, en 30 secondes, avec un catalogue de 123 postes BTP intégré. 29,90€ HT, achat unique — sans abonnement.">
+<meta name="description" content="L'application qui calcule vos devis chantier sur place, en 30 secondes, avec un catalogue de 123 postes BTP intégré. 2 jours d'essai gratuit, puis 29,90€ HT en achat unique — sans abonnement.">
 <meta name="theme-color" content="#7c3aed">
 <style>
   :root{
@@ -125,8 +125,8 @@
     <div class="badge">🧮 SKYECO — ESTIMATEUR BTP</div>
     <h1>Chiffrez un devis chantier en 30 secondes, directement depuis votre téléphone</h1>
     <p class="sub">Catalogue de 123 postes BTP avec prix repères déjà intégré — terrassement, maçonnerie, VRD, assainissement, clôtures/portails, revêtements de sol, espaces verts.</p>
-    <a href="#commencer" class="hero-cta">Acheter maintenant — 29,90 € HT</a>
-    <div class="hero-mini">Achat unique — pas d'abonnement, pas de prélèvement récurrent</div>
+    <a href="#commencer" class="hero-cta">Démarrer mon essai gratuit</a>
+    <div class="hero-mini">2 jours d'essai gratuit — puis 29,90 € HT, achat unique</div>
   </div>
 </header>
 
@@ -165,9 +165,9 @@
   <div class="wrap">
     <h2>Le tarif</h2>
     <div class="price-card">
-      <div class="essai">💳 Achat unique — pas d'abonnement</div>
+      <div class="essai">🎁 2 jours d'essai gratuit, sans carte bancaire</div>
       <div class="montant">29,90 € <small>HT</small></div>
-      <div class="note">Un seul paiement, un accès à vie — aucun prélèvement ultérieur.</div>
+      <div class="note">Achat unique ensuite — pas d'abonnement, aucun prélèvement récurrent.</div>
     </div>
   </div>
 </section>
@@ -183,11 +183,11 @@
     <div class="field">
       <label for="emailInput">Votre email</label>
       <input type="email" id="emailInput" placeholder="Votre email" autocomplete="email" inputmode="email">
-      <div class="hint">Pour retrouver votre accès sur votre téléphone comme sur votre ordinateur.</div>
+      <div class="hint">Pour retrouver votre essai sur votre téléphone comme sur votre ordinateur.</div>
     </div>
-    <button class="btn-go" id="btnCommencer">Acheter maintenant — 29,90 € HT</button>
+    <button class="btn-go" id="btnCommencer">Démarrer mon essai gratuit</button>
     <div class="form-err" id="formErr"></div>
-    <div class="reassure">Vous arrivez directement sur le paiement, votre entreprise déjà renseignée dans l'appli.</div>
+    <div class="reassure">Vous arrivez directement dans l'application, votre entreprise déjà renseignée.</div>
   </div>
 </section>
 
@@ -200,19 +200,18 @@
    campagne de prospection envoyée aux ~19 000 artisans BTP (même
    infrastructure que prospects-paysagiste.html). Objectif : un artisan
    clique le lien de l'email, voit la démo, entre son SIRET (et son email),
-   et enchaîne directement sur le paiement (29,90€ HT, achat unique — pas
-   d'essai ni d'abonnement), avec son entreprise déjà renseignée dans
-   l'appli une fois l'achat confirmé — sans ressaisir quoi que ce soit.
+   et arrive directement dans l'application avec son essai gratuit de 2 jours
+   déjà démarré et son entreprise déjà renseignée — sans ressaisir quoi que
+   ce soit. Après l'essai, l'accès continue via un ACHAT UNIQUE de 29,90€ HT
+   (jamais un abonnement récurrent — voir api/estimateur-btp-checkout.js).
 
    IMPORTANT : on ne passe ni le SIRET ni l'email en paramètre d'URL (données
    personnelles) — on écrit directement dans localStorage, sous les MÊMES clés
    que celles lues par estimateur-btp.html au chargement (estimbtp_acces et
    estimbtp_settings), puisque cette page et l'application vivent sur le même
    domaine. Aucune modification du code de estimateur-btp.html n'est donc
-   nécessaire : il retrouve les réglages déjà remplis, exactement comme si
-   l'artisan les avait saisis lui-même dans "Réglages". Si l'email a déjà un
-   accès (achat précédent, ou Kit Pro Artisan BTP en bonus), on l'envoie
-   directement dans l'application au lieu de repasser par le paiement. */
+   nécessaire : il retrouve un essai déjà actif et des réglages déjà remplis,
+   exactement comme si l'artisan les avait saisis lui-même dans "Réglages". */
 
 const videoDemo = document.getElementById('videoDemo');
 const playBadge = document.getElementById('playBadge');
@@ -302,22 +301,22 @@ btn.addEventListener('click', async () => {
   try{
     const infos = await verifierSiretSiBesoin(siret);
 
-    const respAcces = await fetch('/api/estimateur-btp-essai', {
+    const respEssai = await fetch('/api/estimateur-btp-essai', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email })
     });
-    const dataAcces = await respAcces.json();
-    if (!respAcces.ok || !dataAcces.success) throw new Error(dataAcces.error || 'Erreur inconnue');
+    const dataEssai = await respEssai.json();
+    if (!respEssai.ok || !dataEssai.success) throw new Error(dataEssai.error || 'Erreur inconnue');
 
     saveJSON(LS_ACCES, {
-      email: dataAcces.email,
-      abonnement_actif: dataAcces.abonnement_actif,
-      source: dataAcces.source
+      email: dataEssai.email,
+      essai_fin: dataEssai.essai_fin,
+      abonnement_actif: dataEssai.abonnement_actif,
+      source: dataEssai.source
     });
 
     // Pré-remplissage des réglages entreprise (jamais par-dessus une valeur
     // déjà présente sur cet appareil — même logique prudente que
-    // construire-ma-vitrine.html). Utile même avant l'achat : une fois le
-    // paiement confirmé, l'appli les retrouve déjà remplis.
+    // construire-ma-vitrine.html).
     const settingsActuels = loadJSON(LS_SETTINGS, { nom:'', coord:'', logo:'', client:'', clientTelephone:'', clientEmail:'', clientAdresse:'', tvaDefaut:'0.20', dashboardLink:'', draftId:'' });
     if (infos){
       if (!settingsActuels.nom) settingsActuels.nom = infos.denomination || '';
@@ -331,27 +330,19 @@ btn.addEventListener('click', async () => {
     }
     saveJSON(LS_SETTINGS, settingsActuels);
 
-    if (dataAcces.abonnement_actif){
-      // Accès déjà accordé (achat précédent, ou Kit Pro Artisan BTP en
-      // bonus) : direction l'application, pas besoin de repayer.
-      window.location.href = '/estimateur-btp.html';
-    } else {
-      // Pas encore d'accès : direction le paiement Stripe (29,90€ HT, achat
-      // unique — aucun abonnement). Le retour de paiement redirige ensuite
-      // vers l'application.
-      btn.textContent = 'Redirection…';
-      const respCheckout = await fetch('/api/estimateur-btp-checkout', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email })
-      });
-      const dataCheckout = await respCheckout.json();
-      if (!respCheckout.ok || !dataCheckout.url) throw new Error(dataCheckout.error || 'Erreur inconnue');
-      window.location.href = dataCheckout.url;
+    if (dataEssai.reglages || dataEssai.overrides || dataEssai.postesPerso || dataEssai.postesMasques){
+      // Un compte existant a déjà des réglages serveur : on les laisse
+      // prendre le dessus au chargement de l'appli (comportement natif de
+      // synchroniserApresConnexion() dans estimateur-btp.html) plutôt que
+      // d'imposer les nôtres.
     }
+
+    window.location.href = '/estimateur-btp.html';
   }catch(e){
-    formErr.textContent = "Impossible de continuer — vérifiez votre connexion et réessayez.";
+    formErr.textContent = "Impossible de démarrer l'essai — vérifiez votre connexion et réessayez.";
     formErr.style.display = 'block';
     btn.disabled = false;
-    btn.textContent = 'Acheter maintenant — 29,90 € HT';
+    btn.textContent = 'Démarrer mon essai gratuit';
   }
 });
 

@@ -1,8 +1,10 @@
 // /api/estimateur-btp-reglages.js
 // Sauvegarde les réglages entreprise (nom, coordonnées, logo, TVA par défaut,
-// lien dashboard) et les prix personnalisés (overrides) d'un compte
-// Estimateur BTP, pour qu'ils soient identiques sur tous les appareils
-// connectés avec le même email (25/09/2026).
+// lien dashboard), les prix personnalisés (overrides) et les postes
+// personnalisés (postesPerso) d'un compte Estimateur BTP, pour qu'ils soient
+// identiques sur tous les appareils connectés avec le même email
+// (25/09/2026 ; postesPerso ajouté le même jour — postes créés par
+// l'artisan en plus des 123 du catalogue commun).
 //
 // N'INCLUT PAS les champs propres au client du devis en cours (nom/téléphone/
 // email/adresse du client) — ceux-là sont attachés à chaque devis via
@@ -20,7 +22,7 @@ export default async function handler(req, res) {
   }
 
   const email = (req.body?.email || '').trim().toLowerCase();
-  const { reglages, overrides } = req.body || {};
+  const { reglages, overrides, postesPerso } = req.body || {};
   if (!emailValide(email)) {
     return res.status(400).json({ success: false, error: 'Email invalide' });
   }
@@ -39,6 +41,7 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           reglages: reglages || null,
           overrides: overrides || null,
+          postes_perso: postesPerso || null,
           updated_at: new Date().toISOString(),
         }),
       }

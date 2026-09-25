@@ -96,6 +96,7 @@ function etatPourReponse(row) {
     source: row.source,
     reglages: row.reglages || null,
     overrides: row.overrides || null,
+    postesPerso: row.postes_perso || null,
   };
 }
 

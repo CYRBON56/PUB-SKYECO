@@ -211,6 +211,18 @@ export default async function handler(req, res) {
             }),
           }
         );
+        // Même chose côté abonnement "Estimateur BTP" (25/09/2026) — sans
+        // effet si cet id ne correspond pas à un abonnement de ce produit
+        // (aucune ligne ne matche dans ce cas, ce qui est normal pour tous
+        // les autres abonnements Skyeco Pro).
+        await fetch(
+          `${process.env.SUPABASE_URL}/rest/v1/estimateur_btp_acces?stripe_subscription_id=eq.${subscription.id}`,
+          {
+            method: 'PATCH',
+            headers: { ...supaHeaders, Prefer: 'return=minimal' },
+            body: JSON.stringify({ abonnement_actif: false, updated_at: new Date().toISOString() }),
+          }
+        );
         break;
       }
 
@@ -299,11 +311,63 @@ export default async function handler(req, res) {
             body: JSON.stringify({ subscription_status: subscription.status }),
           }
         );
+        // Même chose côté abonnement "Estimateur BTP" (25/09/2026) — sans
+        // effet si cet id ne correspond pas à un abonnement de ce produit.
+        await fetch(
+          `${process.env.SUPABASE_URL}/rest/v1/estimateur_btp_acces?stripe_subscription_id=eq.${subscription.id}`,
+          {
+            method: 'PATCH',
+            headers: { ...supaHeaders, Prefer: 'return=minimal' },
+            body: JSON.stringify({
+              abonnement_actif: subscription.status === 'active' || subscription.status === 'trialing',
+              updated_at: new Date().toISOString(),
+            }),
+          }
+        );
         break;
       }
 
       case 'checkout.session.completed': {
         const session = event.data.object;
+
+        // Abonnement "Estimateur BTP" (25/09/2026) : déverrouille l'accès
+        // immédiatement, sans attendre un cycle de facturation. Le succès de
+        // la session Stripe (success_url) revérifie aussi le statut de son
+        // côté (estimateur-btp-statut.js) au cas où ce webhook arriverait
+        // après que la personne soit revenue sur la page.
+        if (session.metadata?.product === 'estimateur-btp' && session.mode === 'subscription') {
+          const email = (session.metadata?.email || session.customer_details?.email || session.customer_email || '').toLowerCase();
+          if (email) {
+            await fetch(`${process.env.SUPABASE_URL}/rest/v1/estimateur_btp_acces?email=eq.${encodeURIComponent(email)}`, {
+              method: 'PATCH',
+              headers: { ...supaHeaders, Prefer: 'return=representation' },
+              body: JSON.stringify({
+                abonnement_actif: true,
+                source: 'stripe',
+                stripe_customer_id: session.customer || null,
+                stripe_subscription_id: session.subscription || null,
+                updated_at: new Date().toISOString(),
+              }),
+            }).then(async (r) => {
+              // Si la ligne n'existait pas encore (paiement direct sans être
+              // passé par l'essai gratuit au préalable), on la crée.
+              const rows = r.ok ? await r.json() : [];
+              if (!rows.length) {
+                await fetch(`${process.env.SUPABASE_URL}/rest/v1/estimateur_btp_acces`, {
+                  method: 'POST',
+                  headers: { ...supaHeaders, Prefer: 'resolution=ignore-duplicates,return=minimal' },
+                  body: JSON.stringify({
+                    email,
+                    abonnement_actif: true,
+                    source: 'stripe',
+                    stripe_customer_id: session.customer || null,
+                    stripe_subscription_id: session.subscription || null,
+                  }),
+                });
+              }
+            });
+          }
+        }
 
         // Ne traite ici QUE le paiement unique du Kit Pro Artisan BTP —
         // les abonnements Skyeco Pro (mode 'subscription') passent par

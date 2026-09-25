@@ -60,17 +60,39 @@
     opacity:.75;
     margin-top:2px;
   }
-  .icon-btn{
-    background:rgba(255,255,255,.12);
-    border:none;
+  /* Colonne de boutons flottante à droite (25/09/2026) — remplace les
+     anciennes icônes discrètes de l'en-tête : plus grands, avec leur nom
+     écrit à côté, empilés du bas vers le haut (Catalogue tout en bas, puis
+     Mes devis, Nouveau devis, Installer, Réglages en remontant). */
+  .side-rail{
+    position:fixed;
+    right:12px;
+    bottom:186px;
+    z-index:35;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    align-items:flex-end;
+  }
+  .rail-btn{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:var(--navy);
     color:#fff;
-    width:38px;height:38px;
-    border-radius:10px;
-    font-size:18px;
-    display:flex;align-items:center;justify-content:center;
+    border:none;
+    padding:12px 18px 12px 14px;
+    border-radius:999px;
+    font-size:14px;
+    font-weight:700;
+    white-space:nowrap;
+    box-shadow:0 4px 14px rgba(0,0,0,.3);
     cursor:pointer;
   }
-  .icon-btn:active{background:rgba(255,255,255,.25);}
+  .rail-btn .rail-icon{font-size:21px;line-height:1;}
+  .rail-btn:active{background:var(--navy-dark);}
+  #btnCatalogue.rail-btn{background:var(--orange);}
+  #btnCatalogue.rail-btn:active{background:var(--orange-dark);}
 
   main{padding:14px;max-width:640px;margin:0 auto;}
 
@@ -439,6 +461,7 @@
   /* Aperçu du devis à l'écran (avant impression/PDF) — voir #btnPrint */
   body.previewing .app-header,
   body.previewing .card.search-card,
+  body.previewing .side-rail,
   body.previewing .totals-bar{display:none !important;}
   body.previewing .print-only{
     display:block !important;
@@ -559,15 +582,16 @@
       <h1>🧮 Estimateur BTP</h1>
       <div class="sub" id="entrepriseLabel">Devis chantier — sur place, en 30 secondes</div>
     </div>
-    <div style="display:flex;gap:8px;">
-      <button class="icon-btn" id="btnCatalogue" title="Catalogue produits">📦</button>
-      <button class="icon-btn" id="btnHistorique" title="Mes devis (téléphone + ordinateur)">📜</button>
-      <button class="icon-btn" id="btnInstallApp" title="Installer sur mon téléphone">📲</button>
-      <button class="icon-btn" id="btnClear" title="Nouveau devis">🗑️</button>
-      <button class="icon-btn" id="btnSettings" title="Réglages">⚙️</button>
-    </div>
   </div>
 </header>
+
+<div class="side-rail no-print" id="sideRail">
+  <button class="rail-btn" id="btnSettings" title="Réglages"><span class="rail-icon">⚙️</span><span class="rail-label">Réglages</span></button>
+  <button class="rail-btn" id="btnInstallApp" title="Installer sur mon téléphone"><span class="rail-icon">📲</span><span class="rail-label">Installer</span></button>
+  <button class="rail-btn" id="btnClear" title="Nouveau devis"><span class="rail-icon">🗑️</span><span class="rail-label">Nouveau devis</span></button>
+  <button class="rail-btn" id="btnHistorique" title="Mes devis (téléphone + ordinateur)"><span class="rail-icon">📜</span><span class="rail-label">Mes devis</span></button>
+  <button class="rail-btn" id="btnCatalogue" title="Catalogue produits"><span class="rail-icon">📦</span><span class="rail-label">Catalogue</span></button>
+</div>
 
 <main>
 
@@ -1011,7 +1035,23 @@ function lienCreerPoste(query){
   </div>`;
 }
 
+// La colonne de boutons flottante (side-rail, 25/09/2026) est repliée pendant
+// qu'une liste de résultats est affichée sous la recherche : sinon elle
+// cache une partie des résultats/prix sur les téléphones étroits. Elle
+// revient dès que la liste se vide (recherche effacée, "Tous" sans texte, ou
+// sélection d'un résultat qui vide la liste — voir selectProduct).
+function actualiserVisibiliteRail(){
+  const box = document.getElementById('suggestionsBox');
+  const rail = document.getElementById('sideRail');
+  if (rail && box) rail.style.display = box.innerHTML.trim() ? 'none' : 'flex';
+}
+
 function runSearch(query){
+  runSearchInterne(query);
+  actualiserVisibiliteRail();
+}
+
+function runSearchInterne(query){
   const box = document.getElementById('suggestionsBox');
   const q = strip(query).trim();
   let pool = poolComplet();
@@ -1174,6 +1214,7 @@ function selectProduct(code){
   document.getElementById('productSheet').style.display = 'block';
   document.getElementById('suggestionsBox').innerHTML = '';
   document.getElementById('searchInput').value = '';
+  actualiserVisibiliteRail();
   document.getElementById('productSheet').scrollIntoView({behavior:'smooth', block:'start'});
 }
 

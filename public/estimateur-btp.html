@@ -991,8 +991,36 @@ function runSearch(query){
   let pool = poolComplet();
   if(activeMetier) pool = pool.filter(c=>c.metier===activeMetier);
 
+  // Recherche vide : rien à afficher si "Tous" est sélectionné (trop de
+  // postes pour être utile en vrac), mais dès qu'un corps de métier précis
+  // (ou "Mes postes") est choisi, on liste tous ses postes — c'est la seule
+  // façon de "parcourir le catalogue" dans l'appli (25/09/2026).
   if(!q){
-    box.innerHTML = '';
+    if(!activeMetier){
+      box.innerHTML = '';
+      return;
+    }
+    if(pool.length===0){
+      box.innerHTML = activeMetier===PERSO_METIER
+        ? '<div class="empty-state">Vous n\'avez pas encore créé de poste personnalisé. Tapez un nom ci-dessus pour en créer un.</div>'
+        : '<div class="empty-state">Aucun poste dans ce corps de métier.</div>';
+      return;
+    }
+    const tousLesPostes = pool.slice().sort((a,b)=>a.designation.localeCompare(b.designation, 'fr'));
+    box.innerHTML = tousLesPostes.map(it=>{
+      const p = priceFor(it.code, it.prixDefaut);
+      return `<div class="sugg-item" data-code="${it.code}">
+        <div class="sugg-main">
+          <div class="sugg-code">${it.code} · ${it.metier}</div>
+          <div class="sugg-desig">${it.designation}</div>
+          <div class="sugg-meta">Unité : ${it.unite}${it.prixRepere && it.prixRepere !== '—' ? ' · Repère marché : ' + it.prixRepere : ''}</div>
+        </div>
+        <div class="sugg-price">${p ? eur(p) : '—'}<br><span style="font-weight:400;font-size:10.5px;color:var(--text-mut);">/${it.unite}</span></div>
+      </div>`;
+    }).join('');
+    box.querySelectorAll('.sugg-item[data-code]').forEach(el=>{
+      el.addEventListener('click', ()=> selectProduct(el.dataset.code));
+    });
     return;
   }
   const tokens = q.split(/\s+/).filter(Boolean);

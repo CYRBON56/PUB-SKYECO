@@ -1,32 +1,29 @@
 // /api/estimateur-btp-essai.js
-// Démarre (ou renvoie, si déjà démarré) l'essai gratuit de 2 jours de
-// l'Estimateur BTP (public/estimateur-btp.html), à partir d'un simple email
-// — pas de mot de passe, pas de carte bancaire, dans le même esprit "essai
-// sans friction" que le reste de Skyeco Pro.
+// Vérifie l'accès d'un email à l'Estimateur BTP (public/estimateur-btp.html).
 //
-// Cas particulier important : toute personne ayant déjà acheté le "Kit Pro
-// Artisan BTP" (table kit_pro_commandes) reçoit un accès illimité et
+// ⚠️ Changement du 25/09/2026 : il n'y a plus d'essai gratuit ni
+// d'abonnement — l'Estimateur BTP est un ACHAT UNIQUE et FIXE de 29,90€ HT
+// (voir api/estimateur-btp-checkout.js). Ce endpoint (dont le nom de fichier
+// n'a volontairement pas changé, pour ne pas casser les pages qui l'appellent
+// déjà) ne fait donc plus que deux choses :
+//   1) Si l'email a déjà un accès enregistré (achat Stripe, ou achat du
+//      "Kit Pro Artisan BTP" qui inclut ce produit en bonus), on le renvoie
+//      tel quel — jamais réinitialisé.
+//   2) Sinon, on NE CRÉE RIEN : on renvoie simplement dejaAchete:false, et
+//      c'est au front-end d'enchaîner sur /api/estimateur-btp-checkout pour
+//      lancer le paiement.
+//
+// Cas particulier conservé : toute personne ayant déjà acheté le "Kit Pro
+// Artisan BTP" (table kit_pro_commandes) reçoit un accès illimité et gratuit
 // automatique — ce produit à 29€ incluait déjà un lien vers l'Estimateur BTP
 // en bonus, sans restriction, AVANT que celui-ci ne devienne un produit payant
-// séparé à 29,90€ HT/mois (24-25/09/2026). On ne casse pas cette promesse
-// déjà faite aux acheteurs existants.
-//
-// Idempotent : un email qui a déjà un essai en cours (ou un abonnement actif)
-// se voit renvoyer son état existant, jamais réinitialisé.
-//
-// Envoie aussi un email de bienvenue expliquant le fonctionnement du
-// catalogue de prix préintégré — uniquement au tout premier démarrage
-// (jamais renvoyé aux visites suivantes, voir dejaDemarre) — car avant le
-// 25/09/2026 rien n'expliquait comment se servir de l'appli après le clic
-// "Démarrer mon essai gratuit". Un échec d'envoi d'email n'empêche jamais de
-// démarrer l'essai (c'est secondaire par rapport à l'accès lui-même).
+// séparé. On ne casse pas cette promesse déjà faite aux acheteurs existants.
 //
 // Variables d'environnement requises :
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, RESEND_API_KEY
 
 import { blocCommentCaMarcheEstimateur } from './_lib/estimateur-btp-email.js';
 
-const DUREE_ESSAI_JOURS = 2;
 const EXPEDITEUR_EMAIL = process.env.RESEND_FROM_EMAIL_ESTIMATEUR || 'Estimateur BTP <notifications@ecoskybyrms.fr>';
 
 function emailValide(email) {
@@ -52,14 +49,11 @@ async function supabaseRequest(path, options = {}) {
   return text ? JSON.parse(text) : null;
 }
 
-async function envoyerEmailBienvenue(email, dejaClientKitPro) {
-  const intro = dejaClientKitPro
-    ? `<p>Votre achat du <strong>Kit Pro Artisan BTP</strong> vous donne un accès illimité et gratuit à l'Estimateur BTP — pas d'essai à surveiller, pas d'abonnement.</p>`
-    : `<p>Votre essai gratuit de <strong>${DUREE_ESSAI_JOURS} jours</strong> vient de démarrer — sans carte bancaire. À la fin de l'essai, l'accès continue pour <strong>29,90€ HT/mois</strong> si vous souhaitez garder l'appli, sans engagement.</p>`;
+async function envoyerEmailAccesKitPro(email) {
   const html = `
     <div style="font-family:Arial, sans-serif; color:#222; max-width:560px; margin:0 auto;">
       <h2 style="color:#1F3A5F;">Bienvenue sur l'Estimateur BTP</h2>
-      ${intro}
+      <p>Votre achat du <strong>Kit Pro Artisan BTP</strong> vous donne un accès illimité et gratuit à l'Estimateur BTP — rien à payer, rien à surveiller.</p>
       <p style="margin:0 0 4px;"><a href="https://www.skyeco.fr/estimateur-btp.html" style="color:#1F3A5F; font-weight:bold;">https://www.skyeco.fr/estimateur-btp.html</a></p>
       <p style="margin:0 0 4px; font-size:13px; color:#666;">Ouvrez ce lien depuis votre téléphone, puis ajoutez la page à votre écran d'accueil (bouton 📲 « Installer l'appli » en haut de l'appli) pour l'utiliser comme une application, même sans connexion internet sur un chantier isolé.</p>
       <div style="margin-top:24px; padding:18px; background:#F2F2F2; border-radius:10px;">
@@ -77,9 +71,7 @@ async function envoyerEmailBienvenue(email, dejaClientKitPro) {
     body: JSON.stringify({
       from: EXPEDITEUR_EMAIL,
       to: [email],
-      subject: dejaClientKitPro
-        ? 'Votre Estimateur BTP — accès illimité (Kit Pro)'
-        : 'Bienvenue — votre essai gratuit Estimateur BTP a démarré',
+      subject: 'Votre Estimateur BTP — accès illimité (Kit Pro)',
       html,
     }),
   });
@@ -91,7 +83,6 @@ async function envoyerEmailBienvenue(email, dejaClientKitPro) {
 function etatPourReponse(row) {
   return {
     email: row.email,
-    essai_fin: row.essai_fin,
     abonnement_actif: row.abonnement_actif,
     source: row.source,
     reglages: row.reglages || null,
@@ -112,13 +103,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 1) Déjà un accès enregistré (essai en cours, abonné, ou déjà repéré
-    //    comme acheteur Kit Pro) ? On ne réinitialise jamais.
+    // 1) Déjà un accès enregistré (achat Stripe, ou déjà repéré comme
+    //    acheteur Kit Pro) ? On ne réinitialise jamais.
     const existants = await supabaseRequest(
       `estimateur_btp_acces?email=eq.${encodeURIComponent(email)}&select=*&limit=1`
     );
     if (Array.isArray(existants) && existants.length > 0) {
-      return res.status(200).json({ success: true, ...etatPourReponse(existants[0]), dejaDemarre: true });
+      return res.status(200).json({ success: true, ...etatPourReponse(existants[0]), dejaAchete: true });
     }
 
     // 2) Pas encore d'accès : a-t-il déjà acheté le Kit Pro Artisan BTP ?
@@ -127,37 +118,34 @@ export default async function handler(req, res) {
     );
     const dejaClientKitPro = Array.isArray(achatsKitPro) && achatsKitPro.length > 0;
 
-    const maintenant = new Date();
-    const nouvelleLigne = dejaClientKitPro
-      ? {
+    if (dejaClientKitPro) {
+      const inserted = await supabaseRequest('estimateur_btp_acces', {
+        method: 'POST',
+        body: JSON.stringify({
           email,
           abonnement_actif: true,
           source: 'kit_pro',
           essai_debut: null,
           essai_fin: null,
-        }
-      : {
-          email,
-          abonnement_actif: false,
-          source: 'essai',
-          essai_debut: maintenant.toISOString(),
-          essai_fin: new Date(maintenant.getTime() + DUREE_ESSAI_JOURS * 24 * 60 * 60 * 1000).toISOString(),
-        };
+        }),
+      });
 
-    const inserted = await supabaseRequest('estimateur_btp_acces', {
-      method: 'POST',
-      body: JSON.stringify(nouvelleLigne),
-    });
+      // Best-effort : un échec d'envoi d'email ne doit jamais faire échouer
+      // l'accès lui-même (déjà enregistré ci-dessus).
+      try {
+        await envoyerEmailAccesKitPro(email);
+      } catch (err) {
+        console.error('estimateur-btp-essai : email Kit Pro non envoyé —', err.message);
+      }
 
-    // Best-effort : un échec d'envoi d'email ne doit jamais faire échouer le
-    // démarrage de l'essai lui-même (l'accès est déjà enregistré ci-dessus).
-    try {
-      await envoyerEmailBienvenue(email, dejaClientKitPro);
-    } catch (err) {
-      console.error('estimateur-btp-essai : email de bienvenue non envoyé —', err.message);
+      return res.status(200).json({ success: true, ...etatPourReponse(inserted[0]), dejaAchete: true });
     }
 
-    return res.status(200).json({ success: true, ...etatPourReponse(inserted[0]), dejaDemarre: false });
+    // 3) Ni accès existant, ni achat Kit Pro : on ne crée rien ici. Le
+    // paiement (29,90€ HT, achat unique) se fait via
+    // /api/estimateur-btp-checkout, qui accordera l'accès une fois le
+    // paiement confirmé (voir api/stripe-webhook.js).
+    return res.status(200).json({ success: true, email, abonnement_actif: false, dejaAchete: false });
   } catch (err) {
     console.error('estimateur-btp-essai error:', err.message);
     return res.status(500).json({ success: false, error: 'Erreur serveur, réessayez.' });

@@ -126,6 +126,40 @@ const KIT_PRO_FICHIERS = [
 // avant cette date le lien n'était envoyé nulle part après l'achat.
 const KIT_PRO_LIEN_ESTIMATEUR = 'https://www.skyeco.fr/estimateur-btp.html';
 
+// --- Confirmation d'achat "Estimateur BTP" (25/09/2026, achat unique) -----
+// Envoyée dès que le paiement Stripe de 29,90€ HT est confirmé (voir le cas
+// checkout.session.completed ci-dessous). Remplace l'ancien email de
+// "bienvenue essai gratuit" envoyé auparavant par estimateur-btp-essai.js.
+async function envoyerEmailAchatEstimateur(email) {
+  const html = `
+    <div style="font-family:Arial, sans-serif; color:#222; max-width:560px; margin:0 auto;">
+      <h2 style="color:#1F3A5F;">Merci pour votre achat !</h2>
+      <p>Votre accès à l'<strong>Estimateur BTP</strong> est activé — achat unique de 29,90€ HT, aucun abonnement, aucun prélèvement à venir.</p>
+      <p style="margin:0 0 4px;"><a href="${KIT_PRO_LIEN_ESTIMATEUR}" style="color:#1F3A5F; font-weight:bold;">${KIT_PRO_LIEN_ESTIMATEUR}</a></p>
+      <p style="margin:0 0 4px; font-size:13px; color:#666;">Ouvrez ce lien depuis votre téléphone, connectez-vous avec ce même email, puis ajoutez la page à votre écran d'accueil (bouton 📲 « Installer l'appli ») pour l'utiliser comme une application, même sans connexion internet sur un chantier isolé.</p>
+      <div style="margin-top:24px; padding:18px; background:#F2F2F2; border-radius:10px;">
+        ${blocCommentCaMarcheEstimateur()}
+      </div>
+      <p style="margin-top:24px; color:#666; font-size:13px;">Une question ? Répondez simplement à cet email.</p>
+    </div>`;
+  const resp = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: 'Estimateur BTP <notifications@ecoskybyrms.fr>',
+      to: [email],
+      subject: 'Merci pour votre achat — votre Estimateur BTP est prêt',
+      html,
+    }),
+  });
+  if (!resp.ok) {
+    throw new Error('Resend a refusé l\'envoi : ' + (await resp.text()));
+  }
+}
+
 async function envoyerEmailLivraisonKitPro(email) {
   const liensHtml = KIT_PRO_FICHIERS.map(
     (f) => `<li style="margin-bottom:10px;"><a href="${f.url}" style="color:#1F3A5F; font-weight:bold;">${f.nom}</a></li>`
@@ -333,42 +367,54 @@ export default async function handler(req, res) {
       case 'checkout.session.completed': {
         const session = event.data.object;
 
-        // Abonnement "Estimateur BTP" (25/09/2026) : déverrouille l'accès
-        // immédiatement, sans attendre un cycle de facturation. Le succès de
-        // la session Stripe (success_url) revérifie aussi le statut de son
-        // côté (estimateur-btp-statut.js) au cas où ce webhook arriverait
-        // après que la personne soit revenue sur la page.
-        if (session.metadata?.product === 'estimateur-btp' && session.mode === 'subscription') {
+        // Achat unique "Estimateur BTP" (29,90€ HT, pas d'abonnement — revu
+        // le 25/09/2026, il n'y a plus ni essai ni forfait récurrent) :
+        // déverrouille l'accès dès ce paiement confirmé. Le retour sur la
+        // page (success_url) revérifie aussi le statut de son côté
+        // (estimateur-btp-statut.js) au cas où ce webhook arriverait après
+        // que la personne soit revenue sur la page.
+        if (session.metadata?.product === 'estimateur-btp' && session.mode === 'payment') {
           const email = (session.metadata?.email || session.customer_details?.email || session.customer_email || '').toLowerCase();
           if (email) {
-            await fetch(`${process.env.SUPABASE_URL}/rest/v1/estimateur_btp_acces?email=eq.${encodeURIComponent(email)}`, {
-              method: 'PATCH',
-              headers: { ...supaHeaders, Prefer: 'return=representation' },
-              body: JSON.stringify({
-                abonnement_actif: true,
-                source: 'stripe',
-                stripe_customer_id: session.customer || null,
-                stripe_subscription_id: session.subscription || null,
-                updated_at: new Date().toISOString(),
-              }),
-            }).then(async (r) => {
-              // Si la ligne n'existait pas encore (paiement direct sans être
-              // passé par l'essai gratuit au préalable), on la crée.
-              const rows = r.ok ? await r.json() : [];
-              if (!rows.length) {
-                await fetch(`${process.env.SUPABASE_URL}/rest/v1/estimateur_btp_acces`, {
-                  method: 'POST',
-                  headers: { ...supaHeaders, Prefer: 'resolution=ignore-duplicates,return=minimal' },
-                  body: JSON.stringify({
-                    email,
-                    abonnement_actif: true,
-                    source: 'stripe',
-                    stripe_customer_id: session.customer || null,
-                    stripe_subscription_id: session.subscription || null,
-                  }),
-                });
+            const existantResp = await fetch(
+              `${process.env.SUPABASE_URL}/rest/v1/estimateur_btp_acces?email=eq.${encodeURIComponent(email)}&select=abonnement_actif`,
+              { headers: supaHeaders }
+            );
+            const existantRows = existantResp.ok ? await existantResp.json() : [];
+            const avaitDejaAcces = existantRows[0]?.abonnement_actif === true;
+
+            const champsAcces = {
+              abonnement_actif: true,
+              source: 'stripe',
+              stripe_customer_id: session.customer || null,
+              stripe_payment_intent: session.payment_intent || null,
+              updated_at: new Date().toISOString(),
+            };
+
+            if (existantRows.length) {
+              await fetch(`${process.env.SUPABASE_URL}/rest/v1/estimateur_btp_acces?email=eq.${encodeURIComponent(email)}`, {
+                method: 'PATCH',
+                headers: { ...supaHeaders, Prefer: 'return=minimal' },
+                body: JSON.stringify(champsAcces),
+              });
+            } else {
+              await fetch(`${process.env.SUPABASE_URL}/rest/v1/estimateur_btp_acces`, {
+                method: 'POST',
+                headers: { ...supaHeaders, Prefer: 'resolution=ignore-duplicates,return=minimal' },
+                body: JSON.stringify({ email, ...champsAcces }),
+              });
+            }
+
+            // Email de confirmation d'achat — uniquement au premier accès
+            // accordé pour cet email (jamais renvoyé si l'accès était déjà
+            // actif, par ex. sur un retry de webhook Stripe).
+            if (!avaitDejaAcces) {
+              try {
+                await envoyerEmailAchatEstimateur(email);
+              } catch (errEmail) {
+                console.error('Erreur envoi email de confirmation — Estimateur BTP :', errEmail);
               }
-            });
+            }
           }
         }
 

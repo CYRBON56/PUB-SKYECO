@@ -1,15 +1,14 @@
 // /api/estimateur-btp-checkout.js
-// Crée une session Stripe pour ABONNER un email à l'Estimateur BTP après la
-// fin de son essai gratuit de 2 jours (ou avant, s'il choisit de payer plus
-// tôt) — 29,90€ HT/mois, sans engagement.
+// Crée une session Stripe pour ACHETER l'Estimateur BTP — 29,90€ HT, achat
+// UNIQUE et FIXE, pas d'abonnement ni de forfait (changement du 25/09/2026 :
+// avant cette date c'était un essai gratuit de 2 jours puis un abonnement à
+// 29,90€ HT/mois ; il n'y a plus ni essai, ni prélèvement récurrent).
 //
-// Même principe que create-checkout-session.js (Skyeco Pro) : la TVA (20%)
-// est directement incluse dans unit_amount (prix TTC), pas de calcul de taxe
-// Stripe séparé. Contrairement à Skyeco Pro, PAS de trial_period_days ici :
-// l'essai gratuit de 2 jours est déjà géré en dehors de Stripe (sans carte
-// bancaire, voir estimateur-btp-essai.js) — arriver jusqu'à ce paiement
-// signifie que l'essai est fini (ou que la personne choisit de payer
-// directement), donc le prélèvement démarre immédiatement.
+// Même principe que create-checkout-session.js (Skyeco Pro) pour la TVA :
+// elle est directement incluse dans unit_amount (prix TTC), pas de calcul de
+// taxe Stripe séparé. mode: 'payment' (paiement unique) — voir
+// api/stripe-webhook.js pour la livraison de l'accès une fois ce paiement
+// confirmé.
 //
 // Variable d'environnement requise : STRIPE_SECRET_KEY
 
@@ -18,7 +17,7 @@ import Stripe from 'stripe';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const TAUX_TVA = 0.20;
-const PRIX_CENTIMES_HT = 2990; // 29,90€ HT/mois
+const PRIX_CENTIMES_HT = 2990; // 29,90€ HT, achat unique
 
 function emailValide(email) {
   return typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
@@ -39,7 +38,7 @@ export default async function handler(req, res) {
 
   try {
     const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
+      mode: 'payment',
       payment_method_types: ['card'],
       locale: 'fr',
       customer_email: email,
@@ -48,19 +47,15 @@ export default async function handler(req, res) {
           price_data: {
             currency: 'eur',
             unit_amount: centimesTTC,
-            recurring: { interval: 'month' },
             product_data: {
-              name: 'Estimateur BTP — accès illimité',
-              description: `Sans engagement, vous arrêtez quand vous voulez. ${(PRIX_CENTIMES_HT / 100).toFixed(2)} € HT/mois — TVA 20% incluse. Calculateur de devis chantier, catalogue de prix BTP, utilisable hors connexion.`,
+              name: 'Estimateur BTP — accès à vie',
+              description: `Achat unique, ${(PRIX_CENTIMES_HT / 100).toFixed(2)} € HT — TVA 20% incluse, aucun abonnement ni prélèvement ultérieur. Calculateur de devis chantier, catalogue de prix BTP, utilisable hors connexion.`,
             },
           },
           quantity: 1,
         },
       ],
       metadata: { product: 'estimateur-btp', email },
-      subscription_data: {
-        metadata: { product: 'estimateur-btp', email },
-      },
       success_url: `${origin}/estimateur-btp.html?paiement=ok&email=${encodeURIComponent(email)}`,
       cancel_url: `${origin}/estimateur-btp.html?paiement=annule`,
     });

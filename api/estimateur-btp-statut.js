@@ -1,10 +1,9 @@
 // /api/estimateur-btp-statut.js
-// Revérifie l'état d'accès (essai en cours / expiré / abonné) d'un email pour
-// l'Estimateur BTP — utilisé en tâche de fond par estimateur-btp.html quand
-// une connexion réseau est disponible (l'appli reste utilisable hors ligne
-// entre deux vérifications, avec le dernier état connu), et juste après un
-// retour de paiement Stripe pour confirmer l'abonnement sans attendre le
-// webhook.
+// Revérifie l'état d'accès (a acheté ou non) d'un email pour l'Estimateur
+// BTP — utilisé en tâche de fond par estimateur-btp.html quand une connexion
+// réseau est disponible (l'appli reste utilisable hors ligne entre deux
+// vérifications, avec le dernier état connu), et juste après un retour de
+// paiement Stripe pour confirmer l'achat sans attendre le webhook.
 //
 // Variables d'environnement requises : SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
@@ -35,7 +34,7 @@ export default async function handler(req, res) {
 
   try {
     const rows = await supabaseRequest(
-      `estimateur_btp_acces?email=eq.${encodeURIComponent(email)}&select=email,essai_fin,abonnement_actif,source,reglages,overrides,postesPerso:postes_perso,postesMasques:postes_masques&limit=1`
+      `estimateur_btp_acces?email=eq.${encodeURIComponent(email)}&select=email,abonnement_actif,source,reglages,overrides,postesPerso:postes_perso,postesMasques:postes_masques&limit=1`
     );
     if (!rows.length) {
       return res.status(404).json({ success: false, error: 'Aucun essai trouvé pour cet email' });

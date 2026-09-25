@@ -1,5 +1,5 @@
 // /api/estimateur-btp-essai.js
-// Démarre (ou renvoie, si déjà démarré) l'essai gratuit de 5 jours de
+// Démarre (ou renvoie, si déjà démarré) l'essai gratuit de 2 jours de
 // l'Estimateur BTP (public/estimateur-btp.html), à partir d'un simple email
 // — pas de mot de passe, pas de carte bancaire, dans le même esprit "essai
 // sans friction" que le reste de Skyeco Pro.
@@ -26,7 +26,7 @@
 
 import { blocCommentCaMarcheEstimateur } from './_lib/estimateur-btp-email.js';
 
-const DUREE_ESSAI_JOURS = 5;
+const DUREE_ESSAI_JOURS = 2;
 const EXPEDITEUR_EMAIL = process.env.RESEND_FROM_EMAIL_ESTIMATEUR || 'Estimateur BTP <notifications@ecoskybyrms.fr>';
 
 function emailValide(email) {

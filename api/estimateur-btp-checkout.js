@@ -1,12 +1,12 @@
 // /api/estimateur-btp-checkout.js
 // Crée une session Stripe pour ABONNER un email à l'Estimateur BTP après la
-// fin de son essai gratuit de 5 jours (ou avant, s'il choisit de payer plus
+// fin de son essai gratuit de 2 jours (ou avant, s'il choisit de payer plus
 // tôt) — 29,90€ HT/mois, sans engagement.
 //
 // Même principe que create-checkout-session.js (Skyeco Pro) : la TVA (20%)
 // est directement incluse dans unit_amount (prix TTC), pas de calcul de taxe
 // Stripe séparé. Contrairement à Skyeco Pro, PAS de trial_period_days ici :
-// l'essai gratuit de 5 jours est déjà géré en dehors de Stripe (sans carte
+// l'essai gratuit de 2 jours est déjà géré en dehors de Stripe (sans carte
 // bancaire, voir estimateur-btp-essai.js) — arriver jusqu'à ce paiement
 // signifie que l'essai est fini (ou que la personne choisit de payer
 // directement), donc le prélèvement démarre immédiatement.

@@ -493,7 +493,7 @@
   .sync-banner .btn-envoyer{background:#2C6E49;color:#fff;}
   .sync-banner .btn-plustard{background:transparent;color:#5b6b64;}
 
-  /* Accès payant après 5 jours d'essai gratuit (25/09/2026). L'appli reste
+  /* Accès payant après 2 jours d'essai gratuit (25/09/2026). L'appli reste
      entièrement cachée (appWrapper) tant qu'on n'a pas décidé, côté script,
      que l'email connu a un essai en cours ou un abonnement actif — voir le
      bloc JS "ACCÈS / ESSAI / PAIEMENT" tout en bas du script. */
@@ -561,7 +561,7 @@
     <div id="gateEmailStep">
       <h2>🧮 Estimateur BTP</h2>
       <p>Calculateur de devis chantier — catalogue de prix BTP intégré, utilisable même hors connexion sur un chantier isolé.</p>
-      <div class="gate-essai-ligne">5 jours d'essai gratuit, sans carte bancaire.</div>
+      <div class="gate-essai-ligne">2 jours d'essai gratuit, sans carte bancaire.</div>
       <input type="email" id="gateEmailInput" placeholder="Votre email" autocomplete="email" inputmode="email">
       <button class="btn btn-primary" id="gateEmailBtn" style="width:100%;">Démarrer mon essai gratuit</button>
       <div class="gate-err" id="gateEmailErr"></div>
@@ -1768,7 +1768,7 @@ updateEntrepriseLabel();
 
 /* ===================== ACCÈS / ESSAI / PAIEMENT (25/09/2026) =====================
    L'Estimateur BTP est devenu payant (29,90€ HT/mois) après un essai gratuit
-   de 5 jours, sans carte bancaire à l'entrée — même esprit "sans friction"
+   de 2 jours, sans carte bancaire à l'entrée — même esprit "sans friction"
    que le reste de Skyeco Pro. Tout se joue sur un simple email, stocké ici
    en local (LS_ACCES) pour que l'appli reste utilisable hors connexion sur
    un chantier une fois l'essai démarré ou l'abonnement actif : on ne

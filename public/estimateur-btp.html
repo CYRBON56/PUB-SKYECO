@@ -511,6 +511,20 @@
   .trial-banner button{
     border:none;background:var(--navy);color:#fff;border-radius:8px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;
   }
+
+  /* Historique des devis (25/09/2026) */
+  .history-item{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:12px;border:1px solid var(--border);border-radius:10px;margin-bottom:10px;
+  }
+  .history-item .info{min-width:0;}
+  .history-item .nom{font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .history-item .meta{font-size:12px;color:var(--text-mut);margin-top:2px;}
+  .history-item .actions{display:flex;gap:6px;flex-shrink:0;}
+  .history-item button{border:none;border-radius:8px;padding:8px 10px;font-size:13px;font-weight:700;cursor:pointer;}
+  .history-item .btn-charger{background:var(--navy);color:#fff;}
+  .history-item .btn-suppr{background:#f7e3e0;color:#a8321e;}
+  .history-empty{text-align:center;color:var(--text-mut);font-size:13px;padding:20px 0;}
 </style>
 </head>
 <body>
@@ -546,6 +560,8 @@
       <div class="sub" id="entrepriseLabel">Devis chantier — sur place, en 30 secondes</div>
     </div>
     <div style="display:flex;gap:8px;">
+      <button class="icon-btn" id="btnHistorique" title="Mes devis (téléphone + ordinateur)">📜</button>
+      <button class="icon-btn" id="btnInstallApp" title="Installer sur mon téléphone">📲</button>
       <button class="icon-btn" id="btnClear" title="Nouveau devis">🗑️</button>
       <button class="icon-btn" id="btnSettings" title="Réglages">⚙️</button>
     </div>
@@ -730,6 +746,41 @@
   </div>
 </div>
 
+<div class="modal-overlay no-print" id="historyModal">
+  <div class="modal">
+    <h3>📜 Mes devis</h3>
+    <div class="search-hint" style="margin-bottom:12px;">Retrouvez ici vos devis, sur ce téléphone comme sur votre ordinateur (même email). Les photos/vidéo du chantier restent uniquement sur l'appareil qui les a prises.</div>
+    <div id="historyList"></div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn btn-secondary" id="btnFermerHistorique" style="width:100%;">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay no-print" id="installModal">
+  <div class="modal">
+    <div id="installChoixEtape">
+      <h3>📲 Installer sur mon téléphone</h3>
+      <p class="search-hint" style="margin-bottom:16px;">Une fois installée, l'appli s'ouvre comme les autres depuis l'écran d'accueil — même hors connexion. Quel téléphone avez-vous ?</p>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-secondary" id="btnInstallIphone" style="flex:1;">📱 iPhone</button>
+        <button class="btn btn-secondary" id="btnInstallAndroid" style="flex:1;">🤖 Android</button>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px;">
+        <button class="btn btn-ghost" id="btnFermerInstall1" style="width:100%;">Fermer</button>
+      </div>
+    </div>
+    <div id="installInstructionsEtape" style="display:none;">
+      <h3 id="installTitreEtape">Installer</h3>
+      <ol id="installListeEtapes" style="padding-left:20px;line-height:1.9;font-size:14px;color:var(--text);"></ol>
+      <div style="display:flex;gap:10px;margin-top:16px;">
+        <button class="btn btn-secondary" id="btnInstallRetour">◀ Changer</button>
+        <button class="btn btn-primary" id="btnFermerInstall2" style="flex:1;">Compris</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 </div><!-- /appWrapper -->
@@ -760,6 +811,71 @@ let settings = loadJSON(LS_KEYS.settings, { nom:'', coord:'', logo:'', client:''
 let overrides = loadJSON(LS_KEYS.overrides, {}); // code -> prix perso
 let devis = loadJSON(LS_KEYS.devis, []); // [{code,designation,unite,qte,prixU,tva,dims}]
 let mediasChantier = loadJSON(LS_KEYS.medias, []); // [{id,type:'photo'|'video',dataUrl,ajouteLe}]
+
+/* ===================== ACCÈS / SYNCHRONISATION (25/09/2026) =====================
+   État déclaré ici (tôt dans le script, avant le rendu du devis) pour que
+   noterDevisModifie()/noterReglagesModifies() — appelées depuis renderDevis()
+   et les écrans de réglages — puissent lire accesCourant/devisMeta même lors
+   du tout premier rendu au chargement de la page (avant que le gros bloc de
+   connexion/paiement, tout en bas du script, ne les mette à jour). Rien
+   n'est envoyé au serveur tant qu'aucun email n'est connu (accesCourant
+   reste alors null) — voir le bloc "ACCÈS / ESSAI / PAIEMENT" en bas. */
+const LS_ACCES = 'estimbtp_acces';
+const LS_DEVIS_META = 'estimbtp_devis_meta'; // { id: <uuid du devis courant côté serveur, ou null> }
+let accesCourant = loadJSON(LS_ACCES, null);
+let devisMeta = loadJSON(LS_DEVIS_META, { id: null });
+
+function debounce(fn, delaiMs){
+  let h;
+  return (...args) => { clearTimeout(h); h = setTimeout(() => fn(...args), delaiMs); };
+}
+
+async function sauvegarderDevisCourantServeur(){
+  if (!accesCourant || !accesCourant.email || !devis.length) return;
+  try{
+    const totaux = computeTotals();
+    const resp = await fetch('/api/estimateur-btp-devis', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: accesCourant.email,
+        id: devisMeta.id || undefined,
+        lignes: devis,
+        client_nom: settings.client || '',
+        client_telephone: settings.clientTelephone || '',
+        client_email: settings.clientEmail || '',
+        client_adresse: settings.clientAdresse || '',
+        total_ht: totaux.ht,
+        total_ttc: totaux.ttc,
+      }),
+    });
+    const data = await resp.json();
+    if (resp.ok && data.id){
+      devisMeta = { id: data.id };
+      saveJSON(LS_DEVIS_META, devisMeta);
+    }
+  }catch(e){
+    // Silencieux : hors connexion, le devis reste de toute façon disponible
+    // en local sur cet appareil — on réessaiera à la prochaine modification.
+  }
+}
+const noterDevisModifie = debounce(sauvegarderDevisCourantServeur, 1500);
+
+async function sauvegarderReglagesServeur(){
+  if (!accesCourant || !accesCourant.email) return;
+  try{
+    await fetch('/api/estimateur-btp-reglages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: accesCourant.email,
+        reglages: { nom: settings.nom, coord: settings.coord, logo: settings.logo, tvaDefaut: settings.tvaDefaut, dashboardLink: settings.dashboardLink },
+        overrides,
+      }),
+    });
+  }catch(e){ /* silencieux, même logique que ci-dessus */ }
+}
+const noterReglagesModifies = debounce(sauvegarderReglagesServeur, 1500);
 
 /* ===================== UTILITAIRES ===================== */
 function strip(s){
@@ -943,6 +1059,7 @@ document.getElementById('ps-add').addEventListener('click', ()=>{
   if(prixU !== currentItem.prixDefaut){
     overrides[currentItem.code] = prixU;
     saveJSON(LS_KEYS.overrides, overrides);
+    noterReglagesModifies();
   }
 
   devis.push({
@@ -963,6 +1080,7 @@ function renderDevis(){
   const wrap = document.getElementById('devisLines');
   document.getElementById('lineCount').textContent = devis.length;
   if(typeof verifierPropositionSync === 'function') verifierPropositionSync();
+  noterDevisModifie(); // sync historique (compte email) — sans effet si pas encore connecté
   if(devis.length===0){
     wrap.innerHTML = '<div class="devis-empty">Aucune ligne pour l\'instant.<br>Dictez un produit ci-dessus pour commencer.</div>';
   } else {
@@ -997,6 +1115,7 @@ function renderDevis(){
         devis[i].prixU = parseFloat(e.target.value)||0;
         overrides[devis[i].code] = devis[i].prixU;
         saveJSON(LS_KEYS.overrides, overrides);
+        noterReglagesModifies();
         saveJSON(LS_KEYS.devis, devis);
         renderDevis();
       });
@@ -1040,6 +1159,10 @@ document.getElementById('btnClear').addEventListener('click', ()=>{
   if(confirm('Effacer le devis en cours (et ses photos/vidéo) pour repartir de zéro ?')){
     devis = [];
     saveJSON(LS_KEYS.devis, devis);
+    // Le prochain devis rempli doit créer une NOUVELLE fiche dans l'historique,
+    // pas écraser celle qu'on vient de quitter.
+    devisMeta = { id: null };
+    saveJSON(LS_DEVIS_META, devisMeta);
     renderDevis();
     mediasChantier = [];
     saveJSON(LS_KEYS.medias, mediasChantier);
@@ -1095,6 +1218,7 @@ document.getElementById('set-save').addEventListener('click', ()=>{
     draftId: draftId || settings.draftId || '',
   };
   saveJSON(LS_KEYS.settings, settings);
+  noterReglagesModifies();
   updateEntrepriseLabel();
   modal.classList.remove('open');
   toast('Réglages enregistrés');
@@ -1104,6 +1228,7 @@ document.getElementById('set-reset-prix').addEventListener('click', ()=>{
   if(confirm('Remettre tous les prix personnalisés aux prix de référence marché ?')){
     overrides = {};
     saveJSON(LS_KEYS.overrides, overrides);
+    noterReglagesModifies();
     toast('Prix réinitialisés');
   }
 });
@@ -1429,6 +1554,18 @@ renderMediasChantier();
 // prend le contrôle, on recharge automatiquement la page une fois pour
 // afficher tout de suite le dernier correctif, sans action de l'artisan.
 if('serviceWorker' in navigator){
+  // Corrigé le 25/09/2026 : "controllerchange" se déclenche aussi la toute
+  // première fois qu'un service worker prend le contrôle de la page (pas
+  // seulement lors d'une mise à jour), car sw-estimateur.js appelle
+  // self.clients.claim() dans "activate". Sans cette vérification, un tout
+  // nouveau visiteur se voyait rechargé automatiquement 1 seconde environ
+  // après l'ouverture de l'appli — parfois en pleine saisie de son email
+  // pour démarrer l'essai gratuit, ce qui pouvait faire croire à un bug
+  // ("l'email a disparu"). On ne recharge donc que si la page était déjà
+  // pilotée par un ancien service worker (vraie mise à jour en cours
+  // d'utilisation) — jamais lors de la toute première installation, où la
+  // page affichée est de toute façon déjà la dernière version.
+  const etaitDejaPiloteeParUnSW = !!navigator.serviceWorker.controller;
   window.addEventListener('load', ()=>{
     navigator.serviceWorker.register('/sw-estimateur.js').then((reg)=>{
       // Vérifie activement s'il existe une version plus récente côté
@@ -1441,7 +1578,7 @@ if('serviceWorker' in navigator){
   navigator.serviceWorker.addEventListener('controllerchange', ()=>{
     if (dejaRecharge) return;
     dejaRecharge = true;
-    window.location.reload();
+    if (etaitDejaPiloteeParUnSW) window.location.reload();
   });
 }
 
@@ -1459,8 +1596,11 @@ updateEntrepriseLabel();
    revérifie en ligne qu'en tâche de fond, jamais de façon bloquante.
    Les personnes ayant déjà acheté le "Kit Pro Artisan BTP" (qui incluait ce
    lien en bonus avant ce changement) reçoivent un accès illimité automatique
-   — voir api/estimateur-btp-essai.js. */
-const LS_ACCES = 'estimbtp_acces';
+   — voir api/estimateur-btp-essai.js.
+   (LS_ACCES, accesCourant et devisMeta sont déclarés plus haut, avec le
+   reste de l'état de l'appli, pour que noterDevisModifie()/
+   noterReglagesModifies() — appelées dès le premier rendu — puissent déjà
+   les lire.) */
 
 function decidersEtatAcces(acces){
   if (!acces || !acces.email) return 'gate';
@@ -1507,8 +1647,205 @@ async function demarrerAbonnement(email){
   window.location.href = data.url;
 }
 
-let accesCourant = loadJSON(LS_ACCES, null);
 appliquerEtatAcces(decidersEtatAcces(accesCourant), accesCourant);
+
+function appliquerReglagesRecus(data){
+  // Réglages entreprise + prix personnalisés reçus du serveur (même compte
+  // email) — le serveur fait référence : une valeur vide ("") côté serveur
+  // ne remplace pas une valeur locale existante (payload jamais initialisé,
+  // ex. tout premier appareil d'un compte flambant neuf), mais une vraie
+  // valeur reçue écrase toujours la valeur locale, pour que les 2 appareils
+  // affichent la même chose.
+  if (data.reglages){
+    settings.nom = data.reglages.nom || settings.nom;
+    settings.coord = data.reglages.coord || settings.coord;
+    settings.logo = data.reglages.logo || settings.logo;
+    settings.tvaDefaut = data.reglages.tvaDefaut || settings.tvaDefaut;
+    settings.dashboardLink = data.reglages.dashboardLink || settings.dashboardLink;
+    saveJSON(LS_KEYS.settings, settings);
+    updateEntrepriseLabel();
+  }
+  if (data.overrides){
+    overrides = data.overrides;
+    saveJSON(LS_KEYS.overrides, overrides);
+  }
+}
+
+// Migration en douceur pour un appareil qui utilisait déjà l'Estimateur BTP
+// AVANT l'ajout des comptes (25/09/2026) : la toute première fois qu'un
+// email connu se retrouve en ligne, on récupère ce que le compte a déjà en
+// ligne (autre appareil) — ou, si le compte est encore vierge côté serveur,
+// on y envoie ce que cet appareil avait déjà en local, pour ne rien perdre.
+// Ne se déclenche qu'une seule fois par appareil (LS_SYNC_INITIAL).
+const LS_SYNC_INITIAL = 'estimbtp_sync_initial_fait';
+async function synchroniserApresConnexion(){
+  if (!accesCourant || !accesCourant.email) return;
+  if (loadJSON(LS_SYNC_INITIAL, false)) return;
+  if (!navigator.onLine) return;
+  try{
+    const resp = await fetch('/api/estimateur-btp-statut?email=' + encodeURIComponent(accesCourant.email));
+    const data = resp.ok ? await resp.json() : null;
+    const serveurAReglages = data && data.success && data.reglages && Object.keys(data.reglages).length > 0;
+    if (serveurAReglages){
+      appliquerReglagesRecus(data);
+    } else if (settings.nom){
+      await sauvegarderReglagesServeur();
+    }
+    if (devis.length && !devisMeta.id){
+      await sauvegarderDevisCourantServeur();
+    }
+    saveJSON(LS_SYNC_INITIAL, true);
+  }catch(e){
+    // On réessaiera à la prochaine connexion — LS_SYNC_INITIAL n'est marqué
+    // qu'en cas de succès.
+  }
+}
+
+/* ---------- Historique des devis (téléphone + ordinateur) ---------- */
+let historyItemsCourants = [];
+
+function renderHistoryList(items){
+  historyItemsCourants = items;
+  const list = document.getElementById('historyList');
+  if (!items.length){
+    list.innerHTML = '<div class="history-empty">Aucun devis enregistré pour l\'instant — vos devis apparaîtront ici au fur et à mesure.</div>';
+    return;
+  }
+  list.innerHTML = items.map(it => {
+    const date = new Date(it.updated_at).toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' }) +
+      ' à ' + new Date(it.updated_at).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+    const nom = it.client_nom || 'Devis sans nom de client';
+    const total = typeof it.total_ttc === 'number' ? eur(it.total_ttc) : '—';
+    return `<div class="history-item">
+      <div class="info">
+        <div class="nom">${nom}</div>
+        <div class="meta">${total} · ${date}</div>
+      </div>
+      <div class="actions">
+        <button class="btn-charger" data-id="${it.id}">Charger</button>
+        <button class="btn-suppr" data-id="${it.id}" title="Supprimer">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  list.querySelectorAll('.btn-charger').forEach(btn => {
+    btn.addEventListener('click', () => chargerDevisHistorique(btn.dataset.id));
+  });
+  list.querySelectorAll('.btn-suppr').forEach(btn => {
+    btn.addEventListener('click', () => supprimerDevisHistorique(btn.dataset.id));
+  });
+}
+
+async function chargerHistorique(){
+  const list = document.getElementById('historyList');
+  if (!accesCourant || !accesCourant.email){
+    list.innerHTML = '<div class="history-empty">Démarrez votre essai avec votre email pour voir votre historique.</div>';
+    return;
+  }
+  if (!navigator.onLine){
+    list.innerHTML = '<div class="history-empty">Hors connexion — l\'historique n\'est disponible qu\'une fois reconnecté.</div>';
+    return;
+  }
+  list.innerHTML = '<div class="history-empty">Chargement…</div>';
+  try{
+    const resp = await fetch('/api/estimateur-btp-devis?email=' + encodeURIComponent(accesCourant.email));
+    const data = await resp.json();
+    if (!resp.ok || !data.success) throw new Error();
+    renderHistoryList(data.devis || []);
+  }catch(e){
+    list.innerHTML = '<div class="history-empty">Impossible de charger l\'historique — réessayez.</div>';
+  }
+}
+
+function chargerDevisHistorique(id){
+  const item = historyItemsCourants.find(it => it.id === id);
+  if (!item) return;
+  if (devis.length && !confirm('Remplacer le devis en cours par celui-ci ?')) return;
+  devis = item.lignes || [];
+  saveJSON(LS_KEYS.devis, devis);
+  devisMeta = { id: item.id };
+  saveJSON(LS_DEVIS_META, devisMeta);
+  settings.client = item.client_nom || '';
+  settings.clientTelephone = item.client_telephone || '';
+  settings.clientEmail = item.client_email || '';
+  settings.clientAdresse = item.client_adresse || '';
+  saveJSON(LS_KEYS.settings, settings);
+  renderDevis();
+  document.getElementById('historyModal').classList.remove('open');
+  toast('✅ Devis chargé');
+}
+
+async function supprimerDevisHistorique(id){
+  if (!confirm('Supprimer définitivement ce devis de l\'historique ?')) return;
+  try{
+    await fetch('/api/estimateur-btp-devis?id=' + encodeURIComponent(id) + '&email=' + encodeURIComponent(accesCourant.email), { method: 'DELETE' });
+    if (devisMeta.id === id){
+      devisMeta = { id: null };
+      saveJSON(LS_DEVIS_META, devisMeta);
+    }
+    chargerHistorique();
+  }catch(e){
+    toast('Impossible de supprimer — réessayez.');
+  }
+}
+
+document.getElementById('btnHistorique').addEventListener('click', () => {
+  document.getElementById('historyModal').classList.add('open');
+  chargerHistorique();
+});
+document.getElementById('btnFermerHistorique').addEventListener('click', () => {
+  document.getElementById('historyModal').classList.remove('open');
+});
+document.getElementById('historyModal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('historyModal')) document.getElementById('historyModal').classList.remove('open');
+});
+
+/* ---------- Installer sur l'écran d'accueil (PWA) ---------- */
+const INSTRUCTIONS_INSTALL = {
+  iphone: {
+    titre: '📱 Sur iPhone (Safari)',
+    etapes: [
+      'Ouvrez cette page dans <strong>Safari</strong> (pas Chrome — sur iPhone, seul Safari sait installer une appli sur l\'écran d\'accueil).',
+      'Appuyez sur le bouton <strong>Partager</strong> en bas de l\'écran (le carré avec une flèche vers le haut).',
+      'Faites défiler la liste et appuyez sur <strong>« Sur l\'écran d\'accueil »</strong>.',
+      'Appuyez sur <strong>« Ajouter »</strong> en haut à droite.',
+    ],
+  },
+  android: {
+    titre: '🤖 Sur Android (Chrome)',
+    etapes: [
+      'Ouvrez cette page dans <strong>Chrome</strong>.',
+      'Appuyez sur les <strong>3 points</strong> en haut à droite de l\'écran.',
+      'Appuyez sur <strong>« Installer l\'application »</strong> (ou <strong>« Ajouter à l\'écran d\'accueil »</strong> selon la version).',
+      'Confirmez — l\'icône apparaît sur votre écran d\'accueil.',
+    ],
+  },
+};
+
+function afficherInstructionsInstall(type){
+  const infos = INSTRUCTIONS_INSTALL[type];
+  document.getElementById('installTitreEtape').textContent = infos.titre;
+  document.getElementById('installListeEtapes').innerHTML = infos.etapes.map(e => `<li>${e}</li>`).join('');
+  document.getElementById('installChoixEtape').style.display = 'none';
+  document.getElementById('installInstructionsEtape').style.display = 'block';
+}
+
+document.getElementById('btnInstallApp').addEventListener('click', () => {
+  document.getElementById('installChoixEtape').style.display = 'block';
+  document.getElementById('installInstructionsEtape').style.display = 'none';
+  document.getElementById('installModal').classList.add('open');
+});
+document.getElementById('btnInstallIphone').addEventListener('click', () => afficherInstructionsInstall('iphone'));
+document.getElementById('btnInstallAndroid').addEventListener('click', () => afficherInstructionsInstall('android'));
+document.getElementById('btnInstallRetour').addEventListener('click', () => {
+  document.getElementById('installChoixEtape').style.display = 'block';
+  document.getElementById('installInstructionsEtape').style.display = 'none';
+});
+document.getElementById('btnFermerInstall1').addEventListener('click', () => document.getElementById('installModal').classList.remove('open'));
+document.getElementById('btnFermerInstall2').addEventListener('click', () => document.getElementById('installModal').classList.remove('open'));
+document.getElementById('installModal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('installModal')) document.getElementById('installModal').classList.remove('open');
+});
 
 // Bouton "Démarrer mon essai gratuit"
 document.getElementById('gateEmailBtn').addEventListener('click', async () => {
@@ -1535,6 +1872,8 @@ document.getElementById('gateEmailBtn').addEventListener('click', async () => {
     accesCourant = { email: data.email, essai_fin: data.essai_fin, abonnement_actif: data.abonnement_actif, source: data.source };
     saveJSON(LS_ACCES, accesCourant);
     appliquerEtatAcces(decidersEtatAcces(accesCourant), accesCourant);
+    appliquerReglagesRecus(data);
+    synchroniserApresConnexion();
   }catch(e){
     err.textContent = "Impossible de démarrer l'essai — vérifiez votre connexion et réessayez.";
     err.style.display = 'block';
@@ -1594,6 +1933,7 @@ document.getElementById('btnTrialAbonner').addEventListener('click', async () =>
           accesCourant = { email, essai_fin: data.essai_fin, abonnement_actif: data.abonnement_actif, source: data.source };
           saveJSON(LS_ACCES, accesCourant);
           appliquerEtatAcces(decidersEtatAcces(accesCourant), accesCourant);
+          appliquerReglagesRecus(data);
           if (accesCourant.abonnement_actif) toast('✅ Abonnement activé, merci !');
         }
       })
@@ -1612,10 +1952,15 @@ if (accesCourant && accesCourant.email && navigator.onLine){
         accesCourant = { email: accesCourant.email, essai_fin: data.essai_fin, abonnement_actif: data.abonnement_actif, source: data.source };
         saveJSON(LS_ACCES, accesCourant);
         appliquerEtatAcces(decidersEtatAcces(accesCourant), accesCourant);
+        appliquerReglagesRecus(data);
       }
     })
     .catch(() => {});
 }
+
+// Migration en douceur pour les appareils qui utilisaient déjà l'appli avant
+// l'ajout des comptes (voir la fonction plus haut) — sans effet si déjà fait.
+synchroniserApresConnexion();
 </script>
 </body>
 </html>

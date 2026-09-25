@@ -560,6 +560,7 @@
       <div class="sub" id="entrepriseLabel">Devis chantier — sur place, en 30 secondes</div>
     </div>
     <div style="display:flex;gap:8px;">
+      <button class="icon-btn" id="btnCatalogue" title="Catalogue produits">📦</button>
       <button class="icon-btn" id="btnHistorique" title="Mes devis (téléphone + ordinateur)">📜</button>
       <button class="icon-btn" id="btnInstallApp" title="Installer sur mon téléphone">📲</button>
       <button class="icon-btn" id="btnClear" title="Nouveau devis">🗑️</button>
@@ -784,6 +785,20 @@
   </div>
 </div>
 
+<div class="modal-overlay no-print" id="catalogueModal">
+  <div class="modal">
+    <h3>📦 Catalogue produits</h3>
+    <p class="search-hint" style="margin-bottom:12px;">Les 123 produits communs, plus ceux que vous avez créés. Masquer un produit commun ou en créer un nouveau ne concerne que votre compte.</p>
+    <button class="btn btn-primary" id="btnNouveauProduitCatalogue" style="width:100%;margin-bottom:14px;">➕ Créer un nouveau produit</button>
+    <input type="text" id="catalogueSearchInput" placeholder="Rechercher un produit..." style="width:100%;margin-bottom:10px;" autocomplete="off">
+    <div class="metier-chips" id="catalogueChips"></div>
+    <div id="catalogueList" style="margin-top:10px;"></div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn btn-secondary" id="btnFermerCatalogue" style="width:100%;">Fermer</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay no-print" id="creerPosteModal">
   <div class="modal">
     <h3>➕ Nouveau poste personnalisé</h3>
@@ -835,7 +850,8 @@ const LS_KEYS = {
   medias: 'estimbtp_medias_courant',
   dernierEnvoiHash: 'estimbtp_dernier_envoi_hash',
   bannerIgnoreeHash: 'estimbtp_banner_ignoree_hash',
-  customItems: 'estimbtp_postes_perso' // 25/09/2026 — postes créés par l'artisan, en plus des 123 du catalogue
+  customItems: 'estimbtp_postes_perso', // 25/09/2026 — postes créés par l'artisan, en plus des 123 du catalogue
+  hiddenCodes: 'estimbtp_postes_masques' // 25/09/2026 — codes des postes communs masqués par l'artisan (onglet Catalogue)
 };
 
 function loadJSON(key, fallback){
@@ -858,6 +874,14 @@ let mediasChantier = loadJSON(LS_KEYS.medias, []); // [{id,type:'photo'|'video',
 // poolComplet() plus bas. metier vaut toujours 'Mes postes' pour les
 // distinguer visuellement et permettre de les filtrer à part.
 let customItems = loadJSON(LS_KEYS.customItems, []);
+// Postes communs masqués (25/09/2026) : depuis l'onglet Catalogue, un artisan
+// peut masquer un produit du catalogue commun (les 123 lignes codées en dur
+// dans CATALOGUE plus haut sont partagées par tous les comptes, donc on ne
+// peut pas les supprimer réellement — on les cache juste pour ce compte,
+// synchronisé comme le reste). Un poste masqué n'est ni cherchable, ni
+// visible en parcourant le catalogue, mais reste inchangé sur les devis déjà
+// faits avec (mêmes raisons que la suppression de poste perso, voir plus bas).
+let hiddenCodes = loadJSON(LS_KEYS.hiddenCodes, []);
 
 /* ===================== ACCÈS / SYNCHRONISATION (25/09/2026) =====================
    État déclaré ici (tôt dans le script, avant le rendu du devis) pour que
@@ -919,6 +943,7 @@ async function sauvegarderReglagesServeur(){
         reglages: { nom: settings.nom, coord: settings.coord, logo: settings.logo, tvaDefaut: settings.tvaDefaut, dashboardLink: settings.dashboardLink },
         overrides,
         postesPerso: customItems,
+        postesMasques: hiddenCodes,
       }),
     });
   }catch(e){ /* silencieux, même logique que ci-dessus */ }
@@ -949,9 +974,10 @@ const PERSO_METIER = 'Mes postes'; // corps de métier réservé aux postes cré
 let activeMetier = null;
 
 // Catalogue + postes personnalisés de l'artisan, cherchés et sélectionnés
-// exactement de la même façon (voir runSearch/selectProduct ci-dessous).
+// exactement de la même façon (voir runSearch/selectProduct ci-dessous) —
+// moins les postes communs que l'artisan a masqués depuis l'onglet Catalogue.
 function poolComplet(){
-  return CATALOGUE.concat(customItems);
+  return CATALOGUE.filter(c => !hiddenCodes.includes(c.code)).concat(customItems);
 }
 
 function scoreItem(item, tokens){
@@ -1781,6 +1807,10 @@ function appliquerReglagesRecus(data){
     customItems = data.postesPerso;
     saveJSON(LS_KEYS.customItems, customItems);
   }
+  if (data.postesMasques){
+    hiddenCodes = data.postesMasques;
+    saveJSON(LS_KEYS.hiddenCodes, hiddenCodes);
+  }
 }
 
 // Migration en douceur pour un appareil qui utilisait déjà l'Estimateur BTP
@@ -1803,10 +1833,10 @@ async function synchroniserApresConnexion(){
       // Cas d'un compte déjà relié avant l'ajout des postes personnalisés
       // (25/09/2026) : le serveur a des réglages mais pas encore de
       // postesPerso — on remonte ceux de cet appareil s'il en a.
-      if (!data.postesPerso && customItems.length){
+      if ((!data.postesPerso && customItems.length) || (!data.postesMasques && hiddenCodes.length)){
         await sauvegarderReglagesServeur();
       }
-    } else if (settings.nom || customItems.length){
+    } else if (settings.nom || customItems.length || hiddenCodes.length){
       await sauvegarderReglagesServeur();
     }
     if (devis.length && !devisMeta.id){
@@ -1977,7 +2007,14 @@ function genererCodePoste(){
   return 'PERSO-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
 }
 
-function ouvrirCreationPoste(texteRecherche){
+// Retient d'où vient la création pour savoir quoi faire une fois le poste
+// créé : depuis la recherche pendant un devis, on enchaîne sur sa fiche
+// produit (comportement d'origine, 25/09/2026) ; depuis l'onglet Catalogue,
+// on reste dans le catalogue et on rafraîchit juste sa liste.
+let posteCreationOrigin = 'recherche';
+
+function ouvrirCreationPoste(texteRecherche, origine){
+  posteCreationOrigin = origine || 'recherche';
   document.getElementById('cp-designation').value = texteRecherche || '';
   document.getElementById('cp-unite').value = 'm²';
   document.getElementById('cp-prix').value = '';
@@ -2020,9 +2057,17 @@ document.getElementById('btnValiderCreerPoste').addEventListener('click', () => 
   noterReglagesModifies();
   document.getElementById('creerPosteModal').classList.remove('open');
   toast('✅ Poste créé — retrouvable sur tous vos appareils');
-  // Ouvre directement sa fiche produit pour enchaîner sur l'ajout au devis,
-  // comme pour un poste du catalogue.
-  selectProduct(nouveauPoste.code);
+  if (posteCreationOrigin === 'catalogue'){
+    // Créé depuis l'onglet Catalogue : on reste dans le catalogue, sur "Mes
+    // postes", plutôt que de basculer sur un ajout au devis en cours.
+    catalogueActiveMetier = PERSO_METIER;
+    renderCatalogueChips();
+    renderCatalogueList();
+  } else {
+    // Créé pendant la recherche d'un devis : on enchaîne directement sur sa
+    // fiche produit pour l'ajouter, comme pour un poste du catalogue.
+    selectProduct(nouveauPoste.code);
+  }
 });
 
 document.getElementById('ps-supprimer-poste-lien').addEventListener('click', (e) => {
@@ -2035,6 +2080,134 @@ document.getElementById('ps-supprimer-poste-lien').addEventListener('click', (e)
   document.getElementById('productSheet').style.display = 'none';
   currentItem = null;
   toast('Poste supprimé');
+});
+
+/* ===================== ONGLET CATALOGUE (25/09/2026) =====================
+   Vue dédiée pour parcourir tout le catalogue (123 postes communs + postes
+   personnalisés), en créer de nouveaux sans passer par la recherche d'un
+   devis, et en retirer : suppression réelle pour un poste personnalisé,
+   masquage (réversible, propre au compte) pour un poste commun — voir
+   hiddenCodes/poolComplet() plus haut. */
+const MASQUES_METIER = 'MASQUES';
+let catalogueActiveMetier = null;
+
+function poolCatalogueTab(){
+  if (catalogueActiveMetier === MASQUES_METIER){
+    return CATALOGUE.filter(c => hiddenCodes.includes(c.code));
+  }
+  let pool = poolComplet();
+  if (catalogueActiveMetier) pool = pool.filter(c => c.metier === catalogueActiveMetier);
+  return pool;
+}
+
+function renderCatalogueChips(){
+  const wrap = document.getElementById('catalogueChips');
+  wrap.innerHTML = ['Tous', ...METIERS, PERSO_METIER, 'Masqués'].map(m => {
+    const val = m === 'Tous' ? '' : (m === 'Masqués' ? MASQUES_METIER : m);
+    const active = val ? catalogueActiveMetier === val : !catalogueActiveMetier;
+    return `<div class="chip ${active ? 'active' : ''}" data-m="${val}">${m}</div>`;
+  }).join('');
+  wrap.querySelectorAll('.chip').forEach(el => {
+    el.addEventListener('click', () => {
+      catalogueActiveMetier = el.dataset.m || null;
+      renderCatalogueChips();
+      renderCatalogueList();
+    });
+  });
+}
+
+function renderCatalogueList(){
+  const box = document.getElementById('catalogueList');
+  const q = strip(document.getElementById('catalogueSearchInput').value).trim();
+  let pool = poolCatalogueTab();
+
+  if (q){
+    const tokens = q.split(/\s+/).filter(Boolean);
+    pool = pool.map(item => ({ item, score: scoreItem(item, tokens) }))
+               .filter(r => r.score > 0)
+               .sort((a, b) => b.score - a.score)
+               .map(r => r.item);
+  } else {
+    pool = pool.slice().sort((a, b) =>
+      a.metier.localeCompare(b.metier, 'fr') || a.designation.localeCompare(b.designation, 'fr')
+    );
+  }
+
+  if (pool.length === 0){
+    box.innerHTML = '<div class="empty-state">' + (
+      catalogueActiveMetier === MASQUES_METIER ? 'Aucun produit masqué.' :
+      catalogueActiveMetier === PERSO_METIER ? 'Vous n\'avez pas encore créé de produit personnalisé.' :
+      'Aucun produit trouvé.'
+    ) + '</div>';
+    return;
+  }
+
+  const estVueMasques = catalogueActiveMetier === MASQUES_METIER;
+  box.innerHTML = pool.map(it => {
+    const estPerso = it.metier === PERSO_METIER;
+    const p = priceFor(it.code, it.prixDefaut);
+    const actionBtn = estVueMasques
+      ? `<button class="btn-cat-action" data-action="restaurer" data-code="${it.code}" title="Réafficher ce produit" style="width:36px;height:36px;font-size:15px;border:1px solid var(--border);background:#F7F9FA;border-radius:8px;cursor:pointer;flex-shrink:0;">↩️</button>`
+      : `<button class="btn-cat-action" data-action="supprimer" data-code="${it.code}" title="${estPerso ? 'Supprimer ce produit' : 'Masquer ce produit'}" style="width:36px;height:36px;font-size:15px;border:1px solid var(--border);background:#F7F9FA;border-radius:8px;cursor:pointer;flex-shrink:0;">🗑️</button>`;
+    return `<div class="sugg-item" style="cursor:default;">
+      <div class="sugg-main">
+        <div class="sugg-code">${it.code} · ${it.metier}</div>
+        <div class="sugg-desig">${it.designation}</div>
+        <div class="sugg-meta">Unité : ${it.unite}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="sugg-price">${p ? eur(p) : '—'}<br><span style="font-weight:400;font-size:10.5px;color:var(--text-mut);">/${it.unite}</span></div>
+        ${actionBtn}
+      </div>
+    </div>`;
+  }).join('');
+
+  box.querySelectorAll('.btn-cat-action').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const code = btn.dataset.code;
+      const action = btn.dataset.action;
+      if (action === 'restaurer'){
+        hiddenCodes = hiddenCodes.filter(c => c !== code);
+        saveJSON(LS_KEYS.hiddenCodes, hiddenCodes);
+        noterReglagesModifies();
+        toast('Produit réaffiché');
+        renderCatalogueList();
+        return;
+      }
+      const estPerso = CATALOGUE.every(c => c.code !== code); // pas dans les 123 -> personnalisé
+      if (estPerso){
+        if (!confirm('Supprimer définitivement ce produit personnalisé ? (Les devis qui l\'utilisent déjà ne sont pas modifiés.)')) return;
+        customItems = customItems.filter(it => it.code !== code);
+        saveJSON(LS_KEYS.customItems, customItems);
+        toast('Produit supprimé');
+      } else {
+        if (!confirm('Masquer ce produit du catalogue commun ? Il n\'apparaîtra plus dans vos recherches ni votre catalogue — vous pourrez le réafficher à tout moment depuis "Masqués". Cela ne concerne que votre compte.')) return;
+        hiddenCodes.push(code);
+        saveJSON(LS_KEYS.hiddenCodes, hiddenCodes);
+        toast('Produit masqué');
+      }
+      noterReglagesModifies();
+      renderCatalogueList();
+    });
+  });
+}
+
+document.getElementById('btnCatalogue').addEventListener('click', () => {
+  catalogueActiveMetier = null;
+  document.getElementById('catalogueSearchInput').value = '';
+  renderCatalogueChips();
+  renderCatalogueList();
+  document.getElementById('catalogueModal').classList.add('open');
+});
+document.getElementById('btnFermerCatalogue').addEventListener('click', () => {
+  document.getElementById('catalogueModal').classList.remove('open');
+});
+document.getElementById('catalogueModal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('catalogueModal')) document.getElementById('catalogueModal').classList.remove('open');
+});
+document.getElementById('catalogueSearchInput').addEventListener('input', renderCatalogueList);
+document.getElementById('btnNouveauProduitCatalogue').addEventListener('click', () => {
+  ouvrirCreationPoste('', 'catalogue');
 });
 
 // Bouton "Démarrer mon essai gratuit"

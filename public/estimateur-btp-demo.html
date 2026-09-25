@@ -134,11 +134,13 @@
   <div class="wrap">
     <div class="video-frame" id="videoFrame">
       <!-- 25/09/2026 : vidéo de présentation générée via HeyGen HyperFrames
-           (style motion design animé). Le fichier doit être déposé par
-           Cyrille dans /videos/estimateur-btp-demo.mp4 (lien de téléchargement
-           fourni séparément — le lien signé HeyGen expire début octobre). -->
+           (style motion design animé). Hébergée sur Supabase Storage (bucket
+           public skyeco-pro-media, comme les photos/vidéos de chantier
+           ailleurs dans l'app) plutôt que dans /public — un .mp4 déposé dans
+           /public doit être commité dans le dépôt Git, ce que l'interface web
+           de GitHub gère mal pour un fichier binaire de cette taille. -->
       <video id="videoDemo" playsinline preload="metadata" poster="/estimateur-btp-og.png">
-        <source src="/videos/estimateur-btp-demo.mp4" type="video/mp4">
+        <source src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/estimateur-btp/estimateur-btp-demo.mp4" type="video/mp4">
       </video>
       <div class="play-badge" id="playBadge"><span>▶</span></div>
     </div>

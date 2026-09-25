@@ -4,9 +4,19 @@
 // (recherche-entreprises.api.gouv.fr, DINUM/INSEE, sans clé requise) pour
 // retrouver la forme juridique officielle d'un SIRET.
 //
+// 25/09/2026 : étendu pour retourner aussi la dénomination et l'adresse de
+// l'établissement (rue/CP/ville) — jusqu'ici seule la forme juridique était
+// renvoyée. Demandé par Cyrille : le bloc "Commencez par votre SIRET" en
+// tête de construire-ma-vitrine.html doit pré-remplir en un seul geste le
+// nom, l'adresse ET la forme juridique — une grosse partie de l'entête des
+// futurs devis de l'artisan — plutôt que de ne confirmer que la forme
+// juridique comme le faisait jusqu'ici le bouton "Vérifier ma forme
+// juridique via mon SIRET" (toujours en place, toujours compatible avec
+// cette réponse enrichie). Champs ajoutés : adresse, codePostal, ville.
+//
 // IMPORTANT — ce que cet endpoint peut et ne peut PAS dire :
 //   - Il peut confirmer la FORME JURIDIQUE (ex : "Entrepreneur individuel"),
-//     donnée publique et fiable.
+//     le nom et l'adresse de l'établissement, données publiques et fiables.
 //   - Il NE PEUT PAS confirmer le régime de TVA réel (franchise en base ou
 //     non), qui dépend du chiffre d'affaires réellement réalisé par
 //     l'artisan — une donnée que personne d'autre que lui ne connaît.
@@ -45,6 +55,12 @@ export default async function handler(req, res) {
     // indice, pas une certitude (voir avertissement en tête de fichier).
     const suggestionFranchiseTva = !!(natureJuridique && natureJuridique.startsWith('1'));
 
+    // 25/09/2026 : l'établissement correspondant exactement au SIRET demandé
+    // (et non le siège par défaut, si l'artisan a donné l'établissement d'un
+    // autre site) — même logique que public/skyeco-pro-inscription-siret.html.
+    const matching = (resultat.matching_etablissements || []).find(e => e.siret === siretPropre);
+    const etablissement = matching || resultat.siege || {};
+
     return res.status(200).json({
       success: true,
       trouve: true,
@@ -52,6 +68,9 @@ export default async function handler(req, res) {
       natureJuridique,
       libelleNature,
       suggestionFranchiseTva,
+      adresse: etablissement.adresse || null,
+      codePostal: etablissement.code_postal || null,
+      ville: etablissement.libelle_commune || null,
     });
   } catch (err) {
     console.error('Erreur verifier-siret :', err);

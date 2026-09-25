@@ -133,11 +133,14 @@
 <section class="video">
   <div class="wrap">
     <div class="video-frame" id="videoFrame">
-      <!-- 25/09/2026 : la vidéo de présentation (générée via HeyGen HyperFrames,
-           style motion design animé) sera intégrée ici une fois le rendu MP4
-           récupéré. En attendant, un visuel de l'application tient sa place. -->
-      <img src="/estimateur-btp-og.png" alt="Aperçu de l'application Estimateur BTP" onerror="this.style.display='none'">
-      <div class="play-badge"><span>▶</span></div>
+      <!-- 25/09/2026 : vidéo de présentation générée via HeyGen HyperFrames
+           (style motion design animé). Le fichier doit être déposé par
+           Cyrille dans /videos/estimateur-btp-demo.mp4 (lien de téléchargement
+           fourni séparément — le lien signé HeyGen expire début octobre). -->
+      <video id="videoDemo" playsinline preload="metadata" poster="/estimateur-btp-og.png">
+        <source src="/videos/estimateur-btp-demo.mp4" type="video/mp4">
+      </video>
+      <div class="play-badge" id="playBadge"><span>▶</span></div>
     </div>
     <div class="video-caption">Voir la démo — comment chiffrer un devis en 30 secondes</div>
   </div>
@@ -205,6 +208,20 @@
    domaine. Aucune modification du code de estimateur-btp.html n'est donc
    nécessaire : il retrouve un essai déjà actif et des réglages déjà remplis,
    exactement comme si l'artisan les avait saisis lui-même dans "Réglages". */
+
+const videoDemo = document.getElementById('videoDemo');
+const playBadge = document.getElementById('playBadge');
+if (videoDemo && playBadge) {
+  playBadge.addEventListener('click', () => {
+    videoDemo.setAttribute('controls', '');
+    videoDemo.play().catch(() => {});
+    playBadge.style.display = 'none';
+  });
+  videoDemo.addEventListener('pause', () => {
+    if (videoDemo.currentTime > 0 && !videoDemo.ended) playBadge.style.display = 'flex';
+  });
+  videoDemo.addEventListener('play', () => { playBadge.style.display = 'none'; });
+}
 
 const LS_ACCES = 'estimbtp_acces';
 const LS_SETTINGS = 'estimbtp_settings';

@@ -171,6 +171,30 @@
     display:inline-flex; align-items:center; gap:8px; background:#e8622c; color:#fff; text-decoration:none;
     border-radius:10px; padding:11px 18px; font-size:0.85rem; font-weight:700;
   }
+
+  /* 25/09/2026 : bloc "commencez par votre SIRET" en tête de page — demandé
+     par Cyrille ("il met son siret et il commence") : une seule saisie
+     retrouve le nom et l'adresse de l'entreprise dans le répertoire officiel
+     et pré-remplit une grosse partie de l'entête de ses futurs devis, avant
+     même de décrire son activité plus bas. Voir #siretRapideBox plus bas. */
+  .siret-rapide-box {
+    background:linear-gradient(120deg, #eaf5ee, #eef7f0); border:1.5px solid #bfe0cd;
+    border-radius:18px; padding:22px 24px; margin-bottom:24px;
+  }
+  .siret-rapide-box .siret-rapide-titre { font-size:1.02rem; font-weight:800; color:#14312a; margin-bottom:4px; display:flex; align-items:center; gap:8px; }
+  .siret-rapide-box .siret-rapide-sous { font-size:0.86rem; color:#4a5c53; line-height:1.5; margin-bottom:14px; }
+  .siret-rapide-ligne { display:flex; gap:10px; flex-wrap:wrap; }
+  .siret-rapide-ligne input { flex:1; min-width:180px; margin:0; }
+  .btn-siret-rapide {
+    background:#3d7a5a; color:#fff; border:none; border-radius:10px; padding:12px 20px;
+    font-size:0.88rem; font-weight:700; cursor:pointer; white-space:nowrap; transition:filter 0.15s;
+  }
+  .btn-siret-rapide:hover { filter:brightness(1.06); }
+  .btn-siret-rapide:disabled { opacity:0.6; cursor:default; }
+  .siret-rapide-statut { font-size:0.82rem; color:#4a5c53; margin-top:10px; line-height:1.5; }
+  .siret-rapide-statut.ok { color:#2a5940; font-weight:600; }
+  .siret-rapide-statut.err { color:#b5482a; font-weight:600; }
+  .siret-rapide-lien-manuel { display:inline-block; margin-top:10px; font-size:0.8rem; color:#4a8a68; font-weight:600; cursor:pointer; text-decoration:underline; background:none; border:none; padding:0; }
 </style>
 </head>
 <body>
@@ -216,6 +240,23 @@
   <div class="progress-wrap">
     <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
     <div class="progress-label" id="progressLabel">0% complété</div>
+  </div>
+
+  <!-- 25/09/2026 : bloc "commencez par votre SIRET", tout en haut de page,
+       masqué automatiquement dès que l'entreprise est déjà renseignée (voir
+       chargerDraftExistant). Une seule saisie retrouve le nom et l'adresse
+       de l'entreprise (répertoire officiel, via /api/verifier-siret côté
+       serveur) et pré-remplit les sections "Coordonnées" et "Informations
+       légales" plus bas, avant même de décrire son activité. -->
+  <div class="siret-rapide-box" id="siretRapideBox">
+    <div class="siret-rapide-titre">🏢 Commencez par votre SIRET</div>
+    <p class="siret-rapide-sous">On retrouve automatiquement le nom de votre entreprise et son adresse dans le répertoire officiel — vous n'aurez presque rien à retaper.</p>
+    <div class="siret-rapide-ligne">
+      <input type="text" id="siretRapideInput" placeholder="Votre SIRET — 14 chiffres" inputmode="numeric" maxlength="17" autocomplete="off">
+      <button type="button" class="btn-siret-rapide" id="btnSiretRapide">🔍 Remplir mes informations</button>
+    </div>
+    <div id="siretRapideStatut" class="siret-rapide-statut"></div>
+    <button type="button" class="siret-rapide-lien-manuel" id="btnSiretRapideIgnorer">Je préfère saisir mes informations moi-même</button>
   </div>
 
   <!-- 14/09/2026 : section "Assistant IA" déplacée EN PREMIER et seule
@@ -360,6 +401,14 @@
         <label style="margin-top:18px;">Vos prestations (une par ligne)</label>
         <textarea id="textareaProduitsVitrine" placeholder="Petite maçonnerie&#10;Allée carrossable&#10;Petit muret&#10;Taille de haie&#10;Évacuation de déblais" style="min-height:110px;"></textarea>
         <p class="hint">Chaque ligne s'affiche à tour de rôle sous ton carrousel : "Vous avez besoin d'un devis de [ta ligne] ?" — laisse vide pour ne rien afficher.</p>
+
+        <!-- 18/09/2026 : lien vers lequel envoyer un client pour laisser un avis
+             (Pages Jaunes, avis Google...) — demandé par Cyrille pour un bouton
+             "Demander un avis" (SMS manuel) dans mon-dashboard.html, une fois le
+             chantier terminé et payé. Voir api/demander-avis-lead.js. -->
+        <label style="margin-top:18px;">Lien pour demander un avis client</label>
+        <input type="url" id="inputLienAvisClient" placeholder="https://www.pagesjaunes.fr/pros/votre-fiche...">
+        <p class="hint">La page de ta fiche Pages Jaunes (ou tes avis Google) où un client peut laisser un avis. Une fois renseigné, tu pourras envoyer un SMS avec ce lien à un client depuis "Gérer les clients", quand son chantier est terminé et payé.</p>
       </div>
     </div>
   </div>
@@ -824,6 +873,16 @@
       document.getElementById('delaiIntervention').value = draft.delai_intervention || '';
       document.getElementById('siteExistant').value = draft.site_web_existant || '';
 
+      // 25/09/2026 : le bloc "commencez par votre SIRET" ne sert qu'au tout
+      // premier passage — dès que l'entreprise est renseignée (que ce soit
+      // par ce bloc ou en remplissant "Coordonnées" à la main), il n'a plus
+      // lieu d'être et on ne le montre plus.
+      const siretRapideBoxInit = document.getElementById('siretRapideBox');
+      if (siretRapideBoxInit) {
+        siretRapideBoxInit.style.display = draft.entreprise ? 'none' : 'block';
+        if (draft.siret) document.getElementById('siretRapideInput').value = draft.siret;
+      }
+
       metiersActuels = Array.isArray(draft.metier) ? draft.metier : (draft.metier ? [draft.metier] : []);
       zoneActuelle = draft.zone || null;
       construireOptionsTitre(metiersActuels, draft.titre_hero_choisi || '');
@@ -916,6 +975,12 @@
       textareaProduits.addEventListener('blur', () => {
         const produits = textareaProduits.value.split('\n').map(l => l.trim()).filter(Boolean);
         sauvegarderChampsImmediat({ produits_vitrine: produits });
+      });
+
+      const inputLienAvis = document.getElementById('inputLienAvisClient');
+      if (draft.lien_avis_client) inputLienAvis.value = draft.lien_avis_client;
+      inputLienAvis.addEventListener('blur', () => {
+        sauvegarderChampsImmediat({ lien_avis_client: inputLienAvis.value.trim() || null });
       });
 
       if (draft.photos && draft.photos.length) {
@@ -1044,9 +1109,137 @@
           checkFranchiseTva.checked = true;
           statut.textContent += ' Case "franchise en base de TVA" pré-cochée — à confirmer ou décocher toi-même.';
         }
+        appliquerFormeJuridiqueDepuisLibelle(data.libelleNature);
       } catch (e) {
         statut.textContent = 'Vérification indisponible pour le moment — tu peux cocher la case manuellement.';
       }
+    });
+  }
+
+  // 25/09/2026 : le répertoire officiel renvoie un libellé INSEE littéral
+  // ("Entrepreneur individuel", "Société à responsabilité limitée (sans autre
+  // indication)"...) qui ne correspond pas mot pour mot aux options du menu
+  // "Forme juridique" — on rapproche les formulations les plus courantes.
+  // Ne modifie jamais une valeur déjà choisie par l'artisan.
+  function appliquerFormeJuridiqueDepuisLibelle(libelleNature) {
+    const select = document.getElementById('formeJuridique');
+    if (!select || select.value || !libelleNature) return;
+    const libelle = libelleNature.toLowerCase();
+    let correspondance = '';
+    if (libelle.includes('entrepreneur individuel') || libelle.includes('personne physique')) correspondance = 'Entreprise individuelle (EI)';
+    else if (libelle.includes('unipersonnelle à responsabilité limitée') || libelle.includes('eurl')) correspondance = 'EURL';
+    else if (libelle.includes('par actions simplifiée unipersonnelle') || libelle.includes('sasu')) correspondance = 'SASU';
+    else if (libelle.includes('par actions simplifiée')) correspondance = 'SAS';
+    else if (libelle.includes('responsabilité limitée')) correspondance = 'SARL';
+    if (correspondance) {
+      select.value = correspondance;
+      sauvegarderChampsImmediat({ forme_juridique: correspondance });
+    }
+  }
+
+  // 25/09/2026 : bloc "Commencez par votre SIRET" en tête de page — demandé
+  // par Cyrille. Une seule saisie récupère nom/adresse/forme juridique via
+  // /api/verifier-siret (déjà utilisé plus bas par "Vérifier ma forme
+  // juridique", désormais enrichi pour renvoyer aussi l'adresse) et
+  // pré-remplit les sections Coordonnées + Informations légales — jamais
+  // par-dessus une valeur déjà saisie par l'artisan.
+  const btnSiretRapide = document.getElementById('btnSiretRapide');
+  const btnSiretRapideIgnorer = document.getElementById('btnSiretRapideIgnorer');
+  if (btnSiretRapide) {
+    btnSiretRapide.addEventListener('click', async () => {
+      const input = document.getElementById('siretRapideInput');
+      const statut = document.getElementById('siretRapideStatut');
+      const siret = input.value.replace(/\s/g, '');
+      statut.className = 'siret-rapide-statut';
+      if (!/^\d{14}$/.test(siret)) {
+        statut.textContent = 'Un SIRET comporte 14 chiffres — vérifiez la saisie.';
+        statut.className = 'siret-rapide-statut err';
+        return;
+      }
+      btnSiretRapide.disabled = true;
+      statut.textContent = 'Recherche dans le répertoire officiel…';
+      try {
+        const res = await fetch('/api/verifier-siret', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ siret })
+        });
+        const data = await res.json();
+        if (!data.success) {
+          statut.textContent = data.error || 'Recherche indisponible pour le moment — vous pouvez saisir vos informations vous-même ci-dessous.';
+          statut.className = 'siret-rapide-statut err';
+          return;
+        }
+        if (!data.trouve) {
+          statut.textContent = 'SIRET introuvable dans le répertoire officiel — vérifiez la saisie, ou saisissez vos informations vous-même ci-dessous.';
+          statut.className = 'siret-rapide-statut err';
+          return;
+        }
+
+        const champsTrouves = [];
+        const champsARemplir = {};
+        const entrepriseEl = document.getElementById('entreprise');
+        if (!entrepriseEl.value.trim() && data.denomination) {
+          entrepriseEl.value = data.denomination;
+          champsARemplir.entreprise = data.denomination;
+          champsTrouves.push('nom de l\'entreprise');
+        }
+        const adresseRueEl = document.getElementById('adresseRue');
+        if (!adresseRueEl.value.trim() && data.adresse) {
+          adresseRueEl.value = data.adresse;
+          champsARemplir.adresse_rue = data.adresse;
+          champsTrouves.push('adresse');
+        }
+        const adresseCpEl = document.getElementById('adresseCp');
+        if (!adresseCpEl.value.trim() && data.codePostal) {
+          adresseCpEl.value = data.codePostal;
+          champsARemplir.adresse_cp = data.codePostal;
+        }
+        const adresseVilleEl = document.getElementById('adresseVille');
+        if (!adresseVilleEl.value.trim() && data.ville) {
+          adresseVilleEl.value = data.ville;
+          champsARemplir.adresse_ville = data.ville;
+        }
+        const siretEl = document.getElementById('siret');
+        if (!siretEl.value.trim()) {
+          siretEl.value = siret;
+          champsARemplir.siret = siret;
+        }
+        if (data.libelleNature) champsTrouves.push('forme juridique');
+        appliquerFormeJuridiqueDepuisLibelle(data.libelleNature);
+        if (data.suggestionFranchiseTva && checkFranchiseTva && !checkFranchiseTva.checked) {
+          checkFranchiseTva.checked = true;
+          sauvegarderChampsImmediat({ franchise_tva: true });
+        }
+        if (Object.keys(champsARemplir).length) sauvegarderChampsImmediat(champsARemplir);
+
+        // On ouvre Coordonnées + Informations légales pour que l'artisan
+        // voie et corrige ce qui vient d'être rempli avant de continuer.
+        ['coordonnees', 'legal'].forEach(nom => {
+          const section = document.querySelector(`[data-section="${nom}"]`);
+          if (section) section.classList.add('open');
+        });
+        calculerProgression();
+
+        statut.textContent = champsTrouves.length
+          ? `✓ Trouvé : ${champsTrouves.join(', ')}. Vérifiez et complétez ci-dessous, puis continuez.`
+          : 'SIRET reconnu — vos informations étaient déjà renseignées.';
+        statut.className = 'siret-rapide-statut ok';
+        document.getElementById('siretRapideBox').style.display = 'none';
+      } catch (e) {
+        statut.textContent = 'Recherche indisponible pour le moment — vous pouvez saisir vos informations vous-même ci-dessous.';
+        statut.className = 'siret-rapide-statut err';
+      } finally {
+        btnSiretRapide.disabled = false;
+      }
+    });
+    document.getElementById('siretRapideInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); btnSiretRapide.click(); }
+    });
+  }
+  if (btnSiretRapideIgnorer) {
+    btnSiretRapideIgnorer.addEventListener('click', () => {
+      document.getElementById('siretRapideBox').style.display = 'none';
+      const section = document.querySelector('[data-section="coordonnees"]');
+      if (section) section.classList.add('open');
     });
   }
 

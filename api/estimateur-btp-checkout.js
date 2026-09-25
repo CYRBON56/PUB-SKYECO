@@ -1,8 +1,12 @@
 // /api/estimateur-btp-checkout.js
 // Crée une session Stripe pour ACHETER l'Estimateur BTP — 29,90€ HT, achat
-// UNIQUE et FIXE, pas d'abonnement ni de forfait (changement du 25/09/2026 :
-// avant cette date c'était un essai gratuit de 2 jours puis un abonnement à
-// 29,90€ HT/mois ; il n'y a plus ni essai, ni prélèvement récurrent).
+// UNIQUE et FIXE, pas d'abonnement (revu deux fois le 25/09/2026, tranché
+// définitivement par Cyrille : l'essai gratuit de 2 jours reste bien présent
+// — voir api/estimateur-btp-essai.js — mais ce qui suit n'est plus un
+// abonnement mensuel qui se renouvelle tout seul : un seul paiement de
+// 29,90€ HT, jamais reprélevé). Appelé soit à la fin de l'essai gratuit
+// (paywall), soit plus tôt si la personne choisit de payer avant la fin de
+// l'essai.
 //
 // Même principe que create-checkout-session.js (Skyeco Pro) pour la TVA :
 // elle est directement incluse dans unit_amount (prix TTC), pas de calcul de

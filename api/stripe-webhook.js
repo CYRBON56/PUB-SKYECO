@@ -368,11 +368,13 @@ export default async function handler(req, res) {
         const session = event.data.object;
 
         // Achat unique "Estimateur BTP" (29,90€ HT, pas d'abonnement — revu
-        // le 25/09/2026, il n'y a plus ni essai ni forfait récurrent) :
-        // déverrouille l'accès dès ce paiement confirmé. Le retour sur la
-        // page (success_url) revérifie aussi le statut de son côté
-        // (estimateur-btp-statut.js) au cas où ce webhook arriverait après
-        // que la personne soit revenue sur la page.
+        // le 25/09/2026 : l'essai gratuit de 2 jours reste présent, voir
+        // api/estimateur-btp-essai.js, mais ce qui suit n'est plus un
+        // abonnement mensuel récurrent) : déverrouille l'accès dès ce
+        // paiement confirmé. Le retour sur la page (success_url) revérifie
+        // aussi le statut de son côté (estimateur-btp-statut.js) au cas où
+        // ce webhook arriverait après que la personne soit revenue sur la
+        // page.
         if (session.metadata?.product === 'estimateur-btp' && session.mode === 'payment') {
           const email = (session.metadata?.email || session.customer_details?.email || session.customer_email || '').toLowerCase();
           if (email) {

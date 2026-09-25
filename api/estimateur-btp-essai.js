@@ -97,6 +97,7 @@ function etatPourReponse(row) {
     reglages: row.reglages || null,
     overrides: row.overrides || null,
     postesPerso: row.postes_perso || null,
+    postesMasques: row.postes_masques || null,
   };
 }
 

@@ -35,7 +35,7 @@ export default async function handler(req, res) {
 
   try {
     const rows = await supabaseRequest(
-      `estimateur_btp_acces?email=eq.${encodeURIComponent(email)}&select=email,essai_fin,abonnement_actif,source,reglages,overrides,postesPerso:postes_perso&limit=1`
+      `estimateur_btp_acces?email=eq.${encodeURIComponent(email)}&select=email,essai_fin,abonnement_actif,source,reglages,overrides,postesPerso:postes_perso,postesMasques:postes_masques&limit=1`
     );
     if (!rows.length) {
       return res.status(404).json({ success: false, error: 'Aucun essai trouvé pour cet email' });

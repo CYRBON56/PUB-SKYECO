@@ -1,10 +1,12 @@
 // /api/estimateur-btp-reglages.js
 // Sauvegarde les réglages entreprise (nom, coordonnées, logo, TVA par défaut,
-// lien dashboard), les prix personnalisés (overrides) et les postes
-// personnalisés (postesPerso) d'un compte Estimateur BTP, pour qu'ils soient
+// lien dashboard), les prix personnalisés (overrides), les postes
+// personnalisés (postesPerso) et les postes du catalogue commun masqués par
+// l'artisan (postesMasques) d'un compte Estimateur BTP, pour qu'ils soient
 // identiques sur tous les appareils connectés avec le même email
-// (25/09/2026 ; postesPerso ajouté le même jour — postes créés par
-// l'artisan en plus des 123 du catalogue commun).
+// (25/09/2026 ; postesPerso et postesMasques ajoutés le même jour — onglet
+// Catalogue permettant de créer ses propres postes et de masquer ceux du
+// catalogue commun qu'on ne veut pas voir).
 //
 // N'INCLUT PAS les champs propres au client du devis en cours (nom/téléphone/
 // email/adresse du client) — ceux-là sont attachés à chaque devis via
@@ -22,7 +24,7 @@ export default async function handler(req, res) {
   }
 
   const email = (req.body?.email || '').trim().toLowerCase();
-  const { reglages, overrides, postesPerso } = req.body || {};
+  const { reglages, overrides, postesPerso, postesMasques } = req.body || {};
   if (!emailValide(email)) {
     return res.status(400).json({ success: false, error: 'Email invalide' });
   }
@@ -42,6 +44,7 @@ export default async function handler(req, res) {
           reglages: reglages || null,
           overrides: overrides || null,
           postes_perso: postesPerso || null,
+          postes_masques: postesMasques || null,
           updated_at: new Date().toISOString(),
         }),
       }

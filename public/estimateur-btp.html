@@ -87,12 +87,17 @@
       gap:20px;
       align-items:start;
     }
-    main .search-card{grid-column:1;grid-row:1;}
-    main #productSheet{grid-column:1;grid-row:2;}
-    main #mediasCard{grid-column:1;grid-row:3;}
+    /* Bandeaux (essai gratuit, reprise de connexion) : sur toute la largeur,
+       au-dessus des 2 colonnes — sans ça, l'emplacement grid libre le plus
+       proche (calculé automatiquement) les fait atterrir n'importe où, par
+       exemple à la place de la fiche produit repliée. */
+    main .trial-banner, main .sync-banner{grid-column:1 / -1;grid-row:1;}
+    main .search-card{grid-column:1;grid-row:2;}
+    main #productSheet{grid-column:1;grid-row:3;}
+    main #mediasCard{grid-column:1;grid-row:4;}
     main #devisCard{
       grid-column:2;
-      grid-row:1 / span 3;
+      grid-row:2 / span 3;
       position:sticky;
       top:84px; /* sous l'en-tête, qui reste fixe en haut */
       margin-bottom:0;
@@ -460,9 +465,79 @@
   .sync-banner button{border:none;border-radius:8px;padding:8px 12px;font-weight:700;font-size:13px;cursor:pointer;}
   .sync-banner .btn-envoyer{background:#2C6E49;color:#fff;}
   .sync-banner .btn-plustard{background:transparent;color:#5b6b64;}
+
+  /* Accès payant après 5 jours d'essai gratuit (25/09/2026). L'appli reste
+     entièrement cachée (appWrapper) tant qu'on n'a pas décidé, côté script,
+     que l'email connu a un essai en cours ou un abonnement actif — voir le
+     bloc JS "ACCÈS / ESSAI / PAIEMENT" tout en bas du script. */
+  #accessGate{
+    position:fixed; inset:0; z-index:9999;
+    background:linear-gradient(135deg,var(--navy),var(--navy-dark));
+    display:none;
+    align-items:center; justify-content:center;
+    padding:20px;
+  }
+  #accessGate .gate-card{
+    background:var(--card);
+    border-radius:var(--radius);
+    padding:28px 22px;
+    max-width:400px;
+    width:100%;
+    text-align:center;
+    box-shadow:0 10px 40px rgba(0,0,0,.25);
+  }
+  #accessGate h2{font-size:20px;margin:0 0 8px;color:var(--navy);}
+  #accessGate p{font-size:14px;color:var(--text-mut);margin:0 0 14px;line-height:1.5;}
+  #accessGate .gate-essai-ligne{font-weight:700;color:var(--navy);margin-bottom:16px;}
+  #accessGate input[type="email"]{margin-bottom:12px;}
+  #accessGate .gate-mini{font-size:12px;color:var(--text-mut);margin-top:14px;}
+  #accessGate .gate-err{color:#c0392b;font-size:13px;margin-top:10px;display:none;}
+  #accessGate .gate-prix{font-size:30px;font-weight:800;color:var(--orange);margin:8px 0 0;}
+  #accessGate .gate-prix small{font-size:13px;font-weight:600;color:var(--text-mut);}
+
+  .trial-banner{
+    background:var(--yellow-bg);
+    border:1px solid #f0d98a;
+    border-radius:10px;
+    padding:10px 12px;
+    font-size:13px;
+    color:#7a5c00;
+    margin-bottom:14px;
+    display:none;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .trial-banner button{
+    border:none;background:var(--navy);color:#fff;border-radius:8px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;
+  }
 </style>
 </head>
 <body>
+
+<div id="accessGate">
+  <div class="gate-card">
+    <div id="gateEmailStep">
+      <h2>🧮 Estimateur BTP</h2>
+      <p>Calculateur de devis chantier — catalogue de prix BTP intégré, utilisable même hors connexion sur un chantier isolé.</p>
+      <div class="gate-essai-ligne">5 jours d'essai gratuit, sans carte bancaire.</div>
+      <input type="email" id="gateEmailInput" placeholder="Votre email" autocomplete="email" inputmode="email">
+      <button class="btn btn-primary" id="gateEmailBtn" style="width:100%;">Démarrer mon essai gratuit</button>
+      <div class="gate-err" id="gateEmailErr"></div>
+    </div>
+    <div id="gatePaywallStep" style="display:none;">
+      <h2>Votre essai gratuit est terminé</h2>
+      <p>Continuez à chiffrer vos devis en 30 secondes, sur chantier comme au bureau.</p>
+      <div class="gate-prix">29,90 € <small>HT / mois</small></div>
+      <p style="margin-top:6px;">Sans engagement — vous arrêtez quand vous voulez.</p>
+      <button class="btn btn-primary" id="gatePaywallBtn" style="width:100%;margin-top:6px;">S'abonner</button>
+      <div class="gate-err" id="gatePaywallErr"></div>
+      <div class="gate-mini">Vous avez déjà payé et voyez quand même cet écran ? Attendez quelques secondes et rechargez la page.</div>
+    </div>
+  </div>
+</div>
+
+<div id="appWrapper" style="display:none;">
 
 <header class="app-header no-print">
   <div class="row">
@@ -478,6 +553,11 @@
 </header>
 
 <main>
+
+  <div class="trial-banner no-print" id="trialBanner">
+    <div class="txt">🎁 Essai gratuit en cours.</div>
+    <button id="btnTrialAbonner">S'abonner</button>
+  </div>
 
   <div class="sync-banner no-print" id="syncBanner">
     <div class="txt">🌐 Connexion retrouvée — envoyer ce devis vers votre dashboard ?</div>
@@ -651,6 +731,8 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+</div><!-- /appWrapper -->
 
 <script>
 /* ===================== CATALOGUE (123 prestations BTP) ===================== */
@@ -1367,6 +1449,173 @@ if('serviceWorker' in navigator){
 renderMetierChips();
 renderDevis();
 updateEntrepriseLabel();
+
+/* ===================== ACCÈS / ESSAI / PAIEMENT (25/09/2026) =====================
+   L'Estimateur BTP est devenu payant (29,90€ HT/mois) après un essai gratuit
+   de 5 jours, sans carte bancaire à l'entrée — même esprit "sans friction"
+   que le reste de Skyeco Pro. Tout se joue sur un simple email, stocké ici
+   en local (LS_ACCES) pour que l'appli reste utilisable hors connexion sur
+   un chantier une fois l'essai démarré ou l'abonnement actif : on ne
+   revérifie en ligne qu'en tâche de fond, jamais de façon bloquante.
+   Les personnes ayant déjà acheté le "Kit Pro Artisan BTP" (qui incluait ce
+   lien en bonus avant ce changement) reçoivent un accès illimité automatique
+   — voir api/estimateur-btp-essai.js. */
+const LS_ACCES = 'estimbtp_acces';
+
+function decidersEtatAcces(acces){
+  if (!acces || !acces.email) return 'gate';
+  if (acces.abonnement_actif) return 'app';
+  if (acces.essai_fin && new Date(acces.essai_fin).getTime() > Date.now()) return 'app';
+  return 'paywall';
+}
+
+function appliquerEtatAcces(etat, acces){
+  const gate = document.getElementById('accessGate');
+  const wrapper = document.getElementById('appWrapper');
+  const emailStep = document.getElementById('gateEmailStep');
+  const paywallStep = document.getElementById('gatePaywallStep');
+  const banner = document.getElementById('trialBanner');
+
+  if (etat === 'app'){
+    gate.style.display = 'none';
+    wrapper.style.display = 'block';
+    if (banner){
+      if (acces && !acces.abonnement_actif && acces.essai_fin){
+        const joursRestants = Math.max(0, Math.ceil((new Date(acces.essai_fin).getTime() - Date.now()) / 86400000));
+        banner.style.display = 'flex';
+        banner.querySelector('.txt').textContent = `🎁 Essai gratuit : encore ${joursRestants} jour${joursRestants > 1 ? 's' : ''}.`;
+      } else {
+        banner.style.display = 'none';
+      }
+    }
+  } else {
+    gate.style.display = 'flex';
+    wrapper.style.display = 'none';
+    emailStep.style.display = (etat === 'gate') ? 'block' : 'none';
+    paywallStep.style.display = (etat === 'paywall') ? 'block' : 'none';
+  }
+}
+
+async function demarrerAbonnement(email){
+  const resp = await fetch('/api/estimateur-btp-checkout', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email })
+  });
+  const data = await resp.json();
+  if (!resp.ok || !data.url) throw new Error(data.error || 'Erreur inconnue');
+  window.location.href = data.url;
+}
+
+let accesCourant = loadJSON(LS_ACCES, null);
+appliquerEtatAcces(decidersEtatAcces(accesCourant), accesCourant);
+
+// Bouton "Démarrer mon essai gratuit"
+document.getElementById('gateEmailBtn').addEventListener('click', async () => {
+  const input = document.getElementById('gateEmailInput');
+  const err = document.getElementById('gateEmailErr');
+  const btn = document.getElementById('gateEmailBtn');
+  const email = (input.value || '').trim().toLowerCase();
+  err.style.display = 'none';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    err.textContent = 'Merci de saisir un email valide.';
+    err.style.display = 'block';
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = 'Un instant…';
+  try{
+    const resp = await fetch('/api/estimateur-btp-essai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const data = await resp.json();
+    if (!resp.ok || !data.success) throw new Error(data.error || 'Erreur inconnue');
+    accesCourant = { email: data.email, essai_fin: data.essai_fin, abonnement_actif: data.abonnement_actif, source: data.source };
+    saveJSON(LS_ACCES, accesCourant);
+    appliquerEtatAcces(decidersEtatAcces(accesCourant), accesCourant);
+  }catch(e){
+    err.textContent = "Impossible de démarrer l'essai — vérifiez votre connexion et réessayez.";
+    err.style.display = 'block';
+  }finally{
+    btn.disabled = false;
+    btn.textContent = 'Démarrer mon essai gratuit';
+  }
+});
+document.getElementById('gateEmailInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('gateEmailBtn').click();
+});
+
+// Bouton "S'abonner" (écran de paiement plein écran)
+document.getElementById('gatePaywallBtn').addEventListener('click', async () => {
+  const err = document.getElementById('gatePaywallErr');
+  const btn = document.getElementById('gatePaywallBtn');
+  err.style.display = 'none';
+  if (!accesCourant || !accesCourant.email) return;
+  btn.disabled = true;
+  btn.textContent = 'Redirection…';
+  try{
+    await demarrerAbonnement(accesCourant.email);
+  }catch(e){
+    err.textContent = "Impossible d'ouvrir la page de paiement — réessayez.";
+    err.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = "S'abonner";
+  }
+});
+
+// Bouton "S'abonner" du petit bandeau (pendant l'essai, pour payer plus tôt)
+document.getElementById('btnTrialAbonner').addEventListener('click', async () => {
+  if (!accesCourant || !accesCourant.email) return;
+  try{
+    await demarrerAbonnement(accesCourant.email);
+  }catch(e){
+    toast("Impossible d'ouvrir la page de paiement — réessayez.");
+  }
+});
+
+// Retour depuis Stripe (?paiement=ok) : revérifie tout de suite le statut
+// sans attendre le webhook, puis nettoie l'URL. ?paiement=annule n'a rien de
+// spécial à faire : l'état d'accès local n'a pas changé.
+(function gererRetourPaiement(){
+  const params = new URLSearchParams(window.location.search);
+  const paiement = params.get('paiement');
+  if (!paiement) return;
+
+  const email = params.get('email') || (accesCourant && accesCourant.email);
+  history.replaceState({}, '', window.location.pathname);
+
+  if (paiement === 'ok' && email){
+    fetch('/api/estimateur-btp-statut?email=' + encodeURIComponent(email))
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data && data.success){
+          accesCourant = { email, essai_fin: data.essai_fin, abonnement_actif: data.abonnement_actif, source: data.source };
+          saveJSON(LS_ACCES, accesCourant);
+          appliquerEtatAcces(decidersEtatAcces(accesCourant), accesCourant);
+          if (accesCourant.abonnement_actif) toast('✅ Abonnement activé, merci !');
+        }
+      })
+      .catch(() => {});
+  }
+})();
+
+// Revérification silencieuse en tâche de fond si une connexion est
+// disponible (jamais bloquante — hors ligne, on garde le dernier état connu,
+// c'est tout l'intérêt de cette appli sur un chantier isolé).
+if (accesCourant && accesCourant.email && navigator.onLine){
+  fetch('/api/estimateur-btp-statut?email=' + encodeURIComponent(accesCourant.email))
+    .then(r => r.ok ? r.json() : null)
+    .then(data => {
+      if (data && data.success){
+        accesCourant = { email: accesCourant.email, essai_fin: data.essai_fin, abonnement_actif: data.abonnement_actif, source: data.source };
+        saveJSON(LS_ACCES, accesCourant);
+        appliquerEtatAcces(decidersEtatAcces(accesCourant), accesCourant);
+      }
+    })
+    .catch(() => {});
+}
 </script>
 </body>
 </html>

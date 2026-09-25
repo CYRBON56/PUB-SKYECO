@@ -14,9 +14,20 @@
 // Idempotent : un email qui a déjà un essai en cours (ou un abonnement actif)
 // se voit renvoyer son état existant, jamais réinitialisé.
 //
-// Variables d'environnement requises : SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+// Envoie aussi un email de bienvenue expliquant le fonctionnement du
+// catalogue de prix préintégré — uniquement au tout premier démarrage
+// (jamais renvoyé aux visites suivantes, voir dejaDemarre) — car avant le
+// 25/09/2026 rien n'expliquait comment se servir de l'appli après le clic
+// "Démarrer mon essai gratuit". Un échec d'envoi d'email n'empêche jamais de
+// démarrer l'essai (c'est secondaire par rapport à l'accès lui-même).
+//
+// Variables d'environnement requises :
+//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, RESEND_API_KEY
+
+import { blocCommentCaMarcheEstimateur } from './_lib/estimateur-btp-email.js';
 
 const DUREE_ESSAI_JOURS = 5;
+const EXPEDITEUR_EMAIL = process.env.RESEND_FROM_EMAIL_ESTIMATEUR || 'Estimateur BTP <notifications@ecoskybyrms.fr>';
 
 function emailValide(email) {
   return typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
@@ -39,6 +50,42 @@ async function supabaseRequest(path, options = {}) {
   }
   const text = await res.text();
   return text ? JSON.parse(text) : null;
+}
+
+async function envoyerEmailBienvenue(email, dejaClientKitPro) {
+  const intro = dejaClientKitPro
+    ? `<p>Votre achat du <strong>Kit Pro Artisan BTP</strong> vous donne un accès illimité et gratuit à l'Estimateur BTP — pas d'essai à surveiller, pas d'abonnement.</p>`
+    : `<p>Votre essai gratuit de <strong>${DUREE_ESSAI_JOURS} jours</strong> vient de démarrer — sans carte bancaire. À la fin de l'essai, l'accès continue pour <strong>29,90€ HT/mois</strong> si vous souhaitez garder l'appli, sans engagement.</p>`;
+  const html = `
+    <div style="font-family:Arial, sans-serif; color:#222; max-width:560px; margin:0 auto;">
+      <h2 style="color:#1F3A5F;">Bienvenue sur l'Estimateur BTP</h2>
+      ${intro}
+      <p style="margin:0 0 4px;"><a href="https://www.skyeco.fr/estimateur-btp.html" style="color:#1F3A5F; font-weight:bold;">https://www.skyeco.fr/estimateur-btp.html</a></p>
+      <p style="margin:0 0 4px; font-size:13px; color:#666;">Ouvrez ce lien depuis votre téléphone, puis ajoutez la page à votre écran d'accueil (bouton 📲 « Installer l'appli » en haut de l'appli) pour l'utiliser comme une application, même sans connexion internet sur un chantier isolé.</p>
+      <div style="margin-top:24px; padding:18px; background:#F2F2F2; border-radius:10px;">
+        ${blocCommentCaMarcheEstimateur()}
+      </div>
+      <p style="margin-top:24px; color:#666; font-size:13px;">Une question ? Répondez simplement à cet email.</p>
+    </div>`;
+
+  const resp = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: EXPEDITEUR_EMAIL,
+      to: [email],
+      subject: dejaClientKitPro
+        ? 'Votre Estimateur BTP — accès illimité (Kit Pro)'
+        : 'Bienvenue — votre essai gratuit Estimateur BTP a démarré',
+      html,
+    }),
+  });
+  if (!resp.ok) {
+    throw new Error('Resend a refusé l\'envoi : ' + (await resp.text()));
+  }
 }
 
 function etatPourReponse(row) {
@@ -99,6 +146,14 @@ export default async function handler(req, res) {
       method: 'POST',
       body: JSON.stringify(nouvelleLigne),
     });
+
+    // Best-effort : un échec d'envoi d'email ne doit jamais faire échouer le
+    // démarrage de l'essai lui-même (l'accès est déjà enregistré ci-dessus).
+    try {
+      await envoyerEmailBienvenue(email, dejaClientKitPro);
+    } catch (err) {
+      console.error('estimateur-btp-essai : email de bienvenue non envoyé —', err.message);
+    }
 
     return res.status(200).json({ success: true, ...etatPourReponse(inserted[0]), dejaDemarre: false });
   } catch (err) {

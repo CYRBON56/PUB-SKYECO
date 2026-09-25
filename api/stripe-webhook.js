@@ -20,6 +20,7 @@
 //   RESEND_API_KEY          (déjà utilisé ailleurs — envoi de l'email de livraison)
 
 import Stripe from 'stripe';
+import { blocCommentCaMarcheEstimateur } from './_lib/estimateur-btp-email.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -137,9 +138,11 @@ async function envoyerEmailLivraisonKitPro(email) {
       <p style="margin-top:24px;">Chaque fichier s'ouvre avec Word / PowerPoint, ou peut être importé directement dans Canva (pour les visuels réseaux sociaux). Remplacez les textes entre crochets [ ] par vos informations et le tour est joué.</p>
       <div style="margin-top:24px; padding:18px; background:#F2F2F2; border-radius:10px;">
         <p style="margin:0 0 10px; font-weight:bold; color:#1F3A5F;">Bonus inclus : votre application de chiffrage sur chantier</p>
-        <p style="margin:0 0 12px;">Ouvrez ce lien depuis votre téléphone pour chiffrer vos devis directement sur le chantier (catalogue de prix BTP intégré, calcul automatique des surfaces/volumes) :</p>
+        <p style="margin:0 0 12px;">Ouvrez ce lien depuis votre téléphone pour chiffrer vos devis directement sur le chantier :</p>
         <p style="margin:0 0 10px;"><a href="${KIT_PRO_LIEN_ESTIMATEUR}" style="color:#1F3A5F; font-weight:bold;">${KIT_PRO_LIEN_ESTIMATEUR}</a></p>
-        <p style="margin:0; font-size:13px; color:#666;">Une fois la page ouverte, vous pouvez l'ajouter à votre écran d'accueil (menu du navigateur → « Ajouter à l'écran d'accueil ») pour l'utiliser comme une application, même sans connexion internet.</p>
+        <p style="margin:0 0 4px; font-size:13px; color:#666;">Une fois la page ouverte, vous pouvez l'ajouter à votre écran d'accueil (menu du navigateur → « Ajouter à l'écran d'accueil », ou le bouton 📲 dans l'appli) pour l'utiliser comme une application, même sans connexion internet.</p>
+        ${blocCommentCaMarcheEstimateur()}
+
       </div>
       <p style="margin-top:24px; color:#666; font-size:13px;">Un souci pour ouvrir ou retrouver vos fichiers ? Répondez simplement à cet email.</p>
     </div>`;

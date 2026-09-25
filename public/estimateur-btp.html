@@ -626,6 +626,9 @@
     <div style="margin-top:14px;">
       <button class="btn btn-primary" id="ps-add">➕ Ajouter au devis</button>
     </div>
+    <div id="ps-supprimer-poste" style="display:none; margin-top:10px; text-align:center;">
+      <a href="#" id="ps-supprimer-poste-lien" style="font-size:13px; color:#a8321e;">🗑️ Supprimer ce poste personnalisé</a>
+    </div>
   </div>
 
   <div class="card" id="devisCard">
@@ -781,6 +784,41 @@
   </div>
 </div>
 
+<div class="modal-overlay no-print" id="creerPosteModal">
+  <div class="modal">
+    <h3>➕ Nouveau poste personnalisé</h3>
+    <p class="search-hint" style="margin-bottom:14px;">En plus des 123 postes du catalogue — retrouvable ensuite comme les autres, sur tous vos appareils.</p>
+
+    <label class="field-label">Désignation</label>
+    <input type="text" id="cp-designation" placeholder="Ex : Pose de terrasse bois sur plots" style="margin-bottom:12px;">
+
+    <div class="row-2">
+      <div>
+        <label class="field-label">Unité</label>
+        <select id="cp-unite">
+          <option value="m²">m²</option>
+          <option value="m³">m³</option>
+          <option value="mL">mL</option>
+          <option value="u">u (unité)</option>
+          <option value="forfait">forfait</option>
+          <option value="jour">jour</option>
+          <option value="h">h (heure)</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label">Prix par défaut HT (€)</label>
+        <input type="number" id="cp-prix" inputmode="decimal" step="0.01" min="0" placeholder="Ex : 45">
+      </div>
+    </div>
+    <div id="cp-err" class="search-hint" style="display:none;color:#a8321e;margin-top:8px;"></div>
+
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn btn-ghost" id="btnFermerCreerPoste" style="width:100%;">Annuler</button>
+      <button class="btn btn-primary" id="btnValiderCreerPoste" style="width:100%;">Créer</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 </div><!-- /appWrapper -->
@@ -796,7 +834,8 @@ const LS_KEYS = {
   devis: 'estimbtp_devis_courant',
   medias: 'estimbtp_medias_courant',
   dernierEnvoiHash: 'estimbtp_dernier_envoi_hash',
-  bannerIgnoreeHash: 'estimbtp_banner_ignoree_hash'
+  bannerIgnoreeHash: 'estimbtp_banner_ignoree_hash',
+  customItems: 'estimbtp_postes_perso' // 25/09/2026 — postes créés par l'artisan, en plus des 123 du catalogue
 };
 
 function loadJSON(key, fallback){
@@ -811,6 +850,14 @@ let settings = loadJSON(LS_KEYS.settings, { nom:'', coord:'', logo:'', client:''
 let overrides = loadJSON(LS_KEYS.overrides, {}); // code -> prix perso
 let devis = loadJSON(LS_KEYS.devis, []); // [{code,designation,unite,qte,prixU,tva,dims}]
 let mediasChantier = loadJSON(LS_KEYS.medias, []); // [{id,type:'photo'|'video',dataUrl,ajouteLe}]
+// Postes personnalisés (25/09/2026) : en plus des 123 postes du catalogue
+// commun à tous les artisans, chaque compte peut créer ses propres lignes
+// (ex : une prestation très spécifique à son métier). Même forme qu'une
+// entrée du CATALOGUE (code/metier/designation/unite/prixDefaut/alias) pour
+// pouvoir être cherchées et sélectionnées exactement pareil — voir
+// poolComplet() plus bas. metier vaut toujours 'Mes postes' pour les
+// distinguer visuellement et permettre de les filtrer à part.
+let customItems = loadJSON(LS_KEYS.customItems, []);
 
 /* ===================== ACCÈS / SYNCHRONISATION (25/09/2026) =====================
    État déclaré ici (tôt dans le script, avant le rendu du devis) pour que
@@ -871,6 +918,7 @@ async function sauvegarderReglagesServeur(){
         email: accesCourant.email,
         reglages: { nom: settings.nom, coord: settings.coord, logo: settings.logo, tvaDefaut: settings.tvaDefaut, dashboardLink: settings.dashboardLink },
         overrides,
+        postesPerso: customItems,
       }),
     });
   }catch(e){ /* silencieux, même logique que ci-dessus */ }
@@ -897,7 +945,14 @@ function priceFor(code, fallback){
 
 /* ===================== RECHERCHE FLOUE ===================== */
 const METIERS = [...new Set(CATALOGUE.map(c=>c.metier))];
+const PERSO_METIER = 'Mes postes'; // corps de métier réservé aux postes créés par l'artisan (25/09/2026)
 let activeMetier = null;
+
+// Catalogue + postes personnalisés de l'artisan, cherchés et sélectionnés
+// exactement de la même façon (voir runSearch/selectProduct ci-dessous).
+function poolComplet(){
+  return CATALOGUE.concat(customItems);
+}
 
 function scoreItem(item, tokens){
   const hay = strip(item.designation + ' ' + item.alias + ' ' + item.metier + ' ' + item.code);
@@ -914,10 +969,26 @@ function scoreItem(item, tokens){
   return score;
 }
 
+function htmlEscape(s){
+  return (s||'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// Lien "créer ce poste" affiché sous les résultats de recherche (ou seul, si
+// aucun résultat) — c'est la porte d'entrée vers la création d'un poste
+// personnalisé (25/09/2026), avec le texte tapé déjà pré-rempli.
+function lienCreerPoste(query){
+  return `<div class="sugg-item sugg-item-creer" data-query="${htmlEscape(query)}" style="border-style:dashed;">
+    <div class="sugg-main">
+      <div class="sugg-desig">➕ Créer « ${htmlEscape(query)} » comme nouveau poste</div>
+      <div class="sugg-meta">Votre propre prix, retrouvable la prochaine fois — sur tous vos appareils.</div>
+    </div>
+  </div>`;
+}
+
 function runSearch(query){
   const box = document.getElementById('suggestionsBox');
   const q = strip(query).trim();
-  let pool = CATALOGUE;
+  let pool = poolComplet();
   if(activeMetier) pool = pool.filter(c=>c.metier===activeMetier);
 
   if(!q){
@@ -931,30 +1002,34 @@ function runSearch(query){
                      .slice(0,8);
 
   if(results.length===0){
-    box.innerHTML = '<div class="empty-state">Aucune référence trouvée. Essayez un autre mot, ou changez de corps de métier ci-dessus.</div>';
-    return;
+    box.innerHTML = '<div class="empty-state">Aucune référence trouvée. Essayez un autre mot, ou changez de corps de métier ci-dessus.</div>' + lienCreerPoste(query.trim());
+  } else {
+    box.innerHTML = results.map(r=>{
+      const it = r.item;
+      const p = priceFor(it.code, it.prixDefaut);
+      return `<div class="sugg-item" data-code="${it.code}">
+        <div class="sugg-main">
+          <div class="sugg-code">${it.code} · ${it.metier}</div>
+          <div class="sugg-desig">${it.designation}</div>
+          <div class="sugg-meta">Unité : ${it.unite}${it.prixRepere && it.prixRepere !== '—' ? ' · Repère marché : ' + it.prixRepere : ''}</div>
+        </div>
+        <div class="sugg-price">${p ? eur(p) : '—'}<br><span style="font-weight:400;font-size:10.5px;color:var(--text-mut);">/${it.unite}</span></div>
+      </div>`;
+    }).join('') + lienCreerPoste(query.trim());
   }
-  box.innerHTML = results.map(r=>{
-    const it = r.item;
-    const p = priceFor(it.code, it.prixDefaut);
-    return `<div class="sugg-item" data-code="${it.code}">
-      <div class="sugg-main">
-        <div class="sugg-code">${it.code} · ${it.metier}</div>
-        <div class="sugg-desig">${it.designation}</div>
-        <div class="sugg-meta">Unité : ${it.unite}${it.prixRepere && it.prixRepere !== '—' ? ' · Repère marché : ' + it.prixRepere : ''}</div>
-      </div>
-      <div class="sugg-price">${p ? eur(p) : '—'}<br><span style="font-weight:400;font-size:10.5px;color:var(--text-mut);">/${it.unite}</span></div>
-    </div>`;
-  }).join('');
 
-  box.querySelectorAll('.sugg-item').forEach(el=>{
+  box.querySelectorAll('.sugg-item[data-code]').forEach(el=>{
     el.addEventListener('click', ()=> selectProduct(el.dataset.code));
   });
+  const lienCreer = box.querySelector('.sugg-item-creer');
+  if(lienCreer){
+    lienCreer.addEventListener('click', ()=> ouvrirCreationPoste(lienCreer.dataset.query));
+  }
 }
 
 function renderMetierChips(){
   const wrap = document.getElementById('metierChips');
-  wrap.innerHTML = ['Tous', ...METIERS].map(m=>{
+  wrap.innerHTML = ['Tous', ...METIERS, PERSO_METIER].map(m=>{
     const isAll = m==='Tous';
     const active = isAll ? !activeMetier : activeMetier===m;
     return `<div class="chip ${active?'active':''}" data-m="${isAll?'':m}">${m}</div>`;
@@ -1022,7 +1097,7 @@ function recomputeDims(){
 }
 
 function selectProduct(code){
-  const item = CATALOGUE.find(c=>c.code===code);
+  const item = poolComplet().find(c=>c.code===code);
   if(!item) return;
   currentItem = item;
   document.getElementById('ps-code').textContent = item.code + ' · ' + item.metier;
@@ -1037,6 +1112,11 @@ function selectProduct(code){
     const el = document.getElementById(id);
     if(el) el.addEventListener('input', recomputeDims);
   });
+  // Postes personnalisés uniquement : lien pour supprimer ce poste (les 123
+  // postes du catalogue commun ne peuvent pas être supprimés, seulement voir
+  // leur prix modifié).
+  const supprLigne = document.getElementById('ps-supprimer-poste');
+  supprLigne.style.display = (item.metier === PERSO_METIER) ? 'block' : 'none';
   document.getElementById('productSheet').style.display = 'block';
   document.getElementById('suggestionsBox').innerHTML = '';
   document.getElementById('searchInput').value = '';
@@ -1669,6 +1749,10 @@ function appliquerReglagesRecus(data){
     overrides = data.overrides;
     saveJSON(LS_KEYS.overrides, overrides);
   }
+  if (data.postesPerso){
+    customItems = data.postesPerso;
+    saveJSON(LS_KEYS.customItems, customItems);
+  }
 }
 
 // Migration en douceur pour un appareil qui utilisait déjà l'Estimateur BTP
@@ -1688,7 +1772,13 @@ async function synchroniserApresConnexion(){
     const serveurAReglages = data && data.success && data.reglages && Object.keys(data.reglages).length > 0;
     if (serveurAReglages){
       appliquerReglagesRecus(data);
-    } else if (settings.nom){
+      // Cas d'un compte déjà relié avant l'ajout des postes personnalisés
+      // (25/09/2026) : le serveur a des réglages mais pas encore de
+      // postesPerso — on remonte ceux de cet appareil s'il en a.
+      if (!data.postesPerso && customItems.length){
+        await sauvegarderReglagesServeur();
+      }
+    } else if (settings.nom || customItems.length){
       await sauvegarderReglagesServeur();
     }
     if (devis.length && !devisMeta.id){
@@ -1845,6 +1935,78 @@ document.getElementById('btnFermerInstall1').addEventListener('click', () => doc
 document.getElementById('btnFermerInstall2').addEventListener('click', () => document.getElementById('installModal').classList.remove('open'));
 document.getElementById('installModal').addEventListener('click', (e) => {
   if (e.target === document.getElementById('installModal')) document.getElementById('installModal').classList.remove('open');
+});
+
+/* ---------- Postes personnalisés (25/09/2026) ---------- */
+// En plus des 123 postes du catalogue commun, chaque artisan peut créer ses
+// propres lignes (ex : une prestation spécifique à son métier) — voir
+// poolComplet()/runSearch plus haut pour la recherche, et PERSO_METIER pour
+// le corps de métier réservé qui les distingue.
+function genererCodePoste(){
+  // Suffixe aléatoire plutôt qu'un compteur : évite toute collision entre
+  // deux appareils du même compte qui créeraient un poste au même moment,
+  // sans synchronisation en temps réel entre eux.
+  return 'PERSO-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+}
+
+function ouvrirCreationPoste(texteRecherche){
+  document.getElementById('cp-designation').value = texteRecherche || '';
+  document.getElementById('cp-unite').value = 'm²';
+  document.getElementById('cp-prix').value = '';
+  document.getElementById('cp-err').style.display = 'none';
+  document.getElementById('creerPosteModal').classList.add('open');
+}
+
+document.getElementById('btnFermerCreerPoste').addEventListener('click', () => {
+  document.getElementById('creerPosteModal').classList.remove('open');
+});
+document.getElementById('creerPosteModal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('creerPosteModal')) document.getElementById('creerPosteModal').classList.remove('open');
+});
+
+document.getElementById('btnValiderCreerPoste').addEventListener('click', () => {
+  const designation = document.getElementById('cp-designation').value.trim();
+  const unite = document.getElementById('cp-unite').value;
+  const prix = parseFloat(document.getElementById('cp-prix').value);
+  const err = document.getElementById('cp-err');
+  if (!designation){
+    err.textContent = 'Merci de donner un nom à ce poste.';
+    err.style.display = 'block';
+    return;
+  }
+  if (!(prix >= 0)){
+    err.textContent = 'Merci d\'indiquer un prix (0 si vous le déciderez plus tard).';
+    err.style.display = 'block';
+    return;
+  }
+  const nouveauPoste = {
+    code: genererCodePoste(),
+    metier: PERSO_METIER,
+    designation,
+    unite,
+    prixDefaut: prix,
+    alias: '',
+  };
+  customItems.push(nouveauPoste);
+  saveJSON(LS_KEYS.customItems, customItems);
+  noterReglagesModifies();
+  document.getElementById('creerPosteModal').classList.remove('open');
+  toast('✅ Poste créé — retrouvable sur tous vos appareils');
+  // Ouvre directement sa fiche produit pour enchaîner sur l'ajout au devis,
+  // comme pour un poste du catalogue.
+  selectProduct(nouveauPoste.code);
+});
+
+document.getElementById('ps-supprimer-poste-lien').addEventListener('click', (e) => {
+  e.preventDefault();
+  if (!currentItem || currentItem.metier !== PERSO_METIER) return;
+  if (!confirm('Supprimer définitivement ce poste personnalisé ? (Les devis qui l\'utilisent déjà ne sont pas modifiés.)')) return;
+  customItems = customItems.filter(it => it.code !== currentItem.code);
+  saveJSON(LS_KEYS.customItems, customItems);
+  noterReglagesModifies();
+  document.getElementById('productSheet').style.display = 'none';
+  currentItem = null;
+  toast('Poste supprimé');
 });
 
 // Bouton "Démarrer mon essai gratuit"

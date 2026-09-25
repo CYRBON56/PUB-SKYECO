@@ -47,6 +47,8 @@ function etatPourReponse(row) {
     essai_fin: row.essai_fin,
     abonnement_actif: row.abonnement_actif,
     source: row.source,
+    reglages: row.reglages || null,
+    overrides: row.overrides || null,
   };
 }
 

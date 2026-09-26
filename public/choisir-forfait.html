@@ -394,6 +394,25 @@
         } catch (e) { /* en cas de doute, on garde le tarif normal (rang 1) */ }
       }
 
+      // 26/09/2026 : remise de fidélité Estimateur BTP (-5€ HT/mois pendant
+      // 1 an sur le forfait standard) pour les artisans qui ont déjà payé
+      // pour l'Estimateur BTP (achat direct ou via le Kit Pro Artisan BTP).
+      // Purement informatif ici (affichage du tarif) — l'éligibilité réelle
+      // est revérifiée côté serveur dans api/create-checkout-session.js, qui
+      // seul décide si le coupon Stripe est appliqué.
+      let remiseFideliteEstimateur = false;
+      if (draft.email) {
+        try {
+          const respAcces = await fetch(`/api/estimateur-btp-statut?email=${encodeURIComponent(draft.email)}`);
+          if (respAcces.ok) {
+            const dataAcces = await respAcces.json();
+            if (dataAcces.success && ['stripe', 'kit_pro'].includes(dataAcces.source)) {
+              remiseFideliteEstimateur = true;
+            }
+          }
+        } catch (e) { /* pas grave — sans remise affichée si on ne peut pas vérifier */ }
+      }
+
       // 14/09/2026 (soir) : le verrou manuel "site_valide" (bloquait le choix
       // de formule tant que Cyrille n'avait pas validé la fiche à la main
       // depuis mes-artisans.html) est retiré — désormais l'identité de
@@ -411,7 +430,7 @@
       }
 
       document.getElementById('vitrineFrame').src = '/apercu.html?id=' + draftId;
-      renderPlans(draft.status, rangVitrine);
+      renderPlans(draft.status, rangVitrine, remiseFideliteEstimateur);
       initChoixVitrine(draft);
     } catch (e) {
       document.body.innerHTML = '<div class="loading">Impossible de charger la page pour le moment.</div>';
@@ -601,7 +620,7 @@
   // c'est le bouton de paiement classique qui s'affiche à la place. Pour
   // tout le monde d'autre (premier passage), seul le bouton d'essai gratuit
   // est visible — le paiement direct n'est plus proposé en premier choix.
-  function renderPlans(statutActuel, rangVitrine) {
+  function renderPlans(statutActuel, rangVitrine, remiseFideliteEstimateur) {
     // 17/09/2026 (soir) : sur demande de Cyrille, un artisan dont l'essai
     // gratuit est encore EN COURS ('essai') ne doit plus voir le bouton de
     // paiement — ça revenait à lui redemander une carte alors qu'il n'a pas
@@ -614,17 +633,22 @@
     // À partir de la 3e vitrine du compte, tarif "vitrine supplémentaire"
     // (03/09) — 3e/4e vitrine à 59,90€, 5e/6e et suivantes à 79,90€ (18/09) —
     // sinon le forfait normal, inchangé.
+    // Remise de fidélité Estimateur BTP (26/09) : uniquement affichée sur le
+    // forfait standard (id 3), jamais sur les vitrines supplémentaires —
+    // cohérent avec PLAN_AVEC_REMISE_FIDELITE côté serveur.
     const forfaitsAffiches = (rangVitrine >= 5) ? [FORFAIT_VITRINE_SUPPLEMENTAIRE_2]
       : (rangVitrine >= 3) ? [FORFAIT_VITRINE_SUPPLEMENTAIRE]
-      : FORFAITS;
+      : FORFAITS.map(f => (remiseFideliteEstimateur && f.id === 3)
+          ? { ...f, prixPromo: '34,90', dureePromoMois: 12, promoTileLabel: 'Remise fidélité<br>Estimateur BTP', promoTileBadge: '-5€ HT' }
+          : f);
     const grid = document.getElementById('plansGrid');
     grid.innerHTML = forfaitsAffiches.map(f => `
       <div class="plan-card ${f.recommande ? 'recommande' : ''}">
         ${f.recommande ? '<div class="plan-badge">Recommandé</div>' : ''}
         ${f.prixPromo ? `
           <div class="promo-tile">
-            <div class="promo-tile-label">Prix spécial<br>artisan</div>
-            <div class="promo-tile-percent">-50%</div>
+            <div class="promo-tile-label">${f.promoTileLabel || 'Prix spécial<br>artisan'}</div>
+            <div class="promo-tile-percent">${f.promoTileBadge || '-50%'}</div>
             <div class="promo-tile-duree">1ère année</div>
           </div>
         ` : ''}

@@ -97,6 +97,8 @@
   .rail-btn:active{background:var(--navy-dark);}
   #btnCatalogue.rail-btn{background:var(--orange);}
   #btnCatalogue.rail-btn:active{background:var(--orange-dark);}
+  #btnAdsDashboard.rail-btn{background:var(--green);}
+  #btnAdsDashboard.rail-btn:active{background:#166b3d;}
 
   main{padding:14px;max-width:640px;margin:0 auto;}
 
@@ -593,6 +595,7 @@
 </header>
 
 <div class="side-rail no-print" id="sideRail">
+  <button class="rail-btn" id="btnAdsDashboard" title="Gérer mes pubs et réseaux sociaux (tableau de bord Skyeco Pro)"><span class="rail-icon">📊</span><span class="rail-label">Mon Ads &amp; Réseau</span></button>
   <button class="rail-btn" id="btnSettings" title="Réglages"><span class="rail-icon">⚙️</span><span class="rail-label">Réglages</span></button>
   <button class="rail-btn" id="btnInstallApp" title="Installer sur mon téléphone"><span class="rail-icon">📲</span><span class="rail-label">Installer</span></button>
   <button class="rail-btn" id="btnClear" title="Nouveau devis"><span class="rail-icon">🗑️</span><span class="rail-label">Nouveau devis</span></button>
@@ -1990,6 +1993,13 @@ async function supprimerDevisHistorique(id){
     toast('Impossible de supprimer — réessayez.');
   }
 }
+
+document.getElementById('btnAdsDashboard').addEventListener('click', () => {
+  // 26/09/2026 : bouton de passerelle vers le tableau de bord Ads/Réseaux
+  // sociaux (Skyeco Pro) — ouvert dans un nouvel onglet pour ne pas perdre
+  // le devis en cours dans l'Estimateur BTP.
+  window.open('https://pub-skyeco-23ue.vercel.app/mon-dashboard-demo.html?visiteur=1', '_blank');
+});
 
 document.getElementById('btnHistorique').addEventListener('click', () => {
   document.getElementById('historyModal').classList.add('open');

@@ -402,10 +402,12 @@
          signature électronique des devis, prise de RDV en ligne). Affichée
          uniquement au même moment que #introFunnel (mode visiteur ou brouillon
          existant, voir plus bas).
-         Fichier hébergé en dur dans public/videos/ (copie livrée par Cyrille
-         après le rendu HyperFrames) — pas de lien signé à durée limitée. -->
+         Fichier hébergé sur Supabase Storage (bucket public "skyeco-pro-media",
+         dossier estimateur-btp/) plutôt que dans le repo Git — pas de lien
+         signé à durée limitée, et pas besoin de redéployer pour le remplacer
+         plus tard (juste réécraser le fichier dans Supabase). -->
     <video controls playsinline preload="metadata" style="width:100%; max-width:640px; border-radius:16px; box-shadow:0 8px 26px rgba(76,29,149,0.16); display:block; margin:0 auto;">
-      <source src="/videos/dashboard-ads-reseau-explication.mp4" type="video/mp4">
+      <source src="https://wklddwumirkdjkbxvzyj.supabase.co/storage/v1/object/public/skyeco-pro-media/estimateur-btp/dashboard-ads-reseau-explication.mp4" type="video/mp4">
     </video>
   </div>
   <button type="button" id="btnVoirVitrineDemo" class="btn-voir-vitrine-demo" style="display:none;">👁️ Voir la vitrine d'un vrai client</button>

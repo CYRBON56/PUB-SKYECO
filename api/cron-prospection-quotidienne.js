@@ -6,9 +6,14 @@
 // prospects-paysagiste.html — même logique d'envoi progressif, mêmes garde-fous
 // (quota Resend, marquage obsolète, etc.), juste sans clic manuel.
 //
-// Envoi volontairement étalé en petits lots (30 toutes les 30 min, ~26 lots/jour
-// pendant la plage horaire) plutôt qu'un seul gros lot le matin, pour limiter le
-// risque d'être repéré comme spam par les filtres email (Gmail, Outlook, etc.).
+// Envoi étalé en lots (300 toutes les 30 min, ~26 lots/jour pendant la plage
+// horaire) plutôt qu'un seul gros lot le matin. Note : le lot était
+// volontairement réduit à 30 depuis le 08-09/09/2026 pour limiter le risque
+// d'être repéré comme spam par les filtres email (Gmail, Outlook, etc.) — ce
+// choix de prudence a été explicitement mis de côté le 26/09/2026 à la
+// demande de Cyrille, qui veut accélérer le volume envoyé aux
+// paysagistes/espaces verts. À surveiller : taux de bounce/désabonnement et
+// délivrabilité (Resend) dans les jours qui suivent ce changement.
 //
 // Variables d'environnement requises sur Vercel :
 //   SKYECO_PROSPECTION_PASSWORD   -> même mot de passe que le portail "Accès réservé"
@@ -17,7 +22,7 @@
 //                                      cette URL contre un déclenchement externe)
 
 const SITE_BASE = 'https://pub-skyeco-23ue.vercel.app';
-const TAILLE_LOT = 30; // petit lot, envoyé toutes les 30 min plutôt qu'un seul gros lot
+const TAILLE_LOT = 300; // relevé de 30 à 300 le 26/09/2026 à la demande explicite de Cyrille, malgré le risque de réputation email évoqué ci-dessus (décision assumée)
 
 const SUJET_PAR_DEFAUT = "Testez gratuitement pendant 1 mois, sans inscription";
 

@@ -3,6 +3,8 @@
 // mensuel), et non plus un paiement unique de mise en ligne.
 // Variables d'environnement requises (à définir dans Vercel, jamais dans le code) :
 //   STRIPE_SECRET_KEY
+//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (pour vérifier l'éligibilité à
+//   la remise de fidélité Estimateur BTP, voir plus bas)
 
 import Stripe from 'stripe';
 
@@ -76,6 +78,75 @@ async function assurerCouponRemise() {
   }
 }
 
+// 26/09/2026 : remise de fidélité pour les artisans qui ont DÉJÀ PAYÉ pour
+// l'Estimateur BTP (achat direct ou via le Kit Pro Artisan BTP, qui l'inclut)
+// et qui souscrivent à Skyeco Pro — sur demande de Cyrille. -5€ HT/mois
+// pendant 12 mois sur le forfait standard (3) uniquement : 39,90€ HT ->
+// 34,90€ HT/mois pendant 1 an, puis retour à 39,90€ HT/mois. Coupon distinct
+// du COUPON_REMISE_ID ci-dessus (montant différent, immuable une fois créé
+// côté Stripe, et logique d'éligibilité différente — par email plutôt que
+// par forfait).
+const COUPON_FIDELITE_ESTIMATEUR_ID = 'skyeco-fidelite-estimateur-btp';
+const REMISE_FIDELITE_DUREE_MOIS = 12;
+const REMISE_FIDELITE_MONTANT_CENTIMES_TTC = 600; // 5€ HT * 1,20 TVA = 6€ TTC
+const PLAN_AVEC_REMISE_FIDELITE = 3; // uniquement le forfait standard (39,90€ HT)
+// Sources d'estimateur_btp_acces considérées comme "a déjà payé" : achat
+// direct ('stripe') ou accès offert via le Kit Pro Artisan BTP ('kit_pro'),
+// lui-même payant. 'essai' (essai gratuit en cours) n'y donne pas droit.
+const SOURCES_ESTIMATEUR_PAYEES = ['stripe', 'kit_pro'];
+
+async function assurerCouponFideliteEstimateur() {
+  try {
+    await stripe.coupons.retrieve(COUPON_FIDELITE_ESTIMATEUR_ID);
+  } catch (e) {
+    try {
+      await stripe.coupons.create({
+        id: COUPON_FIDELITE_ESTIMATEUR_ID,
+        duration: 'repeating',
+        duration_in_months: REMISE_FIDELITE_DUREE_MOIS,
+        amount_off: REMISE_FIDELITE_MONTANT_CENTIMES_TTC,
+        currency: 'eur',
+        name: 'Remise fidélité Estimateur BTP (1ère année)',
+      });
+    } catch (e2) { /* déjà créé entre-temps, ou erreur transitoire : pas bloquant */ }
+  }
+}
+
+// Vérifie, via Supabase, si l'artisan derrière ce brouillon a déjà payé pour
+// l'Estimateur BTP. En cas de doute (erreur réseau, config manquante, email
+// introuvable) on répond false : pas de remise plutôt qu'une remise
+// accordée par erreur.
+async function estEligibleRemiseFideliteEstimateur(draftId) {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) return false;
+  const headers = {
+    apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+    'Content-Type': 'application/json',
+  };
+  try {
+    const draftResp = await fetch(
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=email`,
+      { headers }
+    );
+    if (!draftResp.ok) return false;
+    const draftRows = await draftResp.json();
+    const email = draftRows?.[0]?.email;
+    if (!email) return false;
+
+    const accesResp = await fetch(
+      `${process.env.SUPABASE_URL}/rest/v1/estimateur_btp_acces?email=eq.${encodeURIComponent(String(email).toLowerCase())}&select=source&limit=1`,
+      { headers }
+    );
+    if (!accesResp.ok) return false;
+    const accesRows = await accesResp.json();
+    const source = accesRows?.[0]?.source;
+    return SOURCES_ESTIMATEUR_PAYEES.includes(source);
+  } catch (e) {
+    console.error('Erreur vérification éligibilité remise fidélité Estimateur BTP :', e.message);
+    return false;
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Méthode non autorisée' });
@@ -95,17 +166,33 @@ export default async function handler(req, res) {
   const forfait = FORFAITS[plan] || FORFAITS[3]; // Forfait unique par défaut si non précisé
   const avecRemise = PLANS_AVEC_REMISE.includes(Number(planId));
 
+  // Remise de fidélité Estimateur BTP : seulement sur le forfait standard,
+  // et seulement si l'artisan a déjà payé pour l'Estimateur BTP (voir
+  // estEligibleRemiseFideliteEstimateur). Ne se cumule pas avec une
+  // éventuelle remise de lancement (avecRemise, actuellement inutilisée).
+  const avecRemiseFidelite = !avecRemise
+    && Number(planId) === PLAN_AVEC_REMISE_FIDELITE
+    && await estEligibleRemiseFideliteEstimateur(draftId);
+
   const origin = req.headers.origin || `https://${req.headers.host}`;
 
   try {
     if (avecRemise) await assurerCouponRemise();
+    if (avecRemiseFidelite) await assurerCouponFideliteEstimateur();
 
     const centimesTTC = Math.round(forfait.centimesHT * (1 + TAUX_TVA));
     const remiseCentimesHT = Math.round(REMISE_MONTANT_CENTIMES_TTC / (1 + TAUX_TVA));
     const prixReduitHT = ((forfait.centimesHT - remiseCentimesHT) / 100).toFixed(2);
+    const remiseFideliteCentimesHT = Math.round(REMISE_FIDELITE_MONTANT_CENTIMES_TTC / (1 + TAUX_TVA));
+    const prixReduitFideliteHT = ((forfait.centimesHT - remiseFideliteCentimesHT) / 100).toFixed(2);
+    const couponAAppliquer = avecRemise
+      ? COUPON_REMISE_ID
+      : (avecRemiseFidelite ? COUPON_FIDELITE_ESTIMATEUR_ID : null);
 
     const description = avecRemise
       ? `1er mois offert, puis sans engagement — vous arrêtez quand vous voulez. Prix HT : ${(forfait.centimesHT / 100).toFixed(2)} € — TVA 20% incluse. Prix spécial artisan : ${prixReduitHT} € HT/mois pendant les 12 premiers mois, puis ${(forfait.centimesHT / 100).toFixed(2)} € HT/mois. Votre formulaire vitrine en ligne, mis à jour et actif chaque mois.`
+      : avecRemiseFidelite
+      ? `1er mois offert, puis sans engagement — vous arrêtez quand vous voulez. Remise fidélité Estimateur BTP : ${prixReduitFideliteHT} € HT/mois pendant les 12 premiers mois (au lieu de ${(forfait.centimesHT / 100).toFixed(2)} € HT/mois), puis ${(forfait.centimesHT / 100).toFixed(2)} € HT/mois — TVA 20% incluse. Votre formulaire vitrine en ligne, mis à jour et actif chaque mois.`
       : `1er mois offert, puis sans engagement — vous arrêtez quand vous voulez. ${(forfait.centimesHT / 100).toFixed(2)} € HT/mois — TVA 20% incluse, sans remise temporaire ni changement de tarif dans le temps. Votre formulaire vitrine en ligne, mis à jour et actif chaque mois.`;
 
     const session = await stripe.checkout.sessions.create({
@@ -131,8 +218,8 @@ export default async function handler(req, res) {
           quantity: 1,
         },
       ],
-      ...(avecRemise ? { discounts: [{ coupon: COUPON_REMISE_ID }] } : {}),
-      metadata: { draft_id: draftId, plan: String(plan || 1) },
+      ...(couponAAppliquer ? { discounts: [{ coupon: couponAAppliquer }] } : {}),
+      metadata: { draft_id: draftId, plan: String(plan || 1), remise_fidelite_estimateur: String(avecRemiseFidelite) },
       subscription_data: {
         // 17/09/2026 (soir) : "le premier mois est gratuit" — jusqu'ici,
         // s'abonner via ce endpoint débitait la carte immédiatement, alors

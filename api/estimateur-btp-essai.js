@@ -27,14 +27,59 @@
 //
 // Variables d'environnement requises :
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, RESEND_API_KEY
+//   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER, ADMIN_PHONE
+//   (déjà configurés sur Vercel — mêmes variables que api/notify-nouvelle-demande.js)
+//   -> utilisés pour le SMS d'alerte à Cyrille ci-dessous (26/09/2026, sur sa
+//   demande) à chaque VRAI nouvel essai gratuit démarré (pas pour l'accès
+//   Kit Pro, qui n'est pas un essai).
 
 import { blocCommentCaMarcheEstimateur } from './_lib/estimateur-btp-email.js';
 
 const DUREE_ESSAI_JOURS = 2;
 const EXPEDITEUR_EMAIL = process.env.RESEND_FROM_EMAIL_ESTIMATEUR || 'Estimateur BTP <notifications@ecoskybyrms.fr>';
+const ADMIN_PHONE = process.env.ADMIN_PHONE || '';
 
 function emailValide(email) {
   return typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+}
+
+// Même conversion que api/notify-nouvelle-demande.js : Twilio exige le
+// format E.164 (+33...) — ADMIN_PHONE est déjà stocké dans ce format sur
+// Vercel, mais on garde la conversion par sécurité/cohérence.
+function toE164(rawPhone) {
+  const digits = String(rawPhone || '').replace(/\D/g, '');
+  if (digits.startsWith('33') && digits.length === 11) return '+' + digits;
+  if (digits.startsWith('0') && digits.length === 10) return '+33' + digits.slice(1);
+  return rawPhone;
+}
+
+// Best-effort, ne doit jamais faire échouer le démarrage de l'essai
+// lui-même : un échec ici est juste loggé.
+async function alerterAdminNouvelEssai(email) {
+  if (!ADMIN_PHONE) return;
+  try {
+    const sid = process.env.TWILIO_ACCOUNT_SID;
+    const token = process.env.TWILIO_AUTH_TOKEN;
+    const from = process.env.TWILIO_FROM_NUMBER;
+    const resp = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Basic ' + Buffer.from(`${sid}:${token}`).toString('base64'),
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        To: toE164(ADMIN_PHONE),
+        From: from,
+        Body: `🧮 Nouvel essai gratuit Estimateur BTP démarré : ${email}`,
+      }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+      console.error('estimateur-btp-essai : alerte SMS admin non délivrée —', JSON.stringify(data));
+    }
+  } catch (err) {
+    console.error('estimateur-btp-essai : erreur envoi alerte SMS admin —', err.message);
+  }
 }
 
 async function supabaseRequest(path, options = {}) {
@@ -159,6 +204,12 @@ export default async function handler(req, res) {
       await envoyerEmailBienvenue(email, dejaClientKitPro);
     } catch (err) {
       console.error('estimateur-btp-essai : email de bienvenue non envoyé —', err.message);
+    }
+
+    // Alerte SMS à Cyrille — uniquement pour un VRAI nouvel essai gratuit
+    // (pas pour l'accès Kit Pro, qui n'est pas un essai à surveiller).
+    if (!dejaClientKitPro) {
+      await alerterAdminNouvelEssai(email);
     }
 
     return res.status(200).json({ success: true, ...etatPourReponse(inserted[0]), dejaDemarre: false });

@@ -396,6 +396,19 @@
   <div id="introFunnel" style="display:none;" class="intro-funnel">
     Voici, avec des données fictives sur <strong>6 mois</strong>, à quoi ressemblera votre tableau de bord une fois votre vitrine en ligne.
   </div>
+  <div id="videoExplicative" style="display:none; margin:0 0 18px;">
+    <!-- 26/09/2026 : vidéo explicative (HyperFrames) présentant les 4 avantages
+         principaux (Google Ads géré par IA, relances SMS/email automatiques,
+         signature électronique des devis, prise de RDV en ligne). Affichée
+         uniquement au même moment que #introFunnel (mode visiteur ou brouillon
+         existant, voir plus bas).
+         ⚠️ L'URL source est un lien signé HeyGen à durée limitée (expire
+         début octobre 2026) — à remplacer par une copie hébergée durablement
+         (ex: public/videos/) avant cette date pour ne pas casser la lecture. -->
+    <video controls playsinline preload="metadata" style="width:100%; max-width:640px; border-radius:16px; box-shadow:0 8px 26px rgba(76,29,149,0.16); display:block; margin:0 auto;">
+      <source src="https://files2.heygen.ai/aries/output/b29fad34-0887-41e6-b49c-ec8106d3d922/video.mp4?Expires=1791006007&Signature=P-Z5QHIpX6HQKJbYp2owo7-958Q4Ng208OWgMG7gCVe3UkySXA8fygpKJK8Dka9AASOCGHxAKWPzNhfnJ~N9jOzd4DQkDbS2jRroph044s~5lHnv2j2eI66jEPw8qHH8f~pikFgyCvdNBkozR6nDZRz0ngFS8Qt3IdW41BzsZLd1l7mUpANU1XX9DUS8lb5o-hit4GZ4l2sPOjWUQCsQhcvkHVmmAkbVZFNblNJIz3IV7AauLay1YHo6dWpzhP8DRgzKAkml0cCU7Mx3-2mfZoL-pBHUm5qW0M34lESIxta2GgwhojOyeo2trEfPbngWqgyGwvlpBzjDzqUTTck4sQ__&Key-Pair-Id=K38HBHX5LX3X2H" type="video/mp4">
+    </video>
+  </div>
   <button type="button" id="btnVoirVitrineDemo" class="btn-voir-vitrine-demo" style="display:none;">👁️ Voir la vitrine d'un vrai client</button>
   <div id="hintClic" style="display:none;" class="hint-clic">💡 Cliquez sur un encart pour voir à quoi il sert</div>
 
@@ -866,6 +879,7 @@
 
   if (draftId || visiteurMode) {
     document.getElementById('introFunnel').style.display = 'block';
+    document.getElementById('videoExplicative').style.display = 'block';
     document.getElementById('btnVoirVitrineDemo').style.display = 'inline-flex';
 
     // 08/09/2026 : bandeau "essai sans paiement" visible dès l'arrivée sur

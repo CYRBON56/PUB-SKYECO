@@ -461,6 +461,13 @@
         <span class="panel-tab-icone">📹</span>
         <span class="panel-tab-texte">Appel vidéo<span class="panel-tab-sous">Besoin d'aide en direct</span></span>
       </button>
+      <!-- 26/09/2026 : visible uniquement pour les artisans ayant déjà payé
+           l'Estimateur BTP (achat direct ou Kit Pro) — voir initEstimateurBtp()
+           et api/estimateur-btp-eligibilite.js. -->
+      <button type="button" class="panel-tab" id="tabEstimateur" data-tab="estimateur" style="display:none;">
+        <span class="panel-tab-icone">🧮</span>
+        <span class="panel-tab-texte">Estimateur BTP<span class="panel-tab-sous">Devis chantier en 30 secondes</span></span>
+      </button>
     </div>
   </aside>
   <div class="dash-main">
@@ -875,6 +882,16 @@
       </div>
     </div>
   </div>
+
+  <div id="panelEstimateur" style="display:none;">
+    <div class="liste-panel">
+      <div class="liste-header">
+        <h3 class="calendrier-titre">🧮 Estimateur BTP</h3>
+      </div>
+      <p class="calendrier-note">Vous avez déjà accès à l'Estimateur BTP — retrouvez-le ici pour chiffrer un devis chantier en 30 secondes, sur place, avec votre catalogue de prix préintégré.</p>
+      <button type="button" id="btnOuvrirEstimateur" class="btn-action" style="background:#7c3aed;color:#fff;border:none;padding:12px 20px;border-radius:10px;font-weight:700;cursor:pointer;">🧮 Ouvrir l'Estimateur BTP</button>
+    </div>
+  </div>
   </div><!-- /dash-main -->
 </div>
 
@@ -1002,6 +1019,7 @@
     chargerDemandes(tokenCalendrierActuel);
     initPilotageAds();
     initAppelVideo();
+    initEstimateurBtp();
     demarrerPresence();
     verifierStatutPause();
     chargerZones();
@@ -1271,6 +1289,7 @@
     document.getElementById('panelClients').style.display = cible === 'clients' ? '' : 'none';
     document.getElementById('panelCalendrier').style.display = cible === 'calendrier' ? '' : 'none';
     document.getElementById('panelAppelVideo').style.display = cible === 'appelvideo' ? '' : 'none';
+    document.getElementById('panelEstimateur').style.display = cible === 'estimateur' ? '' : 'none';
     if (cible === 'calendrier' && !calendrierDejaCharge) {
       calendrierDejaCharge = true;
       chargerCalendrier();
@@ -1289,6 +1308,35 @@
       activerOnglet('calendrier');
       document.getElementById('panelTabs').scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
+  }
+
+  // --- Onglet "Estimateur BTP" (26/09) : visible uniquement pour les
+  // artisans ayant déjà payé l'Estimateur BTP avant de s'inscrire à Skyeco
+  // Pro (achat direct ou via le Kit Pro Artisan BTP) — voir
+  // api/estimateur-btp-eligibilite.js. Le bouton ouvre l'appli existante
+  // dans un nouvel onglet plutôt que de l'intégrer en iframe : c'est une PWA
+  // pensée pour du plein écran mobile, pas pour être encastrée. -----------
+  function initEstimateurBtp() {
+    document.getElementById('btnOuvrirEstimateur').addEventListener('click', () => {
+      window.open('https://www.skyeco.fr/estimateur-btp.html', '_blank');
+    });
+    verifierEligibiliteEstimateur();
+  }
+
+  async function verifierEligibiliteEstimateur() {
+    if (!tokenCalendrierActuel) return;
+    try {
+      const rep = await fetch('/api/estimateur-btp-eligibilite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId, token: tokenCalendrierActuel }),
+      });
+      if (!rep.ok) return;
+      const data = await rep.json();
+      if (data.success && data.eligible) {
+        document.getElementById('tabEstimateur').style.display = '';
+      }
+    } catch (e) { /* pas grave — l'onglet reste simplement caché en cas de doute */ }
   }
 
   // --- Onglet "Appel vidéo" (05/09) : demande d'appel côté artisan --------
@@ -2267,6 +2315,9 @@
       content.querySelectorAll('[data-action="demander-photos"]').forEach(btn => {
         btn.addEventListener('click', () => demanderPhotosLead(btn.dataset.lead));
       });
+      content.querySelectorAll('[data-action="demander-avis"]').forEach(btn => {
+        btn.addEventListener('click', () => demanderAvisLead(btn.dataset.lead));
+      });
       content.querySelectorAll('[data-action="archiver-lead"]').forEach(btn => {
         btn.addEventListener('click', () => archiverLead(btn.dataset.lead));
       });
@@ -2430,6 +2481,25 @@
     }
   }
 
+  async function demanderAvisLead(leadId) {
+    const lead = leadsData.find(l => l.id === leadId);
+    if (!lead) return;
+    const telephone = prompt('Numéro de téléphone du client (il recevra un SMS avec le lien pour laisser un avis) :', lead.telephone || '');
+    if (telephone === null) return;
+    if (!telephone.trim()) { alert('Numéro requis.'); return; }
+    try {
+      const resp = await fetch('/api/demander-avis-lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leadId, telephone: telephone.trim() }),
+      });
+      const data = await resp.json();
+      alert(data.success ? '✓ SMS envoyé au client.' : (data.error || "Impossible d'envoyer le SMS pour le moment."));
+    } catch (e) {
+      alert('Impossible de contacter le serveur.');
+    }
+  }
+
   function labelStatutLead(statut) {
     const infos = { nouveau: '🆕 Nouveau' }[statut] || (statut || 'Nouveau');
     return `<span class="statut-badge">${infos}</span>`;
@@ -2451,7 +2521,15 @@
       return `<div class="devis-actions">${lienDevisNatif}<button type="button" class="btn-devis envoyer" data-action="envoyer-devis" data-lead="${l.id}" data-site="${l.draft_id}">📄 Envoyer un devis</button></div>`;
     }
     if (statut === 'signe') {
-      return `<div class="devis-actions">${lienDevisNatif}${badges.signe}${lienVoir}</div>`;
+      // 18/09/2026 : "Demander un avis" — bouton manuel, à cliquer par
+      // l'artisan une fois le chantier terminé ET payé (voir la note sur le
+      // paiement/NF525 dans api/devis-gestion.js : ce logiciel ne suit
+      // jamais lui-même si un chantier est payé, donc pas de déclenchement
+      // automatique ici, juste un bouton que l'artisan actionne quand il le
+      // sait). Demande de Cyrille : envoyer au client un lien pour laisser
+      // un avis (Pages Jaunes, Google...), configuré dans "Construire ma
+      // vitrine" (lien_avis_client).
+      return `<div class="devis-actions">${lienDevisNatif}${badges.signe}${lienVoir}<button type="button" class="btn-devis" data-action="demander-avis" data-lead="${l.id}" style="background:#f59e0b;">⭐ Demander un avis</button></div>`;
     }
     return `<div class="devis-actions">${lienDevisNatif}${badges[statut] || ''}${lienVoir}<button type="button" class="btn-devis relancer" data-action="relancer-devis" data-lead="${l.id}" data-site="${l.draft_id}">🔁 Relancer</button></div>`;
   }

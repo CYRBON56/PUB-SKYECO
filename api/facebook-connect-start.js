@@ -1,53 +1,78 @@
 // /api/facebook-connect-start.js
-// Démarre le flux "Se connecter avec Facebook" (dialogue OAuth classique par
-// scopes) pour relier la Page Facebook professionnelle de l'artisan, en plus
-// d'Instagram (voir social-connect-start.js pour le flux Instagram Login).
+// Démarre le flux OAuth Facebook Login for Business (27/09/2026) — connecte
+// à la fois la Page Facebook ET son compte Instagram professionnel relié
+// (une seule autorisation Meta pour les deux réseaux), pour que l'agent IA
+// puisse ensuite publier automatiquement sur les deux.
 //
-// On utilise ici le dialogue OAuth classique (scope=...) plutôt que le
-// flux "Facebook Login for Business" basé sur config_id : il donne le même
-// résultat (jeton utilisateur -> /me/accounts -> jetons de Page) sans obliger
-// Cyrille à créer une "Configuration" dans le dashboard Meta au préalable.
+// GET ?id=<draftId>&token=<jeton de session dashboard>
+//   -> redirige vers la boîte de dialogue d'autorisation Facebook.
 //
 // Variables d'environnement requises :
-//   FACEBOOK_APP_ID        - ID de l'app Meta (Paramètres de l'app > Basique)
-//   FACEBOOK_REDIRECT_URI  - ex: https://skyeco.fr/api/facebook-callback
-//                             (à ajouter dans Facebook Login > Paramètres >
-//                             "URI de redirection OAuth valides")
+//   META_APP_ID, DASHBOARD_SESSION_SECRET, SUPABASE_URL,
+//   SUPABASE_SERVICE_ROLE_KEY
+//
+// Pré-requis côté Meta (à faire une fois, dans developers.facebook.com) :
+//   - Une app Meta en mode "Live" (pas juste "Development") pour que
+//     n'importe quel artisan (pas seulement les comptes testeurs de l'app)
+//     puisse se connecter.
+//   - Produit "Facebook Login for Business" ajouté à l'app.
+//   - URI de redirection autorisée : https://www.skyeco.fr/api/facebook-callback
+//   - Permissions à demander en App Review (sinon seuls les comptes
+//     testeurs/admin de l'app fonctionnent) : pages_show_list,
+//     pages_manage_posts, pages_read_engagement, instagram_basic,
+//     instagram_content_publish, business_management.
 
-export default function handler(req, res) {
-  const { id: draftId, token } = req.query;
+import crypto from 'crypto';
+import { creerEtatOAuth } from './_lib/oauth-state.js';
 
-  if (!draftId) {
-    res.status(400).send("Paramètre 'id' manquant.");
-    return;
+function verifierToken(token, draftIdAttendu) {
+  try {
+    const decode = Buffer.from(token, 'base64url').toString('utf8');
+    const parties = decode.split('.');
+    if (parties.length !== 4) return false;
+    const [sujet, role, expStr, sig] = parties;
+    const exp = parseInt(expStr, 10);
+    if (!exp || Date.now() / 1000 > exp) return false;
+    const payload = `${sujet}.${role}.${expStr}`;
+    const attendu = crypto.createHmac('sha256', process.env.DASHBOARD_SESSION_SECRET).update(payload).digest('hex');
+    const sigBuf = Buffer.from(sig, 'hex');
+    const attenduBuf = Buffer.from(attendu, 'hex');
+    if (sigBuf.length !== attenduBuf.length || !crypto.timingSafeEqual(sigBuf, attenduBuf)) return false;
+    return role === 'admin' ? sujet === draftIdAttendu : role === 'artisan';
+  } catch (e) {
+    return false;
+  }
+}
+
+const SITE_BASE_URL = 'https://www.skyeco.fr';
+const SCOPES = [
+  'pages_show_list',
+  'pages_manage_posts',
+  'pages_read_engagement',
+  'instagram_basic',
+  'instagram_content_publish',
+  'business_management',
+].join(',');
+
+export default async function handler(req, res) {
+  const draftId = req.query?.id;
+  const token = req.query?.token;
+  if (!draftId || !token || !verifierToken(token, draftId)) {
+    return res.status(401).send('Session invalide — retournez sur votre dashboard et réessayez.');
+  }
+  if (!process.env.META_APP_ID) {
+    return res.status(500).send("Configuration serveur incomplète (META_APP_ID manquant) — contactez le support.");
   }
 
-  const FACEBOOK_APP_ID = process.env.FACEBOOK_APP_ID;
-  const FACEBOOK_REDIRECT_URI = process.env.FACEBOOK_REDIRECT_URI;
+  const state = creerEtatOAuth(draftId);
+  const redirectUri = `${SITE_BASE_URL}/api/facebook-callback`;
+  const url = new URL('https://www.facebook.com/v21.0/dialog/oauth');
+  url.searchParams.set('client_id', process.env.META_APP_ID);
+  url.searchParams.set('redirect_uri', redirectUri);
+  url.searchParams.set('state', state);
+  url.searchParams.set('scope', SCOPES);
+  url.searchParams.set('response_type', 'code');
 
-  if (!FACEBOOK_APP_ID || !FACEBOOK_REDIRECT_URI) {
-    res.status(500).send("Configuration Facebook manquante côté serveur (FACEBOOK_APP_ID / FACEBOOK_REDIRECT_URI).");
-    return;
-  }
-
-  const state = Buffer.from(JSON.stringify({ draftId, token })).toString("base64url");
-
-  // Permissions nécessaires pour lister les Pages de l'utilisateur et
-  // publier des photos/vidéos sur la Page choisie.
-  const scopes = [
-    "pages_show_list",
-    "pages_read_engagement",
-    "pages_manage_posts",
-  ].join(",");
-
-  const authUrl =
-    `https://www.facebook.com/v21.0/dialog/oauth` +
-    `?client_id=${encodeURIComponent(FACEBOOK_APP_ID)}` +
-    `&redirect_uri=${encodeURIComponent(FACEBOOK_REDIRECT_URI)}` +
-    `&response_type=code` +
-    `&state=${encodeURIComponent(state)}` +
-    `&scope=${encodeURIComponent(scopes)}`;
-
-  res.writeHead(302, { Location: authUrl });
+  res.writeHead(302, { Location: url.toString() });
   res.end();
 }

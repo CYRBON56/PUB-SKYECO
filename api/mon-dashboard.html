@@ -1238,60 +1238,61 @@
     });
   }
 
-  // --- Onglet "Réseaux sociaux" (11/09) ------------------------------------
-  // Publication automatique Instagram/Facebook — table skyeco_pro_social_connections
-  // (statut de connexion OAuth) et skyeco_pro_social_posts (file de posts,
-  // statut brouillon/planifie/publie/echec) à créer côté Supabase. Les
-  // actions (connecter, nouveau post, modifier) appellent des endpoints
-  // /api/social-* qui restent à développer.
+  // --- Onglet "Réseaux sociaux" (11/09, refonte 27/09) ---------------------
+  // Agent IA qui publie automatiquement (voir api/agent-reseaux-sociaux.js) —
+  // table skyeco_pro_social_connections (statut de connexion OAuth par
+  // réseau) et skyeco_pro_social_posts (historique des posts générés/publiés
+  // par l'agent). Connexion en self-service pour les 4 réseaux (Facebook —
+  // qui embarque Instagram —, TikTok, Google Business Profile, Pinterest) :
+  // même schéma OAuth partout, voir api/<reseau>-connect-start.js.
   async function chargerReseauxSociaux() {
     const content = document.getElementById('reseauxContent');
     content.innerHTML = '<div class="loading">Chargement…</div>';
     try {
-      const [connexionResp, postsResp, ficheGoogleResp] = await Promise.all([
+      const [connexionResp, postsResp] = await Promise.all([
         fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_social_connections?draft_id=eq.${draftId}&select=*`, { headers: { apikey: SUPABASE_ANON_KEY } }),
-        fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_social_posts?draft_id=eq.${draftId}&select=*&order=created_at.desc`, { headers: { apikey: SUPABASE_ANON_KEY } }),
-        fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=google_business_location_id`, { headers: { apikey: SUPABASE_ANON_KEY } }),
+        fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_social_posts?draft_id=eq.${draftId}&select=*&order=created_at.desc&limit=20`, { headers: { apikey: SUPABASE_ANON_KEY } }),
       ]);
       const connexions = connexionResp.ok ? await connexionResp.json() : [];
       const posts = postsResp.ok ? await postsResp.json() : [];
-      const fichesGoogle = ficheGoogleResp.ok ? await ficheGoogleResp.json() : [];
       const connexion = connexions[0];
-      const ficheGoogleConnectee = !!(fichesGoogle[0] && fichesGoogle[0].google_business_location_id);
+      const agentActif = !connexion || connexion.auto_publication_active !== false;
 
-      const pillLabels = { planifie: 'Planifié', brouillon: 'Brouillon', echec: 'Échec', publie: 'Publié' };
-      const pillClass = { planifie: 'planned', brouillon: 'draft', echec: 'failed', publie: 'done' };
+      const pillLabels = { planifie: 'Planifié', brouillon: 'Brouillon', echec: 'Échec', erreur: 'Échec', publie: 'Publié' };
+      const pillClass = { planifie: 'planned', brouillon: 'draft', echec: 'failed', erreur: 'failed', publie: 'done' };
 
       content.innerHTML = `
-        <div class="rs-status" style="margin-bottom:20px; padding-bottom:18px; border-bottom:1.5px solid #eef1f0;">
-          <span class="rs-status-dot ${connexion ? '' : 'off'}"></span>
+        <div class="rs-status" style="margin-bottom:20px; padding-bottom:18px; border-bottom:1.5px solid #eef1f0; background:#faf8ff; border-radius:12px; padding:16px;">
+          <span class="rs-status-dot ${agentActif ? '' : 'off'}"></span>
           <div class="rs-status-text">
-            <strong>${connexion ? `Instagram connecté — @${escapeHtmlDash(connexion.ig_username || '')}` : 'Aucun compte connecté'}</strong>
-            ${connexion ? `Jetons valides jusqu'au ${new Date(connexion.expires_at).toLocaleDateString('fr-FR')}` : "Connectez votre Instagram Business pour activer la publication automatique."}
+            <strong>${agentActif ? '🤖 Agent IA actif' : '⏸️ Agent IA en pause'}</strong>
+            ${agentActif
+              ? "Dès qu'un réseau est connecté ci-dessous, l'agent choisit une photo de vos réalisations, rédige une légende et publie tout seul (~2 posts/semaine max par réseau)."
+              : "L'agent ne publiera plus tant qu'il est en pause — vos connexions restent actives."}
           </div>
-          <button type="button" class="rs-btn ${connexion ? 'secondary' : ''}" id="btnConnecterInstagram">${connexion ? 'Gérer la connexion' : 'Connecter Instagram'}</button>
+          <button type="button" class="rs-btn secondary" id="btnBasculerAgent">${agentActif ? 'Mettre en pause' : 'Réactiver'}</button>
         </div>
 
         <div class="rs-status" style="margin-bottom:20px; padding-bottom:18px; border-bottom:1.5px solid #eef1f0;">
           <span class="rs-status-dot ${connexion && connexion.facebook_page_id ? '' : 'off'}"></span>
           <div class="rs-status-text">
-            <strong>${connexion && connexion.facebook_page_id ? `Facebook connecté — ${escapeHtmlDash(connexion.facebook_page_name || '')}` : 'Facebook non connecté'}</strong>
+            <strong>${connexion && connexion.facebook_page_id ? `Facebook connecté — ${escapeHtmlDash(connexion.facebook_page_name || '')}` : 'Facebook + Instagram non connectés'}</strong>
             ${connexion && connexion.facebook_page_id
-              ? 'Vos posts sont aussi publiés automatiquement sur cette Page.'
-              : 'Connectez votre Page Facebook pour que vos posts s\'y publient aussi, en plus d\'Instagram. <a href="#" id="lienCreerPageFacebook" style="color:#7c3aed;font-weight:700;">Pas encore de Page ?</a>'}
+              ? (connexion.ig_username ? `Instagram @${escapeHtmlDash(connexion.ig_username)} connecté aussi (même autorisation).` : "Page Facebook connectée — aucun compte Instagram professionnel relié à cette Page n'a été trouvé.")
+              : 'Une seule connexion pour les deux réseaux à la fois (votre compte Instagram doit être relié à votre Page Facebook). <a href="#" id="lienCreerPageFacebook" style="color:#7c3aed;font-weight:700;">Pas encore de Page ?</a>'}
           </div>
-          <button type="button" class="rs-btn ${connexion && connexion.facebook_page_id ? 'secondary' : ''}" id="btnConnecterFacebook">${connexion && connexion.facebook_page_id ? 'Gérer la connexion' : 'Connecter Facebook'}</button>
+          <button type="button" class="rs-btn ${connexion && connexion.facebook_page_id ? 'secondary' : ''}" id="btnConnecterFacebook">${connexion && connexion.facebook_page_id ? 'Gérer la connexion' : 'Connecter Facebook + Instagram'}</button>
         </div>
 
         <div class="rs-status" style="margin-bottom:20px; padding-bottom:18px; border-bottom:1.5px solid #eef1f0;">
-          <span class="rs-status-dot ${ficheGoogleConnectee ? '' : 'off'}"></span>
+          <span class="rs-status-dot ${connexion && connexion.google_business_location_id ? '' : 'off'}"></span>
           <div class="rs-status-text">
-            <strong>${ficheGoogleConnectee ? 'Fiche Google connectée' : 'Fiche Google (Google Business Profile) non connectée'}</strong>
-            ${ficheGoogleConnectee
-              ? 'Vos posts sont aussi publiés automatiquement sur votre fiche Google — utile pour votre référencement local.'
-              : "Connectez votre fiche Google pour que vos posts y apparaissent aussi. La connexion est faite manuellement par votre conseiller Skyeco Pro — cliquez pour lui envoyer la demande."}
+            <strong>${connexion && connexion.google_business_location_id ? `Fiche Google connectée — ${escapeHtmlDash(connexion.google_business_location_name || '')}` : 'Google Business Profile non connecté'}</strong>
+            ${connexion && connexion.google_business_location_id
+              ? 'Vos posts sont aussi publiés automatiquement sur votre fiche Google — le plus utile pour votre référencement local.'
+              : "Connectez votre fiche Google (Google Business Profile) pour apparaître avec des posts à jour sur Google Maps/Search."}
           </div>
-          <button type="button" class="rs-btn ${ficheGoogleConnectee ? 'secondary' : ''}" id="btnConnecterGoogleBusiness" ${ficheGoogleConnectee ? 'disabled' : ''}>${ficheGoogleConnectee ? 'Connectée ✓' : 'Demander la connexion'}</button>
+          <button type="button" class="rs-btn ${connexion && connexion.google_business_location_id ? 'secondary' : ''}" id="btnConnecterGoogleBusiness">${connexion && connexion.google_business_location_id ? 'Gérer la connexion' : 'Connecter Google Business Profile'}</button>
         </div>
 
         <div class="rs-status" style="margin-bottom:20px; padding-bottom:18px; border-bottom:1.5px solid #eef1f0;">
@@ -1303,6 +1304,17 @@
               : 'Connectez votre compte TikTok pour que vos posts y soient aussi publiés automatiquement.'}
           </div>
           <button type="button" class="rs-btn ${connexion && connexion.tiktok_open_id ? 'secondary' : ''}" id="btnConnecterTikTok">${connexion && connexion.tiktok_open_id ? 'Gérer la connexion' : 'Connecter TikTok'}</button>
+        </div>
+
+        <div class="rs-status" style="margin-bottom:20px; padding-bottom:18px; border-bottom:1.5px solid #eef1f0;">
+          <span class="rs-status-dot ${connexion && connexion.pinterest_board_id ? '' : 'off'}"></span>
+          <div class="rs-status-text">
+            <strong>${connexion && connexion.pinterest_board_id ? `Pinterest connecté — @${escapeHtmlDash(connexion.pinterest_username || '')}` : 'Pinterest non connecté'}</strong>
+            ${connexion && connexion.pinterest_board_id
+              ? `Vos posts sont aussi épinglés automatiquement sur le tableau "${escapeHtmlDash(connexion.pinterest_board_name || '')}".`
+              : 'Connectez votre compte Pinterest — utile pour les réalisations qui inspirent (portails, aménagements).'}
+          </div>
+          <button type="button" class="rs-btn ${connexion && connexion.pinterest_board_id ? 'secondary' : ''}" id="btnConnecterPinterest">${connexion && connexion.pinterest_board_id ? 'Gérer la connexion' : 'Connecter Pinterest'}</button>
         </div>
 
         ${!posts.length
@@ -1321,15 +1333,22 @@
         }
       `;
 
-      document.getElementById('btnConnecterFacebook').addEventListener('click', () => {
+      function ouvrirConnexionOAuth(prefixe) {
         if (!window.tarifActifActuel) {
           window.location.href = '/mes-elements.html?id=' + draftId + '&verrou=ads';
           return;
         }
-        // Flux OAuth classique (voir facebook-connect-start.js) — la Page est
-        // choisie automatiquement (la première renvoyée par Meta) puis reliée.
-        window.location.href = `/api/facebook-connect-start?id=${encodeURIComponent(draftId)}&token=${encodeURIComponent(tokenCalendrierActuel || '')}`;
-      });
+        window.location.href = `/api/${prefixe}-connect-start?id=${encodeURIComponent(draftId)}&token=${encodeURIComponent(tokenCalendrierActuel || '')}`;
+      }
+
+      // Même schéma OAuth self-service pour les 4 réseaux (voir
+      // api/<reseau>-connect-start.js + api/<reseau>-callback.js) — Facebook
+      // embarque aussi Instagram (compte pro relié à la Page).
+      document.getElementById('btnConnecterFacebook').addEventListener('click', () => ouvrirConnexionOAuth('facebook'));
+      document.getElementById('btnConnecterGoogleBusiness').addEventListener('click', () => ouvrirConnexionOAuth('google-business'));
+      document.getElementById('btnConnecterTikTok').addEventListener('click', () => ouvrirConnexionOAuth('tiktok'));
+      document.getElementById('btnConnecterPinterest').addEventListener('click', () => ouvrirConnexionOAuth('pinterest'));
+
       const lienCreerPageFacebook = document.getElementById('lienCreerPageFacebook');
       if (lienCreerPageFacebook) {
         lienCreerPageFacebook.addEventListener('click', (e) => {
@@ -1339,53 +1358,21 @@
         });
       }
 
-      // Google Business Profile : pas d'OAuth self-service ici (voir
-      // api/demander-connexion-google-business.js) — le clic notifie
-      // simplement le conseiller Skyeco Pro, qui relie la fiche manuellement
-      // via Windsor.ai puis renseigne google_business_location_id.
-      const btnConnecterGoogleBusiness = document.getElementById('btnConnecterGoogleBusiness');
-      if (btnConnecterGoogleBusiness && !ficheGoogleConnectee) {
-        btnConnecterGoogleBusiness.addEventListener('click', async () => {
-          btnConnecterGoogleBusiness.disabled = true;
-          btnConnecterGoogleBusiness.textContent = 'Envoi…';
-          try {
-            const resp = await fetch('/api/demander-connexion-google-business', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ draftId }),
-            });
-            const data = await resp.json();
-            if (data.success) {
-              btnConnecterGoogleBusiness.textContent = '✓ Demande envoyée';
-            } else {
-              throw new Error(data.error || 'Échec de l\'envoi.');
-            }
-          } catch (e) {
-            btnConnecterGoogleBusiness.disabled = false;
-            btnConnecterGoogleBusiness.textContent = 'Demander la connexion';
-            alert('Impossible d\'envoyer la demande pour le moment — réessayez.');
-          }
-        });
-      }
-
-      document.getElementById('btnConnecterTikTok').addEventListener('click', () => {
-        if (!window.tarifActifActuel) {
-          window.location.href = '/mes-elements.html?id=' + draftId + '&verrou=ads';
-          return;
-        }
-        // Flux OAuth self-service TikTok (voir tiktok-connect-start.js).
-        window.location.href = `/api/tiktok-connect-start?id=${encodeURIComponent(draftId)}&token=${encodeURIComponent(tokenCalendrierActuel || '')}`;
-      });
-
-      document.getElementById('btnConnecterInstagram').addEventListener('click', () => {
-        if (!window.tarifActifActuel) {
-          window.location.href = '/mes-elements.html?id=' + draftId + '&verrou=ads';
-          return;
-        }
-        if (connexion) {
-          rsOuvrirOnboarding(true);
-        } else {
-          rsOuvrirOnboarding(false);
+      // Pause/reprise de l'agent IA (27/09) — n'affecte que la publication
+      // automatique, jamais les connexions déjà établies.
+      document.getElementById('btnBasculerAgent').addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        btn.disabled = true;
+        try {
+          await fetch('/api/social-basculer-agent', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ draftId, token: tokenCalendrierActuel, actif: !agentActif }),
+          });
+          chargerReseauxSociaux();
+        } catch (e2) {
+          btn.disabled = false;
+          alert("Impossible de changer l'état de l'agent pour le moment — réessayez.");
         }
       });
 
@@ -1591,27 +1578,31 @@
     });
   }
 
-  // Message de retour après le flux OAuth (voir /api/social-callback,
-  // /api/facebook-callback et /api/tiktok-callback) :
-  // ?social=succes|refuse|sans_compte_pro|erreur (Instagram),
-  // fb_succes|fb_refuse|fb_sans_page|fb_erreur (Facebook), ou
-  // tiktok_succes|tiktok_refuse|tiktok_erreur (TikTok) dans l'URL,
-  // avec #reseaux pour rouvrir directement le bon onglet.
+  // Message de retour après le flux OAuth (voir facebook-callback.js,
+  // tiktok-callback.js, google-business-callback.js, pinterest-callback.js) :
+  // ?social=fb_succes|fb_refuse|fb_sans_page|fb_erreur (Facebook+Instagram),
+  // tiktok_succes|tiktok_refuse|tiktok_erreur (TikTok),
+  // gbp_succes|gbp_refuse|gbp_sans_fiche|gbp_erreur (Google Business Profile),
+  // ou pinterest_succes|pinterest_refuse|pinterest_erreur (Pinterest) dans
+  // l'URL, avec #reseaux pour rouvrir directement le bon onglet.
   (function afficherRetourSocial() {
     const statutSocial = params.get('social');
     if (!statutSocial) return;
     const messages = {
-      succes: { texte: '✓ Instagram connecté avec succès.', couleur: '#7c3aed' },
-      refuse: { texte: "Connexion annulée — vous n'avez pas autorisé l'accès.", couleur: '#8a9891' },
-      sans_compte_pro: { texte: "Aucun compte Instagram professionnel relié à une Page Facebook n'a été trouvé sur ce compte Meta. Suivez les étapes du guide puis réessayez.", couleur: '#c0392b' },
-      erreur: { texte: 'Une erreur est survenue pendant la connexion — réessayez.', couleur: '#c0392b' },
-      fb_succes: { texte: '✓ Page Facebook connectée avec succès.', couleur: '#7c3aed' },
+      fb_succes: { texte: '✓ Facebook (et Instagram si relié) connecté avec succès.', couleur: '#7c3aed' },
       fb_refuse: { texte: "Connexion Facebook annulée — vous n'avez pas autorisé l'accès.", couleur: '#8a9891' },
       fb_sans_page: { texte: "Aucune Page Facebook trouvée sur ce compte. Créez d'abord votre Page professionnelle Facebook, puis réessayez.", couleur: '#c0392b' },
       fb_erreur: { texte: 'Une erreur est survenue pendant la connexion à Facebook — réessayez.', couleur: '#c0392b' },
       tiktok_succes: { texte: '✓ TikTok connecté avec succès.', couleur: '#7c3aed' },
       tiktok_refuse: { texte: "Connexion TikTok annulée — vous n'avez pas autorisé l'accès.", couleur: '#8a9891' },
       tiktok_erreur: { texte: 'Une erreur est survenue pendant la connexion à TikTok — réessayez.', couleur: '#c0392b' },
+      gbp_succes: { texte: '✓ Fiche Google Business Profile connectée avec succès.', couleur: '#7c3aed' },
+      gbp_refuse: { texte: "Connexion Google annulée — vous n'avez pas autorisé l'accès.", couleur: '#8a9891' },
+      gbp_sans_fiche: { texte: "Aucune fiche Google Business Profile trouvée sur ce compte Google. Créez d'abord votre fiche sur google.com/business, puis réessayez.", couleur: '#c0392b' },
+      gbp_erreur: { texte: 'Une erreur est survenue pendant la connexion à Google Business Profile — réessayez.', couleur: '#c0392b' },
+      pinterest_succes: { texte: '✓ Pinterest connecté avec succès.', couleur: '#7c3aed' },
+      pinterest_refuse: { texte: "Connexion Pinterest annulée — vous n'avez pas autorisé l'accès.", couleur: '#8a9891' },
+      pinterest_erreur: { texte: 'Une erreur est survenue pendant la connexion à Pinterest — réessayez.', couleur: '#c0392b' },
     };
     const info = messages[statutSocial];
     if (!info) return;

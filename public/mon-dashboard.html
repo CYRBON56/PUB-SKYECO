@@ -401,6 +401,25 @@
     color:#5b6b64; font-size:0.95rem;
   }
 
+  /* ---- Réseaux sociaux (27/09) ---- */
+  .rs-status { display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
+  .rs-status-dot { width:10px; height:10px; border-radius:50%; background:#7c3aed; flex-shrink:0; }
+  .rs-status-dot.off { background:#ec4899; }
+  .rs-status-text { flex:1; min-width:200px; }
+  .rs-status-text strong { display:block; color:#211a35; font-size:0.95rem; margin-bottom:2px; }
+  .rs-btn { background:#7c3aed; color:#fff; border:none; padding:10px 18px; border-radius:10px; font-size:0.85rem; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .rs-btn.secondary { background:#fff; color:#7c3aed; border:1.5px solid #7c3aed; }
+  .rs-row { display:grid; grid-template-columns:52px 1fr auto auto; align-items:center; gap:14px; padding:14px 0; border-top:1px solid #eef1f0; }
+  .rs-row:first-child { border-top:none; }
+  .rs-thumb { width:52px; height:52px; border-radius:8px; background:#f5f3ff; background-size:cover; background-position:center; }
+  .rs-caption { font-size:0.86rem; color:#211a35; line-height:1.4; }
+  .rs-meta { font-size:0.74rem; color:#8a9891; margin-top:3px; }
+  .rs-pill { font-size:0.72rem; font-weight:700; padding:4px 10px; border-radius:999px; white-space:nowrap; }
+  .rs-pill.planned { background:#f5f3ff; color:#7c3aed; }
+  .rs-pill.draft { background:#f0ece0; color:#8a6d1f; }
+  .rs-pill.failed { background:#fdeaea; color:#991b1b; }
+  .rs-pill.done { background:#e4eef4; color:#2c5f8a; }
+  .rs-action { font-size:0.78rem; color:#7c3aed; font-weight:700; background:none; border:none; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -452,6 +471,10 @@
       <button type="button" class="panel-tab" id="tabClients" data-tab="clients">
         <span class="panel-tab-icone">👥</span>
         <span class="panel-tab-texte">Gérer les clients<span class="panel-tab-sous">Demandes, devis, signatures</span></span>
+      </button>
+      <button type="button" class="panel-tab" id="tabReseaux" data-tab="reseaux">
+        <span class="panel-tab-icone">📱</span>
+        <span class="panel-tab-texte">Réseaux sociaux<span class="panel-tab-sous">Facebook, Instagram, Google, TikTok, Pinterest</span></span>
       </button>
       <button type="button" class="panel-tab" id="tabCalendrier" data-tab="calendrier">
         <span class="panel-tab-icone">📅</span>
@@ -854,6 +877,15 @@
   </div>
   </div>
 
+  <div id="panelReseaux" style="display:none;">
+  <div class="liste-panel">
+    <div class="liste-header">
+      <h3 style="display:flex; align-items:center; gap:9px;"><span style="font-size:1.1rem;">📱</span>Réseaux sociaux</h3>
+    </div>
+    <div id="reseauxContent"><div class="loading">Chargement…</div></div>
+  </div>
+  </div>
+
   <div id="panelCalendrier" style="display:none;">
   <div class="liste-panel calendrier-panel">
     <div class="liste-header">
@@ -951,6 +983,7 @@
   let sessionTokenActuel = null;
   let tokenCalendrierActuel = null;
   let estDemoActuel = false;
+  let reseauxSociauxDejaCharge = false;
 
   const DRAFT_ID_SKYECO_PRO = '4fbdb122-9fca-4636-b80c-d9e4abc2542b';
 
@@ -1287,12 +1320,17 @@
     if (btnCible) btnCible.classList.add('active');
     document.getElementById('panelAds').style.display = cible === 'ads' ? '' : 'none';
     document.getElementById('panelClients').style.display = cible === 'clients' ? '' : 'none';
+    document.getElementById('panelReseaux').style.display = cible === 'reseaux' ? '' : 'none';
     document.getElementById('panelCalendrier').style.display = cible === 'calendrier' ? '' : 'none';
     document.getElementById('panelAppelVideo').style.display = cible === 'appelvideo' ? '' : 'none';
     document.getElementById('panelEstimateur').style.display = cible === 'estimateur' ? '' : 'none';
     if (cible === 'calendrier' && !calendrierDejaCharge) {
       calendrierDejaCharge = true;
       chargerCalendrier();
+    }
+    if (cible === 'reseaux' && !reseauxSociauxDejaCharge) {
+      reseauxSociauxDejaCharge = true;
+      chargerReseauxSociaux();
     }
     if (cible === 'clients') {
       chargerDemandes(tokenCalendrierActuel);
@@ -1309,6 +1347,196 @@
       document.getElementById('panelTabs').scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   }
+
+  // --- Onglet "Réseaux sociaux" (27/09) -------------------------------------
+  // Agent IA qui publie automatiquement (voir api/agent-reseaux-sociaux.js) —
+  // table skyeco_pro_social_connections (statut de connexion OAuth par
+  // réseau) et skyeco_pro_social_posts (historique des posts générés/publiés
+  // par l'agent). Connexion en self-service pour les 4 réseaux (Facebook —
+  // qui embarque Instagram —, TikTok, Google Business Profile, Pinterest) :
+  // même schéma OAuth partout, voir api/<reseau>-connect-start.js.
+  async function chargerReseauxSociaux() {
+    const content = document.getElementById('reseauxContent');
+    content.innerHTML = '<div class="loading">Chargement…</div>';
+    try {
+      const [connexionResp, postsResp] = await Promise.all([
+        fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_social_connections?draft_id=eq.${draftId}&select=*`, { headers: { apikey: SUPABASE_ANON_KEY } }),
+        fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_social_posts?draft_id=eq.${draftId}&select=*&order=created_at.desc&limit=20`, { headers: { apikey: SUPABASE_ANON_KEY } }),
+      ]);
+      const connexions = connexionResp.ok ? await connexionResp.json() : [];
+      const posts = postsResp.ok ? await postsResp.json() : [];
+      const connexion = connexions[0];
+      const agentActif = !connexion || connexion.auto_publication_active !== false;
+
+      const pillLabels = { planifie: 'Planifié', brouillon: 'Brouillon', echec: 'Échec', erreur: 'Échec', publie: 'Publié' };
+      const pillClass = { planifie: 'planned', brouillon: 'draft', echec: 'failed', erreur: 'failed', publie: 'done' };
+
+      content.innerHTML = `
+        <div class="rs-status" style="margin-bottom:20px; padding-bottom:18px; border-bottom:1.5px solid #eef1f0; background:#faf8ff; border-radius:12px; padding:16px;">
+          <span class="rs-status-dot ${agentActif ? '' : 'off'}"></span>
+          <div class="rs-status-text">
+            <strong>${agentActif ? '🤖 Agent IA actif' : '⏸️ Agent IA en pause'}</strong>
+            ${agentActif
+              ? "Dès qu'un réseau est connecté ci-dessous, l'agent choisit une photo de vos réalisations, rédige une légende et publie tout seul (~2 posts/semaine max par réseau)."
+              : "L'agent ne publiera plus tant qu'il est en pause — vos connexions restent actives."}
+          </div>
+          <button type="button" class="rs-btn secondary" id="btnBasculerAgent">${agentActif ? 'Mettre en pause' : 'Réactiver'}</button>
+        </div>
+
+        <div class="rs-status" style="margin-bottom:20px; padding-bottom:18px; border-bottom:1.5px solid #eef1f0;">
+          <span class="rs-status-dot ${connexion && connexion.facebook_page_id ? '' : 'off'}"></span>
+          <div class="rs-status-text">
+            <strong>${connexion && connexion.facebook_page_id ? `Facebook connecté — ${escapeHtmlDash(connexion.facebook_page_name || '')}` : 'Facebook + Instagram non connectés'}</strong>
+            ${connexion && connexion.facebook_page_id
+              ? (connexion.ig_username ? `Instagram @${escapeHtmlDash(connexion.ig_username)} connecté aussi (même autorisation).` : "Page Facebook connectée — aucun compte Instagram professionnel relié à cette Page n'a été trouvé.")
+              : 'Une seule connexion pour les deux réseaux à la fois (votre compte Instagram doit être relié à votre Page Facebook). <a href="#" id="lienCreerPageFacebook" style="color:#7c3aed;font-weight:700;">Pas encore de Page ?</a>'}
+          </div>
+          <button type="button" class="rs-btn ${connexion && connexion.facebook_page_id ? 'secondary' : ''}" id="btnConnecterFacebook">${connexion && connexion.facebook_page_id ? 'Gérer la connexion' : 'Connecter Facebook + Instagram'}</button>
+        </div>
+
+        <div class="rs-status" style="margin-bottom:20px; padding-bottom:18px; border-bottom:1.5px solid #eef1f0;">
+          <span class="rs-status-dot ${connexion && connexion.google_business_location_id ? '' : 'off'}"></span>
+          <div class="rs-status-text">
+            <strong>${connexion && connexion.google_business_location_id ? `Fiche Google connectée — ${escapeHtmlDash(connexion.google_business_location_name || '')}` : 'Google Business Profile non connecté'}</strong>
+            ${connexion && connexion.google_business_location_id
+              ? 'Vos posts sont aussi publiés automatiquement sur votre fiche Google — le plus utile pour votre référencement local.'
+              : "Connectez votre fiche Google (Google Business Profile) pour apparaître avec des posts à jour sur Google Maps/Search."}
+          </div>
+          <button type="button" class="rs-btn ${connexion && connexion.google_business_location_id ? 'secondary' : ''}" id="btnConnecterGoogleBusiness">${connexion && connexion.google_business_location_id ? 'Gérer la connexion' : 'Connecter Google Business Profile'}</button>
+        </div>
+
+        <div class="rs-status" style="margin-bottom:20px; padding-bottom:18px; border-bottom:1.5px solid #eef1f0;">
+          <span class="rs-status-dot ${connexion && connexion.tiktok_open_id ? '' : 'off'}"></span>
+          <div class="rs-status-text">
+            <strong>${connexion && connexion.tiktok_open_id ? `TikTok connecté — @${escapeHtmlDash(connexion.tiktok_username || '')}` : 'TikTok non connecté'}</strong>
+            ${connexion && connexion.tiktok_open_id
+              ? "Vos posts sont aussi publiés automatiquement sur TikTok. ⚠️ Ils restent visibles par vous seul pour l'instant (compte en attente de validation TikTok pour la publication publique)."
+              : 'Connectez votre compte TikTok pour que vos posts y soient aussi publiés automatiquement.'}
+          </div>
+          <button type="button" class="rs-btn ${connexion && connexion.tiktok_open_id ? 'secondary' : ''}" id="btnConnecterTikTok">${connexion && connexion.tiktok_open_id ? 'Gérer la connexion' : 'Connecter TikTok'}</button>
+        </div>
+
+        <div class="rs-status" style="margin-bottom:20px; padding-bottom:18px; border-bottom:1.5px solid #eef1f0;">
+          <span class="rs-status-dot ${connexion && connexion.pinterest_board_id ? '' : 'off'}"></span>
+          <div class="rs-status-text">
+            <strong>${connexion && connexion.pinterest_board_id ? `Pinterest connecté — @${escapeHtmlDash(connexion.pinterest_username || '')}` : 'Pinterest non connecté'}</strong>
+            ${connexion && connexion.pinterest_board_id
+              ? `Vos posts sont aussi épinglés automatiquement sur le tableau "${escapeHtmlDash(connexion.pinterest_board_name || '')}".`
+              : 'Connectez votre compte Pinterest — utile pour les réalisations qui inspirent (portails, aménagements).'}
+          </div>
+          <button type="button" class="rs-btn ${connexion && connexion.pinterest_board_id ? 'secondary' : ''}" id="btnConnecterPinterest">${connexion && connexion.pinterest_board_id ? 'Gérer la connexion' : 'Connecter Pinterest'}</button>
+        </div>
+
+        ${!posts.length
+          ? '<div class="empty-msg" style="padding:20px 0;"><span class="empty-icone">📱</span>Aucun post pour l\'instant — l\'agent publie automatiquement une fois un réseau connecté ci-dessus.</div>'
+          : posts.map(p => `
+            <div class="rs-row">
+              <div class="rs-thumb" style="background-image:url('${p.photo_url || ''}')"></div>
+              <div>
+                <div class="rs-caption">${escapeHtmlDash(p.legende || '')}</div>
+                <div class="rs-meta">${escapeHtmlDash((p.reseaux_cibles || []).join(', '))}</div>
+              </div>
+              <span class="rs-pill ${pillClass[p.statut] || 'draft'}">${pillLabels[p.statut] || p.statut}</span>
+              <button type="button" class="rs-action" data-id="${p.id}">${p.statut === 'publie' ? 'Voir' : (p.statut === 'echec' || p.statut === 'erreur') ? 'Réessayer' : ''}</button>
+            </div>
+          `).join('')
+        }
+      `;
+
+      function ouvrirConnexionOAuth(prefixe) {
+        if (!window.tarifActifActuel) {
+          window.location.href = '/mes-elements.html?id=' + draftId + '&verrou=ads';
+          return;
+        }
+        window.location.href = `/api/${prefixe}-connect-start?id=${encodeURIComponent(draftId)}&token=${encodeURIComponent(tokenCalendrierActuel || '')}`;
+      }
+
+      // Même schéma OAuth self-service pour les 4 réseaux (voir
+      // api/<reseau>-connect-start.js + api/<reseau>-callback.js) — Facebook
+      // embarque aussi Instagram (compte pro relié à la Page).
+      document.getElementById('btnConnecterFacebook').addEventListener('click', () => ouvrirConnexionOAuth('facebook'));
+      document.getElementById('btnConnecterGoogleBusiness').addEventListener('click', () => ouvrirConnexionOAuth('google-business'));
+      document.getElementById('btnConnecterTikTok').addEventListener('click', () => ouvrirConnexionOAuth('tiktok'));
+      document.getElementById('btnConnecterPinterest').addEventListener('click', () => ouvrirConnexionOAuth('pinterest'));
+
+      const lienCreerPageFacebook = document.getElementById('lienCreerPageFacebook');
+      if (lienCreerPageFacebook) {
+        lienCreerPageFacebook.addEventListener('click', (e) => {
+          e.preventDefault();
+          // Nouvel onglet — le dashboard reste ouvert, l'artisan revient dessus une fois sa Page créée.
+          window.open('https://www.facebook.com/pages/create', '_blank', 'noopener');
+        });
+      }
+
+      // Pause/reprise de l'agent IA (27/09) — n'affecte que la publication
+      // automatique, jamais les connexions déjà établies.
+      document.getElementById('btnBasculerAgent').addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        btn.disabled = true;
+        try {
+          await fetch('/api/social-basculer-agent', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ draftId, token: tokenCalendrierActuel, actif: !agentActif }),
+          });
+          chargerReseauxSociaux();
+        } catch (e2) {
+          btn.disabled = false;
+          alert("Impossible de changer l'état de l'agent pour le moment — réessayez.");
+        }
+      });
+
+      content.querySelectorAll('.rs-action').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const post = posts.find((p) => p.id === btn.dataset.id);
+          if (!post) return;
+          if (post.statut === 'publie' && post.ig_media_id) {
+            window.open(`https://www.instagram.com/p/${post.ig_media_id}/`, '_blank');
+          }
+        });
+      });
+    } catch (e) {
+      content.innerHTML = '<div class="empty-msg"><span class="empty-icone">⚠️</span>Impossible de charger les réseaux sociaux pour le moment.</div>';
+    }
+  }
+
+  // Message de retour après le flux OAuth (voir facebook-callback.js,
+  // tiktok-callback.js, google-business-callback.js, pinterest-callback.js) :
+  // ?social=fb_succes|fb_refuse|fb_sans_page|fb_erreur (Facebook+Instagram),
+  // tiktok_succes|tiktok_refuse|tiktok_erreur (TikTok),
+  // gbp_succes|gbp_refuse|gbp_sans_fiche|gbp_erreur (Google Business Profile),
+  // ou pinterest_succes|pinterest_refuse|pinterest_erreur (Pinterest) dans
+  // l'URL, avec #reseaux pour rouvrir directement le bon onglet.
+  (function afficherRetourSocial() {
+    const statutSocial = params.get('social');
+    if (!statutSocial) return;
+    const messages = {
+      fb_succes: { texte: '✓ Facebook (et Instagram si relié) connecté avec succès.', couleur: '#7c3aed' },
+      fb_refuse: { texte: "Connexion Facebook annulée — vous n'avez pas autorisé l'accès.", couleur: '#8a9891' },
+      fb_sans_page: { texte: "Aucune Page Facebook trouvée sur ce compte. Créez d'abord votre Page professionnelle Facebook, puis réessayez.", couleur: '#c0392b' },
+      fb_erreur: { texte: 'Une erreur est survenue pendant la connexion à Facebook — réessayez.', couleur: '#c0392b' },
+      tiktok_succes: { texte: '✓ TikTok connecté avec succès.', couleur: '#7c3aed' },
+      tiktok_refuse: { texte: "Connexion TikTok annulée — vous n'avez pas autorisé l'accès.", couleur: '#8a9891' },
+      tiktok_erreur: { texte: 'Une erreur est survenue pendant la connexion à TikTok — réessayez.', couleur: '#c0392b' },
+      gbp_succes: { texte: '✓ Fiche Google Business Profile connectée avec succès.', couleur: '#7c3aed' },
+      gbp_refuse: { texte: "Connexion Google annulée — vous n'avez pas autorisé l'accès.", couleur: '#8a9891' },
+      gbp_sans_fiche: { texte: "Aucune fiche Google Business Profile trouvée sur ce compte Google. Créez d'abord votre fiche sur google.com/business, puis réessayez.", couleur: '#c0392b' },
+      gbp_erreur: { texte: 'Une erreur est survenue pendant la connexion à Google Business Profile — réessayez.', couleur: '#c0392b' },
+      pinterest_succes: { texte: '✓ Pinterest connecté avec succès.', couleur: '#7c3aed' },
+      pinterest_refuse: { texte: "Connexion Pinterest annulée — vous n'avez pas autorisé l'accès.", couleur: '#8a9891' },
+      pinterest_erreur: { texte: 'Une erreur est survenue pendant la connexion à Pinterest — réessayez.', couleur: '#c0392b' },
+    };
+    const info = messages[statutSocial];
+    if (!info) return;
+    const toast = document.createElement('div');
+    toast.style.cssText = `position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:10006;background:${info.couleur};color:#fff;padding:12px 20px;border-radius:10px;font-size:0.85rem;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,0.18);max-width:90vw;text-align:center;`;
+    toast.textContent = info.texte;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 6000);
+    if (params.get('social')?.startsWith('fb_') || params.get('social')?.startsWith('tiktok_') || params.get('social')?.startsWith('gbp_') || params.get('social')?.startsWith('pinterest_')) {
+      activerOnglet('reseaux');
+    }
+  })();
 
   // --- Onglet "Estimateur BTP" (26/09) : visible uniquement pour les
   // artisans ayant déjà payé l'Estimateur BTP avant de s'inscrire à Skyeco

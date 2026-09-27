@@ -7,9 +7,16 @@
     {
       "path": "/api/agent-leads",
       "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/agent-pub",
+      "schedule": "0 6 * * 1"
     }
   ],
   "rewrites": [
-    { "source": "/mobile", "destination": "/index.html" }
+    {
+      "source": "/mobile",
+      "destination": "/index.html"
+    }
   ]
 }

@@ -1,22 +1,14 @@
 {
   "crons": [
-    {
-      "path": "/api/send-relances",
-      "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/agent-leads",
-      "schedule": "0 7 * * *"
-    },
-    {
-      "path": "/api/agent-pub",
-      "schedule": "0 6 * * 1"
-    }
+    { "path": "/api/verifier-essais-a-programmer", "schedule": "0 9 * * *" },
+    { "path": "/api/verifier-pauses-a-programmer", "schedule": "0 9 * * *" },
+    { "path": "/api/verifier-soldes-bas", "schedule": "*/15 * * * *" },
+    { "path": "/api/rappel-rdv", "schedule": "*/15 * * * *" },
+    { "path": "/api/cron-prospection-quotidienne", "schedule": "*/30 6-19 * * *" }
   ],
   "rewrites": [
-    {
-      "source": "/mobile",
-      "destination": "/index.html"
-    }
+    { "source": "/l", "destination": "/api/lien" },
+    { "source": "/o", "destination": "/api/ouverture" },
+    { "source": "/d", "destination": "/api/desabonnement" }
   ]
 }

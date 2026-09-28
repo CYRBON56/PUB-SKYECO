@@ -42,5 +42,10 @@
       "source": "/d",
       "destination": "/api/desabonnement"
     }
-  ]
+  ],
+  "functions": {
+    "api/prix-travaux-analyser-devis.js": {
+      "maxDuration": 60
+    }
+  }
 }

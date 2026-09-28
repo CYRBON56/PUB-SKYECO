@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="same-origin">
 <title>Skyeco – Votre devis travaux est-il au juste prix ?</title>
 <meta name="description" content="Estimez vos travaux dans 20 métiers du bâtiment et vérifiez le devis de votre artisan ligne par ligne avant de signer.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -941,11 +942,12 @@ function openApp(m){ hide("landing"); show("app"); window.scrollTo(0,0); if(m) p
 document.querySelectorAll("[data-start]").forEach(b=>b.addEventListener("click",()=>openApp(b.dataset.start||null)));
 $("home").onclick=()=>{hide("app");show("landing");window.scrollTo(0,0)};
 
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function qHTML(q){
   const hint=q.hint?`<p class="hint" style="margin-top:6px">${q.hint}</p>`:"";
   if(q.type==="choice") return `<fieldset class="q" data-q="${q.id}"><legend>${q.label}</legend><div class="choices">${q.options.map(([v,l])=>`<input type="radio" name="${q.id}" id="${q.id}-${v}" value="${v}" ${s[q.id]===v?"checked":""}><label for="${q.id}-${v}">${l}</label>`).join("")}</div>${hint}</fieldset>`;
-  if(q.type==="number") return `<div class="q" data-q="${q.id}"><label for="in-${q.id}">${q.label}</label><input type="number" id="in-${q.id}" data-id="${q.id}" min="${q.min}" step="any" inputmode="decimal" placeholder="${q.ph||""}" value="${s[q.id]??""}">${hint}</div>`;
-  return `<div class="q" data-q="${q.id}"><label for="in-${q.id}">${q.label}</label><input type="text" id="in-${q.id}" data-id="${q.id}" maxlength="3" placeholder="ex. 56" value="${s[q.id]??""}"></div>`;
+  if(q.type==="number") return `<div class="q" data-q="${q.id}"><label for="in-${q.id}">${q.label}</label><input type="number" id="in-${q.id}" data-id="${q.id}" min="${q.min}" step="any" inputmode="decimal" placeholder="${q.ph||""}" value="${esc(s[q.id])}">${hint}</div>`;
+  return `<div class="q" data-q="${q.id}"><label for="in-${q.id}">${q.label}</label><input type="text" id="in-${q.id}" data-id="${q.id}" maxlength="3" placeholder="ex. 56" value="${esc(s[q.id])}"></div>`;
 }
 function renderQs(boxId,qs){
   const box=$(boxId); box.innerHTML=qs.map(qHTML).join("");

@@ -525,6 +525,14 @@
   #accessGate .gate-err{color:#c0392b;font-size:13px;margin-top:10px;display:none;}
   #accessGate .gate-prix{font-size:30px;font-weight:800;color:var(--orange);margin:8px 0 0;}
   #accessGate .gate-prix small{font-size:13px;font-weight:600;color:var(--text-mut);}
+  /* 28/09/2026 : infos entreprise demandées seulement au moment de payer */
+  #accessGate .achat-champs{text-align:left;margin:14px 0 4px;}
+  #accessGate .achat-champs label{display:block;font-size:12px;font-weight:700;color:var(--navy);margin:10px 0 4px;}
+  #accessGate .achat-champs input{width:100%;box-sizing:border-box;margin-bottom:0;}
+  #accessGate .siret-statut{font-size:12px;margin-top:4px;min-height:16px;}
+  #accessGate .siret-statut.ok{color:#1e8449;}
+  #accessGate .siret-statut.err{color:#c0392b;}
+  #accessGate .gate-lien{background:none;border:none;color:var(--navy);text-decoration:underline;font-size:13px;cursor:pointer;margin-top:10px;}
 
   .trial-banner{
     background:var(--yellow-bg);
@@ -572,12 +580,23 @@
       <div class="gate-mini">Déjà commencé ? Ressaisissez simplement le même email pour retrouver votre accès.</div>
     </div>
     <div id="gatePaywallStep" style="display:none;">
-      <h2>Votre essai gratuit est terminé</h2>
+      <h2 id="gatePaywallTitre">Votre essai gratuit est terminé</h2>
       <p>Continuez à chiffrer vos devis en 30 secondes, sur chantier comme au bureau.</p>
       <div class="gate-prix">29,90 € <small>HT</small></div>
       <p style="margin-top:6px;">Achat unique — pas d'abonnement, pas de prélèvement récurrent.</p>
-      <button class="btn btn-primary" id="gatePaywallBtn" style="width:100%;margin-top:6px;">Acheter maintenant</button>
+      <div class="achat-champs">
+        <label for="achatSiret">SIRET de votre entreprise</label>
+        <input type="text" id="achatSiret" inputmode="numeric" placeholder="14 chiffres" maxlength="17" autocomplete="off">
+        <div class="siret-statut" id="achatSiretStatut"></div>
+        <label for="achatEmail">Email (reçu d'achat + accès sur vos autres appareils)</label>
+        <input type="email" id="achatEmail" placeholder="Votre email" autocomplete="email" inputmode="email">
+        <label for="achatTel">Téléphone</label>
+        <input type="tel" id="achatTel" placeholder="06 xx xx xx xx" autocomplete="tel" inputmode="tel">
+      </div>
+      <button class="btn btn-primary" id="gatePaywallBtn" style="width:100%;margin-top:12px;">Acheter maintenant</button>
       <div class="gate-err" id="gatePaywallErr"></div>
+      <button class="gate-lien" id="btnDejaAchete">J'ai déjà acheté — retrouver mon accès</button>
+      <button class="gate-lien" id="btnRetourAppli" style="display:none;">← Revenir à mon essai</button>
       <div class="gate-mini">Vous avez déjà payé et voyez quand même cet écran ? Attendez quelques secondes et rechargez la page.</div>
     </div>
   </div>
@@ -928,6 +947,13 @@ let hiddenCodes = loadJSON(LS_KEYS.hiddenCodes, []);
 const LS_ACCES = 'estimbtp_acces';
 const LS_DEVIS_META = 'estimbtp_devis_meta'; // { id: <uuid du devis courant côté serveur, ou null> }
 let accesCourant = loadJSON(LS_ACCES, null);
+// 28/09/2026 (demande de Cyrille) : l'essai démarre tout de suite, sans
+// SIRET ni email. Essai de 2 jours gardé localement sur l'appareil ; le
+// SIRET, l'email et le téléphone ne sont demandés qu'au moment de payer.
+if (!accesCourant){
+  accesCourant = { email: '', anonyme: true, essai_fin: new Date(Date.now() + 2 * 86400000).toISOString(), abonnement_actif: false, source: 'essai-anonyme' };
+  try{ localStorage.setItem(LS_ACCES, JSON.stringify(accesCourant)); }catch(e){}
+}
 let devisMeta = loadJSON(LS_DEVIS_META, { id: null });
 
 function debounce(fn, delaiMs){
@@ -1791,7 +1817,7 @@ updateEntrepriseLabel();
    les lire.) */
 
 function decidersEtatAcces(acces){
-  if (!acces || !acces.email) return 'gate';
+  if (!acces) return 'gate';
   if (acces.abonnement_actif) return 'app';
   if (acces.essai_fin && new Date(acces.essai_fin).getTime() > Date.now()) return 'app';
   return 'paywall';
@@ -1827,11 +1853,11 @@ function appliquerEtatAcces(etat, acces){
 // Paiement unique de 29,90€ HT (achat fixe, jamais un abonnement) — appelé
 // soit depuis l'écran "essai terminé", soit depuis le bandeau d'essai pour
 // payer plus tôt.
-async function demarrerAchat(email){
+async function demarrerAchat(email, infosEntreprise){
   const resp = await fetch('/api/estimateur-btp-checkout', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email })
+    body: JSON.stringify({ email, ...(infosEntreprise || {}) })
   });
   const data = await resp.json();
   if (!resp.ok || !data.url) throw new Error(data.error || 'Erreur inconnue');
@@ -1944,7 +1970,7 @@ function renderHistoryList(items){
 async function chargerHistorique(){
   const list = document.getElementById('historyList');
   if (!accesCourant || !accesCourant.email){
-    list.innerHTML = '<div class="history-empty">Démarrez votre essai avec votre email pour voir votre historique.</div>';
+    list.innerHTML = '<div class="history-empty">L\'historique sur plusieurs appareils est disponible après l\'achat. Vos devis restent enregistrés sur cet appareil.</div>';
     return;
   }
   if (!navigator.onLine){
@@ -2313,35 +2339,118 @@ document.getElementById('gateEmailInput').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') document.getElementById('gateEmailBtn').click();
 });
 
-// Bouton "Acheter maintenant" (écran "essai terminé") — paiement unique de
-// 29,90€ HT, jamais un abonnement.
+// 28/09/2026 : les infos entreprise (SIRET, email, téléphone) ne sont
+// demandées QU'ICI, au moment de payer — jamais pour démarrer l'essai.
+let achatInfosSiret = null, achatDernierSiret = null;
+async function achatVerifierSiret(siret){
+  if (siret === achatDernierSiret) return achatInfosSiret;
+  achatDernierSiret = siret; achatInfosSiret = null;
+  const st = document.getElementById('achatSiretStatut');
+  st.className = 'siret-statut'; st.textContent = 'Vérification…';
+  try{
+    const r = await fetch('/api/verifier-siret', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ siret }) });
+    const d = await r.json();
+    if (!r.ok || !d.success || d.trouve === false){
+      st.className = 'siret-statut err';
+      st.textContent = d.trouve === false ? 'SIRET introuvable — vérifiez la saisie.' : 'Vérification indisponible — vous pouvez continuer.';
+      return null;
+    }
+    achatInfosSiret = d;
+    st.className = 'siret-statut ok';
+    st.textContent = (d.denomination || 'Entreprise trouvée') + (d.ville ? ' — ' + d.ville : '');
+    return d;
+  }catch(e){
+    st.className = 'siret-statut err'; st.textContent = 'Vérification indisponible — vous pouvez continuer.';
+    return null;
+  }
+}
+document.getElementById('achatSiret').addEventListener('blur', () => {
+  const s = document.getElementById('achatSiret').value.replace(/\s/g, '');
+  if (/^\d{14}$/.test(s)) achatVerifierSiret(s);
+});
+
+function ouvrirFormulaireAchat(depuisEssai){
+  const gate = document.getElementById('accessGate');
+  gate.style.display = 'flex';
+  document.getElementById('gateEmailStep').style.display = 'none';
+  document.getElementById('gatePaywallStep').style.display = 'block';
+  document.getElementById('gatePaywallTitre').textContent = depuisEssai ? 'Passer à la version complète' : 'Votre essai gratuit est terminé';
+  document.getElementById('btnRetourAppli').style.display = depuisEssai ? 'inline-block' : 'none';
+  if (accesCourant && accesCourant.email) document.getElementById('achatEmail').value = accesCourant.email;
+}
+
+document.getElementById('btnRetourAppli').addEventListener('click', () => {
+  appliquerEtatAcces(decidersEtatAcces(accesCourant), accesCourant);
+});
+
+// Bouton "Acheter maintenant" — paiement unique de 29,90€ HT, jamais un abonnement.
 document.getElementById('gatePaywallBtn').addEventListener('click', async () => {
   const err = document.getElementById('gatePaywallErr');
   const btn = document.getElementById('gatePaywallBtn');
   err.style.display = 'none';
-  if (!accesCourant || !accesCourant.email) return;
+  const siret = document.getElementById('achatSiret').value.replace(/\s/g, '');
+  const email = document.getElementById('achatEmail').value.trim().toLowerCase();
+  const tel = document.getElementById('achatTel').value.trim();
+  const erreur = (m) => { err.textContent = m; err.style.display = 'block'; };
+  if (!/^\d{14}$/.test(siret)) return erreur('Un SIRET comporte 14 chiffres.');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return erreur('Merci de saisir un email valide.');
+  if (tel.replace(/\D/g, '').length < 10) return erreur('Merci de saisir un numéro de téléphone valide.');
+
   btn.disabled = true;
   btn.textContent = 'Redirection…';
   try{
-    await demarrerAchat(accesCourant.email);
+    const infos = await achatVerifierSiret(siret);
+    // Pré-remplit l'entête des devis (jamais par-dessus une valeur déjà saisie)
+    if (!settings.nom && infos && infos.denomination) settings.nom = infos.denomination;
+    if (!settings.coord){
+      const morceaux = [];
+      if (infos && infos.adresse) morceaux.push(infos.adresse);
+      if (infos && (infos.codePostal || infos.ville)) morceaux.push([infos.codePostal, infos.ville].filter(Boolean).join(' '));
+      morceaux.push(tel);
+      morceaux.push('SIRET ' + siret);
+      settings.coord = morceaux.join(' — ');
+    }
+    saveJSON(LS_KEYS.settings, settings);
+    updateEntrepriseLabel();
+    await demarrerAchat(email, { siret, telephone: tel, entreprise: (infos && infos.denomination) || settings.nom || '' });
   }catch(e){
-    err.textContent = "Impossible d'ouvrir la page de paiement — réessayez.";
-    err.style.display = 'block';
+    erreur("Impossible d'ouvrir la page de paiement — réessayez.");
     btn.disabled = false;
     btn.textContent = 'Acheter maintenant';
   }
 });
 
-// Bouton "Acheter maintenant" du petit bandeau (pendant l'essai, pour payer
-// plus tôt)
-document.getElementById('btnTrialAcheter').addEventListener('click', async () => {
-  if (!accesCourant || !accesCourant.email) return;
+// Déjà acheté sur un autre appareil : on retrouve l'accès par l'email.
+document.getElementById('btnDejaAchete').addEventListener('click', async () => {
+  const err = document.getElementById('gatePaywallErr');
+  const email = document.getElementById('achatEmail').value.trim().toLowerCase();
+  err.style.display = 'none';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    err.textContent = "Saisissez l'email utilisé lors de l'achat, puis recliquez ici.";
+    err.style.display = 'block';
+    return;
+  }
   try{
-    await demarrerAchat(accesCourant.email);
+    const r = await fetch('/api/estimateur-btp-statut?email=' + encodeURIComponent(email));
+    const d = r.ok ? await r.json() : null;
+    if (d && d.success && d.abonnement_actif){
+      accesCourant = { email, essai_fin: d.essai_fin, abonnement_actif: true, source: d.source };
+      saveJSON(LS_ACCES, accesCourant);
+      appliquerEtatAcces('app', accesCourant);
+      appliquerReglagesRecus(d);
+      toast('✅ Accès retrouvé');
+    } else {
+      err.textContent = 'Aucun achat trouvé pour cet email.';
+      err.style.display = 'block';
+    }
   }catch(e){
-    toast("Impossible d'ouvrir la page de paiement — réessayez.");
+    err.textContent = 'Vérification impossible — réessayez.';
+    err.style.display = 'block';
   }
 });
+
+// Bouton "Acheter maintenant" du petit bandeau (pendant l'essai, pour payer plus tôt)
+document.getElementById('btnTrialAcheter').addEventListener('click', () => ouvrirFormulaireAchat(true));
 
 // Retour depuis Stripe (?paiement=ok) : revérifie tout de suite le statut
 // sans attendre le webhook, puis nettoie l'URL. ?paiement=annule n'a rien de

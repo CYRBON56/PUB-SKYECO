@@ -26,10 +26,33 @@ async function desabonner(table, headers, p, champNom) {
   return prospect[champNom];
 }
 
+// 28/09/2026 : un simple GET ne désabonne plus. Les scanners de sécurité
+// des messageries d'entreprise "cliquent" tous les liens d'un email, ce qui
+// désabonnait des prospects sans qu'aucun humain n'ait rien demandé.
+//   - GET  /d?p=...  -> page avec un bouton "Confirmer mon désabonnement"
+//   - POST /d?p=...  -> désabonnement effectif (bouton de la page, ET
+//     désabonnement en un clic de Gmail/Outlook via l'en-tête
+//     List-Unsubscribe-Post, qui envoie justement un POST).
+function pageDemandeConfirmation(p) {
+  const pSur = String(p).replace(/[^a-zA-Z0-9_-]/g, '');
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Se désabonner</title>
+<style>body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#14312a;color:#fff;}
+.wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;}
+.card{max-width:420px;text-align:center;} h1{font-size:1.4rem;margin:0 0 12px;} p{color:#cfe0d8;font-size:0.95rem;line-height:1.5;margin:0 0 22px;}
+button{background:#fff;color:#14312a;border:none;border-radius:8px;padding:14px 22px;font-size:1rem;font-weight:700;cursor:pointer;}</style></head>
+<body><div class="wrap"><div class="card"><h1>Se désabonner</h1><p>Confirmez que vous ne souhaitez plus recevoir nos emails.</p>
+<form method="POST" action="/d?p=${pSur}"><button type="submit">Confirmer mon désabonnement</button></form></div></div></body></html>`;
+}
+
 export default async function handler(req, res) {
   const { p } = req.query || {};
   res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.setHeader("X-Robots-Tag", "noindex");
   if (!p) return res.status(200).send(pageConfirmation({ succes: false }));
+
+  if (req.method !== "POST") {
+    return res.status(200).send(pageDemandeConfirmation(p));
+  }
 
   try {
     const headers = { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}` };

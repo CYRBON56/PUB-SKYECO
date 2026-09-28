@@ -49,7 +49,7 @@ export default async function handler(req, res) {
         });
       } else {
         const lecturePaysagiste = await fetch(
-          `${process.env.SUPABASE_URL}/rest/v1/prospects_paysagiste?clic_token=eq.${encodeURIComponent(p)}&select=id,nb_clics,lien_clic_destination`,
+          `${process.env.SUPABASE_URL}/rest/v1/prospects_paysagiste?clic_token=eq.${encodeURIComponent(p)}&select=id,nb_clics,nb_clics_robots,lien_clic_destination,date_envoi_email`,
           { headers: supaHeaders }
         );
         const rowsPaysagiste = lecturePaysagiste.ok ? await lecturePaysagiste.json() : [];
@@ -65,10 +65,19 @@ export default async function handler(req, res) {
           destination = (destinationEnregistree && /^https?:\/\//i.test(destinationEnregistree))
             ? destinationEnregistree
             : `${DESTINATION_PROSPECTION_ARTISANS}?pp=${encodeURIComponent(prospectPaysagiste.id)}`;
+          // 28/09/2026 : les scanners de sécurité des messageries d'entreprise
+          // cliquent tous les liens quelques secondes après la réception. Un
+          // clic moins de 30 s après l'envoi est compté à part (nb_clics_robots)
+          // et ne passe PAS lien_clique à true — le visiteur est redirigé quand même.
+          const envoiMs = prospectPaysagiste.date_envoi_email ? new Date(prospectPaysagiste.date_envoi_email).getTime() : 0;
+          const clicRobot = envoiMs && (Date.now() - envoiMs) < 30 * 1000;
+          const corpsClic = clicRobot
+            ? { nb_clics_robots: (prospectPaysagiste.nb_clics_robots || 0) + 1 }
+            : { lien_clique: true, clicked_at: new Date().toISOString(), nb_clics: (prospectPaysagiste.nb_clics || 0) + 1 };
           await fetch(`${process.env.SUPABASE_URL}/rest/v1/prospects_paysagiste?id=eq.${encodeURIComponent(prospectPaysagiste.id)}`, {
             method: "PATCH",
             headers: { ...supaHeaders, "Content-Type": "application/json", Prefer: "return=minimal" },
-            body: JSON.stringify({ lien_clique: true, clicked_at: new Date().toISOString(), nb_clics: (prospectPaysagiste.nb_clics || 0) + 1 }),
+            body: JSON.stringify(corpsClic),
           });
         }
       }

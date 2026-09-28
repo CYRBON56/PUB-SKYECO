@@ -7,15 +7,28 @@
 // fois (un jeton n'existe que dans une seule table).
 const PIXEL_GIF = Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBTAA7", "base64");
 
+// 28/09/2026 : Gmail (proxy d'images) et les antivirus d'entreprise chargent
+// le pixel quelques secondes après la réception, sans aucun humain. Pour
+// prospects_paysagiste, une ouverture moins de 60 s après l'envoi est donc
+// comptée à part (nb_ouvertures_auto) et ne passe PAS email_ouvert à true.
+const DELAI_OUVERTURE_AUTO_MS = 60 * 1000;
+
 async function marquerOuverture(table, headers, p) {
-  const lecture = await fetch(`${process.env.SUPABASE_URL}/rest/v1/${table}?clic_token=eq.${encodeURIComponent(p)}&select=id,nb_ouvertures`, { headers });
+  const avecDate = table === 'prospects_paysagiste';
+  const colonnes = avecDate ? 'id,nb_ouvertures,nb_ouvertures_auto,date_envoi_email' : 'id,nb_ouvertures';
+  const lecture = await fetch(`${process.env.SUPABASE_URL}/rest/v1/${table}?clic_token=eq.${encodeURIComponent(p)}&select=${colonnes}`, { headers });
   const rows = lecture.ok ? await lecture.json() : [];
   const prospect = rows && rows[0];
   if (!prospect) return false;
+
+  let corps = { email_ouvert: true, date_ouverture: new Date().toISOString(), nb_ouvertures: (prospect.nb_ouvertures || 0) + 1 };
+  if (avecDate && prospect.date_envoi_email && (Date.now() - new Date(prospect.date_envoi_email).getTime()) < DELAI_OUVERTURE_AUTO_MS) {
+    corps = { nb_ouvertures_auto: (prospect.nb_ouvertures_auto || 0) + 1 };
+  }
   await fetch(`${process.env.SUPABASE_URL}/rest/v1/${table}?id=eq.${encodeURIComponent(prospect.id)}`, {
     method: "PATCH",
     headers: { ...headers, "Content-Type": "application/json", Prefer: "return=minimal" },
-    body: JSON.stringify({ email_ouvert: true, date_ouverture: new Date().toISOString(), nb_ouvertures: (prospect.nb_ouvertures || 0) + 1 }),
+    body: JSON.stringify(corps),
   });
   return true;
 }

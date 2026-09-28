@@ -125,7 +125,7 @@
     <div class="badge">🧮 SKYECO — ESTIMATEUR BTP</div>
     <h1>Chiffrez un devis chantier en 30 secondes, directement depuis votre téléphone</h1>
     <p class="sub">Catalogue de 137 postes BTP avec prix repères déjà intégré — terrassement, maçonnerie, VRD, assainissement, clôtures/portails, revêtements de sol, espaces verts.</p>
-    <a href="#commencer" class="hero-cta">Démarrer mon essai gratuit</a>
+    <a href="/estimateur-btp.html" class="hero-cta">Démarrer mon essai gratuit</a>
     <div class="hero-mini">2 jours d'essai gratuit — puis 29,90 € HT, achat unique</div>
   </div>
 </header>
@@ -175,19 +175,8 @@
 <section class="start" id="commencer">
   <div class="wrap">
     <h2>Commencer maintenant</h2>
-    <div class="field">
-      <label for="siretInput">Votre SIRET</label>
-      <input type="text" id="siretInput" inputmode="numeric" placeholder="14 chiffres" maxlength="17" autocomplete="off">
-      <div class="siret-statut" id="siretStatut"></div>
-    </div>
-    <div class="field">
-      <label for="emailInput">Votre email</label>
-      <input type="email" id="emailInput" placeholder="Votre email" autocomplete="email" inputmode="email">
-      <div class="hint">Pour retrouver votre essai sur votre téléphone comme sur votre ordinateur.</div>
-    </div>
-    <button class="btn-go" id="btnCommencer">Démarrer mon essai gratuit</button>
-    <div class="form-err" id="formErr"></div>
-    <div class="reassure">Vous arrivez directement dans l'application, votre entreprise déjà renseignée.</div>
+    <a class="btn-go" href="/estimateur-btp.html" style="display:block;text-align:center;text-decoration:none;">Démarrer mon essai gratuit</a>
+    <div class="reassure">Aucune inscription : vous arrivez directement dans l'application. Vos informations d'entreprise ne sont demandées qu'au moment de l'achat.</div>
   </div>
 </section>
 
@@ -196,157 +185,7 @@
 </footer>
 
 <script>
-/* 25/09/2026 — Page de démo dédiée à l'Estimateur BTP, destinée à la
-   campagne de prospection envoyée aux ~19 000 artisans BTP (même
-   infrastructure que prospects-paysagiste.html). Objectif : un artisan
-   clique le lien de l'email, voit la démo, entre son SIRET (et son email),
-   et arrive directement dans l'application avec son essai gratuit de 2 jours
-   déjà démarré et son entreprise déjà renseignée — sans ressaisir quoi que
-   ce soit. Après l'essai, l'accès continue via un ACHAT UNIQUE de 29,90€ HT
-   (jamais un abonnement récurrent — voir api/estimateur-btp-checkout.js).
-
-   IMPORTANT : on ne passe ni le SIRET ni l'email en paramètre d'URL (données
-   personnelles) — on écrit directement dans localStorage, sous les MÊMES clés
-   que celles lues par estimateur-btp.html au chargement (estimbtp_acces et
-   estimbtp_settings), puisque cette page et l'application vivent sur le même
-   domaine. Aucune modification du code de estimateur-btp.html n'est donc
-   nécessaire : il retrouve un essai déjà actif et des réglages déjà remplis,
-   exactement comme si l'artisan les avait saisis lui-même dans "Réglages". */
-
-const videoDemo = document.getElementById('videoDemo');
-const playBadge = document.getElementById('playBadge');
-if (videoDemo && playBadge) {
-  playBadge.addEventListener('click', () => {
-    videoDemo.setAttribute('controls', '');
-    videoDemo.play().catch(() => {});
-    playBadge.style.display = 'none';
-  });
-  videoDemo.addEventListener('pause', () => {
-    if (videoDemo.currentTime > 0 && !videoDemo.ended) playBadge.style.display = 'flex';
-  });
-  videoDemo.addEventListener('play', () => { playBadge.style.display = 'none'; });
-}
-
-const LS_ACCES = 'estimbtp_acces';
-const LS_SETTINGS = 'estimbtp_settings';
-
-function loadJSON(key, fallback){
-  try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
-  catch(e){ return fallback; }
-}
-function saveJSON(key, val){
-  try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){}
-}
-
-const siretInput = document.getElementById('siretInput');
-const siretStatut = document.getElementById('siretStatut');
-const emailInput = document.getElementById('emailInput');
-const btn = document.getElementById('btnCommencer');
-const formErr = document.getElementById('formErr');
-
-let dernierSiretVerifie = null;
-let infosSiret = null; // { denomination, adresse, codePostal, ville }
-
-async function verifierSiretSiBesoin(siret){
-  if (siret === dernierSiretVerifie) return infosSiret;
-  dernierSiretVerifie = siret;
-  infosSiret = null;
-  siretStatut.className = 'siret-statut loading';
-  siretStatut.textContent = 'Vérification…';
-  try{
-    const res = await fetch('/api/verifier-siret', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ siret })
-    });
-    const data = await res.json();
-    if (!data.success || !data.trouve){
-      siretStatut.className = 'siret-statut err';
-      siretStatut.textContent = data.trouve === false ? 'SIRET introuvable — vérifiez la saisie.' : (data.error || 'Vérification indisponible pour le moment.');
-      return null;
-    }
-    infosSiret = data;
-    siretStatut.className = 'siret-statut ok';
-    siretStatut.textContent = `${data.denomination || 'Entreprise trouvée'}${data.ville ? ' — ' + data.ville : ''}`;
-    return data;
-  }catch(e){
-    siretStatut.className = 'siret-statut err';
-    siretStatut.textContent = 'Vérification indisponible pour le moment — vous pouvez continuer, vos informations resteront à compléter dans l\'appli.';
-    return null;
-  }
-}
-
-siretInput.addEventListener('blur', () => {
-  const siret = siretInput.value.replace(/\s/g, '');
-  if (/^\d{14}$/.test(siret)) verifierSiretSiBesoin(siret);
-});
-
-btn.addEventListener('click', async () => {
-  formErr.style.display = 'none';
-  const siret = siretInput.value.replace(/\s/g, '');
-  const email = (emailInput.value || '').trim().toLowerCase();
-
-  if (!/^\d{14}$/.test(siret)){
-    formErr.textContent = 'Un SIRET comporte 14 chiffres.';
-    formErr.style.display = 'block';
-    return;
-  }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
-    formErr.textContent = 'Merci de saisir un email valide.';
-    formErr.style.display = 'block';
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = 'Un instant…';
-
-  try{
-    const infos = await verifierSiretSiBesoin(siret);
-
-    const respEssai = await fetch('/api/estimateur-btp-essai', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email })
-    });
-    const dataEssai = await respEssai.json();
-    if (!respEssai.ok || !dataEssai.success) throw new Error(dataEssai.error || 'Erreur inconnue');
-
-    saveJSON(LS_ACCES, {
-      email: dataEssai.email,
-      essai_fin: dataEssai.essai_fin,
-      abonnement_actif: dataEssai.abonnement_actif,
-      source: dataEssai.source
-    });
-
-    // Pré-remplissage des réglages entreprise (jamais par-dessus une valeur
-    // déjà présente sur cet appareil — même logique prudente que
-    // construire-ma-vitrine.html).
-    const settingsActuels = loadJSON(LS_SETTINGS, { nom:'', coord:'', logo:'', client:'', clientTelephone:'', clientEmail:'', clientAdresse:'', tvaDefaut:'0.20', dashboardLink:'', draftId:'' });
-    if (infos){
-      if (!settingsActuels.nom) settingsActuels.nom = infos.denomination || '';
-      if (!settingsActuels.coord){
-        const morceaux = [];
-        if (infos.adresse) morceaux.push(infos.adresse);
-        if (infos.codePostal || infos.ville) morceaux.push([infos.codePostal, infos.ville].filter(Boolean).join(' '));
-        morceaux.push('SIRET ' + siret);
-        settingsActuels.coord = morceaux.join(' — ');
-      }
-    }
-    saveJSON(LS_SETTINGS, settingsActuels);
-
-    if (dataEssai.reglages || dataEssai.overrides || dataEssai.postesPerso || dataEssai.postesMasques){
-      // Un compte existant a déjà des réglages serveur : on les laisse
-      // prendre le dessus au chargement de l'appli (comportement natif de
-      // synchroniserApresConnexion() dans estimateur-btp.html) plutôt que
-      // d'imposer les nôtres.
-    }
-
-    window.location.href = '/estimateur-btp.html';
-  }catch(e){
-    formErr.textContent = "Impossible de démarrer l'essai — vérifiez votre connexion et réessayez.";
-    formErr.style.display = 'block';
-    btn.disabled = false;
-    btn.textContent = 'Démarrer mon essai gratuit';
-  }
-});
-
-emailInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') btn.click(); });
+/* 28/09/2026 : plus de formulaire SIRET/email ici — l'essai démarre directement dans l'application ; les infos entreprise sont demandées au paiement (voir estimateur-btp.html). */
 </script>
 
 </body>

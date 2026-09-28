@@ -28,7 +28,7 @@
 // à "réseau d'abord, cache en secours seulement si hors-ligne" — l'app reste
 // utilisable sans réseau sur un chantier isolé, mais dès qu'il y a du
 // réseau, c'est toujours la dernière version qui s'affiche.
-const CACHE_VERSION = "v3"; // ⚠️ à incrémenter à chaque déploiement touchant cette appli
+const CACHE_VERSION = "v4"; // ⚠️ à incrémenter à chaque déploiement touchant cette appli
 const CACHE_NAME = "estimateur-btp-" + CACHE_VERSION;
 const STATIC_ASSETS = [
   "/estimateur-btp.html",

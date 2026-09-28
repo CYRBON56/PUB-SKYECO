@@ -122,7 +122,11 @@ export default async function handler(req, res) {
     // dans le schéma et était affichée par api/track-click.js, mais n'était jamais vérifiée ici).
     let filtre = `email=not.is.null&opt_out=eq.false&bounced=eq.false&email_envoye=eq.false&stopped=eq.false`;
     if (metier) filtre += `&metier=eq.${encodeURIComponent(metier)}`;
-    if (familleMetier) filtre += `&famille_metier=eq.${encodeURIComponent(familleMetier)}`;
+    // 28/09/2026 : familleMetier accepte aussi une LISTE de familles (cron Estimateur BTP)
+    if (Array.isArray(familleMetier) && familleMetier.length) {
+      const liste = familleMetier.map((f) => '"' + String(f).replace(/"/g, '') + '"').join(',');
+      filtre += `&famille_metier=in.(${encodeURIComponent(liste)})`;
+    } else if (familleMetier) filtre += `&famille_metier=eq.${encodeURIComponent(familleMetier)}`;
     const lotResp = await fetch(
       `${process.env.SUPABASE_URL}/rest/v1/prospects_paysagiste?${filtre}&select=id,nom_entreprise,ville,metier,email,clic_token&order=created_at.asc&limit=${taille}`,
       { headers: supaHeaders }

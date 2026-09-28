@@ -30,8 +30,18 @@ const TAILLE_LOT = 300; // relevé de 30 à 300 le 26/09/2026 à la demande expl
 const SUJET_PAR_DEFAUT = "Chiffrez vos devis chantier en 30 secondes, depuis votre téléphone";
 // Destination du bouton "Voir la démo" (enregistrée côté serveur par prospect, cf. api/lien.js)
 const DESTINATION_CTA = "https://www.skyeco.fr/estimateur-btp-demo.html";
-// Cible : mettre null pour envoyer à toutes les familles de métiers BTP.
-const FAMILLE_METIER = 'Paysagisme & espaces verts';
+// Cible (28/09/2026) : tous les paysagistes ont déjà reçu un email — la
+// campagne Estimateur BTP vise désormais les familles BTP (dont les artisans
+// RGE importés depuis l'ADEME, voir api/collecte-rge-batch.js).
+const FAMILLE_METIER = [
+  'Gros œuvre / VRD',
+  'Second œuvre / finitions',
+  'Isolation / enveloppe (RGE)',
+  'Chauffage / ventilation (RGE)',
+  'Menuiserie (RGE)',
+  'Énergies renouvelables (RGE)',
+  'Rénovation (RGE)',
+];
 
 const HTML_PAR_DEFAUT = `Bonjour {{nom_entreprise}},<br><br>Je m'appelle Cyrille, artisan comme vous — je gère RMS EcoSky, une entreprise de revêtements de sol. Sur chantier, j'ai toujours perdu du temps à chiffrer mes devis une fois rentré au bureau, alors j'ai créé mon propre outil : <strong>l'Estimateur BTP</strong>.<br><br>C'est une application qui calcule vos devis directement sur place, en 30 secondes :<br>— un catalogue de 260 postes BTP avec prix repères déjà intégré (terrassement, maçonnerie, VRD, assainissement, couverture, plomberie, électricité, menuiserie, isolation, peinture, carrelage, espaces verts),<br>— calcul automatique des surfaces, volumes et mètres linéaires,<br>— un devis prêt à envoyer, avec votre logo et vos coordonnées,<br>— aucune installation, ça fonctionne même sans réseau une fois ouvert une première fois.<br><br>Le plus simple, c'est de voir comment ça marche :<br><br><a href="{{lien_cta}}" style="display:inline-block;background:#ec4899;color:#fff;padding:12px 22px;text-decoration:none;font-weight:700;border-radius:6px;">▶ Voir la démo</a><br><br>2 jours d'essai gratuit, sans carte bancaire, puis 29,90€ HT en achat unique (sans abonnement) — ça peut être utile pour {{nom_entreprise}} à {{ville}} aussi, pour un métier comme {{metier}}.<br><br><img src="cid:signature-cyrille" width="64" height="64" alt="Cyrille Bon" style="border-radius:50%;display:block;margin-bottom:8px;">Cyrille Bon<br>Skyeco`;
 
@@ -58,7 +68,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         motDePasseInterne: process.env.SKYECO_PROSPECTION_PASSWORD,
         batchSize: TAILLE_LOT,
-        familleMetier: FAMILLE_METIER || undefined, // 08/09/2026 : restreint à cette famille (taux de désabonnement ~4,8% hors cible sur le premier envoi test)
+        familleMetier: FAMILLE_METIER, // familles BTP uniquement (désabonnements ~4,8% hors cible sur le premier test du 08/09)
         videoUrl: DESTINATION_CTA,
         subject: SUJET_PAR_DEFAUT,
         html: HTML_PAR_DEFAUT,

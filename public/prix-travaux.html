@@ -312,7 +312,7 @@ tr.sub td{color:var(--muted);font-size:.92rem}
   <footer>
     <div class="wrap">
       <p style="max-width:62ch;margin:0">Skyeco est une marque de RESINE MARBRE SOL, SASU au capital de 50 000 €, 23 route de Corn er Hoet, 56400 Brech. SIRET 939 997 870 00018, RCS Lorient. Estimations indicatives, elles ne remplacent pas une visite technique.</p>
-      <div class="foot-links"><a href="#">Mentions légales</a><a href="#">Conditions générales de vente</a><a href="#">Confidentialité</a></div>
+      <div class="foot-links"><a href="/mentions-legales.html">Mentions légales</a><a href="/cgv-estimateur.html">Conditions générales de vente</a><a href="/confidentialite-estimateur.html">Confidentialité</a></div>
     </div>
   </footer>
 </div>
@@ -340,6 +340,11 @@ tr.sub td{color:var(--muted);font-size:.92rem}
       <div class="paywall" id="paywall">
         <h3 style="margin-top:0">L'estimation détaillée de votre projet</h3>
         <ul id="pay-list"></ul>
+        <div class="checkbox-list" style="margin-bottom:14px">
+          <label><input type="checkbox" id="ok-cgv">J'ai lu et j'accepte les <a href="/cgv-estimateur.html" target="_blank" rel="noopener">conditions générales de vente</a>.</label>
+          <label><input type="checkbox" id="ok-retract">Je demande l'accès immédiat à mon estimation détaillée et je reconnais perdre mon droit de rétractation dès le début de son utilisation.</label>
+        </div>
+        <p class="err" id="err-pay"></p>
         <button class="btn-pay" id="pay">Débloquer l'estimation détaillée pour 35,90 €</button>
         <p class="demo-note">Mode démonstration : le paiement n'est pas encore branché, le bouton débloque directement.</p>
       </div>
@@ -380,7 +385,7 @@ tr.sub td{color:var(--muted);font-size:.92rem}
       </div>
     </section>
 
-    <p class="app-foot">Estimation indicative basée sur les prix du marché 2026, elle ne remplace pas une visite technique.</p>
+    <p class="app-foot">Estimation indicative basée sur les prix du marché 2026, elle ne remplace pas une visite technique. <a href="/mentions-legales.html">Mentions légales</a>, <a href="/cgv-estimateur.html">CGV</a>, <a href="/confidentialite-estimateur.html">confidentialité</a>.</p>
   </main>
 </div>
 
@@ -988,7 +993,7 @@ $("go1").onclick=()=>{
   ["c2","r2","c3"].forEach(hide); show("paywall"); show("r1"); gauge("r1",low,high);
   $("r1").scrollIntoView({behavior:"smooth",block:"start"});
 };
-$("pay").onclick=()=>{ hide("paywall"); show("c2"); renderQs("detail-qs",METIERS[metier].detail); $("c2").scrollIntoView({behavior:"smooth",block:"start"}) };
+$("pay").onclick=()=>{ if(!$("ok-cgv").checked||!$("ok-retract").checked){$("err-pay").textContent="Cochez les deux cases pour continuer.";return} $("err-pay").textContent=""; hide("paywall"); show("c2"); renderQs("detail-qs",METIERS[metier].detail); $("c2").scrollIntoView({behavior:"smooth",block:"start"}) };
 
 function tvaTexte(M,d){
   if(d.tva===.055) return "TVA à 5,5 % : travaux d'amélioration énergétique dans un logement de plus de 2 ans, sous conditions de matériel et de performances. L'artisan doit l'indiquer sur son devis.";

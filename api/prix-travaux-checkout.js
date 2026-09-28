@@ -4,15 +4,18 @@
 // Variables requises : STRIPE_SECRET_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
 import Stripe from 'stripe';
-import { sb, METIERS, PRIX_TTC } from './_lib/prix-travaux-commande.js';
+import { sb, METIERS, PRIX_TTC, nettoyerReponses } from './_lib/prix-travaux-commande.js';
+import { verifierLimite, ipDepuisRequete } from './_lib/rate-limit.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Méthode non autorisée' });
-  const { metier, reponses } = req.body || {};
-  if (!METIERS[metier]) return res.status(400).json({ error: 'Type de travaux inconnu' });
-  if (!reponses || typeof reponses !== 'object' || JSON.stringify(reponses).length > 5000) return res.status(400).json({ error: 'Réponses invalides' });
+  if (!(await verifierLimite('pt-checkout:' + ipDepuisRequete(req), 10, 600))) return res.status(429).json({ error: 'Trop de tentatives. Réessayez dans quelques minutes.' });
+  const metier = req.body?.metier;
+  if (typeof metier !== 'string' || !Object.hasOwn(METIERS, metier)) return res.status(400).json({ error: 'Type de travaux inconnu' });
+  const reponses = nettoyerReponses(req.body?.reponses);
+  if (!reponses || typeof reponses.projet !== 'string') return res.status(400).json({ error: 'Réponses invalides' });
   const dept = String(reponses.dept || '').toUpperCase();
   const qty = Number(reponses.qty);
   if (!/^(\d{2}|2A|2B|97\d)$/.test(dept) || !(qty > 0 && qty < 100000)) return res.status(400).json({ error: 'Département ou quantité invalide' });

@@ -5,10 +5,12 @@
 
 import Stripe from 'stripe';
 import { finaliserCommande } from './_lib/prix-travaux-commande.js';
+import { verifierLimite, ipDepuisRequete } from './_lib/rate-limit.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export default async function handler(req, res) {
+  if (!(await verifierLimite('pt-confirmer:' + ipDepuisRequete(req), 30, 600))) return res.status(429).json({ error: 'Trop de tentatives. Réessayez dans quelques minutes.' });
   const sid = String(req.query.session_id || '');
   if (!/^cs_(test|live)_[A-Za-z0-9]+$/.test(sid)) return res.status(400).json({ error: 'Lien invalide' });
   try {
@@ -20,6 +22,7 @@ export default async function handler(req, res) {
     const c = r.commande;
     return res.status(200).json({ paye: true, metier: c.metier, reponses: c.reponses, facture: c.facture_numero, email: c.email });
   } catch (e) {
+    if (e?.code === 'resource_missing') return res.status(404).json({ error: 'Lien invalide' });
     console.error('prix-travaux-confirmer :', e.message);
     return res.status(500).json({ error: 'Vérification du paiement impossible pour le moment.' });
   }

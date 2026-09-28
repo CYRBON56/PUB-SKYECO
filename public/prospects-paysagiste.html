@@ -211,7 +211,16 @@
       <ul id="listeEnLigne"></ul>
     </div>
 
+    <div class="sel-row" style="margin-bottom:10px;">
+      <label for="selCampagne" style="font-weight:700;margin-right:6px;">Campagne :</label>
+      <select id="selCampagne" style="min-width:260px;">
+        <option value="">Toutes les campagnes</option>
+        <option value="estimateur">📱 Estimateur BTP (nouveau mail)</option>
+        <option value="anciens">📧 Anciens mails (Skyeco IA Ads)</option>
+      </select>
+    </div>
     <div class="stats" id="stats"></div>
+    <div class="hint" id="tauxCampagne" style="margin:-6px 0 12px;"></div>
 
     <div class="sel-row">
       <input type="text" id="searchNom" placeholder="Rechercher une entreprise ou une ville…" style="min-width:260px;">
@@ -312,6 +321,7 @@
   let searchNom = '';
   let searchMetier = '';
   let searchFamille = '';
+  let campagne = '';
   let totalRows = 0;
 
   function normPhone(raw){
@@ -612,10 +622,16 @@
     }));
 
     try{
-      const { compteurs } = await appelerAdmin('compteurs');
+      const { compteurs } = await appelerAdmin('compteurs', { campagne });
       document.querySelectorAll('.stat').forEach(el => {
         el.querySelector('.n').textContent = compteurs[el.dataset.filter] ?? '0';
       });
+      const tauxEl = document.getElementById('tauxCampagne');
+      const env = compteurs.envoyes || 0;
+      const pct = (n) => env ? (Math.round((n || 0) / env * 1000) / 10).toString().replace('.', ',') + ' %' : '—';
+      tauxEl.textContent = campagne && env
+        ? `Sur ${env} envois : ouverture ${pct(compteurs.ouverts)} · clics ${pct(compteurs.cliques)} · désabonnements ${pct(compteurs.desabonnes)} · obsolètes ${pct(compteurs.obsoletes)}`
+        : '';
     } catch(err){
       document.querySelectorAll('.stat .n').forEach(el => { el.textContent = '—'; });
     }
@@ -628,7 +644,7 @@
     let data, count;
     try{
       const resultat = await appelerAdmin('liste', {
-        filtre: currentFilter, searchNom, searchMetier, searchFamille,
+        filtre: currentFilter, searchNom, searchMetier, searchFamille, campagne,
         page: currentPage, pageSize: PAGE_SIZE,
       });
       data = resultat.rows; count = resultat.total;
@@ -749,6 +765,7 @@
     loadTable();
   });
   document.getElementById('searchFamille').addEventListener('change', () => document.getElementById('btnSearch').click());
+  document.getElementById('selCampagne').addEventListener('change', (e) => { campagne = e.target.value; currentPage = 0; loadStats(); loadTable(); });
   document.getElementById('searchNom').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('btnSearch').click(); });
   document.getElementById('searchMetier').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('btnSearch').click(); });
 

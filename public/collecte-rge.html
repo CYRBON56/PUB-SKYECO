@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Import artisans RGE (ADEME)</title>
+<style>
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#f4f6f8;color:#1F3A5F;margin:0;padding:24px;}
+  .card{max-width:620px;margin:0 auto;background:#fff;border-radius:12px;padding:24px;box-shadow:0 4px 20px rgba(0,0,0,.08);}
+  h1{font-size:22px;margin:0 0 8px;} p{color:#555;font-size:14px;line-height:1.5;}
+  input{width:100%;box-sizing:border-box;padding:11px;border:1px solid #ccd;border-radius:8px;font-size:15px;margin:6px 0 14px;}
+  button{background:#E8622C;color:#fff;border:none;border-radius:8px;padding:12px 18px;font-size:15px;font-weight:700;cursor:pointer;margin-right:8px;}
+  button.sec{background:#1F3A5F;} button:disabled{opacity:.5;cursor:default;}
+  .bar{height:14px;background:#e7ebef;border-radius:7px;overflow:hidden;margin:18px 0 8px;}
+  .bar div{height:100%;width:0;background:#2e9e5b;transition:width .3s;}
+  #etat{font-size:14px;} #log{font-size:12px;color:#666;max-height:220px;overflow:auto;margin-top:12px;white-space:pre-line;}
+  .err{color:#c0392b;}
+  a{color:#1F3A5F;}
+</style>
+</head>
+<body>
+<div class="card">
+  <p><a href="/prospects-paysagiste.html">← Retour à la prospection</a></p>
+  <h1>Import des artisans RGE (ADEME)</h1>
+  <p>Récupère gratuitement les artisans RGE de toute la France depuis l'open data officiel de l'ADEME (email fourni directement). Architectes et bureaux d'études exclus. Aucun doublon : un SIRET ou un email déjà en base (y compris désabonné) n'est jamais réimporté. Laissez la page ouverte pendant l'import (quelques minutes) ; vous pouvez l'arrêter et le reprendre plus tard, il repart où il s'était arrêté.</p>
+  <label>Mot de passe interne</label>
+  <input type="password" id="mdp" autocomplete="current-password">
+  <button id="btnGo">▶ Lancer / reprendre l'import</button>
+  <button id="btnStop" class="sec" disabled>⏸ Arrêter</button>
+  <div class="bar"><div id="barre"></div></div>
+  <div id="etat">Prêt.</div>
+  <div id="log"></div>
+  <p style="margin-top:18px;"><button id="btnReset" class="sec" style="font-size:12px;padding:7px 10px;">Recommencer depuis le début</button> <span style="font-size:12px;">(relit toute la liste ADEME, utile dans quelques mois pour récupérer les nouveaux artisans — sans créer de doublons)</span></p>
+</div>
+<script>
+let enCours = false;
+const $ = (id) => document.getElementById(id);
+function log(t){ $('log').textContent = t + '\n' + $('log').textContent; }
+
+async function unLot(recommencer){
+  const r = await fetch('/api/collecte-rge-batch', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ motDePasseInterne: $('mdp').value, recommencer: !!recommencer })
+  });
+  const d = await r.json();
+  if (!r.ok || !d.success) throw new Error(d.error || ('Erreur ' + r.status));
+  return d;
+}
+
+async function lancer(recommencer){
+  if (enCours) return;
+  enCours = true; $('btnGo').disabled = true; $('btnStop').disabled = false; $('btnReset').disabled = true;
+  let premier = true;
+  try{
+    while (enCours){
+      const d = await unLot(premier && recommencer);
+      premier = false;
+      if (d.totalADEME) $('barre').style.width = Math.min(100, Math.round(d.lignesLues / d.totalADEME * 100)) + '%';
+      $('etat').textContent = d.toutTermine
+        ? `✅ Import terminé — ${d.inseresTotal} nouveaux artisans ajoutés au total.`
+        : `Lignes ADEME lues : ${d.lignesLues}${d.totalADEME ? ' / ' + d.totalADEME : ''} — nouveaux artisans ajoutés : ${d.inseresTotal}`;
+      if (d.toutTermine){ $('barre').style.width = '100%'; break; }
+      log(`Lot : ${d.lignesLuesCeLot} lignes lues, ${d.retenuesCeLot} retenues, ${d.nouveauxCeLot} nouveaux`);
+      await new Promise(r => setTimeout(r, 400));
+    }
+  }catch(e){
+    $('etat').innerHTML = '<span class="err">Erreur : ' + e.message + '</span> — recliquez sur « Lancer / reprendre » pour continuer.';
+  }
+  enCours = false; $('btnGo').disabled = false; $('btnStop').disabled = true; $('btnReset').disabled = false;
+}
+
+$('btnGo').addEventListener('click', () => lancer(false));
+$('btnStop').addEventListener('click', () => { enCours = false; $('etat').textContent += ' — arrêt demandé (fin du lot en cours).'; });
+$('btnReset').addEventListener('click', () => { if (confirm('Relire toute la liste ADEME depuis le début ? (aucun doublon ne sera créé)')) lancer(true); });
+</script>
+</body>
+</html>

@@ -169,6 +169,22 @@ tr.sub td{color:var(--muted);font-size:.92rem}
 .c-ok{background:var(--ok-soft);border-left:5px solid var(--ok)}
 .c-warn{background:var(--orange-soft);border-left:5px solid var(--orange)}
 .c-bad{background:var(--alert-soft);border-left:5px solid var(--alert)}
+/* 28/09/2026 : analyse automatique du devis déposé */
+.upload-devis{border:2px dashed var(--orange);border-radius:12px;padding:18px;margin:4px 0 22px;text-align:center}
+.upload-devis p{margin:0 0 12px}
+.upload-devis .btn{cursor:pointer}
+.upload-devis input[type=file]{display:none}
+.upload-etat{margin-top:10px;font-weight:500}
+.or-sep{text-align:center;margin:0 0 18px;opacity:.7;font-size:.95rem}
+.lignes-devis{width:100%;border-collapse:collapse;font-size:.92rem}
+.lignes-devis td,.lignes-devis th{padding:9px 8px;border-bottom:1px solid rgba(128,128,128,.25);vertical-align:top;text-align:left}
+.lignes-devis td.m{white-space:nowrap;text-align:right}
+.tag{display:inline-block;border-radius:999px;padding:2px 10px;font-size:.8rem;font-weight:700;white-space:nowrap}
+.tag-ok{background:var(--ok-soft);color:var(--ok)}
+.tag-warn{background:var(--orange-soft);color:var(--orange)}
+.tag-bad{background:var(--alert-soft);color:var(--alert)}
+.tag-gris{background:rgba(128,128,128,.15)}
+.raison{display:block;font-size:.84rem;opacity:.85;margin-top:4px}
 .card h3{font-size:1.4rem;margin:26px 0 8px}
 .alerts{margin:14px 0 0;padding-left:20px}
 .alerts li{margin-bottom:7px}
@@ -370,7 +386,14 @@ tr.sub td{color:var(--muted);font-size:.92rem}
     </section>
 
     <section class="card hidden" id="c3">
-      <div class="card-head"><span class="num">3</span><div><h2>Comparer avec le devis de l'artisan</h2><p class="hint">Recopiez les montants et cochez ce qui figure sur le devis. Vous pouvez comparer plusieurs devis à la suite.</p></div></div>
+      <div class="card-head"><span class="num">3</span><div><h2>Comparer avec le devis de l'artisan</h2><p class="hint">Déposez le devis reçu : nous le lisons ligne par ligne et repérons les prix gonflés, les postes inutiles et les oublis. Vous pouvez comparer plusieurs devis à la suite.</p></div></div>
+      <div class="upload-devis">
+        <p><strong>Analyse automatique du devis</strong><br><span class="hint">PDF ou photo bien nette, prise à plat (4 Mo maximum).</span></p>
+        <label class="btn btn-orange" for="fichierDevis">📄 Déposer le devis de l'artisan</label>
+        <input type="file" id="fichierDevis" accept="application/pdf,image/jpeg,image/png,image/webp">
+        <div class="upload-etat" id="upload-etat"></div>
+      </div>
+      <p class="or-sep">— ou recopiez les montants à la main —</p>
       <div class="q"><label for="devis">Montant total TTC du devis, en €</label><input type="number" id="devis" min="1" inputmode="decimal"></div>
       <div class="q" id="devisSurf-wrap"><label for="devisSurf" id="devisSurf-label">Surface indiquée sur le devis, en m² (facultatif)</label><input type="number" id="devisSurf" min="1" inputmode="decimal"></div>
       <fieldset class="q"><legend>Taux de TVA indiqué sur le devis</legend><div class="choices" id="tva-choices"></div></fieldset>
@@ -381,6 +404,7 @@ tr.sub td{color:var(--muted);font-size:.92rem}
         <div class="tape"><div class="tape-bar"><div class="tape-band" id="r3-band"></div><div class="tape-mark" id="r3-mark"></div></div><div class="tape-labels" id="r3-labels"></div></div>
         <div class="callout" id="r3-verdict"></div>
         <ul class="alerts" id="r3-alerts"></ul>
+        <div id="r3-lignes"></div>
       </div>
     </section>
 
@@ -1065,7 +1089,7 @@ $("go2").onclick=()=>{
   $("inclus").innerHTML=M.inc(s).concat(INC_COMMUNS).map(l=>`<label><input type="checkbox" data-l="${l}">${l}</label>`).join("");
   if(M.cmp){show("devisSurf-wrap");$("devisSurf-label").textContent=M.cmp.label+" (facultatif)"}else hide("devisSurf-wrap");
   $("devis").value=""; $("devisSurf").value="";
-  hide("r3"); show("r2"); show("c3"); gauge("r2",detail.low,detail.high);
+  hide("r3"); $("r3-lignes").innerHTML=""; $("upload-etat").textContent=""; analyseDevis=null; show("r2"); show("c3"); gauge("r2",detail.low,detail.high);
   $("r2").scrollIntoView({behavior:"smooth",block:"start"});
 };
 $("go3").onclick=()=>{
@@ -1089,6 +1113,93 @@ $("go3").onclick=()=>{
   $("r3-alerts").innerHTML=(a.length?a:["Tous les postes importants figurent sur le devis."]).map(x=>`<li>${x}</li>`).join("");
   $("r3").scrollIntoView({behavior:"smooth",block:"nearest"});
 };
+
+/* ============================================================
+   ANALYSE AUTOMATIQUE DU DEVIS DÉPOSÉ (28/09/2026)
+   L'IA lit le devis et rapproche chaque ligne de nos postes ; les écarts
+   de prix sont calculés ici, à partir de nos propres montants.
+   ============================================================ */
+let analyseDevis=null;
+function lireFichierBase64(file){
+  return new Promise((ok,ko)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(",")[1]);r.onerror=()=>ko(new Error("lecture"));r.readAsDataURL(file)});
+}
+function compresserImage(file){
+  return new Promise((ok,ko)=>{
+    const img=new Image(), url=URL.createObjectURL(file);
+    img.onload=()=>{const max=2200,k=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement("canvas");
+      c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(url);ok(c.toDataURL("image/jpeg",.85).split(",")[1])};
+    img.onerror=()=>ko(new Error("image"));img.src=url;
+  });
+}
+$("fichierDevis").onchange=async e=>{
+  const file=e.target.files[0]; e.target.value=""; if(!file) return;
+  const etat=$("upload-etat");
+  if(!detail){etat.textContent="Calculez d'abord votre estimation détaillée (étape 2).";return}
+  if(!paye){etat.textContent="L'analyse automatique est réservée aux estimations payées. Vous pouvez recopier les montants à la main ci-dessous.";return}
+  const estPdf=file.type==="application/pdf"||/\.pdf$/i.test(file.name);
+  if(estPdf&&file.size>3.2*1024*1024){etat.textContent="Ce PDF est trop lourd (3 Mo maximum). Prenez plutôt une photo nette du devis.";return}
+  etat.textContent="Lecture du devis en cours… (20 à 40 secondes)";
+  try{
+    const fichier=estPdf?await lireFichierBase64(file):await compresserImage(file);
+    const M=METIERS[metier];
+    const r=await fetch("/api/prix-travaux-analyser-devis",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+      session_id:paye.session_id, fichier, media_type:estPdf?"application/pdf":"image/jpeg",
+      estimation:{lignes:detail.lines, ht:detail.ht, tva:detail.tva, metier:M.nom, quantite:s.qty},
+      inclus:M.inc(s).concat(INC_COMMUNS)})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok||!j.success){etat.textContent=j.error||"L'analyse n'a pas abouti. Réessayez ou recopiez les montants à la main.";return}
+    analyseDevis=j.devis; appliquerAnalyse(j.devis);
+    etat.textContent="✅ Devis lu"+(j.devis.artisan?` (${j.devis.artisan})`:"")+" : "+j.devis.lignes.length+" lignes analysées. Vérifiez les montants reportés ci-dessous.";
+  }catch(err){etat.textContent="L'analyse n'a pas abouti. Réessayez ou recopiez les montants à la main."}
+};
+function appliquerAnalyse(d){
+  const t=d.taux_tva, ttc=d.total_ttc||(d.total_ht&&t!=null?d.total_ht*(1+t/100):null);
+  if(ttc) $("devis").value=Math.round(ttc*100)/100;
+  const code=t===5.5?"5.5":t===10?"10":t===20?"20":"nsp"; const radio=$("tv-"+code); if(radio) radio.checked=true;
+  if(d.surface&&METIERS[metier].cmp) $("devisSurf").value=d.surface;
+  document.querySelectorAll("#inclus input").forEach(x=>x.checked=d.inclus_trouves.includes(x.dataset.l));
+  $("go3").onclick();
+  afficherLignes(d);
+}
+function afficherLignes(d){
+  const ref=detail.lines, groupes=new Map(), sansRef=[], vus=new Set();
+  let aDiscuter=0;
+  d.lignes.forEach(l=>{
+    if(l.type!=="ok"){sansRef.push(l);return}
+    if(!l.ref.length){sansRef.push(l);return}
+    const cle=[...new Set(l.ref)].sort((a,b)=>a-b).join(",");
+    if(!groupes.has(cle)) groupes.set(cle,{ref:cle.split(",").map(Number),lignes:[],ht:0});
+    const g=groupes.get(cle); g.lignes.push(l); g.ht+=l.montant_ht||0;
+  });
+  const rows=[];
+  groupes.forEach(g=>{
+    g.ref.forEach(i=>vus.add(i));
+    const refHT=g.ref.reduce((a,i)=>a+(ref[i]?ref[i][1]:0),0), ec=refHT>0?(g.ht-refHT)/refHT:0, pct=Math.round(ec*100);
+    let tag;
+    if(refHT<=0) tag=`<span class="tag tag-gris">Non comparé</span>`;
+    else if(ec>.25){tag=`<span class="tag tag-bad">Prix gonflé +${pct} %</span>`;aDiscuter+=g.ht-refHT*1.1}
+    else if(ec>.10) tag=`<span class="tag tag-warn">Un peu cher +${pct} %</span>`;
+    else if(ec<-.35) tag=`<span class="tag tag-warn">Très bas ${pct} % : vérifiez le contenu</span>`;
+    else tag=`<span class="tag tag-ok">Prix juste</span>`;
+    rows.push(`<tr><td>${g.lignes.map(l=>esc(l.designation)).join("<br>")}<span class="raison">Notre référence : ${esc(g.ref.map(i=>ref[i]?ref[i][0]:"").join(" + "))}</span></td><td class="m">${eur(g.ht)}<span class="raison">réf. ${eur(refHT)}</span></td><td>${tag}</td></tr>`);
+  });
+  sansRef.forEach(l=>{
+    const lib={hors_projet:["tag-bad","Inutile ou hors projet ?"],doublon:["tag-bad","Doublon ?"],vague:["tag-warn","Libellé trop vague"],ok:["tag-gris","Hors estimation"]}[l.type];
+    if(l.type==="hors_projet"||l.type==="doublon") aDiscuter+=l.montant_ht||0;
+    rows.push(`<tr><td>${esc(l.designation)}${l.raison?`<span class="raison">${esc(l.raison)}</span>`:""}</td><td class="m">${eur(l.montant_ht||0)}</td><td><span class="tag ${lib[0]}">${lib[1]}</span></td></tr>`);
+  });
+  const oublis=ref.map((l,i)=>[l,i]).filter(([l,i])=>!vus.has(i)&&l[1]>=150&&!/ajustement minimum/i.test(l[0])).map(([l])=>l[0]);
+  let html=`<h3>Analyse ligne par ligne</h3>`;
+  if(aDiscuter>50) html+=`<div class="callout c-bad"><strong>Environ ${eur(aDiscuter)} HT à discuter avec l'artisan</strong> : postes nettement au-dessus du prix du marché, ou qui semblent inutiles ou en double.</div>`;
+  html+=`<div class="table-wrap"><table class="lignes-devis"><tr><th>Ligne du devis</th><th>Montant HT</th><th>Avis</th></tr>${rows.join("")}</table></div>`;
+  if(oublis.length) html+=`<h3>Présents dans notre estimation, absents du devis</h3><ul>${oublis.map(o=>`<li>${esc(o)} : oubli, ou compris ailleurs ? Demandez-le par écrit.</li>`).join("")}</ul>`;
+  if(d.remarques.length) html+=`<h3>Autres points d'attention</h3><ul>${d.remarques.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`;
+  html+=`<p class="hint">Lecture automatique : vérifiez les montants reportés. Un écart n'est pas forcément abusif, il peut s'expliquer par un matériau ou une difficulté particulière : demandez simplement à l'artisan de le justifier.</p>`;
+  $("r3-lignes").innerHTML=html;
+}
+// Un nouveau calcul manuel efface l'analyse précédente
+$("devis").addEventListener("input",()=>{ if(analyseDevis){ analyseDevis=null; $("r3-lignes").innerHTML=""; $("upload-etat").textContent=""; } });
 
 /* Lien direct vers un métier : prix-travaux.html?metier=toiture */
 const lien=new URLSearchParams(location.search).get("metier"); if(new URLSearchParams(location.search).get("paiement")) retourPaiement(); else if(lien&&METIERS[lien]) openApp(lien);

@@ -841,7 +841,7 @@
 <div class="modal-overlay no-print" id="catalogueModal">
   <div class="modal">
     <h3>📦 Catalogue produits</h3>
-    <p class="search-hint" style="margin-bottom:12px;">Les 123 produits communs, plus ceux que vous avez créés. Masquer un produit commun ou en créer un nouveau ne concerne que votre compte.</p>
+    <p class="search-hint" style="margin-bottom:12px;">Les <span id="nbProduitsCommuns">260</span> produits communs, plus ceux que vous avez créés. Masquer un produit commun ou en créer un nouveau ne concerne que votre compte.</p>
     <button class="btn btn-primary" id="btnNouveauProduitCatalogue" style="width:100%;margin-bottom:14px;">➕ Créer un nouveau produit</button>
     <input type="text" id="catalogueSearchInput" placeholder="Rechercher un produit..." style="width:100%;margin-bottom:10px;" autocomplete="off">
     <div class="metier-chips" id="catalogueChips"></div>
@@ -903,7 +903,7 @@ const LS_KEYS = {
   medias: 'estimbtp_medias_courant',
   dernierEnvoiHash: 'estimbtp_dernier_envoi_hash',
   bannerIgnoreeHash: 'estimbtp_banner_ignoree_hash',
-  customItems: 'estimbtp_postes_perso', // 25/09/2026 — postes créés par l'artisan, en plus des 123 du catalogue
+  customItems: 'estimbtp_postes_perso', // 25/09/2026 — postes créés par l'artisan, en plus des postes du catalogue
   hiddenCodes: 'estimbtp_postes_masques' // 25/09/2026 — codes des postes communs masqués par l'artisan (onglet Catalogue)
 };
 
@@ -1030,6 +1030,8 @@ function priceFor(code, fallback){
 
 /* ===================== RECHERCHE FLOUE ===================== */
 const METIERS = [...new Set(CATALOGUE.map(c=>c.metier))];
+// Nombre de produits communs affiché dans le Catalogue, toujours à jour
+try{ document.getElementById('nbProduitsCommuns').textContent = CATALOGUE.length; }catch(e){}
 const PERSO_METIER = 'Mes postes'; // corps de métier réservé aux postes créés par l'artisan (25/09/2026)
 let activeMetier = null;
 
@@ -1242,7 +1244,7 @@ function selectProduct(code){
     const el = document.getElementById(id);
     if(el) el.addEventListener('input', recomputeDims);
   });
-  // Postes personnalisés uniquement : lien pour supprimer ce poste (les 123
+  // Postes personnalisés uniquement : lien pour supprimer ce poste (les postes communs
   // postes du catalogue commun ne peuvent pas être supprimés, seulement voir
   // leur prix modifié).
   const supprLigne = document.getElementById('ps-supprimer-poste');
@@ -2264,7 +2266,7 @@ function renderCatalogueList(){
         renderCatalogueList();
         return;
       }
-      const estPerso = CATALOGUE.every(c => c.code !== code); // pas dans les 123 -> personnalisé
+      const estPerso = CATALOGUE.every(c => c.code !== code); // pas dans le catalogue commun -> personnalisé
       if (estPerso){
         if (!confirm('Supprimer définitivement ce produit personnalisé ? (Les devis qui l\'utilisent déjà ne sont pas modifiés.)')) return;
         customItems = customItems.filter(it => it.code !== code);

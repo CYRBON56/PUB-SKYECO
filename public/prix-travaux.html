@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Skyeco – Votre devis travaux est-il au juste prix ?</title>
+<meta name="description" content="Estimez vos travaux dans 20 métiers du bâtiment et vérifiez le devis de votre artisan ligne par ligne avant de signer.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#14304A; --navy-2:#1C3F5F; --orange:#E8622C; --orange-soft:#FBE3D8; --paper:#F4F7F9;
+  --bg:#F4F7F9; --surface:#FFFFFF; --ink:#14304A; --text:#27394A; --muted:#5B6268; --line:#D5DEE5;
+  --ok:#2E7D5B; --ok-soft:#DDF0E6; --alert:#C0392B; --alert-soft:#F8E0DD; --focus:#2F6FEB;
+  --display:"Big Shoulders Display","Arial Narrow",Arial,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1B28; --surface:#15263A; --ink:#EEF3F7; --text:#D4DEE7; --muted:#9FB0BF; --line:#2A3E53;
+    --orange-soft:#3A2418; --ok:#5DBB8E; --ok-soft:#173327; --alert:#E57B6E; --alert-soft:#3A1E1B; --focus:#86B4FF;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1B28; --surface:#15263A; --ink:#EEF3F7; --text:#D4DEE7; --muted:#9FB0BF; --line:#2A3E53;
+  --orange-soft:#3A2418; --ok:#5DBB8E; --ok-soft:#173327; --alert:#E57B6E; --alert-soft:#3A1E1B; --focus:#86B4FF;
+}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 72px);scroll-behavior:smooth}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);font-size:17px;line-height:1.55;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+img,svg{max-width:100%}
+a{color:inherit}
+.wrap{max-width:1120px;margin:0 auto;padding:0 22px}
+h1,h2,h3{font-family:var(--display);color:var(--ink);margin:0;line-height:1;letter-spacing:.005em}
+h2{font-size:clamp(2.2rem,5vw,3.2rem);font-weight:800;margin-bottom:14px}
+h3{font-size:1.6rem;font-weight:800;margin-bottom:8px}
+p{margin:0 0 14px}
+.muted{color:var(--muted)}
+.hidden{display:none!important}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+
+/* ===== Barre du haut ===== */
+.top{position:sticky;top:0;z-index:20;background:var(--navy);padding-top:env(safe-area-inset-top,0px)}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;height:66px}
+.logo{display:flex;align-items:center;gap:11px;text-decoration:none;background:none;border:0;padding:0;color:#fff}
+.logo svg{width:40px;height:40px;flex:none}
+.logo-word{font-family:var(--display);font-weight:800;font-size:1.75rem;letter-spacing:.02em;color:#fff;line-height:1}
+.logo-word b{color:var(--orange);font-weight:800}
+.logo-sub{display:block;font-family:var(--body);font-size:.72rem;font-weight:500;color:#AFC3D4;letter-spacing:.02em;margin-top:2px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:10px;padding:14px 22px;font-weight:600;text-decoration:none;font-size:1rem}
+.btn-orange{background:var(--orange);color:#fff}
+.btn-orange:hover{background:#D6541F}
+.btn-ghost{background:transparent;color:#fff;border:1.5px solid #4C6A86}
+.btn-ghost:hover{border-color:#fff}
+.btn-navy{background:var(--navy);color:#fff}
+:root[data-theme="dark"] .btn-navy{background:var(--orange)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn-navy{background:var(--orange)}}
+.top .btn{padding:10px 16px;font-size:.95rem}
+
+/* ===== Hero ===== */
+.hero{background:var(--navy);color:#DDE7EF;padding:56px 0 84px;overflow:hidden}
+.hero .wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center}
+.hero h1{color:#fff;font-size:clamp(3rem,8.5vw,5.9rem);font-weight:900;line-height:.92;margin-bottom:22px}
+.hero .lede{font-size:1.15rem;max-width:34ch;color:#C6D5E2;margin-bottom:30px}
+.hero-ctas{display:flex;flex-wrap:wrap;gap:12px}
+.hero-facts{display:flex;flex-wrap:wrap;gap:22px;margin-top:34px;font-size:.93rem;color:#AFC3D4}
+.hero-facts span{display:flex;gap:8px;align-items:center}
+.hero-facts i{width:8px;height:8px;border-radius:50%;background:var(--orange);display:inline-block}
+
+/* Devis d'exemple : la feuille inclinée du logo */
+.sheet-zone{position:relative;padding:18px 18px 40px}
+.sheet{background:var(--paper);color:#14304A;border-radius:12px;padding:26px 26px 22px;transform:rotate(-3deg);box-shadow:0 30px 60px -20px rgba(0,0,0,.55);font-size:.9rem}
+.sheet-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #14304A;padding-bottom:10px;margin-bottom:12px}
+.sheet-head strong{font-family:var(--display);font-size:1.4rem;font-weight:800}
+.sheet-head small{color:#5B6268}
+.sheet-row{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dashed #C5D0D9}
+.sheet-row.flag{color:#C0392B}
+.sheet-total{display:flex;justify-content:space-between;font-weight:600;padding-top:12px;font-size:1rem}
+.stamp{position:absolute;right:0;bottom:4px;width:132px;height:132px;border-radius:50%;background:var(--orange);color:#fff;display:grid;place-content:center;text-align:center;transform:rotate(8deg);box-shadow:0 14px 30px -10px rgba(0,0,0,.5)}
+.stamp b{font-family:var(--display);font-size:2.6rem;font-weight:900;line-height:.9}
+.stamp span{font-size:.72rem;font-weight:600;line-height:1.2;padding:0 14px}
+.sheet-note{position:absolute;left:18px;bottom:0;font-size:.78rem;color:#8FA5B8}
+
+/* ===== Sections ===== */
+section.band{padding:84px 0}
+.band-alt{background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.intro{max-width:60ch;margin-bottom:40px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;counter-reset:st}
+.steps li{list-style:none;border-top:3px solid var(--ink);padding-top:18px}
+.steps li::before{counter-increment:st;content:counter(st);font-family:var(--display);font-weight:900;font-size:3.4rem;color:var(--orange);line-height:1;display:block;margin-bottom:6px}
+.steps ol{padding:0;margin:0}
+.checks-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px 40px;margin-top:10px}
+.checks-grid div{display:flex;gap:14px}
+.checks-grid svg{flex:none;width:26px;height:26px;margin-top:2px}
+.checks-grid strong{display:block;color:var(--ink)}
+.trades{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.trade{border:1.5px solid var(--line);border-radius:12px;padding:18px;background:var(--bg);text-align:left;font:inherit;color:var(--text)}
+button.trade{cursor:pointer;border-color:var(--ink);background:var(--surface)}
+button.trade:hover{border-color:var(--orange)}
+.trade strong{display:block;font-family:var(--display);font-size:1.45rem;font-weight:800;color:var(--ink);margin-bottom:4px}
+.trade small{color:var(--muted);font-size:.86rem}
+.trade .tag{display:inline-block;margin-top:10px;font-size:.8rem;font-weight:600;border-radius:6px;padding:3px 8px;background:var(--orange-soft);color:var(--orange)}
+.trade.soon{opacity:.62}
+.trade.soon .tag{background:var(--line);color:var(--muted)}
+.price-card{display:grid;grid-template-columns:1fr 1fr;gap:0;border:2px solid var(--ink);border-radius:16px;overflow:hidden;background:var(--surface)}
+.price-main{padding:34px;background:var(--navy);color:#DDE7EF}
+.price-main .amount{font-family:var(--display);font-weight:900;font-size:5rem;color:#fff;line-height:.9}
+.price-main .amount small{font-size:1.4rem;font-weight:700;color:#AFC3D4}
+.price-list{padding:30px 34px}
+.price-list ul{margin:0 0 18px;padding-left:20px}
+.price-list li{margin-bottom:8px}
+details{border-bottom:1px solid var(--line);padding:16px 0}
+summary{cursor:pointer;font-weight:600;color:var(--ink);font-size:1.06rem}
+details p{margin:10px 0 0;max-width:70ch}
+footer{background:var(--navy);color:#AFC3D4;padding:44px 0 34px;font-size:.88rem}
+footer .wrap{display:flex;flex-wrap:wrap;gap:24px;justify-content:space-between}
+footer a{color:#DDE7EF}
+.foot-links{display:flex;gap:18px;flex-wrap:wrap}
+
+/* ===== Application ===== */
+#app main{max-width:720px;margin:0 auto;padding:34px 20px 80px}
+.app-title{font-size:clamp(2.4rem,7vw,3.6rem);font-weight:900;margin-bottom:10px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:26px 22px;margin:0 0 22px}
+.card-head{display:flex;gap:14px;align-items:flex-start;margin-bottom:20px}
+.num{flex:none;width:34px;height:34px;border-radius:50%;background:var(--orange);color:#fff;display:grid;place-items:center;font-family:var(--display);font-weight:900;font-size:1.2rem}
+.card-head h2{font-size:1.9rem;margin:2px 0 4px}
+.hint{color:var(--muted);font-size:.92rem;margin:0}
+.q{margin:0 0 22px;border:0;padding:0}
+.q legend,.q>label{display:block;font-weight:600;color:var(--ink);margin-bottom:10px;padding:0}
+.choices{display:flex;flex-wrap:wrap;gap:8px}
+.choices input{position:absolute;opacity:0;pointer-events:none}
+.choices label{border:1.5px solid var(--line);border-radius:10px;padding:9px 14px;cursor:pointer;background:var(--bg);font-size:.96rem}
+.choices label:hover{border-color:var(--ink)}
+.choices input:checked+label{border-color:var(--navy);background:var(--navy);color:#fff}
+.choices input:focus-visible+label{outline:3px solid var(--focus);outline-offset:2px}
+input[type=number],input[type=text]{font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:8px;padding:11px 12px;width:100%;max-width:240px}
+input[type=number]:focus,input[type=text]:focus{border-color:var(--navy)}
+.err{color:var(--alert);font-size:.93rem;min-height:1.3em;margin:0 0 8px}
+.metier-pick{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.metier-pick button{text-align:left;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);padding:18px;color:var(--text)}
+.metier-pick button[aria-pressed="true"]{border-color:var(--orange);box-shadow:inset 0 0 0 1.5px var(--orange)}
+.metier-pick strong{display:block;font-family:var(--display);font-size:1.5rem;font-weight:800;color:var(--ink)}
+.big{font-family:var(--display);font-size:clamp(2.2rem,7vw,3.2rem);font-weight:900;color:var(--ink);line-height:1;margin:10px 0 0}
+.tape{margin:26px 0 6px}
+.tape-bar{position:relative;height:48px;border-radius:6px;border:2px solid var(--navy);background:repeating-linear-gradient(90deg,transparent 0 calc(10% - 2px),var(--line) calc(10% - 2px) 10%),var(--bg)}
+:root[data-theme="dark"] .tape-bar{border-color:var(--line)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .tape-bar{border-color:var(--line)}}
+.tape-band{position:absolute;top:0;bottom:0;background:var(--orange);transition:left .5s ease,width .5s ease}
+.tape-mark{position:absolute;top:-12px;bottom:-12px;width:4px;border-radius:2px;background:var(--alert);transition:left .5s ease}
+.tape-mark.ok{background:var(--ok)}
+.tape-labels{position:relative;height:26px;font-size:.86rem;color:var(--muted)}
+.tape-labels span{position:absolute;transform:translateX(-50%);white-space:nowrap;top:4px}
+.paywall{border-top:1px dashed var(--line);margin-top:22px;padding-top:22px}
+.paywall ul{margin:0 0 20px;padding-left:20px}
+.btn-pay{width:100%;background:var(--orange);color:#fff;border:0;border-radius:12px;padding:16px;font-weight:600;font-size:1.08rem}
+.demo-note{font-size:.84rem;color:var(--muted);text-align:center;margin:10px 0 0}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;margin:14px 0 8px;font-size:.96rem}
+td{padding:10px 0;border-bottom:1px solid var(--line);vertical-align:top}
+td:last-child{text-align:right;white-space:nowrap;padding-left:16px}
+tr.total td{border-bottom:0;font-weight:600;color:var(--ink);padding-top:14px}
+tr.sub td{color:var(--muted);font-size:.92rem}
+.callout{border-radius:10px;padding:15px 17px;margin:16px 0 0;font-weight:500}
+.c-ok{background:var(--ok-soft);border-left:5px solid var(--ok)}
+.c-warn{background:var(--orange-soft);border-left:5px solid var(--orange)}
+.c-bad{background:var(--alert-soft);border-left:5px solid var(--alert)}
+.card h3{font-size:1.4rem;margin:26px 0 8px}
+.alerts{margin:14px 0 0;padding-left:20px}
+.alerts li{margin-bottom:7px}
+.checkbox-list label{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;cursor:pointer;font-weight:400;color:var(--text)}
+.checkbox-list input{margin-top:4px;width:18px;height:18px;accent-color:var(--orange)}
+.tgroup{margin-bottom:34px}.tgroup h3{font-size:1.5rem;margin-bottom:14px;color:var(--muted)}
+.mcat{font-weight:600;color:var(--muted);font-size:.9rem;margin:18px 0 8px}
+.metier-pick{grid-template-columns:repeat(3,1fr)!important}
+.metier-pick button{padding:12px 14px!important}.metier-pick strong{font-size:1.25rem!important}
+#free-zone{border-top:1px solid var(--line);margin-top:26px;padding-top:24px}.free-title{font-size:1.9rem;margin:0 0 18px}
+@media (max-width:640px){.metier-pick{grid-template-columns:1fr 1fr!important}}
+.app-foot{font-size:.84rem;color:var(--muted);margin-top:28px}
+
+@media (max-width:900px){
+  .hero .wrap{grid-template-columns:1fr}
+  .sheet-zone{max-width:440px}
+  .trades{grid-template-columns:repeat(2,1fr)}
+  .price-card{grid-template-columns:1fr}
+}
+@media (max-width:640px){
+  .steps,.checks-grid{grid-template-columns:1fr}
+  .metier-pick{grid-template-columns:1fr}
+  .top .btn span{display:none}
+  .logo-sub{display:none}
+  section.band{padding:64px 0}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.tape-band,.tape-mark{transition:none}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <button class="logo" id="home" aria-label="Skyeco, accueil">
+      <svg viewBox="0 0 140 140" aria-hidden="true"><rect width="140" height="140" rx="28" fill="#1C3F5F"/><g transform="rotate(-6 62 70)"><rect x="30" y="24" width="64" height="86" rx="6" fill="#F4F7F9"/><rect x="40" y="38" width="34" height="5" rx="2" fill="#14304A" opacity=".55"/><rect x="40" y="50" width="44" height="5" rx="2" fill="#14304A" opacity=".35"/><rect x="40" y="62" width="28" height="5" rx="2" fill="#14304A" opacity=".35"/><rect x="40" y="90" width="44" height="2" fill="#14304A" opacity=".25"/></g><circle cx="96" cy="92" r="30" fill="#E8622C"/><text x="96" y="104" text-anchor="middle" font-family="Big Shoulders Display, Arial, sans-serif" font-weight="900" font-size="34" fill="#F4F7F9">€</text><path d="M22 46 40 30v8h16v8H40v8Z" fill="#E8622C"/></svg>
+      <span><span class="logo-word">SKY<b>ECO</b></span><span class="logo-sub">Estimateur travaux 2026</span></span>
+    </button>
+    <button class="btn btn-orange" data-start>Estimer <span>mon projet</span></button>
+  </div>
+</header>
+
+<!-- ===================== PAGE DE VENTE ===================== -->
+<div id="landing">
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <h1>Ce devis est-il au juste prix&nbsp;?</h1>
+        <p class="lede">Estimez vos travaux en quelques minutes, puis vérifiez le devis de votre artisan ligne par ligne avant de signer.</p>
+        <div class="hero-ctas">
+          <button class="btn btn-orange" data-start>Estimer mon projet</button>
+          <a class="btn btn-ghost" href="#comment">Comment ça marche</a>
+        </div>
+        <div class="hero-facts"><span><i></i>20 métiers du bâtiment</span><span><i></i>Prix 2026 indexés sur le coût du bâtiment</span><span><i></i>Grille établie avec des artisans</span></div>
+      </div>
+      <div class="sheet-zone" aria-label="Exemple de devis vérifié">
+        <div class="sheet">
+          <div class="sheet-head"><strong>Devis n° 2026-148</strong><small>Toiture, 118 m²</small></div>
+          <div class="sheet-row"><span>Échafaudage et protections</span><span>2 400 €</span></div>
+          <div class="sheet-row flag"><span>Dépose couverture, 146 m²</span><span>3 070 €</span></div>
+          <div class="sheet-row"><span>Écran sous-toiture</span><span>1 750 €</span></div>
+          <div class="sheet-row flag"><span>Tuiles terre cuite, 146 m²</span><span>21 900 €</span></div>
+          <div class="sheet-row flag"><span>Faîtage et rives</span><span>non détaillé</span></div>
+          <div class="sheet-total"><span>Total TTC</span><span>32 040 €</span></div>
+        </div>
+        <div class="stamp"><b>+24&nbsp;%</b><span>surface gonflée de 28 m²</span></div>
+        <p class="sheet-note">Exemple fictif</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="comment">
+    <div class="wrap">
+      <div class="intro">
+        <h2>Trois étapes, sans être du métier</h2>
+        <p class="muted">Des questions simples, en langage clair. Si vous ne savez pas, dites-le : l'estimation en tient compte.</p>
+      </div>
+      <ol class="steps">
+        <li><h3>Décrivez votre projet</h3><p class="muted">Type de travaux, surface, état actuel, finitions. Pas besoin de mètre ruban pour un toit : nous le calculons à partir de la surface au sol.</p></li>
+        <li><h3>Obtenez le juste prix</h3><p class="muted">Le détail poste par poste, comme un vrai devis, avec une fourchette de prix du marché pour votre région.</p></li>
+        <li><h3>Vérifiez le devis de l'artisan</h3><p class="muted">Saisissez son montant et ce qu'il contient. Vous voyez l'écart, les postes oubliés et les questions à lui poser.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="band band-alt">
+    <div class="wrap">
+      <div class="intro">
+        <h2>Ce que l'estimateur repère</h2>
+        <p class="muted">Un devis n'est pas seulement trop cher ou pas cher. Il est souvent incomplet, et c'est là que les mauvaises surprises arrivent.</p>
+      </div>
+      <div class="checks-grid">
+        <div><svg viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="13" fill="#E8622C"/><path d="m7.5 13.5 3.5 3.5 7.5-8" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round"/></svg><p><strong>Un prix au-dessus du marché</strong>L'écart en pourcentage, et les postes qui le font grimper.</p></div>
+        <div><svg viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="13" fill="#E8622C"/><path d="m7.5 13.5 3.5 3.5 7.5-8" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round"/></svg><p><strong>Une surface surévaluée</strong>Comparée à la surface calculée pour votre projet.</p></div>
+        <div><svg viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="13" fill="#E8622C"/><path d="m7.5 13.5 3.5 3.5 7.5-8" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round"/></svg><p><strong>Des postes oubliés</strong>Préparation du support, évacuation, garantie décennale : ce qui manque se paie plus tard.</p></div>
+        <div><svg viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="13" fill="#E8622C"/><path d="m7.5 13.5 3.5 3.5 7.5-8" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round"/></svg><p><strong>Une TVA mal appliquée</strong>20 % au lieu de 10 % sur une rénovation, par exemple.</p></div>
+        <div><svg viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="13" fill="#E8622C"/><path d="m7.5 13.5 3.5 3.5 7.5-8" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round"/></svg><p><strong>Un prix trop bas</strong>Souvent le signe d'un travail bâclé ou d'avenants à venir.</p></div>
+        <div><svg viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="13" fill="#E8622C"/><path d="m7.5 13.5 3.5 3.5 7.5-8" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round"/></svg><p><strong>Les risques particuliers</strong>Amiante dans le fibrociment, support à reprendre, charpente à vérifier.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="metiers">
+    <div class="wrap">
+      <div class="intro"><h2>20 métiers couverts</h2><p class="muted">Du toit au jardin, de la salle de bain à la pompe à chaleur. Choisissez vos travaux pour commencer.</p></div>
+      <div id="trades"></div>
+    </div>
+  </section>
+
+  <section class="band band-alt" id="tarif">
+    <div class="wrap">
+      <div class="intro"><h2>Un prix unique, par projet</h2><p class="muted">Moins cher qu'une erreur de 1 % sur un devis de travaux.</p></div>
+      <div class="price-card">
+        <div class="price-main">
+          <div class="amount">35,90&nbsp;€ <small>TTC</small></div>
+          <p style="margin-top:16px">Pour un projet. Paiement unique, sans abonnement.</p>
+          <button class="btn btn-orange" data-start style="margin-top:10px">Estimer mon projet</button>
+        </div>
+        <div class="price-list">
+          <ul>
+            <li>L'estimation détaillée poste par poste</li>
+            <li>Toutes les options modifiables à volonté : matériaux, finitions, isolation…</li>
+            <li>Autant de devis d'artisans comparés que vous le souhaitez</li>
+            <li>Votre projet enregistré dans votre espace, accessible à tout moment</li>
+          </ul>
+          <p class="muted" style="font-size:.93rem">Votre projet prend du retard ? Après 6 mois, réactualisez votre estimation aux prix du jour pour 24,90 € TTC.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="faq">
+    <div class="wrap" style="max-width:820px">
+      <h2>Questions fréquentes</h2>
+      <details><summary>L'estimation est-elle aussi précise qu'un devis&nbsp;?</summary><p>Elle donne le prix juste du marché pour votre projet, avec une fourchette. Deux artisans sérieux peuvent avoir des prix différents pour le même chantier, et certains éléments ne se voient qu'en visite, comme l'état réel d'une charpente. L'estimation sert à savoir si un devis est cohérent, pas à remplacer la visite de l'artisan.</p></details>
+      <details><summary>D'où viennent les prix&nbsp;?</summary><p>D'une grille établie avec des artisans de chaque métier, ajustée selon votre département et indexée sur l'indice officiel du coût de la construction (index BT de l'INSEE).</p></details>
+      <details><summary>Que se passe-t-il si je change d'avis sur un matériau&nbsp;?</summary><p>Vous modifiez vos réponses autant que vous voulez, le prix se recalcule. Seuls le type de travaux, le département et la surface sont fixés à l'achat, avec une marge pour corriger une erreur de mesure.</p></details>
+      <details><summary>Puis-je être remboursé&nbsp;?</summary><p>L'estimation est un contenu numérique fourni immédiatement. Au moment du paiement, vous demandez son accès immédiat et reconnaissez perdre votre droit de rétractation dès le début de son utilisation.</p></details>
+      <details><summary>Mes informations sont-elles transmises à des artisans&nbsp;?</summary><p>Non. Skyeco ne vend pas vos coordonnées et ne vous met pas en relation avec des artisans sans votre accord.</p></details>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p style="max-width:62ch;margin:0">Skyeco est une marque de RESINE MARBRE SOL, SASU au capital de 50 000 €, 23 route de Corn er Hoet, 56400 Brech. SIRET 939 997 870 00018, RCS Lorient. Estimations indicatives, elles ne remplacent pas une visite technique.</p>
+      <div class="foot-links"><a href="#">Mentions légales</a><a href="#">Conditions générales de vente</a><a href="#">Confidentialité</a></div>
+    </div>
+  </footer>
+</div>
+
+<!-- ===================== APPLICATION ===================== -->
+<div id="app" class="hidden">
+  <main>
+    <h1 class="app-title">Estimer mon projet</h1>
+    <p class="muted" style="margin-bottom:28px">Répondez simplement. Si vous ne savez pas, choisissez « Je ne sais pas ».</p>
+
+    <section class="card" id="c1">
+      <div class="card-head"><span class="num">1</span><div><h2>Votre projet</h2><p class="hint">Choisissez vos travaux, puis répondez à trois questions pour une première fourchette de prix.</p></div></div>
+      <div id="metier-pick"></div>
+      <div id="free-zone" class="hidden"><h3 id="free-title" class="free-title"></h3>
+      <div id="free-qs"></div>
+      <p class="err" id="err1"></p>
+      <button class="btn btn-navy" id="go1">Voir ma fourchette de prix</button></div>
+    </section>
+
+    <section class="card hidden" id="r1">
+      <h2>Votre fourchette de prix</h2>
+      <p class="hint" id="r1-hint"></p>
+      <p class="big" id="r1-range"></p>
+      <div class="tape"><div class="tape-bar"><div class="tape-band" id="r1-band"></div></div><div class="tape-labels" id="r1-labels"></div></div>
+      <div class="paywall" id="paywall">
+        <h3 style="margin-top:0">L'estimation détaillée de votre projet</h3>
+        <ul id="pay-list"></ul>
+        <button class="btn-pay" id="pay">Débloquer l'estimation détaillée pour 35,90 €</button>
+        <p class="demo-note">Mode démonstration : le paiement n'est pas encore branché, le bouton débloque directement.</p>
+      </div>
+    </section>
+
+    <section class="card hidden" id="c2">
+      <div class="card-head"><span class="num">2</span><div><h2>Les détails qui font le prix</h2><p class="hint">Chaque réponse affine l'estimation. Vous pourrez les modifier ensuite.</p></div></div>
+      <div id="detail-qs"></div>
+      <button class="btn btn-navy" id="go2">Calculer mon estimation détaillée</button>
+    </section>
+
+    <section class="card hidden" id="r2">
+      <h2>Votre estimation détaillée</h2>
+      <p class="hint" id="r2-hint"></p>
+      <p class="big" id="r2-range"></p>
+      <div class="tape"><div class="tape-bar"><div class="tape-band" id="r2-band"></div></div><div class="tape-labels" id="r2-labels"></div></div>
+      <div id="r2-warn"></div>
+      <div class="table-wrap"><table id="r2-table"></table></div>
+      <p class="hint" id="r2-tva"></p>
+      <h3>Ce qu'un devis sérieux doit contenir</h3>
+      <ul id="r2-must"></ul>
+      <h3>Les questions à poser à l'artisan</h3>
+      <ul id="r2-ask"></ul>
+    </section>
+
+    <section class="card hidden" id="c3">
+      <div class="card-head"><span class="num">3</span><div><h2>Comparer avec le devis de l'artisan</h2><p class="hint">Recopiez les montants et cochez ce qui figure sur le devis. Vous pouvez comparer plusieurs devis à la suite.</p></div></div>
+      <div class="q"><label for="devis">Montant total TTC du devis, en €</label><input type="number" id="devis" min="1" inputmode="decimal"></div>
+      <div class="q" id="devisSurf-wrap"><label for="devisSurf" id="devisSurf-label">Surface indiquée sur le devis, en m² (facultatif)</label><input type="number" id="devisSurf" min="1" inputmode="decimal"></div>
+      <fieldset class="q"><legend>Taux de TVA indiqué sur le devis</legend><div class="choices" id="tva-choices"></div></fieldset>
+      <fieldset class="q checkbox-list"><legend>Ce qui figure sur le devis</legend><div id="inclus"></div></fieldset>
+      <p class="err" id="err3"></p>
+      <button class="btn btn-navy" id="go3">Comparer ce devis</button>
+      <div id="r3" class="hidden">
+        <div class="tape"><div class="tape-bar"><div class="tape-band" id="r3-band"></div><div class="tape-mark" id="r3-mark"></div></div><div class="tape-labels" id="r3-labels"></div></div>
+        <div class="callout" id="r3-verdict"></div>
+        <ul class="alerts" id="r3-alerts"></ul>
+      </div>
+    </section>
+
+    <p class="app-foot">Estimation indicative basée sur les prix du marché 2026, elle ne remplace pas une visite technique.</p>
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   SKYECO – ESTIMATEUR TRAVAUX 2026
+   Grilles de prix HT indicatives : à valider métier par métier.
+   ============================================================ */
+const DEPT_HAUT=["75","77","78","91","92","93","94","95"];          // coef 1,15
+const DEPT_MOYEN=["06","13","83","69","33","31","44","67","74","73"]; // coef 1,07
+const deptCoef=d=>{d=String(d).padStart(2,"0");return DEPT_HAUT.includes(d)?1.15:DEPT_MOYEN.includes(d)?1.07:1};
+
+/* ---------- Aides à la déclaration des questions ---------- */
+const o=str=>str.split("|").map(x=>{const i=x.indexOf(":");return [x.slice(0,i),x.slice(i+1)]});
+const ch=(id,label,opts,def,when,hint)=>({id,type:"choice",label,options:o(opts),def,when,hint});
+const nu=(id,label,ph,def,when,hint,min)=>({id,type:"number",label,ph,def,when,hint,min:min??0});
+const is=(k,...v)=>s=>v.includes(s[k]);
+const not=(k,...v)=>s=>!v.includes(s[k]);
+const YN="non:Non|oui:Oui", YNN="non:Non|oui:Oui|nsp:Je ne sais pas";
+const ETAGES="pp:Plain-pied|e1:1 étage|e2:2 étages ou plus";
+const AGE=ch("age","Le logement a-t-il plus de 2 ans ?","oui:Oui|non:Non","oui");
+const DEPT={id:"dept",type:"dept",label:"Département"};
+const free=(projet,qtyLabel,ph,hint)=>[ch("projet","Type de projet",projet),nu("qty",qtyLabel,ph,undefined,null,hint,1),DEPT];
+const add=(L,label,v)=>{if(v>0)L.push([label,v])};
+const r0=n=>Math.round(n);
+
+const METIERS={
+
+/* ===================== TOITURE ET FAÇADE ===================== */
+toiture:{nom:"Toiture",cat:"Toiture et façade",desc:"Réfection, nettoyage, gouttières",qtyMin:10,
+ free:free("refection:Refaire entièrement la toiture|nettoyage:Nettoyer et traiter la toiture","Surface de la maison au sol, en m²","ex. 100","La surface du rez-de-chaussée, garage compris s'il est sous le même toit. Nous calculons la surface du toit."),
+ detail:[
+  ch("forme","Forme du toit","deux:2 pans|quatre:4 pans ou plus complexe|plat:Toit plat","deux"),
+  ch("pente","Pente du toit","faible:Faible|moyenne:Moyenne|forte:Forte, très pentue","moyenne",not("forme","plat")),
+  ch("etages","Hauteur de la maison",ETAGES,"e1"),
+  ch("actuel","Couverture actuelle","tuiles:Tuiles|ardoise:Ardoises|fibro:Plaques ou ardoises en fibrociment|bac:Tôle ou bac acier|membrane:Membrane (toit plat)|nsp:Je ne sais pas","nsp"),
+  ch("souhait","Couverture souhaitée","identique:Le même matériau|tuiles:Tuiles terre cuite|ardoise:Ardoises naturelles|bac:Bac acier","identique",s=>s.projet==="refection"&&s.forme!=="plat"),
+  ch("charp","La charpente vous semble-t-elle saine ?","ok:Oui|doute:J'ai un doute|nsp:Je ne sais pas","nsp",is("projet","refection"),"Bois qui s'effrite, poutres qui fléchissent, toit qui ondule : répondez « J'ai un doute »."),
+  ch("iso","Isoler le toit en même temps, par l'extérieur ?",YN,"non",is("projet","refection")),
+  ch("velux","Fenêtres de toit à remplacer","0:Aucune|1:1|2:2|3:3 ou plus","0",is("projet","refection")),
+  ch("chem","Cheminées ou conduits qui traversent le toit","0:Aucune|1:1|2:2 ou plus","1",is("projet","refection")),
+  ch("gout","Gouttières à remplacer",YN,"non"),
+  ch("acces","Accès autour de la maison","facile:Facile depuis la rue|jardin:Par le jardin|etroit:Étroit ou maison mitoyenne","facile"),
+  AGE],
+ area(s){return s.forme==="plat"?s.qty*1.05:s.qty*({faible:1.1,moyenne:1.25,forte:1.45}[s.pente])*1.08},
+ freeHint(s){return `Estimation large pour un toit à 2 pans d'environ ${r0(this.area(s))} m², sans connaître son état ni vos options.`},
+ hint2(s,d){return `Surface de toit estimée : environ ${r0(d.area)} m² (${r0(s.qty)} m² au sol).`},
+ calc(s){
+  const A=this.area(s),L=[],echaf={pp:1200,e1:2200,e2:3500}[s.etages]*{facile:1,jardin:1.15,etroit:1.3}[s.acces];
+  L.push(["Installation de chantier et déplacement",s.projet==="refection"?450:300]);
+  if(s.projet==="refection"){
+   L.push(["Échafaudage et protections",echaf]);
+   L.push([`Dépose et évacuation de la couverture existante (${r0(A)} m²)`,A*18]);
+   if(s.actuel==="fibro") L.push(["Désamiantage du fibrociment, évacuation en filière agréée",A*45]);
+   add(L,"Provision pour reprise de charpente",A*{ok:0,doute:15,nsp:8}[s.charp]);
+   const mat=s.forme==="plat"?"membrane":(s.souhait==="identique"?(["tuiles","ardoise","bac"].includes(s.actuel)?s.actuel:"tuiles"):s.souhait);
+   if(mat!=="membrane") L.push(["Écran sous-toiture et liteaunage",A*12]);
+   L.push([`Fourniture et pose de la couverture ${{tuiles:"en tuiles terre cuite",ardoise:"en ardoises naturelles",bac:"en bac acier",membrane:"en membrane d'étanchéité"}[mat]}, faîtage et rives compris`,A*{tuiles:120,ardoise:170,bac:75,membrane:90}[mat]*{deux:1,quatre:1.12,plat:1}[s.forme]*(s.forme!=="plat"&&s.pente==="forte"?1.1:1)]);
+   if(s.iso==="oui") L.push(["Isolation par l'extérieur",A*75]);
+   add(L,`Remplacement des fenêtres de toit (${s.velux})`,+s.velux*900);
+   add(L,`Raccords d'étanchéité autour des cheminées (${s.chem})`,+s.chem*450);
+  } else {
+   L.push(["Sécurisation : échafaudage ou nacelle, protections",echaf*.6]);
+   L.push([`Démoussage, nettoyage et traitement hydrofuge (${r0(A)} m²)`,A*(s.actuel==="bac"?18:22)]);
+   if(!["bac","membrane"].includes(s.actuel)) L.push(["Provision pour tuiles ou ardoises cassées",A*3]);
+  }
+  if(s.gout==="oui"){const p=4*Math.sqrt(s.qty)*1.05,g=r0(s.forme==="deux"?p*.55:s.forme==="plat"?p*.5:p);L.push([`Gouttières et descentes (environ ${g} m)`,g*45])}
+  return {L,min:s.projet==="refection"?3000:900,area:A,nsp:[s.actuel,s.projet==="refection"?s.charp:""].filter(v=>v==="nsp").length};
+ },
+ must:s=>s.projet==="nettoyage"?["La surface traitée en m²","La méthode de nettoyage (jamais de haute pression sur du fibrociment)","Le nom et le type du produit hydrofuge","Les tuiles cassées : comprises ou prix à l'unité","La sécurisation du chantier"]
+  :["La surface de toiture en m², et comment elle a été mesurée","Le matériau exact : marque, modèle et coloris","L'écran sous-toiture et le remplacement des liteaux","Le traitement du faîtage, des rives et des noues","L'échafaudage et l'évacuation des déchets","Ce qui est prévu si la charpente est abîmée : prix au mètre ou réserve écrite"],
+ ask:s=>s.projet==="nettoyage"?["Quel produit hydrofuge utilisez-vous, et combien de temps tient-il ?","Nettoyez-vous au jet haute pression ? À quelle pression ?","Combien de tuiles cassées sont comprises dans le prix ?"]
+  :["Comment avez-vous mesuré la surface du toit ?","Le faîtage sera-t-il scellé au mortier ou posé à sec et ventilé ?","Que se passe-t-il si vous découvrez du bois abîmé une fois la couverture enlevée ?","Comment la maison est-elle protégée s'il pleut pendant les travaux ?"],
+ inc:s=>{const i=s.projet==="nettoyage"?["Surface traitée en m²","Méthode de nettoyage","Produit hydrofuge nommé","Tuiles cassées comprises ou chiffrées","Sécurisation du chantier"]
+  :["Surface de toiture en m²","Matériau précis (marque, modèle)","Écran sous-toiture","Faîtage, rives et noues","Échafaudage","Évacuation des déchets","Réserve ou prix pour la charpente"];
+  if(s.projet==="refection"&&s.actuel==="fibro")i.push("Repérage et désamiantage"); if(s.projet==="refection"&&s.iso==="oui")i.push("Isolation, épaisseur et performance"); if(s.gout==="oui")i.push("Gouttières et descentes"); return i},
+ cmp:{label:"Surface de toiture indiquée sur le devis, en m²",ref:(s,d)=>d.area,tol:.15},
+ warn:s=>s.actuel!=="fibro"?"":s.projet==="refection"?"Votre couverture en fibrociment contient peut-être de l'amiante, surtout si la maison date d'avant 1997. Un repérage amiante est obligatoire avant les travaux, et le retrait doit être fait par une entreprise certifiée.":"Sur du fibrociment, le nettoyage au jet haute pression est à proscrire : il peut libérer des fibres d'amiante. Exigez une méthode adaptée, par écrit."
+},
+
+ravalement:{nom:"Façade",cat:"Toiture et façade",desc:"Nettoyage, peinture, enduit",qtyMin:10,
+ free:free("nettoyage:Nettoyer la façade|peinture:Repeindre la façade|enduit:Refaire l'enduit","Surface de la maison au sol, en m²","ex. 100","Nous calculons la surface des façades."),
+ detail:[ch("etages","Hauteur de la maison",ETAGES,"e1"),
+  ch("support","Façade actuelle","enduit:Enduit ou crépi|pierre:Pierre|brique:Brique|beton:Béton|nsp:Je ne sais pas","enduit"),
+  ch("etat","État de la façade","bon:Bon état|fines:Petites fissures|importantes:Fissures importantes ou décollements|nsp:Je ne sais pas","nsp"),
+  ch("facades","Façades concernées","toutes:Toutes les façades|partie:Une ou deux façades","toutes"),
+  ch("acces","Accès autour de la maison","facile:Facile|jardin:Par le jardin|etroit:Étroit ou mitoyen","facile"),AGE],
+ area(s){return 4*Math.sqrt(s.qty)*{pp:3.2,e1:5.8,e2:8.5}[s.etages]*.85*(s.facades==="partie"?.5:1)},
+ hint2(s,d){return `Surface de façade estimée : environ ${r0(d.area)} m², ouvertures déduites.`},
+ calc(s){const A=this.area(s),L=[];
+  L.push(["Installation de chantier",300]);
+  L.push(["Échafaudage et protection des abords",A*12*{facile:1,jardin:1.1,etroit:1.25}[s.acces]]);
+  add(L,"Traitement des fissures",A*{bon:0,fines:5,importantes:15,nsp:7}[s.etat]);
+  const sc={pierre:1.3,brique:1.15}[s.support]||1;
+  if(s.projet==="enduit") L.push(["Piquage de l'ancien enduit et évacuation",A*20]);
+  L.push([{nettoyage:"Nettoyage et traitement de la façade",peinture:"Préparation et peinture de façade, 2 couches",enduit:"Fourniture et pose d'un enduit neuf"}[s.projet]+` (${r0(A)} m²)`,A*{nettoyage:18,peinture:32,enduit:60}[s.projet]*sc]);
+  return {L,min:2500,area:A,nsp:[s.support,s.etat].filter(v=>v==="nsp").length}},
+ must:()=>["La surface de façade en m², ouvertures déduites ou non","La préparation : lavage, traitement des fissures, fixateur","Le produit utilisé : marque, type et nombre de couches","L'échafaudage et la protection des abords","La déclaration préalable en mairie si l'aspect change"],
+ ask:()=>["Les ouvertures sont-elles déduites de la surface ?","Combien de couches allez-vous appliquer ?","Comment traitez-vous les fissures avant de peindre ?","Qui s'occupe de la déclaration en mairie ?"],
+ inc:()=>["Surface de façade en m²","Traitement des fissures","Produit et nombre de couches","Échafaudage","Protection des abords"],
+ cmp:{label:"Surface de façade indiquée sur le devis, en m²",ref:(s,d)=>d.area,tol:.15}
+},
+
+/* ===================== EXTÉRIEUR ===================== */
+resine:{nom:"Sol en résine",cat:"Extérieur",desc:"Terrasse, piscine, allée, aire de jeux",qtyMin:10,
+ free:free("terrasse:Terrasse|piscine:Plage de piscine|allee_pieton:Allée piétonne|allee_voiture:Allée ou parking pour voitures|jeux:Aire de jeux","Surface à couvrir, en m²","ex. 40","Minimum 10 m²."),
+ detail:[
+  ch("sol","Sol actuel","beton_ok:Béton en bon état|beton_fissure:Béton fissuré|carrelage:Carrelage|pave:Pavés|enrobe:Enrobé|terre:Terre ou gravier|nsp:Je ne sais pas","nsp"),
+  ch("eau","L'eau stagne-t-elle quand il pleut ?",YNN,"nsp"),
+  ch("revet","Type de revêtement souhaité","epdm:Souple, type caoutchouc (EPDM)|granulats:Granulats de marbre ou de quartz|nsp:Je ne sais pas","nsp",not("projet","jeux","allee_voiture")),
+  ch("hauteur","Hauteur des jeux les plus hauts","h1:Jusqu'à 1 m|h15:Jusqu'à 1,50 m|h2:Jusqu'à 2 m|h3:Jusqu'à 3 m","h15",is("projet","jeux")),
+  ch("bord","Bordures","existantes:Déjà en place|creer:À créer|aucune:Pas besoin","aucune"),
+  nu("ml","Longueur de bordures à créer, en mètres","ex. 20",0,is("bord","creer")),
+  ch("couleur","Couleur","unie:Unie|melange:Mélange de couleurs|motifs:Motifs ou logo","unie"),
+  ch("acces","Accès au chantier","camion:Un camion peut approcher|brouette:Brouette uniquement|etage:À l'étage","camion"),
+  ch("depose","Un ancien revêtement est-il à enlever et évacuer ?",YN,"non"),AGE],
+ calc(s){const S=s.qty,sc=S<20?1.1:S<=50?1:S<=100?.95:.9,ac={camion:1,brouette:1.08,etage:1.15}[s.acces],L=[];
+  const coul=r=>(r+(s.couleur==="melange"?6:0))*(s.couleur==="motifs"?1.15:1);
+  if(s.depose==="oui") L.push(["Dépose et évacuation de l'ancien revêtement",S*14*sc]);
+  if(s.projet==="allee_voiture"){
+   add(L,"Terrassement, fondation en concassé et compactage",S*(s.sol==="terre"?30:s.sol==="nsp"?15:0)*sc*ac);
+   add(L,"Reprise des pentes et gestion de l'eau",S*{non:0,oui:8,nsp:3}[s.eau]*sc);
+   L.push(["Fourniture et pose de granulats liés à la résine, épaisseur carrossable",S*coul(150)*ac*sc]);
+  } else {
+   L.push(["Préparation du support : ponçage, nettoyage, réparations, primaire",S*({beton_ok:15,beton_fissure:30,carrelage:22,pave:25,enrobe:18,terre:70,nsp:30}[s.sol]+{non:0,oui:8,nsp:3}[s.eau])*sc*ac]);
+   if(s.projet==="jeux") L.push(["Sous-couche amortissante adaptée à la hauteur des jeux",S*{h1:25,h15:38,h2:48,h3:68}[s.hauteur]*sc*ac]);
+   const rev=s.projet==="jeux"?"epdm":s.revet;
+   L.push([`Fourniture et pose du revêtement ${rev==="epdm"?"EPDM":rev==="granulats"?"en granulats de marbre ou de quartz":"résine"}`,S*coul({epdm:100,granulats:95,nsp:97.5}[rev]+(s.projet==="piscine"?10:0))*ac*sc]);
+  }
+  if(s.bord==="creer"&&s.ml>0) L.push([`Bordures (${r0(s.ml)} m)`,s.ml*45]);
+  return {L,min:1150,area:S,nsp:[s.sol,s.eau,["jeux","allee_voiture"].includes(s.projet)?"":s.revet].filter(v=>v==="nsp").length}},
+ must:s=>{const m=["La préparation du support détaillée (nettoyage, réparation des fissures, primaire d'accrochage)","Le type de revêtement et son épaisseur en millimètres","La surface exacte en m² et le prix au m²"];
+  if(s.projet==="jeux")m.push("L'épaisseur de la sous-couche, adaptée à la hauteur de chute des jeux"); if(s.bord==="creer")m.push("Les bordures, en mètres linéaires"); if(s.depose==="oui")m.push("La dépose et l'évacuation de l'ancien revêtement"); return m},
+ ask:()=>["Comment allez-vous préparer mon support, et que se passe-t-il si vous trouvez des fissures ?","Quelle épaisseur allez-vous poser, et pourquoi celle-là ?","Le revêtement est-il drainant ? Où ira l'eau de pluie ?","Pouvez-vous me montrer un chantier similaire réalisé il y a plus de 2 ans ?"],
+ inc:s=>{const i=["Préparation du support","Primaire d'accrochage","Épaisseur du revêtement","Surface en m² et prix au m²"];if(s.bord==="creer")i.push("Bordures");if(s.depose==="oui")i.push("Dépose et évacuation");if(s.projet==="jeux")i.push("Sous-couche amortissante");return i},
+ cmp:{label:"Surface indiquée sur le devis, en m²",ref:s=>s.qty,tol:.1}
+},
+
+allees:{nom:"Allées",cat:"Extérieur",desc:"Enrobé, béton désactivé, pavés, gravier",qtyMin:5,
+ free:free("enrobe:Enrobé|beton:Béton désactivé|paves:Pavés|gravier:Gravier stabilisé","Surface, en m²","ex. 60"),
+ detail:[ch("usage","Usage","pieton:Piétons uniquement|voiture:Voitures|lourd:Camping-car ou véhicules lourds","voiture"),
+  ch("sol","Sol actuel","terre:Terre ou pelouse|gravier:Gravier|dur:Ancien enrobé ou béton à casser|nsp:Je ne sais pas","nsp"),
+  ch("pente","Le terrain est-il en pente ?","non:Non|legere:Légère pente|forte:Forte pente","non"),
+  ch("bord","Bordures","existantes:Déjà en place|creer:À créer|aucune:Pas besoin","aucune"),
+  nu("ml","Longueur de bordures à créer, en mètres","ex. 20",0,is("bord","creer")),
+  ch("eau","Récupérer l'eau de pluie (caniveau, grille) ?",YNN,"non"),
+  ch("acces","Accès au chantier","facile:Un camion peut approcher|etroit:Accès étroit","facile"),AGE],
+ calc(s){const S=s.qty,sc=S<30?1.15:S>150?.9:1,ac=s.acces==="etroit"?1.15:1,L=[];
+  L.push(["Installation de chantier et amenée des engins",400]);
+  L.push(["Décaissement, évacuation des terres, fondation en concassé compacté",S*({terre:35,gravier:18,dur:50,nsp:32}[s.sol]+{non:0,legere:5,forte:15}[s.pente])*sc*ac]);
+  L.push([`Fourniture et mise en œuvre ${{enrobe:"de l'enrobé",beton:"du béton désactivé",paves:"des pavés",gravier:"du gravier stabilisé"}[s.projet]}`,S*({enrobe:45,beton:75,paves:95,gravier:40}[s.projet]+{pieton:-5,voiture:0,lourd:12}[s.usage])*sc*ac]);
+  if(s.bord==="creer"&&s.ml>0) L.push([`Bordures (${r0(s.ml)} m)`,s.ml*40]);
+  add(L,"Caniveau ou grille de récupération des eaux",{non:0,oui:700,nsp:350}[s.eau]);
+  return {L,min:1500,area:S,nsp:[s.sol,s.eau].filter(v=>v==="nsp").length}},
+ must:()=>["Le terrassement : profondeur de décaissement et évacuation des terres","La fondation : type et épaisseur de la couche de concassé","L'épaisseur du revêtement","La gestion de l'eau de pluie (pente, caniveau)","Les bordures, en mètres"],
+ ask:()=>["Sur quelle profondeur allez-vous décaisser ?","Quelle épaisseur de revêtement posez-vous ?","Où ira l'eau de pluie ?","Le compactage est-il fait au rouleau ou à la plaque ?"],
+ inc:()=>["Décaissement et évacuation des terres","Fondation en concassé","Épaisseur du revêtement","Gestion de l'eau de pluie","Bordures"],
+ cmp:{label:"Surface indiquée sur le devis, en m²",ref:s=>s.qty,tol:.1},
+ warn:s=>s.projet==="enrobe"?"Méfiez-vous des propositions d'enrobé à prix cassé faites à votre porte, « avec le reste d'un chantier voisin » : c'est une arnaque fréquente.":""
+},
+
+terrasses:{nom:"Terrasses",cat:"Extérieur",desc:"Bois, composite, carrelage sur plots",qtyMin:5,
+ free:free("pin:Bois pin traité|exotique:Bois exotique|composite:Composite|carrelage:Carrelage sur plots|dalle:Dalle béton carrelée","Surface, en m²","ex. 30"),
+ detail:[ch("support","Sol actuel","terre:Terre ou pelouse|dalle:Dalle béton existante|nsp:Je ne sais pas","nsp"),
+  ch("hauteur","Hauteur de la terrasse","sol:Au niveau du sol|basse:Surélevée de moins de 1 m|haute:Surélevée de plus de 1 m","sol"),
+  nu("gc","Garde-corps, en mètres","ex. 8",0,not("hauteur","sol")),
+  ch("escalier","Un escalier ?",YN,"non",not("hauteur","sol")),
+  ch("acces","Accès au chantier","camion:Accès facile|brouette:Brouette uniquement","camion"),AGE],
+ calc(s){const S=s.qty,ac=s.acces==="brouette"?1.08:1,L=[];
+  L.push(["Installation de chantier",300]);
+  add(L,"Préparation du sol : terrassement, géotextile, plots ou fondations",S*({terre:25,dalle:0,nsp:12}[s.support]+(s.projet==="dalle"&&s.support!=="dalle"?30:0))*ac);
+  add(L,"Structure surélevée",S*{sol:0,basse:40,haute:90}[s.hauteur]);
+  L.push([`Fourniture et pose ${{pin:"en pin traité",exotique:"en bois exotique",composite:"en composite",carrelage:"de carrelage sur plots",dalle:"d'une dalle béton et carrelage"}[s.projet]}`,S*{pin:110,exotique:190,composite:170,carrelage:150,dalle:170}[s.projet]*ac]);
+  if(s.hauteur!=="sol"){add(L,`Garde-corps (${r0(s.gc||0)} m)`,(s.gc||0)*180); if(s.escalier==="oui")L.push(["Escalier",900])}
+  return {L,min:1500,area:S,nsp:s.support==="nsp"?1:0}},
+ must:()=>["L'essence de bois ou la marque du composite, et sa classe d'emploi","La structure : lambourdes, plots, entraxe","La préparation du sol (géotextile, stabilisation)","Les finitions : bords, contremarches, garde-corps","La surface en m²"],
+ ask:()=>["Quel entraxe entre les lambourdes ?","Les vis sont-elles en inox ?","Comment l'eau s'écoule-t-elle sous la terrasse ?","Faut-il une déclaration en mairie pour une terrasse surélevée ?"],
+ inc:()=>["Essence ou marque du matériau","Structure et entraxe","Préparation du sol","Finitions","Surface en m²"],
+ cmp:{label:"Surface indiquée sur le devis, en m²",ref:s=>s.qty,tol:.1}
+},
+
+clotures:{nom:"Clôtures",cat:"Extérieur",desc:"Grillage, panneaux, alu, bois, composite",qtyMin:3,
+ free:free("grillage:Grillage souple|rigide:Panneaux rigides|alu:Aluminium|bois:Bois|composite:Composite","Longueur de clôture, en mètres","ex. 40"),
+ detail:[ch("h","Hauteur","h12:1,20 m|h15:1,50 m|h18:1,80 m|h20:2 m","h15"),
+  ch("terrain","Terrain","plat:Plat|pente:En pente|forte:Fort dénivelé","plat"),
+  ch("sol","Nature du sol","terre:Terre|rocher:Rocheux|beton:Béton|nsp:Je ne sais pas","terre"),
+  ch("souba","Soubassement en béton ?",YN,"non"),
+  ch("portillon","Portillon ?",YN,"non"),
+  ch("arrachage","Ancienne clôture à retirer ?",YN,"non"),AGE],
+ calc(s){const M=s.qty,L=[];
+  L.push(["Installation de chantier",250]);
+  add(L,"Dépose et évacuation de l'ancienne clôture",s.arrachage==="oui"?M*12:0);
+  L.push([`Fourniture et pose de la clôture ${{grillage:"en grillage souple",rigide:"en panneaux rigides",alu:"en aluminium",bois:"en bois",composite:"en composite"}[s.projet]}, poteaux scellés (${r0(M)} m)`,M*{grillage:35,rigide:65,alu:220,bois:120,composite:180}[s.projet]*{h12:.85,h15:1,h18:1.15,h20:1.3}[s.h]*{plat:1,pente:1.1,forte:1.25}[s.terrain]]);
+  add(L,"Surcoût de scellement (sol dur ou incertain)",M*{terre:0,rocher:15,beton:8,nsp:5}[s.sol]);
+  add(L,"Soubassement béton",s.souba==="oui"?M*40:0);
+  add(L,"Portillon assorti",s.portillon==="oui"?{grillage:450,rigide:600,alu:1300,bois:900,composite:1100}[s.projet]:0);
+  return {L,min:900,area:M,nsp:s.sol==="nsp"?1:0}},
+ must:()=>["Le type de clôture, sa hauteur et sa couleur","Le nombre et le type de poteaux, et leur scellement","La longueur en mètres","Les accessoires : portillon, jambes de force","L'évacuation de l'ancienne clôture"],
+ ask:()=>["Tous les combien posez-vous un poteau ?","Les poteaux sont-ils scellés au béton ?","Qui vérifie les limites de propriété ?","Faut-il une déclaration en mairie ?"],
+ inc:()=>["Type, hauteur et couleur","Poteaux et scellement","Longueur en mètres","Accessoires","Évacuation de l'ancienne clôture"],
+ cmp:{label:"Longueur indiquée sur le devis, en mètres",ref:s=>s.qty,tol:.1},
+ warn:()=>"Avant la pose, vérifiez les limites de propriété et le règlement d'urbanisme de votre commune : une déclaration préalable peut être obligatoire."
+},
+
+portails:{nom:"Portails",cat:"Extérieur",desc:"Battant, coulissant, motorisation",qtyMin:2,
+ free:free("battant:Portail battant|coulissant:Portail coulissant","Largeur du passage, en mètres","ex. 3,5"),
+ detail:[ch("mat","Matériau","pvc:PVC|alu:Aluminium|acier:Acier|bois:Bois","alu"),
+  ch("moteur","Motorisation ?",YN,"oui"),
+  ch("elec","Électricité jusqu'au portail","oui:Déjà disponible|court:À amener, moins de 10 m|moyen:À amener, 10 à 25 m|long:À amener, plus de 25 m|nsp:Je ne sais pas","nsp",is("moteur","oui")),
+  ch("piliers","Piliers","ok:Déjà en place et en bon état|creer:À créer|nsp:Je ne sais pas","ok"),
+  ch("portillon","Portillon assorti ?",YN,"non"),
+  ch("depose","Ancien portail à retirer ?",YN,"non"),AGE],
+ calc(s){const L=[],b={pvc:1800,alu:3200,acier:2600,bois:2800}[s.mat]*Math.max(.8,s.qty/3.5)*(s.projet==="coulissant"?1.2:1);
+  L.push(["Installation de chantier",200]); add(L,"Dépose et évacuation de l'ancien portail",s.depose==="oui"?250:0);
+  add(L,"Création des piliers",{ok:0,creer:900,nsp:450}[s.piliers]);
+  L.push([`Fourniture et pose d'un portail ${s.projet} en ${{pvc:"PVC",alu:"aluminium",acier:"acier",bois:"bois"}[s.mat]} (${String(s.qty).replace(".",",")} m)`,b]);
+  if(s.projet==="coulissant") L.push(["Rail ou longrine de guidage",600]);
+  if(s.moteur==="oui"){L.push(["Motorisation, télécommandes, feu et cellules de sécurité",s.projet==="coulissant"?1300:1100]);add(L,"Tranchée et arrivée électrique",{oui:0,court:500,moyen:1100,long:2000,nsp:900}[s.elec])}
+  add(L,"Portillon assorti",s.portillon==="oui"?Math.max(800,b*.4):0);
+  return {L,min:1500,nsp:[s.piliers,s.moteur==="oui"?s.elec:""].filter(v=>v==="nsp").length}},
+ must:()=>["Le matériau, le modèle et les dimensions exactes","La motorisation : marque, modèle, nombre de télécommandes","Les sécurités : feu clignotant, cellules","L'arrivée électrique : tranchée et câble compris ou non","Le scellement ou la création des piliers"],
+ ask:()=>["La tranchée pour l'électricité est-elle comprise ?","Combien de télécommandes sont fournies ?","Que se passe-t-il en cas de coupure de courant ?","Quelle garantie sur le moteur ?"],
+ inc:()=>["Modèle et dimensions","Motorisation détaillée","Sécurités (feu, cellules)","Arrivée électrique","Piliers"],cmp:null
+},
+
+terrassement:{nom:"Terrassement",cat:"Extérieur",desc:"Décaissement, nivellement, drainage",qtyMin:5,
+ free:free("decaissement:Décaisser pour une terrasse ou une allée|nivellement:Niveler un terrain","Surface, en m²","ex. 50"),
+ detail:[ch("prof","Profondeur","p20:Environ 20 cm|p30:Environ 30 cm|p50:Environ 50 cm","p30",is("projet","decaissement")),
+  ch("evac","Évacuer les terres ?","oui:Oui|non:Non, elles restent sur le terrain","oui",is("projet","decaissement")),
+  ch("sol","Nature du sol","terre:Terre|argile:Argile|rocher:Rocheux|nsp:Je ne sais pas","nsp"),
+  ch("acces","Accès pour les engins","facile:Accès facile pour une pelleteuse|etroit:Accès étroit, mini-pelle","facile"),
+  ch("drain","Créer un drainage ?",YN,"non"),
+  nu("drainMl","Longueur de drainage, en mètres","ex. 30",0,is("drain","oui")),AGE],
+ calc(s){const L=[],k={terre:1,argile:1.1,rocher:1.8,nsp:1.15}[s.sol]*(s.acces==="etroit"?1.2:1);
+  L.push(["Amenée et repli des engins",450]);
+  let vol=0;
+  if(s.projet==="decaissement"){vol=s.qty*{p20:.2,p30:.3,p50:.5}[s.prof];L.push([`Décaissement (environ ${r0(vol)} m³)`,vol*35*k]);if(s.evac==="oui")L.push(["Chargement, transport et mise en décharge des terres",vol*1.3*45])}
+  else L.push(["Nivellement et compactage du terrain",s.qty*8*k]);
+  add(L,`Drainage (${r0(s.drainMl||0)} m)`,s.drain==="oui"?(s.drainMl||0)*55:0);
+  return {L,min:800,area:s.qty,vol,nsp:s.sol==="nsp"?1:0}},
+ hint2:(s,d)=>d.vol?`Volume de terre estimé : environ ${r0(d.vol)} m³.`:"",
+ must:()=>["Le volume de terre à extraire, en m³","L'évacuation des terres et le lieu de mise en décharge","Le type d'engin utilisé","La remise en état des abords","Ce qui est prévu en cas de roche"],
+ ask:()=>["Où partent les terres, et est-ce compris ?","Avez-vous fait les déclarations obligatoires avant de creuser près des réseaux ?","Que se passe-t-il si vous trouvez de la roche ?","Le compactage du fond est-il compris ?"],
+ inc:()=>["Volume en m³","Évacuation et décharge","Engin utilisé","Remise en état","Clause en cas de roche"],
+ cmp:{label:"Surface indiquée sur le devis, en m²",ref:s=>s.qty,tol:.1}
+},
+
+piscine:{nom:"Piscine",cat:"Extérieur",desc:"Coque, maçonnée, rénovation de liner",qtyMin:6,
+ free:free("coque:Piscine coque|maconnee:Piscine maçonnée (béton)|liner:Changer le liner","Surface du bassin, en m²","ex. 32","Longueur × largeur, par exemple 8 × 4 = 32 m²."),
+ detail:[ch("forme","Forme","rect:Rectangulaire|libre:Forme libre","rect",not("projet","liner")),
+  ch("prof","Profondeur","standard:1,20 à 1,50 m|profonde:Jusqu'à 2 m ou plus","standard",not("projet","liner")),
+  ch("sol","Nature du sol","terre:Terre|rocher:Rocheux|nsp:Je ne sais pas","nsp",not("projet","liner")),
+  ch("secu","Sécurité (obligatoire)","alarme:Alarme|volet:Volet roulant|abri:Abri|deja:Déjà en place","alarme"),
+  ch("chauffage","Chauffage par pompe à chaleur ?",YN,"non"),
+  nu("plage","Plage autour du bassin, en m²","ex. 20",0,not("projet","liner")),
+  ch("acces","Accès au jardin","facile:Accès facile pour les engins|etroit:Accès étroit","facile")],
+ tva:()=>.2,
+ calc(s){const S=s.qty,L=[],ac=s.acces==="etroit"?1.15:1;
+  if(s.projet==="liner") L.push(["Vidange, dépose de l'ancien liner, fourniture et pose du nouveau, remise en eau",S*180]);
+  else{L.push([`Construction du bassin ${s.projet==="coque"?"coque":"maçonné"}, terrassement et filtration compris`,S*(s.projet==="coque"?700:900)*(s.forme==="libre"?1.1:1)*(s.prof==="profonde"?1.08:1)*ac]);
+   add(L,"Provision pour terrain rocheux",{terre:0,rocher:2500,nsp:1000}[s.sol]); add(L,`Plage autour du bassin (${r0(s.plage||0)} m²)`,(s.plage||0)*90)}
+  add(L,{alarme:"Alarme de sécurité",volet:"Volet roulant de sécurité",abri:"Abri de piscine",deja:""}[s.secu],{alarme:700,volet:Math.max(6000,S*260),abri:Math.max(6000,S*300),deja:0}[s.secu]);
+  add(L,"Pompe à chaleur de piscine",s.chauffage==="oui"?3000:0);
+  return {L,min:s.projet==="liner"?1800:8000,area:S,nsp:s.projet!=="liner"&&s.sol==="nsp"?1:0}},
+ must:()=>["Les dimensions et la profondeur exactes du bassin","Le terrassement et l'évacuation des terres","La filtration : type, marque, puissance de la pompe","Le dispositif de sécurité conforme à la norme","Les raccordements électriques et hydrauliques"],
+ ask:()=>["L'évacuation des terres est-elle comprise ?","Qui s'occupe de la déclaration en mairie ?","Quelle garantie sur la structure ?","La mise en eau et la mise en service sont-elles incluses ?"],
+ inc:()=>["Dimensions et profondeur","Terrassement et évacuation","Filtration détaillée","Sécurité normalisée","Raccordements"],
+ cmp:{label:"Surface du bassin indiquée sur le devis, en m²",ref:s=>s.qty,tol:.1},
+ warn:s=>s.projet==="liner"?"":"Un bassin de plus de 10 m² demande au minimum une déclaration préalable en mairie, et un dispositif de sécurité normalisé est obligatoire."
+},
+
+anc:{nom:"Assainissement",cat:"Extérieur",desc:"Fosse, micro-station, filtre compact",qtyMin:1,
+ free:free("fosse:Fosse toutes eaux et épandage|microstation:Micro-station|compact:Filtre compact|sable:Filtre à sable|nsp:Je ne sais pas encore","Nombre de chambres","ex. 3"),
+ detail:[ch("etude","Étude de sol déjà réalisée ?",YN,"non"),
+  ch("engin","Une pelleteuse peut-elle accéder au terrain ?","oui:Oui|non:Non","oui"),
+  ch("rocher","Terrain rocheux ?",YNN,"nsp"),
+  ch("relevage","Le terrain de l'installation est-il plus haut que la sortie des eaux de la maison ?",YNN,"nsp"),
+  ch("distance","Distance entre la maison et l'installation","court:Moins de 10 m|moyen:10 à 25 m|long:Plus de 25 m","court"),
+  ch("ancienne","Ancienne fosse à vider et neutraliser ?",YN,"oui"),AGE],
+ eh:s=>Math.max(4,s.qty+1),
+ hint2(s){return `Installation dimensionnée pour environ ${this.eh(s)} équivalents-habitants. Seule l'étude de sol fixe la filière et la taille définitives.`},
+ calc(s){const EH=this.eh(s),L=[],t=s.projet;
+  add(L,"Étude de sol (obligatoire)",s.etude==="non"?500:0);
+  L.push([`Fourniture et pose ${{fosse:"d'une fosse toutes eaux et de l'épandage",microstation:"d'une micro-station",compact:"d'un filtre compact",sable:"d'une fosse et d'un filtre à sable",nsp:"de l'installation (filière à définir)"}[t]}, terrassement compris`,({fosse:7500,microstation:8500,compact:10000,sable:9500,nsp:9000}[t]+Math.max(0,EH-5)*{fosse:400,microstation:500,compact:600,sable:500,nsp:500}[t])*(s.engin==="non"?1.2:1)]);
+  add(L,"Provision pour terrain rocheux (brise-roche)",{non:0,oui:1500,nsp:600}[s.rocher]);
+  add(L,"Poste de relevage",{non:0,oui:1800,nsp:700}[s.relevage]);
+  add(L,"Canalisations supplémentaires",{court:0,moyen:400,long:900}[s.distance]);
+  add(L,"Vidange et neutralisation de l'ancienne fosse",s.ancienne==="oui"?500:0);
+  return {L,min:5000,nsp:[s.rocher,s.relevage,t].filter(v=>v==="nsp").length}},
+ must:()=>["La filière et le dimensionnement conformes à l'étude de sol","La marque et le modèle de l'installation, avec son agrément","Le terrassement et l'évacuation des terres","Les raccordements et la ventilation","La neutralisation de l'ancienne fosse"],
+ ask:()=>["Le projet a-t-il été validé par le SPANC ?","Qui s'occupe de la vidange de l'ancienne fosse ?","Quel est le coût d'entretien annuel de l'installation ?","Que se passe-t-il si vous tombez sur de la roche ?"],
+ inc:()=>["Filière conforme à l'étude de sol","Marque, modèle et agrément","Terrassement et évacuation","Raccordements et ventilation","Neutralisation de l'ancienne fosse"],cmp:null,
+ warn:()=>"Avant les travaux, l'étude de sol et l'avis favorable du SPANC sont obligatoires. Sans étude de sol, un devis reste une hypothèse."
+},
+
+/* ===================== ÉNERGIE ET ISOLATION ===================== */
+isolation:{nom:"Isolation",cat:"Énergie et isolation",desc:"Combles, murs, planchers",qtyMin:5,
+ free:free("combles:Combles perdus (grenier non habitable)|rampants:Combles aménagés, sous la toiture|ite:Murs par l'extérieur|iti:Murs par l'intérieur|plancher:Plancher bas (garage, sous-sol, vide sanitaire)","Surface à isoler, en m²","ex. 80","Pour des combles perdus : la surface au sol du dernier étage."),
+ detail:[ch("isolant","Type d'isolant","classique:Laine de verre ou de roche, polystyrène|bio:Fibre de bois ou ouate de cellulose|nsp:Je ne sais pas","nsp"),
+  ch("perf","Niveau de performance","standard:Standard|haute:Haute performance (plus épais)","standard"),
+  ch("ancien","Ancien isolant à retirer ?",YNN,"non",is("projet","combles","rampants")),
+  ch("trappe","Accès aux combles","facile:On y tient debout|difficile:Petite trappe, faible hauteur","facile",is("projet","combles")),
+  ch("finition","Finition extérieure","enduit:Enduit|bardage_bois:Bardage bois|bardage_comp:Bardage composite","enduit",is("projet","ite")),
+  ch("etages","Hauteur de la maison",ETAGES,"e1",is("projet","ite")),
+  ch("finInt","Finition intérieure","plaque:Plaques de plâtre prêtes à peindre|peinture:Plaques et peinture","plaque",is("projet","iti","rampants")),AGE],
+ tva:s=>s.age==="non"?.2:.055,
+ calc(s){const S=s.qty,L=[],p=s.projet;
+  L.push(["Installation de chantier",300]);
+  add(L,"Retrait et évacuation de l'ancien isolant",["combles","rampants"].includes(p)?S*{non:0,oui:12,nsp:6}[s.ancien]:0);
+  if(p==="ite") L.push(["Échafaudage",{pp:1500,e1:3000,e2:5000}[s.etages]]);
+  const base=p==="ite"?{enduit:140,bardage_bois:180,bardage_comp:200}[s.finition]:{combles:25,rampants:60,iti:55,plancher:35}[p];
+  L.push([{combles:"Isolation des combles perdus par soufflage",rampants:"Isolation sous rampants, pare-vapeur et plaques de plâtre",ite:"Isolation des murs par l'extérieur, avec finition",iti:"Doublage isolant des murs, pare-vapeur et plaques de plâtre",plancher:"Isolation du plancher bas par panneaux fixés en sous-face"}[p]+` (${r0(S)} m²)`,S*base*{classique:1,bio:1.2,nsp:1.1}[s.isolant]*(s.perf==="haute"?1.12:1)*(p==="combles"&&s.trappe==="difficile"?1.1:1)]);
+  add(L,"Peinture des nouvelles surfaces",["iti","rampants"].includes(p)&&s.finInt==="peinture"?S*22:0);
+  return {L,min:1200,area:S,nsp:(s.isolant==="nsp"?1:0)+(s.ancien==="nsp"?1:0)}},
+ must:()=>["La résistance thermique R de l'isolant et son épaisseur","La marque et la référence de l'isolant","La surface isolée en m²","Le pare-vapeur, quand il est nécessaire","La qualification RGE de l'entreprise, indispensable pour les aides"],
+ ask:()=>["Quelle résistance thermique R allez-vous atteindre ?","Êtes-vous certifié RGE, et pour quel type de travaux ?","Comment traitez-vous les ponts thermiques et la ventilation ?","Qui monte le dossier d'aides, et que se passe-t-il s'il est refusé ?"],
+ inc:()=>["Résistance thermique R","Marque et épaisseur de l'isolant","Surface en m²","Pare-vapeur","Certification RGE"],
+ cmp:{label:"Surface isolée indiquée sur le devis, en m²",ref:s=>s.qty,tol:.1},
+ warn:()=>"Méfiez-vous du démarchage sur l'isolation : aucune administration ne démarche les particuliers. Pour obtenir des aides, l'entreprise doit être certifiée RGE."
+},
+
+pac:{nom:"Pompe à chaleur",cat:"Énergie et isolation",desc:"Air-eau, air-air, chauffe-eau",qtyMin:20,
+ free:free("air_eau:Pompe à chaleur air-eau (remplace une chaudière)|air_air:Pompe à chaleur air-air (climatisation réversible)|cet:Chauffe-eau thermodynamique","Surface habitable, en m²","ex. 110"),
+ detail:[ch("iso","Isolation de la maison","bonne:Bonne ou récente|moyenne:Moyenne|faible:Faible, maison ancienne non isolée|nsp:Je ne sais pas","nsp",not("projet","cet")),
+  ch("radiat","Avez-vous déjà des radiateurs à eau ou un plancher chauffant ?","oui:Oui|non:Non","oui",is("projet","air_eau")),
+  ch("ancien","Chauffage actuel à retirer","gaz:Chaudière gaz|fioul:Chaudière fioul|elec:Radiateurs électriques|aucun:Rien à retirer","gaz",is("projet","air_eau")),
+  ch("ecs","Produire aussi l'eau chaude ?",YN,"oui",is("projet","air_eau")),
+  nu("pieces","Nombre de pièces à équiper","ex. 3",3,is("projet","air_air")),
+  ch("ballon","Capacité du chauffe-eau","200:200 litres|270:250 à 270 litres","200",is("projet","cet")),AGE],
+ tva:s=>s.age==="non"?.2:s.projet==="air_air"?.1:.055,
+ kw:s=>s.qty*{bonne:50,moyenne:70,faible:100,nsp:75}[s.iso||"nsp"]/1000,
+ hint2(s){return s.projet==="air_eau"?`Puissance estimée : environ ${Math.round(this.kw(s))} kW. Seule une étude thermique la fixe précisément.`:""},
+ calc(s){const L=[];
+  if(s.projet==="air_eau"){const kw=this.kw(s);
+   L.push([`Fourniture et pose de la pompe à chaleur air-eau (environ ${Math.round(kw)} kW), mise en service`,6000+650*kw]);
+   add(L,"Ballon d'eau chaude",s.ecs==="oui"?1500:0);
+   add(L,"Création d'un réseau de radiateurs",s.radiat==="non"?s.qty*60:0);
+   add(L,{gaz:"Dépose de la chaudière gaz",fioul:"Dépose de la chaudière fioul",elec:"",aucun:""}[s.ancien],{gaz:400,fioul:900,elec:0,aucun:0}[s.ancien]);
+   add(L,"Vidange et neutralisation de la cuve à fioul",s.ancien==="fioul"?900:0);
+  } else if(s.projet==="air_air"){const n=Math.max(1,r0(s.pieces||1));
+   L.push([n===1?"Fourniture et pose d'une climatisation réversible mono-split":`Fourniture et pose d'un système multi-split (${n} unités intérieures)`,n===1?2000:1500+1100*n]);
+  } else {L.push([`Fourniture et pose d'un chauffe-eau thermodynamique ${s.ballon} litres`,s.ballon==="270"?3300:2800]);L.push(["Dépose et évacuation de l'ancien chauffe-eau",250])}
+  return {L,min:1500,nsp:s.projet!=="cet"&&s.iso==="nsp"?1:0}},
+ must:()=>["La marque, le modèle et la puissance en kW","Le calcul de puissance adapté à votre maison","La mise en service et le raccordement électrique","L'emplacement de l'unité extérieure et son niveau de bruit","La qualification RGE de l'installateur"],
+ ask:()=>["Comment avez-vous calculé la puissance nécessaire ?","Quel sera le coût d'entretien annuel ?","Où sera installée l'unité extérieure, et fera-t-elle du bruit chez les voisins ?","Êtes-vous certifié RGE, et qui monte le dossier d'aides ?"],
+ inc:()=>["Marque, modèle et puissance","Calcul de puissance","Mise en service","Raccordement électrique","Certification RGE"],cmp:null,
+ warn:()=>"Les pompes à chaleur font l'objet de nombreux démarchages abusifs. Ne signez jamais le jour même, et vérifiez la certification RGE de l'entreprise sur le site officiel France Rénov'."
+},
+
+menuiseries:{nom:"Menuiseries",cat:"Énergie et isolation",desc:"Fenêtres, portes, baies, volets",qtyMin:1,
+ free:free("fenetre:Fenêtres|porte:Porte d'entrée|baie:Baie vitrée coulissante|volet:Volets roulants seuls","Nombre","ex. 6"),
+ detail:[ch("mat","Matériau","pvc:PVC|alu:Aluminium|bois:Bois|mixte:Bois et aluminium","pvc",not("projet","volet")),
+  ch("taille","Taille moyenne","petite:Petite (salle de bain, WC)|standard:Standard|grande:Grande","standard",is("projet","fenetre","baie")),
+  ch("vitrage","Vitrage","double:Double vitrage|triple:Triple vitrage","double",is("projet","fenetre","baie")),
+  ch("pose","Type de pose","renovation:Sur l'ancien cadre (rénovation)|totale:Dépose totale de l'ancien cadre|nsp:Je ne sais pas","nsp",not("projet","volet")),
+  ch("voletInt","Volets roulants intégrés ?",YN,"non",is("projet","fenetre","baie")),
+  ch("moteur","Manœuvre des volets","filaire:Électrique|solaire:Solaire|manuel:Manuelle","filaire",s=>s.projet==="volet"||s.voletInt==="oui"),
+  ch("etage","Emplacement","rdc:Tout au rez-de-chaussée|etage:Certaines à l'étage","rdc"),AGE],
+ calc(s){const n=Math.max(1,r0(s.qty)),L=[],et=s.etage==="etage"?1.08:1,p=s.projet;
+  L.push(["Déplacement et installation",200]);
+  if(p==="volet") L.push([`Fourniture et pose de ${n} volet${n>1?"s":""} roulant${n>1?"s":""} ${{filaire:"électriques",solaire:"solaires",manuel:"manuels"}[s.moteur]}`,n*{filaire:550,solaire:750,manuel:380}[s.moteur]*et]);
+  else{const u={fenetre:{pvc:650,alu:950,bois:1000,mixte:1200},porte:{pvc:1800,alu:2800,bois:2600,mixte:3200},baie:{pvc:2200,alu:3200,bois:3500,mixte:3800}}[p][s.mat]*(p!=="porte"?{petite:.75,standard:1,grande:1.5}[s.taille]*(s.vitrage==="triple"?1.18:1):1);
+   const nom={fenetre:n>1?"fenêtres":"fenêtre",porte:n>1?"portes d'entrée":"porte d'entrée",baie:n>1?"baies vitrées":"baie vitrée"}[p];
+   L.push([`Fourniture et pose de ${n} ${nom} en ${{pvc:"PVC",alu:"aluminium",bois:"bois",mixte:"bois et aluminium"}[s.mat]}`,n*u*et]);
+   add(L,"Dépose totale des anciens cadres et reprise des finitions",n*{renovation:0,totale:250,nsp:125}[s.pose]);
+   add(L,`Volets roulants intégrés (${n})`,p!=="porte"&&s.voletInt==="oui"?n*{filaire:450,solaire:650,manuel:300}[s.moteur]:0);
+   L.push(["Évacuation des anciennes menuiseries",n*40]);}
+  return {L,min:800,area:n,nsp:p!=="volet"&&s.pose==="nsp"?1:0}},
+ must:()=>["Le matériau, la marque et la gamme","Les performances : coefficient Uw pour une fenêtre, Ud pour une porte","Le type de pose : sur l'ancien cadre ou dépose totale","Les dimensions de chaque menuiserie","Les finitions intérieures et extérieures après pose"],
+ ask:()=>["Posez-vous sur l'ancien cadre ou en dépose totale, et pourquoi ?","Quel est le coefficient Uw de vos fenêtres ?","Qui fabrique les menuiseries, et quelle est la garantie ?","Les finitions autour des fenêtres sont-elles comprises ?"],
+ inc:()=>["Marque et gamme","Coefficient Uw ou Ud","Type de pose","Dimensions","Finitions et habillages"],
+ cmp:{label:"Nombre de menuiseries sur le devis",ref:s=>s.qty,tol:.01},
+ tvaNote:"Un taux de 5,5 % peut s'appliquer à des menuiseries isolantes qui remplacent du simple vitrage, sous conditions de performances."
+},
+
+/* ===================== INTÉRIEUR ===================== */
+sdb:{nom:"Salle de bain",cat:"Intérieur",desc:"Rénovation complète, douche",qtyMin:2,
+ free:free("complete:Rénovation complète|douche:Remplacer la baignoire par une douche","Surface de la salle de bain, en m²","ex. 6"),
+ detail:[ch("equip","Équipements","douche:Douche|baignoire:Baignoire|les_deux:Douche et baignoire","douche",is("projet","complete")),
+  ch("typeDouche","Type de douche","italienne:À l'italienne, de plain-pied|receveur:Avec receveur extra-plat","italienne",s=>s.projet==="douche"||s.equip!=="baignoire"),
+  ch("vasque","Meuble vasque","simple:Simple vasque|double:Double vasque","simple",is("projet","complete")),
+  ch("wc","WC dans la pièce","non:Non|pose:Oui, WC classique|suspendu:Oui, WC suspendu","non",is("projet","complete")),
+  ch("faience","Faïence murale","humides:Autour de la douche et de la baignoire|toute:Toute hauteur, tous les murs","humides",is("projet","complete")),
+  ch("deplace","Déplacer les arrivées d'eau ou l'évacuation ?",YNN,"nsp"),
+  ch("elec","Électricité à refaire ?",YN,"non",is("projet","complete")),
+  ch("gamme","Gamme des équipements","essentiel:Essentielle|confort:Confort|premium:Haut de gamme","confort"),AGE],
+ calc(s){const S=s.qty,g={essentiel:.8,confort:1,premium:1.5}[s.gamme],L=[],dch=s.typeDouche==="italienne"?2500:1400;
+  if(s.projet==="complete"){
+   L.push(["Dépose de l'ancienne salle de bain et évacuation des gravats",800+S*15]);
+   L.push(["Plomberie : alimentations et évacuations",1500]);
+   L.push([`Carrelage au sol (${r0(S)} m²)`,S*70]);
+   L.push(["Faïence murale",s.faience==="toute"?4*Math.sqrt(S)*2.4*60:(s.equip==="les_deux"?12:8)*60]);
+   if(s.equip!=="baignoire") L.push([s.typeDouche==="italienne"?"Douche à l'italienne avec étanchéité et paroi":"Douche avec receveur extra-plat et paroi",dch*g]);
+   if(s.equip!=="douche") L.push(["Baignoire et robinetterie",1500*g]);
+   L.push([s.vasque==="double"?"Meuble double vasque et robinetterie":"Meuble vasque et robinetterie",(s.vasque==="double"?1600:900)*g]);
+   add(L,s.wc==="suspendu"?"WC suspendu avec bâti":"WC",{non:0,pose:500,suspendu:1100}[s.wc]*g);
+   add(L,"Électricité de la salle de bain",s.elec==="oui"?900:0);
+   L.push(["Peinture du plafond",S*25]);
+  } else {
+   L.push(["Dépose de la baignoire et évacuation",450]);
+   L.push([s.typeDouche==="italienne"?"Douche à l'italienne avec étanchéité et paroi":"Douche avec receveur extra-plat et paroi",dch*g]);
+   L.push(["Faïence autour de la douche",6*60]); L.push(["Raccordements de plomberie",400]);
+  }
+  add(L,"Déplacement des arrivées d'eau ou de l'évacuation",{non:0,oui:1200,nsp:600}[s.deplace]);
+  return {L,min:1500,nsp:s.deplace==="nsp"?1:0}},
+ must:()=>["Le détail des équipements : marque et référence de chaque élément","L'étanchéité sous la douche","Les surfaces de carrelage et de faïence en m²","La plomberie : ce qui est remplacé et ce qui est conservé","L'évacuation des gravats"],
+ ask:()=>["Quel système d'étanchéité posez-vous sous la douche ?","Les équipements sont-ils fournis par vous, et de quelle marque ?","Combien de temps serons-nous sans salle de bain ?","Qui coordonne le plombier, l'électricien et le carreleur ?"],
+ inc:()=>["Marque et référence des équipements","Étanchéité sous la douche","Surfaces de carrelage et faïence","Plomberie détaillée","Évacuation des gravats"],cmp:null
+},
+
+cuisine:{nom:"Cuisine",cat:"Intérieur",desc:"Pose, plan de travail, raccordements",qtyMin:1,
+ free:free("pose:Poser une cuisine achetée en magasin|renov:Changer le plan de travail et la crédence","Longueur de meubles, en mètres","ex. 5","Mesurez le long des murs, îlot non compris."),
+ detail:[ch("ilot","Îlot central ?",YN,"non",is("projet","pose")),
+  ch("plan","Plan de travail","strat:Stratifié|bois:Bois massif|quartz:Quartz ou céramique","strat"),
+  nu("appareils","Appareils à encastrer (four, plaque, lave-vaisselle…)","ex. 3",3,is("projet","pose")),
+  ch("evier","Déplacer l'évier ?",YN,"non",is("projet","pose")),
+  ch("elec","Électricité à refaire ?",YNN,"nsp",is("projet","pose")),
+  ch("credence","Crédence","aucune:Aucune|carrelage:Carrelage|verre:Verre ou même matériau que le plan","carrelage"),
+  ch("depose","Ancienne cuisine à démonter ?",YN,"oui"),AGE],
+ calc(s){const M=s.qty,L=[],pose=s.projet==="pose";
+  add(L,"Démontage et évacuation de l'ancienne cuisine",s.depose==="oui"?(pose?400:200):0);
+  if(pose){L.push([`Montage et pose des meubles (${String(M).replace(".",",")} m)`,M*180]); add(L,"Îlot central",s.ilot==="oui"?600:0)}
+  L.push(["Fourniture et pose du plan de travail, découpes comprises",(M+(pose&&s.ilot==="oui"?1.5:0))*{strat:120,bois:250,quartz:500}[s.plan]]);
+  if(pose){add(L,"Encastrement des appareils",r0(s.appareils||0)*80); L.push([s.evier==="oui"?"Déplacement de l'évier et raccordements":"Raccordements d'eau et d'évacuation",s.evier==="oui"?900:250]); add(L,"Électricité de la cuisine",{non:0,oui:1200,nsp:600}[s.elec])}
+  add(L,"Crédence",M*.6*{aucune:0,carrelage:90,verre:220}[s.credence]);
+  return {L,min:800,area:M,nsp:pose&&s.elec==="nsp"?1:0}},
+ must:()=>["Ce qui est compris : montage, pose, découpes, raccordements","Le plan de travail : matériau, épaisseur, découpes pour évier et plaque","Les raccordements d'eau, d'évacuation et d'électricité","L'encastrement de chaque appareil","L'évacuation de l'ancienne cuisine"],
+ ask:()=>["Les découpes du plan de travail sont-elles comprises ?","Le raccordement de la plaque et du four est-il inclus ?","Que se passe-t-il si un meuble arrive abîmé ?","Combien de jours dure la pose ?"],
+ inc:()=>["Montage et pose des meubles","Plan de travail et découpes","Raccordements eau et électricité","Encastrement des appareils","Évacuation de l'ancienne cuisine"],
+ cmp:{label:"Longueur indiquée sur le devis, en mètres",ref:s=>s.qty,tol:.15}
+},
+
+sols:{nom:"Sols intérieurs",cat:"Intérieur",desc:"Carrelage, parquet, vinyle",qtyMin:3,
+ free:free("carrelage:Carrelage|massif:Parquet massif|contrecolle:Parquet contrecollé|stratifie:Sol stratifié|vinyle:Sol vinyle (PVC)","Surface, en m²","ex. 45"),
+ detail:[ch("actuel","Sol actuel","carrelage:Carrelage|parquet:Parquet ou stratifié|moquette:Moquette ou lino|beton:Béton brut|nsp:Je ne sais pas","nsp"),
+  ch("depose","Retirer l'ancien revêtement ?",YN,"oui",not("actuel","beton")),
+  ch("ragreage","Le sol est-il inégal ?",YNN,"nsp"),
+  ch("format","Format du carrelage","std:Standard|grand:Grand format (60 cm et plus)","std",is("projet","carrelage")),
+  ch("plinthes","Plinthes à poser ?",YN,"oui"),
+  ch("fourni","Qui fournit le revêtement ?","artisan:L'artisan|moi:Moi","artisan"),AGE],
+ calc(s){const S=s.qty,L=[];
+  L.push(["Installation et protection du chantier",150]);
+  add(L,"Dépose et évacuation de l'ancien revêtement",s.actuel!=="beton"&&s.depose==="oui"?S*{carrelage:20,parquet:8,moquette:6,nsp:10}[s.actuel]:0);
+  add(L,"Ragréage du sol",S*{non:0,oui:18,nsp:9}[s.ragreage]);
+  const base={carrelage:75,massif:110,contrecolle:70,stratifie:40,vinyle:45}[s.projet]*(s.projet==="carrelage"&&s.format==="grand"?1.15:1);
+  const nom={carrelage:"du carrelage",massif:"du parquet massif",contrecolle:"du parquet contrecollé",stratifie:"du sol stratifié",vinyle:"du sol vinyle"}[s.projet];
+  L.push([s.fourni==="moi"?`Pose ${nom} fourni par vous (${r0(S)} m²)`:`Fourniture et pose ${nom} (${r0(S)} m²)`,S*base*(s.fourni==="moi"?.45:1)]);
+  if(s.plinthes==="oui"){const ml=r0(4*Math.sqrt(S)*1.3);L.push([`Plinthes (environ ${ml} m)`,ml*18])}
+  return {L,min:600,area:S,nsp:[s.actuel,s.ragreage].filter(v=>v==="nsp").length}},
+ must:()=>["La surface en m², avec la marge de coupe","La préparation du sol : dépose, ragréage, sous-couche","La référence du revêtement et son prix au m²","Les plinthes et les barres de seuil","L'évacuation des déchets"],
+ ask:()=>["Le ragréage est-il compris si le sol n'est pas plat ?","Quelle marge de coupe prévoyez-vous ?","Dans quel sens allez-vous poser ?","Les portes devront-elles être rabotées ?"],
+ inc:()=>["Surface en m²","Préparation du sol","Référence du revêtement","Plinthes et seuils","Évacuation des déchets"],
+ cmp:{label:"Surface indiquée sur le devis, en m²",ref:s=>s.qty,tol:.12}
+},
+
+peinture:{nom:"Peinture",cat:"Intérieur",desc:"Murs, plafonds, boiseries",qtyMin:5,
+ free:free("murs_plafonds:Murs et plafonds|murs:Murs seulement|plafonds:Plafonds seulement","Surface au sol des pièces à peindre, en m²","ex. 60","Nous calculons la surface des murs."),
+ detail:[ch("etat","État des murs","bon:Bon état|trous:Trous et petites fissures|papier:Papier peint à enlever|nsp:Je ne sais pas","nsp",not("projet","plafonds")),
+  ch("hsp","Hauteur sous plafond","std:Standard, environ 2,50 m|haute:Haute, plus de 2,80 m","std"),
+  nu("portes","Portes et encadrements à peindre","ex. 4",0),
+  ch("meuble","Les pièces sont-elles meublées ?",YN,"oui"),
+  ch("couleur","Couleurs","blanc:Blanc|couleurs:Couleurs","blanc"),AGE],
+ calc(s){const S=s.qty,L=[],m=s.meuble==="oui"?1.08:1,murs=S*2.6*(s.hsp==="haute"?1.2:1);
+  L.push(["Protection des sols et des meubles, installation",150*m]);
+  if(s.projet!=="plafonds"){add(L,"Préparation des murs",murs*{bon:0,trous:6,papier:10,nsp:5}[s.etat]*m);L.push([`Peinture des murs, sous-couche et 2 couches (${r0(murs)} m²)`,murs*25*(s.couleur==="couleurs"?1.05:1)*m])}
+  if(s.projet!=="murs") L.push([`Peinture des plafonds (${r0(S)} m²)`,S*30*(s.hsp==="haute"?1.1:1)*m]);
+  add(L,`Portes et encadrements (${r0(s.portes||0)})`,r0(s.portes||0)*120);
+  return {L,min:600,murs,nsp:s.projet!=="plafonds"&&s.etat==="nsp"?1:0}},
+ hint2:(s,d)=>d.murs&&s.projet!=="plafonds"?`Surface de murs estimée : environ ${r0(d.murs)} m².`:"",
+ must:()=>["Les surfaces en m², murs et plafonds séparés","La préparation : rebouchage, ponçage, sous-couche","La marque de peinture et le nombre de couches","La protection des sols et des meubles","Le nettoyage en fin de chantier"],
+ ask:()=>["Combien de couches, et avec quelle peinture ?","La sous-couche est-elle comprise ?","Qui déplace les meubles ?","Combien de jours par pièce ?"],
+ inc:()=>["Surfaces murs et plafonds","Préparation et sous-couche","Marque et nombre de couches","Protection","Nettoyage"],cmp:null
+},
+
+platrerie:{nom:"Plâtrerie",cat:"Intérieur",desc:"Cloisons, faux plafonds, doublage",qtyMin:3,
+ free:free("cloison:Créer une cloison|plafond:Faux plafond|doublage:Doublage des murs","Surface, en m²","ex. 20","Pour une cloison : longueur × hauteur."),
+ detail:[ch("plaque","Type de plaque","std:Standard|hydro:Hydrofuge (salle de bain)|phonique:Phonique","std"),
+  ch("isol","Avec isolant ?",YN,"non"),
+  ch("finition","Finition","peindre:Prête à peindre|peinte:Peinture comprise","peindre"),
+  nu("portes","Portes à créer dans la cloison","ex. 1",0,is("projet","cloison")),
+  nu("spots","Spots encastrés","ex. 6",0,is("projet","plafond")),AGE],
+ calc(s){const S=s.qty,L=[];
+  L.push(["Installation de chantier",150]);
+  L.push([`${{cloison:"Cloison sur ossature métallique",plafond:"Faux plafond sur ossature",doublage:"Doublage des murs"}[s.projet]}, bandes et enduit (${r0(S)} m²)`,S*({cloison:55,plafond:60,doublage:50}[s.projet]+{std:0,hydro:5,phonique:12}[s.plaque])]);
+  add(L,"Isolant",s.isol==="oui"?S*20:0); add(L,"Peinture",s.finition==="peinte"?S*25:0);
+  add(L,`Portes avec huisserie (${r0(s.portes||0)})`,r0(s.portes||0)*450); add(L,`Spots encastrés (${r0(s.spots||0)})`,r0(s.spots||0)*90);
+  return {L,min:700,area:S,nsp:0}},
+ must:()=>["La surface en m² et le type de plaque","L'ossature métallique et l'isolant éventuel","Les bandes et l'enduit de finition","Les huisseries et les portes","L'évacuation des déchets"],
+ ask:()=>["La finition est-elle prête à peindre, ou peinte ?","Quel isolant, et quelle épaisseur ?","Les passages électriques sont-ils compris ?","Combien de temps pour le séchage des bandes ?"],
+ inc:()=>["Surface et type de plaque","Ossature et isolant","Bandes et finition","Huisseries et portes","Évacuation des déchets"],
+ cmp:{label:"Surface indiquée sur le devis, en m²",ref:s=>s.qty,tol:.1}
+},
+
+electricite:{nom:"Électricité",cat:"Intérieur",desc:"Rénovation, mise en sécurité, tableau",qtyMin:10,
+ free:free("complete:Rénovation complète|normes:Mise en sécurité (tableau, terre, prises)|tableau:Remplacement du tableau électrique","Surface habitable, en m²","ex. 90"),
+ detail:[ch("pose","Passage des câbles","encastre:Encastrés dans les murs|apparente:Sous goulottes apparentes","encastre",is("projet","complete")),
+  ch("occupe","Le logement est-il habité pendant les travaux ?",YN,"oui",not("projet","tableau")),
+  ch("vmc","Installer une VMC ?",YN,"non"),
+  ch("borne","Borne de recharge pour voiture électrique ?",YN,"non"),AGE],
+ calc(s){const S=s.qty,L=[],oc=s.occupe==="oui"?1.1:1;
+  L.push(["Déplacement et installation",150]);
+  if(s.projet==="complete"){L.push([`Rénovation complète de l'installation, ${s.pose==="encastre"?"encastrée":"sous goulottes"}, tableau compris`,S*{encastre:95,apparente:70}[s.pose]*oc]);L.push(["Attestation de conformité (Consuel)",180])}
+  else if(s.projet==="normes") L.push(["Mise en sécurité : tableau, mise à la terre, remplacement des prises dangereuses",Math.max(2500,S*35)*oc]);
+  else L.push(["Remplacement du tableau électrique",1300]);
+  add(L,"Ventilation mécanique (VMC)",s.vmc==="oui"?900:0); add(L,"Borne de recharge",s.borne==="oui"?1400:0);
+  return {L,min:900,nsp:0}},
+ must:()=>["Le nombre de prises, d'interrupteurs et de points lumineux par pièce","Le tableau : nombre de rangées, disjoncteurs et différentiels","La mise à la terre","Le respect de la norme NF C 15-100","L'attestation de conformité quand elle est nécessaire"],
+ ask:()=>["Combien de prises et de points lumineux prévoyez-vous par pièce ?","Les rebouchages après saignées sont-ils compris ?","Fournissez-vous une attestation de conformité ?","Le tableau garde-t-il de la place pour des ajouts ?"],
+ inc:()=>["Détail des points par pièce","Tableau détaillé","Mise à la terre","Norme NF C 15-100","Attestation de conformité"],cmp:null
+},
+
+plomberie:{nom:"Plomberie",cat:"Intérieur",desc:"Chauffe-eau, réseau complet",qtyMin:10,
+ free:free("chauffe_eau:Remplacer le chauffe-eau électrique|reseau:Refaire la plomberie du logement","Surface habitable, en m²","ex. 90"),
+ detail:[ch("ballon","Capacité du chauffe-eau","100:100 litres|150:150 litres|200:200 litres|300:300 litres","200",is("projet","chauffe_eau")),
+  ch("emplacement","Emplacement du chauffe-eau","facile:Facile d'accès|difficile:Placard étroit, combles ou sous-sol","facile",is("projet","chauffe_eau")),
+  nu("points","Nombre de points d'eau (évier, lavabo, douche, WC…)","ex. 6",6,is("projet","reseau")),
+  ch("evac","Refaire aussi les évacuations ?",YN,"oui",is("projet","reseau")),
+  ch("occupe","Le logement est-il habité pendant les travaux ?",YN,"oui",is("projet","reseau")),AGE],
+ calc(s){const L=[];
+  if(s.projet==="chauffe_eau"){L.push([`Fourniture et pose d'un chauffe-eau électrique ${s.ballon} litres, groupe de sécurité compris`,{100:900,150:1000,200:1150,300:1450}[s.ballon]]);L.push(["Dépose et évacuation de l'ancien chauffe-eau",120]);add(L,"Surcoût d'accès difficile",s.emplacement==="difficile"?200:0)}
+  else{const p=Math.max(1,r0(s.points||6)),oc=s.occupe==="oui"?1.08:1;L.push([`Réseau d'alimentation neuf (${p} points d'eau)`,(1500+s.qty*30+p*350)*oc]);add(L,"Réseau d'évacuation neuf",s.evac==="oui"?p*150*oc:0)}
+  return {L,min:400,nsp:0}},
+ must:()=>["La marque, la capacité et la classe énergétique du chauffe-eau","Le groupe de sécurité et les raccords","La dépose et l'évacuation de l'ancien appareil","Pour un réseau : le matériau des tuyaux et le nombre de points d'eau","Les essais d'étanchéité"],
+ ask:()=>["Le groupe de sécurité est-il neuf ?","Quel matériau utilisez-vous pour les tuyaux ?","Les rebouchages sont-ils compris ?","Quelle garantie sur le chauffe-eau ?"],
+ inc:()=>["Marque et capacité","Groupe de sécurité","Dépose et évacuation","Matériau des tuyaux","Essais d'étanchéité"],cmp:null
+}
+};
+
+const CATS=["Toiture et façade","Extérieur","Énergie et isolation","Intérieur"];
+const MUST_COMMUNS=["La garantie décennale, avec le nom de l'assureur","Le délai d'intervention et la durée des travaux"];
+const INC_COMMUNS=["Garantie décennale","Délai d'intervention"];
+
+function estimer(M,s){
+  const r=M.calc(s), dc=deptCoef(s.dept);
+  const lines=r.L.map(([l,v])=>[l,v*dc]); let ht=lines.reduce((a,[,v])=>a+v,0);
+  if(ht<r.min){lines.push(["Ajustement minimum de chantier",r.min-ht]);ht=r.min}
+  const tva=M.tva?M.tva(s):(s.age==="non"?.2:.1);
+  return {...r,lines,ht,tva,ttc:ht*(1+tva)};
+}
+
+/* ============================================================
+   INTERFACE
+   ============================================================ */
+const $=id=>document.getElementById(id);
+const show=id=>$(id).classList.remove("hidden"), hide=id=>$(id).classList.add("hidden");
+const eur=n=>new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(Math.round(n/10)*10);
+const list=(id,arr)=>$(id).innerHTML=arr.map(x=>`<li>${x}</li>`).join("");
+let metier=null, s={}, detail=null;
+
+/* Grilles de métiers : page d'accueil et application */
+$("trades").innerHTML=CATS.map(c=>`<div class="tgroup"><h3>${c}</h3><div class="trades">${Object.entries(METIERS).filter(([,M])=>M.cat===c).map(([k,M])=>`<button class="trade" data-start="${k}"><strong>${M.nom}</strong><small>${M.desc}</small></button>`).join("")}</div></div>`).join("");
+$("metier-pick").innerHTML=CATS.map(c=>`<p class="mcat">${c}</p><div class="metier-pick">${Object.entries(METIERS).filter(([,M])=>M.cat===c).map(([k,M])=>`<button type="button" data-metier="${k}" aria-pressed="false"><strong>${M.nom}</strong><span class="hint">${M.desc}</span></button>`).join("")}</div>`).join("");
+
+function openApp(m){ hide("landing"); show("app"); window.scrollTo(0,0); if(m) pickMetier(m,true) }
+document.querySelectorAll("[data-start]").forEach(b=>b.addEventListener("click",()=>openApp(b.dataset.start||null)));
+$("home").onclick=()=>{hide("app");show("landing");window.scrollTo(0,0)};
+
+function qHTML(q){
+  const hint=q.hint?`<p class="hint" style="margin-top:6px">${q.hint}</p>`:"";
+  if(q.type==="choice") return `<fieldset class="q" data-q="${q.id}"><legend>${q.label}</legend><div class="choices">${q.options.map(([v,l])=>`<input type="radio" name="${q.id}" id="${q.id}-${v}" value="${v}" ${s[q.id]===v?"checked":""}><label for="${q.id}-${v}">${l}</label>`).join("")}</div>${hint}</fieldset>`;
+  if(q.type==="number") return `<div class="q" data-q="${q.id}"><label for="in-${q.id}">${q.label}</label><input type="number" id="in-${q.id}" data-id="${q.id}" min="${q.min}" step="any" inputmode="decimal" placeholder="${q.ph||""}" value="${s[q.id]??""}">${hint}</div>`;
+  return `<div class="q" data-q="${q.id}"><label for="in-${q.id}">${q.label}</label><input type="text" id="in-${q.id}" data-id="${q.id}" maxlength="3" placeholder="ex. 56" value="${s[q.id]??""}"></div>`;
+}
+function renderQs(boxId,qs){
+  const box=$(boxId); box.innerHTML=qs.map(qHTML).join("");
+  box.querySelectorAll("input[type=radio]").forEach(r=>r.addEventListener("change",()=>{s[r.name]=r.value;refresh()}));
+  box.querySelectorAll("input[data-id]").forEach(i=>i.addEventListener("input",()=>{s[i.dataset.id]=i.type==="number"?parseFloat(String(i.value).replace(",",".")):i.value.trim().toUpperCase()}));
+  refresh();
+}
+function refresh(){
+  if(!metier) return; const M=METIERS[metier];
+  [...M.free,...M.detail].forEach(q=>document.querySelectorAll(`[data-q="${q.id}"]`).forEach(el=>el.classList.toggle("hidden",q.when?!q.when(s):false)));
+}
+function pickMetier(m,scroll){
+  metier=m; s={}; const M=METIERS[m];
+  M.detail.forEach(q=>{if(q.def!==undefined) s[q.id]=q.def});
+  document.querySelectorAll("[data-metier]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.metier===m));
+  $("free-title").textContent=M.nom; show("free-zone");
+  renderQs("free-qs",M.free);
+  ["r1","c2","r2","c3","r3"].forEach(hide); show("paywall"); $("err1").textContent="";
+  if(scroll) $("free-zone").scrollIntoView({behavior:"smooth",block:"start"});
+}
+document.querySelectorAll("[data-metier]").forEach(b=>b.addEventListener("click",()=>pickMetier(b.dataset.metier,true)));
+
+function gauge(p,low,high,mark){
+  let min=low*.55,max=high*1.55; if(mark){min=Math.min(min,mark*.85);max=Math.max(max,mark*1.1)}
+  const x=v=>(v-min)/(max-min)*100;
+  $(p+"-band").style.left=x(low)+"%"; $(p+"-band").style.width=(x(high)-x(low))+"%";
+  let lab=`<span style="left:${x(low)}%">${eur(low)}</span><span style="left:${x(high)}%">${eur(high)}</span>`;
+  if(mark){$(p+"-mark").style.left=`calc(${x(mark)}% - 2px)`;lab+=`<span style="left:${x(mark)}%;top:30px;color:var(--ink);font-weight:600">Devis ${eur(mark)}</span>`;$(p+"-labels").style.height="56px"}
+  $(p+"-labels").innerHTML=lab;
+}
+
+$("go1").onclick=()=>{
+  const e=$("err1"), M=metier&&METIERS[metier];
+  if(!M){e.textContent="Choisissez d'abord un type de travaux.";return}
+  if(!s.projet){e.textContent="Précisez le type de projet.";return}
+  if(!(s.qty>=M.qtyMin)){e.textContent=`Indiquez une valeur d'au moins ${M.qtyMin} pour « ${M.free[1].label.toLowerCase()} ».`;return}
+  if(!/^(\d{2}|2A|2B|97\d)$/.test(s.dept||"")){e.textContent="Indiquez le numéro de département, par exemple 56.";return}
+  e.textContent="";
+  const r=estimer(M,s), low=r.ttc*.78, high=r.ttc*1.22;
+  $("r1-hint").textContent=M.freeHint?M.freeHint(s):`Estimation large pour votre projet, sans connaître l'état actuel ni vos options.`;
+  $("r1-range").textContent=`Entre ${eur(low)} et ${eur(high)} TTC`;
+  list("pay-list",["Le prix calculé selon vos réponses détaillées","Le détail poste par poste, comme un vrai devis","La comparaison avec le devis de votre artisan et les oublis à repérer","Les questions à poser avant de signer"]);
+  ["c2","r2","c3"].forEach(hide); show("paywall"); show("r1"); gauge("r1",low,high);
+  $("r1").scrollIntoView({behavior:"smooth",block:"start"});
+};
+$("pay").onclick=()=>{ hide("paywall"); show("c2"); renderQs("detail-qs",METIERS[metier].detail); $("c2").scrollIntoView({behavior:"smooth",block:"start"}) };
+
+function tvaTexte(M,d){
+  if(d.tva===.055) return "TVA à 5,5 % : travaux d'amélioration énergétique dans un logement de plus de 2 ans, sous conditions de matériel et de performances. L'artisan doit l'indiquer sur son devis.";
+  if(d.tva===.1) return "Logement de plus de 2 ans : TVA à 10 % sur les travaux de rénovation. L'artisan doit préciser le taux applicable sur son devis."+(M.tvaNote?" "+M.tvaNote:"");
+  return s.age==="non"?"Logement de moins de 2 ans : TVA à 20 %.":"Ces travaux relèvent en principe de la TVA à 20 %.";
+}
+$("go2").onclick=()=>{
+  const M=METIERS[metier];
+  detail=estimer(M,s); const m=.09+detail.nsp*.035; detail.low=detail.ttc*(1-m); detail.high=detail.ttc*(1+m);
+  $("r2-hint").textContent=M.hint2?M.hint2(s,detail):"";
+  $("r2-range").textContent=`Entre ${eur(detail.low)} et ${eur(detail.high)} TTC`;
+  const w=M.warn?M.warn(s):""; $("r2-warn").innerHTML=w?`<div class="callout c-bad">${w}</div>`:"";
+  $("r2-table").innerHTML=detail.lines.map(([l,v])=>`<tr><td>${l}</td><td>${eur(v)}</td></tr>`).join("")+
+    `<tr class="total"><td>Total HT</td><td>${eur(detail.ht)}</td></tr><tr class="sub"><td>TVA ${String(detail.tva*100).replace(".",",")} %</td><td>${eur(detail.ht*detail.tva)}</td></tr><tr class="total"><td>Total TTC estimé</td><td>${eur(detail.ttc)}</td></tr>`;
+  $("r2-tva").textContent=tvaTexte(M,detail);
+  list("r2-must",M.must(s).concat(MUST_COMMUNS)); list("r2-ask",M.ask(s));
+  const def=String(detail.tva*100);
+  $("tva-choices").innerHTML=[["5.5","5,5 %"],["10","10 %"],["20","20 %"],["nsp","Je ne sais pas"]].map(([v,l])=>`<input type="radio" name="tvaDevis" id="tv-${v}" value="${v}" ${v===def?"checked":""}><label for="tv-${v}">${l}</label>`).join("");
+  $("inclus").innerHTML=M.inc(s).concat(INC_COMMUNS).map(l=>`<label><input type="checkbox" data-l="${l}">${l}</label>`).join("");
+  if(M.cmp){show("devisSurf-wrap");$("devisSurf-label").textContent=M.cmp.label+" (facultatif)"}else hide("devisSurf-wrap");
+  $("devis").value=""; $("devisSurf").value="";
+  hide("r3"); show("r2"); show("c3"); gauge("r2",detail.low,detail.high);
+  $("r2").scrollIntoView({behavior:"smooth",block:"start"});
+};
+$("go3").onclick=()=>{
+  const M=METIERS[metier], d=parseFloat($("devis").value), ds=parseFloat($("devisSurf").value);
+  if(!(d>0)){$("err3").textContent="Indiquez le montant total TTC du devis.";return} $("err3").textContent="";
+  const tv=(document.querySelector('input[name="tvaDevis"]:checked')||{}).value||"nsp";
+  const t=tv==="nsp"?detail.tva:parseFloat(tv)/100, ht=d/(1+t), ec=(ht-detail.ht)/detail.ht, pct=Math.round(Math.abs(ec)*100);
+  show("r3"); gauge("r3",detail.low,detail.high,ht*(1+detail.tva));
+  const v=$("r3-verdict"), mk=$("r3-mark"); mk.className="tape-mark";
+  if(ec<-.15){v.className="callout c-warn";v.textContent=`Ce devis est ${pct} % en dessous du prix habituel. Un prix bas n'est pas forcément une bonne affaire : vérifiez qu'il ne manque rien.`}
+  else if(ec<=.10){v.className="callout c-ok";v.textContent=`Ce devis est dans le prix juste (${ec>=0?"+":"−"}${pct} % par rapport à notre estimation).`;mk.className="tape-mark ok"}
+  else if(ec<=.25){v.className="callout c-warn";v.textContent=`Ce devis est ${pct} % au-dessus de notre estimation. C'est négociable : demandez le détail des postes les plus chers.`}
+  else{v.className="callout c-bad";v.textContent=`Ce devis est ${pct} % au-dessus de notre estimation. Demandez des explications poste par poste et comparez avec au moins un autre artisan.`}
+  const a=[];
+  if(M.cmp&&ds>0){const ref=M.cmp.ref(s,detail),r=(ds-ref)/ref;
+    if(r>M.cmp.tol) a.push(`Le devis indique ${String(ds).replace(".",",")}, contre environ ${Math.round(ref*10)/10} pour votre projet (+${Math.round(r*100)} %). C'est une source fréquente de surfacturation : demandez comment la mesure a été faite.`);
+    else if(r<-M.cmp.tol) a.push(`Le devis indique ${String(ds).replace(".",",")}, nettement moins que les ${Math.round(ref*10)/10} de votre projet. Vérifiez que tout est bien compris.`)}
+  if(tv==="20"&&detail.tva<.2) a.push("Le devis applique une TVA à 20 % alors que ces travaux dans un logement de plus de 2 ans relèvent en principe d'un taux réduit. Demandez à l'artisan de vérifier.");
+  if(tv==="10"&&detail.tva===.055) a.push("Ces travaux peuvent bénéficier d'une TVA à 5,5 % sous conditions. Demandez à l'artisan pourquoi il applique 10 %.");
+  document.querySelectorAll("#inclus input:not(:checked)").forEach(x=>a.push(`Absent du devis : ${x.dataset.l.toLowerCase()}. Demandez à l'artisan de l'ajouter par écrit.`));
+  $("r3-alerts").innerHTML=(a.length?a:["Tous les postes importants figurent sur le devis."]).map(x=>`<li>${x}</li>`).join("");
+  $("r3").scrollIntoView({behavior:"smooth",block:"nearest"});
+};
+
+/* Lien direct vers un métier : prix-travaux.html?metier=toiture */
+const lien=new URLSearchParams(location.search).get("metier"); if(lien&&METIERS[lien]) openApp(lien);
+</script>
+</body>
+</html>

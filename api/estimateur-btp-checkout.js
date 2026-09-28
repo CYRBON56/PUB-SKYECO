@@ -37,6 +37,13 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Email invalide' });
   }
 
+  // 28/09/2026 : infos entreprise demandées au moment de l'achat (plus au
+  // démarrage de l'essai) — conservées dans les métadonnées Stripe.
+  const nettoyer = (v, max) => String(v || '').replace(/[\r\n]/g, ' ').trim().slice(0, max);
+  const siret = nettoyer(req.body?.siret, 20).replace(/\s/g, '');
+  const telephone = nettoyer(req.body?.telephone, 30);
+  const entreprise = nettoyer(req.body?.entreprise, 200);
+
   const origin = req.headers.origin || `https://${req.headers.host}`;
   const centimesTTC = Math.round(PRIX_CENTIMES_HT * (1 + TAUX_TVA));
 
@@ -59,7 +66,7 @@ export default async function handler(req, res) {
           quantity: 1,
         },
       ],
-      metadata: { product: 'estimateur-btp', email },
+      metadata: { product: 'estimateur-btp', email, siret, telephone, entreprise },
       success_url: `${origin}/estimateur-btp.html?paiement=ok&email=${encodeURIComponent(email)}`,
       cancel_url: `${origin}/estimateur-btp.html?paiement=annule`,
     });

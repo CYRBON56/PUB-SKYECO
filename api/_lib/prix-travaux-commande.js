@@ -26,6 +26,19 @@ export async function sb(path, opts = {}) {
   return t ? JSON.parse(t) : null;
 }
 
+// N'accepte que des réponses simples : clés alphabétiques, nombres ou codes courts.
+// Empêche l'injection de texte ou de code via les réponses enregistrées.
+export function nettoyerReponses(r) {
+  if (!r || typeof r !== 'object' || Array.isArray(r)) return null;
+  const out = {};
+  for (const [k, v] of Object.entries(r).slice(0, 40)) {
+    if (!/^[A-Za-z_]{1,20}$/.test(k)) continue;
+    if (typeof v === 'number' && Number.isFinite(v) && Math.abs(v) < 1e6) out[k] = v;
+    else if (typeof v === 'string' && /^[A-Za-z0-9_.,-]{0,40}$/.test(v)) out[k] = v;
+  }
+  return out;
+}
+
 const dateFR = (d = new Date()) => d.toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' });
 const echapper = (t) => String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 

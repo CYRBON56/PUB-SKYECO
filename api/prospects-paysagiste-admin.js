@@ -64,6 +64,18 @@ function qsEqFilters(eqFilters) {
     .join('&');
 }
 
+// 28/09/2026 : séparer les statistiques par campagne email.
+// La campagne Estimateur BTP se reconnaît à la destination de son bouton
+// (lien_clic_destination = .../estimateur-btp-demo.html) ; les anciens
+// emails (Skyeco IA Ads) n'ont pas cette destination.
+const MARQUEUR_ESTIMATEUR = '*estimateur-btp*';
+function filtreCampagne(campagne) {
+  // Renvoie { eq: 'param=valeur' pour les URL de comptage, cond: condition PostgREST pour and=(...) }
+  if (campagne === 'estimateur') return { qs: `lien_clic_destination=like.${MARQUEUR_ESTIMATEUR}`, cond: `lien_clic_destination.like.${MARQUEUR_ESTIMATEUR}` };
+  if (campagne === 'anciens') return { qs: `email_envoye=eq.true&or=(lien_clic_destination.is.null,lien_clic_destination.not.like.${MARQUEUR_ESTIMATEUR})`, cond: `or(lien_clic_destination.is.null,lien_clic_destination.not.like.${MARQUEUR_ESTIMATEUR})`, envoye: true };
+  return null;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Méthode non autorisée' });
@@ -85,7 +97,9 @@ export default async function handler(req, res) {
     if (action === 'compteurs') {
       const resultats = await Promise.all(
         Object.entries(FILTRES).map(async ([key, eqFilters]) => {
-          const qs = qsEqFilters(eqFilters);
+          let qs = qsEqFilters(eqFilters);
+          const fc = filtreCampagne((req.body || {}).campagne);
+          if (fc) qs = qs ? qs + '&' + fc.qs : fc.qs;
           const url = `${process.env.SUPABASE_URL}/rest/v1/prospects_paysagiste?select=id${qs ? '&' + qs : ''}`;
           const resp = await fetch(url, { headers: { ...supaHeaders, Prefer: 'count=exact', Range: '0-0' } });
           if (!resp.ok) throw new Error('Comptage impossible (' + key + ') : ' + (await resp.text()));
@@ -98,7 +112,7 @@ export default async function handler(req, res) {
     }
 
     if (action === 'liste') {
-      const { filtre, searchNom, searchMetier, searchFamille, page, pageSize } = req.body || {};
+      const { filtre, searchNom, searchMetier, searchFamille, page, pageSize, campagne } = req.body || {};
       const eqFilters = FILTRES[filtre] || {};
       const taille = Math.min(Math.max(parseInt(pageSize, 10) || 100, 1), 200);
       const p = Math.max(parseInt(page, 10) || 0, 0);
@@ -107,7 +121,14 @@ export default async function handler(req, res) {
       params.set('select', COLONNES_LISTE);
       params.set('order', 'created_at.desc');
       Object.entries(eqFilters).forEach(([col, val]) => params.append(col, `eq.${val}`));
-      if (searchNom) params.set('or', `(nom_entreprise.ilike.%${searchNom}%,ville.ilike.%${searchNom}%)`);
+      const conditions = [];
+      if (searchNom) conditions.push(`or(nom_entreprise.ilike.*${searchNom}*,ville.ilike.*${searchNom}*)`);
+      const fcListe = filtreCampagne(campagne);
+      if (fcListe) {
+        conditions.push(fcListe.cond);
+        if (fcListe.envoye && !params.has('email_envoye')) params.append('email_envoye', 'eq.true');
+      }
+      if (conditions.length) params.set('and', `(${conditions.join(',')})`);
       if (searchMetier) params.set('metier', `ilike.%${searchMetier}%`);
       if (searchFamille) params.set('famille_metier', `eq.${searchFamille}`);
 

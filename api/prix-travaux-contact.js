@@ -7,6 +7,7 @@
 // TWILIO_VERIFY_SERVICE_SID, RESEND_API_KEY ; facultatives : ADMIN_PHONE, TWILIO_FROM_NUMBER.
 import { sb, METIERS, nettoyerReponses } from './_lib/prix-travaux-commande.js';
 import { verifierLimite, ipDepuisRequete } from './_lib/rate-limit.js';
+import { notifierArtisans } from './_lib/chantiers.js';
 
 export const CONSENTEMENT = "J'accepte que Skyeco (RESINE MARBRE SOL) transmette mes coordonnées et la description de mon projet à 3 entreprises au maximum, sélectionnées près de chez moi, pour qu'elles me contactent au sujet de mes travaux. Ce service est gratuit pour moi car ces entreprises paient Skyeco pour ce contact. Je peux retirer mon accord à tout moment en écrivant à infos@ecosky.fr.";
 
@@ -20,6 +21,19 @@ function departementDepuisCP(cp) {
   if (cp.startsWith('97')) return cp.slice(0, 3);
   if (cp.startsWith('20')) return Number(cp) < 20200 ? '2A' : '2B';
   return cp.slice(0, 2);
+}
+const FAUX = new Set(['test', 'toto', 'titi', 'tata', 'azerty', 'qwerty', 'aaa', 'xxx', 'abc', 'nom', 'prenom', 'prénom', 'anonyme', 'inconnu', 'moi', 'personne', 'client', 'monsieur', 'madame', 'mr', 'mme', 'na', 'none', 'null']);
+function nomPlausible(v) {
+  const n = v.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return n.length >= 2 && /^[a-z' -]+$/.test(n) && !FAUX.has(n) && !/(.)\1\1/.test(n) && (n.length <= 3 || /[aeiouy]/.test(n));
+}
+async function communeValide(cp, commune) {
+  try {
+    const r = await fetch(`https://geo.api.gouv.fr/communes?codePostal=${cp}&fields=nom&format=json`);
+    const l = await r.json();
+    if (!Array.isArray(l) || !l.length) return null;
+    return l.find((x) => x.nom.toLowerCase() === String(commune || '').toLowerCase())?.nom || null;
+  } catch { return undefined; } // API indisponible : on n'empêche pas l'enregistrement
 }
 const texte = (v, max = 60) => String(v || '').trim().replace(/\s+/g, ' ').slice(0, max);
 
@@ -44,17 +58,20 @@ export default async function handler(req, res) {
   const tel = toE164(b.telephone), code = String(b.code || '').replace(/\D/g, '').slice(0, 10);
   if (!metier || !reponses) return res.status(400).json({ error: 'Projet invalide.' });
   if (!prenom || !nom) return res.status(400).json({ error: 'Indiquez votre prénom et votre nom.' });
+  if (!nomPlausible(prenom) || !nomPlausible(nom) || prenom.toLowerCase() === nom.toLowerCase()) return res.status(400).json({ error: 'Indiquez vos vrais prénom et nom : les entreprises en ont besoin pour vous contacter.' });
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return res.status(400).json({ error: 'Adresse email invalide.' });
   if (!/^\d{5}$/.test(cp)) return res.status(400).json({ error: 'Code postal invalide (5 chiffres).' });
   if (!tel) return res.status(400).json({ error: 'Numéro de téléphone invalide.' });
   if (b.consentement !== true) return res.status(400).json({ error: "Votre accord est nécessaire pour l'option gratuite." });
   if (!code) return res.status(400).json({ error: 'Saisissez le code reçu par SMS.' });
 
+  const commune = await communeValide(cp, b.commune);
+  if (commune === null) return res.status(400).json({ error: 'Choisissez la commune des travaux dans la liste.' });
   try {
     if (!(await codeValide(tel, code))) return res.status(400).json({ error: 'Code incorrect ou expiré. Vérifiez-le ou demandez un nouveau code.' });
     const est = Number(b.estimation_ttc);
     const [c] = await sb('prix_travaux_contacts', { method: 'POST', body: JSON.stringify({
-      prenom, nom, telephone: tel, email, code_postal: cp, departement: departementDepuisCP(cp),
+      prenom, nom, telephone: tel, email, code_postal: cp, commune: commune || texte(b.commune, 80) || null, departement: departementDepuisCP(cp),
       metier, reponses, estimation_ttc: Number.isFinite(est) && est > 0 && est < 1e7 ? Math.round(est) : null,
       consentement_texte: CONSENTEMENT,
     }) });
@@ -73,6 +90,7 @@ export default async function handler(req, res) {
         body: new URLSearchParams({ To: process.env.ADMIN_PHONE, From: process.env.TWILIO_FROM_NUMBER, Body: `Skyeco : nouveau contact gratuit à vendre (${resume}).` }),
       }).catch(() => {});
     }
+    await notifierArtisans(c).catch((e) => console.error('notifierArtisans :', e.message));
     return res.status(200).json({ ok: true });
   } catch (e) {
     console.error('prix-travaux-contact :', e.message);

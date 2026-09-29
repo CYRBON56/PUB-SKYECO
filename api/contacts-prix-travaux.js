@@ -5,6 +5,7 @@
 // Protégé par INTERNAL_ACCESS_PASSWORD.
 import { sb, METIERS } from './_lib/prix-travaux-commande.js';
 import { verifierLimite, ipDepuisRequete } from './_lib/rate-limit.js';
+import { notifierArtisans } from './_lib/chantiers.js';
 
 // Codes d'activité (NAF/APE) des entreprises compétentes pour chaque métier
 const APE = {
@@ -24,6 +25,39 @@ export default async function handler(req, res) {
   const { motDePasseInterne, action, id } = req.body || {};
   if (!process.env.INTERNAL_ACCESS_PASSWORD || motDePasseInterne !== process.env.INTERNAL_ACCESS_PASSWORD) return res.status(401).json({ error: 'Mot de passe interne invalide.' });
   const idOk = typeof id === 'string' && /^[0-9a-f-]{36}$/.test(id);
+  const aid = typeof req.body.artisan_id === 'string' && /^[0-9a-f-]{36}$/.test(req.body.artisan_id) ? req.body.artisan_id : null;
+  const achatId = typeof req.body.achat_id === 'string' && /^[0-9a-f-]{36}$/.test(req.body.achat_id) ? req.body.achat_id : null;
+  try {
+    // ---- Artisans inscrits et signalements ----
+    if (action === 'artisans') {
+      const artisans = await sb('artisans_chantiers?select=*&order=created_at.desc&limit=500');
+      const achats = await sb('achats_chantiers?select=id,created_at,contact_id,artisan_id,prix_ttc,mode,statut,signale_motif,facture_numero&order=created_at.desc&limit=1000');
+      return res.status(200).json({ artisans, achats, metiers: METIERS });
+    }
+    if (action === 'valider_artisan' && aid) {
+      const [a] = await sb(`artisans_chantiers?id=eq.${aid}`, { method: 'PATCH', body: JSON.stringify({ decennale_validee: req.body.valide === true, actif: req.body.actif !== false }) });
+      return res.status(200).json({ artisan: a });
+    }
+    if (action === 'decennale' && aid) {
+      const [a] = await sb(`artisans_chantiers?id=eq.${aid}&select=decennale_chemin`);
+      if (!a?.decennale_chemin) return res.status(404).json({ error: 'Pas de décennale.' });
+      const r = await fetch(`${process.env.SUPABASE_URL}/storage/v1/object/sign/decennales/${a.decennale_chemin}`, { method: 'POST', headers: { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ expiresIn: 600 }) });
+      const j = await r.json(); if (!r.ok) throw new Error(JSON.stringify(j));
+      return res.status(200).json({ url: `${process.env.SUPABASE_URL}/storage/v1${j.signedURL}` });
+    }
+    if ((action === 'rembourser' || action === 'refuser_signalement') && achatId) {
+      const [ach] = await sb(`achats_chantiers?id=eq.${achatId}&statut=eq.signale&select=*`);
+      if (!ach) return res.status(400).json({ error: 'Aucun signalement en attente pour cet achat.' });
+      if (action === 'refuser_signalement') { await sb(`achats_chantiers?id=eq.${achatId}`, { method: 'PATCH', body: JSON.stringify({ statut: 'paye' }) }); return res.status(200).json({ ok: true }); }
+      await sb(`achats_chantiers?id=eq.${achatId}`, { method: 'PATCH', body: JSON.stringify({ statut: 'rembourse' }) });
+      const [a] = await sb(`artisans_chantiers?id=eq.${ach.artisan_id}&select=credit_gratuit`);
+      await sb(`artisans_chantiers?id=eq.${ach.artisan_id}`, { method: 'PATCH', body: JSON.stringify({ credit_gratuit: (a?.credit_gratuit || 0) + 1 }) });
+      return res.status(200).json({ ok: true });
+    }
+  } catch (e) {
+    console.error('contacts-prix-travaux (artisans) :', e.message);
+    return res.status(500).json({ error: 'Erreur serveur.' });
+  }
   try {
     if (action === 'liste') {
       const contacts = await sb('prix_travaux_contacts?select=*&order=created_at.desc&limit=300');
@@ -50,6 +84,10 @@ export default async function handler(req, res) {
       const nouvelles = [...ventes, { entreprise, siret, prix, date: new Date().toISOString() }];
       const [maj] = await sb(`prix_travaux_contacts?id=eq.${id}`, { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ ventes: nouvelles, statut: 'vendu' }) });
       return res.status(200).json({ contact: maj });
+    }
+    if (action === 'notifier') {
+      const n = await notifierArtisans(c);
+      return res.status(200).json({ notifies: n });
     }
     if (action === 'statut') {
       const statut = ['nouveau', 'propose', 'vendu', 'sans_suite', 'retrait'].includes(req.body.statut) ? req.body.statut : null;

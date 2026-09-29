@@ -68,6 +68,7 @@ export async function genererFacturePDF(f) {
   txt('Client', xc, yc, { bold: true, size: 9, color: GRIS });
   yc -= 15; txt(f.client.nom || f.client.email, xc, yc, { bold: true });
   for (const l of (f.client.adresse || '').split('\n').filter(Boolean)) { yc -= 13; txt(l, xc, yc, { size: 9 }); }
+  if (f.client.siret) { yc -= 13; txt(`SIRET ${f.client.siret}`, xc, yc, { size: 9 }); }
   if (f.client.nom) { yc -= 13; txt(f.client.email, xc, yc, { size: 9 }); }
 
   // Tableau
@@ -104,7 +105,7 @@ export async function genererFacturePDF(f) {
 
   // Mentions
   y -= 45;
-  const mentions = [
+  const mentions = f.mentions ? [`Référence de commande : ${f.reference}`, ...f.mentions] : [
     `Référence de commande : ${f.reference}`,
     'Contenu numérique fourni immédiatement après le paiement. Le client a demandé l\'accès immédiat à l\'estimation',
     'et renoncé à son droit de rétractation dès le début de son utilisation (article L221-28, 13° du Code de la consommation).',

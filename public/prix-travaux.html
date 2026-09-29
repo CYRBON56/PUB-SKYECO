@@ -384,6 +384,7 @@ input[type=tel],input[type=email]{font:inherit;color:var(--ink);background:var(-
               <div class="q"><label for="g-tel">Téléphone mobile</label><input type="tel" id="g-tel" autocomplete="tel" maxlength="20" placeholder="06 12 34 56 78"></div>
               <div class="q"><label for="g-email">Email</label><input type="email" id="g-email" autocomplete="email" maxlength="120"></div>
               <div class="q"><label for="g-cp">Code postal des travaux</label><input type="text" id="g-cp" inputmode="numeric" maxlength="5" placeholder="56400"></div>
+              <div class="q"><label for="g-commune">Commune des travaux</label><select id="g-commune" style="font:inherit;width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)"><option value="">Saisissez d'abord le code postal</option></select></div>
             </div>
             <label class="accord"><input type="checkbox" id="g-accord"> <span>J'accepte que Skyeco (RESINE MARBRE SOL) transmette mes coordonnées et la description de mon projet à 3 entreprises au maximum, sélectionnées près de chez moi, pour qu'elles me contactent au sujet de mes travaux. Ce service est gratuit pour moi car ces entreprises paient Skyeco pour ce contact. Je peux retirer mon accord à tout moment en écrivant à infos@ecosky.fr. <a href="/confidentialite-estimateur.html" target="_blank" rel="noopener">Politique de confidentialité</a></span></label>
             <button class="btn btn-orange" id="g-envoyer-code" type="button" style="margin-top:12px">Recevoir mon code de vérification par SMS</button>
@@ -1075,6 +1076,13 @@ const MODE_DEMO=!/(^|\.)skyeco\.fr$/.test(location.hostname);
 const GADS={id:"",label:""}; // Conversion Google Ads « Achat estimation » : à remplir (ex. id:"AW-123456789", label:"AbCdEf")
 let paye=null; // {session_id, qty} une fois le projet payé
 let modeGratuit=false, estimationGratuite=null;
+$("g-cp").addEventListener("input",async()=>{
+  const cp=$("g-cp").value.trim(), sel=$("g-commune");
+  if(!/^\d{5}$/.test(cp)){ sel.innerHTML='<option value="">Saisissez d\'abord le code postal</option>'; return }
+  try{ const l=await (await fetch("https://geo.api.gouv.fr/communes?codePostal="+cp+"&fields=nom&format=json")).json();
+    sel.innerHTML=l.length?(l.length>1?'<option value="">Choisissez votre commune</option>':"")+l.map(x=>`<option>${x.nom}</option>`).join(""):'<option value="">Code postal inconnu</option>';
+  }catch(e){ sel.innerHTML='<option value="">Liste indisponible, réessayez</option>' }
+});
 $("choix-gratuit").onclick=()=>{ show("form-gratuit"); hide("choix-gratuit"); $("g-prenom").focus() };
 function champsGratuit(){
   const v={prenom:$("g-prenom").value.trim(),nom:$("g-nom").value.trim(),telephone:$("g-tel").value.trim(),email:$("g-email").value.trim(),code_postal:$("g-cp").value.trim()};
@@ -1082,6 +1090,7 @@ function champsGratuit(){
   if(!/^0[67]\d{8}$/.test(v.telephone.replace(/[\s.-]/g,"")) && !/^\+\d{10,15}$/.test(v.telephone.replace(/[\s.-]/g,""))) return [null,"Indiquez un numéro de mobile valide, par exemple 06 12 34 56 78."];
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.email)) return [null,"Indiquez une adresse email valide."];
   if(!/^\d{5}$/.test(v.code_postal)) return [null,"Indiquez le code postal des travaux (5 chiffres)."];
+  v.commune=$("g-commune").value; if(!v.commune) return [null,"Choisissez la commune des travaux dans la liste."];
   if(!$("g-accord").checked) return [null,"Cochez la case d'accord pour choisir l'option gratuite."];
   return [v,""];
 }

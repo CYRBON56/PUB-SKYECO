@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="same-origin">
+<meta name="robots" content="noindex, nofollow">
+<title>Chantier – Skyeco</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800;900&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#14304A;--orange:#E8622C;--bg:#F4F7F9;--surface:#fff;--ink:#14304A;--text:#27394A;--muted:#5B6268;--line:#D5DEE5;--ok:#2E7D5B;--ok-soft:#DDF0E6;--alert:#C0392B;--alert-soft:#F8E0DD;--o-soft:#FBE3D8;--focus:#2F6FEB;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0E1B28;--surface:#15263A;--ink:#EEF3F7;--text:#D4DEE7;--muted:#9FB0BF;--line:#2A3E53;--ok:#5DBB8E;--ok-soft:#173327;--alert:#E57B6E;--alert-soft:#3A1E1B;--o-soft:#3A2418;--focus:#86B4FF}}
+:root[data-theme="dark"]{--bg:#0E1B28;--surface:#15263A;--ink:#EEF3F7;--text:#D4DEE7;--muted:#9FB0BF;--line:#2A3E53;--ok:#5DBB8E;--ok-soft:#173327;--alert:#E57B6E;--alert-soft:#3A1E1B;--o-soft:#3A2418;--focus:#86B4FF}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.55}
+.top{position:sticky;top:0;z-index:5;background:var(--navy);padding-top:env(safe-area-inset-top,0px)}
+.wrap{max-width:980px;margin:0 auto;padding:0 20px}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:64px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none}.logo svg{width:38px;height:38px}
+.word{font-family:"Big Shoulders Display","Arial Narrow",sans-serif;font-weight:800;font-size:1.65rem;color:#fff}.word b{color:var(--orange)}
+.sub{color:#AFC3D4;font-size:.85rem}
+h1,h2,h3{font-family:"Big Shoulders Display","Arial Narrow",sans-serif;color:var(--ink);margin:0;line-height:1}
+h1{font-size:clamp(2.6rem,7vw,4.2rem);font-weight:900;margin-bottom:14px}
+h2{font-size:1.8rem;font-weight:800;margin-bottom:12px}
+h3{font-size:1.35rem;font-weight:800;margin:18px 0 8px}
+main{padding:32px 0 70px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:18px}
+.muted,.hint{color:var(--muted)}.hint{font-size:.9rem;margin:6px 0 0}
+label.l{display:block;font-weight:600;color:var(--ink);margin:14px 0 6px}
+input[type=text],input[type=email],input[type=tel],select{font:inherit;width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+input[type=file]{font:inherit;color:var(--text)}
+button,.btn{font:inherit;cursor:pointer;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--text);padding:10px 16px;text-decoration:none;display:inline-block}
+.btn-o{background:var(--orange);border-color:var(--orange);color:#fff;font-weight:600}
+.btn-n{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:600}
+button:disabled{opacity:.6;cursor:default}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.err{color:var(--alert);min-height:1.3em;margin:8px 0 0;font-size:.93rem}
+.ok{background:var(--ok-soft);border-left:5px solid var(--ok);border-radius:10px;padding:14px 16px;font-weight:500}
+.warn{background:var(--o-soft);border-left:5px solid var(--orange);border-radius:10px;padding:14px 16px}
+.hidden{display:none!important}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.pill{display:inline-block;padding:2px 8px;border-radius:6px;font-size:.78rem;font-weight:600}
+.p-ok{background:var(--ok-soft);color:var(--ok)}.p-bad{background:var(--alert-soft);color:var(--alert)}.p-na{background:var(--bg);color:var(--muted)}
+.checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px 14px}
+.checks label{display:flex;gap:8px;align-items:center;cursor:pointer}
+.checks input,.accord input{width:18px;height:18px;accent-color:var(--orange);flex:none}
+.accord{display:flex;gap:10px;align-items:flex-start;margin-top:14px;cursor:pointer;font-size:.92rem}
+.big{font-family:"Big Shoulders Display","Arial Narrow",sans-serif;font-size:2.4rem;font-weight:900;color:var(--ink)}
+table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{text-align:left;padding:8px 10px 8px 0;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--muted);font-weight:500;font-size:.8rem}
+.tw{overflow-x:auto}
+@media (max-width:760px){.grid3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap"><a class="logo" href="/chantiers.html"><svg viewBox="0 0 140 140" aria-hidden="true"><rect width="140" height="140" rx="28" fill="#1C3F5F"/><g transform="rotate(-6 62 70)"><rect x="30" y="24" width="64" height="86" rx="6" fill="#F4F7F9"/><rect x="40" y="38" width="34" height="5" rx="2" fill="#14304A" opacity=".55"/><rect x="40" y="50" width="44" height="5" rx="2" fill="#14304A" opacity=".35"/><rect x="40" y="62" width="28" height="5" rx="2" fill="#14304A" opacity=".35"/><rect x="40" y="90" width="44" height="2" fill="#14304A" opacity=".25"/></g><circle cx="96" cy="92" r="30" fill="#E8622C"/><text x="96" y="104" text-anchor="middle" font-family="Big Shoulders Display, Arial, sans-serif" font-weight="900" font-size="34" fill="#F4F7F9">€</text><path d="M22 46 40 30v8h16v8H40v8Z" fill="#E8622C"/></svg><span><span class="word">SKY<b>ECO</b></span><br><span class="sub">Chantiers pour les artisans</span></span></a></div></header>
+<main><div class="wrap">
+<section class="card" id="zone"><p class="muted">Chargement du chantier…</p></section>
+</div></main>
+<script>
+const $=id=>document.getElementById(id);
+const esc=t=>String(t??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const eur=v=>(Math.round((+v||0)*100)/100).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";
+
+const q=new URLSearchParams(location.search), P={c:q.get("c"),a:q.get("a"),t:q.get("t")};
+const MOTIFS={faux_numero:"Numéro faux",injoignable:"Injoignable après plusieurs essais",pas_de_projet:"Le particulier dit n'avoir aucun projet",autre:"Autre raison"};
+async function charger(){
+  const extra=q.get("session_id")?"&session_id="+encodeURIComponent(q.get("session_id")):"";
+  try{ const r=await fetch(`/api/chantier?c=${P.c}&a=${P.a}&t=${P.t}${extra}`); const d=await r.json(); if(!r.ok) throw new Error(d.error); afficher(d) }
+  catch(e){ $("zone").innerHTML=`<p class="err">${esc(e.message||"Chantier indisponible.")}</p>` }
+}
+function afficher(d){
+  let h=`<p class="muted" style="margin:0">Proposé à ${esc(d.entreprise)} · ${new Date(d.date).toLocaleDateString("fr-FR")}</p><h1 style="margin-top:8px">${esc(d.metier)}</h1><p style="font-size:1.1rem">${esc(d.resume)}</p><p class="muted">Téléphone du particulier vérifié par code SMS. Commune contrôlée.</p>`;
+  if(d.achete){
+    h+=`<div class="ok" style="margin:16px 0"><strong>${esc(d.client.nom)}</strong><br>Téléphone : <a href="tel:${esc(d.client.telephone)}">${esc(d.client.telephone)}</a><br>Email : <a href="mailto:${esc(d.client.email)}">${esc(d.client.email)}</a><br>Lieu des travaux : ${esc(d.client.lieu)}</div><p class="muted">Appelez-le rapidement : le particulier sait que des entreprises de son secteur vont le contacter.</p>`;
+    if(d.statutAchat==="signale") h+=`<p class="warn">Signalement reçu, nous le vérifions.</p>`;
+    else if(d.statutAchat==="rembourse") h+=`<p class="ok">Signalement accepté : un chantier gratuit vous a été recrédité.</p>`;
+    else if(new Date(d.signalableJusquau)>new Date()) h+=`<h3>Contact faux ou injoignable ?</h3><p class="muted">Vous pouvez le signaler jusqu'au ${new Date(d.signalableJusquau).toLocaleDateString("fr-FR")}. Après vérification, un chantier gratuit vous est recrédité.</p><select id="motif" style="max-width:360px"><option value="">Choisissez un motif</option>${Object.entries(MOTIFS).map(([k,v])=>`<option value="${k}">${v}</option>`).join("")}</select> <button id="signaler" type="button">Signaler</button><p class="err" id="err"></p>`;
+  } else if(!d.compteValide){ h+=`<p class="warn">Votre compte est en cours de validation. Vous pourrez prendre des chantiers dès que votre attestation décennale aura été vérifiée.</p>` }
+  else if(!d.disponible||d.placesRestantes<=0){ h+=`<p class="warn">Ce chantier n'est plus disponible : 3 entreprises l'ont déjà pris.</p>` }
+  else{
+    h+=`<p style="margin:18px 0 6px"><span class="pill p-ok">${d.placesRestantes} place${d.placesRestantes>1?"s":""} sur 3</span></p><p class="big" style="margin:6px 0">${d.gratuitDisponible?"Offert":eur(d.prix)+" TTC"}</p><p class="muted">${d.gratuitDisponible?"C'est votre premier chantier : il est offert.":"Soit "+eur(d.prix/1.2)+" HT. Facture envoyée par email."}</p><button class="btn-o" id="prendre" type="button" style="font-size:1.05rem;padding:13px 22px">${d.gratuitDisponible?"Prendre ce chantier gratuitement":"Prendre ce chantier"}</button><p class="err" id="err"></p>`;
+  }
+  $("zone").innerHTML=h;
+  if($("prendre")) $("prendre").onclick=async()=>{ const b=$("prendre"); b.disabled=true;
+    try{ const r=await fetch("/api/chantier-acheter",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(P)}); const j=await r.json(); if(!r.ok) throw new Error(j.error); if(j.url) location.href=j.url; else charger() }
+    catch(e){ $("err").textContent=e.message; b.disabled=false } };
+  if($("signaler")) $("signaler").onclick=async()=>{ const m=$("motif").value; if(!m){$("err").textContent="Choisissez un motif.";return}
+    try{ const r=await fetch("/api/chantier-signaler",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...P,motif:m})}); const j=await r.json(); if(!r.ok) throw new Error(j.error); charger() }
+    catch(e){ $("err").textContent=e.message } };
+}
+charger();
+</script>
+</body>
+</html>

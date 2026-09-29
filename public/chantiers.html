@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="same-origin">
+
+<title>Recevez des chantiers près de chez vous – Skyeco</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800;900&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#14304A;--orange:#E8622C;--bg:#F4F7F9;--surface:#fff;--ink:#14304A;--text:#27394A;--muted:#5B6268;--line:#D5DEE5;--ok:#2E7D5B;--ok-soft:#DDF0E6;--alert:#C0392B;--alert-soft:#F8E0DD;--o-soft:#FBE3D8;--focus:#2F6FEB;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0E1B28;--surface:#15263A;--ink:#EEF3F7;--text:#D4DEE7;--muted:#9FB0BF;--line:#2A3E53;--ok:#5DBB8E;--ok-soft:#173327;--alert:#E57B6E;--alert-soft:#3A1E1B;--o-soft:#3A2418;--focus:#86B4FF}}
+:root[data-theme="dark"]{--bg:#0E1B28;--surface:#15263A;--ink:#EEF3F7;--text:#D4DEE7;--muted:#9FB0BF;--line:#2A3E53;--ok:#5DBB8E;--ok-soft:#173327;--alert:#E57B6E;--alert-soft:#3A1E1B;--o-soft:#3A2418;--focus:#86B4FF}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.55}
+.top{position:sticky;top:0;z-index:5;background:var(--navy);padding-top:env(safe-area-inset-top,0px)}
+.wrap{max-width:980px;margin:0 auto;padding:0 20px}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:64px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none}.logo svg{width:38px;height:38px}
+.word{font-family:"Big Shoulders Display","Arial Narrow",sans-serif;font-weight:800;font-size:1.65rem;color:#fff}.word b{color:var(--orange)}
+.sub{color:#AFC3D4;font-size:.85rem}
+h1,h2,h3{font-family:"Big Shoulders Display","Arial Narrow",sans-serif;color:var(--ink);margin:0;line-height:1}
+h1{font-size:clamp(2.6rem,7vw,4.2rem);font-weight:900;margin-bottom:14px}
+h2{font-size:1.8rem;font-weight:800;margin-bottom:12px}
+h3{font-size:1.35rem;font-weight:800;margin:18px 0 8px}
+main{padding:32px 0 70px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:18px}
+.muted,.hint{color:var(--muted)}.hint{font-size:.9rem;margin:6px 0 0}
+label.l{display:block;font-weight:600;color:var(--ink);margin:14px 0 6px}
+input[type=text],input[type=email],input[type=tel],select{font:inherit;width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+input[type=file]{font:inherit;color:var(--text)}
+button,.btn{font:inherit;cursor:pointer;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--text);padding:10px 16px;text-decoration:none;display:inline-block}
+.btn-o{background:var(--orange);border-color:var(--orange);color:#fff;font-weight:600}
+.btn-n{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:600}
+button:disabled{opacity:.6;cursor:default}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.err{color:var(--alert);min-height:1.3em;margin:8px 0 0;font-size:.93rem}
+.ok{background:var(--ok-soft);border-left:5px solid var(--ok);border-radius:10px;padding:14px 16px;font-weight:500}
+.warn{background:var(--o-soft);border-left:5px solid var(--orange);border-radius:10px;padding:14px 16px}
+.hidden{display:none!important}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.pill{display:inline-block;padding:2px 8px;border-radius:6px;font-size:.78rem;font-weight:600}
+.p-ok{background:var(--ok-soft);color:var(--ok)}.p-bad{background:var(--alert-soft);color:var(--alert)}.p-na{background:var(--bg);color:var(--muted)}
+.checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px 14px}
+.checks label{display:flex;gap:8px;align-items:center;cursor:pointer}
+.checks input,.accord input{width:18px;height:18px;accent-color:var(--orange);flex:none}
+.accord{display:flex;gap:10px;align-items:flex-start;margin-top:14px;cursor:pointer;font-size:.92rem}
+.big{font-family:"Big Shoulders Display","Arial Narrow",sans-serif;font-size:2.4rem;font-weight:900;color:var(--ink)}
+table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{text-align:left;padding:8px 10px 8px 0;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--muted);font-weight:500;font-size:.8rem}
+.tw{overflow-x:auto}
+@media (max-width:760px){.grid3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap"><a class="logo" href="/chantiers.html"><svg viewBox="0 0 140 140" aria-hidden="true"><rect width="140" height="140" rx="28" fill="#1C3F5F"/><g transform="rotate(-6 62 70)"><rect x="30" y="24" width="64" height="86" rx="6" fill="#F4F7F9"/><rect x="40" y="38" width="34" height="5" rx="2" fill="#14304A" opacity=".55"/><rect x="40" y="50" width="44" height="5" rx="2" fill="#14304A" opacity=".35"/><rect x="40" y="62" width="28" height="5" rx="2" fill="#14304A" opacity=".35"/><rect x="40" y="90" width="44" height="2" fill="#14304A" opacity=".25"/></g><circle cx="96" cy="92" r="30" fill="#E8622C"/><text x="96" y="104" text-anchor="middle" font-family="Big Shoulders Display, Arial, sans-serif" font-weight="900" font-size="34" fill="#F4F7F9">€</text><path d="M22 46 40 30v8h16v8H40v8Z" fill="#E8622C"/></svg><span><span class="word">SKY<b>ECO</b></span><br><span class="sub">Chantiers pour les artisans</span></span></a></div></header>
+<main><div class="wrap">
+<h1>Des chantiers près de chez vous, sans abonnement.</h1>
+<p class="muted" style="font-size:1.1rem;max-width:62ch;margin:0 0 26px">Des particuliers estiment leurs travaux sur Skyeco et demandent à être contactés par des entreprises de leur secteur. Inscrivez-vous gratuitement : vous recevez les projets de vos métiers et de votre zone, et vous ne payez que ceux que vous prenez.</p>
+<div class="grid3" style="margin-bottom:22px">
+ <div class="card"><h3 style="margin-top:0">Des projets réels</h3><p class="muted" style="margin:0">Téléphone du particulier vérifié par code SMS, commune contrôlée, estimation du budget jointe.</p></div>
+ <div class="card"><h3 style="margin-top:0">3 entreprises au plus</h3><p class="muted" style="margin:0">Chaque projet n'est proposé qu'à 3 entreprises au maximum. Premier arrivé, premier servi.</p></div>
+ <div class="card"><h3 style="margin-top:0">Premier chantier offert</h3><p class="muted" style="margin:0">Ensuite 39 € HT pour les gros travaux (toiture, pompe à chaleur, isolation…) et 19 € HT pour les autres. Faux contact : remplacé.</p></div>
+</div>
+
+<section class="card" id="form">
+ <h2>Inscription gratuite</h2>
+ <label class="l" for="siret">Numéro SIRET</label>
+ <div style="display:flex;gap:8px"><input type="text" id="siret" inputmode="numeric" maxlength="17" placeholder="14 chiffres"><button id="chercher" class="btn-n" type="button">Rechercher</button></div>
+ <p class="hint" id="fiche"></p>
+ <div id="suite" class="hidden">
+  <label class="l" for="nom">Votre nom</label><input type="text" id="nom" maxlength="80" autocomplete="name">
+  <label class="l">Vos métiers</label><div class="checks" id="metiers"><label><input type="checkbox" value="toiture">Toiture</label><label><input type="checkbox" value="ravalement">Façade</label><label><input type="checkbox" value="resine">Sol en résine</label><label><input type="checkbox" value="allees">Allées</label><label><input type="checkbox" value="terrasses">Terrasses</label><label><input type="checkbox" value="clotures">Clôtures</label><label><input type="checkbox" value="portails">Portails</label><label><input type="checkbox" value="terrassement">Terrassement</label><label><input type="checkbox" value="piscine">Piscine</label><label><input type="checkbox" value="anc">Assainissement</label><label><input type="checkbox" value="isolation">Isolation</label><label><input type="checkbox" value="pac">Pompe à chaleur</label><label><input type="checkbox" value="menuiseries">Menuiseries</label><label><input type="checkbox" value="sdb">Salle de bain</label><label><input type="checkbox" value="cuisine">Cuisine</label><label><input type="checkbox" value="sols">Sols intérieurs</label><label><input type="checkbox" value="peinture">Peinture</label><label><input type="checkbox" value="platrerie">Plâtrerie</label><label><input type="checkbox" value="electricite">Électricité</label><label><input type="checkbox" value="plomberie">Plomberie</label></div>
+  <label class="l" for="depts">Départements où vous intervenez</label><input type="text" id="depts" placeholder="Par exemple : 56, 29, 35">
+  <p class="hint">Séparez les numéros par des virgules. 20 au maximum.</p>
+  <label class="l" for="email">Email</label><input type="email" id="email" maxlength="120" autocomplete="email">
+  <label class="l" for="tel">Téléphone mobile</label><input type="tel" id="tel" maxlength="20" autocomplete="tel" placeholder="06 12 34 56 78">
+  <p class="hint">Vous y recevrez les nouveaux chantiers par SMS.</p>
+  <label class="l" for="dec">Attestation d'assurance décennale en cours de validité (PDF, 4 Mo maximum)</label><input type="file" id="dec" accept="application/pdf">
+  <label class="accord"><input type="checkbox" id="cgv"><span>J'ai lu et j'accepte les <a href="#conditions">conditions de service</a> ci-dessous.</span></label>
+  <p><button class="btn-o" id="code-btn" type="button">Recevoir mon code de vérification par SMS</button></p>
+  <div id="zone-code" class="hidden"><label class="l" for="code">Code reçu par SMS</label><input type="text" id="code" inputmode="numeric" maxlength="8" autocomplete="one-time-code" style="max-width:200px"><p><button class="btn-o" id="valider" type="button">Valider mon inscription</button></p></div>
+  <p class="err" id="err"></p>
+ </div>
+ <div id="fini" class="ok hidden"></div>
+</section>
+
+<section class="card" id="conditions">
+ <h2>Conditions de service</h2>
+ <p>Le service est proposé par RESINE MARBRE SOL (Skyeco by RMS), SASU au capital de 50 000 €, 23 route de Corn er Hoet, 56400 Brech, SIRET 939 997 870 00018, RCS Lorient.</p>
+ <p><strong>Inscription.</strong> Gratuite et sans engagement. Elle est réservée aux entreprises actives dans la base officielle SIRENE et assurées en responsabilité civile décennale pour les travaux concernés. Votre compte est activé après vérification de votre attestation. Vous pouvez vous désinscrire à tout moment par email à infos@ecosky.fr.</p>
+ <p><strong>Chantiers.</strong> Vous êtes alerté des projets correspondant à vos métiers et départements. Chaque projet est proposé à 3 entreprises au maximum. Le premier chantier est offert, les suivants sont facturés 39 € HT (46,80 € TTC) pour la toiture, la pompe à chaleur, l'isolation, la façade, les menuiseries, la piscine, l'assainissement, la salle de bain, la cuisine, le terrassement, les allées et la résine, et 19 € HT (22,80 € TTC) pour les autres métiers. Le paiement se fait par carte, au moment où vous prenez le chantier, et une facture vous est envoyée par email.</p>
+ <p><strong>Données du particulier.</strong> Le particulier a expressément accepté d'être contacté par des entreprises de son secteur au sujet de son projet. Vous vous engagez à n'utiliser ses coordonnées que pour ce projet, à ne pas les céder et à les supprimer s'il vous le demande. Vous êtes responsable de ce traitement pour votre propre usage.</p>
+ <p><strong>Garantie.</strong> Si le numéro est faux ou si le particulier n'a aucun projet, signalez-le depuis la page du chantier dans les 7 jours. Après vérification, un chantier gratuit vous est recrédité. Skyeco ne garantit pas la signature d'un devis : la relation commerciale se fait entre vous et le particulier.</p>
+</section>
+</div></main>
+<script>
+const $=id=>document.getElementById(id);
+const esc=t=>String(t??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const eur=v=>(Math.round((+v||0)*100)/100).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";
+
+let fiche=null;
+$("chercher").onclick=async()=>{
+  const s=$("siret").value.replace(/\D/g,""); $("err").textContent=""; if(s.length!==14){$("fiche").textContent="Le SIRET compte 14 chiffres.";return}
+  $("fiche").textContent="Recherche dans la base officielle…";
+  try{ const r=await fetch("/api/chantiers-siret?siret="+s); const j=await r.json(); if(!r.ok) throw new Error(j.error);
+    fiche=j; $("fiche").innerHTML=`<strong>${esc(j.entreprise)}</strong>, ${esc(j.adresse)} · code d'activité ${esc(j.code_ape)}`; $("depts").value=j.departement||""; $("suite").classList.remove("hidden");
+  }catch(e){ $("fiche").textContent=e.message||"Recherche impossible." }
+};
+function lire(){
+  const v={siret:fiche&&fiche.siret,contact_nom:$("nom").value.trim(),metiers:[...document.querySelectorAll("#metiers input:checked")].map(x=>x.value),
+    departements:$("depts").value.split(/[,; ]+/).map(x=>x.trim().toUpperCase()).filter(Boolean),email:$("email").value.trim(),telephone:$("tel").value.trim(),cgv:$("cgv").checked};
+  if(!v.siret) return [null,"Recherchez d'abord votre SIRET."];
+  if(!v.metiers.length) return [null,"Cochez au moins un métier."];
+  if(!v.departements.length) return [null,"Indiquez au moins un département."];
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.email)) return [null,"Adresse email invalide."];
+  if(!/^(0[67]\d{8}|\+\d{10,15})$/.test(v.telephone.replace(/[\s.-]/g,""))) return [null,"Indiquez un numéro de mobile valide."];
+  const f=$("dec").files[0]; if(!f||f.type!=="application/pdf"||f.size>4.5e6) return [null,"Joignez votre attestation décennale en PDF (4 Mo maximum)."];
+  if(!v.cgv) return [null,"Acceptez les conditions de service."];
+  return [v,""];
+}
+$("code-btn").onclick=async()=>{
+  const [v,e]=lire(); $("err").textContent=e; if(!v) return; const b=$("code-btn"); b.disabled=true;
+  try{ const r=await fetch("/api/verify-send-code",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({telephone:v.telephone})}); if(!r.ok) throw 0;
+    $("zone-code").classList.remove("hidden"); b.textContent="Renvoyer un code"; $("code").focus();
+  }catch(x){ $("err").textContent="Le SMS n'a pas pu être envoyé, vérifiez le numéro." } finally{ b.disabled=false }
+};
+$("valider").onclick=async()=>{
+  const [v,e]=lire(); $("err").textContent=e; if(!v) return; const b=$("valider"); b.disabled=true; b.textContent="Envoi en cours…";
+  try{
+    const pdf=await new Promise((ok,ko)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=ko;r.readAsDataURL($("dec").files[0])});
+    const r=await fetch("/api/chantiers-inscription",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...v,code:$("code").value.trim(),decennale:pdf})});
+    const j=await r.json(); if(!r.ok) throw new Error(j.error);
+    $("suite").classList.add("hidden"); $("fini").classList.remove("hidden");
+    $("fini").textContent=`Merci, ${j.entreprise} est inscrite. Nous vérifions votre attestation décennale, en général sous 24 heures. Vous recevrez ensuite les chantiers de vos métiers par email et par SMS. Votre premier chantier est offert.`;
+  }catch(x){ $("err").textContent=x.message||"L'inscription a échoué." } finally{ b.disabled=false; b.textContent="Valider mon inscription" }
+};
+</script>
+</body>
+</html>

@@ -6,6 +6,7 @@
 import { sb, METIERS } from './_lib/prix-travaux-commande.js';
 import { verifierLimite, ipDepuisRequete } from './_lib/rate-limit.js';
 import { notifierArtisans } from './_lib/chantiers.js';
+import { envoyerLot, statistiques } from './_lib/campagne-chantiers.js';
 
 // Codes d'activité (NAF/APE) des entreprises compétentes pour chaque métier
 const APE = {
@@ -28,6 +29,15 @@ export default async function handler(req, res) {
   const aid = typeof req.body.artisan_id === 'string' && /^[0-9a-f-]{36}$/.test(req.body.artisan_id) ? req.body.artisan_id : null;
   const achatId = typeof req.body.achat_id === 'string' && /^[0-9a-f-]{36}$/.test(req.body.achat_id) ? req.body.achat_id : null;
   try {
+    // ---- Emailing de recrutement des artisans ----
+    if (action === 'campagne_stats') return res.status(200).json(await statistiques());
+    if (action === 'campagne_reglages') {
+      const taille = Math.max(10, Math.min(Number(req.body.taille_lot) || 150, 500));
+      const [r] = await sb('campagne_chantiers_reglages?id=eq.1', { method: 'PATCH', body: JSON.stringify({ active: req.body.active === true, taille_lot: taille }) });
+      return res.status(200).json(r);
+    }
+    if (action === 'campagne_envoyer') return res.status(200).json(await envoyerLot({ taille: req.body.taille_lot }));
+    if (action === 'campagne_test') return res.status(200).json(await envoyerLot({ test: process.env.AGENT_RAPPORT_EMAIL || 'c.bon@ecosky.fr' }));
     // ---- Artisans inscrits et signalements ----
     if (action === 'artisans') {
       const artisans = await sb('artisans_chantiers?select=*&order=created_at.desc&limit=500');

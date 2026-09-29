@@ -27,6 +27,10 @@
     {
       "path": "/api/agent-prix-travaux",
       "schedule": "0 6 */2 * *"
+    },
+    {
+      "path": "/api/cron-campagne-chantiers",
+      "schedule": "0 7 * * 1-5"
     }
   ],
   "rewrites": [

@@ -4,7 +4,7 @@
 // personnelle, aucun cookie : seulement le type d'étape, le métier et l'origine pub.
 import { verifierLimite, ipDepuisRequete } from './_lib/rate-limit.js';
 
-const TYPES = ['visite', 'fourchette', 'clic_payer'];
+const TYPES = ['visite', 'fourchette', 'clic_payer', 'contact_gratuit'];
 const METIERS = ['toiture','ravalement','resine','allees','terrasses','clotures','portails','terrassement','piscine','anc','isolation','pac','menuiseries','sdb','cuisine','sols','peinture','platrerie','electricite','plomberie'];
 
 export default async function handler(req, res) {

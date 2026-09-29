@@ -37,7 +37,7 @@ export default async function handler(req, res) {
   const du = jours === undefined ? LANCEMENT : jour(new Date(auj - jours * 86400000));
   const au = jour(auj);
 
-  const [quotidien, groupes, regions, villes, termes, commandes, evenements, audits] = await Promise.all([
+  const [quotidien, groupes, regions, villes, termes, commandes, evenements, audits, contacts] = await Promise.all([
     windsor(['date', 'clicks', 'impressions', 'cost'], du, au),
     windsor(['ad_group_id', 'clicks', 'impressions', 'cost'], du, au),
     windsor(['geo_target_region', 'clicks', 'cost'], du, au),
@@ -46,6 +46,7 @@ export default async function handler(req, res) {
     sb(`prix_travaux_commandes?created_at=gte.${du}&select=metier,statut,montant_ttc,created_at,paye_le`),
     sb(`prix_travaux_evenements?created_at=gte.${du}&select=type,metier,pub,created_at&limit=20000`),
     sb('agent_prix_travaux_audits?select=created_at,synthese,actions&order=created_at.desc&limit=1'),
+    sb(`prix_travaux_contacts?created_at=gte.${du}&select=metier,ventes`),
   ]);
 
   const payees = commandes.filter((c) => c.statut === 'payee' || c.statut === 'erreur');
@@ -60,8 +61,9 @@ export default async function handler(req, res) {
 
   return res.status(200).json({
     periode: { du, au }, majLe: new Date().toISOString(),
+    contacts: { recus: contacts.length, ventes: contacts.reduce((a, c) => a + (c.ventes || []).length, 0), ca: Math.round(contacts.reduce((a, c) => a + (c.ventes || []).reduce((x, v) => x + n(v.prix), 0), 0) * 100) / 100 },
     kpis: { clics: tot('clics'), impressions: tot('impressions'), cout: tot('cout'), ventes: payees.length, ca: Math.round(payees.reduce((a, c) => a + n(c.montant_ttc), 0) * 100) / 100 },
-    entonnoir: { clicsPub: tot('clics'), visites: compte('visite'), visitesPub: evenements.filter((e) => e.type === 'visite' && e.pub).length, fourchettes: compte('fourchette'), clicsPayer: compte('clic_payer'), paiementsCommences: commandes.length, ventes: payees.length },
+    entonnoir: { clicsPub: tot('clics'), visites: compte('visite'), visitesPub: evenements.filter((e) => e.type === 'visite' && e.pub).length, fourchettes: compte('fourchette'), clicsPayer: compte('clic_payer'), contactsGratuits: contacts.length, paiementsCommences: commandes.length, ventes: payees.length },
     quotidien: grouper(quotidien, 'date').sort((a, b) => a.cle.localeCompare(b.cle)).map((d) => ({ ...d, ventes: ventesParJour[d.cle] || 0 })),
     parMetier: parMetier.sort((a, b) => b.clics - a.clics),
     regions: grouper(regions, 'geo_target_region').sort((a, b) => b.clics - a.clics),

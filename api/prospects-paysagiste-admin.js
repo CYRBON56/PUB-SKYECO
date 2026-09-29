@@ -76,6 +76,43 @@ function filtreCampagne(campagne) {
   return null;
 }
 
+// 29/09/2026 : campagne « Chantiers artisans » (recrutement pour skyeco.fr/chantiers.html).
+// Son suivi est dans la table campagne_chantiers (envoi, ouverture, clic, désinscription),
+// pas dans les colonnes de prospects_paysagiste : on ne mélange donc pas ses chiffres
+// avec ceux des campagnes Estimateur BTP et Skyeco IA Ads.
+const CONDITIONS_CHANTIERS = {
+  tous: '', envoyes: 'statut=neq.erreur', ouverts: 'ouvert_le=not.is.null', cliques: 'clique_le=not.is.null',
+  desabonnes: 'statut=eq.desabonne', obsoletes: 'statut=eq.erreur',
+};
+async function compteursChantiers(supaHeaders) {
+  const compter = async (cond) => {
+    const r = await fetch(`${process.env.SUPABASE_URL}/rest/v1/campagne_chantiers?select=id${cond ? '&' + cond : ''}`, { headers: { ...supaHeaders, Prefer: 'count=exact', Range: '0-0' } });
+    if (!r.ok) throw new Error('Comptage campagne chantiers : ' + (await r.text()));
+    return parseInt((r.headers.get('content-range') || '').split('/')[1], 10) || 0;
+  };
+  const entrees = await Promise.all(Object.entries(CONDITIONS_CHANTIERS).map(async ([k, c]) => [k, await compter(c)]));
+  const r = await fetch(`${process.env.SUPABASE_URL}/rest/v1/rpc/compter_candidats_chantiers`, { method: 'POST', headers: supaHeaders, body: '{}' });
+  const aContacter = r.ok ? Number(await r.json()) || 0 : 0;
+  return { ...Object.fromEntries(entrees), a_contacter: aContacter };
+}
+async function listeChantiers(supaHeaders, { filtre, searchNom, searchMetier, searchFamille, page, pageSize }) {
+  const taille = Math.min(Math.max(parseInt(pageSize, 10) || 100, 1), 200), p = Math.max(parseInt(page, 10) || 0, 0);
+  const params = new URLSearchParams();
+  params.set('select', `envoye_le,ouvert_le,clique_le,statut,prospects_paysagiste!inner(${COLONNES_LISTE})`);
+  params.set('order', 'envoye_le.desc');
+  const cond = CONDITIONS_CHANTIERS[filtre];
+  if (cond) { const [col, val] = cond.split('='); params.append(col, val); }
+  if (searchNom) params.set('prospects_paysagiste.or', `(nom_entreprise.ilike.*${searchNom}*,ville.ilike.*${searchNom}*)`);
+  if (searchMetier) params.set('prospects_paysagiste.metier', `ilike.%${searchMetier}%`);
+  if (searchFamille) params.set('prospects_paysagiste.famille_metier', `eq.${searchFamille}`);
+  const resp = await fetch(`${process.env.SUPABASE_URL}/rest/v1/campagne_chantiers?${params.toString()}`, { headers: { ...supaHeaders, Prefer: 'count=exact', Range: `${p * taille}-${p * taille + taille - 1}` } });
+  if (!resp.ok) throw new Error('Lecture campagne chantiers : ' + (await resp.text()));
+  const lignes = await resp.json();
+  const rows = lignes.map((l) => ({ ...l.prospects_paysagiste, email_envoye: l.statut !== 'erreur', email_ouvert: !!l.ouvert_le, lien_clique: !!l.clique_le, opt_out: l.statut === 'desabonne' || l.prospects_paysagiste.opt_out, bounced: l.statut === 'erreur' || l.prospects_paysagiste.bounced }));
+  const total = parseInt((resp.headers.get('content-range') || '').split('/')[1], 10) || rows.length;
+  return { rows, total };
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Méthode non autorisée' });
@@ -94,6 +131,13 @@ export default async function handler(req, res) {
   };
 
   try {
+    if (action === 'compteurs' && (req.body || {}).campagne === 'chantiers') {
+      return res.status(200).json({ success: true, compteurs: await compteursChantiers(supaHeaders) });
+    }
+    if (action === 'liste' && (req.body || {}).campagne === 'chantiers') {
+      if ((req.body || {}).filtre === 'a_contacter') return res.status(200).json({ success: true, rows: [], total: 0 });
+      return res.status(200).json({ success: true, ...(await listeChantiers(supaHeaders, req.body || {})) });
+    }
     if (action === 'compteurs') {
       const resultats = await Promise.all(
         Object.entries(FILTRES).map(async ([key, eqFilters]) => {

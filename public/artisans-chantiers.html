@@ -58,6 +58,14 @@ table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{text-align:left;
 <section id="login" class="card" style="max-width:380px;margin:40px auto"><h2>Accès réservé</h2><label class="l" for="mdp">Mot de passe interne</label><input type="password" id="mdp" autocomplete="current-password"><p class="err" id="err"></p><button class="btn-o" id="go" type="button">Ouvrir</button></section>
 <div id="dash" class="hidden">
  <p><a href="/contacts-prix-travaux.html">Contacts gratuits</a> · <a href="/stats-prix-travaux.html">Tableau de bord</a> · <a href="/chantiers.html">Page d'inscription artisans</a></p>
+ <section class="card"><h2>Emailing de recrutement des artisans</h2>
+  <p class="muted" style="margin-top:0">Envoi par lots, du lundi au vendredi à 9 h, en commençant par les entreprises qui ont déjà cliqué, puis celles qui ont déjà ouvert vos emails.</p>
+  <div id="camp"></div>
+  <p style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:14px">
+   <label for="lot">Taille du lot quotidien</label><input type="text" id="lot" inputmode="numeric" style="width:90px">
+   <button id="camp-toggle" type="button"></button><button id="camp-test" type="button">M'envoyer un exemple</button><button id="camp-now" type="button">Envoyer un lot maintenant</button>
+  </p><p class="err" id="camp-err"></p>
+ </section>
  <section class="card"><h2>Signalements à traiter</h2><div id="signalements"></div></section>
  <section class="card"><h2>Artisans inscrits</h2><div class="tw"><table id="artisans"></table></div></section>
 </div>
@@ -72,7 +80,16 @@ const MOTIFS={faux_numero:"Numéro faux",injoignable:"Injoignable",pas_de_projet
 async function api(action,extra){ const r=await fetch("/api/contacts-prix-travaux",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({motDePasseInterne:mdp,action,...extra})}); const d=await r.json();
   if(r.status===401){ try{sessionStorage.removeItem("skyeco_stats")}catch(e){} $("dash").classList.add("hidden");$("login").classList.remove("hidden");$("err").textContent="Mot de passe incorrect.";throw new Error("auth") }
   if(!r.ok) throw new Error(d.error||"Erreur"); return d }
-async function charger(){ try{ data=await api("artisans"); try{sessionStorage.setItem("skyeco_stats",mdp)}catch(e){} $("login").classList.add("hidden"); $("dash").classList.remove("hidden"); afficher() }catch(e){ if(e.message!=="auth") alert(e.message) } }
+const NIV={1:"Ont déjà cliqué",2:"Ont déjà ouvert",3:"Déjà contactés, jamais ouvert",4:"Jamais contactés"};
+async function chargerCampagne(){ try{ const s=await api("campagne_stats"); const pct=(a,b)=>b?(Math.round(a/b*1000)/10).toLocaleString("fr-FR")+" %":"–";
+  $("camp").innerHTML=`<p><span class="pill ${s.reglages.active?"p-ok":"p-na"}">${s.reglages.active?"Campagne active":"Campagne en pause"}</span> · ${s.envoyes} envoyés · ${s.ouverts} ouverts (${pct(s.ouverts,s.envoyes)}) · ${s.cliques} clics (${pct(s.cliques,s.envoyes)}) · ${s.desabonnes} désinscriptions · <strong>${s.inscrits} artisans inscrits</strong>${s.erreurs?` · <span class="pill p-bad">${s.erreurs} erreurs</span>`:""}</p><div class="tw"><table><tr><th>Groupe</th><th>Envoyés</th><th>Ouverts</th><th>Clics</th></tr>${s.parPriorite.map(x=>`<tr><td>${NIV[x.priorite]}</td><td>${x.envoyes}</td><td>${x.ouverts} (${pct(x.ouverts,x.envoyes)})</td><td>${x.cliques} (${pct(x.cliques,x.envoyes)})</td></tr>`).join("")}</table></div>`;
+  $("lot").value=s.reglages.taille_lot; $("camp-toggle").textContent=s.reglages.active?"Mettre en pause":"Démarrer la campagne"; $("camp-toggle").className=s.reglages.active?"":"btn-o"; $("camp-toggle").dataset.active=s.reglages.active?"1":"0";
+ }catch(e){ if(e.message!=="auth") $("camp-err").textContent=e.message } }
+$("camp-toggle").onclick=async()=>{ try{ await api("campagne_reglages",{active:$("camp-toggle").dataset.active!=="1",taille_lot:parseInt($("lot").value)}); chargerCampagne() }catch(e){ $("camp-err").textContent=e.message } };
+$("camp-test").onclick=async()=>{ try{ await api("campagne_test"); $("camp-err").textContent="Exemple envoyé sur votre email." }catch(e){ $("camp-err").textContent=e.message } };
+$("camp-now").onclick=async()=>{ const n=parseInt($("lot").value)||150; if(!confirm(`Envoyer maintenant un lot de ${n} emails ?`)) return; $("camp-now").disabled=true;
+  try{ const r=await api("campagne_envoyer",{taille_lot:n}); $("camp-err").textContent=r.termine?"Plus personne à contacter.":`${r.envoyes} emails envoyés.`; chargerCampagne() }catch(e){ $("camp-err").textContent=e.message } finally{ $("camp-now").disabled=false } };
+async function charger(){ chargerCampagne(); try{ data=await api("artisans"); try{sessionStorage.setItem("skyeco_stats",mdp)}catch(e){} $("login").classList.add("hidden"); $("dash").classList.remove("hidden"); afficher() }catch(e){ if(e.message!=="auth") alert(e.message) } }
 function afficher(){
   const nomA=id=>(data.artisans.find(a=>a.id===id)||{}).entreprise||"?";
   const sig=data.achats.filter(x=>x.statut==="signale");

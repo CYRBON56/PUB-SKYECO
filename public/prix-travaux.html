@@ -196,6 +196,11 @@ tr.sub td{color:var(--muted);font-size:.92rem}
 .metier-pick button{padding:12px 14px!important}.metier-pick strong{font-size:1.25rem!important}
 #free-zone{border-top:1px solid var(--line);margin-top:26px;padding-top:24px}.free-title{font-size:1.9rem;margin:0 0 18px}
 @media (max-width:640px){.metier-pick{grid-template-columns:1fr 1fr!important}}
+.apercu{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:6px 0 10px}
+.apercu div{display:flex;justify-content:space-between;gap:12px;padding:9px 12px;border-bottom:1px solid var(--line);font-size:.93rem}
+.apercu div:last-child{border-bottom:0;font-weight:600}
+.apercu .flou{filter:blur(5px);user-select:none;color:var(--ink);white-space:nowrap}
+.apercu-plus{font-size:.92rem;margin:0 0 14px;color:var(--ink);font-weight:500}
 .app-foot{font-size:.84rem;color:var(--muted);margin-top:28px}
 
 @media (max-width:900px){
@@ -231,8 +236,8 @@ tr.sub td{color:var(--muted);font-size:.92rem}
   <section class="hero">
     <div class="wrap">
       <div>
-        <h1>Ce devis est-il au juste prix&nbsp;?</h1>
-        <p class="lede">Estimez vos travaux en quelques minutes, puis vérifiez le devis de votre artisan ligne par ligne avant de signer.</p>
+        <h1 id="hero-titre">Ce devis est-il au juste prix&nbsp;?</h1>
+        <p class="lede" id="hero-lede">Estimez vos travaux en quelques minutes, puis vérifiez le devis de votre artisan ligne par ligne avant de signer.</p>
         <div class="hero-ctas">
           <button class="btn btn-orange" data-start>Estimer mon projet</button>
           <a class="btn btn-ghost" href="#comment">Comment ça marche</a>
@@ -357,6 +362,9 @@ tr.sub td{color:var(--muted);font-size:.92rem}
       <div class="tape"><div class="tape-bar"><div class="tape-band" id="r1-band"></div></div><div class="tape-labels" id="r1-labels"></div></div>
       <div class="paywall" id="paywall">
         <h3 style="margin-top:0">L'estimation détaillée de votre projet</h3>
+        <p class="hint" style="margin:0 0 6px">Aperçu de ce que vous allez obtenir, calculé pour votre projet :</p>
+        <div class="apercu" id="apercu" aria-hidden="true"></div>
+        <p class="apercu-plus" id="apercu-plus"></p>
         <ul id="pay-list"></ul>
         <p class="err" id="err-pay"></p>
         <button class="btn-pay" id="pay">Payer 35,90 € et accéder maintenant</button>
@@ -1014,6 +1022,9 @@ $("go1").onclick=()=>{
   const r=estimer(M,s), low=r.ttc*.78, high=r.ttc*1.22;
   $("r1-hint").textContent=M.freeHint?M.freeHint(s):`Estimation large pour votre projet, sans connaître l'état actuel ni vos options.`;
   $("r1-range").textContent=`Entre ${eur(low)} et ${eur(high)} TTC`; evt("fourchette");
+  const nbPostes=r.lines.length, nbControles=M.must(s).length+MUST_COMMUNS.length+M.ask(s).length;
+  $("apercu").innerHTML=r.lines.map(([l])=>`<div><span>${l}</span><span class="flou">0 000 €</span></div>`).join("")+`<div><span>Total TTC estimé</span><span class="flou">00 000 €</span></div>`;
+  $("apercu-plus").textContent=`${nbPostes} poste${nbPostes>1?"s":""} chiffré${nbPostes>1?"s":""} un par un, et ${nbControles} points de contrôle pour vérifier le devis de votre artisan avant de signer.`;
   list("pay-list",["Le prix calculé selon vos réponses détaillées","Le détail poste par poste, comme un vrai devis","La comparaison avec le devis de votre artisan et les oublis à repérer","Les questions à poser avant de signer"]);
   ["c2","r2","c3"].forEach(hide); show("paywall"); show("r1"); gauge("r1",low,high);
   $("r1").scrollIntoView({behavior:"smooth",block:"start"});
@@ -1203,8 +1214,15 @@ function afficherLignes(d){
 // Un nouveau calcul manuel efface l'analyse précédente
 $("devis").addEventListener("input",()=>{ if(analyseDevis){ analyseDevis=null; $("r3-lignes").innerHTML=""; $("upload-etat").textContent=""; } });
 
+/* Arrivée depuis une annonce (?metier=...) : on montre d'abord la présentation, adaptée au métier */
+const DE={toiture:"de toiture",ravalement:"de façade",resine:"de sol en résine",allees:"d'allée",terrasses:"de terrasse",clotures:"de clôture",portails:"de portail",terrassement:"de terrassement",piscine:"de piscine",anc:"d'assainissement",isolation:"d'isolation",pac:"de pompe à chaleur",menuiseries:"de fenêtres",sdb:"de salle de bain",cuisine:"de cuisine",sols:"de sol",peinture:"de peinture",platrerie:"de plâtrerie",electricite:"d'électricité",plomberie:"de plomberie"};
+function accrocheMetier(m){
+  $("hero-titre").textContent=`Votre devis ${DE[m]} est-il au juste prix ?`;
+  $("hero-lede").textContent=`Obtenez le prix juste de votre projet ${DE[m]}, poste par poste, puis vérifiez le devis de votre artisan ligne par ligne : écart de prix, surface gonflée, postes oubliés.`;
+  document.querySelectorAll("[data-start]").forEach(b=>{ if(!b.dataset.start) b.dataset.start=m });
+}
 /* Lien direct vers un métier : prix-travaux.html?metier=toiture */
-const lien=new URLSearchParams(location.search).get("metier"); if(new URLSearchParams(location.search).get("paiement")) retourPaiement(); else { evt("visite",METIERS[lien]?lien:null); if(lien&&METIERS[lien]) openApp(lien); }
+const lien=new URLSearchParams(location.search).get("metier"); if(new URLSearchParams(location.search).get("paiement")) retourPaiement(); else { evt("visite",METIERS[lien]?lien:null); if(lien&&METIERS[lien]) accrocheMetier(lien); }
 </script>
 </body>
 </html>

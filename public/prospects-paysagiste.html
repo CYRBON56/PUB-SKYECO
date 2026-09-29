@@ -190,12 +190,20 @@
 
     <div class="sous-panel">
       <h3>Email de test</h3>
-      <p class="hint" style="margin-bottom:10px;">Envoie le sujet/contenu ci-dessus à UNE adresse de votre choix, avec des valeurs d'exemple — n'affecte jamais vos prospects ni les statistiques.</p>
+      <p class="hint" style="margin-bottom:10px;">Envoie l'email choisi à UNE adresse de votre choix, avec des valeurs d'exemple — n'affecte jamais vos prospects ni les statistiques.</p>
       <div class="row">
+        <div class="field" style="max-width:300px;">
+          <label>Email à tester</label>
+          <select id="testChoixEmail">
+            <option value="formulaire">📱 Estimateur BTP (contenu ci-dessus)</option>
+            <option value="chantiers">🏗️ Chantiers artisans</option>
+          </select>
+        </div>
         <div class="field" style="max-width:280px;">
           <label>Adresse de test</label>
           <input type="email" id="testEmailAddr" value="c.bon@ecosky.fr">
         </div>
+        <button class="btn btn-ghost" type="button" id="btnApercuTest" style="align-self:flex-end;">👁️ Aperçu</button>
         <button class="btn btn-ghost" type="button" id="btnEnvoyerTest" style="align-self:flex-end;">✉️ Envoyer un email test</button>
       </div>
       <div class="status-msg" id="testStatus"></div>
@@ -524,6 +532,33 @@
       .replaceAll('cid:logo-skyeco-ads', 'https://www.skyeco.fr/images/skyeco-ads-logo-email.png');
   }
 
+  function ouvrirApercu(subject, html){
+    const fenetre = window.open('', '_blank');
+    if(!fenetre){ alert('Le navigateur a bloqué l\'ouverture de l\'aperçu — autorisez les popups pour ce site puis réessayez.'); return; }
+    fenetre.document.write(
+      '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Aperçu — email de prospection</title>' +
+      '<style>body{font-family:Arial,Helvetica,sans-serif;background:#f4f7f9;margin:0;padding:30px;}' +
+      '.cadre{max-width:640px;margin:0 auto;background:#fff;border:1px solid #dce4e9;}' +
+      '.entete{background:#14304A;color:#fff;padding:10px 22px;font-size:11px;font-family:monospace;letter-spacing:0.03em;}' +
+      '.sujet{padding:16px 22px;border-bottom:1px solid #dce4e9;font-weight:700;font-size:15px;color:#14304A;}' +
+      '.corps{padding:22px;font-size:14px;line-height:1.6;color:#14304A;}</style></head><body>' +
+      '<div class="cadre"><div class="entete">APERÇU — VALEURS D\'EXEMPLE, AUCUN ENVOI RÉEL</div>' +
+      '<div class="sujet">' + (subject ? subject.replace(/</g,'&lt;') : '(sans sujet)') + '</div>' +
+      '<div class="corps">' + html + '</div></div></body></html>'
+    );
+    fenetre.document.close();
+  }
+  document.getElementById('btnApercuTest').addEventListener('click', async () => {
+    if(document.getElementById('testChoixEmail').value === 'chantiers'){
+      try{
+        const res = await fetch('/api/contacts-prix-travaux', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ motDePasseInterne: internalPassword, action:'campagne_apercu' }) });
+        const data = await res.json();
+        if(!data.success) throw new Error(data.error || 'Erreur inconnue.');
+        ouvrirApercu(data.sujet, data.html);
+      } catch(err){ const s=document.getElementById('testStatus'); s.textContent = 'Erreur : ' + err.message; s.style.color = '#c0392b'; }
+    } else document.getElementById('btnApercu').click();
+  });
+
   document.getElementById('btnApercu').addEventListener('click', () => {
     const subject = document.getElementById('batchSubject').value.trim();
     const html = document.getElementById('batchHtml').value.trim();
@@ -587,6 +622,18 @@
     const statusEl = document.getElementById('testStatus');
     const btn = document.getElementById('btnEnvoyerTest');
     const destinataire = document.getElementById('testEmailAddr').value.trim();
+    if(document.getElementById('testChoixEmail').value === 'chantiers'){
+      if(!destinataire){ statusEl.textContent = 'Indiquez une adresse de test.'; statusEl.style.color = '#c0392b'; return; }
+      btn.disabled = true; statusEl.textContent = 'Envoi du test…'; statusEl.style.color = 'var(--concrete)';
+      try{
+        const res = await fetch('/api/contacts-prix-travaux', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ motDePasseInterne: internalPassword, action:'campagne_test', destinataire }) });
+        const data = await res.json();
+        if(!res.ok || !data.success) throw new Error(data.error || 'Erreur inconnue.');
+        statusEl.textContent = '✓ Email Chantiers artisans envoyé à ' + data.envoyeA + '.'; statusEl.style.color = 'var(--ok)';
+      } catch(err){ statusEl.textContent = 'Erreur : ' + err.message; statusEl.style.color = '#c0392b'; }
+      finally{ btn.disabled = false; }
+      return;
+    }
     const subject = document.getElementById('batchSubject').value.trim();
     const html = document.getElementById('batchHtml').value.trim();
     const videoUrl = document.getElementById('batchVideoUrl').value.trim();

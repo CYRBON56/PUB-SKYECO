@@ -6,7 +6,7 @@
 import { sb, METIERS } from './_lib/prix-travaux-commande.js';
 import { verifierLimite, ipDepuisRequete } from './_lib/rate-limit.js';
 import { notifierArtisans } from './_lib/chantiers.js';
-import { envoyerLot, statistiques } from './_lib/campagne-chantiers.js';
+import { envoyerLot, statistiques, contenu, SUJET } from './_lib/campagne-chantiers.js';
 
 // Codes d'activité (NAF/APE) des entreprises compétentes pour chaque métier
 const APE = {
@@ -37,7 +37,15 @@ export default async function handler(req, res) {
       return res.status(200).json(r);
     }
     if (action === 'campagne_envoyer') return res.status(200).json(await envoyerLot({ taille: req.body.taille_lot }));
-    if (action === 'campagne_test') return res.status(200).json(await envoyerLot({ test: process.env.AGENT_RAPPORT_EMAIL || 'c.bon@ecosky.fr' }));
+    if (action === 'campagne_test') {
+      const dest = typeof req.body.destinataire === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(req.body.destinataire.trim()) ? req.body.destinataire.trim() : (process.env.AGENT_RAPPORT_EMAIL || 'c.bon@ecosky.fr');
+      await envoyerLot({ test: dest });
+      return res.status(200).json({ success: true, envoyeA: dest });
+    }
+    if (action === 'campagne_apercu') {
+      const c = contenu({ nom_entreprise: 'Entreprise Exemple SARL', departement: '56' }, 'exemple');
+      return res.status(200).json({ success: true, sujet: SUJET, html: c.html.replace(/<img[^>]*>/g, '') });
+    }
     // ---- Artisans inscrits et signalements ----
     if (action === 'artisans') {
       const artisans = await sb('artisans_chantiers?select=*&order=created_at.desc&limit=500');

@@ -201,6 +201,16 @@ tr.sub td{color:var(--muted);font-size:.92rem}
 .apercu div:last-child{border-bottom:0;font-weight:600}
 .apercu .flou{filter:blur(5px);user-select:none;color:var(--ink);white-space:nowrap}
 .apercu-plus{font-size:.92rem;margin:0 0 14px;color:var(--ink);font-weight:500}
+.offre{border:1.5px solid var(--line);border-radius:12px;padding:16px;margin-bottom:6px;background:var(--bg)}
+.offre-tag{display:inline-block;font-size:.8rem;font-weight:600;border-radius:6px;padding:3px 9px;background:var(--navy);color:#fff}
+.offre-tag-o{background:var(--orange)}
+.ou{text-align:center;color:var(--muted);margin:14px 0;font-weight:500}
+.champs2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+.champs2 .q{margin-bottom:12px}.champs2 input{max-width:none}
+input[type=tel],input[type=email]{font:inherit;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:11px 12px;width:100%}
+.accord{display:flex;gap:10px;align-items:flex-start;font-size:.88rem;line-height:1.5;cursor:pointer}
+.accord input{margin-top:4px;width:18px;height:18px;flex:none;accent-color:var(--orange)}
+@media (max-width:640px){.champs2{grid-template-columns:1fr}}
 .app-foot{font-size:.84rem;color:var(--muted);margin-top:28px}
 
 @media (max-width:900px){
@@ -304,7 +314,7 @@ tr.sub td{color:var(--muted);font-size:.92rem}
       <div class="price-card">
         <div class="price-main">
           <div class="amount">35,90&nbsp;€ <small>TTC</small></div>
-          <p style="margin-top:16px">Pour un projet. Paiement unique, sans abonnement.</p>
+          <p style="margin-top:16px">Pour un projet, en restant anonyme. Paiement unique, sans abonnement.</p><p style="margin-top:8px;font-size:.93rem">Ou gratuit, si vous acceptez d'être contacté par 3 entreprises de votre secteur.</p>
           <button class="btn btn-orange" data-start style="margin-top:10px">Estimer mon projet</button>
         </div>
         <div class="price-list">
@@ -327,7 +337,8 @@ tr.sub td{color:var(--muted);font-size:.92rem}
       <details><summary>D'où viennent les prix&nbsp;?</summary><p>De prix moyens du marché pour chaque métier, ajustés selon votre département. Ils sont mis à jour régulièrement et indexés sur les indices officiels du coût de la construction (index BT de l'INSEE).</p></details>
       <details><summary>Que se passe-t-il si je change d'avis sur un matériau&nbsp;?</summary><p>Vous modifiez vos réponses autant que vous voulez, le prix se recalcule. Seuls le type de travaux, le département et la surface sont fixés à l'achat, avec une marge pour corriger une erreur de mesure.</p></details>
       <details><summary>Puis-je être remboursé&nbsp;?</summary><p>L'estimation est un contenu numérique fourni immédiatement. Au moment du paiement, vous demandez son accès immédiat et reconnaissez perdre votre droit de rétractation dès le début de son utilisation.</p></details>
-      <details><summary>Mes informations sont-elles transmises à des artisans&nbsp;?</summary><p>Non. Skyeco ne vend pas vos coordonnées et ne vous met pas en relation avec des artisans sans votre accord.</p></details>
+      <details><summary>Mes informations sont-elles transmises à des artisans&nbsp;?</summary><p>Seulement si vous choisissez l'option gratuite et que vous l'acceptez expressément : vos coordonnées et votre projet sont alors transmis à 3 entreprises au maximum, près de chez vous, qui paient Skyeco pour ce contact. Avec l'option anonyme à 35,90 €, rien n'est jamais transmis.</p></details>
+      <details><summary>Quelle différence entre l'option gratuite et l'option à 35,90&nbsp;€&nbsp;?</summary><p>L'option gratuite donne l'estimation détaillée et vous met en relation avec des entreprises de votre secteur. L'option à 35,90 € donne l'estimation détaillée et la vérification de vos devis ligne par ligne, sans que personne ne vous contacte.</p></details>
     </div>
   </section>
 
@@ -361,7 +372,31 @@ tr.sub td{color:var(--muted);font-size:.92rem}
       <p class="big" id="r1-range"></p>
       <div class="tape"><div class="tape-bar"><div class="tape-band" id="r1-band"></div></div><div class="tape-labels" id="r1-labels"></div></div>
       <div class="paywall" id="paywall">
-        <h3 style="margin-top:0">L'estimation détaillée de votre projet</h3>
+        <div class="offre" id="offre-gratuite">
+          <span class="offre-tag">Option gratuite</span>
+          <h3 style="margin-top:6px">Estimation détaillée offerte, et des devis d'entreprises près de chez vous</h3>
+          <p class="hint" style="margin:0 0 12px">Vous recevez gratuitement votre estimation détaillée. En échange, jusqu'à 3 entreprises vérifiées de votre secteur vous contactent pour vous proposer un devis. Vous n'êtes jamais obligé d'accepter.</p>
+          <button class="btn btn-navy" id="choix-gratuit" type="button">Choisir l'option gratuite</button>
+          <div id="form-gratuit" class="hidden" style="margin-top:16px">
+            <div class="champs2">
+              <div class="q"><label for="g-prenom">Prénom</label><input type="text" id="g-prenom" autocomplete="given-name" maxlength="60"></div>
+              <div class="q"><label for="g-nom">Nom</label><input type="text" id="g-nom" autocomplete="family-name" maxlength="60"></div>
+              <div class="q"><label for="g-tel">Téléphone mobile</label><input type="tel" id="g-tel" autocomplete="tel" maxlength="20" placeholder="06 12 34 56 78"></div>
+              <div class="q"><label for="g-email">Email</label><input type="email" id="g-email" autocomplete="email" maxlength="120"></div>
+              <div class="q"><label for="g-cp">Code postal des travaux</label><input type="text" id="g-cp" inputmode="numeric" maxlength="5" placeholder="56400"></div>
+            </div>
+            <label class="accord"><input type="checkbox" id="g-accord"> <span>J'accepte que Skyeco (RESINE MARBRE SOL) transmette mes coordonnées et la description de mon projet à 3 entreprises au maximum, sélectionnées près de chez moi, pour qu'elles me contactent au sujet de mes travaux. Ce service est gratuit pour moi car ces entreprises paient Skyeco pour ce contact. Je peux retirer mon accord à tout moment en écrivant à infos@ecosky.fr. <a href="/confidentialite-estimateur.html" target="_blank" rel="noopener">Politique de confidentialité</a></span></label>
+            <button class="btn btn-orange" id="g-envoyer-code" type="button" style="margin-top:12px">Recevoir mon code de vérification par SMS</button>
+            <div id="g-zone-code" class="hidden" style="margin-top:14px">
+              <div class="q"><label for="g-code">Code reçu par SMS</label><input type="text" id="g-code" inputmode="numeric" maxlength="8" autocomplete="one-time-code"></div>
+              <button class="btn btn-orange" id="g-valider" type="button">Valider et voir mon estimation détaillée</button>
+            </div>
+            <p class="err" id="err-gratuit" style="margin-top:8px"></p>
+          </div>
+        </div>
+        <p class="ou">ou</p>
+        <span class="offre-tag offre-tag-o">Option anonyme, 35,90 €</span>
+        <h3 style="margin-top:6px">Estimation détaillée et vérification de votre devis, sans être contacté</h3>
         <p class="hint" style="margin:0 0 6px">Aperçu de ce que vous allez obtenir, calculé pour votre projet :</p>
         <div class="apercu" id="apercu" aria-hidden="true"></div>
         <p class="apercu-plus" id="apercu-plus"></p>
@@ -391,6 +426,12 @@ tr.sub td{color:var(--muted);font-size:.92rem}
       <ul id="r2-must"></ul>
       <h3>Les questions à poser à l'artisan</h3>
       <ul id="r2-ask"></ul>
+    </section>
+
+    <section class="card hidden" id="c3-gratuit">
+      <h2>Vous avez déjà un devis ?</h2>
+      <p class="hint" style="margin-bottom:14px">La vérification ligne par ligne d'un devis (écart de prix, surface gonflée, postes oubliés, TVA) fait partie de l'option anonyme.</p>
+      <button class="btn btn-orange" id="pay2" type="button">Vérifier mon devis pour 35,90 €</button>
     </section>
 
     <section class="card hidden" id="c3">
@@ -1021,7 +1062,7 @@ $("go1").onclick=()=>{
   e.textContent="";
   const r=estimer(M,s), low=r.ttc*.78, high=r.ttc*1.22;
   $("r1-hint").textContent=M.freeHint?M.freeHint(s):`Estimation large pour votre projet, sans connaître l'état actuel ni vos options.`;
-  $("r1-range").textContent=`Entre ${eur(low)} et ${eur(high)} TTC`; evt("fourchette");
+  $("r1-range").textContent=`Entre ${eur(low)} et ${eur(high)} TTC`; evt("fourchette"); estimationGratuite=Math.round(r.ttc);
   const nbPostes=r.lines.length, nbControles=M.must(s).length+MUST_COMMUNS.length+M.ask(s).length;
   $("apercu").innerHTML=r.lines.map(([l])=>`<div><span>${l}</span><span class="flou">0 000 €</span></div>`).join("")+`<div><span>Total TTC estimé</span><span class="flou">00 000 €</span></div>`;
   $("apercu-plus").textContent=`${nbPostes} poste${nbPostes>1?"s":""} chiffré${nbPostes>1?"s":""} un par un, et ${nbControles} points de contrôle pour vérifier le devis de votre artisan avant de signer.`;
@@ -1033,6 +1074,40 @@ $("go1").onclick=()=>{
 const MODE_DEMO=!/(^|\.)skyeco\.fr$/.test(location.hostname);
 const GADS={id:"",label:""}; // Conversion Google Ads « Achat estimation » : à remplir (ex. id:"AW-123456789", label:"AbCdEf")
 let paye=null; // {session_id, qty} une fois le projet payé
+let modeGratuit=false, estimationGratuite=null;
+$("choix-gratuit").onclick=()=>{ show("form-gratuit"); hide("choix-gratuit"); $("g-prenom").focus() };
+function champsGratuit(){
+  const v={prenom:$("g-prenom").value.trim(),nom:$("g-nom").value.trim(),telephone:$("g-tel").value.trim(),email:$("g-email").value.trim(),code_postal:$("g-cp").value.trim()};
+  if(!v.prenom||!v.nom) return [null,"Indiquez votre prénom et votre nom."];
+  if(!/^0[67]\d{8}$/.test(v.telephone.replace(/[\s.-]/g,"")) && !/^\+\d{10,15}$/.test(v.telephone.replace(/[\s.-]/g,""))) return [null,"Indiquez un numéro de mobile valide, par exemple 06 12 34 56 78."];
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.email)) return [null,"Indiquez une adresse email valide."];
+  if(!/^\d{5}$/.test(v.code_postal)) return [null,"Indiquez le code postal des travaux (5 chiffres)."];
+  if(!$("g-accord").checked) return [null,"Cochez la case d'accord pour choisir l'option gratuite."];
+  return [v,""];
+}
+function debloquerGratuit(){
+  modeGratuit=true; evt("contact_gratuit"); ouvrirDetail();
+  banniere("Merci ! Votre estimation détaillée est ci-dessous. Jusqu'à 3 entreprises de votre secteur vont vous contacter pour vous proposer un devis.","c-ok");
+  $("c2").scrollIntoView({behavior:"smooth",block:"start"});
+}
+$("g-envoyer-code").onclick=async()=>{
+  const [v,err]=champsGratuit(); $("err-gratuit").textContent=err; if(!v) return;
+  if(MODE_DEMO){ debloquerGratuit(); return }
+  const b=$("g-envoyer-code"); b.disabled=true; b.textContent="Envoi du code…";
+  try{ const r=await fetch("/api/verify-send-code",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({telephone:v.telephone})});
+    if(!r.ok) throw new Error(); show("g-zone-code"); b.textContent="Renvoyer un code"; $("g-code").focus();
+  }catch(e){ $("err-gratuit").textContent="Le SMS n'a pas pu être envoyé. Vérifiez le numéro et réessayez."; b.textContent="Recevoir mon code de vérification par SMS" }
+  finally{ b.disabled=false }
+};
+$("g-valider").onclick=async()=>{
+  const [v,err]=champsGratuit(); $("err-gratuit").textContent=err; if(!v) return;
+  const code=$("g-code").value.replace(/\D/g,""); if(code.length<4){ $("err-gratuit").textContent="Saisissez le code reçu par SMS."; return }
+  const b=$("g-valider"); b.disabled=true;
+  try{ const r=await fetch("/api/prix-travaux-contact",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...v,code,consentement:true,metier,reponses:s,estimation_ttc:estimationGratuite})});
+    const j=await r.json(); if(!r.ok) throw new Error(j.error||"Erreur"); debloquerGratuit();
+  }catch(e){ $("err-gratuit").textContent=e.message||"L'enregistrement a échoué. Réessayez." }
+  finally{ b.disabled=false }
+};
 if(MODE_DEMO) show("demo-note");
 function evt(type,m){ if(MODE_DEMO) return; try{ navigator.sendBeacon("/api/prix-travaux-evenement",new Blob([JSON.stringify({type,metier:m||metier,pub:/[?&](gclid|gbraid|wbraid)=/.test(location.search)})],{type:"application/json"})) }catch(e){} }
 function ouvrirDetail(){ hide("paywall"); show("c2"); renderQs("detail-qs",METIERS[metier].detail) }
@@ -1047,6 +1122,7 @@ $("pay").onclick=async()=>{
     location.href=j.url;
   }catch(e){ $("err-pay").textContent=e.message||"Le paiement n'a pas pu être préparé. Réessayez."; b.disabled=false; b.textContent="Payer 35,90 € et accéder maintenant" }
 };
+$("pay2").onclick=()=>$("pay").onclick();
 function banniere(txt,cls){ const e=$("banniere"); e.className="callout "+cls; e.textContent=txt; show("banniere") }
 function conversion(sid){
   if(!GADS.id) return; try{ if(localStorage.getItem("conv_"+sid)) return; localStorage.setItem("conv_"+sid,"1") }catch(e){}
@@ -1102,7 +1178,7 @@ $("go2").onclick=()=>{
   $("inclus").innerHTML=M.inc(s).concat(INC_COMMUNS).map(l=>`<label><input type="checkbox" data-l="${l}">${l}</label>`).join("");
   if(M.cmp){show("devisSurf-wrap");$("devisSurf-label").textContent=M.cmp.label+" (facultatif)"}else hide("devisSurf-wrap");
   $("devis").value=""; $("devisSurf").value="";
-  hide("r3"); $("r3-lignes").innerHTML=""; $("upload-etat").textContent=""; analyseDevis=null; show("r2"); show("c3"); gauge("r2",detail.low,detail.high);
+  hide("r3"); $("r3-lignes").innerHTML=""; $("upload-etat").textContent=""; analyseDevis=null; show("r2"); if(modeGratuit){hide("c3");show("c3-gratuit")}else show("c3"); gauge("r2",detail.low,detail.high);
   $("r2").scrollIntoView({behavior:"smooth",block:"start"});
 };
 $("go3").onclick=()=>{

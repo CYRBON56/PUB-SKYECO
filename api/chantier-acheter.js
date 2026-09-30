@@ -17,6 +17,7 @@ export default async function handler(req, res) {
     const gratuit = artisan.credit_gratuit > 0, prix = gratuit ? 0 : prixChantier(contact.metier);
     const r = await sb('rpc/reserver_chantier', { method: 'POST', body: JSON.stringify({ p_contact: c, p_artisan: a, p_prix: prix, p_mode: gratuit ? 'gratuit' : 'stripe' }) });
     if (r.etat === 'complet') return res.status(409).json({ error: 'Trop tard : 3 entreprises ont déjà pris ce chantier.' });
+    if (r.etat === 'non_choisi') return res.status(403).json({ error: "Ce chantier est réservé aux entreprises choisies par le particulier." });
     if (r.etat === 'indisponible') return res.status(409).json({ error: "Ce chantier n'est plus disponible." });
     if (r.etat === 'deja') return res.status(200).json({ ok: true });
     if (gratuit) {

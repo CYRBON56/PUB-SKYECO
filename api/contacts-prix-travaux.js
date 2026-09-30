@@ -93,6 +93,7 @@ export default async function handler(req, res) {
     }
     if (action === 'vendre') {
       const ventes = Array.isArray(c.ventes) ? c.ventes : [];
+      if (Array.isArray(c.artisans_choisis)) return res.status(400).json({ error: "Ce particulier choisit lui-même ses entreprises : seules celles qu'il a choisies peuvent prendre son contact, depuis leur lien personnel." });
       if (ventes.length >= MAX_VENTES) return res.status(400).json({ error: 'Ce contact a déjà été vendu à 3 entreprises (maximum promis au particulier).' });
       const entreprise = String(req.body.entreprise || '').trim().slice(0, 120);
       const siret = String(req.body.siret || '').replace(/\D/g, '').slice(0, 14);

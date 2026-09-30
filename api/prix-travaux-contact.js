@@ -7,9 +7,9 @@
 // TWILIO_VERIFY_SERVICE_SID, RESEND_API_KEY ; facultatives : ADMIN_PHONE, TWILIO_FROM_NUMBER.
 import { sb, METIERS, nettoyerReponses } from './_lib/prix-travaux-commande.js';
 import { verifierLimite, ipDepuisRequete } from './_lib/rate-limit.js';
-import { notifierArtisans } from './_lib/chantiers.js';
+import { artisansEligibles, jetonClient } from './_lib/chantiers.js';
 
-export const CONSENTEMENT = "J'accepte que Skyeco (RESINE MARBRE SOL) transmette mes coordonnées et la description de mon projet à 3 entreprises au maximum, sélectionnées près de chez moi, pour qu'elles me contactent au sujet de mes travaux. Ce service est gratuit pour moi car ces entreprises paient Skyeco pour ce contact. Je peux retirer mon accord à tout moment en écrivant à infos@ecosky.fr.";
+export const CONSENTEMENT = "J'accepte que Skyeco (RESINE MARBRE SOL) transmette mes coordonnées et la description de mon projet aux entreprises que je choisirai parmi celles qui me seront présentées (3 au maximum), pour qu'elles me contactent au sujet de mes travaux. Ce service est gratuit pour moi car ces entreprises paient Skyeco pour ce contact. Je peux retirer mon accord à tout moment en écrivant à infos@ecosky.fr.";
 
 function toE164(t) {
   let n = String(t || '').replace(/[^\d+]/g, '');
@@ -73,7 +73,7 @@ export default async function handler(req, res) {
     const [c] = await sb('prix_travaux_contacts', { method: 'POST', body: JSON.stringify({
       prenom, nom, telephone: tel, email, code_postal: cp, commune: commune || texte(b.commune, 80) || null, departement: departementDepuisCP(cp),
       metier, reponses, estimation_ttc: Number.isFinite(est) && est > 0 && est < 1e7 ? Math.round(est) : null,
-      consentement_texte: CONSENTEMENT,
+      consentement_texte: CONSENTEMENT, artisans_choisis: [],
     }) });
 
     // Alerte pour Cyrille (sans bloquer le visiteur en cas d'échec)
@@ -90,8 +90,10 @@ export default async function handler(req, res) {
         body: new URLSearchParams({ To: process.env.ADMIN_PHONE, From: process.env.TWILIO_FROM_NUMBER, Body: `Skyeco : nouveau contact gratuit à vendre (${resume}).` }),
       }).catch(() => {});
     }
-    await notifierArtisans(c).catch((e) => console.error('notifierArtisans :', e.message));
-    return res.status(200).json({ ok: true });
+    // Depuis le 30/09/2026 : le particulier choisit ses entreprises (voir /api/prix-travaux-choix)
+    const liste = await artisansEligibles(c).catch(() => []);
+    const entreprises = liste.map((a) => ({ id: a.id, entreprise: a.entreprise, adresse: a.adresse || '', siret: a.siret || '' }));
+    return res.status(200).json({ ok: true, contact_id: c.id, jeton: jetonClient(c.id), entreprises });
   } catch (e) {
     console.error('prix-travaux-contact :', e.message);
     return res.status(500).json({ error: "L'enregistrement a échoué. Réessayez dans un instant." });

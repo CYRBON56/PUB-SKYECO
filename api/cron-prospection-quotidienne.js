@@ -22,7 +22,7 @@
 //                                      cette URL contre un déclenchement externe)
 
 const SITE_BASE = 'https://pub-skyeco-23ue.vercel.app';
-const TAILLE_LOT = 300; // relevé de 30 à 300 le 26/09/2026 à la demande explicite de Cyrille, malgré le risque de réputation email évoqué ci-dessus (décision assumée)
+const TAILLE_LOT = 35; // abaissé de 300 à 35 le 30/09/2026 à la demande de Cyrille : 35 x 28 passages (toutes les 30 min, 6h-19h UTC) = ~980 emails/jour, pour protéger la réputation du domaine (plaintes + retards de livraison constatés)
 
 // 28/09/2026 : le cron automatique envoie désormais la campagne "Estimateur BTP"
 // (même sujet, même texte et même destination que le formulaire manuel de

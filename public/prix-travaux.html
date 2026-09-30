@@ -380,7 +380,7 @@ input[type=tel],input[type=email]{font:inherit;color:var(--ink);background:var(-
             <div class="champs2">
               <div class="q"><label for="g-prenom">Prénom</label><input type="text" id="g-prenom" autocomplete="given-name" maxlength="60"></div>
               <div class="q"><label for="g-nom">Nom</label><input type="text" id="g-nom" autocomplete="family-name" maxlength="60"></div>
-              <div class="q"><label for="g-tel">Téléphone mobile</label><input type="tel" id="g-tel" autocomplete="tel" maxlength="20" placeholder="06 12 34 56 78"></div>
+              <div class="q"><label for="g-tel">Téléphone mobile</label><input type="tel" id="g-tel" autocomplete="tel" maxlength="20" placeholder="06 12 34 56 78"><p class="hint" style="margin-top:6px">Nous vous envoyons un code par SMS pour vérifier votre numéro. Seules 3 entreprises sérieuses de votre secteur pourront vous appeler, jamais de démarchage ni de revente à d'autres.</p></div>
               <div class="q"><label for="g-email">Email</label><input type="email" id="g-email" autocomplete="email" maxlength="120"></div>
               <div class="q"><label for="g-cp">Code postal des travaux</label><input type="text" id="g-cp" inputmode="numeric" maxlength="5" placeholder="56400"></div>
               <div class="q"><label for="g-commune">Commune des travaux</label><select id="g-commune" style="font:inherit;width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)"><option value="">Saisissez d'abord le code postal</option></select></div>
@@ -388,7 +388,7 @@ input[type=tel],input[type=email]{font:inherit;color:var(--ink);background:var(-
             <label class="accord"><input type="checkbox" id="g-accord"> <span>J'accepte que Skyeco (RESINE MARBRE SOL) transmette mes coordonnées et la description de mon projet à 3 entreprises au maximum, sélectionnées près de chez moi, pour qu'elles me contactent au sujet de mes travaux. Ce service est gratuit pour moi car ces entreprises paient Skyeco pour ce contact. Je peux retirer mon accord à tout moment en écrivant à infos@ecosky.fr. <a href="/confidentialite-estimateur.html" target="_blank" rel="noopener">Politique de confidentialité</a></span></label>
             <button class="btn btn-orange" id="g-envoyer-code" type="button" style="margin-top:12px">Recevoir mon code de vérification par SMS</button>
             <div id="g-zone-code" class="hidden" style="margin-top:14px">
-              <div class="q"><label for="g-code">Code reçu par SMS</label><input type="text" id="g-code" inputmode="numeric" maxlength="8" autocomplete="one-time-code"></div>
+              <div class="q"><label for="g-code">Code reçu par SMS</label><input type="text" id="g-code" inputmode="numeric" maxlength="8" autocomplete="one-time-code"><p class="hint" style="margin-top:6px">Sur la plupart des téléphones, le code se propose tout seul au-dessus du clavier.</p></div>
               <button class="btn btn-orange" id="g-valider" type="button">Valider et voir mon estimation détaillée</button>
             </div>
             <p class="err" id="err-gratuit" style="margin-top:8px"></p>
@@ -1155,7 +1155,7 @@ $("g-cp").addEventListener("input",async()=>{
     sel.innerHTML=l.length?(l.length>1?'<option value="">Choisissez votre commune</option>':"")+l.map(x=>`<option>${x.nom}</option>`).join(""):'<option value="">Code postal inconnu</option>';
   }catch(e){ sel.innerHTML='<option value="">Liste indisponible, réessayez</option>' }
 });
-$("choix-gratuit").onclick=()=>{ show("form-gratuit"); hide("choix-gratuit"); $("g-prenom").focus() };
+$("choix-gratuit").onclick=()=>{ evt("clic_gratuit"); show("form-gratuit"); hide("choix-gratuit"); $("g-prenom").focus() };
 function champsGratuit(){
   const v={prenom:$("g-prenom").value.trim(),nom:$("g-nom").value.trim(),telephone:$("g-tel").value.trim(),email:$("g-email").value.trim(),code_postal:$("g-cp").value.trim()};
   if(!v.prenom||!v.nom) return [null,"Indiquez votre prénom et votre nom."];
@@ -1171,13 +1171,14 @@ function debloquerGratuit(){
   banniere("Merci ! Votre estimation détaillée est ci-dessous. Jusqu'à 3 entreprises de votre secteur vont vous contacter pour vous proposer un devis.","c-ok");
   $("c2").scrollIntoView({behavior:"smooth",block:"start"});
 }
+let incompletSignale=false;
 $("g-envoyer-code").onclick=async()=>{
-  const [v,err]=champsGratuit(); $("err-gratuit").textContent=err; if(!v) return;
+  const [v,err]=champsGratuit(); $("err-gratuit").textContent=err; if(!v){ if(!incompletSignale){ incompletSignale=true; evt("formulaire_incomplet") } return }
   if(MODE_DEMO){ debloquerGratuit(); return }
   const b=$("g-envoyer-code"); b.disabled=true; b.textContent="Envoi du code…";
   try{ const r=await fetch("/api/verify-send-code",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({telephone:v.telephone})});
-    if(!r.ok) throw new Error(); show("g-zone-code"); b.textContent="Renvoyer un code"; $("g-code").focus();
-  }catch(e){ $("err-gratuit").textContent="Le SMS n'a pas pu être envoyé. Vérifiez le numéro et réessayez."; b.textContent="Recevoir mon code de vérification par SMS" }
+    if(!r.ok) throw new Error(); evt("code_demande"); show("g-zone-code"); b.textContent="Renvoyer un code"; $("g-code").focus();
+  }catch(e){ evt("code_echec"); $("err-gratuit").textContent="Le SMS n'a pas pu être envoyé. Vérifiez le numéro et réessayez."; b.textContent="Recevoir mon code de vérification par SMS" }
   finally{ b.disabled=false }
 };
 $("g-valider").onclick=async()=>{
@@ -1186,7 +1187,7 @@ $("g-valider").onclick=async()=>{
   const b=$("g-valider"); b.disabled=true;
   try{ const r=await fetch("/api/prix-travaux-contact",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...v,code,consentement:true,metier,reponses:s,estimation_ttc:estimationGratuite})});
     const j=await r.json(); if(!r.ok) throw new Error(j.error||"Erreur"); debloquerGratuit();
-  }catch(e){ $("err-gratuit").textContent=e.message||"L'enregistrement a échoué. Réessayez." }
+  }catch(e){ evt("code_invalide"); $("err-gratuit").textContent=e.message||"L'enregistrement a échoué. Réessayez." }
   finally{ b.disabled=false }
 };
 if(MODE_DEMO) show("demo-note");

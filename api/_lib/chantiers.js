@@ -44,17 +44,32 @@ const esc = (t) => String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<
 const cadre = (contenu) => `<div style="font-family:Arial,sans-serif;color:#27394A;max-width:560px;line-height:1.55"><p style="font-size:22px;font-weight:bold;color:#14304A;margin:0 0 16px">SKY<span style="color:#E8622C">ECO</span> <span style="font-size:12px;color:#5B6268;font-weight:normal">Chantiers</span></p>${contenu}<p style="font-size:11px;color:#8A949C;border-top:1px solid #D5DEE5;padding-top:10px;margin-top:22px">RESINE MARBRE SOL (Skyeco by RMS), 23 route de Corn er Hoet, 56400 Brech. SIRET 939 997 870 00018. Vous recevez cet email car vous êtes inscrit sur skyeco.fr/chantiers. Pour ne plus recevoir de chantiers, répondez STOP.</p></div>`;
 const bouton = (lien, txt) => `<p><a href="${lien}" style="display:inline-block;background:#E8622C;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:bold">${txt}</a></p>`;
 
-// Alerte les artisans validés du bon métier et du bon département (15 au plus)
+// Jeton du particulier pour choisir ses entreprises (30/09/2026)
+export const jetonClient = (c) => crypto.createHmac('sha256', secret()).update(`${c}:client`).digest('hex').slice(0, 32);
+export function jetonClientValide(c, t) {
+  if (!/^[0-9a-f-]{36}$/.test(String(c)) || !/^[0-9a-f]{32}$/.test(String(t))) return false;
+  return crypto.timingSafeEqual(Buffer.from(jetonClient(c)), Buffer.from(String(t)));
+}
+// Entreprises présentées au particulier : validées (décennale vérifiée), bon métier, bon département (5 au plus)
+export async function artisansEligibles(contact, limite = 5) {
+  return sb(`artisans_chantiers?actif=eq.true&decennale_validee=eq.true&metiers=cs.{${contact.metier}}&departements=cs.{${encodeURIComponent(contact.departement)}}&select=id,entreprise,adresse,siret&order=created_at.asc&limit=${limite}`);
+}
+
+// Alerte les artisans validés du bon métier et du bon département (15 au plus).
+// Depuis le 30/09/2026 : si le particulier a choisi ses entreprises (artisans_choisis),
+// seules celles-là sont alertées ; tableau vide = choix pas encore fait, personne n'est alerté.
 export async function notifierArtisans(contact) {
-  const artisans = await sb(`artisans_chantiers?actif=eq.true&decennale_validee=eq.true&metiers=cs.{${contact.metier}}&departements=cs.{${encodeURIComponent(contact.departement)}}&select=id,entreprise,email,telephone&limit=15`);
+  const choix = Array.isArray(contact.artisans_choisis) ? contact.artisans_choisis.filter((x) => /^[0-9a-f-]{36}$/.test(x)) : null;
+  if (choix && !choix.length) return 0;
+  const artisans = await sb(`artisans_chantiers?actif=eq.true&decennale_validee=eq.true&metiers=cs.{${contact.metier}}&departements=cs.{${encodeURIComponent(contact.departement)}}${choix ? `&id=in.(${choix.join(',')})` : ''}&select=id,entreprise,email,telephone&limit=15`);
   const resume = resumeAnonyme(contact), prix = prixChantier(contact.metier);
   for (const a of artisans) {
     const lien = lienChantier(contact.id, a.id);
     try {
       await email(a.email, `Nouveau chantier près de chez vous : ${METIERS[contact.metier]} (${contact.code_postal})`, cadre(
-        `<p>Bonjour,</p><p>Un particulier cherche une entreprise pour ce projet :</p><p style="background:#F4F7F9;border-radius:8px;padding:12px 14px"><strong>${esc(resume)}</strong><br>Téléphone vérifié par SMS.</p><p>Le contact est réservé aux <strong>3 premières entreprises</strong> qui le prennent, pour ${prix.toFixed(2).replace('.', ',')} € TTC.</p>${bouton(lien, 'Voir et prendre ce chantier')}`));
+        `<p>Bonjour,</p><p>Un particulier cherche une entreprise pour ce projet :</p><p style="background:#F4F7F9;border-radius:8px;padding:12px 14px"><strong>${esc(resume)}</strong><br>Téléphone vérifié par SMS.</p>${choix ? `<p><strong>Le particulier a choisi votre entreprise</strong> parmi celles que nous lui avons présentées. Ses coordonnées vous sont réservées pour ${prix.toFixed(2).replace('.', ',')} € TTC.</p>` : `<p>Le contact est réservé aux <strong>3 premières entreprises</strong> qui le prennent, pour ${prix.toFixed(2).replace('.', ',')} € TTC.</p>`}${bouton(lien, 'Voir et prendre ce chantier')}`));
     } catch (e) { console.error('notifierArtisans :', e.message); }
-    await sms(a.telephone, `Skyeco : nouveau chantier ${METIERS[contact.metier]} à ${contact.code_postal}. 3 places. ${lien}`);
+    await sms(a.telephone, choix ? `Skyeco : un particulier vous a choisi pour un chantier ${METIERS[contact.metier]} à ${contact.code_postal}. ${lien}` : `Skyeco : nouveau chantier ${METIERS[contact.metier]} à ${contact.code_postal}. 3 places. ${lien}`);
   }
   return artisans.length;
 }

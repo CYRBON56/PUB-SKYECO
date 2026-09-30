@@ -990,8 +990,81 @@ const CATS=["Toiture et façade","Extérieur","Énergie et isolation","Intérieu
 const MUST_COMMUNS=["La garantie décennale, avec le nom de l'assureur","Le délai d'intervention et la durée des travaux"];
 const INC_COMMUNS=["Garantie décennale","Délai d'intervention"];
 
+/* ============================================================
+   OPTIONS PAR CORPS DE MÉTIER (30/09/2026)
+   Chaque option apparaît dans le devis détaillé sous forme de
+   question Oui/Non ; si « Oui », une ligne est ajoutée au devis.
+   Format : [id, libellé, prix HT (s,A,P) , condition facultative]
+   A = surface (ou quantité) du projet, P = périmètre estimé.
+   Prix indicatifs, coefficient du département appliqué ensuite.
+   ============================================================ */
+const mn=(v,m)=>Math.max(m,v);
+const OPT_TERRAIN={
+ terr:["Terrassement et décaissement préalable",(s,A)=>mn(A*30,600)],
+ brise:["Utilisation d'un brise-roche (sol rocheux ou vieux béton épais)",(s,A)=>mn(A*25,650)],
+ evac:["Évacuation des déblais en décharge agréée",(s,A)=>mn(A*15,350)],
+ bord:["Pose de bordures (périmètre estimé)",(s,A,P)=>P*42],
+ geo:["Géotextile anti-herbe sous le revêtement",(s,A)=>A*4],
+ dessouch:["Dessouchage ou arrachage d'arbustes",()=>450]
+};
+const T=(...k)=>k.map(x=>OPT_TERRAIN[x]);
+const OPTS={
+ toiture:[["Crochets de sécurité ou ligne de vie en toiture",(s,A)=>mn(A*6,500),is("projet","refection")],
+  ["Habillage des débords de toit (sous-faces et bandeaux)",(s,A,P)=>P*55],
+  ["Remplacement de la zinguerie (noues, abergements)",(s,A)=>mn(A*10,600),is("projet","refection")],
+  ["Nettoyage des gouttières et descentes",()=>250,not("gout","oui")]],
+ ravalement:[["Peinture des volets et boiseries extérieures",()=>1200],
+  ["Peinture des sous-faces de toit",(s,A,P)=>P*30],
+  ["Traitement anti-mousse longue durée",(s,A)=>A*4],
+  ["Isolation thermique par l'extérieur",(s,A)=>A*120]],
+ resine:[...T("terr","brise","evac"),["Création d'une dalle béton support",(s,A)=>A*55],["Drainage périphérique",(s,A,P)=>P*50]],
+ allees:[...T("brise","geo","dessouch"),["Éclairage de l'allée (bornes ou spots encastrés)",()=>900],["Évacuation des anciens gravats (béton, enrobé)",(s,A)=>mn(A*12,300)]],
+ terrasses:[...T("terr","brise","evac","bord","geo"),["Éclairage LED intégré",()=>600],["Banc ou jardinière intégrés",()=>850]],
+ clotures:[["Utilisation d'un brise-roche pour les poteaux",(s,A)=>mn(A*12,450)],
+  ["Arrachage d'une haie existante",(s,A)=>A*25],
+  ["Débroussaillage de la bande de pose",(s,A)=>A*6],
+  ["Évacuation des déblais et végétaux",()=>350],
+  ["Occultation (lamelles ou brise-vue)",(s,A)=>A*25,is("projet","grillage","rigide")]],
+ portails:[["Utilisation d'un brise-roche (fondations des piliers ou rail)",()=>600],
+  ["Évacuation des déblais",()=>250],
+  ["Visiophone ou interphone",()=>700,is("moteur","oui")],
+  ["Clavier à code",()=>250,is("moteur","oui")],
+  ["Seuil en enrobé ou béton devant le portail",()=>650],
+  ["Boîte aux lettres intégrée au pilier",()=>250]],
+ terrassement:[...T("brise","geo","bord","dessouch"),["Apport de concassé compacté (couche de forme)",(s,A)=>A*18]],
+ piscine:[["Utilisation d'un brise-roche",(s,A)=>mn(A*60,1500),not("projet","liner")],
+  ["Évacuation des terres du bassin en décharge",(s,A)=>A*80,not("projet","liner")],
+  ["Margelles en pierre reconstituée",(s,A)=>4.2*Math.sqrt(A)*85,not("projet","liner")],
+  ["Local technique",()=>2500,not("projet","liner")],
+  ["Éclairage LED du bassin",()=>800],
+  ["Traitement au sel (électrolyseur)",()=>1400]],
+ anc:[["Évacuation des déblais en décharge",()=>600],
+  ["Remise en état du terrain (terre végétale, engazonnement)",()=>700],
+  ["Regard de visite supplémentaire",()=>250],
+  ["Ventilation haute jusqu'au toit",()=>450]],
+ isolation:[["Pare-vapeur",(s,A)=>A*6],["Trappe d'accès isolée",()=>250],["Évacuation des déchets de chantier",()=>200]],
+ pac:[["Neutralisation et évacuation d'une cuve à fioul",()=>900],["Désembouage des radiateurs",()=>600],["Thermostat connecté",()=>250],["Socle béton ou supports muraux",()=>250]],
+ menuiseries:[["Évacuation et recyclage des anciennes menuiseries",s=>mn(s.qty*40,150)],["Moustiquaires",s=>s.qty*120,not("projet","porte","volet")],["Grilles de ventilation",s=>s.qty*30,is("projet","fenetre")]],
+ sdb:[["Dépose et évacuation de l'ancienne salle de bain",()=>800],["Sèche-serviettes",()=>450],["Ventilation (VMC ou extracteur)",()=>450],["Miroir éclairant",()=>250]],
+ cuisine:[["Hotte avec sortie extérieure",()=>450],["Éclairage LED sous les meubles hauts",()=>250],["Évacuation des emballages et déchets",()=>150]],
+ sols:[["Sous-couche isolante phonique",(s,A)=>A*5],["Barres de seuil et finitions de portes",()=>150],["Déplacement du mobilier",()=>250]],
+ peinture:[["Rebouchage et enduit complet des murs",s=>s.qty*10],["Lessivage avant peinture",s=>s.qty*4],["Peinture des radiateurs",()=>300]],
+ platrerie:[["Plaques phoniques (isolation acoustique renforcée)",(s,A)=>A*12],["Trappe de visite",()=>150],["Évacuation des gravats",()=>250]],
+ electricite:[["Attestation Consuel",()=>180],["Prises réseau RJ45",()=>400],["Éclairage extérieur",()=>450],["Détecteurs de fumée",()=>120]],
+ plomberie:[["Adoucisseur d'eau",()=>1500],["Réducteur de pression",()=>250],["Robinet extérieur antigel",()=>250],["Évacuation de l'ancien matériel",()=>150]]
+};
+/* Branchement : ajoute les questions Oui/Non à la fin du devis détaillé */
+Object.entries(OPTS).forEach(([k,list])=>{const M=METIERS[k]; if(!M) return;
+ M.opts=list.map((o,i)=>({id:`opt_${i}`,label:o[0],prix:o[1],when:o[2]}));
+ M.detail.push(...M.opts.map(o=>ch(o.id,`Option : ${o.label}`,YN,"non",o.when)));
+});
+function ajouterOptions(M,s,r){ if(!M.opts) return;
+ const A=r.area||s.qty||0, P=4*Math.sqrt(A);
+ M.opts.forEach(o=>{ if(s[o.id]==="oui"&&(!o.when||o.when(s))) add(r.L,o.label,o.prix(s,A,P)) });
+}
+
 function estimer(M,s){
-  const r=M.calc(s), dc=deptCoef(s.dept);
+  const r=M.calc(s); ajouterOptions(M,s,r); const dc=deptCoef(s.dept);
   const lines=r.L.map(([l,v])=>[l,v*dc]); let ht=lines.reduce((a,[,v])=>a+v,0);
   if(ht<r.min){lines.push(["Ajustement minimum de chantier",r.min-ht]);ht=r.min}
   const tva=M.tva?M.tva(s):(s.age==="non"?.2:.1);

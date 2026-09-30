@@ -336,7 +336,7 @@ input[type=tel],input[type=email]{font:inherit;color:var(--ink);background:var(-
       <details><summary>D'où viennent les prix&nbsp;?</summary><p>De prix moyens du marché pour chaque métier, ajustés selon votre département. Ils sont mis à jour régulièrement et indexés sur les indices officiels du coût de la construction (index BT de l'INSEE).</p></details>
       <details><summary>Que se passe-t-il si je change d'avis sur un matériau&nbsp;?</summary><p>Vous modifiez vos réponses autant que vous voulez, le prix se recalcule. Seuls le type de travaux, le département et la surface sont fixés à l'achat, avec une marge pour corriger une erreur de mesure.</p></details>
       <details><summary>Puis-je être remboursé&nbsp;?</summary><p>Si vous choisissez l'option anonyme, l'estimation est un contenu numérique fourni immédiatement. Au moment du paiement, vous demandez son accès immédiat et reconnaissez perdre votre droit de rétractation dès le début de son utilisation.</p></details>
-      <details><summary>Mes informations sont-elles transmises à des artisans&nbsp;?</summary><p>Seulement si vous choisissez l'option gratuite et que vous l'acceptez expressément : vos coordonnées et votre projet sont alors transmis à 3 entreprises au maximum, près de chez vous, qui paient Skyeco pour ce contact. Avec l'option anonyme, rien n'est jamais transmis.</p></details>
+      <details><summary>Mes informations sont-elles transmises à des artisans&nbsp;?</summary><p>Seulement si vous choisissez l'option gratuite. Nous vous présentons alors les entreprises vérifiées de votre secteur, avec leur adresse, leur SIRET et leur assurance décennale, et vous choisissez vous-même celles qui peuvent vous contacter, 3 au maximum. Aucune autre entreprise ne reçoit vos coordonnées. Avec l'option anonyme, rien n'est jamais transmis.</p></details>
       <details><summary>Quelle différence entre l'option gratuite et l'option anonyme&nbsp;?</summary><p>L'option gratuite donne l'estimation détaillée et vous met en relation avec des entreprises de votre secteur. L'option anonyme, payante, donne l'estimation détaillée et la vérification de vos devis ligne par ligne, sans que personne ne vous contacte.</p></details>
     </div>
   </section>
@@ -374,18 +374,18 @@ input[type=tel],input[type=email]{font:inherit;color:var(--ink);background:var(-
         <div class="offre" id="offre-gratuite">
           <span class="offre-tag">Option gratuite</span>
           <h3 style="margin-top:6px">Estimation détaillée offerte, et des devis d'entreprises près de chez vous</h3>
-          <p class="hint" style="margin:0 0 12px">Vous recevez gratuitement votre estimation détaillée. En échange, jusqu'à 3 entreprises vérifiées de votre secteur vous contactent pour vous proposer un devis. Vous n'êtes jamais obligé d'accepter.</p>
+          <p class="hint" style="margin:0 0 12px">Vous recevez gratuitement votre estimation détaillée. Nous vous présentons ensuite les entreprises vérifiées de votre secteur (adresse, SIRET, assurance décennale) : c'est vous qui choisissez celles qui peuvent vous contacter, 3 au maximum. Vous n'êtes jamais obligé d'accepter un devis.</p>
           <button class="btn btn-navy" id="choix-gratuit" type="button">Choisir l'option gratuite</button>
           <div id="form-gratuit" class="hidden" style="margin-top:16px">
             <div class="champs2">
               <div class="q"><label for="g-prenom">Prénom</label><input type="text" id="g-prenom" autocomplete="given-name" maxlength="60"></div>
               <div class="q"><label for="g-nom">Nom</label><input type="text" id="g-nom" autocomplete="family-name" maxlength="60"></div>
-              <div class="q"><label for="g-tel">Téléphone mobile</label><input type="tel" id="g-tel" autocomplete="tel" maxlength="20" placeholder="06 12 34 56 78"><p class="hint" style="margin-top:6px">Nous vous envoyons un code par SMS pour vérifier votre numéro. Seules 3 entreprises sérieuses de votre secteur pourront vous appeler, jamais de démarchage ni de revente à d'autres.</p></div>
+              <div class="q"><label for="g-tel">Téléphone mobile</label><input type="tel" id="g-tel" autocomplete="tel" maxlength="20" placeholder="06 12 34 56 78"><p class="hint" style="margin-top:6px">Nous vous envoyons un code par SMS pour vérifier votre numéro. Seules les entreprises que vous choisirez pourront vous appeler, jamais de démarchage ni de revente à d'autres.</p></div>
               <div class="q"><label for="g-email">Email</label><input type="email" id="g-email" autocomplete="email" maxlength="120"></div>
               <div class="q"><label for="g-cp">Code postal des travaux</label><input type="text" id="g-cp" inputmode="numeric" maxlength="5" placeholder="56400"></div>
               <div class="q"><label for="g-commune">Commune des travaux</label><select id="g-commune" style="font:inherit;width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)"><option value="">Saisissez d'abord le code postal</option></select></div>
             </div>
-            <label class="accord"><input type="checkbox" id="g-accord"> <span>J'accepte que Skyeco (RESINE MARBRE SOL) transmette mes coordonnées et la description de mon projet à 3 entreprises au maximum, sélectionnées près de chez moi, pour qu'elles me contactent au sujet de mes travaux. Ce service est gratuit pour moi car ces entreprises paient Skyeco pour ce contact. Je peux retirer mon accord à tout moment en écrivant à infos@ecosky.fr. <a href="/confidentialite-estimateur.html" target="_blank" rel="noopener">Politique de confidentialité</a></span></label>
+            <label class="accord"><input type="checkbox" id="g-accord"> <span>J'accepte que Skyeco (RESINE MARBRE SOL) transmette mes coordonnées et la description de mon projet aux entreprises que je choisirai parmi celles qui me seront présentées (3 au maximum), pour qu'elles me contactent au sujet de mes travaux. Ce service est gratuit pour moi car ces entreprises paient Skyeco pour ce contact. Je peux retirer mon accord à tout moment en écrivant à infos@ecosky.fr. <a href="/confidentialite-estimateur.html" target="_blank" rel="noopener">Politique de confidentialité</a></span></label>
             <button class="btn btn-orange" id="g-envoyer-code" type="button" style="margin-top:12px">Recevoir mon code de vérification par SMS</button>
             <div id="g-zone-code" class="hidden" style="margin-top:14px">
               <div class="q"><label for="g-code">Code reçu par SMS</label><input type="text" id="g-code" inputmode="numeric" maxlength="8" autocomplete="one-time-code"><p class="hint" style="margin-top:6px">Sur la plupart des téléphones, le code se propose tout seul au-dessus du clavier.</p></div>
@@ -407,6 +407,15 @@ input[type=tel],input[type=email]{font:inherit;color:var(--ink);background:var(-
         <p class="demo-note hidden" id="demo-note">Mode démonstration : hors de skyeco.fr, le bouton débloque directement sans paiement.</p>
       </div>
     </section>
+
+    <section class="card hidden" id="choix-ent">
+      <h2>Choisissez les entreprises qui peuvent vous contacter</h2>
+      <p class="hint">Entreprises de votre secteur dont nous avons vérifié l'assurance décennale. Cochez-en 3 au maximum : seules celles-là recevront vos coordonnées.</p>
+      <div id="liste-ent" style="display:grid;gap:10px;margin:14px 0"></div>
+      <button class="btn btn-orange" id="envoyer-choix" type="button">Envoyer mon choix</button>
+      <p class="err" id="err-choix" style="margin-top:8px"></p>
+    </section>
+    <section class="card hidden" id="choix-ok"><p id="choix-ok-txt" style="margin:0"></p></section>
 
     <section class="card hidden" id="c2">
       <div class="card-head"><span class="num">2</span><div><h2>Les détails qui font le prix</h2><p class="hint">Chaque réponse affine l'estimation. Vous pourrez les modifier ensuite.</p></div></div>
@@ -1112,7 +1121,7 @@ function pickMetier(m,scroll){
   document.querySelectorAll("[data-metier]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.metier===m));
   $("free-title").textContent=M.nom; show("free-zone");
   renderQs("free-qs",M.free);
-  ["r1","c2","r2","c3","r3"].forEach(hide); show("paywall"); $("err1").textContent="";
+  ["r1","c2","r2","c3","r3","choix-ent","choix-ok"].forEach(hide); show("paywall"); $("err1").textContent="";
   if(scroll) $("free-zone").scrollIntoView({behavior:"smooth",block:"start"});
 }
 document.querySelectorAll("[data-metier]").forEach(b=>b.addEventListener("click",()=>pickMetier(b.dataset.metier,true)));
@@ -1186,12 +1195,30 @@ $("g-valider").onclick=async()=>{
   const code=$("g-code").value.replace(/\D/g,""); if(code.length<4){ $("err-gratuit").textContent="Saisissez le code reçu par SMS."; return }
   const b=$("g-valider"); b.disabled=true;
   try{ const r=await fetch("/api/prix-travaux-contact",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...v,code,consentement:true,metier,reponses:s,estimation_ttc:estimationGratuite})});
-    const j=await r.json(); if(!r.ok) throw new Error(j.error||"Erreur"); debloquerGratuit();
+    const j=await r.json(); if(!r.ok) throw new Error(j.error||"Erreur"); afficherChoix(j); debloquerGratuit();
   }catch(e){ evt("code_invalide"); $("err-gratuit").textContent=e.message||"L'enregistrement a échoué. Réessayez." }
   finally{ b.disabled=false }
 };
 if(MODE_DEMO) show("demo-note");
 function evt(type,m){ if(MODE_DEMO) return; try{ navigator.sendBeacon("/api/prix-travaux-evenement",new Blob([JSON.stringify({type,metier:m||metier,pub:/[?&](gclid|gbraid|wbraid)=/.test(location.search)})],{type:"application/json"})) }catch(e){} }
+/* Choix des entreprises par le particulier (30/09/2026) */
+let choixCtx=null;
+function afficherChoix(j){
+  choixCtx=j; const l=j.entreprises||[];
+  if(!l.length){ $("choix-ok-txt").textContent="Aucune entreprise vérifiée n'est encore inscrite pour ce type de travaux dans votre secteur. Nous vous préviendrons par email dès qu'une entreprise sera disponible, et c'est vous qui choisirez. En attente, votre estimation détaillée est ci-dessous."; show("choix-ok"); return }
+  $("liste-ent").innerHTML=l.map(a=>`<label class="accord" style="border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;align-items:flex-start"><input type="checkbox" value="${esc(a.id)}" class="ent-cb"> <span><strong>${esc(a.entreprise)}</strong><br>${a.adresse?esc(a.adresse)+"<br>":""}${a.siret?"SIRET "+esc(a.siret)+"<br>":""}<span style="color:var(--orange);font-weight:600">✓ Assurance décennale vérifiée par Skyeco</span></span></label>`).join("");
+  $("liste-ent").querySelectorAll(".ent-cb").forEach(cb=>cb.addEventListener("change",()=>{ if([...document.querySelectorAll(".ent-cb:checked")].length>3){ cb.checked=false; $("err-choix").textContent="3 entreprises au maximum." } else $("err-choix").textContent="" }));
+  show("choix-ent");
+}
+$("envoyer-choix").onclick=async()=>{
+  const ids=[...document.querySelectorAll(".ent-cb:checked")].map(x=>x.value);
+  if(!ids.length){ $("err-choix").textContent="Cochez au moins une entreprise."; return }
+  const b=$("envoyer-choix"); b.disabled=true; b.textContent="Envoi…";
+  try{ const r=await fetch("/api/prix-travaux-choix",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contact_id:choixCtx.contact_id,jeton:choixCtx.jeton,artisans:ids})});
+    const j=await r.json(); if(!r.ok) throw new Error(j.error||"Erreur");
+    evt("choix_entreprises"); hide("choix-ent"); $("choix-ok-txt").textContent=ids.length>1?`C'est envoyé : les ${ids.length} entreprises choisies vont vous contacter pour vous proposer un devis.`:"C'est envoyé : l'entreprise choisie va vous contacter pour vous proposer un devis."; show("choix-ok");
+  }catch(e){ $("err-choix").textContent=e.message||"L'envoi a échoué. Réessayez." ; b.disabled=false; b.textContent="Envoyer mon choix" }
+};
 function ouvrirDetail(){ hide("paywall"); show("c2"); renderQs("detail-qs",METIERS[metier].detail) }
 $("pay").onclick=async()=>{
   if(MODE_DEMO){ ouvrirDetail(); $("c2").scrollIntoView({behavior:"smooth",block:"start"}); return }

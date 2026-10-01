@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pompe à chaleur : vos aides 2026 en 2 minutes | Skyeco</title>
+<meta name="description" content="Simulez vos aides pour une pompe à chaleur air/eau ou air/air : MaPrimeRénov', prime CEE, TVA réduite. Recevez votre dossier pré-rempli et la liste des pièces à fournir.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<!--
+  01/10/2026 — Simulateur d'aides PAC (air/eau et air/air).
+  Barèmes MaPrimeRénov' 2026 (parcours par geste) : service-public.gouv.fr F35083, vérifié le 01/09/2026.
+  Prime CEE : fourchettes indicatives (fiches BAR-TH-171 air/eau et BAR-TH-129 air/air) — le montant exact
+  dépend de l'offre du partenaire CEE, de l'efficacité de la PAC et de la zone climatique.
+  À METTRE À JOUR à chaque changement de barème (en général au 1er janvier).
+-->
+<style>
+:root{
+  --navy:#14304A; --navy-2:#1C3F5F; --orange:#E8622C; --orange-soft:#FBE3D8;
+  --bg:#F4F7F9; --surface:#FFFFFF; --ink:#14304A; --text:#27394A; --muted:#5B6268; --line:#D5DEE5;
+  --ok:#2E7D5B; --ok-soft:#DDF0E6; --alert:#C0392B; --alert-soft:#F8E0DD; --focus:#2F6FEB;
+  /* Couleurs officielles des profils MaPrimeRénov' : l'accent du résultat prend la couleur du foyer */
+  --mpr-bleu:#1F4FD1; --mpr-jaune:#E3B505; --mpr-violet:#7A3FB8; --mpr-rose:#D94E8F;
+  --accent:var(--navy);
+  --display:"Big Shoulders Display","Arial Narrow",Arial,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1B26; --surface:#162736; --ink:#E9F0F6; --text:#CBD6DF; --muted:#93A3B1; --line:#2A3E50;
+    --orange-soft:#3A2418; --ok-soft:#173327; --alert-soft:#3A1C19;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1B26; --surface:#162736; --ink:#E9F0F6; --text:#CBD6DF; --muted:#93A3B1; --line:#2A3E50;
+  --orange-soft:#3A2418; --ok-soft:#173327; --alert-soft:#3A1C19;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);font-size:17px;line-height:1.6}
+a{color:var(--navy-2)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) a{color:#8FB8E0}}
+.wrap{max-width:860px;margin:0 auto;padding:0 20px}
+header.top{background:var(--navy);color:#fff}
+header.top .wrap{display:flex;justify-content:space-between;align-items:center;padding-top:14px;padding-bottom:14px}
+.logo{font-family:var(--display);font-weight:900;font-size:1.6rem;letter-spacing:.02em;color:#fff;text-decoration:none}
+.logo b{color:var(--orange)}
+.hero{background:var(--navy);color:#E9F0F6;padding:36px 0 56px}
+.hero h1{font-family:var(--display);font-weight:800;font-size:clamp(2.3rem,7vw,3.8rem);line-height:1;margin:0 0 16px;color:#fff;max-width:14ch}
+.hero p{max-width:58ch;margin:0;color:#C9D6E2}
+main{margin-top:-28px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:26px 24px;margin-bottom:22px}
+h2{font-family:var(--display);font-weight:800;font-size:1.9rem;line-height:1.1;color:var(--ink);margin:0 0 6px}
+h3{font-size:1.05rem;color:var(--ink);margin:22px 0 10px}
+.hint{color:var(--muted);font-size:.93rem;margin:4px 0 0}
+fieldset{border:0;margin:0 0 18px;padding:0}
+legend{font-weight:600;color:var(--ink);margin-bottom:8px;padding:0}
+.choix{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+.choix label{display:flex;gap:10px;align-items:flex-start;border:1.5px solid var(--line);border-radius:6px;padding:11px 12px;cursor:pointer;background:var(--surface)}
+.choix label:has(input:checked){border-color:var(--orange);background:var(--orange-soft)}
+.choix input{margin-top:4px;accent-color:var(--orange)}
+.choix small{display:block;color:var(--muted);font-size:.85rem;line-height:1.35}
+.champs{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.champ label{display:block;font-weight:600;color:var(--ink);font-size:.95rem;margin-bottom:5px}
+input[type=text],input[type=email],input[type=tel],input[type=number],select{width:100%;font:inherit;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:6px;padding:10px 12px}
+input:focus-visible,select:focus-visible,button:focus-visible,.choix label:focus-within{outline:3px solid var(--focus);outline-offset:2px}
+.btn{font:inherit;font-weight:600;border:0;border-radius:6px;padding:13px 22px;cursor:pointer;background:var(--orange);color:#fff;font-size:1.02rem}
+.btn:hover{filter:brightness(.95)}
+.btn.sec{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.err{color:var(--alert);font-weight:600;min-height:1.2em;margin:10px 0 0}
+.hidden{display:none!important}
+
+/* Le relevé d'aides : l'élément fort de la page, aux couleurs du profil MaPrimeRénov' */
+.releve{border-top:10px solid var(--accent)}
+.profil{display:inline-block;font-weight:600;color:#fff;background:var(--accent);border-radius:999px;padding:3px 14px;font-size:.92rem}
+.total{font-family:var(--display);font-weight:900;font-size:clamp(2.6rem,9vw,4.4rem);line-height:1;color:var(--ink);margin:14px 0 4px}
+.lignes{width:100%;border-collapse:collapse;margin-top:16px}
+.lignes td{padding:11px 0;border-top:1px solid var(--line);vertical-align:top}
+.lignes td:last-child{text-align:right;white-space:nowrap;font-weight:600;color:var(--ink);padding-left:16px}
+.lignes .non td:last-child{color:var(--muted);font-weight:500}
+.lignes small{display:block;color:var(--muted);font-size:.86rem;line-height:1.4}
+.note{background:var(--orange-soft);border-radius:6px;padding:12px 14px;margin-top:16px;font-size:.95rem}
+.alerte{background:var(--alert-soft);border-radius:6px;padding:12px 14px;margin-top:12px;font-size:.95rem}
+ol.etapes{padding-left:22px;margin:8px 0 0}
+ol.etapes li{margin-bottom:10px}
+ol.etapes strong{color:var(--ink)}
+.accord{display:flex;gap:10px;align-items:flex-start;font-size:.9rem;color:var(--muted);margin-top:14px}
+.accord input{margin-top:4px;accent-color:var(--orange)}
+footer{color:var(--muted);font-size:.85rem;padding:24px 0 40px}
+
+/* Dossier imprimable */
+#dossier{background:#fff;color:#14304A}
+#dossier h2{color:#14304A}
+#dossier .bloc{border:1px solid #D5DEE5;border-radius:4px;padding:12px 14px;margin:12px 0}
+#dossier .bloc h4{margin:0 0 6px;font-size:1rem}
+#dossier dl{display:grid;grid-template-columns:max-content 1fr;gap:3px 14px;margin:0;font-size:.95rem}
+#dossier dt{color:#5B6268}
+#dossier ul.pieces{list-style:none;padding:0;margin:0}
+#dossier ul.pieces li{padding:4px 0 4px 28px;position:relative}
+#dossier ul.pieces li::before{content:"";position:absolute;left:0;top:8px;width:15px;height:15px;border:1.5px solid #14304A;border-radius:2px}
+@media print{
+  @page{margin:14mm}
+  body{background:#fff;font-size:11.5pt}
+  body>*:not(main), main>*:not(#zone-dossier), #zone-dossier>*:not(#dossier){display:none!important}
+  main{margin:0} .wrap{max-width:none;padding:0}
+  #dossier{border:0;padding:0}
+  .no-print{display:none!important}
+}
+@media (prefers-reduced-motion: no-preference){
+  .releve{animation:apparait .35s ease-out}
+  @keyframes apparait{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap"><a class="logo" href="/">SKY<b>ECO</b></a><span style="font-size:.9rem;color:#C9D6E2">Aides pompe à chaleur 2026</span></div></header>
+
+<section class="hero">
+  <div class="wrap">
+    <h1>Votre pompe à chaleur, combien d'aides ?</h1>
+    <p>Répondez à quelques questions sur votre logement et votre foyer. Vous voyez tout de suite les aides auxquelles vous avez droit, puis vous recevez votre dossier pré-rempli avec la liste exacte des papiers à préparer.</p>
+  </div>
+</section>
+
+<main class="wrap">
+  <form id="simu" class="card" novalidate>
+    <h2>Votre projet</h2>
+    <fieldset>
+      <legend>Quel type de pompe à chaleur ?</legend>
+      <div class="choix">
+        <label><input type="radio" name="projet" value="air_eau" checked><span>Air/eau<small>Remplace la chaudière, chauffe les radiateurs ou le plancher et l'eau chaude</small></span></label>
+        <label><input type="radio" name="projet" value="air_air"><span>Air/air<small>Climatisation réversible : chaud l'hiver, frais l'été</small></span></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Votre chauffage actuel</legend>
+      <div class="choix">
+        <label><input type="radio" name="chauffage" value="fioul" checked><span>Fioul</span></label>
+        <label><input type="radio" name="chauffage" value="gaz"><span>Gaz</span></label>
+        <label><input type="radio" name="chauffage" value="electrique"><span>Électrique</span></label>
+        <label><input type="radio" name="chauffage" value="bois"><span>Bois ou autre</span></label>
+      </div>
+    </fieldset>
+    <fieldset id="bloc-cuve">
+      <legend>Faut-il retirer une cuve à fioul ?</legend>
+      <div class="choix">
+        <label><input type="radio" name="cuve" value="oui"><span>Oui</span></label>
+        <label><input type="radio" name="cuve" value="non" checked><span>Non</span></label>
+      </div>
+    </fieldset>
+
+    <h2 style="margin-top:28px">Votre logement</h2>
+    <div class="champs" style="margin-bottom:18px">
+      <div class="champ"><label for="cp">Code postal du logement</label><input type="text" id="cp" inputmode="numeric" maxlength="5" autocomplete="postal-code" placeholder="56400"></div>
+      <div class="champ"><label for="surface">Surface chauffée (m²)</label><input type="number" id="surface" min="10" max="1000" inputmode="numeric" placeholder="110"></div>
+    </div>
+    <fieldset>
+      <legend>Vous êtes</legend>
+      <div class="choix">
+        <label><input type="radio" name="statut" value="occupant" checked><span>Propriétaire et j'y habite</span></label>
+        <label><input type="radio" name="statut" value="bailleur"><span>Propriétaire et je le loue</span></label>
+        <label><input type="radio" name="statut" value="locataire"><span>Locataire</span></label>
+      </div>
+    </fieldset>
+    <fieldset id="bloc-rp">
+      <legend>C'est votre résidence principale ?</legend>
+      <div class="choix">
+        <label><input type="radio" name="rp" value="oui" checked><span>Oui<small>J'y vis au moins 8 mois par an</small></span></label>
+        <label><input type="radio" name="rp" value="non"><span>Non<small>Résidence secondaire</small></span></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Le logement a été construit il y a</legend>
+      <div class="choix">
+        <label><input type="radio" name="age" value="moins2"><span>Moins de 2 ans</span></label>
+        <label><input type="radio" name="age" value="2a15"><span>Entre 2 et 15 ans</span></label>
+        <label><input type="radio" name="age" value="plus15" checked><span>Plus de 15 ans</span></label>
+      </div>
+    </fieldset>
+
+    <h2 style="margin-top:28px">Votre foyer</h2>
+    <p class="hint" style="margin-bottom:12px">Ces deux chiffres sont sur votre avis d'imposition 2026 (revenus 2025), en première page. S'il y a plusieurs avis dans le foyer, additionnez les revenus.</p>
+    <div class="champs">
+      <div class="champ"><label for="personnes">Nombre de personnes dans le foyer</label><input type="number" id="personnes" min="1" max="15" value="2" inputmode="numeric"></div>
+      <div class="champ"><label for="rfr">Revenu fiscal de référence (€)</label><input type="number" id="rfr" min="0" max="10000000" inputmode="numeric" placeholder="32000"></div>
+      <div class="champ"><label for="devis">Prix de votre devis TTC (si vous l'avez)</label><input type="number" id="devis" min="0" max="100000" inputmode="numeric" placeholder="Facultatif"></div>
+    </div>
+    <p class="err" id="err-simu" role="alert"></p>
+    <button class="btn" type="submit" style="margin-top:8px">Voir mes aides</button>
+  </form>
+
+  <section id="resultat" class="card releve hidden" aria-live="polite"></section>
+
+  <section id="demarches" class="card hidden">
+    <h2>Dans quel ordre faire les démarches</h2>
+    <p class="hint">L'ordre compte : une étape faite trop tôt peut vous faire perdre une aide.</p>
+    <ol class="etapes" id="liste-etapes"></ol>
+  </section>
+
+  <section id="zone-dossier" class="hidden">
+    <form id="form-dossier" class="card no-print" novalidate>
+      <h2>Recevoir votre dossier pré-rempli</h2>
+      <p class="hint">Nous préparons votre dossier avec vos réponses, la liste des pièces à fournir et les liens officiels. Un conseiller Skyeco vous rappelle pour vérifier votre projet.</p>
+      <div class="champs" style="margin-top:14px">
+        <div class="champ"><label for="d-prenom">Prénom</label><input type="text" id="d-prenom" autocomplete="given-name" maxlength="60"></div>
+        <div class="champ"><label for="d-nom">Nom</label><input type="text" id="d-nom" autocomplete="family-name" maxlength="60"></div>
+        <div class="champ"><label for="d-tel">Téléphone</label><input type="tel" id="d-tel" autocomplete="tel" maxlength="20" placeholder="06 12 34 56 78"></div>
+        <div class="champ"><label for="d-email">Email</label><input type="email" id="d-email" autocomplete="email" maxlength="120"></div>
+        <div class="champ" style="grid-column:1/-1"><label for="d-adresse">Adresse du logement</label><input type="text" id="d-adresse" autocomplete="street-address" maxlength="160"></div>
+        <div class="champ"><label for="d-commune">Commune</label><input type="text" id="d-commune" autocomplete="address-level2" maxlength="80"></div>
+      </div>
+      <label class="accord"><input type="checkbox" id="d-accord"><span>J'accepte que Skyeco (RESINE MARBRE SOL) utilise ces informations pour préparer mon dossier d'aides et me recontacter au sujet de mon projet de pompe à chaleur. Je peux retirer mon accord à tout moment en écrivant à infos@ecosky.fr.</span></label>
+      <p class="err" id="err-dossier" role="alert"></p>
+      <button class="btn" type="submit">Recevoir mon dossier</button>
+    </form>
+
+    <article id="dossier" class="card hidden"></article>
+  </section>
+</main>
+
+<footer class="wrap">
+  Estimation indicative basée sur les barèmes 2026 publiés par l'État (MaPrimeRénov' parcours par geste) et sur des fourchettes de prime CEE constatées. Seuls l'Anah et le partenaire CEE confirment le montant définitif. Skyeco est une marque de RESINE MARBRE SOL, SASU au capital de 50 000 €, 23 route de Corn er Hoet, 56400 Brech, SIRET 939 997 870 00018, RCS Lorient.
+</footer>
+
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const val=n=>{const el=document.querySelector(`input[name="${n}"]:checked`);return el?el.value:null};
+const eur=n=>new Intl.NumberFormat("fr-FR",{maximumFractionDigits:0}).format(Math.round(n))+" €";
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function evt(){} // point d'accroche pour un futur suivi d'étapes
+
+/* ===== Barèmes 2026 (service-public.gouv.fr, fiche F35083) ===== */
+// [1 pers, 2, 3, 4, 5, par personne supplémentaire]
+const PLAFONDS={
+  hors:{bleu:[17363,25393,30540,35676,40835,5151],jaune:[22259,32553,39148,45735,52348,6598],violet:[31185,45842,55196,64550,73907,9357]},
+  idf:{bleu:[24031,35270,42357,49455,56580,7116],jaune:[29253,42933,51564,60208,68877,8663],violet:[40851,60051,71846,84562,96817,12257]}
+};
+const IDF=["75","77","78","91","92","93","94","95"];
+const PROFILS={
+  bleu:{nom:"MaPrimeRénov' Bleu",libelle:"ressources très modestes",couleur:"var(--mpr-bleu)",pac:5000,cuve:1200,ecretement:.90},
+  jaune:{nom:"MaPrimeRénov' Jaune",libelle:"ressources modestes",couleur:"var(--mpr-jaune)",pac:4000,cuve:800,ecretement:.75},
+  violet:{nom:"MaPrimeRénov' Violet",libelle:"ressources intermédiaires",couleur:"var(--mpr-violet)",pac:3000,cuve:400,ecretement:.60},
+  rose:{nom:"MaPrimeRénov' Rose",libelle:"ressources supérieures",couleur:"var(--mpr-rose)",pac:0,cuve:0,ecretement:null}
+};
+const PLAFOND_DEPENSE_PAC=12000; // dépense retenue pour une PAC air/eau
+// Prime CEE : fourchettes indicatives (le montant réel dépend du partenaire CEE, de l'efficacité et de la zone)
+const CEE={air_eau:[2500,4500],air_air:[300,1000]};
+
+function plafond(t,n){return n<=5?t[n-1]:t[4]+(n-5)*t[5]}
+function profilDe(rfr,n,idf){
+  const T=idf?PLAFONDS.idf:PLAFONDS.hors;
+  if(rfr<=plafond(T.bleu,n))return"bleu";
+  if(rfr<=plafond(T.jaune,n))return"jaune";
+  if(rfr<=plafond(T.violet,n))return"violet";
+  return"rose";
+}
+
+function lireReponses(){
+  return{projet:val("projet"),chauffage:val("chauffage"),cuve:val("chauffage")==="fioul"?val("cuve"):"non",
+    cp:$("cp").value.trim(),surface:parseInt($("surface").value,10)||0,statut:val("statut"),
+    rp:val("statut")==="occupant"?val("rp"):"oui",age:val("age"),
+    personnes:parseInt($("personnes").value,10)||0,rfr:parseInt($("rfr").value,10),devis:parseInt($("devis").value,10)||0};
+}
+
+function calculer(r){
+  const dep=r.cp.slice(0,2), idf=IDF.includes(dep), outremer=r.cp.startsWith("97");
+  const cat=profilDe(r.rfr,r.personnes,idf), P=PROFILS[cat];
+  const lignes=[], alertes=[];
+  let min=0,max=0;
+  const neuf=r.age==="moins2";
+  if(outremer)alertes.push("Ce simulateur couvre la France métropolitaine. Les barèmes sont différents en outre-mer.");
+
+  // --- MaPrimeRénov' ---
+  let mprOk=true, motif="";
+  if(r.projet==="air_air"){mprOk=false;motif="La PAC air/air n'est plus aidée seule par MaPrimeRénov'. Elle peut l'être dans une rénovation globale du logement (audit énergétique, logement classé E, F ou G)."}
+  else if(r.statut==="locataire"){mprOk=false;motif="C'est le propriétaire qui peut demander MaPrimeRénov'."}
+  else if(r.rp==="non"){mprOk=false;motif="MaPrimeRénov' ne finance que les résidences principales."}
+  else if(neuf){mprOk=false;motif="Le logement doit avoir au moins 2 ans pour une PAC air/eau."}
+  else if(cat==="rose"){mprOk=false;motif="Les ressources supérieures n'ont pas de forfait MaPrimeRénov' pour un équipement seul."}
+  else if(r.statut==="bailleur"){motif="Le logement doit être loué en résidence principale au moins 6 ans."}
+  const mpr=mprOk?P.pac:0;
+  lignes.push({nom:"MaPrimeRénov' pompe à chaleur air/eau",detail:mprOk?`Forfait ${P.nom}${motif?". "+motif:""}`:motif,min:mpr,max:mpr,ok:mprOk});
+
+  // --- Dépose cuve fioul ---
+  let cuve=0;
+  if(r.cuve==="oui"){
+    const ok=r.statut!=="locataire"&&r.rp==="oui"&&!neuf&&cat!=="rose";
+    cuve=ok?P.cuve:0;
+    lignes.push({nom:"MaPrimeRénov' dépose de la cuve à fioul",detail:ok?"Forfait pour retirer et neutraliser l'ancienne cuve.":"Non accessible avec votre situation.",min:cuve,max:cuve,ok});
+  }
+
+  // --- Prime CEE ---
+  const ceeOk=!neuf;
+  const [cmin,cmax]=ceeOk?CEE[r.projet]:[0,0];
+  const ceeDetail=!ceeOk?"Le logement doit avoir plus de 2 ans."
+    :(r.projet==="air_air"?"Pour une PAC de 12 kW maximum avec un SCOP d'au moins 3,9. Montant selon la surface chauffée, la zone et le partenaire CEE."
+    :"Montant selon l'efficacité de la PAC, la zone climatique et le partenaire CEE.")
+    +(r.statut==="locataire"&&ceeOk?" Possible pour un locataire avec l'accord écrit du propriétaire.":"");
+  lignes.push({nom:"Prime énergie (CEE)",detail:ceeDetail,min:cmin,max:cmax,ok:ceeOk});
+
+  // --- Écrêtement : MaPrimeRénov' + CEE sur la PAC ne peuvent pas dépasser un % de la dépense PAC ---
+  let pacMin=mpr+cmin, pacMax=mpr+cmax;
+  if(r.devis>0&&mprOk&&P.ecretement){
+    const plafondAides=P.ecretement*Math.min(r.devis,PLAFOND_DEPENSE_PAC);
+    if(pacMax>plafondAides){pacMax=plafondAides;pacMin=Math.min(pacMin,plafondAides);
+      alertes.push(`Pour votre profil, MaPrimeRénov' et la prime CEE ne peuvent pas dépasser ${Math.round(P.ecretement*100)} % du prix de la PAC : nous avons limité l'estimation.`)}
+  }
+  min=pacMin+cuve; max=pacMax+cuve;
+
+  // --- TVA ---
+  const tva=r.projet==="air_eau"?"5,5 % au lieu de 20 %, appliquée directement sur le devis."
+    :"10 % au lieu de 20 % dans un logement de plus de 2 ans. Les modèles air/air les plus performants peuvent passer à 5,5 % : votre conseiller vérifie le modèle.";
+
+  return{cat,P,idf,lignes,min,max,tva,alertes,mprOk};
+}
+
+function etapes(r,s){
+  const e=[];
+  e.push("<strong>Visite technique et devis</strong> par l'installateur partenaire"+(r.projet==="air_eau"?" certifié RGE (obligatoire pour les aides). La date de la visite doit figurer sur le devis.":". Le devis doit indiquer la marque, la référence, la puissance et le SCOP de la PAC."));
+  e.push("<strong>Accepter l'offre de prime CEE avant de signer le devis.</strong> Si le devis est signé avant, la prime est perdue.");
+  if(s.mprOk||r.cuve==="oui")e.push("<strong>Créer votre compte et déposer la demande MaPrimeRénov'</strong> sur maprimerenov.gouv.fr. Vous seul pouvez créer le compte. Attendez l'accusé de réception de l'Anah avant de signer le devis et de commencer les travaux.");
+  e.push("<strong>Signer le devis</strong>, puis faire réaliser les travaux.");
+  e.push("<strong>Après les travaux</strong> : envoyer la facture"+(s.mprOk?" sur maprimerenov.gouv.fr pour demander le versement de la prime, et":"")+" au partenaire CEE avec l'attestation sur l'honneur signée.");
+  return e;
+}
+
+function pieces(r,s){
+  const p=["Avis d'imposition 2026 (revenus 2025) de chaque personne du foyer","Justificatif de propriété du logement (taxe foncière ou acte de propriété)","Relevé d'identité bancaire (RIB) pour recevoir les primes","Une adresse email et un téléphone à votre nom (obligatoires pour le compte MaPrimeRénov')","Le devis signé après accord des aides, puis la facture"];
+  if(r.statut==="bailleur")p.push("Attestation sur l'honneur du propriétaire bailleur (formulaire Anah)");
+  if(r.statut==="locataire")p.push("Accord écrit du propriétaire pour les travaux");
+  if(r.cuve==="oui")p.push("Certificat de dégazage et de neutralisation de la cuve (fourni par l'entreprise)");
+  p.push("Photos du chauffage actuel et de l'emplacement prévu pour l'unité extérieure");
+  return p;
+}
+
+let derniere=null;
+$("simu").addEventListener("change",()=>{
+  $("bloc-cuve").classList.toggle("hidden",val("chauffage")!=="fioul");
+  $("bloc-rp").classList.toggle("hidden",val("statut")!=="occupant");
+});
+$("simu").addEventListener("submit",e=>{
+  e.preventDefault();
+  const r=lireReponses(), err=$("err-simu");
+  if(!/^\d{5}$/.test(r.cp)){err.textContent="Indiquez le code postal du logement (5 chiffres).";$("cp").focus();return}
+  if(!(r.personnes>=1&&r.personnes<=15)){err.textContent="Indiquez le nombre de personnes du foyer (entre 1 et 15).";$("personnes").focus();return}
+  if(!(r.rfr>=0)){err.textContent="Indiquez votre revenu fiscal de référence, en première page de l'avis d'imposition.";$("rfr").focus();return}
+  err.textContent="";
+  const s=calculer(r); derniere={r,s};
+  document.documentElement.style.setProperty("--accent",s.P.couleur);
+  const totalTxt=s.max===s.min?eur(s.max):`${eur(s.min)} à ${eur(s.max)}`;
+  $("resultat").innerHTML=`
+    <span class="profil">${esc(s.P.nom)}</span>
+    <p class="hint" style="margin-top:8px">Votre foyer a des ${esc(s.P.libelle)}${s.idf?" (barème Île-de-France)":""}.</p>
+    <div class="total">${totalTxt}</div>
+    <p style="margin:0">d'aides estimées pour votre ${r.projet==="air_eau"?"PAC air/eau":"PAC air/air"}, versées après les travaux.</p>
+    <table class="lignes"><tbody>
+      ${s.lignes.map(l=>`<tr class="${l.ok?"":"non"}"><td>${esc(l.nom)}<small>${esc(l.detail)}</small></td><td>${l.ok?(l.min===l.max?eur(l.min):eur(l.min)+" à "+eur(l.max)):"Non"}</td></tr>`).join("")}
+      <tr><td>TVA réduite<small>${esc(s.tva)}</small></td><td>Incluse</td></tr>
+    </tbody></table>
+    ${s.alertes.map(a=>`<p class="alerte">${esc(a)}</p>`).join("")}
+    ${r.devis>0?`<p class="note">Reste à payer estimé sur votre devis de ${eur(r.devis)} : <strong>${eur(Math.max(0,r.devis-s.max))} à ${eur(Math.max(0,r.devis-s.min))}</strong>.</p>`:""}
+    <p class="note">Montants indicatifs. L'Anah confirme MaPrimeRénov' après étude du dossier, et le partenaire CEE fixe le montant de la prime énergie dans son offre.</p>`;
+  $("liste-etapes").innerHTML=etapes(r,s).map(t=>`<li>${t}</li>`).join("");
+  ["resultat","demarches","zone-dossier"].forEach(id=>$(id).classList.remove("hidden"));
+  $("resultat").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
+});
+
+const LIBELLES={projet:{air_eau:"Pompe à chaleur air/eau",air_air:"Pompe à chaleur air/air"},chauffage:{fioul:"Fioul",gaz:"Gaz",electrique:"Électrique",bois:"Bois ou autre"},
+  statut:{occupant:"Propriétaire occupant",bailleur:"Propriétaire bailleur",locataire:"Locataire"},age:{moins2:"Moins de 2 ans",'2a15':"Entre 2 et 15 ans",plus15:"Plus de 15 ans"}};
+
+function construireDossier(c){
+  const {r,s}=derniere, d=new Date().toLocaleDateString("fr-FR");
+  const totalTxt=s.max===s.min?eur(s.max):`${eur(s.min)} à ${eur(s.max)}`;
+  $("dossier").innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap">
+      <h2>Dossier d'aides pompe à chaleur</h2><span class="hint">Préparé le ${d} par Skyeco</span>
+    </div>
+    <div class="bloc"><h4>Demandeur</h4><dl>
+      <dt>Nom</dt><dd>${esc(c.prenom)} ${esc(c.nom)}</dd>
+      <dt>Adresse du logement</dt><dd>${esc(c.adresse)}, ${esc(r.cp)} ${esc(c.commune)}</dd>
+      <dt>Téléphone</dt><dd>${esc(c.telephone)}</dd><dt>Email</dt><dd>${esc(c.email)}</dd></dl></div>
+    <div class="bloc"><h4>Foyer et logement</h4><dl>
+      <dt>Personnes du foyer</dt><dd>${r.personnes}</dd>
+      <dt>Revenu fiscal de référence</dt><dd>${eur(r.rfr)}</dd>
+      <dt>Profil</dt><dd>${esc(s.P.nom)} (${esc(s.P.libelle)})</dd>
+      <dt>Statut</dt><dd>${esc(LIBELLES.statut[r.statut])}${r.statut==="occupant"?(r.rp==="oui"?", résidence principale":", résidence secondaire"):""}</dd>
+      <dt>Ancienneté</dt><dd>${esc(LIBELLES.age[r.age])}</dd>
+      <dt>Surface chauffée</dt><dd>${r.surface?r.surface+" m²":"À préciser"}</dd>
+      <dt>Chauffage actuel</dt><dd>${esc(LIBELLES.chauffage[r.chauffage])}${r.cuve==="oui"?", cuve à retirer":""}</dd></dl></div>
+    <div class="bloc"><h4>Projet et aides estimées</h4><dl>
+      <dt>Projet</dt><dd>${esc(LIBELLES.projet[r.projet])}</dd>
+      ${s.lignes.map(l=>`<dt>${esc(l.nom)}</dt><dd>${l.ok?(l.min===l.max?eur(l.min):eur(l.min)+" à "+eur(l.max)):"Non éligible"}</dd>`).join("")}
+      <dt>TVA</dt><dd>${esc(s.tva)}</dd>
+      <dt><strong>Total estimé</strong></dt><dd><strong>${totalTxt}</strong></dd></dl></div>
+    <div class="bloc"><h4>Pièces à préparer</h4><ul class="pieces">${pieces(r,s).map(p=>`<li>${esc(p)}</li>`).join("")}</ul></div>
+    <div class="bloc"><h4>Ordre des démarches</h4><ol class="etapes" style="margin:0">${etapes(r,s).map(t=>`<li>${t}</li>`).join("")}</ol></div>
+    <div class="bloc"><h4>Liens officiels</h4><dl>
+      <dt>Demande MaPrimeRénov'</dt><dd>maprimerenov.gouv.fr</dd>
+      <dt>Conseiller public gratuit</dt><dd>France Rénov' : 0 808 800 700</dd>
+      <dt>Formulaires Anah</dt><dd>service-public.gouv.fr, fiche F35083 (attestations, mandat)</dd></dl></div>
+    <p class="hint">Estimation indicative selon les barèmes 2026. Seuls l'Anah et le partenaire CEE confirment le montant définitif. Ne signez aucun devis avant d'avoir accepté l'offre de prime CEE et reçu l'accusé de réception MaPrimeRénov'.</p>
+    <div class="no-print" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
+      <button class="btn" type="button" id="btn-imprimer">Enregistrer en PDF ou imprimer</button>
+    </div>`;
+  $("dossier").classList.remove("hidden");
+  $("btn-imprimer").addEventListener("click",()=>window.print());
+}
+
+$("form-dossier").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const err=$("err-dossier");
+  if(!derniere){err.textContent="Faites d'abord la simulation en haut de la page.";return}
+  const c={prenom:$("d-prenom").value.trim(),nom:$("d-nom").value.trim(),telephone:$("d-tel").value.trim(),email:$("d-email").value.trim(),adresse:$("d-adresse").value.trim(),commune:$("d-commune").value.trim()};
+  if(!c.prenom||!c.nom){err.textContent="Indiquez votre prénom et votre nom.";return}
+  if(!/^0[1-9]\d{8}$/.test(c.telephone.replace(/[\s.-]/g,""))){err.textContent="Indiquez un numéro de téléphone français à 10 chiffres.";$("d-tel").focus();return}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(c.email)){err.textContent="Indiquez une adresse email valide.";$("d-email").focus();return}
+  if(!c.adresse||!c.commune){err.textContent="Indiquez l'adresse et la commune du logement.";return}
+  if(!$("d-accord").checked){err.textContent="Cochez la case d'accord pour recevoir votre dossier.";return}
+  err.textContent="";
+  const b=e.submitter||e.target.querySelector("button"); b.disabled=true; b.textContent="Préparation…";
+  const {r,s}=derniere;
+  const simulation={categorie:s.cat,total_min:Math.round(s.min),total_max:Math.round(s.max),mpr_ok:s.mprOk,idf:s.idf,
+    aides:Object.fromEntries(s.lignes.map((l,i)=>["aide_"+"abcd"[i],{min:l.min,max:l.max,ok:l.ok}]))};
+  const reponses={projet:r.projet,chauffage:r.chauffage,cuve:r.cuve,statut:r.statut,rp:r.rp,age:r.age,personnes:r.personnes,rfr:r.rfr,surface:r.surface,devis:r.devis};
+  try{
+    const res=await fetch("/api/aides-pac",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({...c,code_postal:r.cp,accord:true,simulation,reponses})});
+    const j=await res.json().catch(()=>({}));
+    if(!res.ok)throw new Error(j.error||"L'envoi a échoué. Réessayez dans un instant.");
+    $("form-dossier").classList.add("hidden");
+    construireDossier(c);
+    $("dossier").scrollIntoView({block:"start"});
+  }catch(x){err.textContent=x.message;b.disabled=false;b.textContent="Recevoir mon dossier"}
+});
+})();
+</script>
+</body>
+</html>

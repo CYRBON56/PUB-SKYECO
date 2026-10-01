@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Balise Google Ads (01/10/2026) : la conversion « Demande devis portail » est comptée sur /merci-portail.html -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-17738090056"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','AW-17738090056');</script>
 <title>Portails aluminium autoportés — RMS EcoSky | Devis livraison et pose</title>
 <meta name="description" content="Portails aluminium autoportés haut de gamme, fourniture et pose par RMS EcoSky en Bretagne. Design, sur mesure, sans rail au sol. Demandez votre devis.">
 <meta name="robots" content="index, follow">
@@ -787,6 +790,7 @@
       f.style.display = 'none';
       msg.style.color = 'var(--sauge)';
       msg.textContent = '✓ Merci ! Votre demande a bien été reçue. Un conseiller vous recontacte sous 48h.';
+      setTimeout(() => { window.location.href = '/merci-portail.html'; }, 800);
     } catch (err) {
       btn.disabled = false;
       btn.textContent = 'Envoyer ma demande';

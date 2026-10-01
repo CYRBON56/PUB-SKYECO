@@ -203,7 +203,7 @@
     <div class="wrap">
     <p class="eyebrow">Portails aluminium · Fourniture et pose</p>
     <h1 style="margin-top:16px; max-width:20ch;">Des portails autoportés, design et haut de gamme.</h1>
-    <p class="hero-price-badge">À partir de 4 641 € HT<span class="sep">&nbsp;·&nbsp;</span>pose incluse</p>
+    <p class="hero-price-badge">À partir de 5 105 € TTC<span class="sep">&nbsp;·&nbsp;</span>pose incluse</p>
     <p class="lead" style="margin-top:18px;">RMS EcoSky sélectionne des gammes de portails aluminium autoportés — sans rail au sol, sans motorisation enterrée — pour un rendu net et une pose adaptée à tous les terrains, y compris en pente ou sur gravier. Fourniture et pose par notre équipe, du relevé de côtes à la mise en service.</p>
     <div class="hero-actions">
       <a href="#devis-portail" class="btn">Calculer votre devis</a>
@@ -700,7 +700,7 @@
     const ttcTotal = htTotal * (1 + tauxTVA);
 
     elPrixTTC.textContent = fmtEUR(ttcTotal) + ' TTC';
-    elPrixDetail.innerHTML = `Dont pose : ${fmtEUR(POSE_HT)} HT. Total HT : ${fmtEUR(htTotal)} — TVA ${Math.round(tauxTVA*100)}%.`;
+    elPrixDetail.innerHTML = `Pose comprise. TVA ${Math.round(tauxTVA*100)} % incluse (soit ${fmtEUR(htTotal)} HT).`;
 
     return { htProduit, htPortillon, htOptions, htPeinture, htTotal, tauxTVA, ttcTotal, opts };
   }

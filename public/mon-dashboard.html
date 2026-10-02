@@ -408,6 +408,22 @@
   .rs-status-text { flex:1; min-width:200px; }
   .rs-status-text strong { display:block; color:#211a35; font-size:0.95rem; margin-bottom:2px; }
   .rs-btn { background:#7c3aed; color:#fff; border:none; padding:10px 18px; border-radius:10px; font-size:0.85rem; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .vid-form { display:grid; gap:8px; max-width:560px; margin:6px 0 22px; }
+  .vid-form label { font-size:0.85rem; font-weight:700; color:#374151; }
+  .vid-form select, .vid-form textarea { font:inherit; font-size:0.9rem; padding:9px 11px; border:1.5px solid #e5e1f5; border-radius:9px; background:#fff; }
+  .vid-form .rs-btn { justify-self:start; margin-top:4px; }
+  .vid-form .rs-btn:disabled { opacity:0.6; cursor:wait; }
+  .vid-vide { color:#6b7a72; font-size:0.9rem; }
+  .vid-script { border:1.5px solid #eef1f0; border-radius:12px; padding:16px 18px; margin-bottom:16px; background:#fff; }
+  .vid-script header { display:flex; flex-wrap:wrap; justify-content:space-between; gap:6px; margin-bottom:8px; }
+  .vid-date { font-size:0.8rem; color:#6b7a72; }
+  .vid-accroche { font-weight:800; color:#7c3aed; letter-spacing:0.01em; margin:0 0 10px; }
+  .vid-script h4 { font-size:0.8rem; color:#6b7a72; margin:12px 0 4px; }
+  .vid-script p, .vid-script li { font-size:0.9rem; line-height:1.5; }
+  .vid-script ul { margin:0; padding-left:18px; }
+  .vid-texte { background:#faf8ff; border-radius:9px; padding:10px 12px; }
+  .vid-tags { color:#7c3aed; }
+  .vid-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
   .rs-btn.secondary { background:#fff; color:#7c3aed; border:1.5px solid #7c3aed; }
   .rs-row { display:grid; grid-template-columns:52px 1fr auto auto; align-items:center; gap:14px; padding:14px 0; border-top:1px solid #eef1f0; }
   .rs-row:first-child { border-top:none; }
@@ -475,6 +491,10 @@
       <button type="button" class="panel-tab" id="tabReseaux" data-tab="reseaux">
         <span class="panel-tab-icone">📱</span>
         <span class="panel-tab-texte">Réseaux sociaux<span class="panel-tab-sous">Facebook, Instagram, Google, TikTok, Pinterest</span></span>
+      </button>
+      <button type="button" class="panel-tab" id="tabVideos" data-tab="videos">
+        <span class="panel-tab-icone">🎬</span>
+        <span class="panel-tab-texte">Mes vidéos<span class="panel-tab-sous">Scripts écrits par votre agent IA</span></span>
       </button>
       <button type="button" class="panel-tab" id="tabCalendrier" data-tab="calendrier">
         <span class="panel-tab-icone">📅</span>
@@ -886,6 +906,32 @@
   </div>
   </div>
 
+  <!-- 02/10/2026 : onglet "Mes vidéos" — étape 1, scripts seulement (voir
+       api/generer-script-video.js). La génération vidéo HeyGen viendra après. -->
+  <div id="panelVideos" style="display:none;">
+  <div class="liste-panel">
+    <div class="liste-header">
+      <h3 style="display:flex; align-items:center; gap:9px;"><span style="font-size:1.1rem;">🎬</span>Mes vidéos</h3>
+    </div>
+    <p class="calendrier-note" id="videosIntro">Votre agent IA écrit vos scripts de vidéos courtes pour TikTok, Instagram et Facebook. Choisissez un thème, il s'occupe du reste.</p>
+    <div class="vid-form">
+      <label for="vidTheme">Thème de la vidéo</label>
+      <select id="vidTheme">
+        <option value="presentation">Présenter mon entreprise</option>
+        <option value="conseil">Un conseil pour les particuliers</option>
+        <option value="avant_apres">Un chantier avant / après</option>
+        <option value="prix">De quoi dépend le prix</option>
+        <option value="saison">Les travaux de saison</option>
+        <option value="coulisses">Les coulisses du métier</option>
+      </select>
+      <label for="vidIdee">Une idée ou une précision (facultatif)</label>
+      <textarea id="vidIdee" rows="2" maxlength="500" placeholder="Ex. : parler de notre dernier chantier de terrasse à Vannes"></textarea>
+      <button type="button" class="rs-btn" id="btnGenererScript">Écrire un script</button>
+    </div>
+    <div id="videosContent"><div class="loading">Chargement…</div></div>
+  </div>
+  </div>
+
   <div id="panelCalendrier" style="display:none;">
   <div class="liste-panel calendrier-panel">
     <div class="liste-header">
@@ -984,6 +1030,107 @@
   let tokenCalendrierActuel = null;
   let estDemoActuel = false;
   let reseauxSociauxDejaCharge = false;
+  let videosDejaChargees = false;
+
+  // --- Onglet "Mes vidéos" (02/10/2026) -------------------------------------
+  // L'agent IA propre à l'artisan (prénom attribué automatiquement côté
+  // serveur) écrit des scripts de vidéos courtes. Tout passe par
+  // api/generer-script-video.js avec le jeton de session (pas d'accès direct
+  // à la table depuis le navigateur).
+  const THEMES_VIDEO = {
+    presentation: 'Présenter mon entreprise', conseil: 'Un conseil', avant_apres: 'Avant / après',
+    prix: 'De quoi dépend le prix', saison: 'Travaux de saison', coulisses: 'Coulisses du métier',
+  };
+  let scriptsVideo = [];
+
+  async function appelScriptsVideo(corps) {
+    const resp = await fetch('/api/generer-script-video', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ draftId, token: tokenCalendrierActuel, ...corps }),
+    });
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok || !data.success) throw new Error(data.error || 'Erreur du serveur.');
+    return data;
+  }
+
+  function texteCompletScript(s) {
+    const ecrans = (s.textes_ecran || []).map(t => '- ' + t).join('\n');
+    return `ACCROCHE À L'ÉCRAN : ${s.accroche_ecran || ''}\n\nTEXTE DE L'AVATAR :\n${s.texte_avatar || ''}\n\nTEXTES À L'ÉCRAN :\n${ecrans}\n\nLÉGENDE :\n${s.legende || ''}\n\n${(s.hashtags || []).join(' ')}`;
+  }
+
+  function afficherScriptsVideo(agentPrenom) {
+    const content = document.getElementById('videosContent');
+    if (agentPrenom) {
+      document.getElementById('videosIntro').textContent =
+        `${agentPrenom}, votre agent IA, écrit vos scripts de vidéos courtes pour TikTok, Instagram et Facebook. Choisissez un thème, il s'occupe du reste.`;
+    }
+    if (!scriptsVideo.length) {
+      content.innerHTML = '<p class="vid-vide">Aucun script pour l\'instant. Choisissez un thème et cliquez sur « Écrire un script ».</p>';
+      return;
+    }
+    content.innerHTML = scriptsVideo.map((s, i) => `
+      <article class="vid-script">
+        <header>
+          <strong>${escapeHtmlDash(s.titre || THEMES_VIDEO[s.theme] || 'Script')}</strong>
+          <span class="vid-date">${new Date(s.created_at).toLocaleDateString('fr-FR')} · ${escapeHtmlDash(THEMES_VIDEO[s.theme] || '')}</span>
+        </header>
+        <p class="vid-accroche">${escapeHtmlDash(s.accroche_ecran || '')}</p>
+        <h4>Texte de l'avatar</h4>
+        <p class="vid-texte">${escapeHtmlDash(s.texte_avatar || '')}</p>
+        <h4>Textes à l'écran</h4>
+        <ul>${(s.textes_ecran || []).map(t => `<li>${escapeHtmlDash(t)}</li>`).join('')}</ul>
+        <h4>Légende</h4>
+        <p>${escapeHtmlDash(s.legende || '')}<br><span class="vid-tags">${escapeHtmlDash((s.hashtags || []).join(' '))}</span></p>
+        <div class="vid-actions">
+          <button type="button" class="rs-btn secondary" data-copier-avatar="${i}">Copier le texte de l'avatar</button>
+          <button type="button" class="rs-btn secondary" data-copier-tout="${i}">Copier tout le script</button>
+        </div>
+      </article>`).join('');
+    content.querySelectorAll('[data-copier-avatar]').forEach(b => b.addEventListener('click', () =>
+      copierTexteVideo(scriptsVideo[+b.dataset.copierAvatar].texte_avatar, 'Texte de l\'avatar copié')));
+    content.querySelectorAll('[data-copier-tout]').forEach(b => b.addEventListener('click', () =>
+      copierTexteVideo(texteCompletScript(scriptsVideo[+b.dataset.copierTout]), 'Script copié')));
+  }
+
+  async function copierTexteVideo(texte, message) {
+    try { await navigator.clipboard.writeText(texte); toastCalendrier(message); }
+    catch (e) { toastCalendrier('Copie impossible : sélectionnez le texte à la main.'); }
+  }
+
+  async function chargerScriptsVideo() {
+    const content = document.getElementById('videosContent');
+    content.innerHTML = '<div class="loading">Chargement…</div>';
+    try {
+      const data = await appelScriptsVideo({ action: 'lister' });
+      scriptsVideo = data.scripts || [];
+      afficherScriptsVideo(data.agentPrenom);
+    } catch (e) {
+      content.innerHTML = `<p class="vid-vide">${escapeHtmlDash(e.message)}</p>`;
+    }
+  }
+
+  document.getElementById('btnGenererScript').addEventListener('click', async () => {
+    const btn = document.getElementById('btnGenererScript');
+    btn.disabled = true;
+    btn.textContent = 'Votre agent écrit…';
+    try {
+      const data = await appelScriptsVideo({
+        action: 'generer',
+        theme: document.getElementById('vidTheme').value,
+        idee: document.getElementById('vidIdee').value.trim(),
+      });
+      scriptsVideo.unshift(data.script);
+      document.getElementById('vidIdee').value = '';
+      afficherScriptsVideo(data.agentPrenom);
+      toastCalendrier('Script écrit');
+    } catch (e) {
+      toastCalendrier(e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Écrire un script';
+    }
+  });
 
   const DRAFT_ID_SKYECO_PRO = '4fbdb122-9fca-4636-b80c-d9e4abc2542b';
 
@@ -1321,12 +1468,17 @@
     document.getElementById('panelAds').style.display = cible === 'ads' ? '' : 'none';
     document.getElementById('panelClients').style.display = cible === 'clients' ? '' : 'none';
     document.getElementById('panelReseaux').style.display = cible === 'reseaux' ? '' : 'none';
+    document.getElementById('panelVideos').style.display = cible === 'videos' ? '' : 'none';
     document.getElementById('panelCalendrier').style.display = cible === 'calendrier' ? '' : 'none';
     document.getElementById('panelAppelVideo').style.display = cible === 'appelvideo' ? '' : 'none';
     document.getElementById('panelEstimateur').style.display = cible === 'estimateur' ? '' : 'none';
     if (cible === 'calendrier' && !calendrierDejaCharge) {
       calendrierDejaCharge = true;
       chargerCalendrier();
+    }
+    if (cible === 'videos' && !videosDejaChargees) {
+      videosDejaChargees = true;
+      chargerScriptsVideo();
     }
     if (cible === 'reseaux' && !reseauxSociauxDejaCharge) {
       reseauxSociauxDejaCharge = true;

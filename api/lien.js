@@ -65,6 +65,18 @@ export default async function handler(req, res) {
           destination = (destinationEnregistree && /^https?:\/\//i.test(destinationEnregistree))
             ? destinationEnregistree
             : `${DESTINATION_PROSPECTION_ARTISANS}?pp=${encodeURIComponent(prospectPaysagiste.id)}`;
+          // 02/10/2026 : si la destination personnalisée est une page skyeco.fr
+          // (ex : estimateur-btp-demo.html), on lui passe le jeton du prospect
+          // en ?pid= pour que public/tracking-visites.js relie la visite (et
+          // l'éventuel démarrage d'essai) à ce prospect. Jamais ajouté sur un
+          // site externe (Loom, YouTube...).
+          try {
+            const urlDest = new URL(destination);
+            if (/(^|\.)skyeco\.fr$/i.test(urlDest.hostname) && !urlDest.searchParams.has('pid')) {
+              urlDest.searchParams.set('pid', p);
+              destination = urlDest.toString();
+            }
+          } catch (e) { /* destination non parsable : on la laisse telle quelle */ }
           // 28/09/2026 : les scanners de sécurité des messageries d'entreprise
           // cliquent tous les liens quelques secondes après la réception. Un
           // clic moins de 30 s après l'envoi est compté à part (nb_clics_robots)

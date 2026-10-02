@@ -953,6 +953,9 @@ let accesCourant = loadJSON(LS_ACCES, null);
 if (!accesCourant){
   accesCourant = { email: '', anonyme: true, essai_fin: new Date(Date.now() + 2 * 86400000).toISOString(), abonnement_actif: false, source: 'essai-anonyme' };
   try{ localStorage.setItem(LS_ACCES, JSON.stringify(accesCourant)); }catch(e){}
+  // 02/10/2026 : trace le démarrage de l'essai anonyme (une seule fois par
+  // appareil), relié au prospect s'il vient d'un email — voir tracking-visites.js.
+  (window.skyecoEvenements = window.skyecoEvenements || []).push('essai_demarre');
 }
 let devisMeta = loadJSON(LS_DEVIS_META, { id: null });
 
@@ -2372,6 +2375,7 @@ document.getElementById('achatSiret').addEventListener('blur', () => {
 });
 
 function ouvrirFormulaireAchat(depuisEssai){
+  (window.skyecoEvenements = window.skyecoEvenements || []).push(depuisEssai ? 'achat_ouvert_pendant_essai' : 'achat_ouvert_fin_essai');
   const gate = document.getElementById('accessGate');
   gate.style.display = 'flex';
   document.getElementById('gateEmailStep').style.display = 'none';
@@ -2502,5 +2506,6 @@ if (accesCourant && accesCourant.email && navigator.onLine){
 // l'ajout des comptes (voir la fonction plus haut) — sans effet si déjà fait.
 synchroniserApresConnexion();
 </script>
+<script src="/tracking-visites.js"></script>
 </body>
 </html>

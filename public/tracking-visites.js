@@ -54,6 +54,33 @@
       }
     }
 
+    // 02/10/2026 : événements ponctuels (ex : essai gratuit démarré, écran
+    // de paiement ouvert). Une page peut appeler, même AVANT que ce script
+    // soit chargé :
+    //   (window.skyecoEvenements = window.skyecoEvenements || []).push('essai_demarre');
+    // Chaque événement est enregistré dans visites_tunnel comme une "page"
+    // nommée "evenement:<nom>", avec le même session_id et pid que la visite,
+    // ce qui le fait apparaître tel quel dans statistiques-visites.html.
+    function envoyerEvenement(nom) {
+      try {
+        fetch('/api/tracker-visite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          keepalive: true,
+          body: JSON.stringify({
+            action: 'entree',
+            sessionId: sessionId,
+            pid: pid,
+            page: 'evenement:' + String(nom).slice(0, 60),
+            referrer: window.location.pathname,
+          }),
+        }).catch(function () {});
+      } catch (e) {}
+    }
+    var fileAttente = window.skyecoEvenements || [];
+    window.skyecoEvenements = { push: envoyerEvenement };
+    for (var i = 0; i < fileAttente.length; i++) envoyerEvenement(fileAttente[i]);
+
     document.addEventListener('visibilitychange', function () {
       if (document.visibilityState === 'hidden') envoyerSortie();
     });

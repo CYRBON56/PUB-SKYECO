@@ -61,6 +61,11 @@
       "source": "/chantiers",
       "destination": "/chantiers.html",
       "permanent": false
+    },
+    {
+      "source": "/maisonauchaud",
+      "destination": "/maison-au-chaud.html",
+      "permanent": false
     }
   ]
 }

@@ -201,6 +201,13 @@ tr.sub td{color:var(--muted);font-size:.92rem}
 .apercu div:last-child{border-bottom:0;font-weight:600}
 .apercu .flou{filter:blur(5px);user-select:none;color:var(--ink);white-space:nowrap}
 .apercu-plus{font-size:.92rem;margin:0 0 14px;color:var(--ink);font-weight:500}
+/* 06/10/2026 : aperçu gratuit du devis déposé avant paiement */
+#apercu-res{text-align:left}
+#apercu-res .ap-titre{font-size:1.15rem;font-weight:700;margin:14px 0 8px;color:var(--ink)}
+#apercu-res ul{list-style:none;padding:0;margin:0 0 12px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+#apercu-res li{display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border-bottom:1px solid var(--line);font-size:.93rem}
+#apercu-res li:last-child{border-bottom:0}
+#apercu-res li .flou{filter:blur(5px);user-select:none;white-space:nowrap;flex:none;align-self:center}
 .offre{border:1.5px solid var(--line);border-radius:12px;padding:16px;margin-bottom:6px;background:var(--bg)}
 .offre-tag{display:inline-block;font-size:.8rem;font-weight:600;border-radius:6px;padding:3px 9px;background:var(--navy);color:#fff}
 .offre-tag-o{background:var(--orange)}
@@ -250,7 +257,7 @@ input[type=tel],input[type=email]{font:inherit;color:var(--ink);background:var(-
         <p class="lede" id="hero-lede">Estimez vos travaux en quelques minutes, puis vérifiez le devis de votre artisan ligne par ligne avant de signer.</p>
         <div class="hero-ctas">
           <button class="btn btn-orange" data-start>Estimer mon projet</button>
-          <a class="btn btn-ghost" href="#comment">Comment ça marche</a>
+          <button class="btn btn-ghost" data-start id="hero-devis" type="button">J'ai déjà un devis à vérifier</button>
         </div>
         <div class="hero-facts"><span><i></i>20 métiers du bâtiment</span><span><i></i>Prix 2026 indexés sur le coût du bâtiment</span><span><i></i>Ajusté à votre département</span></div>
       </div>
@@ -397,6 +404,13 @@ input[type=tel],input[type=email]{font:inherit;color:var(--ink);background:var(-
         <p class="ou">ou</p>
         <span class="offre-tag offre-tag-o">Option anonyme, 35,90 €</span>
         <h3 style="margin-top:6px">Estimation détaillée et vérification de votre devis, sans être contacté</h3>
+        <div class="upload-devis" id="apercu-devis">
+          <p><strong>Vous avez déjà un devis ? Aperçu gratuit</strong><br><span class="hint">Déposez-le (PDF ou photo nette, prise à plat) : nous le lisons et vous montrons combien de points posent question. Le détail se débloque avec l'option anonyme.</span></p>
+          <label class="btn btn-orange" for="fichierApercu">📄 Déposer mon devis</label>
+          <input type="file" id="fichierApercu" accept="application/pdf,image/jpeg,image/png,image/webp">
+          <div class="upload-etat" id="apercu-etat"></div>
+          <div id="apercu-res"></div>
+        </div>
         <p class="hint" style="margin:0 0 6px">Aperçu de ce que vous allez obtenir, calculé pour votre projet :</p>
         <div class="apercu" id="apercu" aria-hidden="true"></div>
         <p class="apercu-plus" id="apercu-plus"></p>
@@ -1088,6 +1102,7 @@ const show=id=>$(id).classList.remove("hidden"), hide=id=>$(id).classList.add("h
 const eur=n=>new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(Math.round(n/10)*10);
 const list=(id,arr)=>$(id).innerHTML=arr.map(x=>`<li>${x}</li>`).join("");
 let metier=null, s={}, detail=null;
+let veutApercu=false, refFourchette=null; // aperçu gratuit du devis (06/10/2026)
 
 /* Grilles de métiers : page d'accueil et application */
 $("trades").innerHTML=CATS.map(c=>`<div class="tgroup"><h3>${c}</h3><div class="trades">${Object.entries(METIERS).filter(([,M])=>M.cat===c).map(([k,M])=>`<button class="trade" data-start="${k}"><strong>${M.nom}</strong><small>${M.desc}</small></button>`).join("")}</div></div>`).join("");
@@ -1095,6 +1110,7 @@ $("metier-pick").innerHTML=CATS.map(c=>`<p class="mcat">${c}</p><div class="meti
 
 function openApp(m){ hide("landing"); show("app"); window.scrollTo(0,0); if(m) pickMetier(m,true) }
 document.querySelectorAll("[data-start]").forEach(b=>b.addEventListener("click",()=>openApp(b.dataset.start||null)));
+$("hero-devis").addEventListener("click",()=>{ veutApercu=true; evt("clic_apercu"); banniere("Choisissez vos travaux et répondez à 3 questions : elles nous servent de référence pour lire votre devis. Vous pourrez ensuite le déposer pour un aperçu gratuit.","c-ok") });
 $("home").onclick=()=>{hide("app");show("landing");window.scrollTo(0,0)};
 
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -1150,7 +1166,8 @@ $("go1").onclick=()=>{
   $("apercu-plus").textContent=`${nbPostes} poste${nbPostes>1?"s":""} chiffré${nbPostes>1?"s":""} un par un, et ${nbControles} points de contrôle pour vérifier le devis de votre artisan avant de signer.`;
   list("pay-list",["Le prix calculé selon vos réponses détaillées","Le détail poste par poste, comme un vrai devis","La comparaison avec le devis de votre artisan et les oublis à repérer","Les questions à poser avant de signer"]);
   ["c2","r2","c3"].forEach(hide); show("paywall"); show("r1"); gauge("r1",low,high);
-  $("r1").scrollIntoView({behavior:"smooth",block:"start"});
+  refFourchette={lignes:r.lines,ht:r.ht,tva:r.tva}; $("apercu-res").innerHTML=""; $("apercu-etat").textContent="";
+  $(veutApercu?"apercu-devis":"r1").scrollIntoView({behavior:"smooth",block:"start"});
 };
 /* ===== Paiement Stripe ===== */
 const MODE_DEMO=!/(^|\.)skyeco\.fr$/.test(location.hostname);
@@ -1258,7 +1275,7 @@ async function retourPaiement(){
     $("free-title").textContent=METIERS[metier].nom; show("free-zone"); renderQs("free-qs",METIERS[metier].free);
     document.querySelectorAll('#free-qs input[name="projet"]').forEach(x=>x.disabled=true); const d=$("in-dept"); if(d) d.disabled=true;
     hide("go1"); ouvrirDetail(); $("go2").click();
-    banniere(`Paiement confirmé. Votre facture${j.facture?" n° "+j.facture:""} a été envoyée à ${j.email||"votre adresse email"}. Gardez cet email : il contient le lien pour revenir à votre projet.`,"c-ok");
+    banniere(`Paiement confirmé. Votre facture${j.facture?" n° "+j.facture:""} a été envoyée à ${j.email||"votre adresse email"}. Gardez cet email : il contient le lien pour revenir à votre projet.${(()=>{try{return sessionStorage.getItem("skyeco_apercu")?" Redéposez votre devis à l'étape 3 ci-dessous : l'analyse complète s'affiche en 30 secondes.":""}catch(_){return ""}})()}`,"c-ok");
     conversion(sid); window.scrollTo(0,0);
   }catch(e){ banniere("Nous n'arrivons pas à confirmer votre paiement pour le moment. Rechargez la page dans une minute ou écrivez-nous à infos@ecosky.fr.","c-bad") }
 }
@@ -1395,6 +1412,52 @@ function afficherLignes(d){
   if(d.remarques.length) html+=`<h3>Autres points d'attention</h3><ul>${d.remarques.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`;
   html+=`<p class="hint">Lecture automatique : vérifiez les montants reportés. Un écart n'est pas forcément abusif, il peut s'expliquer par un matériau ou une difficulté particulière : demandez simplement à l'artisan de le justifier.</p>`;
   $("r3-lignes").innerHTML=html;
+}
+/* ============================================================
+   APERÇU GRATUIT DU DEVIS, AVANT PAIEMENT (06/10/2026)
+   Même lecture par l'IA que l'analyse payée, comparée à la fourchette
+   de l'étape 1 ; le serveur ne renvoie que des compteurs.
+   ============================================================ */
+$("fichierApercu").onchange=async e=>{
+  const file=e.target.files[0]; e.target.value=""; if(!file) return;
+  const etat=$("apercu-etat"), res=$("apercu-res"); res.innerHTML="";
+  if(!refFourchette||!metier){etat.textContent="Choisissez d'abord vos travaux et affichez votre fourchette de prix.";return}
+  const estPdf=file.type==="application/pdf"||/\.pdf$/i.test(file.name);
+  if(estPdf&&file.size>3.2*1024*1024){etat.textContent="Ce PDF est trop lourd (3 Mo maximum). Prenez plutôt une photo nette du devis.";return}
+  evt("apercu_depot"); etat.textContent="Lecture de votre devis en cours… (20 à 40 secondes)";
+  try{
+    const fichier=estPdf?await lireFichierBase64(file):await compresserImage(file);
+    const M=METIERS[metier];
+    const r=await fetch("/api/prix-travaux-analyser-devis",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+      apercu:true, metier, pub:/[?&](gclid|gbraid|wbraid)=/.test(location.search), fichier, media_type:estPdf?"application/pdf":"image/jpeg",
+      estimation:{lignes:refFourchette.lignes, ht:refFourchette.ht, tva:refFourchette.tva, metier:M.nom, quantite:s.qty},
+      inclus:M.inc(s).concat(INC_COMMUNS)})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok||!j.success){evt("apercu_echec");etat.textContent=j.error||"La lecture n'a pas abouti. Réessayez avec une photo plus nette ou le PDF d'origine.";return}
+    etat.textContent=""; afficherApercu(j.apercu);
+    try{sessionStorage.setItem("skyeco_apercu","1")}catch(_){}
+  }catch(err){evt("apercu_echec");etat.textContent="La lecture n'a pas abouti. Réessayez avec une photo plus nette ou le PDF d'origine."}
+};
+function afficherApercu(a){
+  const pl=(n,u,p)=>`${n} ${n>1?p:u}`, items=[];
+  if(a.ecart_pct!=null&&a.ecart_pct>10) items.push(`Montant total environ ${a.ecart_pct} % au-dessus de notre fourchette`);
+  if(a.ecart_pct!=null&&a.ecart_pct<-25) items.push(`Montant total environ ${-a.ecart_pct} % en dessous : il manque peut-être des postes`);
+  if(a.prix_eleves) items.push(pl(a.prix_eleves,"poste au-dessus du prix du marché","postes au-dessus du prix du marché"));
+  if(a.lignes_suspectes) items.push(pl(a.lignes_suspectes,"ligne vague, inutile ou en double","lignes vagues, inutiles ou en double"));
+  if(a.oublis) items.push(pl(a.oublis,"poste important absent du devis","postes importants absents du devis"));
+  if(a.mentions_absentes) items.push(pl(a.mentions_absentes,"mention à vérifier sur le devis","mentions à vérifier sur le devis"));
+  if(a.points_attention) items.push(pl(a.points_attention,"point d'attention (acompte, assurance, délais…)","points d'attention (acompte, assurance, délais…)"));
+  const lu=`Devis lu${a.artisan?` (${esc(a.artisan)})`:""} : ${pl(a.nb_lignes,"ligne","lignes")}.`;
+  let html=`<p class="hint" style="margin:12px 0 0">${lu}</p>`;
+  if(items.length){
+    html+=`<p class="ap-titre">${pl(items.length,"point à vérifier","points à vérifier")} sur ce devis</p><ul>${items.map(x=>`<li><span>${x}</span><span class="flou">0 000 €</span></li>`).join("")}</ul>`;
+    html+=`<p class="hint" style="margin:0 0 12px">L'option anonyme vous montre quelles lignes sont concernées, l'écart en euros pour chacune et les questions à poser à l'artisan avant de signer.</p>`;
+  }else{
+    html+=`<p class="ap-titre">Aucun problème majeur à première lecture</p><p class="hint" style="margin:0 0 12px">L'option anonyme vérifie chaque ligne en détail, avec vos réponses précises, et vous donne les questions à poser avant de signer.</p>`;
+  }
+  html+=`<button class="btn-pay" type="button" id="pay-apercu">Débloquer l'analyse complète, 35,90 €</button>`;
+  $("apercu-res").innerHTML=html;
+  $("pay-apercu").onclick=()=>{ evt("clic_payer_apercu"); $("pay").onclick() };
 }
 // Un nouveau calcul manuel efface l'analyse précédente
 $("devis").addEventListener("input",()=>{ if(analyseDevis){ analyseDevis=null; $("r3-lignes").innerHTML=""; $("upload-etat").textContent=""; } });

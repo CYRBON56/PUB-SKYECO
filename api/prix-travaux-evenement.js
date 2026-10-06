@@ -4,7 +4,9 @@
 // personnelle, aucun cookie : seulement le type d'étape, le métier et l'origine pub.
 import { verifierLimite, ipDepuisRequete } from './_lib/rate-limit.js';
 
-const TYPES = ['visite', 'fourchette', 'clic_payer', 'contact_gratuit', 'clic_gratuit', 'formulaire_incomplet', 'code_demande', 'code_echec', 'code_invalide', 'choix_entreprises'];
+const TYPES = ['visite', 'fourchette', 'clic_payer', 'contact_gratuit', 'clic_gratuit', 'formulaire_incomplet', 'code_demande', 'code_echec', 'code_invalide', 'choix_entreprises', 'clic_apercu', 'apercu_depot', 'apercu_echec', 'clic_payer_apercu'];
+// 'apercu_ok' n'est volontairement pas accepté ici : il est écrit par le serveur
+// (prix-travaux-analyser-devis) et sert de plafond quotidien des aperçus gratuits.
 const METIERS = ['toiture','ravalement','resine','allees','terrasses','clotures','portails','terrassement','piscine','anc','isolation','pac','menuiseries','sdb','cuisine','sols','peinture','platrerie','electricite','plomberie'];
 
 export default async function handler(req, res) {

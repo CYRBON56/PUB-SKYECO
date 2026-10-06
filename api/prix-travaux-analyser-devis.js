@@ -51,13 +51,52 @@ Réponds UNIQUEMENT avec un objet JSON, sans texte autour :
 "inclus_trouves":[],"remarques":[]}`;
 }
 
+// Aperçu gratuit : uniquement des compteurs, calculés comme sur la page
+// (regroupement des lignes par poste de référence, écart de prix par poste).
+function resumerApercu(d, est, inclus) {
+  const groupes = new Map(), vus = new Set();
+  let suspectes = 0;
+  for (const l of d.lignes) {
+    if (l.type !== 'ok') { suspectes++; continue; }
+    if (!l.ref.length) continue;
+    const cle = [...new Set(l.ref)].sort((a, b) => a - b).join(',');
+    if (!groupes.has(cle)) groupes.set(cle, { ref: cle.split(',').map(Number), ht: 0 });
+    groupes.get(cle).ht += l.montant_ht || 0;
+  }
+  let prixEleves = 0;
+  groupes.forEach((g) => {
+    g.ref.forEach((i) => vus.add(i));
+    const refHT = g.ref.reduce((a, i) => a + (est.lignes[i] ? est.lignes[i][1] : 0), 0);
+    if (refHT > 0 && (g.ht - refHT) / refHT > 0.10) prixEleves++;
+  });
+  const oublis = est.lignes.filter((l, i) => !vus.has(i) && l[1] >= 150 && !/ajustement minimum/i.test(l[0])).length;
+  const ht = d.total_ht || (d.total_ttc && d.taux_tva != null ? d.total_ttc / (1 + d.taux_tva / 100) : null);
+  return {
+    artisan: d.artisan,
+    nb_lignes: d.lignes.length,
+    ecart_pct: ht && est.ht > 0 ? Math.round(((ht - est.ht) / est.ht) * 100) : null,
+    prix_eleves: prixEleves,
+    lignes_suspectes: suspectes,
+    oublis,
+    mentions_absentes: Math.max(0, inclus.length - d.inclus_trouves.length),
+    points_attention: d.remarques.length,
+  };
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Méthode non autorisée' });
   if (!(await verifierLimite('pt-analyse-ip:' + ipDepuisRequete(req), 20, 3600))) {
     return res.status(429).json({ success: false, error: 'Trop d\'analyses en peu de temps. Réessayez dans une heure.' });
   }
   const { session_id, fichier, media_type, estimation, inclus } = req.body || {};
-  if (!/^cs_(test|live)_[A-Za-z0-9]+$/.test(String(session_id || ''))) {
+  // 06/10/2026 — Aperçu gratuit avant paiement : même lecture par l'IA, mais on
+  // ne renvoie que des compteurs (le détail reste réservé à l'option payante).
+  const apercu = req.body?.apercu === true;
+  if (apercu) {
+    if (!(await verifierLimite('pt-apercu-ip:' + ipDepuisRequete(req), 3, 86400))) {
+      return res.status(429).json({ success: false, error: "Vous avez déjà utilisé vos 3 aperçus gratuits aujourd'hui. L'analyse complète reste disponible avec l'option anonyme." });
+    }
+  } else if (!/^cs_(test|live)_[A-Za-z0-9]+$/.test(String(session_id || ''))) {
     return res.status(403).json({ success: false, error: "L'analyse de devis est réservée aux estimations payées." });
   }
   if (!TYPES.includes(media_type) || typeof fichier !== 'string' || fichier.length < 100) {
@@ -71,10 +110,19 @@ export default async function handler(req, res) {
   }
 
   try {
-    const [c] = await sb(`prix_travaux_commandes?stripe_session_id=eq.${session_id}&statut=in.(payee,erreur)&select=id`);
-    if (!c) return res.status(403).json({ success: false, error: "L'analyse de devis est réservée aux estimations payées." });
-    if (!(await verifierLimite('pt-analyse:' + session_id, 15, 86400))) {
-      return res.status(429).json({ success: false, error: 'Vous avez atteint 15 analyses aujourd\'hui pour ce projet. Réessayez demain.' });
+    if (apercu) {
+      // Plafond global (coût IA) : 300 aperçus gratuits par 24 h, compté en base.
+      const depuis = new Date(Date.now() - 86400000).toISOString();
+      const deja = await sb(`prix_travaux_evenements?type=eq.apercu_ok&created_at=gte.${depuis}&select=id&limit=300`);
+      if ((deja || []).length >= 300) {
+        return res.status(503).json({ success: false, error: "L'aperçu gratuit est momentanément indisponible. L'analyse complète reste disponible avec l'option anonyme." });
+      }
+    } else {
+      const [c] = await sb(`prix_travaux_commandes?stripe_session_id=eq.${session_id}&statut=in.(payee,erreur)&select=id`);
+      if (!c) return res.status(403).json({ success: false, error: "L'analyse de devis est réservée aux estimations payées." });
+      if (!(await verifierLimite('pt-analyse:' + session_id, 15, 86400))) {
+        return res.status(429).json({ success: false, error: 'Vous avez atteint 15 analyses aujourd\'hui pour ce projet. Réessayez demain.' });
+      }
     }
 
     const propres = {
@@ -130,6 +178,11 @@ export default async function handler(req, res) {
       inclus_trouves: (Array.isArray(devis.inclus_trouves) ? devis.inclus_trouves : []).filter((x) => inclusPropres.includes(x)),
       remarques: (Array.isArray(devis.remarques) ? devis.remarques : []).slice(0, 4).map((x) => String(x).slice(0, 300)),
     };
+    if (apercu) {
+      const metier = typeof req.body.metier === 'string' && /^[a-z]{2,20}$/.test(req.body.metier) ? req.body.metier : null;
+      sb('prix_travaux_evenements', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ type: 'apercu_ok', metier, pub: req.body.pub === true }) }).catch(() => {});
+      return res.status(200).json({ success: true, apercu: resumerApercu(propre, propres, inclusPropres) });
+    }
     return res.status(200).json({ success: true, devis: propre });
   } catch (e) {
     console.error('prix-travaux-analyser-devis :', e.message);

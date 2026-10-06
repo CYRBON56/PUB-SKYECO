@@ -55,5 +55,12 @@
     "api/prix-travaux-analyser-devis.js": {
       "maxDuration": 60
     }
-  }
+  },
+  "redirects": [
+    {
+      "source": "/chantiers",
+      "destination": "/chantiers.html",
+      "permanent": false
+    }
+  ]
 }

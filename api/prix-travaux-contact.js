@@ -8,6 +8,7 @@
 import { sb, METIERS, nettoyerReponses } from './_lib/prix-travaux-commande.js';
 import { verifierLimite, ipDepuisRequete } from './_lib/rate-limit.js';
 import { artisansEligibles, jetonClient } from './_lib/chantiers.js';
+import { jetonTelephoneValide } from './prix-travaux-rappel.js';
 
 export const CONSENTEMENT = "J'accepte que Skyeco (RESINE MARBRE SOL) transmette mes coordonnées et la description de mon projet aux entreprises que je choisirai parmi celles qui me seront présentées (3 au maximum), pour qu'elles me contactent au sujet de mes travaux. Ce service est gratuit pour moi car ces entreprises paient Skyeco pour ce contact. Je peux retirer mon accord à tout moment en écrivant à infos@ecosky.fr.";
 
@@ -63,12 +64,13 @@ export default async function handler(req, res) {
   if (!/^\d{5}$/.test(cp)) return res.status(400).json({ error: 'Code postal invalide (5 chiffres).' });
   if (!tel) return res.status(400).json({ error: 'Numéro de téléphone invalide.' });
   if (b.consentement !== true) return res.status(400).json({ error: "Votre accord est nécessaire pour l'option gratuite." });
-  if (!code) return res.status(400).json({ error: 'Saisissez le code reçu par SMS.' });
+  const telDejaVerifie = jetonTelephoneValide(tel, b.jeton_tel);
+  if (!code && !telDejaVerifie) return res.status(400).json({ error: 'Saisissez le code reçu par SMS.' });
 
   const commune = await communeValide(cp, b.commune);
   if (commune === null) return res.status(400).json({ error: 'Choisissez la commune des travaux dans la liste.' });
   try {
-    if (!(await codeValide(tel, code))) return res.status(400).json({ error: 'Code incorrect ou expiré. Vérifiez-le ou demandez un nouveau code.' });
+    if (!telDejaVerifie && !(await codeValide(tel, code))) return res.status(400).json({ error: 'Code incorrect ou expiré. Vérifiez-le ou demandez un nouveau code.' });
     const est = Number(b.estimation_ttc);
     const [c] = await sb('prix_travaux_contacts', { method: 'POST', body: JSON.stringify({
       prenom, nom, telephone: tel, email, code_postal: cp, commune: commune || texte(b.commune, 80) || null, departement: departementDepuisCP(cp),

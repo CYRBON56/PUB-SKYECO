@@ -215,6 +215,7 @@ tr.sub td{color:var(--muted);font-size:.92rem}
 .champs2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
 .champs2 .q{margin-bottom:12px}.champs2 input{max-width:none}
 input[type=tel],input[type=email]{font:inherit;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:11px 12px;width:100%}
+.porte-flou{filter:blur(7px);user-select:none}
 .accord{display:flex;gap:10px;align-items:flex-start;font-size:.88rem;line-height:1.5;cursor:pointer}
 .accord input{margin-top:4px;width:18px;height:18px;flex:none;accent-color:var(--orange)}
 @media (max-width:640px){.champs2{grid-template-columns:1fr}}
@@ -370,6 +371,23 @@ input[type=tel],input[type=email]{font:inherit;color:var(--ink);background:var(-
       <div id="free-qs"></div>
       <p class="err" id="err1"></p>
       <button class="btn btn-navy" id="go1">Voir ma fourchette de prix</button></div>
+    </section>
+
+    <section class="card hidden" id="porte">
+      <h2>Votre fourchette de prix est prête</h2>
+      <p class="big"><span class="porte-flou">Entre 00 000 € et 00 000 € TTC</span></p>
+      <p class="hint" style="margin:0 0 14px">Pour l'afficher, indiquez votre prénom et votre mobile : vous recevez un code par SMS. Un conseiller Skyeco peut vous rappeler pour en parler, sans engagement. Votre numéro n'est jamais revendu.</p>
+      <div class="champs2">
+        <div class="q"><label for="p-prenom">Prénom</label><input type="text" id="p-prenom" autocomplete="given-name" maxlength="60"></div>
+        <div class="q"><label for="p-tel">Téléphone mobile</label><input type="tel" id="p-tel" autocomplete="tel" maxlength="20" placeholder="06 12 34 56 78"></div>
+      </div>
+      <label class="accord"><input type="checkbox" id="p-accord"> <span>J'accepte que Skyeco (RESINE MARBRE SOL) me recontacte par téléphone ou SMS au sujet de ce projet. Mon numéro n'est ni vendu ni transmis à des entreprises sans mon accord. <a href="/confidentialite-estimateur.html" target="_blank" rel="noopener">Politique de confidentialité</a></span></label>
+      <button class="btn btn-orange" id="p-envoyer-code" type="button" style="margin-top:12px">Recevoir mon code par SMS</button>
+      <div id="p-zone-code" class="hidden" style="margin-top:14px">
+        <div class="q"><label for="p-code">Code reçu par SMS</label><input type="text" id="p-code" inputmode="numeric" maxlength="8" autocomplete="one-time-code"><p class="hint" style="margin-top:6px">Sur la plupart des téléphones, le code se propose tout seul au-dessus du clavier.</p></div>
+        <button class="btn btn-navy" id="p-valider" type="button">Voir ma fourchette de prix</button>
+      </div>
+      <p class="err" id="err-porte" style="margin-top:8px"></p>
     </section>
 
     <section class="card hidden" id="r1">
@@ -1158,6 +1176,13 @@ $("go1").onclick=()=>{
   if(!(s.qty>=M.qtyMin)){e.textContent=`Indiquez une valeur d'au moins ${M.qtyMin} pour « ${M.free[1].label.toLowerCase()} ».`;return}
   if(!/^(\d{2}|2A|2B|97\d)$/.test(s.dept||"")){e.textContent="Indiquez le numéro de département, par exemple 56.";return}
   e.textContent="";
+  if(MODE_DEMO||telVerifie){ afficherFourchette(); return }
+  ["r1","c2","r2","c3"].forEach(hide); show("porte"); evt("porte_vue");
+  estimationGratuite=Math.round(estimer(M,s).ttc);
+  $("porte").scrollIntoView({behavior:"smooth",block:"start"}); setTimeout(()=>$("p-prenom").focus(),400);
+};
+function afficherFourchette(){
+  const M=METIERS[metier]; hide("porte");
   const r=estimer(M,s), low=r.ttc*.78, high=r.ttc*1.22;
   $("r1-hint").textContent=M.freeHint?M.freeHint(s):`Estimation large pour votre projet, sans connaître l'état actuel ni vos options.`;
   $("r1-range").textContent=`Entre ${eur(low)} et ${eur(high)} TTC`; evt("fourchette"); estimationGratuite=Math.round(r.ttc);
@@ -1181,7 +1206,7 @@ $("g-cp").addEventListener("input",async()=>{
     sel.innerHTML=l.length?(l.length>1?'<option value="">Choisissez votre commune</option>':"")+l.map(x=>`<option>${x.nom}</option>`).join(""):'<option value="">Code postal inconnu</option>';
   }catch(e){ sel.innerHTML='<option value="">Liste indisponible, réessayez</option>' }
 });
-$("choix-gratuit").onclick=()=>{ evt("clic_gratuit"); show("form-gratuit"); hide("choix-gratuit"); $("g-prenom").focus() };
+$("choix-gratuit").onclick=()=>{ evt("clic_gratuit"); preremplirGratuit(); show("form-gratuit"); hide("choix-gratuit"); $("g-prenom").focus() };
 function champsGratuit(){
   const v={prenom:$("g-prenom").value.trim(),nom:$("g-nom").value.trim(),telephone:$("g-tel").value.trim(),email:$("g-email").value.trim(),code_postal:$("g-cp").value.trim()};
   if(!v.prenom||!v.nom) return [null,"Indiquez votre prénom et votre nom."];
@@ -1201,6 +1226,7 @@ let incompletSignale=false;
 $("g-envoyer-code").onclick=async()=>{
   const [v,err]=champsGratuit(); $("err-gratuit").textContent=err; if(!v){ if(!incompletSignale){ incompletSignale=true; evt("formulaire_incomplet") } return }
   if(MODE_DEMO){ debloquerGratuit(); return }
+  if(telVerifie&&telNorm(v.telephone)===telNorm(telVerifie.tel)){ await enregistrerContact(v,"",telVerifie.jeton); return }
   const b=$("g-envoyer-code"); b.disabled=true; b.textContent="Envoi du code…";
   try{ const r=await fetch("/api/verify-send-code",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({telephone:v.telephone})});
     if(!r.ok) throw new Error(); evt("code_demande"); show("g-zone-code"); b.textContent="Renvoyer un code"; $("g-code").focus();
@@ -1210,13 +1236,46 @@ $("g-envoyer-code").onclick=async()=>{
 $("g-valider").onclick=async()=>{
   const [v,err]=champsGratuit(); $("err-gratuit").textContent=err; if(!v) return;
   const code=$("g-code").value.replace(/\D/g,""); if(code.length<4){ $("err-gratuit").textContent="Saisissez le code reçu par SMS."; return }
-  const b=$("g-valider"); b.disabled=true;
-  try{ const r=await fetch("/api/prix-travaux-contact",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...v,code,consentement:true,metier,reponses:s,estimation_ttc:estimationGratuite})});
+  await enregistrerContact(v,code,null);
+};
+async function enregistrerContact(v,code,jeton){
+  const b=$("g-valider"), b2=$("g-envoyer-code"); b.disabled=b2.disabled=true;
+  try{ const r=await fetch("/api/prix-travaux-contact",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...v,code,jeton_tel:jeton,consentement:true,metier,reponses:s,estimation_ttc:estimationGratuite})});
     const j=await r.json(); if(!r.ok) throw new Error(j.error||"Erreur"); afficherChoix(j); debloquerGratuit();
   }catch(e){ evt("code_invalide"); $("err-gratuit").textContent=e.message||"L'enregistrement a échoué. Réessayez." }
+  finally{ b.disabled=b2.disabled=false }
+}
+if(MODE_DEMO) show("demo-note");
+/* Téléphone vérifié avant la fourchette (07/10/2026) */
+let telVerifie=null; try{ telVerifie=JSON.parse(sessionStorage.getItem("pt_tel")||"null") }catch(e){}
+const telNorm=t=>String(t||"").replace(/[^\d+]/g,"").replace(/^\+33/,"0").replace(/^0033/,"0");
+function preremplirGratuit(){ if(!telVerifie) return; if(!$("g-prenom").value) $("g-prenom").value=telVerifie.prenom; if(!$("g-tel").value) $("g-tel").value=telVerifie.tel }
+function champsPorte(){
+  const v={prenom:$("p-prenom").value.trim(),telephone:$("p-tel").value.trim()};
+  if(v.prenom.length<2) return [null,"Indiquez votre prénom."];
+  if(!/^0[67]\d{8}$/.test(v.telephone.replace(/[\s.-]/g,""))&&!/^\+\d{10,15}$/.test(v.telephone.replace(/[\s.-]/g,""))) return [null,"Indiquez un numéro de mobile valide, par exemple 06 12 34 56 78."];
+  if(!$("p-accord").checked) return [null,"Cochez la case pour recevoir votre fourchette."];
+  return [v,""];
+}
+$("p-envoyer-code").onclick=async()=>{
+  const [v,err]=champsPorte(); $("err-porte").textContent=err; if(!v) return;
+  const b=$("p-envoyer-code"); b.disabled=true; b.textContent="Envoi du code…";
+  try{ const r=await fetch("/api/verify-send-code",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({telephone:v.telephone})});
+    if(!r.ok) throw new Error(); evt("porte_code"); show("p-zone-code"); b.textContent="Renvoyer un code"; $("p-code").focus();
+  }catch(e){ evt("porte_echec"); $("err-porte").textContent="Le SMS n'a pas pu être envoyé. Vérifiez le numéro et réessayez."; b.textContent="Recevoir mon code par SMS" }
   finally{ b.disabled=false }
 };
-if(MODE_DEMO) show("demo-note");
+$("p-valider").onclick=async()=>{
+  const [v,err]=champsPorte(); $("err-porte").textContent=err; if(!v) return;
+  const code=$("p-code").value.replace(/\D/g,""); if(code.length<4){ $("err-porte").textContent="Saisissez le code reçu par SMS."; return }
+  const b=$("p-valider"); b.disabled=true;
+  try{ const r=await fetch("/api/prix-travaux-rappel",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...v,code,consentement:true,metier,reponses:s,estimation_ttc:estimationGratuite,pub:/[?&](gclid|gbraid|wbraid|fbclid)=/.test(location.search)})});
+    const j=await r.json(); if(!r.ok) throw new Error(j.error||"Erreur");
+    telVerifie={prenom:v.prenom,tel:v.telephone,jeton:j.jeton_tel}; try{ sessionStorage.setItem("pt_tel",JSON.stringify(telVerifie)) }catch(e){}
+    evt("porte_ok"); preremplirGratuit(); afficherFourchette();
+  }catch(e){ evt("porte_code_invalide"); $("err-porte").textContent=e.message||"La vérification a échoué. Réessayez." }
+  finally{ b.disabled=false }
+};
 function evt(type,m){ if(MODE_DEMO) return; try{ navigator.sendBeacon("/api/prix-travaux-evenement",new Blob([JSON.stringify({type,metier:m||metier,pub:/[?&](gclid|gbraid|wbraid)=/.test(location.search)})],{type:"application/json"})) }catch(e){} }
 /* Choix des entreprises par le particulier (30/09/2026) */
 let choixCtx=null;

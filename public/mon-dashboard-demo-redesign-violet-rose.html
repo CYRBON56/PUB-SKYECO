@@ -674,7 +674,7 @@
         btn.disabled = true;
         btn.textContent = 'Préparation de votre espace…';
         try {
-          const res = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts`, {
+          const res = await fetch(`${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?select=id`, {
             method: 'POST',
             headers: {
               apikey: SUPABASE_ANON_KEY,

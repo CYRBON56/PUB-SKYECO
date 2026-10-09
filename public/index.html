@@ -1,190 +1,133 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RMS EcoSky — Résine EPDM & aménagements extérieurs en Bretagne</title>
-<meta name="description" content="RMS EcoSky, artisan du sol souple EPDM et des aménagements extérieurs à Brech, Morbihan. Terrasses, plages de piscine, allées, assainissement, clôtures.">
-<link rel="canonical" href="https://www.ecosky.fr/index.html">
-<meta name="robots" content="index, follow">
-<meta property="og:type" content="website">
-<meta property="og:title" content="RMS EcoSky — Résine EPDM & aménagements extérieurs en Bretagne">
-<meta property="og:description" content="Artisan du sol souple EPDM et des aménagements extérieurs à Brech, Morbihan. Terrasses, plages de piscine, allées, assainissement, clôtures.">
-<meta property="og:image" content="https://www.ecosky.fr/images/hero-piscine.jpg">
-<meta property="og:url" content="https://www.ecosky.fr/index.html">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skyeco — Les outils de l'artisan du bâtiment</title>
+<meta name="description" content="Chantiers près de chez vous, estimateur de prix, modèle de devis conforme, site vitrine, Google Ads : tous les outils Skyeco pour les artisans du BTP, au même endroit.">
+<link rel="canonical" href="https://www.skyeco.fr/">
+<meta property="og:title" content="Skyeco — Les outils de l'artisan du bâtiment">
+<meta property="og:description" content="Choisissez l'outil qui vous fait gagner du temps ou des chantiers.">
+<meta property="og:url" content="https://www.skyeco.fr/">
 <meta property="og:locale" content="fr_FR">
-<meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="styles.css">
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "HomeAndConstructionBusiness",
-  "name": "RMS EcoSky",
-  "alternateName": "EcoSky by RMS",
-  "image": "https://www.ecosky.fr/images/hero-piscine.jpg",
-  "description": "Artisan du sol souple EPDM (EcoSky'Gum) et des aménagements extérieurs : terrasses, plages de piscine, allées, assainissement non collectif, clôtures.",
-  "address": {
-    "@type": "PostalAddress",
-    "streetAddress": "23 route de Corn er Hoet",
-    "addressLocality": "Brech",
-    "postalCode": "56400",
-    "addressCountry": "FR"
-  },
-  "areaServed": {
-    "@type": "GeoCircle",
-    "geoMidpoint": { "@type": "GeoCoordinates", "latitude": 47.6803, "longitude": -2.9187 },
-    "geoRadius": "40000"
-  },
-  "email": "infos@ecosky.fr",
-  "url": "https://www.ecosky.fr/index.html",
-  "priceRange": "€€"
-}
-</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#14304A;--blue:#2C5F8A;--orange:#E8622C;--orange-dark:#C74F20;--paper:#F4F7F9;--line:#DCE4E9;--muted:#5B6268;--text:#27394A;--ok:#2E7D5B;--ok-soft:#DDF0E6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--text);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:17px;line-height:1.5}
+a{color:inherit}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+header{background:var(--navy);color:#fff}
+.top{display:flex;align-items:center;justify-content:space-between;padding:18px 0}
+.logo{font-family:"Big Shoulders Display",sans-serif;font-weight:900;font-size:30px;letter-spacing:1px;text-decoration:none}
+.logo span{color:var(--orange)}
+.top a.tel{color:#fff;text-decoration:none;font-weight:600;font-size:15px;opacity:.9}
+.hero{padding:44px 0 64px}
+.hero h1{font-family:"Big Shoulders Display",sans-serif;font-weight:900;font-size:clamp(40px,7vw,68px);line-height:1;margin:0 0 18px;text-transform:uppercase}
+.hero h1 em{font-style:normal;color:var(--orange)}
+.hero p{max-width:620px;font-size:19px;margin:0;color:#D6E1EA}
+main{margin-top:-36px;padding-bottom:40px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:18px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:26px 24px 22px;display:flex;flex-direction:column;box-shadow:0 2px 10px rgba(20,48,74,.05)}
+.tag{align-self:flex-start;font-size:13px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:4px 10px;border-radius:20px;background:var(--ok-soft);color:var(--ok);margin-bottom:14px}
+.tag.pay{background:#FCE9E0;color:var(--orange-dark)}
+.card h2{font-family:"Big Shoulders Display",sans-serif;font-weight:700;font-size:30px;line-height:1.05;margin:0 0 10px;color:var(--navy)}
+.card p{margin:0 0 14px}
+.card ul{margin:0 0 18px;padding-left:20px;color:var(--muted);font-size:15.5px}
+.card li{margin-bottom:4px}
+.price{margin-top:auto;font-weight:700;color:var(--navy);font-size:16px;padding-top:14px;border-top:1px solid var(--line)}
+.price small{display:block;font-weight:400;color:var(--muted);font-size:14px}
+.btn{display:block;text-align:center;margin-top:16px;background:var(--orange);color:#fff;text-decoration:none;font-weight:700;padding:14px 16px;border-radius:10px}
+.btn:hover{background:var(--orange-dark)}
+.alt{display:block;text-align:center;margin-top:10px;font-size:14.5px;color:var(--blue)}
+.help{margin-top:30px;background:var(--navy);color:#fff;border-radius:14px;padding:28px 24px;display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between}
+.help h3{font-family:"Big Shoulders Display",sans-serif;font-size:28px;margin:0 0 4px}
+.help p{margin:0;color:#D6E1EA}
+.help a.btn{margin:0;min-width:240px}
+footer{padding:26px 0 40px;font-size:14px;color:var(--muted)}
+footer a{color:var(--muted);margin-right:16px}
+@media (max-width:520px){.hero{padding:30px 0 56px}.top a.tel{display:none}.grid{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
-
-<header class="site">
-  <nav class="wrap">
-    <a href="index.html" class="logo"><img src="images/logo.png" alt="RMS EcoSky"></a>
-    <ul class="navlinks" id="navlinks">
-      <li><a href="index.html" class="active">Accueil</a></li>
-      <li><a href="services.html">Services</a></li>
-      <li><a href="portails.html">Portails</a></li>
-      <li><a href="realisations.html">Réalisations</a></li>
-      <li><a href="contact.html">Contact</a></li>
-      <li><a class="btn" href="https://salesflow-ecosky.vercel.app/estimation.html" target="_blank" rel="noopener">Devis gratuit</a></li>
-    </ul>
-    <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
-  </nav>
+<header>
+  <div class="wrap">
+    <div class="top">
+      <a class="logo" href="/">SKY<span>ECO</span></a>
+      <a class="tel" href="tel:+33645688394">06 45 68 83 94</a>
+    </div>
+    <div class="hero">
+      <h1>Les outils de <em>l'artisan</em><br>du bâtiment</h1>
+      <p>Plus de chantiers, des devis plus rapides, une meilleure image. Choisissez ce qui vous sert, payez seulement ce que vous prenez.</p>
+    </div>
+  </div>
 </header>
 
-<main>
+<main class="wrap">
+  <div class="grid">
 
-  <!-- HERO -->
-  <section class="wrap" style="padding: 72px 0 40px; display:grid; grid-template-columns: 1.1fr 0.9fr; gap:56px; align-items:center;">
+    <article class="card">
+      <span class="tag">Premier chantier offert</span>
+      <h2>Recevoir des chantiers</h2>
+      <p>Des demandes de particuliers près de chez vous, avec la surface, la commune et le budget.</p>
+      <ul><li>Sans abonnement</li><li>Vous ne payez que le chantier que vous prenez</li><li>Tous les métiers du bâtiment</li></ul>
+      <div class="price">19 € à 39 € HT le chantier<small>Le premier est offert</small></div>
+      <a class="btn" href="/chantiers">Voir les chantiers</a>
+    </article>
+
+    <article class="card">
+      <span class="tag">2 jours d'essai gratuit</span>
+      <h2>Estimateur BTP</h2>
+      <p>Le prix du marché de 300 postes de travaux, sur votre téléphone, avant de chiffrer.</p>
+      <ul><li>Prix repères ajustés à votre secteur</li><li>Utilisable directement chez le client</li><li>Sans carte bancaire pour l'essai</li></ul>
+      <div class="price">29,90 € HT, achat unique<small>Pas d'abonnement</small></div>
+      <a class="btn" href="/estimateur-btp-demo.html">Essayer l'estimateur</a>
+    </article>
+
+    <article class="card">
+      <span class="tag pay">Téléchargement immédiat</span>
+      <h2>Kit Pro Artisan</h2>
+      <p>Un modèle de devis conforme aux mentions légales 2026 et des visuels prêts à publier sur vos réseaux.</p>
+      <ul><li>Les mentions obligatoires, sans oubli</li><li>Posts Facebook et Instagram à personnaliser</li><li>À vous pour toujours</li></ul>
+      <div class="price">29 € TTC, paiement unique</div>
+      <a class="btn" href="/kit-pro-artisan-btp.html">Voir le kit</a>
+    </article>
+
+    <article class="card">
+      <span class="tag pay">Clé en main</span>
+      <h2>Skyeco Pro</h2>
+      <p>Votre site vitrine et toutes vos demandes clients au même endroit, avec alerte dès qu'un client écrit.</p>
+      <ul><li>Site vitrine à votre nom</li><li>Formulaire de demande personnalisé</li><li>Tableau de bord sur téléphone</li></ul>
+      <div class="price">Dès 390 € de mise en place +&nbsp;39&nbsp;€/mois<small>Rien à installer</small></div>
+      <a class="btn" href="/skyeco-pro-landing.html">Découvrir Skyeco Pro</a>
+      <a class="alt" href="/skyeco-pro-landing-paysagiste.html">Vous êtes paysagiste ? Version dédiée</a>
+    </article>
+
+    <article class="card">
+      <span class="tag">Essai gratuit 30 jours</span>
+      <h2>Skyeco Ads</h2>
+      <p>Vos annonces Google pilotées pour vous, vos prospects suivis et vos devis signés en ligne.</p>
+      <ul><li>Annonces Google Ads gérées</li><li>Devis avec signature électronique</li><li>Sans engagement, sans carte bancaire</li></ul>
+      <div class="price">Essai gratuit, puis forfait mensuel</div>
+      <a class="btn" href="/skyeco-ads-landing-nationale.html">Démarrer l'essai</a>
+    </article>
+
+  </div>
+
+  <section class="help">
     <div>
-      <p class="eyebrow">Artisan sol souple EPDM · Morbihan, Bretagne</p>
-      <h1 style="margin-top:18px;">Le sol qui tient tête<br> aux hivers bretons.</h1>
-      <p class="lead" style="margin-top:22px;">Résine EPDM coulée en place, drainante et sans joint, pour vos terrasses, plages de piscine et allées. Posée par les mêmes mains qui gèrent votre assainissement et vos clôtures — un seul artisan, du terrassement à la finition.</p>
-      <div style="margin-top:34px; display:flex; gap:16px; flex-wrap:wrap;">
-        <a class="btn" href="https://salesflow-ecosky.vercel.app/estimation.html" target="_blank" rel="noopener">Demander mon devis gratuit</a>
-        <a class="btn outline" href="realisations.html">Voir les réalisations</a>
-      </div>
-      <div style="margin-top:44px; display:flex; gap:36px; flex-wrap:wrap;">
-        <div><div style="font-family:var(--display); font-size:1.8rem; color:var(--nuit);">15 ans</div><div class="eyebrow" style="margin-top:2px;">d'expérience VRD</div></div>
-        <div><div style="font-family:var(--display); font-size:1.8rem; color:var(--nuit);">40 km</div><div class="eyebrow" style="margin-top:2px;">autour de Brech</div></div>
-        <div><div style="font-family:var(--display); font-size:1.8rem; color:var(--nuit);">100%</div><div class="eyebrow" style="margin-top:2px;">drainant, sans joint</div></div>
-      </div>
+      <h3>Vous hésitez ?</h3>
+      <p>Dites-nous votre métier, on vous dit en deux minutes quel outil vous servira vraiment.</p>
     </div>
-    <div class="resin-swatch" style="aspect-ratio: 4/5; display:flex; align-items:flex-end; padding:26px;">
-      <img src="images/hero-piscine.jpg" alt="Plage de piscine en résine EPDM posée par RMS EcoSky">
-      <div style="position:relative; z-index:1; background:var(--nuit); color:var(--ivoire); padding:14px 18px; border-radius:12px; font-family:var(--mono); font-size:0.78rem; line-height:1.6;">
-        EPDM 2–4mm<br>Caoutchouc recyclé<br>Pose sur dalle
-      </div>
-    </div>
+    <a class="btn" href="mailto:infos@ecosky.fr?subject=Quel%20outil%20Skyeco%20pour%20moi%20%3F">Nous écrire</a>
   </section>
-
-  <!-- BANDEAU SERVICES -->
-  <section style="background: var(--ivoire-2); padding: 90px 0; margin-top:70px;">
-    <div class="wrap">
-      <p class="eyebrow">Ce que nous faisons</p>
-      <h2 style="margin-top:14px; max-width:20ch;">Du sol jusqu'aux réseaux, un seul interlocuteur.</h2>
-      <div style="margin-top:52px; display:grid; grid-template-columns: repeat(3, 1fr); gap:26px;">
-        <div class="resin-card" style="padding:30px;">
-          <h3>EcoSky'Gum — résine EPDM</h3>
-          <p style="margin-top:12px; color:var(--ardoise-2); font-size:0.96rem;">Terrasses, tours de piscine, allées carrossables. Antidérapant, perméable, sans mauvaises herbes.</p>
-        </div>
-        <div class="resin-card" style="padding:30px; display:flex; flex-direction:column;">
-          <h3>Assainissement (ANC/SPANC)</h3>
-          <p style="margin-top:12px; color:var(--ardoise-2); font-size:0.96rem; flex-grow:1;">Étude de sol, filière compacte ou traditionnelle, mise aux normes, dossier SPANC géré pour vous.</p>
-          <div style="margin-top:20px; display:flex; gap:14px; flex-wrap:wrap;">
-            <a href="assainissement.html" class="btn outline" style="padding:10px 20px; font-size:0.85rem;">Les systèmes ANC</a>
-            <a href="https://salesflow-ecosky.vercel.app/estimation-anc.html" target="_blank" rel="noopener" class="btn outline" style="padding:10px 20px; font-size:0.85rem;">Devis assainissement</a>
-          </div>
-        </div>
-        <div class="resin-card" style="padding:30px; display:flex; flex-direction:column;">
-          <h3>Portails, clôtures & enrobés</h3>
-          <p style="margin-top:12px; color:var(--ardoise-2); font-size:0.96rem; flex-grow:1;">Aménagement complet du terrain : portails aluminium autoportés, clôtures, allées en enrobé.</p>
-          <a href="portails.html" class="btn outline" style="margin-top:20px; align-self:flex-start; padding:10px 20px; font-size:0.85rem;">Voir nos portails</a>
-        </div>
-      </div>
-      <a href="services.html" class="btn outline" style="margin-top:40px;">Tous nos services</a>
-    </div>
-  </section>
-
-  <!-- POURQUOI -->
-  <section class="wrap" style="padding: 100px 0;">
-    <p class="eyebrow">Pourquoi RMS EcoSky</p>
-    <h2 style="margin-top:14px; max-width:22ch;">Un chantier, un artisan, aucune mauvaise surprise.</h2>
-    <div style="margin-top:52px; display:grid; grid-template-columns: repeat(4, 1fr); gap:28px;">
-      <div>
-        <div style="font-family:var(--mono); color:var(--sauge); font-size:0.85rem;">01</div>
-        <h3 style="margin-top:10px; font-size:1.1rem;">Étude sur site</h3>
-        <p style="margin-top:8px; font-size:0.92rem; color:var(--ardoise-2);">Diagnostic du support, du sol et de vos contraintes réelles.</p>
-      </div>
-      <div>
-        <div style="font-family:var(--mono); color:var(--sauge); font-size:0.85rem;">02</div>
-        <h3 style="margin-top:10px; font-size:1.1rem;">Devis détaillé</h3>
-        <p style="margin-top:8px; font-size:0.92rem; color:var(--ardoise-2);">Chiffrage clair, poste par poste, sans ligne cachée.</p>
-      </div>
-      <div>
-        <div style="font-family:var(--mono); color:var(--sauge); font-size:0.85rem;">03</div>
-        <h3 style="margin-top:10px; font-size:1.1rem;">Pose soignée</h3>
-        <p style="margin-top:8px; font-size:0.92rem; color:var(--ardoise-2);">Équipe RMS EcoSky, du terrassement à la finition.</p>
-      </div>
-      <div>
-        <div style="font-family:var(--mono); color:var(--sauge); font-size:0.85rem;">04</div>
-        <h3 style="margin-top:10px; font-size:1.1rem;">Suivi après pose</h3>
-        <p style="margin-top:8px; font-size:0.92rem; color:var(--ardoise-2);">Un artisan joignable, pas un service client anonyme.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- CTA FINAL -->
-  <section class="wrap" style="padding-bottom:110px;">
-    <div class="resin-card" style="background:var(--nuit); border-color:var(--nuit); padding:64px 56px; display:flex; align-items:center; justify-content:space-between; gap:32px; flex-wrap:wrap;">
-      <div>
-        <h2 style="color:var(--blanc); max-width:16ch;">Un projet en tête ?</h2>
-        <p style="color:var(--ivoire-2); margin-top:10px; max-width:42ch;">Décrivez votre terrain, nous revenons vers vous avec une estimation sous 48h.</p>
-      </div>
-      <a class="btn" style="background:var(--sable); border-color:var(--sable); color:var(--nuit);" href="https://salesflow-ecosky.vercel.app/estimation.html" target="_blank" rel="noopener">Demander mon devis</a>
-    </div>
-  </section>
-
 </main>
 
-<footer class="site">
-  <div class="wrap">
-    <div>
-      <div class="foot-logo">RMS EcoSky</div>
-      <p style="max-width:34ch; font-size:0.92rem;">Résine EPDM et aménagements extérieurs. 23 route de Corn er Hoet, 56400 Brech.</p>
-    </div>
-    <div>
-      <h4>Navigation</h4>
-      <p style="display:flex; flex-direction:column; gap:10px;">
-        <a href="services.html">Services</a>
-        <a href="realisations.html">Réalisations</a>
-        <a href="contact.html">Contact</a>
-      </p>
-    </div>
-    <div>
-      <h4>Contact</h4>
-      <p style="display:flex; flex-direction:column; gap:10px;">
-        <a href="mailto:infos@ecosky.fr">infos@ecosky.fr</a>
-        <a href="https://salesflow-ecosky.vercel.app/estimation.html" target="_blank" rel="noopener">Devis en ligne</a>
-      </p>
-    </div>
-  </div>
-  <div class="wrap legal">
-    <span>© RMS EcoSky — SIRET 939 997 870 00018</span>
-    <span>APE 4399D</span>
-  </div>
+<footer class="wrap">
+  <p>Skyeco by RMS — RESINE MARBRE SOL, 23 route de Corn er Hoet, 56400 Brech.</p>
+  <p><a href="/prix-travaux.html">Vous êtes un particulier ? Estimez vos travaux</a><a href="/mentions-legales.html">Mentions légales</a><a href="/politique-confidentialite.html">Confidentialité</a><a href="/cgv.html">CGV</a></p>
 </footer>
-
-<script src="script.js"></script>
-<script>
-  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
-</script>
-<script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>

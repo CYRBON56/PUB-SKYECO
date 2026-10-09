@@ -61,13 +61,15 @@ async function upsertAbonne(email, customer, sub) {
 }
 function etat(a) { return { email: a.email, statut: a.statut, actif: actif(a.statut), fin_periode: a.fin_periode }; }
 
-async function claude(content, maxTokens, system) {
+async function claude(content, maxTokens, system, modele = MODELE) {
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model: MODELE, max_tokens: maxTokens, ...(system ? { system } : {}), messages: content }),
+    body: JSON.stringify({ model: modele, max_tokens: maxTokens, ...(system ? { system } : {}), messages: content }),
   });
   const j = await r.json().catch(() => ({}));
+  // Modèle indisponible sur le compte : on retombe sur celui déjà utilisé ailleurs sur le site.
+  if (!r.ok && modele !== 'claude-sonnet-4-6' && (r.status === 404 || /model/i.test(JSON.stringify(j)))) return claude(content, maxTokens, system, 'claude-sonnet-4-6');
   if (!r.ok) throw new Error(`anthropic ${r.status} ${JSON.stringify(j).slice(0, 300)}`);
   return (j.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('');
 }

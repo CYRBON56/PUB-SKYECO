@@ -1,38 +1,6 @@
 {
   "crons": [
     {
-      "path": "/api/verifier-essais-a-programmer",
-      "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/verifier-pauses-a-programmer",
-      "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/verifier-soldes-bas",
-      "schedule": "*/15 * * * *"
-    },
-    {
-      "path": "/api/rappel-rdv",
-      "schedule": "*/15 * * * *"
-    },
-    {
-      "path": "/api/cron-prospection-quotidienne",
-      "schedule": "*/30 6-19 * * *"
-    },
-    {
-      "path": "/api/agent-reseaux-sociaux",
-      "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/agent-prix-travaux",
-      "schedule": "0 6 */2 * *"
-    },
-    {
-      "path": "/api/cron-campagne-chantiers",
-      "schedule": "0 7 * * 1-5"
-    },
-    {
       "path": "/api/veille-appels-offres",
       "schedule": "30 5 * * *"
     }

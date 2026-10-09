@@ -138,13 +138,15 @@
     while (jours.length < 220) { d = new Date(d.getTime() + 864e5); jours.push({ cle: cleJour(d), T: NORMALES[d.getMonth()], prevu: false }); }
     return jours;
   }
+  // Degrés-jours de la semaine de référence (7 prochains jours), avec un plancher pour éviter
+  // de diviser par presque rien quand il fait doux.
+  const refSemaine = (jours) => Math.max(jours.slice(0, 7).reduce((s, j) => s + dju(j.T), 0), 14);
   if (produit === 'stock-granules') {
     lancer($('demo-form'), (c, pts) => {
       const stock = Math.max(0, Number($('demo-stock').value) || 0), sem = Math.max(0.5, Number($('demo-semaine').value) || 0);
       const jours = projectionJours(pts);
-      // Consommation par degré-jour, calée sur une semaine « normale » du mois en cours
-      const ref = 7 * dju(NORMALES[new Date().getMonth()]) || 7;
-      const parDJU = sem / Math.max(ref, 14);
+      // Consommation par degré-jour, calée sur la semaine qui vient : « en ce moment » = ces 7 jours-là
+      const parDJU = sem / refSemaine(jours);
       let reste = stock, fin = null, sem7 = 0;
       jours.forEach((j, i) => { const c = dju(j.T) * parDJU; if (i < 7) sem7 += c; if (fin === null) { reste -= c; if (reste <= 0) fin = j; } });
       const froid = jours.slice(0, 9).reduce((m, j) => (j.T < m.T ? j : m), jours[0]);
@@ -152,9 +154,9 @@
       if (!fin) html += `<div class="tile"><div class="row"><strong>Votre stock tient</strong><span class="chip ok">tout l'hiver</span></div><span class="meta">Au rythme estimé, vous ne serez pas à court avant le printemps.</span></div>`;
       else {
         const dFin = new Date(fin.cle + 'T12:00:00'), dCmd = new Date(dFin.getTime() - 21 * 864e5);
-        const urgent = dCmd <= new Date();
+        const urgent = dCmd.getTime() <= Date.now() + 3 * 864e5; // à commander dans les 3 jours
         html += `<div class="tile"><div class="row"><strong>Tient jusqu'au</strong><span class="chip ${urgent ? 'bad' : 'warn'}">${esc(fmtJour.format(dFin))}</span></div><span class="meta">${fin.prevu ? 'Selon les prévisions des prochains jours.' : 'Prévisions sur 9 jours, puis températures moyennes de saison.'}</span></div>
-          <div class="tile"><div class="row"><strong>Recommandez avant le</strong><span class="chip ${urgent ? 'bad' : 'ok'}">${urgent ? 'maintenant' : esc(fmtJour.format(dCmd))}</span></div><span class="meta">En comptant 3 semaines de délai de livraison en plein hiver.</span></div>`;
+          <div class="tile"><div class="row"><strong>Recommandez avant le</strong><span class="chip ${urgent ? 'bad' : 'ok'}">${urgent ? 'dès maintenant' : esc(fmtJour.format(dCmd))}</span></div><span class="meta">En comptant 3 semaines de délai de livraison en plein hiver.</span></div>`;
       }
       html += `<div class="tile"><div class="row"><strong>Les 7 prochains jours</strong><span>${num(sem7, 1)} sacs</span></div><span class="meta">Journée la plus froide prévue : ${esc(fmtJour.format(new Date(froid.cle + 'T12:00:00')))}, ${num(froid.T, 1)} °C en moyenne.</span></div>
         <p class="demo-note">Démo simplifiée : l'appli apprendra votre vraie consommation semaine après semaine. Données : MET Norway (CC BY 4.0).</p>`;
@@ -167,8 +169,7 @@
     lancer($('demo-form'), (c, pts) => {
       const kwh = Math.max(1, Number($('demo-kwh').value) || 0), prix = Math.max(0.01, Number(String($('demo-prix').value).replace(',', '.')) || 0.25);
       const jours = projectionJours(pts);
-      const ref = 7 * dju(NORMALES[new Date().getMonth()]) || 7;
-      const parDJU = kwh / Math.max(ref, 14);
+      const parDJU = kwh / refSemaine(jours);
       const finMars = (new Date().getMonth() >= 3 ? new Date().getFullYear() + 1 : new Date().getFullYear()) + '-03-31';
       const mois = new Map(); let total = 0;
       for (const j of jours) { if (j.cle > finMars) break; const k = j.cle.slice(0, 7); const v = dju(j.T) * parDJU; mois.set(k, (mois.get(k) || 0) + v); total += v; }

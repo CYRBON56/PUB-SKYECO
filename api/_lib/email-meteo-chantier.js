@@ -7,7 +7,7 @@
 
 export const SUJET_METEO_CHANTIER = 'Demain, vous pouvez couler ou pas ? Le feu vert météo, chantier par chantier';
 
-export const DESTINATION_METEO_CHANTIER = 'https://www.skyeco.fr/meteo-chantier.html?src=email';
+export const DESTINATION_METEO_CHANTIER = 'https://www.skyeco.fr/meteo-chantier.html?src=email#essayer';
 
 export const FAMILLES_METEO_CHANTIER = [
   'Isolation / enveloppe (RGE)',
@@ -20,7 +20,7 @@ Alors on prépare <strong>Météo Chantier</strong> : une appli qui vous dit cha
 — elle croise gel, point de rosée, humidité et pluie au point exact du chantier,<br>
 — avec les règles de votre métier (enduit, ITE, étanchéité, béton, peinture…),<br>
 — et vous envoie l'alerte la veille au soir : « Demain, Vannes : non, gel au sol ».<br><br>
-<a href="{{lien_cta}}" style="display:inline-block;background:#e3a008;color:#1b1403;padding:12px 22px;text-decoration:none;font-weight:700;border-radius:6px;">Voir à quoi ça ressemble</a><br><br>
+<a href="{{lien_cta}}" style="display:inline-block;background:#e3a008;color:#1b1403;padding:12px 22px;text-decoration:none;font-weight:700;border-radius:6px;">Essayer sur ma commune</a><br><br>
 19,90 € une seule fois, sans abonnement. Elle sort fin novembre : si vous la précommandez et qu'elle n'est pas prête le 30 novembre, vous êtes remboursé automatiquement.<br><br>
 Et si vous pensez que ça ne vous servirait pas, une ligne en réponse m'aide aussi : je veux construire ce qui sert vraiment aux artisans.<br><br>
 <img src="cid:signature-cyrille" width="64" height="64" alt="Cyrille Bon" style="border-radius:50%;display:block;margin-bottom:8px;">Cyrille Bon<br>RMS, Brech (56)`;

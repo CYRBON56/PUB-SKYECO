@@ -19,7 +19,8 @@ import { verifierLimite, ipDepuisRequete } from './_lib/rate-limit.js';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const PRIX_CENTIMES = 499;
 const JOURS_ESSAI = 7;
-const QUOTA_JOUR = 25; // appels à Claude par abonné et par jour (maîtrise des coûts)
+const QUOTA_JOUR = 25; // appels à Claude par abonné payant et par jour (maîtrise des coûts)
+const QUOTA_ESSAI = 10; // pendant l'essai gratuit sans carte
 const MODELE = 'claude-sonnet-5-5';
 
 export const config = { api: { bodyParser: { sizeLimit: '6mb' } } };
@@ -59,7 +60,17 @@ async function upsertAbonne(email, customer, sub) {
     body: JSON.stringify({ email, stripe_customer: customer, stripe_subscription: sub.id, statut: sub.status, fin_periode: sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null, updated_at: new Date().toISOString() }) });
   return rows[0];
 }
-function etat(a) { return { email: a.email, statut: a.statut, actif: actif(a.statut), fin_periode: a.fin_periode }; }
+const essaiEnCours = (a) => a.statut === 'essai' && a.fin_periode && Date.parse(a.fin_periode) > Date.now();
+const acces = (a) => actif(a.statut) || essaiEnCours(a);
+function etat(a) {
+  const jours = a.fin_periode ? Math.max(0, Math.ceil((Date.parse(a.fin_periode) - Date.now()) / 864e5)) : 0;
+  return { email: a.email, statut: a.statut, actif: acces(a), essai: a.statut === 'essai', essai_fini: a.statut === 'essai' && !essaiEnCours(a), jours_restants: jours, fin_periode: a.fin_periode, abonne: actif(a.statut) };
+}
+async function emailBienvenue(email, url) {
+  await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from: 'Petite Part <notifications@ecoskybyrms.fr>', to: [email], subject: 'Votre essai Petite Part : 7 jours offerts',
+      html: `<p>Bonjour,</p><p>Votre essai gratuit de Petite Part est activé pour 7 jours, sans carte bancaire : photographiez vos assiettes, demandez des recettes et parlez à votre coach.</p><p>Pour retrouver l'appli sur un autre téléphone, touchez ce bouton :</p><p><a href="${url}" style="background:#2F7D4F;color:#fff;padding:12px 18px;border-radius:10px;text-decoration:none;font-weight:700">Ouvrir Petite Part</a></p><p>À la fin de l'essai, rien n'est prélevé : vous choisirez si vous voulez continuer pour 4,99 € par mois.</p>` }) }).catch(() => {});
+}
 
 async function claude(content, maxTokens, system, modele = MODELE) {
   const r = await fetch('https://api.anthropic.com/v1/messages', {
@@ -81,23 +92,36 @@ export default async function handler(req, res) {
   const ip = ipDepuisRequete(req);
   try {
     if (action === 'essai') {
-      if (!(await verifierLimite('pp-essai:' + ip, 8, 600))) return res.status(429).json({ error: 'Trop de tentatives. Réessayez dans quelques minutes.' });
+      // Essai gratuit de 7 jours SANS carte bancaire. Une seule fois par adresse email.
+      if (!(await verifierLimite('pp-essai:' + ip, 4, 3600))) return res.status(429).json({ error: 'Trop de tentatives. Réessayez plus tard.' });
       if (!emailOk(b.email)) return res.status(400).json({ error: 'Adresse email invalide.' });
       const email = b.email.trim().toLowerCase();
-      const deja = await sb(`petitepart_abonnes?email=eq.${encodeURIComponent(email)}&select=statut`);
-      if (deja?.[0] && actif(deja[0].statut)) return res.status(409).json({ error: 'Vous avez déjà un abonnement. Utilisez « Déjà abonné » pour recevoir votre lien de connexion.' });
+      const deja = await sb(`petitepart_abonnes?email=eq.${encodeURIComponent(email)}&select=id,statut`);
+      if (deja?.[0]) return res.status(409).json({ error: "Cette adresse a déjà profité de l'essai. Touchez « Déjà inscrit ? » pour recevoir votre lien de connexion." });
+      const [a] = await sb('petitepart_abonnes', { method: 'POST', body: JSON.stringify({ email, statut: 'essai', fin_periode: new Date(Date.now() + JOURS_ESSAI * 864e5).toISOString() }) });
+      const jeton = await nouveauJeton(a.id);
+      const t2 = await nouveauJeton(a.id);
+      await emailBienvenue(email, `${origine(req)}/petitepart/?connexion=${t2}`);
       console.log('petitepart essai', email.replace(/^(.).*@/, '$1***@'));
+      return res.status(200).json({ jeton, ...etat(a) });
+    }
+
+    if (action === 'abonner') {
+      // Passage à l'offre payante (après ou pendant l'essai) : 4,99 €/mois, sans nouvel essai.
+      if (!(await verifierLimite('pp-abo:' + ip, 8, 600))) return res.status(429).json({ error: 'Trop de tentatives.' });
+      const a = await abonneDuJeton(b.jeton);
+      if (!a) return res.status(401).json({ error: 'Connexion expirée. Demandez un lien de connexion.' });
+      if (actif(a.statut)) return res.status(409).json({ error: 'Votre abonnement est déjà actif.' });
       const o = origine(req);
       const session = await stripe.checkout.sessions.create({
-        mode: 'subscription', locale: 'fr', customer_email: email,
-        line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: PRIX_CENTIMES, recurring: { interval: 'month' }, product_data: { name: 'Petite Part — abonnement', description: 'Programme minceur, analyse de vos assiettes en photo et coach. Résiliable à tout moment. TVA 20 % incluse.' } } }],
-        subscription_data: { trial_period_days: deja?.[0] ? undefined : JOURS_ESSAI, metadata: { product: 'petitepart' } },
-        payment_method_collection: 'always',
+        mode: 'subscription', locale: 'fr', customer_email: a.email,
+        line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: PRIX_CENTIMES, recurring: { interval: 'month' }, product_data: { name: 'Petite Part — abonnement', description: 'Analyse de vos assiettes en photo, recettes sur mesure et coach. Résiliable à tout moment. TVA 20 % incluse.' } } }],
+        subscription_data: { metadata: { product: 'petitepart' } },
         metadata: { product: 'petitepart' },
         success_url: `${o}/petitepart/?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${o}/petitepart/?annule=1`,
       });
-      console.log('petitepart essai ok', session.id);
+      console.log('petitepart abonner', session.id);
       return res.status(200).json({ url: session.url });
     }
 
@@ -142,16 +166,18 @@ export default async function handler(req, res) {
     if (action === 'statut') return res.status(200).json(etat(a));
 
     if (action === 'resilier') {
+      if (!a.stripe_subscription || !actif(a.statut)) return res.status(400).json({ error: "Vous n'avez pas d'abonnement payant : rien ne sera prélevé." });
       const s = await stripe.subscriptions.update(a.stripe_subscription, { cancel_at_period_end: true });
       await majAbonne(a.id, s);
       return res.status(200).json({ ok: true, fin_periode: new Date(s.current_period_end * 1000).toISOString() });
     }
 
     if (action === 'ia') {
-      if (!actif(a.statut)) return res.status(402).json({ error: "Votre abonnement n'est plus actif." });
+      if (!acces(a)) return res.status(402).json({ error: a.statut === 'essai' ? 'Votre essai gratuit est terminé.' : "Votre abonnement n'est plus actif.", essai_fini: a.statut === 'essai' });
       const jour = new Date().toISOString().slice(0, 10);
-      const r = await fetch(`${process.env.SUPABASE_URL}/rest/v1/rpc/petitepart_incrementer_usage`, { method: 'POST', headers: H(), body: JSON.stringify({ p_abonne: a.id, p_jour: jour, p_max: QUOTA_JOUR }) });
-      if (!r.ok || (await r.json()) < 0) return res.status(429).json({ error: `Vous avez atteint les ${QUOTA_JOUR} analyses du jour. Rendez-vous demain !` });
+      const max = actif(a.statut) ? QUOTA_JOUR : QUOTA_ESSAI;
+      const r = await fetch(`${process.env.SUPABASE_URL}/rest/v1/rpc/petitepart_incrementer_usage`, { method: 'POST', headers: H(), body: JSON.stringify({ p_abonne: a.id, p_jour: jour, p_max: max }) });
+      if (!r.ok || (await r.json()) < 0) return res.status(429).json({ error: `Vous avez atteint les ${max} analyses du jour. Rendez-vous demain !` });
 
       const type = b.type;
       if (type === 'photo') {

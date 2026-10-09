@@ -258,7 +258,7 @@ footer a{color:var(--muted)}
       <input type="file" id="cam" accept="image/*" capture="environment">
       <input type="file" id="gal" accept="image/*">
       <input id="ctx" type="text" placeholder="Précision facultative (ex. « sans sauce »)" aria-label="Précision facultative">
-      <p class="ok" id="unavail" hidden>L'analyse de vos assiettes en photo fait partie de l'abonnement. <b>7 jours gratuits</b>, puis 4,99 € par mois, sans engagement. <button class="btn btn-main btn-sm" type="button" data-paywall style="margin-top:8px">Démarrer l'essai gratuit</button></p>
+      <p class="ok" id="unavail" hidden>Analysez vos assiettes en photo : <b>7 jours gratuits, sans carte bancaire</b>. <button class="btn btn-main btn-sm" type="button" data-paywall style="margin-top:8px">Commencer l'essai gratuit</button></p>
     </div>
     <div class="card" id="aRes">
       <div class="plate">
@@ -902,7 +902,7 @@ openDB().then(renderPhotos);
 /* ---------- compte, abonnement et appels à Claude via le serveur Skyeco ---------- */
 const API='/api/petitepart';let jeton=LS.get('jeton',null),compte=LS.get('compte',null);
 async function api(action,body){let r,j={};try{r=await fetch(API+'?action='+action,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})});j=await r.json().catch(()=>({}))}catch(e){throw{code:'upstream_error',message:"Pas de connexion internet. Réessayez."}}
-  if(!r.ok){if(r.status===401){jeton=null;LS.set('jeton',null);activerIA()}throw{code:r.status===401?'auth':r.status===402?'inactif':r.status===429?'quota':r.status===400?'bad':'upstream_error',message:j.error||"Le serveur ne répond pas. Réessayez."}}return j}
+  if(!r.ok){if(r.status===401){jeton=null;LS.set('jeton',null);activerIA()}if(r.status===402&&compte){compte.actif=false;compte.essai_fini=!!j.essai_fini;LS.set('compte',compte);setTimeout(showAbonner,600)}throw{code:r.status===401?'auth':r.status===402?'inactif':r.status===429?'quota':r.status===400?'bad':'upstream_error',message:j.error||"Le serveur ne répond pas. Réessayez."}}return j}
 function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),4200)}
 function reduire(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file);const i=new Image();i.onload=()=>{const k=Math.min(1,1280/Math.max(i.width,i.height));const c=document.createElement('canvas');c.width=Math.round(i.width*k);c.height=Math.round(i.height*k);c.getContext('2d').drawImage(i,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',.85))};i.onerror=()=>{URL.revokeObjectURL(u);rej({code:'image_rejected'})};i.src=u})}
 function lireJSON(t){try{return JSON.parse(t)}catch(e){}const f=/```(?:json)?\s*([\s\S]*?)```/.exec(t);if(f){try{return JSON.parse(f[1])}catch(e){}}const a=t.indexOf('{'),b=t.lastIndexOf('}');if(a>=0&&b>a){try{return JSON.parse(t.slice(a,b+1))}catch(e){}}throw{code:'invalid_json'}}
@@ -920,37 +920,56 @@ function closeSheet(){sheet.hidden=true}
 sheet.addEventListener('click',e=>{if(e.target===sheet)closeSheet()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
 document.addEventListener('click',e=>{if(e.target.closest('[data-paywall]'))showPaywall()});
+function setCompte(r){compte=r;LS.set('compte',r);if(r.jeton){jeton=r.jeton;LS.set('jeton',jeton)}activerIA()}
 function showPaywall(quoi){
-  sheetIn.innerHTML=`<h2 id="sheetTitle">${quoi?esc(quoi)+' : inclus dans l\'abonnement':'Petite Part, version complète'}</h2>
+  if(jeton&&compte&&!compte.actif)return showAbonner();
+  sheetIn.innerHTML=`<h2 id="sheetTitle">${quoi?esc(quoi)+' : à essayer gratuitement':'Essayez Petite Part en entier'}</h2>
   <ul class="perks"><li>📷 <span>Votre assiette en photo : aliments, grammes et calories calculés</span></li><li>🍽️ <span>Le conseil « petite part » quand le plat est riche</span></li><li>🥗 <span>Des recettes sur mesure avec ce que vous avez au frigo</span></li><li>💬 <span>Un coach qui répond à vos questions</span></li></ul>
-  <div><span class="price">7 jours gratuits</span><br><span class="muted">puis 4,99 € par mois, résiliable à tout moment en un clic. Aucun prélèvement si vous arrêtez pendant l'essai.</span></div>
+  <div><span class="price">7 jours gratuits</span><br><span class="muted"><b>Sans carte bancaire.</b> À la fin de l'essai, vous choisissez si vous voulez continuer pour 4,99 € par mois.</span></div>
   <div class="field"><label for="ppEmail">Votre adresse email</label><input id="ppEmail" type="email" autocomplete="email" inputmode="email" placeholder="vous@exemple.fr"></div>
   <p class="small" id="ppMsg" role="status" style="color:var(--prot);font-weight:700"></p>
-  <button class="btn btn-main" id="ppGo" type="button">Démarrer mes 7 jours gratuits</button>
-  <p class="small muted">Paiement sécurisé par Stripe. En continuant, vous acceptez les <a href="/petitepart/cgv.html" target="_blank" rel="noopener">conditions de vente</a>.</p>
-  <button class="btn btn-ghost btn-sm" id="ppDeja" type="button">Déjà abonné ? Recevoir mon lien de connexion</button>
+  <button class="btn btn-main" id="ppGo" type="button">Commencer mon essai gratuit</button>
+  <p class="small muted">Votre email sert à retrouver votre compte. En continuant, vous acceptez les <a href="/petitepart/cgv.html" target="_blank" rel="noopener">conditions</a>.</p>
+  <button class="btn btn-ghost btn-sm" id="ppDeja" type="button">Déjà inscrit ? Recevoir mon lien de connexion</button>
   <button class="btn btn-ghost btn-sm" type="button" id="ppClose">Plus tard</button>`;
   sheet.hidden=false;$('ppClose').onclick=closeSheet;
   $('ppGo').onclick=async()=>{const inp=$('ppEmail');inp.blur();const email=inp.value.trim();const go=$('ppGo');
-    if(!email){toast('Indiquez votre adresse email.');inp.focus();return}
-    go.disabled=true;go.textContent='Ouverture du paiement sécurisé…';
-    try{const r=await api('essai',{email});if(!r||!r.url)throw{code:'upstream_error',message:'Le paiement n\'a pas pu s\'ouvrir. Réessayez.'};window.location.assign(r.url)}
-    catch(e){const m=errTxt(e);toast(m);$('ppMsg').textContent=m;go.disabled=false;go.textContent='Démarrer mes 7 jours gratuits'}};
-  $('ppDeja').onclick=async()=>{const email=$('ppEmail').value.trim();if(!email){$('ppMsg').textContent='Indiquez l\'adresse email de votre abonnement.';$('ppEmail').focus();return}
-    try{await api('lien',{email});toast('Lien envoyé si un abonnement existe pour cette adresse.');$('ppMsg').textContent='Si un abonnement existe pour cette adresse, un lien de connexion vient de vous être envoyé par email.'}catch(e){$('ppMsg').textContent=errTxt(e)}};
+    if(!email){$('ppMsg').textContent='Indiquez votre adresse email.';inp.focus();return}
+    go.disabled=true;go.textContent='Activation…';
+    try{const r=await api('essai',{email});setCompte(r);closeSheet();toast('C\'est parti : 7 jours gratuits ! Photographiez votre première assiette.')}
+    catch(e){$('ppMsg').textContent=errTxt(e);go.disabled=false;go.textContent='Commencer mon essai gratuit'}};
+  $('ppDeja').onclick=async()=>{const email=$('ppEmail').value.trim();if(!email){$('ppMsg').textContent='Indiquez l\'adresse email de votre compte.';$('ppEmail').focus();return}
+    try{await api('lien',{email});$('ppMsg').style.color='var(--accent)';$('ppMsg').textContent='Si un compte existe pour cette adresse, un lien de connexion vient de vous être envoyé par email.'}catch(e){$('ppMsg').textContent=errTxt(e)}};
+}
+function showAbonner(){
+  const fini=compte&&compte.essai_fini;
+  sheetIn.innerHTML=`<h2 id="sheetTitle">${fini?'Votre essai gratuit est terminé':'Continuer avec Petite Part'}</h2>
+  <p>${fini?'Merci d\'avoir essayé Petite Part ! ':''}Pour garder l'analyse de vos assiettes, les recettes sur mesure et votre coach :</p>
+  <div><span class="price">4,99 € par mois</span><br><span class="muted">Sans engagement, résiliable en un clic dans « Mon compte ».</span></div>
+  <p class="small" id="ppMsg" role="status" style="color:var(--prot);font-weight:700"></p>
+  <button class="btn btn-main" id="ppAbo" type="button">S'abonner</button>
+  <p class="small muted">Paiement sécurisé par Stripe. Votre programme, vos recettes, vos exercices et votre suivi restent gratuits.</p>
+  <button class="btn btn-ghost btn-sm" type="button" id="ppClose">Plus tard</button>`;
+  sheet.hidden=false;$('ppClose').onclick=closeSheet;
+  $('ppAbo').onclick=async()=>{const go=$('ppAbo');go.disabled=true;go.textContent='Ouverture du paiement sécurisé…';
+    try{const r=await api('abonner',{jeton});window.location.assign(r.url)}catch(e){$('ppMsg').textContent=errTxt(e);go.disabled=false;go.textContent='S\'abonner'}};
 }
 function showCompte(){
   if(!jeton)return showPaywall();
   const c=compte||{};const fin=c.fin_periode?new Date(c.fin_periode).toLocaleDateString('fr-FR',{day:'numeric',month:'long'}):'';
-  const lib={trialing:'Essai gratuit en cours',active:'Abonnement actif',past_due:'Paiement en attente',canceled:'Abonnement terminé'}[c.statut]||'Abonnement';
-  sheetIn.innerHTML=`<h2 id="sheetTitle">Mon compte</h2><p><b>${esc(lib)}</b>${fin?' · jusqu\'au '+fin:''}<br><span class="muted small">${esc(c.email||'')}</span></p>
-  ${installed()?'':'<button class="btn btn-main" type="button" id="ppInst">📲 Mettre sur l\'écran d\'accueil</button>'}
-  <button class="btn btn-ghost" id="ppRes" type="button">Résilier mon abonnement</button><p class="small" id="ppMsg2" role="status"></p>
+  let lib,extra='';
+  if(c.abonne){lib=c.statut==='trialing'?'Essai gratuit en cours':'Abonnement actif';extra=fin?' · jusqu\'au '+fin:''}
+  else if(c.essai&&!c.essai_fini){lib='Essai gratuit';extra=` · encore ${c.jours_restants} jour${c.jours_restants>1?'s':''}`}
+  else lib=c.essai?'Essai terminé':'Abonnement terminé';
+  sheetIn.innerHTML=`<h2 id="sheetTitle">Mon compte</h2><p><b>${esc(lib)}</b>${esc(extra)}<br><span class="muted small">${esc(c.email||'')}</span></p>
+  ${c.abonne?'':'<button class="btn btn-main" type="button" id="ppAboC">S\'abonner pour 4,99 € par mois</button>'}
+  ${installed()?'':'<button class="btn btn-ghost" type="button" id="ppInst">📲 Mettre sur l\'écran d\'accueil</button>'}
+  ${c.abonne?'<button class="btn btn-ghost" id="ppRes" type="button">Résilier mon abonnement</button>':''}<p class="small" id="ppMsg2" role="status"></p>
   <button class="btn btn-ghost btn-sm" id="ppOut" type="button">Me déconnecter de ce téléphone</button><button class="btn btn-main btn-sm" type="button" id="ppClose">Fermer</button>`;
-  sheet.hidden=false;$('ppClose').onclick=closeSheet;const pi=$('ppInst');if(pi)pi.onclick=installer;
+  sheet.hidden=false;$('ppClose').onclick=closeSheet;const pi=$('ppInst');if(pi)pi.onclick=installer;const pa=$('ppAboC');if(pa)pa.onclick=showAbonner;
   $('ppOut').onclick=()=>{jeton=null;compte=null;LS.set('jeton',null);LS.set('compte',null);activerIA();closeSheet();toast('Déconnecté de ce téléphone.')};
-  $('ppRes').onclick=async()=>{if($('ppRes').dataset.ok!=='1'){$('ppRes').dataset.ok='1';$('ppRes').textContent='Confirmer la résiliation';$('ppMsg2').textContent='Vous gardez l\'accès jusqu\'à la fin de la période en cours. Touchez à nouveau pour confirmer.';return}
-    try{const r=await api('resilier',{jeton});$('ppMsg2').textContent='Résiliation enregistrée. Accès conservé jusqu\'au '+new Date(r.fin_periode).toLocaleDateString('fr-FR',{day:'numeric',month:'long'})+'. Aucun autre prélèvement.';$('ppRes').disabled=true}catch(e){$('ppMsg2').textContent=errTxt(e)}};
+  const rs=$('ppRes');if(rs)rs.onclick=async()=>{if(rs.dataset.ok!=='1'){rs.dataset.ok='1';rs.textContent='Confirmer la résiliation';$('ppMsg2').textContent='Vous gardez l\'accès jusqu\'à la fin de la période en cours. Touchez à nouveau pour confirmer.';return}
+    try{const r=await api('resilier',{jeton});$('ppMsg2').textContent='Résiliation enregistrée. Accès conservé jusqu\'au '+new Date(r.fin_periode).toLocaleDateString('fr-FR',{day:'numeric',month:'long'})+'. Aucun autre prélèvement.';rs.disabled=true}catch(e){$('ppMsg2').textContent=errTxt(e)}};
 }
 $('compteBtn').onclick=showCompte;
 
@@ -986,10 +1005,10 @@ showInstall();
 (async()=>{
   const q=new URLSearchParams(location.search);const clean=()=>history.replaceState(null,'',location.pathname);
   try{
-    if(q.get('session_id')){const r=await api('activer',{session_id:q.get('session_id')});jeton=r.jeton;compte=r;LS.set('jeton',jeton);LS.set('compte',r);clean();toast('Bienvenue ! Votre essai gratuit de 7 jours est activé.')}
-    else if(q.get('connexion')){const r=await api('jeton',{jeton_email:q.get('connexion')});jeton=r.jeton;compte=r;LS.set('jeton',jeton);LS.set('compte',r);clean();toast('Vous êtes connecté sur ce téléphone.')}
+    if(q.get('session_id')){const r=await api('activer',{session_id:q.get('session_id')});setCompte(r);clean();toast(r.statut==='trialing'?'Bienvenue ! Votre essai gratuit est activé.':'Merci ! Votre abonnement est actif.')}
+    else if(q.get('connexion')){const r=await api('jeton',{jeton_email:q.get('connexion')});setCompte(r);clean();toast('Vous êtes connecté sur ce téléphone.')}
     else if(q.get('annule')){clean();toast("Paiement annulé : rien n'a été prélevé.")}
-    else if(jeton){api('statut',{jeton}).then(r=>{compte=r;LS.set('compte',r);if(!r.actif){toast("Votre abonnement n'est plus actif.");}}).catch(()=>{})}
+    else if(jeton){api('statut',{jeton}).then(r=>{setCompte(r);if(r.essai_fini)setTimeout(showAbonner,800);else if(r.essai&&!r.abonne&&r.jours_restants<=2)toast(`Plus que ${r.jours_restants} jour${r.jours_restants>1?'s':''} d'essai gratuit.`);else if(!r.actif)toast("Votre abonnement n'est plus actif.")}).catch(()=>{})}
   }catch(e){clean();toast(errTxt(e))}
   activerIA();
 })();

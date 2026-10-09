@@ -86,6 +86,7 @@ export default async function handler(req, res) {
       const email = b.email.trim().toLowerCase();
       const deja = await sb(`petitepart_abonnes?email=eq.${encodeURIComponent(email)}&select=statut`);
       if (deja?.[0] && actif(deja[0].statut)) return res.status(409).json({ error: 'Vous avez déjà un abonnement. Utilisez « Déjà abonné » pour recevoir votre lien de connexion.' });
+      console.log('petitepart essai', email.replace(/^(.).*@/, '$1***@'));
       const o = origine(req);
       const session = await stripe.checkout.sessions.create({
         mode: 'subscription', locale: 'fr', customer_email: email,
@@ -96,6 +97,7 @@ export default async function handler(req, res) {
         success_url: `${o}/petitepart/?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${o}/petitepart/?annule=1`,
       });
+      console.log('petitepart essai ok', session.id);
       return res.status(200).json({ url: session.url });
     }
 

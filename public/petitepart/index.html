@@ -864,17 +864,19 @@ function showPaywall(quoi){
   <ul class="perks"><li>📷 <span>Votre assiette en photo : aliments, grammes et calories calculés</span></li><li>🍽️ <span>Le conseil « petite part » quand le plat est riche</span></li><li>🥗 <span>Des recettes sur mesure avec ce que vous avez au frigo</span></li><li>💬 <span>Un coach qui répond à vos questions</span></li></ul>
   <div><span class="price">7 jours gratuits</span><br><span class="muted">puis 4,99 € par mois, résiliable à tout moment en un clic. Aucun prélèvement si vous arrêtez pendant l'essai.</span></div>
   <div class="field"><label for="ppEmail">Votre adresse email</label><input id="ppEmail" type="email" autocomplete="email" inputmode="email" placeholder="vous@exemple.fr"></div>
+  <p class="small" id="ppMsg" role="status" style="color:var(--prot);font-weight:700"></p>
   <button class="btn btn-main" id="ppGo" type="button">Démarrer mes 7 jours gratuits</button>
   <p class="small muted">Paiement sécurisé par Stripe. En continuant, vous acceptez les <a href="/petitepart/cgv.html" target="_blank" rel="noopener">conditions de vente</a>.</p>
-  <p class="small" id="ppMsg" role="status"></p>
   <button class="btn btn-ghost btn-sm" id="ppDeja" type="button">Déjà abonné ? Recevoir mon lien de connexion</button>
   <button class="btn btn-ghost btn-sm" type="button" id="ppClose">Plus tard</button>`;
   sheet.hidden=false;$('ppClose').onclick=closeSheet;
-  $('ppGo').onclick=async()=>{const email=$('ppEmail').value.trim();if(!email){$('ppMsg').textContent='Indiquez votre adresse email.';return}
-    $('ppGo').disabled=true;$('ppMsg').textContent='Redirection vers le paiement sécurisé…';
-    try{const r=await api('essai',{email});location.href=r.url}catch(e){$('ppMsg').textContent=errTxt(e);$('ppGo').disabled=false}};
+  $('ppGo').onclick=async()=>{const inp=$('ppEmail');inp.blur();const email=inp.value.trim();const go=$('ppGo');
+    if(!email){toast('Indiquez votre adresse email.');inp.focus();return}
+    go.disabled=true;go.textContent='Ouverture du paiement sécurisé…';
+    try{const r=await api('essai',{email});if(!r||!r.url)throw{code:'upstream_error',message:'Le paiement n\'a pas pu s\'ouvrir. Réessayez.'};window.location.assign(r.url)}
+    catch(e){const m=errTxt(e);toast(m);$('ppMsg').textContent=m;go.disabled=false;go.textContent='Démarrer mes 7 jours gratuits'}};
   $('ppDeja').onclick=async()=>{const email=$('ppEmail').value.trim();if(!email){$('ppMsg').textContent='Indiquez l\'adresse email de votre abonnement.';$('ppEmail').focus();return}
-    try{await api('lien',{email});$('ppMsg').textContent='Si un abonnement existe pour cette adresse, un lien de connexion vient de vous être envoyé par email.'}catch(e){$('ppMsg').textContent=errTxt(e)}};
+    try{await api('lien',{email});toast('Lien envoyé si un abonnement existe pour cette adresse.');$('ppMsg').textContent='Si un abonnement existe pour cette adresse, un lien de connexion vient de vous être envoyé par email.'}catch(e){$('ppMsg').textContent=errTxt(e)}};
 }
 function showCompte(){
   if(!jeton)return showPaywall();

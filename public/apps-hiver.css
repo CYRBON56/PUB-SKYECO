@@ -97,3 +97,6 @@ footer .wrap{display:grid;gap:6px}
 .mois .barre{height:10px;background:var(--line);border-radius:999px;overflow:hidden}
 .mois .barre i{display:block;height:100%;background:var(--accent)}
 .demo-res .gros{font-family:var(--display);font-size:2.4rem;font-weight:700;line-height:1;margin:2px 0}
+.brand .logo-sky{height:30px;width:auto;margin-right:4px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .brand .logo-sky{background:#f3f4f2;border-radius:6px;padding:2px 4px}}
+:root[data-theme="dark"] .brand .logo-sky{background:#f3f4f2;border-radius:6px;padding:2px 4px}

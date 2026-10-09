@@ -40,7 +40,7 @@ async function smsAdmin(texte) {
 
 async function emailConfirmation(p, c) {
   const html = `<div style="font-family:Arial,sans-serif;color:#1d2a36;max-width:560px;line-height:1.55">
-  <p style="font-size:20px;font-weight:bold;margin:0 0 16px">${echapper(p.nom)}</p>
+  <img src="https://www.skyeco.fr/images/skyeco-logo-email.png" width="160" height="52" alt="Skyeco" style="display:block;margin-bottom:14px;"><p style="font-size:20px;font-weight:bold;margin:0 0 16px">${echapper(p.nom)}</p>
   <p>Bonjour${c.nom ? ' ' + echapper(c.nom.split(' ')[0]) : ''},</p>
   <p>Merci, votre précommande de <strong>${echapper(p.nom)}</strong> est confirmée : ${echapper(p.pitch)}.</p>
   <p><strong>Ce qui se passe maintenant</strong><br>
@@ -49,13 +49,13 @@ async function emailConfirmation(p, c) {
   Vous pouvez aussi annuler à tout moment avant la sortie en répondant à cet email : remboursement intégral.</p>
   <p><strong>Récapitulatif</strong><br>${echapper(p.nom)}, précommande<br>Montant : ${euros(p.prix)} TTC, payé par carte bancaire</p>
   <p>Une idée de fonction qui vous serait utile ? Répondez à cet email : les premiers clients orientent ce qu'on construit.</p>
-  <p>Cyrille Bon</p>
-  <p style="font-size:11px;color:#7a8794;border-top:1px solid #d8dee4;padding-top:10px">RESINE MARBRE SOL, SASU au capital de 50 000 €, 23 route de Corn er Hoet, 56400 Brech. SIRET 939 997 870 00018, RCS Lorient.</p></div>`;
+  <p>Cyrille Bon<br>Skyeco</p>
+  <p style="font-size:11px;color:#7a8794;border-top:1px solid #d8dee4;padding-top:10px">Skyeco, édité par RESINE MARBRE SOL, SASU au capital de 50 000 €, 23 route de Corn er Hoet, 56400 Brech. SIRET 939 997 870 00018, RCS Lorient.</p></div>`;
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: process.env.RESEND_FROM_EMAIL_PRIX_TRAVAUX || 'RMS <factures@ecoskybyrms.fr>',
+      from: process.env.RESEND_FROM_EMAIL_PRIX_TRAVAUX || 'Skyeco <factures@ecoskybyrms.fr>',
       to: [c.email], reply_to: 'infos@ecosky.fr', bcc: [process.env.ADMIN_EMAIL || 'infos@ecosky.fr'],
       subject: `Précommande confirmée : ${p.nom}`,
       html,

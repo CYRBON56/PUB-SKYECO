@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="Petite Part : votre programme minceur sur mesure. Photographiez votre assiette, Claude calcule les calories. Menus, recettes, coach et film de votre évolution. 7 jours gratuits.">
+<meta name="description" content="Petite Part : votre programme minceur sur mesure. Photographiez votre assiette, Claude calcule les calories. Menus, recettes, coach et film de votre évolution. 3 jours gratuits.">
 <meta name="theme-color" content="#2F7D4F">
 <link rel="manifest" href="/petitepart/manifest.webmanifest">
 <link rel="icon" href="/petitepart/icon-192.png">
@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Petite Part">
 <meta property="og:title" content="Petite Part — votre assiette en photo, vos calories calculées">
-<meta property="og:description" content="Programme minceur, recettes, coach et film de votre évolution. 7 jours gratuits.">
+<meta property="og:description" content="Programme minceur, recettes, coach et film de votre évolution. 3 jours gratuits.">
 <meta property="og:image" content="https://www.skyeco.fr/petitepart/og.png">
 <title>Petite Part</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -258,7 +258,7 @@ footer a{color:var(--muted)}
       <input type="file" id="cam" accept="image/*" capture="environment">
       <input type="file" id="gal" accept="image/*">
       <input id="ctx" type="text" placeholder="Précision facultative (ex. « sans sauce »)" aria-label="Précision facultative">
-      <p class="ok" id="unavail" hidden>Analysez vos assiettes en photo : <b>7 jours gratuits, sans carte bancaire</b>. <button class="btn btn-main btn-sm" type="button" data-paywall style="margin-top:8px">Commencer l'essai gratuit</button></p>
+      <p class="ok" id="unavail" hidden>Analysez vos assiettes en photo : <b>3 jours gratuits, sans carte bancaire</b>. <button class="btn btn-main btn-sm" type="button" data-paywall style="margin-top:8px">Commencer l'essai gratuit</button></p>
     </div>
     <div class="card" id="aRes">
       <div class="plate">
@@ -925,7 +925,7 @@ function showPaywall(quoi){
   if(jeton&&compte&&!compte.actif)return showAbonner();
   sheetIn.innerHTML=`<h2 id="sheetTitle">${quoi?esc(quoi)+' : à essayer gratuitement':'Essayez Petite Part en entier'}</h2>
   <ul class="perks"><li>📷 <span>Votre assiette en photo : aliments, grammes et calories calculés</span></li><li>🍽️ <span>Le conseil « petite part » quand le plat est riche</span></li><li>🥗 <span>Des recettes sur mesure avec ce que vous avez au frigo</span></li><li>💬 <span>Un coach qui répond à vos questions</span></li></ul>
-  <div><span class="price">7 jours gratuits</span><br><span class="muted"><b>Sans carte bancaire.</b> À la fin de l'essai, vous choisissez si vous voulez continuer pour 4,99 € par mois.</span></div>
+  <div><span class="price">3 jours gratuits</span><br><span class="muted"><b>Sans carte bancaire.</b> À la fin de l'essai, vous choisissez si vous voulez continuer pour 4,99 € par mois.</span></div>
   <div class="field"><label for="ppEmail">Votre adresse email</label><input id="ppEmail" type="email" autocomplete="email" inputmode="email" placeholder="vous@exemple.fr"></div>
   <p class="small" id="ppMsg" role="status" style="color:var(--prot);font-weight:700"></p>
   <button class="btn btn-main" id="ppGo" type="button">Commencer mon essai gratuit</button>
@@ -936,7 +936,7 @@ function showPaywall(quoi){
   $('ppGo').onclick=async()=>{const inp=$('ppEmail');inp.blur();const email=inp.value.trim();const go=$('ppGo');
     if(!email){$('ppMsg').textContent='Indiquez votre adresse email.';inp.focus();return}
     go.disabled=true;go.textContent='Activation…';
-    try{const r=await api('essai',{email});setCompte(r);closeSheet();toast('C\'est parti : 7 jours gratuits ! Photographiez votre première assiette.')}
+    try{const r=await api('essai',{email});setCompte(r);closeSheet();toast('C\'est parti : 3 jours gratuits ! Photographiez votre première assiette.')}
     catch(e){$('ppMsg').textContent=errTxt(e);go.disabled=false;go.textContent='Commencer mon essai gratuit'}};
   $('ppDeja').onclick=async()=>{const email=$('ppEmail').value.trim();if(!email){$('ppMsg').textContent='Indiquez l\'adresse email de votre compte.';$('ppEmail').focus();return}
     try{await api('lien',{email});$('ppMsg').style.color='var(--accent)';$('ppMsg').textContent='Si un compte existe pour cette adresse, un lien de connexion vient de vous être envoyé par email.'}catch(e){$('ppMsg').textContent=errTxt(e)}};

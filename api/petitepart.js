@@ -1,7 +1,7 @@
 // /api/petitepart.js
 // 09/10/2026 — Backend de l'appli « Petite Part » (skyeco.fr/petitepart).
 // Une seule fonction, plusieurs actions (?action=...) :
-//   essai     POST {email}          -> session Stripe Checkout (abonnement 4,99 €/mois, 7 jours offerts)
+//   essai     POST {email}          -> session Stripe Checkout (abonnement 4,99 €/mois, 3 jours offerts)
 //   activer   POST {session_id}     -> vérifie la session Stripe, crée l'abonné et renvoie un jeton d'accès
 //   lien      POST {email}          -> envoie par email un lien de connexion (nouvel appareil)
 //   jeton     POST {jeton_email}    -> échange le lien reçu par email contre un jeton d'accès
@@ -18,7 +18,7 @@ import { verifierLimite, ipDepuisRequete } from './_lib/rate-limit.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const PRIX_CENTIMES = 499;
-const JOURS_ESSAI = 7;
+const JOURS_ESSAI = 3;
 const QUOTA_JOUR = 25; // appels à Claude par abonné payant et par jour (maîtrise des coûts)
 const QUOTA_ESSAI = 10; // pendant l'essai gratuit sans carte
 const MODELE = 'claude-sonnet-5-5';
@@ -68,8 +68,8 @@ function etat(a) {
 }
 async function emailBienvenue(email, url) {
   await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: 'Petite Part <notifications@ecoskybyrms.fr>', to: [email], subject: 'Votre essai Petite Part : 7 jours offerts',
-      html: `<p>Bonjour,</p><p>Votre essai gratuit de Petite Part est activé pour 7 jours, sans carte bancaire : photographiez vos assiettes, demandez des recettes et parlez à votre coach.</p><p>Pour retrouver l'appli sur un autre téléphone, touchez ce bouton :</p><p><a href="${url}" style="background:#2F7D4F;color:#fff;padding:12px 18px;border-radius:10px;text-decoration:none;font-weight:700">Ouvrir Petite Part</a></p><p>À la fin de l'essai, rien n'est prélevé : vous choisirez si vous voulez continuer pour 4,99 € par mois.</p>` }) }).catch(() => {});
+    body: JSON.stringify({ from: 'Petite Part <notifications@ecoskybyrms.fr>', to: [email], subject: 'Votre essai Petite Part : 3 jours offerts',
+      html: `<p>Bonjour,</p><p>Votre essai gratuit de Petite Part est activé pour 3 jours, sans carte bancaire : photographiez vos assiettes, demandez des recettes et parlez à votre coach.</p><p>Pour retrouver l'appli sur un autre téléphone, touchez ce bouton :</p><p><a href="${url}" style="background:#2F7D4F;color:#fff;padding:12px 18px;border-radius:10px;text-decoration:none;font-weight:700">Ouvrir Petite Part</a></p><p>À la fin de l'essai, rien n'est prélevé : vous choisirez si vous voulez continuer pour 4,99 € par mois.</p>` }) }).catch(() => {});
 }
 
 async function claude(content, maxTokens, system, modele = MODELE) {
@@ -92,7 +92,7 @@ export default async function handler(req, res) {
   const ip = ipDepuisRequete(req);
   try {
     if (action === 'essai') {
-      // Essai gratuit de 7 jours SANS carte bancaire. Une seule fois par adresse email.
+      // Essai gratuit de 3 jours SANS carte bancaire. Une seule fois par adresse email.
       if (!(await verifierLimite('pp-essai:' + ip, 4, 3600))) return res.status(429).json({ error: 'Trop de tentatives. Réessayez plus tard.' });
       if (!emailOk(b.email)) return res.status(400).json({ error: 'Adresse email invalide.' });
       const email = b.email.trim().toLowerCase();

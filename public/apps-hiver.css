@@ -78,3 +78,22 @@ footer{padding-block:34px;border-top:1px solid var(--line);font-size:.85rem;colo
 footer .wrap{display:grid;gap:6px}
 @media (prefers-reduced-motion:no-preference){.tile{animation:monte .5s ease-out both}.tile:nth-child(4){animation-delay:.08s}.tile:nth-child(5){animation-delay:.16s}.tile:nth-child(6){animation-delay:.24s}}
 @keyframes monte{from{transform:translateY(6px)}to{transform:none}}
+/* 09/10/2026 — Démos en direct */
+.demo{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:28px;align-items:start}
+@media (max-width:820px){.demo{grid-template-columns:minmax(0,1fr)}}
+.demo-champs{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;display:grid;gap:12px}
+.demo-champs label{font-weight:600;font-size:.95rem;display:grid;gap:6px}
+.demo-champs input,.demo-champs select{font:inherit;padding:10px 12px;border-radius:8px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);width:100%}
+.demo-champs input:focus-visible,.demo-champs select:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+.demo-res{display:grid;gap:10px;min-width:0}
+.demo-res .tile{background:var(--surface)}
+.demo-titre{font-family:var(--display);font-size:1.25rem;font-weight:700;margin:0}
+.demo-note,.demo-attente{font-size:.85rem;color:var(--muted);margin:0}
+.bande{display:flex;gap:3px;margin-top:6px}
+.bande span{flex:1;height:22px;border-radius:4px}
+.h-ok{background:var(--ok)} .h-warn{background:var(--warn)} .h-bad{background:var(--bad);opacity:.75}
+.bande-lbl{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted)}
+.mois{display:grid;grid-template-columns:minmax(0,8em) minmax(0,1fr) auto;gap:10px;align-items:center;font-size:.92rem;font-variant-numeric:tabular-nums;padding-block:3px}
+.mois .barre{height:10px;background:var(--line);border-radius:999px;overflow:hidden}
+.mois .barre i{display:block;height:100%;background:var(--accent)}
+.demo-res .gros{font-family:var(--display);font-size:2.4rem;font-weight:700;line-height:1;margin:2px 0}

@@ -21,7 +21,7 @@
 <body data-produit="facture-chauffage">
 <header class="top"><div class="wrap">
   <span class="brand"><i></i>Ma Facture Chauffage</span>
-  <a class="cta-mini" href="#precommande">Précommander</a>
+  <a class="cta-mini" href="#essayer">Essayer</a>
 </div></header>
 <div id="banniere" class="banniere" hidden></div>
 
@@ -48,6 +48,20 @@
       <p class="exemple">Écran d'exemple</p>
     </div>
   </div>
+</div></section>
+
+<section class="band" id="essayer"><div class="wrap">
+  <h2>Votre facture de chauffage d'ici au 31 mars</h2>
+  <p class="intro">Entrez votre commune et votre consommation actuelle : la démo projette l'hiver avec les prévisions puis les moyennes de saison.</p>
+  <form class="demo" id="demo-form">
+    <div class="demo-champs">
+      <label>Votre commune ou code postal<input class="demo-commune" id="demo-commune" value="Brech" autocomplete="address-level2"></label>
+      <label>kWh de chauffage par semaine en ce moment<input id="demo-kwh" type="number" min="1" step="1" value="120" inputmode="numeric"></label>
+      <label>Prix du kWh (€ TTC)<input id="demo-prix" type="text" value="0,25" inputmode="decimal"></label>
+      <button class="btn" type="submit">Voir le résultat</button>
+    </div>
+    <div class="demo-res" aria-live="polite"><p class="demo-attente">Le résultat s'affiche ici.</p></div>
+  </form>
 </div></section>
 
 <section class="band"><div class="wrap">
@@ -87,5 +101,6 @@
   <span>Contact : infos@ecosky.fr · 06 45 68 83 94 · <a href="/mentions-legales.html">Mentions légales</a> · <a href="/politique-confidentialite.html">Confidentialité</a></span>
 </div></footer>
 <script src="/precommande.js"></script>
+<script src="/demo-hiver.js"></script>
 </body>
 </html>

@@ -13,7 +13,7 @@
 <body data-produit="meteo-chantier">
 <header class="top"><div class="wrap">
   <span class="brand"><i></i>Météo Chantier</span>
-  <a class="cta-mini" href="#precommande">Précommander</a>
+  <a class="cta-mini" href="#essayer">Essayer</a>
 </div></header>
 <div id="banniere" class="banniere" hidden></div>
 
@@ -42,6 +42,19 @@
       <p class="exemple">Écran d'exemple</p>
     </div>
   </div>
+</div></section>
+
+<section class="band" id="essayer"><div class="wrap">
+  <h2>Feu vert ou feu rouge pour demain, sur votre commune</h2>
+  <p class="intro">Entrez la commune d'un de vos chantiers : la démo applique les règles du métier aux vraies prévisions, heure par heure, de 7h à 19h.</p>
+  <form class="demo" id="demo-form">
+    <div class="demo-champs">
+      <label>Votre commune ou code postal<input class="demo-commune" id="demo-commune" value="Vannes" autocomplete="address-level2"></label>
+      <label>Type de travaux<select id="demo-metier"><option value="resine">Sol résine, étanchéité liquide</option><option value="beton">Béton, chape, maçonnerie</option><option value="enrobe">Enrobé</option><option value="peinture">Peinture, enduit de façade</option><option value="carrelage">Carrelage extérieur, colle</option></select></label>
+      <button class="btn" type="submit">Voir le résultat</button>
+    </div>
+    <div class="demo-res" aria-live="polite"><p class="demo-attente">Le résultat s'affiche ici.</p></div>
+  </form>
 </div></section>
 
 <section class="band"><div class="wrap">
@@ -99,5 +112,6 @@
   <span>Les feux verts sont une aide à la décision : ils ne remplacent pas les prescriptions du fabricant ni votre jugement sur place.</span>
 </div></footer>
 <script src="/precommande.js"></script>
+<script src="/demo-hiver.js"></script>
 </body>
 </html>

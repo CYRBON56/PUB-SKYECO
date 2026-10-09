@@ -20,7 +20,7 @@
 <body data-produit="stock-granules">
 <header class="top"><div class="wrap">
   <span class="brand"><i></i>Mon Stock Granulés</span>
-  <a class="cta-mini" href="#precommande">Précommander</a>
+  <a class="cta-mini" href="#essayer">Essayer</a>
 </div></header>
 <div id="banniere" class="banniere" hidden></div>
 
@@ -48,6 +48,20 @@
       <p class="exemple">Écran d'exemple</p>
     </div>
   </div>
+</div></section>
+
+<section class="band" id="essayer"><div class="wrap">
+  <h2>Jusqu'à quand tiendra votre stock ?</h2>
+  <p class="intro">Entrez votre commune et votre stock : la démo calcule avec le froid annoncé chez vous.</p>
+  <form class="demo" id="demo-form">
+    <div class="demo-champs">
+      <label>Votre commune ou code postal<input class="demo-commune" id="demo-commune" value="Brech" autocomplete="address-level2"></label>
+      <label>Sacs de 15 kg qu'il vous reste<input id="demo-stock" type="number" min="0" step="1" value="30" inputmode="numeric"></label>
+      <label>Sacs brûlés par semaine en ce moment<input id="demo-semaine" type="number" min="0.5" step="0.5" value="6" inputmode="decimal"></label>
+      <button class="btn" type="submit">Voir le résultat</button>
+    </div>
+    <div class="demo-res" aria-live="polite"><p class="demo-attente">Le résultat s'affiche ici.</p></div>
+  </form>
 </div></section>
 
 <section class="band"><div class="wrap">
@@ -87,5 +101,6 @@
   <span>Contact : infos@ecosky.fr · 06 45 68 83 94 · <a href="/mentions-legales.html">Mentions légales</a> · <a href="/politique-confidentialite.html">Confidentialité</a></span>
 </div></footer>
 <script src="/precommande.js"></script>
+<script src="/demo-hiver.js"></script>
 </body>
 </html>

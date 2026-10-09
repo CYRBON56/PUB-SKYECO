@@ -900,7 +900,13 @@ if(prof)fillForm(prof);
 renderProg();renderEaten();renderRecipes();renderPlate();renderChart();renderEx();
 openDB().then(renderPhotos);
 /* ---------- compte, abonnement et appels à Claude via le serveur Skyeco ---------- */
-const API='/api/petitepart';let jeton=LS.get('jeton',null),compte=LS.get('compte',null);
+const API='/api/petitepart';
+/* identifiant anonyme de ce téléphone, gardé à deux endroits pour limiter les essais multiples */
+function appareilId(){let id=null;try{id=localStorage.getItem('pp-appareil')}catch(e){}
+  if(!id){try{id=document.cookie.split('; ').find(c=>c.startsWith('pp_app='))?.split('=')[1]||null}catch(e){}}
+  if(!id){id=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2)).replace(/[^a-z0-9-]/gi,'')}
+  try{localStorage.setItem('pp-appareil',id)}catch(e){}try{document.cookie='pp_app='+id+'; max-age=63072000; path=/petitepart; SameSite=Lax; Secure'}catch(e){}return id}
+appareilId();let jeton=LS.get('jeton',null),compte=LS.get('compte',null);
 async function api(action,body){let r,j={};try{r=await fetch(API+'?action='+action,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})});j=await r.json().catch(()=>({}))}catch(e){throw{code:'upstream_error',message:"Pas de connexion internet. Réessayez."}}
   if(!r.ok){if(r.status===401){jeton=null;LS.set('jeton',null);activerIA()}if(r.status===402&&compte){compte.actif=false;compte.essai_fini=!!j.essai_fini;LS.set('compte',compte);setTimeout(showAbonner,600)}throw{code:r.status===401?'auth':r.status===402?'inactif':r.status===429?'quota':r.status===400?'bad':'upstream_error',message:j.error||"Le serveur ne répond pas. Réessayez."}}return j}
 function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),4200)}
@@ -936,7 +942,7 @@ function showPaywall(quoi){
   $('ppGo').onclick=async()=>{const inp=$('ppEmail');inp.blur();const email=inp.value.trim();const go=$('ppGo');
     if(!email){$('ppMsg').textContent='Indiquez votre adresse email.';inp.focus();return}
     go.disabled=true;go.textContent='Activation…';
-    try{const r=await api('essai',{email});setCompte(r);closeSheet();toast('C\'est parti : 3 jours gratuits ! Photographiez votre première assiette.')}
+    try{const r=await api('essai',{email,appareil:appareilId()});setCompte(r);closeSheet();toast('C\'est parti : 3 jours gratuits ! Photographiez votre première assiette.')}
     catch(e){$('ppMsg').textContent=errTxt(e);go.disabled=false;go.textContent='Commencer mon essai gratuit'}};
   $('ppDeja').onclick=async()=>{const email=$('ppEmail').value.trim();if(!email){$('ppMsg').textContent='Indiquez l\'adresse email de votre compte.';$('ppEmail').focus();return}
     try{await api('lien',{email});$('ppMsg').style.color='var(--accent)';$('ppMsg').textContent='Si un compte existe pour cette adresse, un lien de connexion vient de vous être envoyé par email.'}catch(e){$('ppMsg').textContent=errTxt(e)}};

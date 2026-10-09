@@ -33,6 +33,17 @@ async function sb(path, opts = {}) {
 }
 const hash = (t) => crypto.createHash('sha256').update(t).digest('hex');
 const emailOk = (e) => typeof e === 'string' && /^[^\s@]{1,64}@[^\s@]{1,190}\.[a-z]{2,}$/i.test(e.trim());
+// Anti-abus de l'essai : une même boîte mail sous plusieurs formes (alias +, points Gmail),
+// adresses jetables, même téléphone ou même connexion internet.
+const JETABLES = new Set(['yopmail.com','yopmail.fr','mailinator.com','guerrillamail.com','guerrillamail.info','sharklasers.com','10minutemail.com','10minutemail.net','tempmail.com','temp-mail.org','temp-mail.io','trashmail.com','trashmail.fr','jetable.org','throwawaymail.com','getnada.com','dispostable.com','maildrop.cc','mohmal.com','emailondeck.com','fakeinbox.com','mintemail.com','mytemp.email','tempr.email','discard.email','spamgourmet.com','mailnesia.com','moakt.com','tempail.com','burnermail.io','inboxkitten.com','mailpoof.com','minuteinbox.com','emailfake.com','crazymailing.com']);
+function normaliserEmail(e) {
+  let [u, d] = e.toLowerCase().trim().split('@');
+  u = u.split('+')[0];
+  if (d === 'googlemail.com') d = 'gmail.com';
+  if (d === 'gmail.com') u = u.replace(/\./g, '');
+  return `${u}@${d}`;
+}
+const ipHash = (ip) => crypto.createHash('sha256').update('pp:' + ip + ':' + (process.env.SUPABASE_SERVICE_ROLE_KEY || '').slice(-12)).digest('hex').slice(0, 32);
 const actif = (s) => s === 'trialing' || s === 'active';
 const origine = (req) => req.headers.origin && /^https:\/\/(www\.)?skyeco\.fr$|^https:\/\/[a-z0-9-]+\.vercel\.app$/.test(req.headers.origin) ? req.headers.origin : 'https://www.skyeco.fr';
 
@@ -96,9 +107,23 @@ export default async function handler(req, res) {
       if (!(await verifierLimite('pp-essai:' + ip, 4, 3600))) return res.status(429).json({ error: 'Trop de tentatives. Réessayez plus tard.' });
       if (!emailOk(b.email)) return res.status(400).json({ error: 'Adresse email invalide.' });
       const email = b.email.trim().toLowerCase();
-      const deja = await sb(`petitepart_abonnes?email=eq.${encodeURIComponent(email)}&select=id,statut`);
-      if (deja?.[0]) return res.status(409).json({ error: "Cette adresse a déjà profité de l'essai. Touchez « Déjà inscrit ? » pour recevoir votre lien de connexion." });
-      const [a] = await sb('petitepart_abonnes', { method: 'POST', body: JSON.stringify({ email, statut: 'essai', fin_periode: new Date(Date.now() + JOURS_ESSAI * 864e5).toISOString() }) });
+      const dom = email.split('@')[1];
+      if (JETABLES.has(dom)) return res.status(400).json({ error: 'Les adresses email temporaires ne sont pas acceptées. Utilisez votre adresse habituelle.' });
+      const norm = normaliserEmail(email);
+      const appareil = typeof b.appareil === 'string' && /^[a-z0-9-]{16,64}$/i.test(b.appareil) ? b.appareil : null;
+      const iph = ipHash(ip);
+      const DEJA = "Un essai gratuit a déjà été utilisé. Touchez « Déjà inscrit ? » pour recevoir votre lien de connexion, ou abonnez-vous pour continuer.";
+      const deja = await sb(`petitepart_abonnes?or=(email.eq.${encodeURIComponent(email)},email_normalise.eq.${encodeURIComponent(norm)})&select=id`);
+      if (deja?.length) return res.status(409).json({ error: DEJA });
+      if (appareil) {
+        const memeTel = await sb(`petitepart_abonnes?appareil=eq.${appareil}&select=id`);
+        if (memeTel?.length) return res.status(409).json({ error: DEJA });
+      }
+      // Au plus 3 essais par connexion internet sur 30 jours (une box familiale peut en avoir plusieurs).
+      const depuis = new Date(Date.now() - 30 * 864e5).toISOString();
+      const memeIp = await sb(`petitepart_abonnes?ip_hash=eq.${iph}&created_at=gte.${depuis}&select=id`);
+      if ((memeIp?.length || 0) >= 3) return res.status(409).json({ error: DEJA });
+      const [a] = await sb('petitepart_abonnes', { method: 'POST', body: JSON.stringify({ email, email_normalise: norm, appareil, ip_hash: iph, statut: 'essai', fin_periode: new Date(Date.now() + JOURS_ESSAI * 864e5).toISOString() }) });
       const jeton = await nouveauJeton(a.id);
       const t2 = await nouveauJeton(a.id);
       await emailBienvenue(email, `${origine(req)}/petitepart/?connexion=${t2}`);

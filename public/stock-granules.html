@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mon Stock Granulés – jusqu'à quand tiendra votre stock&nbsp;?</title>
+<meta name="description" content="L'appli qui vous dit jusqu'à quand tiendra votre stock de granulés ou de bois, selon le froid annoncé, et quand recommander.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/apps-hiver.css">
+<style>
+:root{--accent:#3f8f5b;--accent-soft:#dcefe2;--accent-ink:#ffffff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--accent:#62b37f;--accent-soft:#1c3324;--accent-ink:#0c1a11}}
+:root[data-theme="dark"]{--accent:#62b37f;--accent-soft:#1c3324;--accent-ink:#0c1a11}
+.jauge{height:14px;border-radius:999px;background:var(--line);overflow:hidden}
+.jauge span{display:block;height:100%;width:38%;background:var(--accent)}
+.gros{font-family:var(--display);font-size:2.4rem;font-weight:700;line-height:1;margin:2px 0}
+</style>
+</head>
+<body data-produit="stock-granules">
+<header class="top"><div class="wrap">
+  <span class="brand"><i></i>Mon Stock Granulés</span>
+  <a class="cta-mini" href="#precommande">Précommander</a>
+</div></header>
+<div id="banniere" class="banniere" hidden></div>
+
+<section class="hero"><div class="wrap">
+  <div>
+    <p class="eyebrow">Poêle à granulés ou à bois · hiver 2026</p>
+    <h1>Jusqu'à quand <em>tiendra votre stock</em>&nbsp;?</h1>
+    <p class="lede">Vous notez les sacs qui restent, l'appli fait le reste : elle calcule votre consommation selon le froid annoncé chez vous et vous prévient avant d'être à court, au moment où les livraisons se font attendre et où les prix grimpent souvent.</p>
+    <div class="buy">
+      <button class="btn js-precommander" type="button">Précommander l'appli</button>
+      <div class="price">9,90 € TTC<small>une seule fois, sans abonnement</small></div>
+    </div>
+    <p class="err" role="status"></p>
+    <p class="guarantee">Livrée au plus tard le 30 novembre 2026, sinon remboursement intégral et automatique. Annulation possible à tout moment avant la sortie.</p>
+  </div>
+  <div class="phone" aria-label="Aperçu de l'appli Mon Stock Granulés">
+    <div class="screen">
+      <div class="bar"><span>19:05</span><span>Jeudi 3 déc.</span></div>
+      <h3>Mon stock</h3>
+      <p class="sub">Poêle 9 kW · maison 110 m² · Brech</p>
+      <div class="tile"><span class="meta">Il reste</span><span class="gros">27 sacs</span><div class="jauge"><span></span></div><span class="meta">405 kg sur une palette de 70 sacs</span></div>
+      <div class="tile"><div class="row"><strong>Tient jusqu'au</strong><span class="chip warn">14 janvier</span></div><span class="meta">Avec la vague de froid annoncée la semaine prochaine</span></div>
+      <div class="tile"><div class="row"><strong>Recommandez avant le</strong><span class="chip bad">20 décembre</span></div><span class="meta">Délai de livraison habituel : 2 à 3 semaines en plein hiver</span></div>
+      <div class="tile"><div class="row"><strong>Cette semaine</strong><span>11 sacs</span></div><span class="meta">+3 sacs par rapport à la semaine dernière (−2 °C la nuit)</span></div>
+      <p class="exemple">Écran d'exemple</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="band"><div class="wrap">
+  <h2>Ce que fait l'appli</h2>
+  <p class="intro">Une appli sur votre téléphone, installée en un clic depuis le lien reçu par email. Trente secondes par semaine.</p>
+  <div class="grid3">
+    <div class="feat"><h3>Un geste par semaine</h3><p>Vous indiquez combien de sacs (ou de stères) il reste. L'appli apprend votre consommation réelle, semaine après semaine.</p></div>
+    <div class="feat"><h3>Le froid annoncé chez vous</h3><p>Elle tient compte des températures prévues dans votre commune : une semaine à −3 °C ne consomme pas comme une semaine à 10 °C.</p></div>
+    <div class="feat"><h3>Prévenu à temps</h3><p>Une alerte quand il faut recommander, en comptant le délai de livraison. Et le coût de votre chauffage depuis le début de l'hiver.</p></div>
+  </div>
+</div></section>
+
+<section class="band" id="precommande"><div class="wrap">
+  <h2>Précommander Mon Stock Granulés</h2>
+  <div class="buybox">
+    <div class="price">9,90 € TTC<small>paiement unique, l'appli est à vous</small></div>
+    <ul>
+      <li>Granulés en sacs ou en vrac, bûches, bûches compressées</li>
+      <li>Prévision de fin de stock selon la météo de votre commune</li>
+      <li>Livraison par email au plus tard le 30 novembre 2026</li>
+      <li>Pas sortie à temps : remboursement intégral et automatique</li>
+    </ul>
+    <div><button class="btn js-precommander" type="button">Précommander pour 9,90 €</button><p class="err" role="status"></p></div>
+  </div>
+</div></section>
+
+<section class="band"><div class="wrap">
+  <h2>Questions fréquentes</h2>
+  <details><summary>Pourquoi payer avant que l'appli existe&nbsp;?</summary><p>Parce que nous la construisons pour ceux qui en veulent vraiment. Si elle ne sort pas au plus tard le 30 novembre 2026, vous êtes remboursé intégralement, sans rien demander.</p></details>
+  <details><summary>Ça marche sur quel téléphone&nbsp;?</summary><p>iPhone et Android. L'appli s'installe depuis le lien reçu par email, sans passer par un store.</p></details>
+  <details><summary>Et si je me chauffe au bois bûche&nbsp;?</summary><p>Ça marche aussi : vous comptez en stères ou en brouettes, l'appli s'adapte.</p></details>
+  <details><summary>Je peux annuler&nbsp;?</summary><p>Oui, à tout moment avant la sortie : répondez simplement à l'email de confirmation, vous êtes remboursé intégralement.</p></details>
+</div></section>
+
+<footer><div class="wrap">
+  <span>Mon Stock Granulés est édité par RESINE MARBRE SOL, SASU au capital de 50 000 €, 23 route de Corn er Hoet, 56400 Brech. SIRET 939 997 870 00018.</span>
+  <span>Contact : infos@ecosky.fr · 06 45 68 83 94 · <a href="/mentions-legales.html">Mentions légales</a> · <a href="/politique-confidentialite.html">Confidentialité</a></span>
+</div></footer>
+<script src="/precommande.js"></script>
+</body>
+</html>

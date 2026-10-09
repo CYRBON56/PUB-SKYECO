@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Météo Chantier – feu vert ou feu rouge, chantier par chantier</title>
+<meta name="description" content="L'appli qui dit chaque matin aux artisans si ils peuvent couler, poser ou peindre : gel, point de rosée, humidité et pluie croisés avec les règles de chaque métier.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/apps-hiver.css">
+<style>:root{--accent:#e3a008;--accent-soft:#fbf0d2;--accent-ink:#1b1403;--mark:#f6c947}</style>
+</head>
+<body data-produit="meteo-chantier">
+<header class="top"><div class="wrap">
+  <span class="brand"><i></i>Météo Chantier</span>
+  <a class="cta-mini" href="#precommande">Précommander</a>
+</div></header>
+<div id="banniere" class="banniere" hidden></div>
+
+<section class="hero"><div class="wrap">
+  <div>
+    <p class="eyebrow">Pour les artisans du bâtiment · hiver 2026</p>
+    <h1>Couler, poser, peindre&nbsp;? <em>Feu vert ou feu rouge</em>, chaque matin.</h1>
+    <p class="lede">Météo Chantier croise le gel, le point de rosée, l'humidité et la pluie avec les règles de votre métier, et vous dit pour chaque chantier si vous pouvez y aller, et à quelle heure. Fini les sols résine qui blanchissent, les enrobés posés sur gel et les façades à refaire.</p>
+    <div class="buy">
+      <button class="btn js-precommander" type="button">Précommander l'appli</button>
+      <div class="price">19,90 € TTC<small>une seule fois, sans abonnement</small></div>
+    </div>
+    <p class="err" role="status"></p>
+    <p class="guarantee">Livrée au plus tard le 30 novembre 2026, sinon remboursement intégral et automatique. Annulation possible à tout moment avant la sortie.</p>
+  </div>
+  <div class="phone" aria-label="Aperçu de l'appli Météo Chantier">
+    <div class="screen">
+      <div class="bar"><span>6:42</span><span>Mardi 17 nov.</span></div>
+      <h3>Mes chantiers demain</h3>
+      <p class="sub">Mis à jour il y a 12 min · Météo-France</p>
+      <div class="tile"><div class="row"><strong>Sol résine · Kervignac</strong><span class="chip ok">OK 11h–16h</span></div><span class="meta">Support 8 °C · rosée 3 °C · humidité 71 %</span></div>
+      <div class="tile"><div class="row"><strong>Enrobé · Vannes</strong><span class="chip bad">Non</span></div><span class="meta">Gel au sol jusqu'à 10h · −1 °C au lever</span></div>
+      <div class="tile"><div class="row"><strong>Peinture façade · Auray</strong><span class="chip bad">Non</span></div><span class="meta">Humidité 92 % · pluie 4 mm l'après-midi</span></div>
+      <div class="tile"><div class="row"><strong>Dalle béton · Brech</strong><span class="chip warn">Après 10h</span></div><span class="meta">6 °C à 10h · prévoir bâche la nuit (2 °C)</span></div>
+      <div class="tile"><div class="row"><strong>Clôture · Plouharnel</strong><span class="chip ok">OK toute la journée</span></div><span class="meta">Vent 25 km/h · sec</span></div>
+      <p class="exemple">Écran d'exemple</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="band"><div class="wrap">
+  <h2>Ce que fait l'appli</h2>
+  <p class="intro">Une appli sur votre téléphone, à installer en un clic depuis le lien reçu par email. Pas de compte compliqué, pas d'abonnement.</p>
+  <div class="grid3">
+    <div class="feat"><h3>Vos chantiers, pas une ville</h3><p>Vous ajoutez l'adresse et le type de travaux. La météo est calculée au point exact du chantier, pas à la station la plus proche.</p></div>
+    <div class="feat"><h3>Les règles de votre métier</h3><p>Résine, béton, enrobé, peinture, enduit, étanchéité, carrelage extérieur : chaque métier a ses seuils de température, d'humidité et de point de rosée.</p></div>
+    <div class="feat"><h3>Une alerte la veille au soir</h3><p>À 18h, une notification : « Demain, Vannes : non, gel au sol ». Vous prévenez le client et réorganisez l'équipe avant de charger le camion.</p></div>
+  </div>
+</div></section>
+
+<section class="band"><div class="wrap">
+  <h2>Les règles que l'appli vérifie</h2>
+  <p class="intro">Les seuils usuels des fiches techniques et des règles de l'art, ajustables si votre fabricant demande plus strict.</p>
+  <div class="scroll"><table class="rules">
+    <tr><th>Travaux</th><th>Feu rouge si…</th></tr>
+    <tr><td>Sol résine, étanchéité liquide</td><td>Support sous 5 °C, ou moins de 3 °C au-dessus du point de rosée, ou humidité au-dessus de 85 %, ou pluie avant durcissement</td></tr>
+    <tr><td>Béton, chape, maçonnerie</td><td>Gel dans les 48 h sans protection, ou température sous 5 °C au coulage</td></tr>
+    <tr><td>Enrobé</td><td>Gel au sol, support mouillé, ou air sous 5 °C</td></tr>
+    <tr><td>Peinture et enduit de façade</td><td>Sous 5 °C ou au-dessus de 30 °C, humidité au-dessus de 80 %, pluie dans les 24 h</td></tr>
+    <tr><td>Carrelage extérieur, colle</td><td>Gel dans les 24 h, ou support sous 5 °C</td></tr>
+  </table></div>
+</div></section>
+
+<section class="band" id="precommande"><div class="wrap">
+  <h2>Précommander Météo Chantier</h2>
+  <div class="buybox">
+    <div class="price">19,90 € TTC<small>paiement unique, l'appli est à vous</small></div>
+    <ul>
+      <li>Chantiers illimités, tous vos métiers</li>
+      <li>Alerte la veille au soir et feu vert heure par heure</li>
+      <li>Livraison par email au plus tard le 30 novembre 2026</li>
+      <li>Pas sortie à temps : remboursement intégral et automatique</li>
+    </ul>
+    <label for="metier" style="font-weight:600">Votre métier principal</label>
+    <select id="metier" style="font:inherit;padding:10px;border-radius:8px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink)">
+      <option>Résine / sols</option><option>Maçonnerie / béton</option><option>Terrassement / enrobé / VRD</option><option>Peinture / façade</option><option>Étanchéité / toiture</option><option>Paysagiste</option><option>Carrelage</option><option>Autre</option>
+    </select>
+    <div><button class="btn js-precommander" type="button">Précommander pour 19,90 €</button><p class="err" role="status"></p></div>
+  </div>
+</div></section>
+
+<section class="band"><div class="wrap">
+  <h2>Questions fréquentes</h2>
+  <details><summary>Pourquoi payer avant que l'appli existe&nbsp;?</summary><p>Parce que nous la construisons pour les artisans qui en veulent vraiment. Les précommandes financent le développement et les premiers clients choisissent les prochaines fonctions. Si elle ne sort pas au plus tard le 30 novembre 2026, vous êtes remboursé intégralement, sans rien demander.</p></details>
+  <details><summary>Ça marche sur quel téléphone&nbsp;?</summary><p>iPhone et Android. L'appli s'installe depuis le lien reçu par email, sans passer par un store.</p></details>
+  <details><summary>D'où vient la météo&nbsp;?</summary><p>Des modèles de prévision de Météo-France (AROME, maille d'environ 1,3 km) au point de votre chantier, mis à jour plusieurs fois par jour.</p></details>
+  <details><summary>Je peux annuler&nbsp;?</summary><p>Oui, à tout moment avant la sortie : répondez simplement à l'email de confirmation, vous êtes remboursé intégralement.</p></details>
+</div></section>
+
+<footer><div class="wrap">
+  <span>Météo Chantier est édité par RESINE MARBRE SOL, SASU au capital de 50 000 €, 23 route de Corn er Hoet, 56400 Brech. SIRET 939 997 870 00018.</span>
+  <span>Contact : infos@ecosky.fr · 06 45 68 83 94 · <a href="/mentions-legales.html">Mentions légales</a> · <a href="/politique-confidentialite.html">Confidentialité</a></span>
+  <span>Les feux verts sont une aide à la décision : ils ne remplacent pas les prescriptions du fabricant ni votre jugement sur place.</span>
+</div></footer>
+<script src="/precommande.js"></script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ma Facture Chauffage – votre facture d'hiver, prévue à l'avance</title>
+<meta name="description" content="L'appli qui prévoit votre facture de chauffage de l'hiver à partir de vos relevés et de la météo, et vous alerte quand la consommation dérape.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/apps-hiver.css">
+<style>
+:root{--accent:#2f6fb5;--accent-soft:#dde9f6;--accent-ink:#ffffff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--accent:#6aa3e0;--accent-soft:#16283c;--accent-ink:#0b1622}}
+:root[data-theme="dark"]{--accent:#6aa3e0;--accent-soft:#16283c;--accent-ink:#0b1622}
+.gros{font-family:var(--display);font-size:2.4rem;font-weight:700;line-height:1;margin:2px 0}
+.mini{display:flex;align-items:flex-end;gap:6px;height:64px;padding-top:6px}
+.mini span{flex:1;background:var(--accent);border-radius:4px 4px 0 0;opacity:.85}
+.mini span.alerte{background:var(--bad)}
+</style>
+</head>
+<body data-produit="facture-chauffage">
+<header class="top"><div class="wrap">
+  <span class="brand"><i></i>Ma Facture Chauffage</span>
+  <a class="cta-mini" href="#precommande">Précommander</a>
+</div></header>
+<div id="banniere" class="banniere" hidden></div>
+
+<section class="hero"><div class="wrap">
+  <div>
+    <p class="eyebrow">Électricité, gaz, fioul · hiver 2026</p>
+    <h1>Votre facture d'hiver, <em>connue dès novembre</em>.</h1>
+    <p class="lede">Un relevé du compteur par semaine suffit. L'appli tient compte du froid annoncé, prévoit ce que vous allez payer d'ici mars et vous prévient dès qu'une semaine dérape : radiateur oublié, fuite, chauffe-eau qui tourne trop.</p>
+    <div class="buy">
+      <button class="btn js-precommander" type="button">Précommander l'appli</button>
+      <div class="price">9,90 € TTC<small>une seule fois, sans abonnement</small></div>
+    </div>
+    <p class="err" role="status"></p>
+    <p class="guarantee">Livrée au plus tard le 30 novembre 2026, sinon remboursement intégral et automatique. Annulation possible à tout moment avant la sortie.</p>
+  </div>
+  <div class="phone" aria-label="Aperçu de l'appli Ma Facture Chauffage">
+    <div class="screen">
+      <div class="bar"><span>8:12</span><span>Lundi 7 déc.</span></div>
+      <h3>Mon hiver</h3>
+      <p class="sub">Électricité · tarif de base · 4 relevés</p>
+      <div class="tile"><span class="meta">Facture prévue de novembre à mars</span><span class="gros">612 €</span><span class="meta">Fourchette 560 € à 670 € selon le froid</span></div>
+      <div class="tile"><div class="row"><strong>Semaine dernière</strong><span class="chip bad">+38 %</span></div><span class="meta">Alors qu'il a fait aussi froid que la semaine d'avant</span><div class="mini" aria-hidden="true"><span style="height:48%"></span><span style="height:55%"></span><span style="height:52%"></span><span class="alerte" style="height:76%"></span></div></div>
+      <div class="tile"><div class="row"><strong>Ce mois-ci</strong><span>134 €</span></div><span class="meta">Mensualité prélevée : 95 €. Prévoir la régularisation.</span></div>
+      <p class="exemple">Écran d'exemple</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="band"><div class="wrap">
+  <h2>Ce que fait l'appli</h2>
+  <p class="intro">Une appli sur votre téléphone, installée en un clic depuis le lien reçu par email. Pas besoin de compte chez votre fournisseur.</p>
+  <div class="grid3">
+    <div class="feat"><h3>Un relevé par semaine</h3><p>Vous tapez le chiffre du compteur (ou le niveau de la cuve de fioul). Un rappel vous le demande le dimanche soir.</p></div>
+    <div class="feat"><h3>Corrigé de la météo</h3><p>L'appli compare votre consommation au froid réellement subi chez vous. Elle voit donc une vraie dérive, pas une semaine simplement plus froide.</p></div>
+    <div class="feat"><h3>Pas de mauvaise surprise</h3><p>La facture prévue jusqu'en mars, comparée à votre mensualité, pour anticiper la régularisation au lieu de la découvrir.</p></div>
+  </div>
+</div></section>
+
+<section class="band" id="precommande"><div class="wrap">
+  <h2>Précommander Ma Facture Chauffage</h2>
+  <div class="buybox">
+    <div class="price">9,90 € TTC<small>paiement unique, l'appli est à vous</small></div>
+    <ul>
+      <li>Électricité, gaz ou fioul</li>
+      <li>Prévision de la facture d'hiver et alerte de dérive</li>
+      <li>Livraison par email au plus tard le 30 novembre 2026</li>
+      <li>Pas sortie à temps : remboursement intégral et automatique</li>
+    </ul>
+    <div><button class="btn js-precommander" type="button">Précommander pour 9,90 €</button><p class="err" role="status"></p></div>
+  </div>
+</div></section>
+
+<section class="band"><div class="wrap">
+  <h2>Questions fréquentes</h2>
+  <details><summary>Pourquoi payer avant que l'appli existe&nbsp;?</summary><p>Parce que nous la construisons pour ceux qui en veulent vraiment. Si elle ne sort pas au plus tard le 30 novembre 2026, vous êtes remboursé intégralement, sans rien demander.</p></details>
+  <details><summary>Mon fournisseur a déjà une appli, quelle différence&nbsp;?</summary><p>Elle marche quel que soit votre fournisseur et votre énergie, y compris le fioul, et elle corrige la consommation selon le froid réellement subi pour repérer une vraie dérive.</p></details>
+  <details><summary>Ça marche sur quel téléphone&nbsp;?</summary><p>iPhone et Android. L'appli s'installe depuis le lien reçu par email, sans passer par un store.</p></details>
+  <details><summary>Je peux annuler&nbsp;?</summary><p>Oui, à tout moment avant la sortie : répondez simplement à l'email de confirmation, vous êtes remboursé intégralement.</p></details>
+</div></section>
+
+<footer><div class="wrap">
+  <span>Ma Facture Chauffage est édité par RESINE MARBRE SOL, SASU au capital de 50 000 €, 23 route de Corn er Hoet, 56400 Brech. SIRET 939 997 870 00018.</span>
+  <span>Contact : infos@ecosky.fr · 06 45 68 83 94 · <a href="/mentions-legales.html">Mentions légales</a> · <a href="/politique-confidentialite.html">Confidentialité</a></span>
+</div></footer>
+<script src="/precommande.js"></script>
+</body>
+</html>

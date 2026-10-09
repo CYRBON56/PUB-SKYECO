@@ -10,6 +10,7 @@
 
 import Stripe from 'stripe';
 import { finaliserCommande } from './_lib/prix-travaux-commande.js';
+import { finaliserPrecommande } from './_lib/precommande.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 export const config = { api: { bodyParser: false } };
@@ -36,6 +37,11 @@ export default async function handler(req, res) {
     if (session.metadata?.product === 'prix-travaux') {
       try { await finaliserCommande(session); }
       catch (e) { console.error('prix-travaux-webhook :', e.message); return res.status(500).send('Erreur, Stripe réessaiera'); }
+    }
+    // 09/10/2026 : précommandes des applis d'hiver (même endpoint Stripe)
+    if (session.metadata?.product === 'precommande') {
+      try { await finaliserPrecommande(session); }
+      catch (e) { console.error('prix-travaux-webhook (précommande) :', e.message); return res.status(500).send('Erreur, Stripe réessaiera'); }
     }
   }
   return res.status(200).json({ received: true });

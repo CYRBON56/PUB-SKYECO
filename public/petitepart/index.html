@@ -159,6 +159,13 @@ body{padding-top:env(safe-area-inset-top,0px)}
 .perks{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:7px}
 .perks li{display:flex;gap:10px}
 .price{font-family:var(--display);font-weight:800;font-size:30px}
+.steps{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:12px;counter-reset:st}
+.steps li{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:start}
+.steps li::before{counter-increment:st;content:counter(st);width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-weight:800;display:flex;align-items:center;justify-content:center}
+.kbd{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:26px;padding:0 6px;border:1.5px solid var(--ink);border-radius:7px;font-weight:800;vertical-align:-6px}
+.arrowdown{position:fixed;left:50%;bottom:calc(10px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:31;font-size:44px;animation:bob 1s ease-in-out infinite;pointer-events:none}
+@keyframes bob{50%{transform:translate(-50%,10px)}}
+@media (prefers-reduced-motion:reduce){.arrowdown{animation:none}}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:11px 16px;border-radius:12px;font-weight:700;z-index:30;max-width:90%;text-align:center}
 footer a{color:var(--muted)}
 @media (max-width:480px){#today{display:none}}
@@ -166,10 +173,15 @@ footer a{color:var(--muted)}
 </head><body>
 
 <div class="wrap">
-  <header><h1>Petite <span>Part</span></h1><span style="display:flex;gap:8px;align-items:center"><span class="muted small" id="today"></span><button class="hbtn" id="compteBtn" type="button">Mon compte</button></span></header>
+  <header><h1>Petite <span>Part</span></h1><span style="display:flex;gap:8px;align-items:center"><span class="muted small" id="today"></span><button class="hbtn" id="installTop" type="button" hidden aria-label="Mettre sur l'écran d'accueil">📲</button><button class="hbtn" id="compteBtn" type="button">Mon compte</button></span></header>
 
   <!-- ============ AUJOURD'HUI ============ -->
   <section id="tab-jour" data-tab>
+    <div class="card" id="installCard" hidden style="flex-direction:row;align-items:center;gap:12px;background:var(--accent);border-color:var(--accent);color:var(--accent-ink)">
+      <img src="/petitepart/icon-192.png" alt="" width="48" height="48" style="border-radius:12px;flex:none">
+      <div style="flex:1;min-width:0"><b>Installer Petite Part</b><br><span class="small">Une icône sur votre écran d'accueil, comme une vraie appli.</span></div>
+      <button class="btn btn-sm" id="installBtn" type="button" style="background:var(--accent-ink);color:var(--accent);flex:none">Installer</button>
+    </div>
     <div class="card" id="profilCard">
       <h2 id="profilTitle">Mon profil</h2>
       <p class="muted small">Ces informations restent sur votre téléphone. Elles servent à calculer votre programme.</p>
@@ -883,15 +895,45 @@ function showCompte(){
   const c=compte||{};const fin=c.fin_periode?new Date(c.fin_periode).toLocaleDateString('fr-FR',{day:'numeric',month:'long'}):'';
   const lib={trialing:'Essai gratuit en cours',active:'Abonnement actif',past_due:'Paiement en attente',canceled:'Abonnement terminé'}[c.statut]||'Abonnement';
   sheetIn.innerHTML=`<h2 id="sheetTitle">Mon compte</h2><p><b>${esc(lib)}</b>${fin?' · jusqu\'au '+fin:''}<br><span class="muted small">${esc(c.email||'')}</span></p>
-  <div class="ok small"><b>Installer l'appli sur l'écran d'accueil :</b><br>iPhone : bouton Partager de Safari, puis « Sur l'écran d'accueil ».<br>Android : menu ⋮ de Chrome, puis « Installer l'application ».</div>
+  ${installed()?'':'<button class="btn btn-main" type="button" id="ppInst">📲 Mettre sur l\'écran d\'accueil</button>'}
   <button class="btn btn-ghost" id="ppRes" type="button">Résilier mon abonnement</button><p class="small" id="ppMsg2" role="status"></p>
   <button class="btn btn-ghost btn-sm" id="ppOut" type="button">Me déconnecter de ce téléphone</button><button class="btn btn-main btn-sm" type="button" id="ppClose">Fermer</button>`;
-  sheet.hidden=false;$('ppClose').onclick=closeSheet;
+  sheet.hidden=false;$('ppClose').onclick=closeSheet;const pi=$('ppInst');if(pi)pi.onclick=installer;
   $('ppOut').onclick=()=>{jeton=null;compte=null;LS.set('jeton',null);LS.set('compte',null);activerIA();closeSheet();toast('Déconnecté de ce téléphone.')};
   $('ppRes').onclick=async()=>{if($('ppRes').dataset.ok!=='1'){$('ppRes').dataset.ok='1';$('ppRes').textContent='Confirmer la résiliation';$('ppMsg2').textContent='Vous gardez l\'accès jusqu\'à la fin de la période en cours. Touchez à nouveau pour confirmer.';return}
     try{const r=await api('resilier',{jeton});$('ppMsg2').textContent='Résiliation enregistrée. Accès conservé jusqu\'au '+new Date(r.fin_periode).toLocaleDateString('fr-FR',{day:'numeric',month:'long'})+'. Aucun autre prélèvement.';$('ppRes').disabled=true}catch(e){$('ppMsg2').textContent=errTxt(e)}};
 }
 $('compteBtn').onclick=showCompte;
+
+/* ---------- installer sur l'écran d'accueil ---------- */
+const ua=navigator.userAgent||'';const isIOS=/iPhone|iPad|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const isSafari=isIOS&&/Safari/.test(ua)&&!/CriOS|FxiOS|EdgiOS|OPiOS|GSA|Instagram|FBAN|FBAV|TikTok|musical_ly|Line\//.test(ua);
+const installed=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;showInstall()});
+window.addEventListener('appinstalled',()=>{$('installCard').hidden=true;$('installTop').hidden=true;toast('Petite Part est sur votre écran d\'accueil.')});
+function showInstall(){if(installed())return;if(LS.get('install-plus-tard',null)===TODAY){$('installTop').hidden=false;return}$('installCard').hidden=false;$('installTop').hidden=false}
+async function installer(){
+  if(deferredPrompt){deferredPrompt.prompt();const r=await deferredPrompt.userChoice.catch(()=>null);deferredPrompt=null;if(r&&r.outcome==='accepted')$('installCard').hidden=true;return}
+  let html;
+  if(isIOS&&!isSafari){html=`<h2 id="sheetTitle">Ouvrez Petite Part dans Safari</h2><p>Sur iPhone, seule l'appli <b>Safari</b> (la boussole bleue) peut mettre Petite Part sur l'écran d'accueil.</p>
+    <ol class="steps"><li><span>Touchez <b>Copier le lien</b> ci-dessous.</span></li><li><span>Ouvrez <b>Safari</b>, touchez la barre d'adresse, collez et validez.</span></li><li><span>Dans Safari, touchez à nouveau le bouton 📲 <b>Installer</b>.</span></li></ol>
+    <button class="btn btn-main" id="copyLink" type="button">Copier le lien</button><p class="small muted" style="user-select:all">https://www.skyeco.fr/petitepart/</p>`}
+  else if(isIOS){html=`<h2 id="sheetTitle">Mettre sur l'écran d'accueil</h2>
+    <ol class="steps"><li><span>Touchez le bouton <b>Partager</b> <span class="kbd">⬆︎</span> en bas de Safari.<br><span class="small muted">Vous ne le voyez pas ? Touchez d'abord <span class="kbd">•••</span> en bas à droite, puis « Partager ».</span></span></li>
+    <li><span>Faites glisser la liste vers le haut et touchez <b>« Sur l'écran d'accueil »</b> <span class="kbd">＋</span></span></li>
+    <li><span>Touchez <b>« Ajouter »</b> en haut à droite. C'est fini !</span></li></ol>
+    <p class="small muted">Touchez « J'ai compris » : une flèche vous montrera où est la barre de Safari.</p>`}
+  else{html=`<h2 id="sheetTitle">Mettre sur l'écran d'accueil</h2>
+    <ol class="steps"><li><span>Touchez les <b>3 points</b> <span class="kbd">⋮</span> en haut à droite de Chrome.</span></li><li><span>Touchez <b>« Installer l'application »</b> ou <b>« Ajouter à l'écran d'accueil »</b>.</span></li><li><span>Confirmez avec <b>Installer</b>.</span></li></ol>`}
+  sheetIn.innerHTML=html+`<button class="btn btn-ghost" type="button" id="ppClose">J'ai compris</button>`;sheet.hidden=false;
+  $('ppClose').onclick=()=>{closeSheet();if(isIOS&&isSafari&&!document.querySelector('.arrowdown')){const a=document.createElement('div');a.className='arrowdown';a.textContent='⬇️';document.body.appendChild(a);setTimeout(()=>a.remove(),8000)}};
+  const cl=$('copyLink');if(cl)cl.onclick=async()=>{try{await navigator.clipboard.writeText('https://www.skyeco.fr/petitepart/');cl.textContent='Lien copié ✓'}catch(e){cl.textContent='Sélectionnez le lien ci-dessous'}};
+}
+$('installBtn').onclick=installer;$('installTop').onclick=installer;
+if('serviceWorker' in navigator){navigator.serviceWorker.register('/petitepart/sw.js',{scope:'/petitepart/'}).catch(()=>{})}
+showInstall();
+
 (async()=>{
   const q=new URLSearchParams(location.search);const clean=()=>history.replaceState(null,'',location.pathname);
   try{

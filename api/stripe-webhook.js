@@ -260,6 +260,15 @@ export default async function handler(req, res) {
             body: JSON.stringify({ abonnement_actif: false, updated_at: new Date().toISOString() }),
           }
         );
+        // Abonnement « Petite Part » (09/10/2026) — sans effet pour les autres produits.
+        await fetch(
+          `${process.env.SUPABASE_URL}/rest/v1/petitepart_abonnes?stripe_subscription=eq.${subscription.id}`,
+          {
+            method: 'PATCH',
+            headers: { ...supaHeaders, Prefer: 'return=minimal' },
+            body: JSON.stringify({ statut: subscription.status, fin_periode: subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : null, updated_at: new Date().toISOString() }),
+          }
+        );
         break;
       }
 
@@ -359,6 +368,15 @@ export default async function handler(req, res) {
               abonnement_actif: subscription.status === 'active' || subscription.status === 'trialing',
               updated_at: new Date().toISOString(),
             }),
+          }
+        );
+        // Abonnement « Petite Part » (09/10/2026) — sans effet pour les autres produits.
+        await fetch(
+          `${process.env.SUPABASE_URL}/rest/v1/petitepart_abonnes?stripe_subscription=eq.${subscription.id}`,
+          {
+            method: 'PATCH',
+            headers: { ...supaHeaders, Prefer: 'return=minimal' },
+            body: JSON.stringify({ statut: subscription.status, fin_periode: subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : null, updated_at: new Date().toISOString() }),
           }
         );
         break;

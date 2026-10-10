@@ -30,6 +30,17 @@
   },
   "redirects": [
     {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "petitepart.com"
+        }
+      ],
+      "destination": "https://www.skyeco.fr/petitepart/",
+      "permanent": false
+    },
+    {
       "source": "/:path*",
       "has": [
         {

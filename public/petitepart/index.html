@@ -257,6 +257,7 @@ footer a{color:var(--muted)}
       </div>
       <input type="file" id="cam" accept="image/*" capture="environment">
       <input type="file" id="gal" accept="image/*">
+      <p class="small muted" style="margin:8px 0 0">💡 Pour un calcul plus juste : photo <b>de dessus</b>, l'assiette entière, avec <b>une fourchette posée à côté</b> pour donner l'échelle.</p>
       <input id="ctx" type="text" placeholder="Précision facultative (ex. « sans sauce »)" aria-label="Précision facultative">
       <p class="ok" id="unavail" hidden>Analysez vos assiettes en photo : <b>3 jours gratuits, sans carte bancaire</b>. <button class="btn btn-main btn-sm" type="button" data-paywall style="margin-top:8px">Commencer l'essai gratuit</button></p>
     </div>
@@ -273,6 +274,7 @@ footer a{color:var(--muted)}
       <div class="note" id="fatNote" hidden></div>
       <div id="aItems"></div>
       <p class="small muted" id="aRemark"></p>
+      <p class="small muted" style="margin:6px 0 10px">Estimation à partir de la photo, à ± 20 % environ. Huile, beurre et sauces cachées ne se voient pas : ajustez les grammes si vous les connaissez.</p>
       <button class="btn btn-main" id="aAdd" type="button">Ajouter à ma journée</button>
     </div>
   </section>
@@ -657,7 +659,7 @@ async function analyse(file){
   $('aDish').innerHTML='<span class="muted"><span class="spin"></span>Claude regarde votre assiette…</span>';$('aKcal').innerHTML='—<small>kcal</small>';$('aItems').innerHTML='';$('fatNote').hidden=true;$('aRemark').textContent='';$('aAdd').disabled=true;
   $('camBtn').disabled=$('galBtn').disabled=true;
   try{const ctx=$('ctx').value.trim();
-    const r=await sample.json(`Tu es diététicien. La photo montre un repas. Identifie chaque aliment visible, estime sa quantité en grammes (taille de l'assiette, couverts, proportions), sans oublier sauces et matières grasses probables.
+    const r=await sample.json(`Tu es diététicien. La photo montre un repas. Identifie chaque aliment visible, estime sa quantité en grammes (taille de l'assiette, couverts présents servant d'échelle — une fourchette mesure environ 19 cm —, proportions), sans oublier sauces et matières grasses probables.
 ${ctx?'Précision de la personne : '+ctx+'\n':''}Indique pour chaque aliment s'il est riche en graisses (friture, fromage, charcuterie, crème, beurre, sauce grasse, pâtisserie, etc.).
 Si le plat est riche, rédige "conseil" : une phrase bienveillante qui invite à prendre une petite part et propose quoi ajouter (légumes, salade). Sinon "conseil":"".
 Réponds uniquement en JSON, valeurs pour 100 g tel que servi (table CIQUAL si possible) :

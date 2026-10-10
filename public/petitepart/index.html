@@ -587,7 +587,14 @@ function renderMenu(){
       b.innerHTML=`<span class="em">${r.e}</span><b>${esc(r.n)}</b><span class="meta">${fmt(r.k*f)} kcal · ${r.min} min${Math.abs(f-1)>.05?' · portion ×'+fmt1(f):''}</span><span class="small" style="color:var(--accent);font-weight:700">Voir la recette ›</span>`;
       b.onclick=ev=>{if(b.getAttribute('aria-pressed')==='true'){openRecipe(r.id,f);go('recettes');return}picked[si]=r.id;LS.set('choix-'+TODAY,picked);o.querySelectorAll('.opt').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true')};
       o.appendChild(b)});
-    s.querySelector('[data-eat]').onclick=()=>{const id=picked[si]||opts[0].r.id;const it=opts.find(x=>x.r.id===id)||opts[0];addEaten(it.r.n,it.r.k*it.f,{e:it.r.e,p:it.r.p*it.f,g:it.r.g*it.f,l:it.r.l*it.f})};
+    const eb=s.querySelector('[data-eat]');const done=LS.get('repas-'+TODAY,{});
+    const markDone=k=>{eb.textContent='✓ Ajouté à ma journée ('+fmt(k)+' kcal)';eb.disabled=true;eb.className='btn btn-sm';eb.style.background='var(--soft)';eb.style.color='var(--accent)';eb.style.opacity='1'};
+    if(done[si])markDone(done[si]);
+    eb.onclick=()=>{const id=picked[si]||opts[0].r.id;const it=opts.find(x=>x.r.id===id)||opts[0];const k=it.r.k*it.f;
+      addEaten(it.r.n,k,{e:it.r.e,p:it.r.p*it.f,g:it.r.g*it.f,l:it.r.l*it.f});
+      const d=LS.get('repas-'+TODAY,{});d[si]=Math.round(k);LS.set('repas-'+TODAY,d);markDone(k);
+      const t=P&&P.kcal?P.kcal:0,e=eatenKcal();
+      toast(it.r.e+' '+label+' ajouté · '+(t?(e<=t?'il reste '+fmt(t-e)+' kcal aujourd\'hui':fmt(e-t)+' kcal au-dessus, pas grave'):fmt(k)+' kcal'))};
     box.appendChild(s)});
 }
 $('shuffle').onclick=()=>{seed++;LS.set('seed-'+TODAY,seed);picked={};LS.set('choix-'+TODAY,picked);renderMenu()};

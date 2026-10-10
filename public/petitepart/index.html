@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="Petite Part">
 <meta property="og:title" content="Petite Part — votre assiette en photo, vos calories calculées">
 <meta property="og:description" content="Programme minceur, recettes, coach et film de votre évolution. 3 jours gratuits.">
-<meta property="og:image" content="https://www.skyeco.fr/petitepart/og.png">
+<meta property="og:image" content="https://petitepart.com/petitepart/og.png">
 <title>Petite Part</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -909,7 +909,7 @@ const API='/api/petitepart';
 function appareilId(){let id=null;try{id=localStorage.getItem('pp-appareil')}catch(e){}
   if(!id){try{id=document.cookie.split('; ').find(c=>c.startsWith('pp_app='))?.split('=')[1]||null}catch(e){}}
   if(!id){id=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2)).replace(/[^a-z0-9-]/gi,'')}
-  try{localStorage.setItem('pp-appareil',id)}catch(e){}try{document.cookie='pp_app='+id+'; max-age=63072000; path=/petitepart; SameSite=Lax; Secure'}catch(e){}return id}
+  try{localStorage.setItem('pp-appareil',id)}catch(e){}try{document.cookie='pp_app='+id+'; max-age=63072000; path=/; SameSite=Lax; Secure'}catch(e){}return id}
 appareilId();let jeton=LS.get('jeton',null),compte=LS.get('compte',null);
 async function api(action,body){let r,j={};try{r=await fetch(API+'?action='+action,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})});j=await r.json().catch(()=>({}))}catch(e){throw{code:'upstream_error',message:"Pas de connexion internet. Réessayez."}}
   if(!r.ok){if(r.status===401){jeton=null;LS.set('jeton',null);activerIA()}if(r.status===402&&compte){compte.actif=false;compte.essai_fini=!!j.essai_fini;LS.set('compte',compte);setTimeout(showAbonner,600)}throw{code:r.status===401?'auth':r.status===402?'inactif':r.status===429?'quota':r.status===400?'bad':'upstream_error',message:j.error||"Le serveur ne répond pas. Réessayez."}}return j}
@@ -996,7 +996,7 @@ async function installer(){
   let html;
   if(isIOS&&!isSafari){html=`<h2 id="sheetTitle">Ouvrez Petite Part dans Safari</h2><p>Sur iPhone, seule l'appli <b>Safari</b> (la boussole bleue) peut mettre Petite Part sur l'écran d'accueil.</p>
     <ol class="steps"><li><span>Touchez <b>Copier le lien</b> ci-dessous.</span></li><li><span>Ouvrez <b>Safari</b>, touchez la barre d'adresse, collez et validez.</span></li><li><span>Dans Safari, touchez à nouveau le bouton 📲 <b>Installer</b>.</span></li></ol>
-    <button class="btn btn-main" id="copyLink" type="button">Copier le lien</button><p class="small muted" style="user-select:all">https://www.skyeco.fr/petitepart/</p>`}
+    <button class="btn btn-main" id="copyLink" type="button">Copier le lien</button><p class="small muted" style="user-select:all">https://petitepart.com/</p>`}
   else if(isIOS){html=`<h2 id="sheetTitle">Mettre sur l'écran d'accueil</h2>
     <ol class="steps"><li><span>Touchez le bouton <b>Partager</b> <span class="kbd">⬆︎</span> en bas de Safari.<br><span class="small muted">Vous ne le voyez pas ? Touchez d'abord <span class="kbd">•••</span> en bas à droite, puis « Partager ».</span></span></li>
     <li><span>Faites glisser la liste vers le haut et touchez <b>« Sur l'écran d'accueil »</b> <span class="kbd">＋</span></span></li>
@@ -1006,10 +1006,10 @@ async function installer(){
     <ol class="steps"><li><span>Touchez les <b>3 points</b> <span class="kbd">⋮</span> en haut à droite de Chrome.</span></li><li><span>Touchez <b>« Installer l'application »</b> ou <b>« Ajouter à l'écran d'accueil »</b>.</span></li><li><span>Confirmez avec <b>Installer</b>.</span></li></ol>`}
   sheetIn.innerHTML=html+`<button class="btn btn-ghost" type="button" id="ppClose">J'ai compris</button>`;sheet.hidden=false;
   $('ppClose').onclick=()=>{closeSheet();if(isIOS&&isSafari&&!document.querySelector('.arrowdown')){const a=document.createElement('div');a.className='arrowdown';a.textContent='⬇️';document.body.appendChild(a);setTimeout(()=>a.remove(),8000)}};
-  const cl=$('copyLink');if(cl)cl.onclick=async()=>{try{await navigator.clipboard.writeText('https://www.skyeco.fr/petitepart/');cl.textContent='Lien copié ✓'}catch(e){cl.textContent='Sélectionnez le lien ci-dessous'}};
+  const cl=$('copyLink');if(cl)cl.onclick=async()=>{try{await navigator.clipboard.writeText('https://petitepart.com/');cl.textContent='Lien copié ✓'}catch(e){cl.textContent='Sélectionnez le lien ci-dessous'}};
 }
 $('installBtn').onclick=installer;$('installTop').onclick=installer;
-if('serviceWorker' in navigator){navigator.serviceWorker.register('/petitepart/sw.js',{scope:'/petitepart/'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(()=>{})}
 showInstall();
 
 (async()=>{

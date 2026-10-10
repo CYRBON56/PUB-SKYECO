@@ -1,5 +1,5 @@
 // /api/petitepart.js
-// 09/10/2026 — Backend de l'appli « Petite Part » (skyeco.fr/petitepart).
+// 09/10/2026 — Backend de l'appli « Petite Part » (petitepart.com, servie depuis public/petitepart).
 // Une seule fonction, plusieurs actions (?action=...) :
 //   essai     POST {email}          -> session Stripe Checkout (abonnement 4,99 €/mois, 3 jours offerts)
 //   activer   POST {session_id}     -> vérifie la session Stripe, crée l'abonné et renvoie un jeton d'accès
@@ -45,7 +45,7 @@ function normaliserEmail(e) {
 }
 const ipHash = (ip) => crypto.createHash('sha256').update('pp:' + ip + ':' + (process.env.SUPABASE_SERVICE_ROLE_KEY || '').slice(-12)).digest('hex').slice(0, 32);
 const actif = (s) => s === 'trialing' || s === 'active';
-const origine = (req) => req.headers.origin && /^https:\/\/(www\.)?skyeco\.fr$|^https:\/\/[a-z0-9-]+\.vercel\.app$/.test(req.headers.origin) ? req.headers.origin : 'https://www.skyeco.fr';
+const origine = () => 'https://petitepart.com';
 
 async function nouveauJeton(abonneId) {
   const t = crypto.randomBytes(32).toString('base64url');
@@ -126,7 +126,7 @@ export default async function handler(req, res) {
       const [a] = await sb('petitepart_abonnes', { method: 'POST', body: JSON.stringify({ email, email_normalise: norm, appareil, ip_hash: iph, statut: 'essai', fin_periode: new Date(Date.now() + JOURS_ESSAI * 864e5).toISOString() }) });
       const jeton = await nouveauJeton(a.id);
       const t2 = await nouveauJeton(a.id);
-      await emailBienvenue(email, `${origine(req)}/petitepart/?connexion=${t2}`);
+      await emailBienvenue(email, `${origine(req)}/?connexion=${t2}`);
       console.log('petitepart essai', email.replace(/^(.).*@/, '$1***@'));
       return res.status(200).json({ jeton, ...etat(a) });
     }
@@ -143,8 +143,8 @@ export default async function handler(req, res) {
         line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: PRIX_CENTIMES, recurring: { interval: 'month' }, product_data: { name: 'Petite Part — abonnement', description: 'Analyse de vos assiettes en photo, recettes sur mesure et coach. Résiliable à tout moment. TVA 20 % incluse.' } } }],
         subscription_data: { metadata: { product: 'petitepart' } },
         metadata: { product: 'petitepart' },
-        success_url: `${o}/petitepart/?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${o}/petitepart/?annule=1`,
+        success_url: `${o}/?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${o}/?annule=1`,
       });
       console.log('petitepart abonner', session.id);
       return res.status(200).json({ url: session.url });
@@ -169,7 +169,7 @@ export default async function handler(req, res) {
       const rows = await sb(`petitepart_abonnes?email=eq.${encodeURIComponent(email)}&select=id,statut`);
       if (rows?.[0]) {
         const t = await nouveauJeton(rows[0].id);
-        const url = `${origine(req)}/petitepart/?connexion=${t}`;
+        const url = `${origine(req)}/?connexion=${t}`;
         await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ from: 'Petite Part <notifications@ecoskybyrms.fr>', to: [email], subject: 'Votre lien de connexion Petite Part',
             html: `<p>Bonjour,</p><p>Touchez ce bouton depuis le téléphone où vous voulez utiliser Petite Part :</p><p><a href="${url}" style="background:#2F7D4F;color:#fff;padding:12px 18px;border-radius:10px;text-decoration:none;font-weight:700">Ouvrir Petite Part</a></p><p style="color:#666;font-size:13px">Si vous n'avez rien demandé, ignorez cet email.</p>` }) });

@@ -11,6 +11,36 @@
   ],
   "rewrites": [
     {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "petitepart.com"
+        }
+      ],
+      "destination": "/petitepart/index.html"
+    },
+    {
+      "source": "/sw.js",
+      "has": [
+        {
+          "type": "host",
+          "value": "petitepart.com"
+        }
+      ],
+      "destination": "/petitepart/sw.js"
+    },
+    {
+      "source": "/manifest.webmanifest",
+      "has": [
+        {
+          "type": "host",
+          "value": "petitepart.com"
+        }
+      ],
+      "destination": "/petitepart/manifest.webmanifest"
+    },
+    {
       "source": "/l",
       "destination": "/api/lien"
     },
@@ -30,25 +60,36 @@
   },
   "redirects": [
     {
-      "source": "/",
-      "has": [
+      "source": "/petitepart",
+      "missing": [
         {
           "type": "host",
           "value": "petitepart.com"
         }
       ],
-      "destination": "https://www.skyeco.fr/petitepart/",
+      "destination": "https://petitepart.com/",
       "permanent": false
     },
     {
-      "source": "/:path*",
-      "has": [
+      "source": "/petitepart/",
+      "missing": [
         {
           "type": "host",
           "value": "petitepart.com"
         }
       ],
-      "destination": "https://www.skyeco.fr/petitepart/",
+      "destination": "https://petitepart.com/",
+      "permanent": false
+    },
+    {
+      "source": "/petitepart/index.html",
+      "missing": [
+        {
+          "type": "host",
+          "value": "petitepart.com"
+        }
+      ],
+      "destination": "https://petitepart.com/",
       "permanent": false
     },
     {

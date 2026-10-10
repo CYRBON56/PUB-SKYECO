@@ -183,6 +183,7 @@ footer a{color:var(--muted)}
       <img src="/petitepart/icon-192.png" alt="" width="48" height="48" style="border-radius:12px;flex:none">
       <div style="flex:1;min-width:0"><b>Installer Petite Part</b><br><span class="small">Une icône sur votre écran d'accueil, comme une vraie appli.</span></div>
       <button class="btn btn-sm" id="installBtn" type="button" style="background:var(--accent-ink);color:var(--accent);flex:none">Installer</button>
+      <button type="button" id="installX" aria-label="Masquer" style="background:none;border:0;color:inherit;font-size:22px;line-height:1;padding:4px 2px;flex:none;cursor:pointer;opacity:.75">×</button>
     </div>
     <div class="card" id="profilCard">
       <h2 id="profilTitle">Mon profil</h2>
@@ -989,9 +990,11 @@ const isSafari=isIOS&&/Safari/.test(ua)&&!/CriOS|FxiOS|EdgiOS|OPiOS|GSA|Instagra
 const installed=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 let deferredPrompt=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;showInstall()});
-window.addEventListener('appinstalled',()=>{$('installCard').hidden=true;$('installTop').hidden=true;toast('Petite Part est sur votre écran d\'accueil.')});
-function showInstall(){if(installed())return;if(LS.get('install-plus-tard',null)===TODAY){$('installTop').hidden=false;return}$('installCard').hidden=false;$('installTop').hidden=false}
+window.addEventListener('appinstalled',()=>{LS.set('install-vu',true);$('installCard').hidden=true;$('installTop').hidden=true;toast('Petite Part est sur votre écran d\'accueil.')});
+function showInstall(){if(installed()){$('installCard').hidden=true;$('installTop').hidden=true;return}$('installTop').hidden=false;$('installCard').hidden=!!LS.get('install-vu',false)}
+function installVu(){LS.set('install-vu',true);$('installCard').hidden=true}
 async function installer(){
+  installVu();
   if(deferredPrompt){deferredPrompt.prompt();const r=await deferredPrompt.userChoice.catch(()=>null);deferredPrompt=null;if(r&&r.outcome==='accepted')$('installCard').hidden=true;return}
   let html;
   if(isIOS&&!isSafari){html=`<h2 id="sheetTitle">Ouvrez Petite Part dans Safari</h2><p>Sur iPhone, seule l'appli <b>Safari</b> (la boussole bleue) peut mettre Petite Part sur l'écran d'accueil.</p>
@@ -1008,7 +1011,7 @@ async function installer(){
   $('ppClose').onclick=()=>{closeSheet();if(isIOS&&isSafari&&!document.querySelector('.arrowdown')){const a=document.createElement('div');a.className='arrowdown';a.textContent='⬇️';document.body.appendChild(a);setTimeout(()=>a.remove(),8000)}};
   const cl=$('copyLink');if(cl)cl.onclick=async()=>{try{await navigator.clipboard.writeText('https://petitepart.com/');cl.textContent='Lien copié ✓'}catch(e){cl.textContent='Sélectionnez le lien ci-dessous'}};
 }
-$('installBtn').onclick=installer;$('installTop').onclick=installer;
+$('installBtn').onclick=installer;$('installTop').onclick=installer;$('installX').onclick=()=>{installVu();toast('Le bouton 📲 en haut reste disponible pour installer plus tard.')};
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(()=>{})}
 showInstall();
 

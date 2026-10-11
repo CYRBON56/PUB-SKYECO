@@ -127,6 +127,24 @@ input[type=range]{padding:0;border:0;background:none;accent-color:var(--accent)}
 .film{width:100%;max-width:330px;margin:0 auto;aspect-ratio:3/4;border-radius:16px;overflow:hidden;background:#111}
 .film canvas{width:100%;height:100%;display:block}
 .thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px}
+.calhd{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.calhd b{text-transform:capitalize}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal .dw{font-size:11px;color:var(--muted);text-align:center;font-weight:700}
+.cal button{aspect-ratio:1;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;padding:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:pointer;min-width:0}
+.cal button .d{font-size:13px;font-weight:700;line-height:1}
+.cal button .k{font-size:9.5px;line-height:1;font-variant-numeric:tabular-nums}
+.cal button.ok{background:var(--soft);border-color:var(--accent);color:var(--accent)}
+.cal button.ov{background:var(--warn-bg);border-color:var(--warn);color:var(--warn)}
+.cal button.td{outline:2px solid var(--ink);outline-offset:1px}
+.cal button.sel{box-shadow:inset 0 0 0 2px var(--ink)}
+.cal button:disabled{opacity:.35;cursor:default}
+.callg{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+.callg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.dayrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.dayrow:first-child{border-top:0}
+.dayrow .mthumb{flex:none}
+.dayrow span.n{flex:1;min-width:0}
 .thumbs figure{margin:0;display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:var(--muted);text-align:center}
 .thumbs img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:10px}
 .chart{width:100%;height:auto;display:block}
@@ -289,6 +307,15 @@ footer a{color:var(--muted)}
 
   <!-- ============ SUIVI ============ -->
   <section id="tab-suivi" data-tab hidden>
+    <div class="card">
+      <h2>Mon calendrier repas</h2>
+      <p class="small muted">Chaque jour, ce que vous avez mangé et vos calories. Touchez un jour pour voir le détail.</p>
+      <div class="calhd"><button class="btn btn-ghost btn-sm" id="calPrev" type="button" aria-label="Mois précédent">‹</button><b id="calMois"></b><button class="btn btn-ghost btn-sm" id="calNext" type="button" aria-label="Mois suivant">›</button></div>
+      <div class="cal" id="cal"></div>
+      <div class="callg"><span><i style="background:var(--soft);border:1px solid var(--accent)"></i>Dans l'objectif</span><span><i style="background:var(--warn-bg);border:1px solid var(--warn)"></i>Au-dessus</span></div>
+      <p class="small" id="calStat" style="margin-top:8px"></p>
+      <div id="calDay" style="margin-top:10px"></div>
+    </div>
     <div class="card">
       <h2>Mon poids</h2>
       <div class="row2" style="align-items:end">
@@ -687,6 +714,39 @@ Si ce n'est pas un repas, renvoie "aliments":[] et explique dans "remarque".`,{i
   finally{$('camBtn').disabled=$('galBtn').disabled=false;renderPlate()}
 }
 
+/* ---------- calendrier des repas ---------- */
+const JOURS=['L','M','M','J','V','S','D'];
+let calM=new Date(TODAY+'T12:00:00');calM.setDate(1);let calSel=TODAY;
+const pad=n=>String(n).padStart(2,'0');
+const kOf=(y,m,d)=>y+'-'+pad(m+1)+'-'+pad(d);
+function dayMeals(k){return k===TODAY?eaten:LS.get('mange-'+k,[])}
+function renderCal(){
+  const y=calM.getFullYear(),m=calM.getMonth(),t=P&&P.kcal?P.kcal:0;
+  $('calMois').textContent=calM.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+  const g=$('cal');g.innerHTML=JOURS.map(j=>`<span class="dw">${j}</span>`).join('');
+  const off=(new Date(y,m,1).getDay()+6)%7,nb=new Date(y,m+1,0).getDate();
+  for(let i=0;i<off;i++)g.insertAdjacentHTML('beforeend','<span></span>');
+  let jours=0,tot=0,dans=0;
+  for(let d=1;d<=nb;d++){const k=kOf(y,m,d),L=dayMeals(k),kc=L.reduce((s,x)=>s+(+x.kcal||0),0);
+    const b=document.createElement('button');b.type='button';
+    b.innerHTML=`<span class="d">${d}</span><span class="k">${L.length?fmt(kc):''}</span>`;
+    if(L.length){jours++;tot+=kc;if(t&&kc>t)b.classList.add('ov');else{b.classList.add('ok');dans++}}
+    if(k===TODAY)b.classList.add('td');if(k===calSel)b.classList.add('sel');
+    if(k>TODAY)b.disabled=true;
+    b.setAttribute('aria-label',new Date(k+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})+(L.length?', '+fmt(kc)+' kcal':', rien noté'));
+    b.onclick=()=>{calSel=k;renderCal()};g.appendChild(b)}
+  $('calStat').textContent=jours?`${jours} jour${jours>1?'s':''} noté${jours>1?'s':''} ce mois · moyenne ${fmt(tot/jours)} kcal/jour`+(t?` · ${dans} jour${dans>1?'s':''} dans l'objectif (${fmt(t)} kcal)`:''):'Aucun repas noté ce mois-ci.';
+  $('calNext').disabled=y*12+m>=+TODAY.slice(0,4)*12+(+TODAY.slice(5,7)-1);
+  renderCalDay()}
+function renderCalDay(){const L=dayMeals(calSel),box=$('calDay');
+  const titre=new Date(calSel+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+  if(!L.length){box.innerHTML=`<p class="small muted"><b style="text-transform:capitalize">${titre}</b> : rien de noté ce jour-là.</p>`;return}
+  const kc=L.reduce((s,x)=>s+(+x.kcal||0),0);
+  box.innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px"><b style="text-transform:capitalize">${titre}</b><b class="num">${fmt(kc)} kcal</b></div>`+
+    L.map(x=>`<div class="dayrow">${x.photo?`<img class="mthumb" alt="" src="${x.photo}">`:`<span class="mthumb em">${esc(x.e||'🍽️')}</span>`}<span class="n"><b>${esc(x.nom)}</b><br><span class="muted small">${esc(x.heure||'')}</span></span><b class="num">${fmt(x.kcal)} kcal</b></div>`).join('')}
+$('calPrev').onclick=()=>{calM.setMonth(calM.getMonth()-1);renderCal()};
+$('calNext').onclick=()=>{calM.setMonth(calM.getMonth()+1);renderCal()};
+
 /* ---------- suivi du poids ---------- */
 function renderChart(){
   const w=LS.get('poids',[]).slice().sort((a,b)=>a.d<b.d?-1:1);const svg=$('chart');
@@ -907,14 +967,14 @@ $('chatSend').onclick=async()=>{$('micHelp').hidden=true;const q=$('chatIn').val
 
 /* ---------- navigation ---------- */
 function go(t){document.querySelectorAll('[data-tab]').forEach(s=>s.hidden=s.id!=='tab-'+t);
-  document.querySelectorAll('nav button').forEach(b=>b.toggleAttribute('aria-current',b.dataset.go===t));if(b0(t))b0(t).setAttribute('aria-current','page');window.scrollTo(0,0)}
+  document.querySelectorAll('nav button').forEach(b=>b.toggleAttribute('aria-current',b.dataset.go===t));if(b0(t))b0(t).setAttribute('aria-current','page');if(t==='suivi')renderCal();window.scrollTo(0,0)}
 const b0=t=>document.querySelector(`nav button[data-go="${t}"]`);
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.go));
 $('goPlate').onclick=()=>go('assiette');
 
 /* ---------- démarrage ---------- */
 if(prof)fillForm(prof);
-renderProg();renderEaten();renderRecipes();renderPlate();renderChart();renderEx();
+renderProg();renderEaten();renderRecipes();renderPlate();renderChart();renderCal();renderEx();
 openDB().then(renderPhotos);
 /* ---------- compte, abonnement et appels à Claude via le serveur Skyeco ---------- */
 const API='/api/petitepart';

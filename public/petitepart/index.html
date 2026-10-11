@@ -127,6 +127,16 @@ input[type=range]{padding:0;border:0;background:none;accent-color:var(--accent)}
 .film{width:100%;max-width:330px;margin:0 auto;aspect-ratio:3/4;border-radius:16px;overflow:hidden;background:#111}
 .film canvas{width:100%;height:100%;display:block}
 .thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px}
+.moms{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:6px 0 4px}
+.mom{border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font:inherit;padding:7px 2px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;min-width:0}
+.mom .e{font-size:20px;line-height:1}.mom b{font-size:11.5px}.mom .s{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums}
+.mom.ok{background:var(--soft);border-color:var(--accent)}.mom.ok .s{color:var(--accent);font-weight:700}
+.mom.skip{opacity:.6}.mom.due{border-color:var(--warn);background:var(--warn-bg)}.mom.due .s{color:var(--warn);font-weight:700}
+.mform{background:var(--soft);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;margin-bottom:6px}
+.mform input{min-width:0}
+.rapm{display:flex;flex-wrap:wrap;gap:6px}
+.rapm input{width:auto;margin:0;flex:none}
+.rapm label{display:flex;align-items:center;gap:5px;white-space:nowrap;border:1px solid var(--line);border-radius:99px;padding:6px 10px;font-size:13px;cursor:pointer}
 .calhd{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
 .calhd b{text-transform:capitalize}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
@@ -248,9 +258,19 @@ footer a{color:var(--muted)}
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><h2>Ce que j'ai mangé</h2><b class="num" id="eatenTotal">0 kcal</b></div>
       <div class="mac" id="dayMac"></div>
+      <div class="moms" id="moments"></div>
+      <div class="mform" id="momentForm" hidden></div>
       <div id="meals"></div>
       <button class="btn btn-main" id="goPlate" type="button">📷 Calculer un repas en photo</button>
       <p class="small muted">Touchez un repas pour revoir sa photo et corriger les quantités : les calories se recalculent.</p>
+    </div>
+
+    <div class="card" id="rappelCard">
+      <h2>🔔 Rappels repas</h2>
+      <p class="small muted">Petite Part vous envoie un petit message pour vous demander ce que vous avez mangé : le matin (10 h), le midi (14 h), au goûter (17 h) et le soir (21 h, avec les grignotages). Pas de rappel si c'est déjà noté.</p>
+      <div class="rapm" id="rapMoments"></div>
+      <button class="btn btn-main" id="rapBtn" type="button">Activer les rappels</button>
+      <p class="small" id="rapMsg"></p>
     </div>
   </section>
 
@@ -525,6 +545,43 @@ function plan(p){
   return r;
 }
 
+/* ---------- moments de la journée ---------- */
+const MOM=[['matin','Matin','☀️','ce matin',11],['midi','Midi','🍽️','ce midi',15],['gouter','Goûter','🍎','au goûter',18],['soir','Soir','🌙','ce soir',22],['grignotage','Grignotage','🍪','en grignotage',99]];
+function momentOf(x){if(x.moment)return x.moment;const h=parseInt(x.heure)||12;return h<11?'matin':h<15?'midi':h<18?'gouter':'soir'}
+let sautes=LS.get('sautes-'+TODAY,[]),pendingMoment=null,momOpen=null,rapEndpoint=LS.get('rappel-endpoint',null),syncT=null;
+function momNotes(){return MOM.map(m=>m[0]).filter(id=>sautes.includes(id)||eaten.some(x=>momentOf(x)===id))}
+function renderMoments(){const box=$('moments');if(!box)return;box.innerHTML='';const h=new Date().getHours();
+  MOM.forEach(([id,lab,em,,fin])=>{const L=eaten.filter(x=>momentOf(x)===id),k=L.reduce((s,x)=>s+(+x.kcal||0),0),skip=sautes.includes(id);
+    const b=document.createElement('button');b.type='button';b.className='mom'+(L.length?' ok':skip?' skip':(h>=fin&&id!=='grignotage'?' due':''));
+    b.innerHTML=`<span class="e">${em}</span><b>${lab}</b><span class="s">${L.length?'✓ '+fmt(k):skip?'rien':'+ noter'}</span>`;
+    b.setAttribute('aria-label',lab+(L.length?' : '+fmt(k)+' kcal':skip?' : rien mangé':' : à noter'));
+    b.onclick=()=>openMoment(id);box.appendChild(b)});
+  syncNotes()}
+function closeMoment(){momOpen=null;$('momentForm').hidden=true}
+function openMoment(id){const m=MOM.find(x=>x[0]===id);if(!m)return;momOpen=id;const f=$('momentForm');f.hidden=false;
+  f.innerHTML=`<b>${m[2]} Qu'avez-vous mangé ${m[3]} ?</b>
+  <input id="mfNom" type="text" placeholder="Ex. 2 tartines beurre, un café au lait" aria-label="Ce que j'ai mangé">
+  <input id="mfK" type="number" inputmode="numeric" min="0" placeholder="Calories (facultatif)" aria-label="Calories">
+  <div class="row2"><button class="btn btn-main btn-sm" id="mfAdd" type="button">Ajouter</button><button class="btn btn-ghost btn-sm" id="mfPhoto" type="button">📷 En photo</button></div>
+  <div class="row2"><button class="btn btn-ghost btn-sm" id="mfRien" type="button">${id==='grignotage'?'Aucun grignotage':"Je n'ai rien mangé"}</button><button class="btn btn-ghost btn-sm" id="mfX" type="button">Fermer</button></div>
+  <p class="small" id="mfMsg"></p>`;
+  f.scrollIntoView({behavior:'smooth',block:'center'});
+  const unskip=()=>{sautes=sautes.filter(x=>x!==id);LS.set('sautes-'+TODAY,sautes)};
+  $('mfX').onclick=closeMoment;
+  $('mfRien').onclick=()=>{if(!sautes.includes(id))sautes.push(id);LS.set('sautes-'+TODAY,sautes);closeMoment();renderMoments();toast('C\'est noté.')};
+  $('mfPhoto').onclick=()=>{pendingMoment=id;closeMoment();go('assiette')};
+  $('mfAdd').onclick=async()=>{const nom=$('mfNom').value.trim(),k=+$('mfK').value;const msg=$('mfMsg');
+    if(!nom){msg.textContent='Écrivez ce que vous avez mangé.';$('mfNom').focus();return}
+    if(k>0){unskip();addEaten(nom,k,{moment:id,e:m[2]});closeMoment();return}
+    if(!sample){msg.textContent="Indiquez les calories, ou prenez l'abonnement pour que Petite Part les calcule pour vous.";$('mfK').focus();return}
+    const b=$('mfAdd');b.disabled=true;b.textContent='Calcul…';msg.textContent='';
+    try{const j=await sample.json(`Estime les calories de ce qu'une personne a mangé, en portions françaises courantes : « ${nom.slice(0,300)} ». Réponds uniquement en JSON : {"kcal":nombre,"proteines":grammes,"glucides":grammes,"lipides":grammes,"emoji":"un seul emoji"}`);
+      const kc=Math.max(0,+j.kcal||0);if(!kc)throw{code:'invalid_json'};
+      unskip();addEaten(nom,kc,{moment:id,e:j.emoji||m[2],p:+j.proteines||0,g:+j.glucides||0,l:+j.lipides||0});closeMoment();
+      toast(m[2]+' '+nom+' · '+fmt(kc)+' kcal')}
+    catch(e){msg.textContent=errTxt(e)+' Vous pouvez aussi indiquer les calories vous-même.';b.disabled=false;b.textContent='Ajouter'}};
+  setTimeout(()=>{try{$('mfNom').focus()}catch(e){}},300)}
+
 /* ---------- journal du jour ---------- */
 let eaten=LS.get('mange-'+TODAY,[]);
 function eatenKcal(){return eaten.reduce((s,x)=>s+x.kcal,0)}
@@ -557,7 +614,7 @@ function renderEaten(){
     const kin=!x.aliments&&body.querySelector('input');if(kin)kin.oninput=()=>{x.kcal=Math.max(0,+kin.value||0);saveEaten();r.querySelector('.mhead .num').textContent=fmt(x.kcal)+' kcal';$('eatenTotal').textContent=fmt(eatenKcal())+' kcal';renderGauge()};
     r.querySelector('.mhead').onclick=()=>{openMeal=openMeal===i?-1:i;renderEaten()};
     r.appendChild(body);m.appendChild(r)});
-  $('eatenTotal').textContent=fmt(eatenKcal())+' kcal';renderGauge();renderMacros();
+  $('eatenTotal').textContent=fmt(eatenKcal())+' kcal';renderGauge();renderMacros();renderMoments();
 }
 function renderMacros(){const t=eaten.reduce((s,x)=>({p:s.p+(x.p||0),g:s.g+(x.g||0),l:s.l+(x.l||0)}),{p:0,g:0,l:0});
   $('dayMac').innerHTML=eaten.length?`<span><i class="dot" style="background:var(--prot)"></i>Protéines ${fmt(t.p)} g</span><span><i class="dot" style="background:var(--gluc)"></i>Glucides ${fmt(t.g)} g</span><span><i class="dot" style="background:var(--lip)"></i>Lipides ${fmt(t.l)} g</span>`:''}
@@ -618,7 +675,7 @@ function renderMenu(){
     const markDone=k=>{eb.textContent='✓ Ajouté à ma journée ('+fmt(k)+' kcal)';eb.disabled=true;eb.className='btn btn-sm';eb.style.background='var(--soft)';eb.style.color='var(--accent)';eb.style.opacity='1'};
     if(done[si])markDone(done[si]);
     eb.onclick=()=>{const id=picked[si]||opts[0].r.id;const it=opts.find(x=>x.r.id===id)||opts[0];const k=it.r.k*it.f;
-      addEaten(it.r.n,k,{e:it.r.e,p:it.r.p*it.f,g:it.r.g*it.f,l:it.r.l*it.f});
+      addEaten(it.r.n,k,{moment:['matin','midi','gouter','soir'][si],e:it.r.e,p:it.r.p*it.f,g:it.r.g*it.f,l:it.r.l*it.f});
       const d=LS.get('repas-'+TODAY,{});d[si]=Math.round(k);LS.set('repas-'+TODAY,d);markDone(k);
       const t=P&&P.kcal?P.kcal:0,e=eatenKcal();
       toast(it.r.e+' '+label+' ajouté · '+(t?(e<=t?'il reste '+fmt(t-e)+' kcal aujourd\'hui':fmt(e-t)+' kcal au-dessus, pas grave'):fmt(k)+' kcal'))};
@@ -691,7 +748,7 @@ function renderPlate(){
   $('aRemark').textContent=cur.remarque||'';$('aAdd').disabled=!!cur.exemple||!cur.aliments.length;$('aAdd').textContent=cur.exemple?'Prenez une photo pour commencer':'Ajouter à ma journée';
   renderPlateTotals();
 }
-$('aAdd').onclick=()=>{const t=tots(cur);addEaten(cur.plat||'Repas photographié',t.k,{e:cur.emoji,photo:curThumb||undefined,p:t.p,g:t.g,l:t.l,aliments:cur.aliments.map(a=>Object.assign({},a))});$('aAdd').disabled=true;$('aAdd').textContent='Ajouté à ma journée'};
+$('aAdd').onclick=()=>{const t=tots(cur);addEaten(cur.plat||'Repas photographié',t.k,{moment:pendingMoment||undefined,e:cur.emoji,photo:curThumb||undefined,p:t.p,g:t.g,l:t.l,aliments:cur.aliments.map(a=>Object.assign({},a))});if(pendingMoment){sautes=sautes.filter(x=>x!==pendingMoment);LS.set('sautes-'+TODAY,sautes);pendingMoment=null;renderMoments()}$('aAdd').disabled=true;$('aAdd').textContent='Ajouté à ma journée'};
 $('camBtn').onclick=()=>$('cam').click();$('galBtn').onclick=()=>$('gal').click();
 ['cam','gal'].forEach(id=>$(id).addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];e.target.value='';if(f)analyse(f)}));
 async function analyse(file){
@@ -743,7 +800,7 @@ function renderCalDay(){const L=dayMeals(calSel),box=$('calDay');
   if(!L.length){box.innerHTML=`<p class="small muted"><b style="text-transform:capitalize">${titre}</b> : rien de noté ce jour-là.</p>`;return}
   const kc=L.reduce((s,x)=>s+(+x.kcal||0),0);
   box.innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px"><b style="text-transform:capitalize">${titre}</b><b class="num">${fmt(kc)} kcal</b></div>`+
-    L.map(x=>`<div class="dayrow">${x.photo?`<img class="mthumb" alt="" src="${x.photo}">`:`<span class="mthumb em">${esc(x.e||'🍽️')}</span>`}<span class="n"><b>${esc(x.nom)}</b><br><span class="muted small">${esc(x.heure||'')}</span></span><b class="num">${fmt(x.kcal)} kcal</b></div>`).join('')}
+    L.map(x=>`<div class="dayrow">${x.photo?`<img class="mthumb" alt="" src="${x.photo}">`:`<span class="mthumb em">${esc(x.e||'🍽️')}</span>`}<span class="n"><b>${esc(x.nom)}</b><br><span class="muted small">${(MOM.find(m=>m[0]===momentOf(x))||[])[1]||''} · ${esc(x.heure||'')}</span></span><b class="num">${fmt(x.kcal)} kcal</b></div>`).join('')}
 $('calPrev').onclick=()=>{calM.setMonth(calM.getMonth()-1);renderCal()};
 $('calNext').onclick=()=>{calM.setMonth(calM.getMonth()+1);renderCal()};
 
@@ -1085,6 +1142,36 @@ async function installer(){
 }
 $('installBtn').onclick=installer;$('installTop').onclick=installer;$('installX').onclick=()=>{installVu();toast('Le bouton 📲 en haut reste disponible pour installer plus tard.')};
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(()=>{})}
+/* ---------- rappels repas (notifications) ---------- */
+const VAPID='BIlMyvl2K3s2d37r0cf2XoUx5XE-B002a_NCBWTSMnuUem0K_PMYbJuRIRF8cUptrMQWb-cEUThxJ0p_AAIC_Jc';
+const RAP='/api/petitepart-rappels';
+let rapMoments=LS.get('rappel-moments',['matin','midi','gouter','soir']);
+const pushOk=()=>'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window;
+async function rapPost(action,body){const r=await fetch(RAP+'?action='+action,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw new Error((await r.json().catch(()=>({}))).error||'Erreur');return r.json()}
+function syncNotes(){if(!rapEndpoint)return;clearTimeout(syncT);syncT=setTimeout(()=>{fetch('/api/petitepart-rappels?action=notes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({endpoint:rapEndpoint,jour:TODAY,notes:momNotes()})}).catch(()=>{})},1500)}
+function b64u(s){const p='='.repeat((4-s.length%4)%4);const b=atob((s+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(b,c=>c.charCodeAt(0))}
+function renderRappel(){const box=$('rapMoments');box.innerHTML='';
+  MOM.slice(0,4).forEach(([id,lab,em])=>{const l=document.createElement('label');l.innerHTML=`<input type="checkbox" ${rapMoments.includes(id)?'checked':''}> ${em} ${lab}`;
+    l.querySelector('input').onchange=e=>{rapMoments=e.target.checked?[...new Set([...rapMoments,id])]:rapMoments.filter(x=>x!==id);LS.set('rappel-moments',rapMoments);
+      if(rapEndpoint)rapPost('notes',{endpoint:rapEndpoint,jour:TODAY,notes:momNotes(),moments:rapMoments}).catch(()=>{})};box.appendChild(l)});
+  const btn=$('rapBtn'),msg=$('rapMsg');
+  if(!pushOk()){btn.hidden=true;msg.textContent=isIOS&&!installed()?"Sur iPhone, installez d'abord Petite Part sur l'écran d'accueil (bouton « Installer »), puis ouvrez-la depuis son icône pour activer les rappels.":"Ce navigateur ne permet pas les rappels. Installez Petite Part sur l'écran d'accueil.";return}
+  if(rapEndpoint&&Notification.permission==='granted'){btn.textContent='Arrêter les rappels';btn.className='btn btn-ghost';msg.textContent='✓ Rappels activés sur ce téléphone.'}
+  else{btn.textContent='Activer les rappels';btn.className='btn btn-main';msg.textContent=Notification.permission==='denied'?"Les notifications sont bloquées pour Petite Part : autorisez-les dans les réglages du téléphone, puis réessayez.":''}
+  btn.hidden=false}
+$('rapBtn').onclick=async()=>{const btn=$('rapBtn'),msg=$('rapMsg');btn.disabled=true;
+  try{const reg=await navigator.serviceWorker.ready;
+    if(rapEndpoint&&Notification.permission==='granted'){const sub=await reg.pushManager.getSubscription();await rapPost('desabonner',{endpoint:rapEndpoint}).catch(()=>{});if(sub)await sub.unsubscribe().catch(()=>{});rapEndpoint=null;LS.set('rappel-endpoint',null);toast('Rappels arrêtés.')}
+    else{const perm=await Notification.requestPermission();if(perm!=='granted'){renderRappel();return}
+      let sub=await reg.pushManager.getSubscription();if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(VAPID)});
+      await rapPost('abonner',{sub:sub.toJSON(),moments:rapMoments,appareil:(()=>{try{return localStorage.getItem('pp-appareil')}catch(e){return null}})()});
+      rapEndpoint=sub.endpoint;LS.set('rappel-endpoint',rapEndpoint);syncNotes();toast('Rappels activés. À tout à l\'heure !')}}
+  catch(e){msg.textContent="Les rappels n'ont pas pu être activés. Réessayez dans un instant."}
+  finally{btn.disabled=false;renderRappel()}};
+renderRappel();
+function ouvrirMoment(id){if(!MOM.some(m=>m[0]===id))return;go('jour');setTimeout(()=>openMoment(id),250)}
+if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data&&e.data.moment)ouvrirMoment(e.data.moment)});
+{const mq=new URLSearchParams(location.search).get('moment');if(mq){ouvrirMoment(mq);try{const u=new URL(location.href);u.searchParams.delete('moment');history.replaceState(null,'',u.pathname+u.search)}catch(e){}}}
 showInstall();
 
 (async()=>{

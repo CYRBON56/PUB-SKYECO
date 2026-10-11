@@ -7,6 +7,10 @@
     {
       "path": "/api/cron-campagne-meteo-chantier",
       "schedule": "*/30 6-15 * * 1-5"
+    },
+    {
+      "path": "/api/petitepart-rappels",
+      "schedule": "0 6-20 * * *"
     }
   ],
   "rewrites": [

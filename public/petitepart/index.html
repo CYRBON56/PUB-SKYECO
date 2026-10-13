@@ -292,6 +292,22 @@ footer a{color:var(--muted)}
       <button class="btn btn-main" id="genRecette" type="button">Proposer une recette</button>
       <div id="genOut"></div>
     </div>
+    <div class="card" id="comCard">
+      <h2>👩‍🍳 Recettes des membres</h2>
+      <p class="small muted">Les recettes légères partagées par les membres de Petite Part, calculées pour une portion.</p>
+      <div class="seg" id="comTri"><button type="button" data-v="recent" aria-pressed="true">Les plus récentes</button><button type="button" data-v="aime" aria-pressed="false">Les plus aimées</button></div>
+      <input id="comQ" type="search" placeholder="Chercher un plat…" aria-label="Chercher une recette de membre">
+      <div class="rlist" id="comList"><p class="small muted">Touchez « Les plus récentes » pour charger les recettes.</p></div>
+      <button class="btn btn-ghost btn-sm" id="comPlus" type="button" hidden>Voir plus</button>
+    </div>
+    <div class="card" id="partCard">
+      <h2>📣 Je partage ma recette</h2>
+      <p class="small muted">Écrivez votre recette comme vous voulez : ingrédients, quantités, préparation, votre astuce. Petite Part la met en forme et calcule les calories, puis elle est visible par tous les membres sous votre pseudo (jamais votre email).</p>
+      <div class="field"><label for="partPseudo">Mon pseudo</label><input id="partPseudo" type="text" maxlength="30" placeholder="Ex. : Cyrille56" autocomplete="nickname"></div>
+      <textarea id="partTexte" rows="6" placeholder="Ex. : Mes lasagnes de courgettes. Pour 2 : 2 courgettes, 250 g de bœuf 5 %, 400 g de coulis, 1 boule de mozzarella light… Je fais revenir la viande…"></textarea>
+      <button class="btn btn-main" id="partGo" type="button">Publier ma recette</button>
+      <p class="small" id="partMsg"></p>
+    </div>
   </section>
 
   <!-- ============ ASSIETTE ============ -->
@@ -837,6 +853,8 @@ function renderCuisine(){const out=$('cuiOut');const p=cuiPlan;out.innerHTML='';
   b.onclick=()=>{if(!p.enregistre){p.enregistre=true;p.valide=false;LS.set('prevu-'+TODAY,p);renderCuisine();renderPlanHint();toast('C\'est noté. Une fois servi, prenez votre assiette en photo.');return}
     renderPlanHint();$('cam').click()};
   out.appendChild(b);
+  const sh=document.createElement('button');sh.type='button';sh.className='btn btn-ghost btn-sm';sh.textContent='📣 Partager ce plat avec les membres';
+  sh.onclick=()=>{$('partTexte').value=`${p.plat} (1 portion, environ ${p.kcal} kcal)\nIngrédients : ${p.aliments.map(a=>a.nom+' '+Math.round(a.grammes)+' g'+(a.etat==='cru'?' cru':'')).join(', ')}\nPréparation : `;go('recettes');setTimeout(()=>{$('partCard').scrollIntoView({behavior:'smooth'});const t=$('partTexte');t.focus();t.setSelectionRange(t.value.length,t.value.length)},250)};out.appendChild(sh);
   const x=document.createElement('button');x.type='button';x.className='btn btn-ghost btn-sm';x.textContent='Changer de plat';
   x.onclick=()=>{cuiPlan=null;LS.set('prevu-'+TODAY,null);renderCuisine();renderPlanHint();$('cuiPlat').focus()};out.appendChild(x)}
 function renderPlanHint(){const p=planEnCours(),h=$('planHint');if(!p){h.hidden=true;return}
@@ -869,6 +887,52 @@ Réponds uniquement en JSON, valeurs pour 100 g dans l'état pesé (table CIQUAL
 $('goCuisine').onclick=()=>ouvrirCuisine();
 /* au démarrage : on reprend le plat prévu aujourd'hui s'il n'a pas encore été validé */
 function initCuisine(){const p=planEnCours();if(p){cuiPlan=p;segSet('cuiMom',p.moment);$('cuiKcal').value=p.objectif||p.kcal;$('cuiPers').value=String(p.personnes||1)}else{const m=momentDuMoment();segSet('cuiMom',m);$('cuiKcal').value=budgetRepas(m)}majCuiLeft();renderCuisine();renderPlanHint()}
+
+/* ---------- recettes des membres : partage visible par tous les inscrits (api ?action=communaute|partager|aimer|signaler|retirer) ---------- */
+let comTri='recent',comOff=0,comCharge=false,comT=null;
+$('partPseudo').value=LS.get('pseudo','');
+function comRow(r){const b=document.createElement('button');b.type='button';b.className='rit';
+  b.innerHTML=`<span class="em">${esc(r.emoji||'🍽️')}</span><span><b>${esc(r.plat)}</b><br><span class="meta">par ${esc(r.pseudo)}${r.moi?' (moi)':''} · ${r.minutes||20} min · ${r.aime?'❤️':'🤍'} ${r.nb_aime||0}</span></span><span class="k">${fmt(r.kcal)}<br><span class="meta">kcal</span></span>`;
+  b.onclick=()=>openCommu(r);return b}
+async function chargerCommu(plus){const l=$('comList');
+  if(!jeton){l.innerHTML='<p class="small muted">Les recettes des membres sont visibles par les inscrits. <button class="btn btn-main btn-sm" type="button" data-paywall style="margin-top:8px">Commencer l\'essai gratuit</button></p>';$('comPlus').hidden=true;return}
+  if(!plus){comOff=0;l.innerHTML='<p class="small muted"><span class="spin"></span>Chargement…</p>'}
+  try{const j=await api('communaute',{jeton,tri:comTri,offset:comOff,q:$('comQ').value.trim()});comCharge=true;
+    if(j.pseudo&&!$('partPseudo').value)$('partPseudo').value=j.pseudo;
+    if(!plus)l.innerHTML='';
+    if(!plus&&!j.recettes.length)l.innerHTML='<p class="small muted">Pas encore de recette ici. Soyez le premier à partager la vôtre !</p>';
+    j.recettes.forEach(r=>l.appendChild(comRow(r)));comOff+=j.recettes.length;$('comPlus').hidden=j.recettes.length<30}
+  catch(e){l.innerHTML=`<p class="note">${esc(errTxt(e))}</p>`}}
+$('comTri').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;comTri=b.dataset.v;segSet('comTri',comTri);chargerCommu()});
+$('comQ').addEventListener('input',()=>{clearTimeout(comT);comT=setTimeout(()=>chargerCommu(),400)});
+$('comPlus').onclick=()=>chargerCommu(true);
+function openCommu(c){const r={id:'c'+c.id,t:c.type,e:c.emoji||'🍽️',n:c.plat,k:c.kcal,p:+c.proteines||0,g:+c.glucides||0,l:+c.lipides||0,min:c.minutes||20,ing:c.ingredients||[],st:c.etapes||[]};RID[r.id]=r;
+  const d=$('rdetail');d.hidden=false;d.innerHTML=recipeHTML(r,1);
+  d.querySelector('.mac').insertAdjacentHTML('beforebegin',`<p class="small muted">Partagée par <b>${esc(c.pseudo)}</b>${c.moi?' (vous)':''}</p>`);
+  if(c.astuce)d.querySelector('[data-eat]').insertAdjacentHTML('beforebegin',`<p class="ok">💡 L'astuce de ${esc(c.pseudo)} : ${esc(c.astuce)}</p>`);
+  d.querySelector('[data-close]').onclick=()=>{d.hidden=true};
+  d.querySelector('[data-eat]').onclick=e=>{addEaten(r.n,r.k,{e:r.e,p:r.p,g:r.g,l:r.l});e.target.textContent='Ajouté à ma journée';e.target.disabled=true};
+  const act=document.createElement('div');act.style.cssText='display:flex;flex-direction:column;gap:8px';
+  act.innerHTML=`<button class="btn btn-ghost" type="button" data-cuis>🍳 Je cuisine ça : mes quantités</button>
+  <div class="row2"><button class="btn btn-ghost btn-sm" type="button" data-aime>${c.aime?'❤️':'🤍'} J'aime (${c.nb_aime||0})</button>${c.moi?'<button class="btn btn-ghost btn-sm" type="button" data-retire>Retirer ma recette</button>':'<button class="btn btn-ghost btn-sm" type="button" data-signal>Signaler</button>'}</div>`;
+  d.appendChild(act);
+  act.querySelector('[data-cuis]').onclick=()=>{$('cuiPlat').value=r.n+' : '+r.ing.map(i=>i[0]).join(', ');cuiPlan=null;renderCuisine();ouvrirCuisine(r.t==='matin'?'matin':r.t==='collation'?'gouter':undefined)};
+  act.querySelector('[data-aime]').onclick=async e=>{const bt=e.currentTarget;bt.disabled=true;try{const j=await api('aimer',{jeton,id:c.id});c.aime=j.aime;c.nb_aime=j.nb_aime;bt.textContent=(c.aime?'❤️':'🤍')+' J\'aime ('+c.nb_aime+')'}catch(er){toast(errTxt(er))}bt.disabled=false};
+  const sg=act.querySelector('[data-signal]');if(sg)sg.onclick=async()=>{if(sg.dataset.ok!=='1'){sg.dataset.ok='1';sg.textContent='Confirmer le signalement';return}
+    try{await api('signaler',{jeton,id:c.id});sg.textContent='Merci, c\'est signalé';sg.disabled=true}catch(er){toast(errTxt(er))}};
+  const rt=act.querySelector('[data-retire]');if(rt)rt.onclick=async()=>{if(rt.dataset.ok!=='1'){rt.dataset.ok='1';rt.textContent='Confirmer : retirer';return}
+    try{await api('retirer',{jeton,id:c.id});d.hidden=true;toast('Recette retirée.');chargerCommu()}catch(er){toast(errTxt(er))}};
+  d.scrollIntoView({behavior:'smooth',block:'start'})}
+$('partGo').onclick=async()=>{const msg=$('partMsg'),bt=$('partGo');const texte=$('partTexte').value.trim(),pseudo=$('partPseudo').value.trim();
+  if(!jeton){showPaywall('Le partage de recettes');return}
+  if(pseudo.length<2){msg.textContent='Choisissez un pseudo.';$('partPseudo').focus();return}
+  if(texte.length<20){msg.textContent='Écrivez votre recette : les ingrédients et comment la préparer.';$('partTexte').focus();return}
+  LS.set('pseudo',pseudo);bt.disabled=true;bt.innerHTML='<span class="spin"></span>Mise en forme de votre recette…';msg.textContent='';
+  try{const j=await api('partager',{jeton,pseudo,texte});$('partTexte').value='';msg.textContent='✅ Merci ! Votre recette est en ligne pour tous les membres.';
+    comTri='recent';segSet('comTri','recent');$('comQ').value='';await chargerCommu();openCommu(j.recette)}
+  catch(e){msg.textContent=errTxt(e)}finally{bt.disabled=false;bt.textContent='Publier ma recette'}};
+/* chargement à la première ouverture de l'onglet Recettes */
+function ouvrirRecettes(){if(!comCharge)chargerCommu()}
 
 /* ---------- calendrier des repas ---------- */
 const JOURS=['L','M','M','J','V','S','D'];
@@ -1123,7 +1187,7 @@ $('chatSend').onclick=async()=>{$('micHelp').hidden=true;const q=$('chatIn').val
 
 /* ---------- navigation ---------- */
 function go(t){document.querySelectorAll('[data-tab]').forEach(s=>s.hidden=s.id!=='tab-'+t);
-  document.querySelectorAll('nav button').forEach(b=>b.toggleAttribute('aria-current',b.dataset.go===t));if(b0(t))b0(t).setAttribute('aria-current','page');if(t==='suivi')renderCal();window.scrollTo(0,0)}
+  document.querySelectorAll('nav button').forEach(b=>b.toggleAttribute('aria-current',b.dataset.go===t));if(b0(t))b0(t).setAttribute('aria-current','page');if(t==='suivi')renderCal();if(t==='recettes')ouvrirRecettes();window.scrollTo(0,0)}
 const b0=t=>document.querySelector(`nav button[data-go="${t}"]`);
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.go));
 $('goPlate').onclick=()=>go('assiette');

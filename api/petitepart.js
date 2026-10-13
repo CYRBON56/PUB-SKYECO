@@ -8,6 +8,7 @@
 //   statut    POST {jeton}          -> état de l'abonnement
 //   ia        POST {jeton, type, …} -> appelle Claude (photo d'assiette, recette, coach) pour un abonné actif
 //   resilier  POST {jeton}          -> résiliation à la fin de la période en cours
+//   partager / communaute / aimer / signaler / retirer -> recettes partagées entre membres (13/10/2026)
 // Les photos d'assiette sont envoyées à Claude pour l'analyse et ne sont
 // jamais stockées ici. Les photos du corps ne quittent jamais le téléphone.
 // Variables : ANTHROPIC_API_KEY, STRIPE_SECRET_KEY, SUPABASE_URL,
@@ -195,6 +196,74 @@ export default async function handler(req, res) {
       const s = await stripe.subscriptions.update(a.stripe_subscription, { cancel_at_period_end: true });
       await majAbonne(a.id, s);
       return res.status(200).json({ ok: true, fin_periode: new Date(s.current_period_end * 1000).toISOString() });
+    }
+
+    // ---------- Recettes de la communauté (13/10/2026) ----------
+    // Chaque inscrit peut publier une recette écrite librement. Claude la met en forme
+    // (1 portion, calories) et refuse ce qui n'est pas une recette (pub, contact, propos déplacés).
+    // Visible par tous les inscrits sous un pseudo, jamais l'email. 3 signalements la masquent.
+    if (action === 'partager') {
+      if (!acces(a)) return res.status(402).json({ error: 'Le partage de recettes est réservé aux membres actifs.' });
+      if (!(await verifierLimite('pp-part:' + a.id, 5, 86400))) return res.status(429).json({ error: 'Vous avez déjà partagé 5 recettes aujourd\'hui. Revenez demain !' });
+      const texte = String(b.texte || '').trim().slice(0, 3000);
+      const pseudo = String(b.pseudo || '').replace(/[<>@]/g, '').trim().slice(0, 30);
+      if (texte.length < 20) return res.status(400).json({ error: 'Écrivez votre recette : les ingrédients et comment la préparer.' });
+      if (pseudo.length < 2) return res.status(400).json({ error: 'Choisissez un pseudo (2 caractères minimum).' });
+      const brut = await claude([{ role: 'user', content: `Un membre de l'appli minceur Petite Part veut partager cette recette avec les autres membres :
+"""${texte}"""
+1. Vérifie que c'est bien une recette de cuisine. Refuse ("refus" non vide, une phrase polie) si ce n'est pas une recette, si c'est de la publicité, si elle contient un contact (téléphone, email, lien, réseau social), des propos blessants, ou si elle pousse à se priver de façon dangereuse (jeûne extrême, moins de 150 kcal pour un vrai repas, coupe-faim, laxatifs).
+2. Sinon, mets-la en forme pour UNE portion, sans changer l'esprit de la recette, avec les calories estimées (table CIQUAL).
+Le pseudo choisi est « ${pseudo} » : s'il est grossier ou contient un contact, mets "pseudo_ok":false.
+Réponds uniquement en JSON :
+{"refus":"","pseudo_ok":true,"n":"nom du plat","e":"un emoji","t":"matin|plat|collation","k":kcal,"p":protéines_g,"g":glucides_g,"l":lipides_g,"min":minutes,"ing":[["ingrédient",quantité,"g|ml|''|c. à soupe"]],"st":["étape 1"],"astuce":"astuce de l'auteur ou chaîne vide"}` }], 1500);
+      let r; try { const m = brut.match(/\{[\s\S]*\}/); r = JSON.parse(m ? m[0] : brut); } catch { return res.status(500).json({ error: 'La recette n\'a pas pu être lue. Réessayez.' }); }
+      if (r.refus) return res.status(400).json({ error: String(r.refus).slice(0, 300) });
+      if (r.pseudo_ok === false) return res.status(400).json({ error: 'Ce pseudo ne peut pas être utilisé. Choisissez-en un autre.' });
+      const ing = Array.isArray(r.ing) ? r.ing.slice(0, 25).map((x) => [String(x[0]).slice(0, 80), +x[1] || 1, String(x[2] || '').slice(0, 15)]) : [];
+      const st = Array.isArray(r.st) ? r.st.slice(0, 15).map((x) => String(x).slice(0, 400)) : [];
+      if (!ing.length || !st.length || !(+r.k > 0)) return res.status(400).json({ error: 'Il manque les ingrédients ou les étapes de préparation.' });
+      await sb(`petitepart_abonnes?id=eq.${a.id}`, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ pseudo }) });
+      const [row] = await sb('petitepart_recettes', { method: 'POST', body: JSON.stringify({ abonne_id: a.id, pseudo, plat: String(r.n || 'Ma recette').slice(0, 80), emoji: String(r.e || '🍽️').slice(0, 8), type: ['matin', 'plat', 'collation'].includes(r.t) ? r.t : 'plat', kcal: Math.round(+r.k), proteines: +r.p || 0, glucides: +r.g || 0, lipides: +r.l || 0, minutes: Math.round(+r.min || 20), ingredients: ing, etapes: st, astuce: String(r.astuce || '').slice(0, 300) }) });
+      console.log('petitepart recette partagée', row.id);
+      return res.status(200).json({ recette: { ...row, aime: false, moi: true } });
+    }
+
+    if (action === 'communaute') {
+      const tri = b.tri === 'aime' ? 'nb_aime.desc,created_at.desc' : 'created_at.desc';
+      const off = Math.max(0, Math.min(1000, +b.offset || 0));
+      const q = String(b.q || '').replace(/[^\p{L}\p{N} '-]/gu, '').trim().slice(0, 40);
+      const filtre = q ? `&plat=ilike.*${encodeURIComponent(q)}*` : '';
+      const rows = await sb(`petitepart_recettes?masquee=eq.false${filtre}&select=id,abonne_id,pseudo,plat,emoji,type,kcal,proteines,glucides,lipides,minutes,ingredients,etapes,astuce,nb_aime,created_at&order=${tri}&limit=30&offset=${off}`);
+      const ids = rows.map((x) => x.id);
+      const mesAime = ids.length ? await sb(`petitepart_recettes_aime?abonne_id=eq.${a.id}&recette_id=in.(${ids.join(',')})&select=recette_id`) : [];
+      const set = new Set(mesAime.map((x) => x.recette_id));
+      return res.status(200).json({ pseudo: a.pseudo || '', recettes: rows.map(({ abonne_id, ...x }) => ({ ...x, aime: set.has(x.id), moi: abonne_id === a.id })) });
+    }
+
+    if (action === 'aimer' || action === 'signaler' || action === 'retirer') {
+      if (typeof b.id !== 'string' || !/^[0-9a-f-]{36}$/i.test(b.id)) return res.status(400).json({ error: 'Recette inconnue.' });
+      if (!(await verifierLimite('pp-rec:' + a.id, 60, 3600))) return res.status(429).json({ error: 'Trop d\'actions. Réessayez plus tard.' });
+      if (action === 'retirer') {
+        await sb(`petitepart_recettes?id=eq.${b.id}&abonne_id=eq.${a.id}`, { method: 'DELETE', headers: { Prefer: 'return=minimal' } });
+        return res.status(200).json({ ok: true });
+      }
+      const table = action === 'aimer' ? 'petitepart_recettes_aime' : 'petitepart_recettes_signal';
+      const deja = await sb(`${table}?recette_id=eq.${b.id}&abonne_id=eq.${a.id}&select=recette_id`);
+      if (action === 'aimer' && deja.length) await sb(`${table}?recette_id=eq.${b.id}&abonne_id=eq.${a.id}`, { method: 'DELETE', headers: { Prefer: 'return=minimal' } });
+      else if (!deja.length) await sb(table, { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ recette_id: b.id, abonne_id: a.id }) });
+      const tous = await sb(`${table}?recette_id=eq.${b.id}&select=abonne_id`);
+      if (action === 'aimer') {
+        await sb(`petitepart_recettes?id=eq.${b.id}`, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ nb_aime: tous.length }) });
+        return res.status(200).json({ aime: !deja.length, nb_aime: tous.length });
+      }
+      const masquee = tous.length >= 3;
+      const [rec] = await sb(`petitepart_recettes?id=eq.${b.id}`, { method: 'PATCH', body: JSON.stringify({ nb_signal: tous.length, ...(masquee ? { masquee: true } : {}) }) });
+      if (!deja.length && rec) {
+        await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ from: 'Petite Part <notifications@ecoskybyrms.fr>', to: ['infos@ecosky.fr'], subject: `Recette signalée (${tous.length}/3) : ${rec.plat}`,
+            html: `<p>La recette « ${rec.plat.replace(/[<>]/g, '')} » de ${rec.pseudo.replace(/[<>]/g, '')} a été signalée ${tous.length} fois.${masquee ? ' Elle est maintenant <b>masquée</b>.' : ''}</p><p>Identifiant : ${rec.id}</p>` }) }).catch(() => {});
+      }
+      return res.status(200).json({ ok: true });
     }
 
     if (action === 'ia') {

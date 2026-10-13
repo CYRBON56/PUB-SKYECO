@@ -63,10 +63,26 @@ async function envoyer() {
   return { moment, envoyes: n, abonnes: rows.length };
 }
 
+// Comptes offerts (gratuits, propriétaire) : si un abonnement Stripe traîne encore dessus, on l'annule
+// et on passe le compte en « offert ». Même liste que dans api/petitepart.js.
+const OFFERTS = ['infos@ecosky.fr', 'c.bon@ecosky.fr'];
+async function balayerOfferts() {
+  const liste = OFFERTS.map((e) => `"${e}"`).join(',');
+  const rows = await sb(`petitepart_abonnes?email=in.(${encodeURIComponent(liste)})&statut=neq.offert&select=id,email,stripe_subscription`);
+  for (const a of rows || []) {
+    await sb(`petitepart_abonnes?id=eq.${a.id}`, { method: 'PATCH', body: JSON.stringify({ statut: 'offert', stripe_subscription: null, fin_periode: null, updated_at: new Date().toISOString() }) });
+    if (a.stripe_subscription) {
+      const r = await fetch(`https://api.stripe.com/v1/subscriptions/${a.stripe_subscription}`, { method: 'DELETE', headers: { Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}` } });
+      console.log('petitepart offert: abonnement Stripe annulé', a.stripe_subscription, r.status);
+    }
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method === 'GET') {
     const secret = process.env.CRON_SECRET;
     if (!secret || req.headers.authorization !== `Bearer ${secret}`) return res.status(401).json({ error: 'Non autorisé' });
+    try { await balayerOfferts(); } catch (e) { console.error('petitepart offerts', e.message); }
     try { const r = await envoyer(); console.log('petitepart-rappels', r); return res.status(200).json(r); }
     catch (e) { console.error('petitepart-rappels', e.message); return res.status(500).json({ error: e.message }); }
   }

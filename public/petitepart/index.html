@@ -853,6 +853,7 @@ function renderCuisine(){const out=$('cuiOut');const p=cuiPlan;out.innerHTML='';
   b.onclick=()=>{if(!p.enregistre){p.enregistre=true;p.valide=false;LS.set('prevu-'+TODAY,p);renderCuisine();renderPlanHint();toast('C\'est noté. Une fois servi, prenez votre assiette en photo.');return}
     renderPlanHint();$('cam').click()};
   out.appendChild(b);
+  const sg=document.createElement('div');sg.id='cuiSugg';out.appendChild(sg);suggestions(p,sg);
   const sh=document.createElement('button');sh.type='button';sh.className='btn btn-ghost btn-sm';sh.textContent='📣 Partager ce plat avec les membres';
   sh.onclick=()=>{$('partTexte').value=`${p.plat} (1 portion, environ ${p.kcal} kcal)\nIngrédients : ${p.aliments.map(a=>a.nom+' '+Math.round(a.grammes)+' g'+(a.etat==='cru'?' cru':'')).join(', ')}\nPréparation : `;go('recettes');setTimeout(()=>{$('partCard').scrollIntoView({behavior:'smooth'});const t=$('partTexte');t.focus();t.setSelectionRange(t.value.length,t.value.length)},250)};out.appendChild(sh);
   const x=document.createElement('button');x.type='button';x.className='btn btn-ghost btn-sm';x.textContent='Changer de plat';
@@ -879,7 +880,7 @@ Réponds uniquement en JSON, valeurs pour 100 g dans l'état pesé (table CIQUAL
 {"plat":"nom court","emoji":"un emoji","conseil":"","remarque":"","aliments":[{"nom":"Spaghettis","etat":"cru","grammes":80,"mesure":"une grosse poignée","kcal_100g":355,"proteines_100g":12,"glucides_100g":70,"lipides_100g":1.5,"gras":false}]}`,{cache:false});
     const al=(Array.isArray(r&&r.aliments)?r.aliments:[]).filter(a=>a&&a.nom&&+a.grammes>0).map(a=>({nom:String(a.nom),etat:a.etat==='cru'?'cru':'tel quel',grammes:+a.grammes,mesure:String(a.mesure||''),kcal_100g:+a.kcal_100g||0,proteines_100g:+a.proteines_100g||0,glucides_100g:+a.glucides_100g||0,lipides_100g:+a.lipides_100g||0,gras:a.gras===true}));
     if(!al.length){out.innerHTML=`<p class="note">${esc(String(r&&r.remarque||'Je n\'ai pas reconnu de plat. Essayez par exemple « poulet, riz et haricots verts ».'))}</p>`;return}
-    const p={plat:String(r.plat||envie).slice(0,80),emoji:r.emoji,conseil:String(r.conseil||''),remarque:String(r.remarque||''),moment:m,objectif:kcal,personnes:pers,aliments:al,enregistre:false};
+    const p={demande:envie.slice(0,200),plat:String(r.plat||envie).slice(0,80),emoji:r.emoji,conseil:String(r.conseil||''),remarque:String(r.remarque||''),moment:m,objectif:kcal,personnes:pers,aliments:al,enregistre:false};
     /* on recale exactement sur l'objectif si Claude s'en écarte un peu */
     const t=totPlan(p),f=t>0?kcal/t:1;if(Math.abs(f-1)>.03&&f>.6&&f<1.6)p.aliments.forEach(a=>{a.grammes=arrondi(a.grammes*f)});
     p.kcal=Math.round(totPlan(p));cuiPlan=p;renderCuisine();
@@ -887,6 +888,23 @@ Réponds uniquement en JSON, valeurs pour 100 g dans l'état pesé (table CIQUAL
 $('goCuisine').onclick=()=>ouvrirCuisine();
 /* au démarrage : on reprend le plat prévu aujourd'hui s'il n'a pas encore été validé */
 function initCuisine(){const p=planEnCours();if(p){cuiPlan=p;segSet('cuiMom',p.moment);$('cuiKcal').value=p.objectif||p.kcal;$('cuiPers').value=String(p.personnes||1)}else{const m=momentDuMoment();segSet('cuiMom',m);$('cuiKcal').value=budgetRepas(m)}majCuiLeft();renderCuisine();renderPlanHint()}
+
+/* ---------- suggestions dans « Je cuisine » : nos recettes + celles des membres qui ressemblent au plat demandé ---------- */
+const VIDES=new Set(['avec','sans','pour','des','les','une','aux','faire','fait','maison','petit','petite','plat','recette','envie','manger','light','leger','legere','sauce','dans','comme','bien','tres']);
+function motsCles(t){return [...new Set(norm(t).split(/[^a-z]+/).filter(w=>w.length>=4&&!VIDES.has(w)).map(w=>w.replace(/(s|x)$/,'')))]}
+async function suggestions(p,box){const mots=motsCles(p.demande||p.plat);if(!mots.length)return;
+  if(!p.sugg){const nous=R.map(r=>{const h=norm(r.n+' '+r.ing.map(i=>i[0]).join(' '));return{r,sc:mots.filter(w=>h.includes(w)).length+(mots.some(w=>norm(r.n).includes(w))?1:0)}}).filter(x=>x.sc>0).sort((a,b)=>b.sc-a.sc).slice(0,3).map(x=>x.r.id);
+    let membres=[];if(jeton){try{const cle=mots.slice().sort((a,b)=>b.length-a.length)[0];membres=(await api('communaute',{jeton,tri:'aime',q:cle})).recettes.slice(0,3)}catch(e){}}
+    p.sugg={nous,membres}}
+  const {nous,membres}=p.sugg;if(!nous.length&&!membres.length){box.innerHTML='';return}
+  box.innerHTML=`<div style="border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:4px"><h3>📖 Envie d'essayer une recette ?</h3><p class="small muted">Des recettes qui ressemblent à votre plat, à la bonne portion pour votre objectif.</p><div class="rlist"></div></div>`;
+  const l=box.querySelector('.rlist');
+  nous.forEach(id=>{const r=RID[id],f=Math.min(1.4,Math.max(.75,(p.objectif||p.kcal)/r.k));const b=document.createElement('button');b.type='button';b.className='rit';
+    b.innerHTML=`<span class="em">${r.e}</span><span><b>${esc(r.n)}</b><br><span class="meta">Recette Petite Part · ${r.min} min</span></span><span class="k">${fmt(r.k*f)}<br><span class="meta">kcal</span></span>`;
+    b.onclick=()=>{go('recettes');openRecipe(r.id,f)};l.appendChild(b)});
+  membres.forEach(c=>{const b=document.createElement('button');b.type='button';b.className='rit';
+    b.innerHTML=`<span class="em">${esc(c.emoji||'🍽️')}</span><span><b>${esc(c.plat)}</b><br><span class="meta">Recette de ${esc(c.pseudo)} · ❤️ ${c.nb_aime||0}</span></span><span class="k">${fmt(c.kcal)}<br><span class="meta">kcal</span></span>`;
+    b.onclick=()=>{go('recettes');openCommu(c)};l.appendChild(b)})}
 
 /* ---------- recettes des membres : partage visible par tous les inscrits (api ?action=communaute|partager|aimer|signaler|retirer) ---------- */
 let comTri='recent',comOff=0,comCharge=false,comT=null;

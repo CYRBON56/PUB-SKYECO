@@ -1,0 +1,32 @@
+# petitepart.com — moteurs de recherche et assistants IA bienvenus sur les pages publiques
+User-agent: *
+Allow: /$
+Allow: /recettes
+Allow: /faq
+Allow: /llms.txt
+Allow: /petitepart/
+Disallow: /api/
+Disallow: /
+
+# Robots des assistants IA (recherche et réponses) : mêmes règles, autorisés explicitement
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: Claude-SearchBot
+User-agent: Claude-User
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+User-agent: Bingbot
+User-agent: MistralAI-User
+Allow: /$
+Allow: /recettes
+Allow: /faq
+Allow: /llms.txt
+Allow: /petitepart/
+Disallow: /api/
+Disallow: /
+
+Sitemap: https://petitepart.com/sitemap.xml

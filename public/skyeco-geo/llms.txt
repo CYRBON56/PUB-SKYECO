@@ -1,0 +1,25 @@
+# Skyeco
+
+> Skyeco (https://www.skyeco.fr) rassemble des outils en ligne pour les travaux du bâtiment, côté particuliers et côté artisans. Édité par Résine Marbre Sol (RMS EcoSky), entreprise de revêtements de sol en résine et d'aménagements extérieurs basée à Brech (Morbihan, Bretagne).
+
+## Pour les particuliers
+
+- [Votre devis travaux est-il au juste prix ?](https://www.skyeco.fr/prix-travaux.html) : estimer des travaux dans 20 métiers du bâtiment et vérifier un devis d'artisan ligne par ligne avant de signer
+- [Pompe à chaleur : vos aides 2026](https://www.skyeco.fr/aides-pompe-a-chaleur.html) : estimer en 2 minutes les aides pour une pompe à chaleur
+- [Mon Stock Granulés](https://www.skyeco.fr/stock-granules.html) : savoir jusqu'à quand tiendra son stock de granulés de bois
+- [Ma Facture Chauffage](https://www.skyeco.fr/facture-chauffage.html) : prévoir à l'avance sa facture de chauffage de l'hiver
+
+## Pour les artisans du BTP
+
+- [Estimateur BTP](https://www.skyeco.fr/estimateur-btp.html) : calculer un devis de chantier en quelques secondes, chez le client
+- [Météo Chantier](https://www.skyeco.fr/meteo-chantier.html) : chaque matin, feu vert ou feu rouge par chantier selon le gel, le point de rosée, l'humidité et la pluie croisés avec les règles de chaque métier
+- [Kit Pro Artisan BTP](https://www.skyeco.fr/kit-pro-artisan-btp.html) : modèle de devis conforme aux mentions légales 2026 et visuels pour les réseaux sociaux
+- [Skyeco Pro](https://www.skyeco.fr/skyeco-pro-landing.html) : suivi des demandes de chantier, devis et relances pour artisans
+
+## RMS EcoSky (travaux en Bretagne)
+
+- [RMS EcoSky](https://www.skyeco.fr/rms.html) : sols souples en résine EPDM (gamme EcoSky'Gum) pour terrasses, plages de piscine et allées, assainissement non collectif, clôtures et portails, à Brech et dans le Morbihan
+- [Devis résine EPDM en Morbihan](https://www.skyeco.fr/devis-resine-epdm-morbihan.html)
+- [Portails aluminium autoportés](https://www.skyeco.fr/portails.html)
+- [Réalisations](https://www.skyeco.fr/realisations.html)
+- Contact : infos@ecosky.fr · 06 45 68 83 94 · 23 route de Corn er Hoet, 56400 Brech

@@ -15,6 +15,78 @@
   ],
   "rewrites": [
     {
+      "source": "/robots.txt",
+      "has": [
+        {
+          "type": "host",
+          "value": "petitepart.com"
+        }
+      ],
+      "destination": "/petitepart/robots.txt"
+    },
+    {
+      "source": "/sitemap.xml",
+      "has": [
+        {
+          "type": "host",
+          "value": "petitepart.com"
+        }
+      ],
+      "destination": "/api/petitepart-geo?page=sitemap"
+    },
+    {
+      "source": "/llms.txt",
+      "has": [
+        {
+          "type": "host",
+          "value": "petitepart.com"
+        }
+      ],
+      "destination": "/api/petitepart-geo?page=llms"
+    },
+    {
+      "source": "/recettes",
+      "has": [
+        {
+          "type": "host",
+          "value": "petitepart.com"
+        }
+      ],
+      "destination": "/api/petitepart-geo?page=index"
+    },
+    {
+      "source": "/recettes/:slug",
+      "has": [
+        {
+          "type": "host",
+          "value": "petitepart.com"
+        }
+      ],
+      "destination": "/api/petitepart-geo?page=recette&slug=:slug"
+    },
+    {
+      "source": "/faq",
+      "has": [
+        {
+          "type": "host",
+          "value": "petitepart.com"
+        }
+      ],
+      "destination": "/petitepart/faq.html"
+    },
+    {
+      "source": "/robots.txt",
+      "destination": "/skyeco-geo/robots.txt"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/skyeco-geo/sitemap.xml"
+    },
+    {
+      "source": "/llms.txt",
+      "destination": "/skyeco-geo/llms.txt"
+    },
+    {
       "source": "/",
       "has": [
         {

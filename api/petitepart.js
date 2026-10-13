@@ -45,7 +45,16 @@ function normaliserEmail(e) {
   return `${u}@${d}`;
 }
 const ipHash = (ip) => crypto.createHash('sha256').update('pp:' + ip + ':' + (process.env.SUPABASE_SERVICE_ROLE_KEY || '').slice(-12)).digest('hex').slice(0, 32);
-const actif = (s) => s === 'trialing' || s === 'active';
+const actif = (s) => s === 'trialing' || s === 'active' || s === 'offert';
+// Comptes offerts (gratuits à vie, sans Stripe) : le propriétaire de Petite Part.
+const OFFERTS = new Set(['infos@ecosky.fr', 'c.bon@ecosky.fr']);
+async function passerOffert(a) {
+  const sub = a.stripe_subscription;
+  // D'abord la base (le webhook Stripe ne retrouvera plus ce compte), puis l'annulation chez Stripe.
+  await sb(`petitepart_abonnes?id=eq.${a.id}`, { method: 'PATCH', body: JSON.stringify({ statut: 'offert', stripe_subscription: null, fin_periode: null, updated_at: new Date().toISOString() }) });
+  if (sub) { try { await stripe.subscriptions.cancel(sub); } catch (e) { console.error('petitepart offert: annulation Stripe', e.message); } }
+  Object.assign(a, { statut: 'offert', stripe_subscription: null, fin_periode: null });
+}
 const origine = () => 'https://petitepart.com';
 
 async function nouveauJeton(abonneId) {
@@ -58,6 +67,7 @@ async function abonneDuJeton(jeton) {
   const rows = await sb(`petitepart_jetons?token_hash=eq.${hash(jeton)}&select=abonne_id,petitepart_abonnes(*)`);
   const a = rows?.[0]?.petitepart_abonnes;
   if (!a) return null;
+  if (OFFERTS.has(String(a.email).toLowerCase()) && a.statut !== 'offert') { await passerOffert(a); return a; }
   // Si l'état n'a pas été rafraîchi depuis 6 h, on le revérifie chez Stripe.
   if (a.stripe_subscription && Date.now() - Date.parse(a.updated_at) > 6 * 3600e3) {
     try { const s = await stripe.subscriptions.retrieve(a.stripe_subscription); await majAbonne(a.id, s); a.statut = s.status; a.fin_periode = new Date(s.current_period_end * 1000).toISOString(); } catch {}

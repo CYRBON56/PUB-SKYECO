@@ -1282,13 +1282,14 @@ function showCompte(){
   if(!jeton)return showPaywall();
   const c=compte||{};const fin=c.fin_periode?new Date(c.fin_periode).toLocaleDateString('fr-FR',{day:'numeric',month:'long'}):'';
   let lib,extra='';
-  if(c.abonne){lib=c.statut==='trialing'?'Essai gratuit en cours':'Abonnement actif';extra=fin?' · jusqu\'au '+fin:''}
+  if(c.statut==='offert'){lib='Accès offert, gratuit'}
+  else if(c.abonne){lib=c.statut==='trialing'?'Essai gratuit en cours':'Abonnement actif';extra=fin?' · jusqu\'au '+fin:''}
   else if(c.essai&&!c.essai_fini){lib='Essai gratuit';extra=` · encore ${c.jours_restants} jour${c.jours_restants>1?'s':''}`}
   else lib=c.essai?'Essai terminé':'Abonnement terminé';
   sheetIn.innerHTML=`<h2 id="sheetTitle">Mon compte</h2><p><b>${esc(lib)}</b>${esc(extra)}<br><span class="muted small">${esc(c.email||'')}</span></p>
   ${c.abonne?'':'<button class="btn btn-main" type="button" id="ppAboC">S\'abonner pour 4,99 € par mois</button>'}
   ${installed()?'':'<button class="btn btn-ghost" type="button" id="ppInst">📲 Mettre sur l\'écran d\'accueil</button>'}
-  ${c.abonne?'<button class="btn btn-ghost" id="ppRes" type="button">Résilier mon abonnement</button>':''}<p class="small" id="ppMsg2" role="status"></p>
+  ${c.abonne&&c.statut!=='offert'?'<button class="btn btn-ghost" id="ppRes" type="button">Résilier mon abonnement</button>':''}<p class="small" id="ppMsg2" role="status"></p>
   <button class="btn btn-ghost btn-sm" id="ppOut" type="button">Me déconnecter de ce téléphone</button><button class="btn btn-main btn-sm" type="button" id="ppClose">Fermer</button>`;
   sheet.hidden=false;$('ppClose').onclick=closeSheet;const pi=$('ppInst');if(pi)pi.onclick=installer;const pa=$('ppAboC');if(pa)pa.onclick=showAbonner;
   $('ppOut').onclick=()=>{jeton=null;compte=null;LS.set('jeton',null);LS.set('compte',null);activerIA();closeSheet();toast('Déconnecté de ce téléphone.')};

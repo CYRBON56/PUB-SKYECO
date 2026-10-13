@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
 <style>
-/* Layout : appli mobile à 5 onglets (Aujourd'hui, Recettes, Assiette, Suivi, Bouger) avec barre de navigation en bas ; une colonne de cartes */
+/* Layout : appli mobile à 5 onglets (Aujourd'hui, Recettes, Cuisiner, Suivi, Bouger) avec barre de navigation en bas ; une colonne de cartes */
 :root{
   --bg:#F2F4EF; --surface:#FFFFFF; --ink:#1B2A22; --muted:#5D6B62; --line:#DDE3DA;
   --accent:#2F7D4F; --accent-ink:#FFFFFF; --soft:#E4EFE7;
@@ -261,7 +261,8 @@ footer a{color:var(--muted)}
       <div class="moms" id="moments"></div>
       <div class="mform" id="momentForm" hidden></div>
       <div id="meals"></div>
-      <button class="btn btn-main" id="goPlate" type="button">📷 Calculer un repas en photo</button>
+      <button class="btn btn-main" id="goCuisine" type="button">🍳 Je cuisine : calculer mes quantités</button>
+      <button class="btn btn-ghost" id="goPlate" type="button">📷 Calculer un repas en photo</button>
       <p class="small muted">Touchez un repas pour revoir sa photo et corriger les quantités : les calories se recalculent.</p>
     </div>
 
@@ -295,8 +296,22 @@ footer a{color:var(--muted)}
 
   <!-- ============ ASSIETTE ============ -->
   <section id="tab-assiette" data-tab hidden>
-    <div class="card">
+    <div class="card" id="cuiCard">
+      <h2>🍳 Je cuisine</h2>
+      <p class="small muted">Dites ce que vous avez envie de manger. Petite Part vous donne les quantités à peser pour rester dans votre objectif. Une fois servi, une photo de l'assiette valide la portion.</p>
+      <div class="field"><label>Pour quel repas ?</label><div class="seg" id="cuiMom"><button type="button" data-v="matin" aria-pressed="false">Matin</button><button type="button" data-v="midi" aria-pressed="false">Midi</button><button type="button" data-v="gouter" aria-pressed="false">Goûter</button><button type="button" data-v="soir" aria-pressed="false">Soir</button></div></div>
+      <div class="field"><label for="cuiPlat">Ce que je veux manger</label><textarea id="cuiPlat" rows="2" placeholder="Ex. : spaghettis bolognaise, ou poulet, riz et haricots verts"></textarea></div>
+      <div class="row2">
+        <div class="field"><label for="cuiKcal">Objectif de ce repas (kcal)</label><input id="cuiKcal" type="number" inputmode="numeric" min="100" max="1500" step="10"></div>
+        <div class="field"><label for="cuiPers">Je cuisine pour</label><select id="cuiPers"><option value="1">1 personne</option><option value="2">2 personnes</option><option value="3">3 personnes</option><option value="4">4 personnes</option><option value="5">5 personnes</option><option value="6">6 personnes</option></select></div>
+      </div>
+      <p class="small muted num" id="cuiLeft"></p>
+      <button class="btn btn-main" id="cuiGo" type="button">Calculer mes quantités</button>
+      <div id="cuiOut" style="display:flex;flex-direction:column;gap:10px"></div>
+    </div>
+    <div class="card" id="photoCard">
       <h2>Photographier mon assiette</h2>
+      <p class="ok" id="planHint" hidden></p>
       <div class="row2">
         <button class="btn btn-main" id="camBtn" type="button">📷 Prendre la photo</button>
         <button class="btn btn-ghost" id="galBtn" type="button">Choisir une image</button>
@@ -317,6 +332,7 @@ footer a{color:var(--muted)}
           <div class="mac" id="aMac"></div>
         </div>
       </div>
+      <div id="verdict" hidden></div>
       <div class="note" id="fatNote" hidden></div>
       <div id="aItems"></div>
       <p class="small muted" id="aRemark"></p>
@@ -425,7 +441,7 @@ footer a{color:var(--muted)}
 <nav aria-label="Onglets"><div class="in">
   <button type="button" data-go="jour" aria-current="page"><span class="i">🏠</span>Aujourd'hui</button>
   <button type="button" data-go="recettes"><span class="i">🥗</span>Recettes</button>
-  <button type="button" data-go="assiette"><span class="i">📷</span>Assiette</button>
+  <button type="button" data-go="assiette"><span class="i">🍳</span>Cuisiner</button>
   <button type="button" data-go="suivi"><span class="i">📈</span>Suivi</button>
   <button type="button" data-go="bouger"><span class="i">🤸</span>Bouger</button>
 </div></nav>
@@ -563,13 +579,15 @@ function openMoment(id){const m=MOM.find(x=>x[0]===id);if(!m)return;momOpen=id;c
   <input id="mfNom" type="text" placeholder="Ex. 2 tartines beurre, un café au lait" aria-label="Ce que j'ai mangé">
   <input id="mfK" type="number" inputmode="numeric" min="0" placeholder="Calories (facultatif)" aria-label="Calories">
   <div class="row2"><button class="btn btn-main btn-sm" id="mfAdd" type="button">Ajouter</button><button class="btn btn-ghost btn-sm" id="mfPhoto" type="button">📷 En photo</button></div>
+  ${id==='grignotage'?'':'<button class="btn btn-ghost btn-sm" id="mfCuis" type="button" style="width:100%">🍳 Je vais cuisiner : mes quantités</button>'}
   <div class="row2"><button class="btn btn-ghost btn-sm" id="mfRien" type="button">${id==='grignotage'?'Aucun grignotage':"Je n'ai rien mangé"}</button><button class="btn btn-ghost btn-sm" id="mfX" type="button">Fermer</button></div>
   <p class="small" id="mfMsg"></p>`;
   f.scrollIntoView({behavior:'smooth',block:'center'});
   const unskip=()=>{sautes=sautes.filter(x=>x!==id);LS.set('sautes-'+TODAY,sautes)};
   $('mfX').onclick=closeMoment;
   $('mfRien').onclick=()=>{if(!sautes.includes(id))sautes.push(id);LS.set('sautes-'+TODAY,sautes);closeMoment();renderMoments();toast('C\'est noté.')};
-  $('mfPhoto').onclick=()=>{pendingMoment=id;closeMoment();go('assiette')};
+  $('mfPhoto').onclick=()=>{pendingMoment=id;closeMoment();go('assiette');setTimeout(()=>$('photoCard').scrollIntoView({behavior:'smooth'}),150)};
+  if($('mfCuis'))$('mfCuis').onclick=()=>{closeMoment();ouvrirCuisine(id)};
   $('mfAdd').onclick=async()=>{const nom=$('mfNom').value.trim(),k=+$('mfK').value;const msg=$('mfMsg');
     if(!nom){msg.textContent='Écrivez ce que vous avez mangé.';$('mfNom').focus();return}
     if(k>0){unskip();addEaten(nom,k,{moment:id,e:m[2]});closeMoment();return}
@@ -614,7 +632,7 @@ function renderEaten(){
     const kin=!x.aliments&&body.querySelector('input');if(kin)kin.oninput=()=>{x.kcal=Math.max(0,+kin.value||0);saveEaten();r.querySelector('.mhead .num').textContent=fmt(x.kcal)+' kcal';$('eatenTotal').textContent=fmt(eatenKcal())+' kcal';renderGauge()};
     r.querySelector('.mhead').onclick=()=>{openMeal=openMeal===i?-1:i;renderEaten()};
     r.appendChild(body);m.appendChild(r)});
-  $('eatenTotal').textContent=fmt(eatenKcal())+' kcal';renderGauge();renderMacros();renderMoments();
+  $('eatenTotal').textContent=fmt(eatenKcal())+' kcal';renderGauge();renderMacros();renderMoments();if(typeof majCuiLeft==='function'&&$('cuiLeft'))majCuiLeft();
 }
 function renderMacros(){const t=eaten.reduce((s,x)=>({p:s.p+(x.p||0),g:s.g+(x.g||0),l:s.l+(x.l||0)}),{p:0,g:0,l:0});
   $('dayMac').innerHTML=eaten.length?`<span><i class="dot" style="background:var(--prot)"></i>Protéines ${fmt(t.p)} g</span><span><i class="dot" style="background:var(--gluc)"></i>Glucides ${fmt(t.g)} g</span><span><i class="dot" style="background:var(--lip)"></i>Lipides ${fmt(t.l)} g</span>`:''}
@@ -736,7 +754,16 @@ function renderPlateTotals(){const t=tots(cur);$('aKcal').innerHTML=fmt(t.k)+'<s
     n.hidden=false;n.innerHTML=`<b>Plat riche : prenez une petite part.</b><br>${esc(cur.conseil||('Les '+fat.map(a=>a.nom.toLowerCase()).join(', ')+' apportent beaucoup de matières grasses. Une petite part et davantage de légumes, et vous en profitez sans exploser votre journée.'))}<div style="margin-top:8px"><button class="btn btn-main btn-sm" type="button" id="halfBtn">Passer en petite part</button></div>`;
     $('halfBtn').onclick=()=>{cur.aliments.forEach((a,i)=>{if(isFat(a)){a.grammes=Math.round(a.grammes*.6/5)*5;const q=$('aq'+i);if(q)q.value=a.grammes}});renderPlateTotals()};
   }else n.hidden=true;
+  renderVerdict(t);
 }
+/* validation de la portion : la photo comparée aux quantités prévues dans « Je cuisine » (marge ± 15 %) */
+function renderVerdict(t){const v=$('verdict');const p=cur.prevu;
+  if(!p||!cur.aliments.length){v.hidden=true;return}
+  const d=t.k-p.kcal,pc=d/p.kcal;v.hidden=false;
+  if(Math.abs(pc)<=.15){v.className='ok';v.innerHTML=`<b>✅ Portion validée par Petite Part</b><br>Votre assiette correspond à ce qui était prévu (environ ${fmt(p.kcal)} kcal). Bon appétit !`}
+  else if(pc>0){v.className='note';v.innerHTML=`<b>Un peu plus que prévu : environ +${fmt(d)} kcal</b><br>Vous pouvez remettre un peu de ${esc(plusGros(p))} dans le plat, ou garder l'assiette et alléger un peu le repas suivant. Rien de grave.`}
+  else{v.className='ok';v.innerHTML=`<b>Un peu moins que prévu : environ ${fmt(-d)} kcal de moins</b><br>Si vous avez encore faim, ajoutez plutôt des légumes.`}}
+function plusGros(p){const a=(p.aliments||[]).slice().sort((x,y)=>y.grammes*y.kcal_100g-x.grammes*x.kcal_100g)[0];return a?a.nom.toLowerCase():'féculents'}
 function renderPlate(){
   $('aBadge').hidden=!cur.exemple;$('aDish').textContent=cur.plat||'Votre repas';
   const ph=$('ph');if(photoURL&&!cur.exemple){ph.style.backgroundImage=`url(${photoURL})`;ph.textContent=''}else{ph.style.backgroundImage='';ph.textContent=cur.emoji||'🍽️'}
@@ -748,7 +775,8 @@ function renderPlate(){
   $('aRemark').textContent=cur.remarque||'';$('aAdd').disabled=!!cur.exemple||!cur.aliments.length;$('aAdd').textContent=cur.exemple?'Prenez une photo pour commencer':'Ajouter à ma journée';
   renderPlateTotals();
 }
-$('aAdd').onclick=()=>{const t=tots(cur);addEaten(cur.plat||'Repas photographié',t.k,{moment:pendingMoment||undefined,e:cur.emoji,photo:curThumb||undefined,p:t.p,g:t.g,l:t.l,aliments:cur.aliments.map(a=>Object.assign({},a))});if(pendingMoment){sautes=sautes.filter(x=>x!==pendingMoment);LS.set('sautes-'+TODAY,sautes);pendingMoment=null;renderMoments()}$('aAdd').disabled=true;$('aAdd').textContent='Ajouté à ma journée'};
+$('aAdd').onclick=()=>{const t=tots(cur);const pv=cur.prevu;if(pv){if(!pendingMoment)pendingMoment=pv.moment;const s=LS.get('prevu-'+TODAY,null);if(s){s.valide=true;LS.set('prevu-'+TODAY,s)}cur.prevu=null;cuiPlan=null;renderCuisine();renderPlanHint()}
+  addEaten((pv&&pv.plat)||cur.plat||'Repas photographié',t.k,{moment:pendingMoment||undefined,e:cur.emoji,photo:curThumb||undefined,p:t.p,g:t.g,l:t.l,aliments:cur.aliments.map(a=>Object.assign({},a))});if(pendingMoment){sautes=sautes.filter(x=>x!==pendingMoment);LS.set('sautes-'+TODAY,sautes);pendingMoment=null;renderMoments()}$('aAdd').disabled=true;$('aAdd').textContent='Ajouté à ma journée'};
 $('camBtn').onclick=()=>$('cam').click();$('galBtn').onclick=()=>$('gal').click();
 ['cam','gal'].forEach(id=>$(id).addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];e.target.value='';if(f)analyse(f)}));
 async function analyse(file){
@@ -757,19 +785,90 @@ async function analyse(file){
   $('ph').style.backgroundImage=`url(${photoURL})`;$('ph').textContent='';$('aBadge').hidden=true;
   $('aDish').innerHTML='<span class="muted"><span class="spin"></span>Claude regarde votre assiette…</span>';$('aKcal').innerHTML='—<small>kcal</small>';$('aItems').innerHTML='';$('fatNote').hidden=true;$('aRemark').textContent='';$('aAdd').disabled=true;
   $('camBtn').disabled=$('galBtn').disabled=true;
+  const pv=planEnCours();setTimeout(()=>$('aRes').scrollIntoView({behavior:'smooth',block:'start'}),100);
   try{const ctx=$('ctx').value.trim();
+    const planTxt=pv?`La personne a pesé ses ingrédients avant de cuisiner pour sa part de « ${pv.plat} » : ${pv.aliments.map(a=>a.nom+' '+Math.round(a.grammes)+' g'+(a.etat&&a.etat!=='tel quel'?' ('+a.etat+')':'')).join(', ')}, soit environ ${pv.kcal} kcal. Vérifie sur la photo si l'assiette correspond à cette part : si oui, reprends ces aliments avec ces valeurs (convertis cru → cuit si besoin en gardant les mêmes calories) ; si une partie semble nettement plus ou moins grosse, ou si un aliment a été ajouté (pain, fromage râpé, sauce…), ajuste en conséquence et dis-le dans "remarque".\n`:'';
     const r=await sample.json(`Tu es diététicien. La photo montre un repas. Identifie chaque aliment visible, estime sa quantité en grammes (taille de l'assiette, couverts présents servant d'échelle — une fourchette mesure environ 19 cm —, proportions), sans oublier sauces et matières grasses probables.
-${ctx?'Précision de la personne : '+ctx+'\n':''}Indique pour chaque aliment s'il est riche en graisses (friture, fromage, charcuterie, crème, beurre, sauce grasse, pâtisserie, etc.).
+${planTxt}${ctx?'Précision de la personne : '+ctx+'\n':''}Indique pour chaque aliment s'il est riche en graisses (friture, fromage, charcuterie, crème, beurre, sauce grasse, pâtisserie, etc.).
 Si le plat est riche, rédige "conseil" : une phrase bienveillante qui invite à prendre une petite part et propose quoi ajouter (légumes, salade). Sinon "conseil":"".
 Réponds uniquement en JSON, valeurs pour 100 g tel que servi (table CIQUAL si possible) :
 {"plat":"nom court","emoji":"un emoji","remarque":"incertitude éventuelle ou chaîne vide","conseil":"...","aliments":[{"nom":"...","grammes":150,"kcal_100g":130,"proteines_100g":2.7,"glucides_100g":28,"lipides_100g":0.3,"gras":false}]}
 Si ce n'est pas un repas, renvoie "aliments":[] et explique dans "remarque".`,{images:[file],cache:false});
     const al=(Array.isArray(r&&r.aliments)?r.aliments:[]).filter(a=>a&&a.nom).map(a=>({nom:String(a.nom),grammes:+a.grammes||0,kcal_100g:+a.kcal_100g||0,proteines_100g:+a.proteines_100g||0,glucides_100g:+a.glucides_100g||0,lipides_100g:+a.lipides_100g||0,gras:a.gras===true}));
-    cur={plat:String(r.plat||'Votre repas'),emoji:r.emoji,remarque:String(r.remarque||''),conseil:String(r.conseil||''),aliments:al};
+    cur={plat:String(r.plat||'Votre repas'),emoji:r.emoji,remarque:String(r.remarque||''),conseil:String(r.conseil||''),aliments:al,prevu:pv||null};
     if(!al.length&&!cur.remarque)cur.remarque='Aucun aliment reconnu sur cette photo.';
   }catch(e){cur={plat:'Analyse impossible',remarque:errTxt(e),aliments:[]}}
   finally{$('camBtn').disabled=$('galBtn').disabled=false;renderPlate()}
 }
+
+/* ---------- Je cuisine : la personne dit ce qu'elle veut manger, Petite Part donne les quantités à peser ----------
+   Le plan du jour est gardé dans pp-prevu-AAAA-MM-JJ ; la photo de l'assiette le compare ensuite (renderVerdict). */
+const PART={matin:.25,midi:.35,gouter:.10,soir:.30};
+const MOMLAB={matin:'petit-déjeuner',midi:'déjeuner',gouter:'goûter',soir:'dîner'};
+let cuiPlan=null;
+function planEnCours(){const p=LS.get('prevu-'+TODAY,null);return p&&!p.valide&&Array.isArray(p.aliments)&&p.aliments.length?p:null}
+function momentDuMoment(){const h=new Date().getHours();return h<11?'matin':h<15?'midi':h<18?'gouter':'soir'}
+function budgetRepas(m){const t=P&&P.kcal?P.kcal:1800;return Math.round(t*(PART[m]||.3)/10)*10}
+function majCuiLeft(){const t=P&&P.kcal?P.kcal:0;if(!t){$('cuiLeft').textContent='';return}const r=t-eatenKcal();
+  $('cuiLeft').textContent=r>0?`Il vous reste ${fmt(r)} kcal aujourd'hui.`:`Vous avez déjà atteint votre objectif du jour : visez une petite assiette riche en légumes.`}
+$('cuiMom').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;segSet('cuiMom',b.dataset.v);$('cuiKcal').value=budgetRepas(b.dataset.v)});
+function ouvrirCuisine(m){m=m||momentDuMoment();segSet('cuiMom',m);$('cuiKcal').value=budgetRepas(m);majCuiLeft();go('assiette');setTimeout(()=>{try{$('cuiPlat').focus()}catch(e){}},300)}
+const kOfA=a=>(+a.grammes||0)/100*(+a.kcal_100g||0);
+function totPlan(p){return p.aliments.reduce((s,a)=>s+kOfA(a),0)}
+function arrondi(g){return g<20?Math.max(1,Math.round(g)):Math.round(g/5)*5}
+function renderCuisine(){const out=$('cuiOut');const p=cuiPlan;out.innerHTML='';if(!p)return;
+  const pers=+p.personnes||1;
+  const head=document.createElement('div');head.style.cssText='display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:12px';
+  head.innerHTML=`<b style="font-size:18px">${esc(p.emoji||'🍽️')} ${esc(p.plat)}</b><div class="big num" id="cuiTot"></div><p class="small muted">Quantités pour <b>votre part</b>${pers>1?`, et le total à préparer pour ${pers} parts identiques`:''}. Modifiez un poids si vous voulez : les calories se recalculent.</p>`;
+  out.appendChild(head);
+  const list=document.createElement('div');
+  p.aliments.forEach(a=>{const d=document.createElement('div');d.className='it';
+    d.innerHTML=`<div class="nm"></div><label class="qty"><input type="number" inputmode="numeric" min="0" step="5" aria-label="Quantité en grammes"><span class="muted small">g</span></label><div class="ik"></div><div class="sub"></div>`;
+    d.querySelector('.nm').textContent=a.nom+(a.etat&&a.etat!=='tel quel'?' ('+a.etat+')':'');
+    const q=d.querySelector('input'),ik=d.querySelector('.ik'),sub=d.querySelector('.sub');q.value=Math.round(a.grammes);
+    const show=()=>{ik.textContent=fmt(kOfA(a))+' kcal';sub.textContent=[a.mesure,pers>1?`pour ${pers} : ${fmt(arrondi(a.grammes*pers))} g`:''].filter(Boolean).join(' · ')};show();
+    q.oninput=()=>{a.grammes=Math.max(0,+q.value||0);show();majTot();if(p.enregistre){LS.set('prevu-'+TODAY,p);renderPlanHint()}};list.appendChild(d)});
+  out.appendChild(list);
+  const majTot=()=>{p.kcal=Math.round(totPlan(p));$('cuiTot').innerHTML=fmt(p.kcal)+'<small>kcal pour votre part</small>'};majTot();
+  if(p.aliments.some(a=>a.etat==='cru'))out.insertAdjacentHTML('beforeend','<p class="small muted">⚖️ Pesez les ingrédients marqués « cru » avant cuisson : 80 g de pâtes crues font environ 200 g une fois cuites.</p>');
+  if(p.conseil)out.insertAdjacentHTML('beforeend',`<p class="ok">💡 ${esc(p.conseil)}</p>`);
+  if(p.remarque)out.insertAdjacentHTML('beforeend',`<p class="small muted">${esc(p.remarque)}</p>`);
+  const b=document.createElement('button');b.type='button';b.className='btn btn-main';b.textContent=p.enregistre?'📷 C\'est servi : je prends la photo':'C\'est parti, je cuisine';
+  b.onclick=()=>{if(!p.enregistre){p.enregistre=true;p.valide=false;LS.set('prevu-'+TODAY,p);renderCuisine();renderPlanHint();toast('C\'est noté. Une fois servi, prenez votre assiette en photo.');return}
+    renderPlanHint();$('cam').click()};
+  out.appendChild(b);
+  const x=document.createElement('button');x.type='button';x.className='btn btn-ghost btn-sm';x.textContent='Changer de plat';
+  x.onclick=()=>{cuiPlan=null;LS.set('prevu-'+TODAY,null);renderCuisine();renderPlanHint();$('cuiPlat').focus()};out.appendChild(x)}
+function renderPlanHint(){const p=planEnCours(),h=$('planHint');if(!p){h.hidden=true;return}
+  h.hidden=false;h.innerHTML=`🍳 Prévu : <b>${esc(p.plat)}</b> (${fmt(p.kcal)} kcal). Prenez la photo une fois servi : Petite Part vérifie que la portion correspond.`}
+$('cuiGo').onclick=async()=>{const envie=$('cuiPlat').value.trim();const out=$('cuiOut');
+  if(!envie){$('cuiPlat').focus();return}
+  if(!sample){showPaywall('Le calcul de vos quantités');return}
+  if(P&&P.mode==='bloque'){out.innerHTML=`<p class="note">${esc(P.msg)}</p>`;return}
+  const m=segVal('cuiMom')||momentDuMoment();const kcal=Math.min(1500,Math.max(100,+$('cuiKcal').value||budgetRepas(m)));const pers=+$('cuiPers').value||1;
+  const go_=$('cuiGo');go_.disabled=true;out.innerHTML='<p class="muted small"><span class="spin"></span>Petite Part calcule vos quantités…</p>';
+  try{const r=await sample.json(`Tu es diététicien. Une personne veut manger au ${MOMLAB[m]} : « ${envie.slice(0,400)} ».
+Son objectif pour SA part : ${kcal} kcal.
+Liste les ingrédients d'UNE part de ce plat (avec ceux qu'elle cite) et donne la quantité à peser de chacun, en grammes, pour arriver à environ ${kcal} kcal au total.
+Règles :
+- Précise "etat" : "cru" pour ce qu'on pèse avant cuisson (pâtes, riz, semoule, viande, poisson, légumineuses sèches), sinon "tel quel".
+- Garde le plat gourmand et reconnaissable. Pour tenir l'objectif, réduis d'abord ce qui est gras (fromage, crème, beurre, huile, charcuterie, sauce), garde assez de protéines et une bonne quantité de légumes.
+- Compte la matière grasse de cuisson si le plat en demande.
+- Ajoute "mesure" : un repère parlant pour quelqu'un sans balance (ex. « 1 blanc de poulet moyen », « 1 c. à soupe rase », « 2 poignées »).
+- "conseil" : une astuce courte et bienveillante pour que ce soit bon et rassasiant, ou chaîne vide.
+Si ce n'est pas un repas ou un aliment, renvoie "aliments":[] et explique dans "remarque".
+Réponds uniquement en JSON, valeurs pour 100 g dans l'état pesé (table CIQUAL si possible) :
+{"plat":"nom court","emoji":"un emoji","conseil":"","remarque":"","aliments":[{"nom":"Spaghettis","etat":"cru","grammes":80,"mesure":"une grosse poignée","kcal_100g":355,"proteines_100g":12,"glucides_100g":70,"lipides_100g":1.5,"gras":false}]}`,{cache:false});
+    const al=(Array.isArray(r&&r.aliments)?r.aliments:[]).filter(a=>a&&a.nom&&+a.grammes>0).map(a=>({nom:String(a.nom),etat:a.etat==='cru'?'cru':'tel quel',grammes:+a.grammes,mesure:String(a.mesure||''),kcal_100g:+a.kcal_100g||0,proteines_100g:+a.proteines_100g||0,glucides_100g:+a.glucides_100g||0,lipides_100g:+a.lipides_100g||0,gras:a.gras===true}));
+    if(!al.length){out.innerHTML=`<p class="note">${esc(String(r&&r.remarque||'Je n\'ai pas reconnu de plat. Essayez par exemple « poulet, riz et haricots verts ».'))}</p>`;return}
+    const p={plat:String(r.plat||envie).slice(0,80),emoji:r.emoji,conseil:String(r.conseil||''),remarque:String(r.remarque||''),moment:m,objectif:kcal,personnes:pers,aliments:al,enregistre:false};
+    /* on recale exactement sur l'objectif si Claude s'en écarte un peu */
+    const t=totPlan(p),f=t>0?kcal/t:1;if(Math.abs(f-1)>.03&&f>.6&&f<1.6)p.aliments.forEach(a=>{a.grammes=arrondi(a.grammes*f)});
+    p.kcal=Math.round(totPlan(p));cuiPlan=p;renderCuisine();
+  }catch(e){out.innerHTML=`<p class="note">${esc(errTxt(e))}</p>`}finally{go_.disabled=false}};
+$('goCuisine').onclick=()=>ouvrirCuisine();
+/* au démarrage : on reprend le plat prévu aujourd'hui s'il n'a pas encore été validé */
+function initCuisine(){const p=planEnCours();if(p){cuiPlan=p;segSet('cuiMom',p.moment);$('cuiKcal').value=p.objectif||p.kcal;$('cuiPers').value=String(p.personnes||1)}else{const m=momentDuMoment();segSet('cuiMom',m);$('cuiKcal').value=budgetRepas(m)}majCuiLeft();renderCuisine();renderPlanHint()}
 
 /* ---------- calendrier des repas ---------- */
 const JOURS=['L','M','M','J','V','S','D'];
@@ -1031,7 +1130,7 @@ $('goPlate').onclick=()=>go('assiette');
 
 /* ---------- démarrage ---------- */
 if(prof)fillForm(prof);
-renderProg();renderEaten();renderRecipes();renderPlate();renderChart();renderCal();renderEx();
+renderProg();renderEaten();renderRecipes();renderPlate();renderChart();renderCal();renderEx();initCuisine();
 openDB().then(renderPhotos);
 /* ---------- compte, abonnement et appels à Claude via le serveur Skyeco ---------- */
 const API='/api/petitepart';

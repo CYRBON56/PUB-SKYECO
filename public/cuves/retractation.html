@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Me rétracter — Skyeco cuves</title>
+<meta name="robots" content="noindex">
+<style>
+body{margin:0;background:#F6F9FB;color:#1B2E3A;font-family:Inter,system-ui,sans-serif;line-height:1.6;font-size:16px}
+.wrap{max-width:620px;margin:0 auto;padding:32px 20px 60px}
+a{color:#2F80B9}
+h1{font-size:30px;margin:10px 0 6px;color:#0C2533}
+form{display:grid;gap:12px;background:#fff;border:1px solid #DCE6EC;border-radius:16px;padding:20px;margin-top:16px}
+label{display:grid;gap:5px;font-size:14px;font-weight:600;color:#5E6E79}
+input,textarea{font:inherit;border:1.5px solid #DCE6EC;border-radius:10px;padding:11px 12px}
+button{font:inherit;background:#0C2533;color:#fff;border:0;border-radius:12px;padding:14px;font-weight:700;cursor:pointer}
+.ok{background:#E8F6EE;border:1px solid #9FD3B4;border-radius:14px;padding:16px;margin-top:16px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+<a href="/cuves/">← Retour à la boutique</a>
+<h1>Me rétracter</h1>
+<p>Vous avez 14 jours après la réception de votre commande pour changer d'avis, sans avoir à vous justifier. Remplissez ce formulaire. Les frais de retour restent à votre charge (voir les <a href="/cuves/cgv.html">CGV</a>, article 6).</p>
+<form id="f">
+  <label>Numéro de commande (ou date de commande)<input name="commande" required></label>
+  <label>Nom et prénom<input name="nom" required autocomplete="name"></label>
+  <label>Email utilisé pour la commande<input name="email" type="email" required autocomplete="email"></label>
+  <label>Produit(s) concerné(s)<textarea name="produits" rows="2" required></textarea></label>
+  <label>Date de réception<input name="reception" type="date" required></label>
+  <button type="submit">Confirmer ma rétractation</button>
+</form>
+<div class="ok" id="ok" hidden>
+  <b>Votre déclaration de rétractation est prête.</b><br>
+  Votre messagerie vient de s'ouvrir avec le message pré-rempli : envoyez-le pour qu'il nous parvienne. Nous vous confirmons la réception par email et vous indiquons comment renvoyer le produit.
+</div>
+<script>
+document.getElementById('f').onsubmit=e=>{
+  e.preventDefault();const d=Object.fromEntries(new FormData(e.target));
+  const corps=`Je vous notifie par la présente ma rétractation du contrat portant sur la vente du ou des biens suivants :\n${d.produits}\n\nCommande : ${d.commande}\nReçu le : ${d.reception}\nNom : ${d.nom}\nEmail : ${d.email}\nDate de la déclaration : ${new Date().toLocaleDateString('fr-FR')}`;
+  window.location.href='mailto:infos@ecosky.fr?subject='+encodeURIComponent('Rétractation — commande '+d.commande)+'&body='+encodeURIComponent(corps);
+  document.getElementById('ok').hidden=false;
+};
+</script>
+</div>
+</body>
+</html>

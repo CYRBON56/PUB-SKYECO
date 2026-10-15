@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skyeco — Cuves et récupérateurs d'eau de pluie ROTO</title>
+<meta name="description" content="Récupérateurs d'eau de pluie, cuves aériennes et cuves à enterrer ROTO, livrés chez vous partout en France. Prix affichés, achat en ligne, 14 jours pour changer d'avis.">
+<link rel="canonical" href="https://www.skyeco.fr/cuves/">
+<meta property="og:title" content="Skyeco — L'eau du ciel, stockée chez vous">
+<meta property="og:description" content="Cuves et récupérateurs d'eau de pluie ROTO, prix affichés et livraison partout en France.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --nuit:#0C2533; --ciel:#2F80B9; --ciel-clair:#E6F1F8; --pluie:#7FB8DD; --soleil:#F0A23A; --soleil-f:#C97E16;
+  --fond:#F6F9FB; --carte:#FFFFFF; --texte:#1B2E3A; --gris:#5E6E79; --ligne:#DCE6EC; --ok:#2E8B5B;
+  --r:16px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--fond);color:var(--texte);font-family:Inter,system-ui,sans-serif;font-size:16px;line-height:1.55}
+a{color:inherit}
+button{font:inherit;cursor:pointer}
+[hidden]{display:none!important}
+.wrap{max-width:1160px;margin:0 auto;padding:0 20px}
+h1,h2,h3{font-family:Outfit,Inter,sans-serif;line-height:1.1;margin:0}
+
+/* Bandeau */
+.bandeau{background:var(--nuit);color:#CFE2EE;font-size:13.5px;text-align:center;padding:8px 12px}
+.bandeau b{color:#fff}
+
+/* En-tête */
+header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border-bottom:1px solid var(--ligne)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;height:66px}
+.logo{display:flex;align-items:center;gap:9px;text-decoration:none;font-family:Outfit,Inter,sans-serif;font-weight:800;font-size:26px;letter-spacing:-.5px;color:var(--nuit)}
+.logo span{color:var(--ciel)}
+.logo small{display:block;font-family:Inter;font-weight:500;font-size:11.5px;color:var(--gris);letter-spacing:0;margin-top:-2px}
+nav.menu{display:flex;gap:22px;font-weight:600;font-size:15px}
+nav.menu a{text-decoration:none;color:var(--texte)}
+nav.menu a:hover{color:var(--ciel)}
+.panier-btn{display:flex;align-items:center;gap:8px;background:var(--nuit);color:#fff;border:0;border-radius:999px;padding:10px 16px;font-weight:600}
+.panier-btn .nb{background:var(--soleil);color:var(--nuit);border-radius:999px;min-width:22px;height:22px;display:inline-grid;place-items:center;font-size:13px;font-weight:800}
+@media(max-width:860px){nav.menu{display:none}}
+.panier-btn{white-space:nowrap}
+@media(max-width:480px){.logo small{display:none}.panier-btn .txt{display:none}}
+
+/* Hero */
+.hero{background:radial-gradient(1200px 500px at 85% -10%,#3E93CC 0%,transparent 60%),linear-gradient(160deg,var(--nuit) 0%,#123A52 100%);color:#fff;overflow:hidden;position:relative}
+.hero .wrap{display:grid;grid-template-columns:1.15fr .85fr;gap:30px;align-items:center;padding-top:56px;padding-bottom:64px}
+.hero h1{font-size:clamp(38px,6vw,64px);font-weight:800;letter-spacing:-1px}
+.hero h1 em{font-style:normal;color:var(--pluie)}
+.hero p.lead{font-size:19px;color:#C9DEEC;max-width:560px;margin:18px 0 26px}
+.cta{display:inline-flex;align-items:center;gap:8px;background:var(--soleil);color:var(--nuit);text-decoration:none;font-weight:700;padding:15px 22px;border-radius:12px;border:0}
+.cta:hover{background:#F5B458}
+.cta.second{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.4);margin-left:10px}
+.atouts{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:28px;font-size:14.5px;color:#D5E6F1}
+.atouts span::before{content:"✓ ";color:var(--soleil);font-weight:800}
+.hero-visu{position:relative;height:330px}
+.goutte{position:absolute;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:linear-gradient(160deg,#9CD0F0,#2F80B9);opacity:.18;animation:tomber 6s linear infinite}
+@keyframes tomber{from{transform:translateY(-60px)}to{transform:translateY(380px)}}
+@media(prefers-reduced-motion:reduce){.goutte{animation:none}}
+.hero-visu svg{position:absolute;inset:auto 0 0 0;margin:auto;width:100%;max-width:380px}
+@media(max-width:860px){.hero .wrap{grid-template-columns:1fr}.hero-visu{display:none}.cta.second{margin:10px 0 0}}
+
+/* Familles */
+section{padding:56px 0}
+.titre-s{display:flex;justify-content:space-between;align-items:end;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+.titre-s h2{font-size:clamp(28px,4vw,38px);font-weight:800;color:var(--nuit)}
+.titre-s p{margin:6px 0 0;color:var(--gris);max-width:640px}
+.filtres{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}
+.filtres button{border:1.5px solid var(--ligne);background:#fff;border-radius:999px;padding:8px 15px;font-weight:600;font-size:14.5px;color:var(--texte)}
+.filtres button[aria-pressed=true]{background:var(--nuit);border-color:var(--nuit);color:#fff}
+.grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:18px}
+@media(max-width:400px){.grille{grid-template-columns:1fr}}
+.prod{background:var(--carte);border:1px solid var(--ligne);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;transition:box-shadow .2s,transform .2s}
+.prod:hover{box-shadow:0 10px 30px rgba(12,37,51,.10);transform:translateY(-2px)}
+.prod .visu{background:linear-gradient(180deg,var(--ciel-clair),#fff);height:190px;display:grid;place-items:center;position:relative}
+.prod .visu svg{height:150px;width:auto}
+.badge{position:absolute;top:12px;left:12px;background:#fff;border:1px solid var(--ligne);border-radius:999px;font-size:12.5px;font-weight:700;padding:4px 10px;color:var(--ciel)}
+.badge.top{background:var(--soleil);border-color:var(--soleil);color:var(--nuit)}
+.prod .corps{padding:18px 18px 20px;display:flex;flex-direction:column;gap:10px;flex:1}
+.prod h3{font-size:21px;font-weight:700;color:var(--nuit)}
+.prod .usage{color:var(--gris);font-size:14.5px;margin:0}
+.tailles{display:flex;flex-wrap:wrap;gap:6px}
+.tailles button{border:1.5px solid var(--ligne);background:#fff;border-radius:9px;padding:6px 10px;font-size:13.5px;font-weight:600;color:var(--texte)}
+.tailles button[aria-pressed=true]{border-color:var(--ciel);background:var(--ciel-clair);color:var(--ciel)}
+.carac{list-style:none;margin:0;padding:0;font-size:14px;color:var(--gris);display:grid;gap:3px}
+.carac li::before{content:"• ";color:var(--ciel)}
+.bas{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:12px;border-top:1px solid var(--ligne)}
+.prix{font-family:Outfit,Inter,sans-serif;font-weight:800;font-size:24px;color:var(--nuit)}
+.prix small{display:block;font-family:Inter;font-weight:500;font-size:12.5px;color:var(--gris)}
+.prix.attente{font-size:16px;color:var(--soleil-f)}
+.ajout{background:var(--ciel);color:#fff;border:0;border-radius:10px;padding:11px 15px;font-weight:700}
+.ajout:hover{background:#246A9C}
+.delai{font-size:13px;color:var(--ok);font-weight:600}
+
+/* Bloc confiance */
+.confiance{background:#fff;border-top:1px solid var(--ligne);border-bottom:1px solid var(--ligne)}
+.confiance .wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.conf h3{font-size:18px;color:var(--nuit);margin:10px 0 6px}
+.conf p{margin:0;color:var(--gris);font-size:14.5px}
+.conf .ic{width:44px;height:44px;border-radius:12px;background:var(--ciel-clair);display:grid;place-items:center;font-size:22px}
+@media(max-width:860px){.confiance .wrap{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.confiance .wrap{grid-template-columns:1fr}}
+
+/* Guide */
+.guide{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.guide .g{background:#fff;border:1px solid var(--ligne);border-radius:var(--r);padding:22px}
+.guide h3{font-size:20px;color:var(--nuit);margin-bottom:8px}
+.guide table{width:100%;border-collapse:collapse;font-size:14.5px}
+.guide td{padding:7px 0;border-bottom:1px solid var(--ligne)}
+.guide td:last-child{text-align:right;font-weight:600}
+@media(max-width:760px){.guide{grid-template-columns:1fr}}
+details.faq{background:#fff;border:1px solid var(--ligne);border-radius:12px;padding:14px 18px;margin-bottom:10px}
+details.faq summary{font-weight:700;cursor:pointer;color:var(--nuit)}
+details.faq p{color:var(--gris);margin:10px 0 0}
+
+/* Pied */
+footer{background:var(--nuit);color:#A9C3D3;padding:44px 0 30px;font-size:14.5px}
+footer .wrap{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:26px}
+footer h4{color:#fff;margin:0 0 10px;font-family:Outfit,Inter,sans-serif;font-size:16px}
+footer a{display:block;color:#A9C3D3;text-decoration:none;margin-bottom:6px}
+footer a:hover{color:#fff}
+.retract{display:inline-block!important;margin-top:8px;border:1.5px solid #A9C3D3;border-radius:9px;padding:8px 12px;color:#fff!important;font-weight:600}
+.legal{border-top:1px solid #23485D;margin-top:26px;padding-top:16px;font-size:13px}
+@media(max-width:760px){footer .wrap{grid-template-columns:1fr}}
+
+/* Panier */
+.voile{position:fixed;inset:0;background:rgba(12,37,51,.45);z-index:40}
+.tiroir{position:fixed;top:0;right:0;bottom:0;width:min(440px,100%);background:#fff;z-index:41;display:flex;flex-direction:column;box-shadow:-10px 0 40px rgba(0,0,0,.15)}
+.tiroir header{position:static;display:flex;justify-content:space-between;align-items:center;padding:16px 20px;background:#fff}
+.tiroir h2{font-size:22px}
+.fermer{border:0;background:var(--fond);width:36px;height:36px;border-radius:50%;font-size:20px}
+.lignes{flex:1;overflow:auto;padding:10px 20px}
+.ligne{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--ligne)}
+.ligne .mini{width:56px;height:56px;border-radius:10px;background:var(--ciel-clair);display:grid;place-items:center;flex:none}
+.ligne .mini svg{height:44px}
+.ligne .info{flex:1;font-size:14.5px}
+.ligne .info b{display:block;color:var(--nuit)}
+.qte{display:flex;align-items:center;gap:6px;margin-top:6px}
+.qte button{width:28px;height:28px;border-radius:8px;border:1px solid var(--ligne);background:#fff}
+.suppr{border:0;background:none;color:var(--gris);font-size:13px;text-decoration:underline;padding:0;margin-left:8px}
+.total{padding:16px 20px;border-top:1px solid var(--ligne);display:grid;gap:8px;font-size:15px}
+.total .l{display:flex;justify-content:space-between}
+.total .l.g{font-family:Outfit,Inter,sans-serif;font-weight:800;font-size:20px;color:var(--nuit)}
+.total .note{font-size:13px;color:var(--gris)}
+.btn-plein{width:100%;background:var(--soleil);color:var(--nuit);border:0;border-radius:12px;padding:15px;font-weight:800;font-size:16px}
+.btn-plein:disabled{opacity:.5;cursor:not-allowed}
+.vide{text-align:center;color:var(--gris);padding:40px 10px}
+
+/* Commande */
+.modal{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:16px}
+.boite{background:#fff;border-radius:18px;width:min(620px,100%);max-height:92vh;overflow:auto;padding:24px;position:relative}
+.boite h2{font-size:26px;color:var(--nuit);margin-bottom:6px}
+.champs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.champs .plein{grid-column:1/-1}
+.champs label{display:grid;gap:5px;font-size:13.5px;font-weight:600;color:var(--gris)}
+.champs input,.champs select,.champs textarea{font:inherit;border:1.5px solid var(--ligne);border-radius:10px;padding:11px 12px;color:var(--texte)}
+.champs input:focus,.champs textarea:focus{outline:2px solid var(--pluie);border-color:var(--ciel)}
+@media(max-width:520px){.champs{grid-template-columns:1fr}}
+.case{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--gris);margin:8px 0}
+.case input{margin-top:3px}
+.info-box{background:var(--ciel-clair);border-radius:12px;padding:12px 14px;font-size:14px;color:var(--nuit)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--nuit);color:#fff;border-radius:12px;padding:12px 18px;z-index:60;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+</style>
+</head>
+<body>
+
+<div class="bandeau">🚚 <b>Livraison partout en France</b> · Paiement sécurisé · <b>14 jours</b> pour changer d'avis</div>
+
+<header>
+  <div class="wrap top">
+    <a class="logo" href="/cuves/" aria-label="Skyeco, accueil">
+      <svg width="30" height="34" viewBox="0 0 30 34" aria-hidden="true"><path d="M15 1C15 1 3 15 3 22a12 12 0 0 0 24 0C27 15 15 1 15 1z" fill="#2F80B9"/><path d="M9 22a6 6 0 0 0 6 6" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg>
+      <div>sky<span>eco</span><small>L'eau du ciel, stockée chez vous</small></div>
+    </a>
+    <nav class="menu" aria-label="Menu principal">
+      <a href="#catalogue">Nos cuves</a>
+      <a href="#guide">Bien choisir</a>
+      <a href="#livraison">Livraison</a>
+      <a href="#faq">Questions</a>
+    </nav>
+    <button class="panier-btn" id="ouvrirPanier" type="button" aria-label="Ouvrir le panier">🛒 <span class="txt">Panier</span> <span class="nb" id="nbPanier">0</span></button>
+  </div>
+</header>
+
+<section class="hero" style="padding:0">
+  <div class="wrap">
+    <div>
+      <h1>L'eau de pluie est <em>gratuite.</em><br>Gardez-la.</h1>
+      <p class="lead">Récupérateurs de jardin, cuves aériennes et cuves à enterrer du fabricant <b>ROTO</b>. Des prix affichés, la commande en ligne et la livraison chez vous, partout en France.</p>
+      <a class="cta" href="#catalogue">Voir les cuves →</a>
+      <a class="cta second" href="#guide">Quelle taille choisir ?</a>
+      <div class="atouts"><span>Fabricant européen</span><span>Polyéthylène rotomoulé</span><span>Livré chez vous</span><span>Conseil par téléphone</span></div>
+    </div>
+    <div class="hero-visu" aria-hidden="true">
+      <div class="goutte" style="left:12%;width:14px;height:20px;animation-delay:-1s"></div>
+      <div class="goutte" style="left:38%;width:10px;height:15px;animation-delay:-3s"></div>
+      <div class="goutte" style="left:62%;width:16px;height:22px;animation-delay:-4.5s"></div>
+      <div class="goutte" style="left:84%;width:11px;height:16px;animation-delay:-2s"></div>
+      <svg viewBox="0 0 380 260"><defs><linearGradient id="hv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7FB8DD"/><stop offset="1" stop-color="#2F80B9"/></linearGradient></defs>
+        <rect x="70" y="40" width="240" height="200" rx="30" fill="#EAF3F9"/>
+        <rect x="70" y="120" width="240" height="120" rx="30" fill="url(#hv)" opacity=".9"/>
+        <path d="M70 130q30-14 60 0t60 0 60 0 60 0" stroke="#fff" stroke-width="3" fill="none" opacity=".6"/>
+        <rect x="160" y="22" width="60" height="22" rx="8" fill="#CFE2EE"/>
+        <rect x="290" y="200" width="40" height="10" rx="5" fill="#F0A23A"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<section id="catalogue">
+  <div class="wrap">
+    <div class="titre-s">
+      <div><h2>Nos cuves ROTO</h2><p>Choisissez une famille, puis la contenance. Toutes les cuves sont en polyéthylène, résistantes au gel et aux UV.</p></div>
+    </div>
+    <div class="filtres" id="filtres" role="group" aria-label="Filtrer par usage"></div>
+    <div class="grille" id="grille"></div>
+  </div>
+</section>
+
+<section class="confiance" id="livraison">
+  <div class="wrap">
+    <div class="conf"><div class="ic">🚚</div><h3>Livraison chez vous</h3><p>Par transporteur, en bord de route ou au pied du terrain. Le prix de livraison dépend de votre département et s'affiche avant de payer.</p></div>
+    <div class="conf"><div class="ic">💶</div><h3>Prix affichés</h3><p>Pas de « prix sur demande » : vous voyez le prix TTC tout de suite, livraison comprise au moment de la commande.</p></div>
+    <div class="conf"><div class="ic">↩️</div><h3>14 jours pour changer d'avis</h3><p>Vous pouvez vous rétracter sans justification. Les frais de retour restent à votre charge, et nous vous les indiquons à l'avance.</p></div>
+    <div class="conf"><div class="ic">📞</div><h3>Un vrai conseil</h3><p>Une question sur la taille ou l'installation ? Un professionnel de l'assainissement vous répond.</p></div>
+  </div>
+</section>
+
+<section id="guide">
+  <div class="wrap">
+    <div class="titre-s"><div><h2>Quelle contenance choisir ?</h2><p>La bonne taille dépend de ce que vous voulez arroser ou alimenter, et de la surface de votre toit.</p></div></div>
+    <div class="guide">
+      <div class="g"><h3>Selon l'usage</h3>
+        <table>
+          <tr><td>Petit jardin, potager, jardinières</td><td>200 à 500 L</td></tr>
+          <tr><td>Jardin moyen, arrosage régulier</td><td>500 L à 2 000 L</td></tr>
+          <tr><td>Grand jardin, arrosage automatique</td><td>3 000 à 6 000 L</td></tr>
+          <tr><td>Maison : WC + lave-linge + jardin</td><td>5 000 à 10 000 L</td></tr>
+          <tr><td>Collectivité, exploitation, gros besoins</td><td>10 000 L et plus</td></tr>
+        </table>
+      </div>
+      <div class="g"><h3>Ce que votre toit récupère</h3>
+        <p style="margin:0 0 10px;color:var(--gris);font-size:14.5px">Repère : 1 mm de pluie sur 1 m² de toit = 1 litre. Avec environ 800 mm de pluie par an (moyenne en France) :</p>
+        <table>
+          <tr><td>Toit de 50 m²</td><td>≈ 32 000 L / an</td></tr>
+          <tr><td>Toit de 100 m²</td><td>≈ 64 000 L / an</td></tr>
+          <tr><td>Toit de 150 m²</td><td>≈ 96 000 L / an</td></tr>
+        </table>
+        <p style="margin:10px 0 0;color:var(--gris);font-size:13px">Calcul après environ 20 % de pertes (évaporation, premier rinçage du toit).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="faq" style="padding-top:0">
+  <div class="wrap">
+    <div class="titre-s"><div><h2>Questions fréquentes</h2></div></div>
+    <details class="faq"><summary>Comment se passe la livraison ?</summary><p>Les cuves sont livrées par transporteur, sur rendez-vous. Les petits récupérateurs arrivent en colis. Les grandes cuves arrivent sur camion : prévoyez un accès dégagé. Le délai est indiqué sur chaque produit.</p></details>
+    <details class="faq"><summary>Puis-je installer une cuve enterrée moi-même ?</summary><p>Oui, si vous êtes à l'aise avec le terrassement. Il faut respecter la notice du fabricant : lit de sable, remblai, profondeur maximale. Pour une cuve sous une zone de passage, choisissez le modèle « passage de véhicules ».</p></details>
+    <details class="faq"><summary>Puis-je utiliser l'eau de pluie dans la maison ?</summary><p>Oui, pour les WC et le lave-linge, à condition d'avoir un réseau séparé et de déclarer l'installation en mairie (arrêté du 21 août 2008). L'eau de pluie n'est pas potable : les cuves « eau potable ACS » servent à stocker de l'eau du réseau ou d'un forage traité.</p></details>
+    <details class="faq"><summary>Et si je change d'avis ?</summary><p>Vous avez 14 jours après la réception pour vous rétracter, avec le bouton « Me rétracter » en bas de page. Le produit doit être renvoyé dans son état d'origine. Les frais de retour sont à votre charge : pour une grande cuve, ils peuvent être élevés, et nous vous les indiquons à l'avance sur chaque fiche.</p></details>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <div class="logo" style="color:#fff">sky<span>eco</span></div>
+      <p style="margin:10px 0 0">Skyeco, c'est « l'économie du ciel » : récupérer l'eau qui tombe gratuitement sur votre toit.</p>
+      <p style="margin:10px 0 0">📞 06 45 68 83 94 · ✉️ infos@ecosky.fr</p>
+    </div>
+    <div>
+      <h4>Boutique</h4>
+      <a href="#catalogue">Toutes les cuves</a>
+      <a href="#guide">Guide de choix</a>
+      <a href="#livraison">Livraison</a>
+      <a href="#faq">Questions fréquentes</a>
+    </div>
+    <div>
+      <h4>Informations</h4>
+      <a href="/cuves/cgv.html">Conditions générales de vente</a>
+      <a href="/mentions-legales.html">Mentions légales</a>
+      <a href="/politique-confidentialite.html">Confidentialité</a>
+      <a class="retract" href="/cuves/retractation.html">↩︎ Me rétracter</a>
+    </div>
+  </div>
+  <div class="wrap legal">Skyeco est une marque de RESINE MARBRE SOL (RMS), 23 route de Corn er Hoet, 56400 Brech · SIRET 939 997 870 00018. ROTO est une marque de son fabricant. Skyeco est un revendeur indépendant.</div>
+</footer>
+
+<!-- Panier -->
+<div class="voile" id="voile" hidden></div>
+<aside class="tiroir" id="tiroir" hidden aria-label="Panier">
+  <header><h2>Votre panier</h2><button class="fermer" id="fermerPanier" type="button" aria-label="Fermer">×</button></header>
+  <div class="lignes" id="lignes"></div>
+  <div class="total" id="totalBox">
+    <div class="l"><span>Sous-total</span><span id="sousTotal">—</span></div>
+    <div class="l"><span>Livraison</span><span id="livr">Calculée à l'étape suivante</span></div>
+    <div class="l g"><span>Total TTC</span><span id="totalTTC">—</span></div>
+    <p class="note" id="noteAttente" hidden>Certains prix sont en cours de mise en ligne. Vous pouvez quand même envoyer votre panier : nous vous rappelons avec le prix exact, livraison comprise.</p>
+    <button class="btn-plein" id="commander" type="button">Commander</button>
+  </div>
+</aside>
+
+<!-- Commande -->
+<div class="modal" id="modalCmd" hidden role="dialog" aria-modal="true" aria-labelledby="titreCmd">
+  <div class="boite">
+    <button class="fermer" id="fermerCmd" type="button" aria-label="Fermer" style="position:absolute;top:14px;right:14px">×</button>
+    <h2 id="titreCmd">Livraison et coordonnées</h2>
+    <p style="margin:0;color:var(--gris)">Le prix de la livraison dépend de votre département.</p>
+    <form id="formCmd" class="champs">
+      <label>Prénom<input name="prenom" required autocomplete="given-name"></label>
+      <label>Nom<input name="nom" required autocomplete="family-name"></label>
+      <label>Email<input name="email" type="email" required autocomplete="email"></label>
+      <label>Téléphone<input name="tel" type="tel" required autocomplete="tel"></label>
+      <label class="plein">Adresse de livraison<input name="adresse" required autocomplete="street-address"></label>
+      <label>Code postal<input name="cp" required inputmode="numeric" pattern="[0-9]{5}" autocomplete="postal-code"></label>
+      <label>Ville<input name="ville" required autocomplete="address-level2"></label>
+      <label class="plein">Accès pour le camion (facultatif)<textarea name="acces" rows="2" placeholder="Ex. : chemin étroit, portail de 3 m, pas de trottoir…"></textarea></label>
+      <div class="plein">
+        <label class="case"><input type="checkbox" name="cgv" required> J'ai lu et j'accepte les <a href="/cuves/cgv.html" target="_blank" rel="noopener">conditions générales de vente</a>, dont le droit de rétractation de 14 jours et les frais de retour à ma charge.</label>
+        <div class="info-box" id="infoPaiement">💳 Le paiement en ligne s'ouvrira dès que les prix seront publiés. En attendant, votre demande nous arrive directement : nous vous rappelons sous 24 h avec le prix exact, livraison comprise.</div>
+      </div>
+      <div class="plein"><button class="btn-plein" type="submit" id="envoyerCmd">Envoyer ma commande</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* ============ Catalogue ROTO ============
+   prix : null = prix pas encore publié. Indiquer le prix TTC en euros, ex. 249.90
+   retour : estimation des frais de retour (affichée sur la fiche, obligatoire pour la transparence) */
+const SVG = {
+  deco:`<svg viewBox="0 0 100 120"><ellipse cx="50" cy="18" rx="30" ry="8" fill="#8A6A4A"/><path d="M20 18q-6 50 4 90h52q10-40 4-90" fill="#A67F58"/><path d="M22 45h56M21 80h58" stroke="#6E5238" stroke-width="5"/><rect x="72" y="92" width="14" height="6" rx="3" fill="#C9CED2"/></svg>`,
+  conique:`<svg viewBox="0 0 100 120"><path d="M24 16h52l-8 96H32z" fill="#6F7B83"/><ellipse cx="50" cy="16" rx="26" ry="7" fill="#58636A"/><path d="M27 50h46M30 84h40" stroke="#4E585E" stroke-width="4"/><rect x="66" y="96" width="14" height="6" rx="3" fill="#C9CED2"/></svg>`,
+  murale:`<svg viewBox="0 0 100 120"><rect x="28" y="10" width="44" height="104" rx="8" fill="#55626B"/><rect x="33" y="16" width="34" height="92" rx="5" fill="#66737C"/><rect x="66" y="96" width="14" height="6" rx="3" fill="#C9CED2"/></svg>`,
+  aerienne:`<svg viewBox="0 0 120 120"><rect x="18" y="14" width="84" height="96" rx="12" fill="#4C8A57"/><rect x="18" y="14" width="84" height="96" rx="12" fill="none" stroke="#3B6E44" stroke-width="3"/><path d="M18 46h84M18 78h84" stroke="#3B6E44" stroke-width="3"/><rect x="46" y="6" width="28" height="10" rx="4" fill="#3B6E44"/><rect x="96" y="96" width="14" height="6" rx="3" fill="#C9CED2"/></svg>`,
+  enterree:`<svg viewBox="0 0 160 120"><rect x="0" y="34" width="160" height="86" fill="#C9A77C" opacity=".35"/><path d="M0 34h160" stroke="#7A9A5B" stroke-width="5"/><ellipse cx="80" cy="82" rx="66" ry="28" fill="#3E4B54"/><rect x="66" y="22" width="28" height="40" rx="6" fill="#56636C"/><ellipse cx="80" cy="22" rx="16" ry="5" fill="#2D3740"/></svg>`,
+  pompe:`<svg viewBox="0 0 160 120"><rect x="0" y="34" width="160" height="86" fill="#C9A77C" opacity=".35"/><path d="M0 34h160" stroke="#7A9A5B" stroke-width="5"/><ellipse cx="80" cy="82" rx="66" ry="28" fill="#3E4B54"/><rect x="66" y="22" width="28" height="40" rx="6" fill="#56636C"/><rect x="40" y="70" width="18" height="24" rx="4" fill="#F0A23A"/><path d="M49 70V44h40" stroke="#F0A23A" stroke-width="4" fill="none"/></svg>`,
+  vehicule:`<svg viewBox="0 0 160 120"><rect x="0" y="34" width="160" height="86" fill="#9C9C9C" opacity=".35"/><path d="M0 34h160" stroke="#6B6B6B" stroke-width="6"/><ellipse cx="80" cy="84" rx="66" ry="27" fill="#1F2A31"/><rect x="66" y="24" width="28" height="36" rx="6" fill="#39454D"/><rect x="104" y="10" width="44" height="18" rx="5" fill="#2F80B9"/><circle cx="114" cy="30" r="5" fill="#222"/><circle cx="140" cy="30" r="5" fill="#222"/></svg>`,
+  potable:`<svg viewBox="0 0 160 120"><rect x="0" y="34" width="160" height="86" fill="#C9A77C" opacity=".35"/><path d="M0 34h160" stroke="#7A9A5B" stroke-width="5"/><ellipse cx="80" cy="82" rx="66" ry="28" fill="#2B5E8A"/><rect x="66" y="22" width="28" height="40" rx="6" fill="#3E77A6"/><path d="M80 66c0 0-10 11-10 17a10 10 0 0 0 20 0c0-6-10-17-10-17z" fill="#BFE0F5"/></svg>`
+};
+const L = n => n.toLocaleString('fr-FR');
+const FAMILLES = [
+  {id:'deco', cat:'jardin', nom:'Récupérateur décoratif', usage:'Le classique du jardin, sous une descente de gouttière. Aspect bois ou pierre.', visu:'deco', delai:'2 à 4 semaines',
+   carac:['Livré avec robinet','Couvercle anti-moustiques','Se branche sur la gouttière'], tailles:[50,80,120,140,150,240,350,500], retour:'≈ 40 à 90 €'},
+  {id:'conique', cat:'jardin', nom:'Tonneau conique', usage:'Forme tonneau moderne, compacte, pour terrasse ou petit jardin.', visu:'conique', delai:'2 à 4 semaines',
+   carac:['Sortie 3/4" avec robinet','Couvercle sécurisé'], tailles:[50,130,300], retour:'≈ 40 à 80 €'},
+  {id:'murale', cat:'jardin', nom:'Cuve murale rectangulaire', usage:'Plate, se pose contre un mur : idéale quand la place manque.', visu:'murale', delai:'2 à 4 semaines',
+   carac:['Faible profondeur','Robinet inclus'], tailles:[80,300], retour:'≈ 40 à 70 €'},
+  {id:'jardiniere', cat:'jardin', nom:'Cuve avec jardinière', usage:'Récupérateur surmonté d\'un bac à fleurs : utile et décoratif.', visu:'deco', delai:'2 à 4 semaines',
+   carac:['Bac de plantation intégré','Robinet inclus'], tailles:[120], retour:'≈ 50 €'},
+  {id:'aerienne', cat:'aerien', nom:'Cuve aérienne Roquadro', usage:'Cuve carrée à poser au sol, dans le jardin, le garage ou la cave. Peut se coupler.', visu:'aerienne', delai:'2 à 4 semaines', top:true,
+   carac:['Forme carrée, gain de place','Couplable en batterie','Robinet de vidange'], tailles:[250,500,750,1000], retour:'≈ 80 à 150 €'},
+  {id:'enterree', cat:'enterre', nom:'Cuve à enterrer', usage:'Grande réserve invisible pour l\'arrosage du jardin. Livrée nue ou avec filtre.', visu:'enterree', delai:'1 à 3 semaines', options:['Nue','Avec filtre'],
+   carac:['Réhausse incluse','Version avec filtre disponible','Pose en jardin (sans passage de véhicules)'], tailles:[10000,12000,16000,20000,25000,30000,40000,45000,50000,55000,60000,65000], retour:'sur devis (camion)'},
+  {id:'pompe', cat:'enterre', nom:'Cuve à enterrer avec pompe', usage:'Prête à l\'emploi pour le jardin et la maison (WC, lave-linge) : la pompe est déjà intégrée.', visu:'pompe', delai:'1 à 3 semaines',
+   carac:['Pompe immergée pré-installée','Réhausse incluse','Usage jardin + habitat'], tailles:[12000,16000,20000,25000,30000,40000,50000], retour:'sur devis (camion)'},
+  {id:'vehicule', cat:'enterre', nom:'Cuve à enterrer « passage de véhicules »', usage:'Renforcée pour être enterrée sous une allée ou un parking (jusqu\'à 40 tonnes).', visu:'vehicule', delai:'2 à 3 semaines',
+   carac:['Résiste au passage jusqu\'à 40 T','Réhausse incluse','Livrée nue'], tailles:[20000,25000,30000,35000,40000,45000,50000,55000,60000,65000], retour:'sur devis (camion)'},
+  {id:'potable', cat:'potable', nom:'Cuve eau potable ACS', usage:'Certifiée contact alimentaire (ACS) pour stocker l\'eau du réseau ou d\'un forage traité.', visu:'potable', delai:'2 à 3 semaines', top:true,
+   carac:['Certification ACS','Réhausse incluse','Livrée nue ou équipée'], tailles:[1500,2200,3000,5000,6000,8000,10000,12000,16000,30000,65000], retour:'sur devis (camion)'}
+];
+/* Prix TTC par famille et par taille — à remplir quand ROTO aura envoyé sa grille. Ex. : PRIX.aerienne = {250:129, 500:199} */
+const PRIX = {};
+const CATS = [{id:'tout',nom:'Toutes'},{id:'jardin',nom:'Récupérateurs de jardin'},{id:'aerien',nom:'Cuves aériennes'},{id:'enterre',nom:'Cuves à enterrer'},{id:'potable',nom:'Eau potable'}];
+
+const $ = id => document.getElementById(id);
+const euro = n => n.toLocaleString('fr-FR',{style:'currency',currency:'EUR'});
+const prixDe = (f,t) => (PRIX[f]||{})[t] ?? null;
+
+let filtre='tout';
+function rendreFiltres(){
+  $('filtres').innerHTML='';
+  CATS.forEach(c=>{const b=document.createElement('button');b.type='button';b.textContent=c.nom;b.setAttribute('aria-pressed',filtre===c.id);
+    b.onclick=()=>{filtre=c.id;rendreFiltres();rendreGrille()};$('filtres').appendChild(b)});
+}
+function rendreGrille(){
+  const g=$('grille');g.innerHTML='';
+  FAMILLES.filter(f=>filtre==='tout'||f.cat===filtre).forEach(f=>{
+    let taille=f.tailles[0], option=f.options?f.options[0]:null;
+    const el=document.createElement('article');el.className='prod';
+    el.innerHTML=`<div class="visu">${f.top?'<span class="badge top">Le plus demandé</span>':`<span class="badge">ROTO</span>`}${SVG[f.visu]}</div>
+      <div class="corps"><h3>${f.nom}</h3><p class="usage">${f.usage}</p>
+      <div><div style="font-size:13px;font-weight:700;color:var(--gris);margin-bottom:6px">Contenance</div><div class="tailles" data-t></div></div>
+      ${f.options?`<div class="tailles" data-o></div>`:''}
+      <ul class="carac">${f.carac.map(c=>`<li>${c}</li>`).join('')}</ul>
+      <div class="delai">Expédition sous ${f.delai} · Retour : ${f.retour}</div>
+      <div class="bas"><div class="prix" data-p></div><button class="ajout" type="button">Ajouter</button></div></div>`;
+    const maj=()=>{
+      el.querySelectorAll('[data-t] button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.v===taille));
+      el.querySelectorAll('[data-o] button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===option));
+      const p=prixDe(f.id,taille),pe=el.querySelector('[data-p]');
+      if(p==null){pe.className='prix attente';pe.innerHTML='Prix bientôt en ligne<small>Ajoutez au panier, on vous rappelle</small>'}
+      else{pe.className='prix';pe.innerHTML=euro(p)+'<small>TTC, hors livraison</small>'}
+    };
+    f.tailles.forEach(t=>{const b=document.createElement('button');b.type='button';b.dataset.v=t;b.textContent=L(t)+' L';b.onclick=()=>{taille=t;maj()};el.querySelector('[data-t]').appendChild(b)});
+    (f.options||[]).forEach(o=>{const b=document.createElement('button');b.type='button';b.dataset.v=o;b.textContent=o;b.onclick=()=>{option=o;maj()};el.querySelector('[data-o]').appendChild(b)});
+    el.querySelector('.ajout').onclick=()=>{ajouter(f,taille,option)};
+    maj();g.appendChild(el);
+  });
+}
+
+/* ============ Panier ============ */
+let panier=[];
+try{panier=JSON.parse(localStorage.getItem('skyeco-panier')||'[]')}catch(e){}
+const sauver=()=>{try{localStorage.setItem('skyeco-panier',JSON.stringify(panier))}catch(e){}};
+function ajouter(f,t,o){
+  const cle=f.id+'|'+t+'|'+(o||'');const l=panier.find(x=>x.cle===cle);
+  if(l)l.q++;else panier.push({cle,id:f.id,nom:f.nom,taille:t,option:o,q:1});
+  sauver();rendrePanier();toast(`${f.nom} ${L(t)} L ajoutée au panier`);
+}
+function rendrePanier(){
+  $('nbPanier').textContent=panier.reduce((s,x)=>s+x.q,0);
+  const box=$('lignes');box.innerHTML='';
+  if(!panier.length){box.innerHTML='<div class="vide">Votre panier est vide.<br>Choisissez une cuve dans le catalogue.</div>';$('totalBox').hidden=true;return}
+  $('totalBox').hidden=false;let st=0,manque=false;
+  panier.forEach(x=>{const f=FAMILLES.find(y=>y.id===x.id);const p=prixDe(x.id,x.taille);if(p==null)manque=true;else st+=p*x.q;
+    const d=document.createElement('div');d.className='ligne';
+    d.innerHTML=`<div class="mini">${SVG[f.visu]}</div><div class="info"><b>${x.nom}</b>${L(x.taille)} L${x.option?' · '+x.option:''}<br><span style="color:var(--gris)">${p==null?'Prix bientôt en ligne':euro(p)}</span>
+      <div class="qte"><button type="button" aria-label="Moins">−</button><span>${x.q}</span><button type="button" aria-label="Plus">+</button><button class="suppr" type="button">Retirer</button></div></div>`;
+    const [m,pl]=d.querySelectorAll('.qte button');
+    m.onclick=()=>{x.q=Math.max(1,x.q-1);sauver();rendrePanier()};pl.onclick=()=>{x.q++;sauver();rendrePanier()};
+    d.querySelector('.suppr').onclick=()=>{panier=panier.filter(y=>y!==x);sauver();rendrePanier()};
+    box.appendChild(d)});
+  $('sousTotal').textContent=manque?(st?euro(st)+' + prix à venir':'À venir'):euro(st);
+  $('totalTTC').textContent=manque?'Sur rappel':euro(st);
+  $('noteAttente').hidden=!manque;
+}
+const ouvrir=()=>{$('voile').hidden=false;$('tiroir').hidden=false};
+const fermer=()=>{$('voile').hidden=true;$('tiroir').hidden=true};
+$('ouvrirPanier').onclick=ouvrir;$('fermerPanier').onclick=fermer;$('voile').onclick=()=>{fermer();$('modalCmd').hidden=true};
+$('commander').onclick=()=>{fermer();$('voile').hidden=false;$('modalCmd').hidden=false};
+$('fermerCmd').onclick=()=>{$('modalCmd').hidden=true;$('voile').hidden=true};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){fermer();$('modalCmd').hidden=true}});
+
+$('formCmd').onsubmit=async e=>{
+  e.preventDefault();const b=$('envoyerCmd');b.disabled=true;b.textContent='Envoi…';
+  const donnees=Object.fromEntries(new FormData(e.target));
+  const lignes=panier.map(x=>`${x.q} × ${x.nom} ${L(x.taille)} L${x.option?' ('+x.option+')':''}`).join('\n');
+  const corps=`Nouvelle commande Skyeco cuves\n\n${lignes}\n\nClient : ${donnees.prenom} ${donnees.nom}\nEmail : ${donnees.email}\nTél : ${donnees.tel}\nLivraison : ${donnees.adresse}, ${donnees.cp} ${donnees.ville}\nAccès : ${donnees.acces||'—'}`;
+  /* Phase 1 : pas encore de paiement en ligne -> la commande part par email (client mail). Phase 2 : Stripe Checkout. */
+  window.location.href='mailto:infos@ecosky.fr?subject='+encodeURIComponent('Commande cuves — '+donnees.nom+' ('+donnees.cp+')')+'&body='+encodeURIComponent(corps);
+  setTimeout(()=>{b.disabled=false;b.textContent='Envoyer ma commande';toast('Merci ! Nous vous rappelons sous 24 h.')},800);
+};
+
+let tt;function toast(m){const t=$('toast');t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2600)}
+
+rendreFiltres();rendreGrille();rendrePanier();
+</script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+[
+  {"id": "mac-j08-ballon", "jour": 8,
+   "hook": ["Ton ballon d'eau chaude", "est réglé trop fort ?"],
+   "steps": [
+     ["Regarde le thermostat", "Sur beaucoup de ballons, il se règle avec une molette sous le capot."],
+     ["Vise 55 à 60 °C", "Assez chaud pour l'hygiène, sans gaspiller d'énergie à chauffer plus."],
+     ["Isole les tuyaux", "Une gaine en mousse sur les tuyaux d'eau chaude limite les pertes."]
+   ],
+   "caption": "Jour 8/30 – L'eau chaude aussi pèse sur la facture 🚿 Tu sais à combien est réglé ton ballon ? 👇 #eauchaude #economie #astuce #hiver #maison"},
+  {"id": "mac-j09-sol", "jour": 9,
+   "hook": ["Les pieds gelés", "même chauffage allumé ?"],
+   "steps": [
+     ["Le froid vient du sol", "Carrelage ou parquet sur vide sanitaire : le sol reste froid."],
+     ["Pose un tapis épais", "Là où tu restes assis, il coupe la sensation de froid."],
+     ["Chaussons et chaussettes", "Pieds au chaud, tu supportes un degré de moins sans souci."]
+   ],
+   "caption": "Jour 9/30 – Pieds froids = tu montes le chauffage pour rien 🧦 Chez toi, c'est carrelage ou parquet ? 👇 #sol #chauffage #astuce #hiver #economie"},
+  {"id": "mac-j10-cheminee", "jour": 10,
+   "hook": ["Ta cheminée ne sert pas ?", "C'est un trou vers le ciel"],
+   "steps": [
+     ["L'air chaud s'envole", "Un conduit ouvert aspire la chaleur de la pièce toute la journée."],
+     ["Ferme le registre", "S'il y a une trappe dans le conduit, garde-la fermée."],
+     ["Ou un obturateur", "Il bouche le conduit, mais retire-le toujours avant d'allumer un feu."]
+   ],
+   "caption": "Jour 10/30 – Une cheminée qu'on n'utilise pas peut refroidir tout le salon 🏠 Tu as une cheminée chez toi ? 👇 #cheminee #isolation #astuce #hiver #maison"},
+  {"id": "mac-j11-trappe", "jour": 11,
+   "hook": ["La trappe du grenier", "laisse filer ta chaleur"],
+   "steps": [
+     ["L'air chaud monte", "Une trappe mal fermée vers les combles, c'est une fuite directe."],
+     ["Pose un joint tout autour", "Pour qu'elle ferme bien à plat, sans jour."],
+     ["Isole le dessus", "Un panneau isolant collé sur la trappe, côté grenier."]
+   ],
+   "caption": "Jour 11/30 – La fuite de chaleur que personne ne regarde : la trappe du grenier 🪜 Tu en as une au plafond ? 👇 #combles #isolation #astuce #bricolage #hiver"},
+  {"id": "mac-j12-coffre", "jour": 12,
+   "hook": ["Air froid en haut", "de ta fenêtre ?"],
+   "steps": [
+     ["Vérifie le coffre", "Le caisson du volet roulant est souvent mal isolé et laisse passer l'air."],
+     ["Fais le test de la main", "Passe la main le long du coffre et de la sangle : tu sens un courant ?"],
+     ["Isole-le", "Des kits de plaques isolantes existent pour l'intérieur du coffre."]
+   ],
+   "caption": "Jour 12/30 – Le coffre de volet roulant, un vrai courant d'air caché 🪟 Tu as des volets roulants ? 👇 #voletroulant #isolation #courantdair #astuce #hiver"},
+  {"id": "mac-j13-vmc", "jour": 13,
+   "hook": ["Tes bouches de VMC", "sont pleines de poussière ?"],
+   "steps": [
+     ["Ne les bouche jamais", "Elles évacuent l'air humide : un air sec chauffe plus facilement."],
+     ["Nettoie-les", "Démonte la grille et lave-la à l'eau savonneuse, VMC coupée."],
+     ["Une à deux fois par an", "Une bouche encrassée aspire mal et l'humidité reste."]
+   ],
+   "caption": "Jour 13/30 – La VMC, on l'oublie… et pourtant 🌬️ Tu les as nettoyées quand, tes bouches ? 👇 #vmc #ventilation #astuce #maison #hiver"},
+  {"id": "mac-j14-robinet", "jour": 14,
+   "hook": ["Les chiffres sur ton radiateur", "tu sais ce qu'ils veulent dire ?"],
+   "steps": [
+     ["Ce n'est pas la puissance", "Le robinet thermostatique vise une température de pièce."],
+     ["Le 3 est souvent le bon", "Sur beaucoup de modèles, il correspond à environ 19-20 °C."],
+     ["Pas besoin de mettre à 5", "Ça ne chauffe pas plus vite, ça chauffe juste plus longtemps."]
+   ],
+   "caption": "Jour 14/30 – Mettre le radiateur à 5 ne chauffe pas plus vite 🔥 Le tien est réglé sur quel chiffre ? 👇 #radiateur #chauffage #astuce #economie #hiver"}
+]

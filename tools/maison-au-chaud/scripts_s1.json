@@ -1,0 +1,58 @@
+[
+  {"id": "mac-j01-thermostat", "jour": 1,
+   "hook": ["Ton chauffage est réglé sur combien ?", "1 degré de moins = moins cher"],
+   "steps": [
+     ["Vise 19 °C dans le salon", "C'est la température conseillée dans les pièces où tu vis la journée."],
+     ["Baisse d'un seul degré", "Chaque degré en moins, c'est environ 7 % de chauffage en moins sur la facture."],
+     ["Programme la nuit", "Quand tu dors ou que tu pars, 16 °C suffisent largement."]
+   ],
+   "caption": "Jour 1/30 – Une maison plus chaude sans exploser la facture 🔥 Ton thermostat est réglé sur combien ? 👇 #chauffage #economie #hiver #astuce #maison"},
+  {"id": "mac-j02-rideaux", "jour": 2,
+   "hook": ["Le geste gratuit à faire", "tous les soirs à 17h"],
+   "steps": [
+     ["Ferme volets et rideaux", "Dès que le soleil se couche, la chaleur part par les vitres."],
+     ["Des rideaux épais", "Un rideau qui descend jusqu'au sol fait une vraie barrière contre le froid."],
+     ["Rouvre le matin", "En journée, laisse entrer le soleil : c'est du chauffage gratuit."]
+   ],
+   "caption": "Jour 2/30 – Le geste gratuit que presque personne ne fait au bon moment 🌙 Tu fermes tes volets à quelle heure ? 👇 #chauffage #astuce #hiver #economie #maison"},
+  {"id": "mac-j03-purger", "jour": 3,
+   "hook": ["Radiateur froid en haut ?", "Il faut le purger"],
+   "steps": [
+     ["Coupe le chauffage", "Attends que le radiateur soit tiède avant de commencer."],
+     ["Ouvre la vis de purge", "Un tournevis ou une clé, un chiffon dessous : l'air s'échappe en sifflant."],
+     ["Referme dès que l'eau coule", "Puis vérifie la pression de la chaudière, souvent entre 1 et 1,5 bar."]
+   ],
+   "caption": "Jour 3/30 – Ton radiateur chauffe en bas mais pas en haut ? C'est de l'air 💨 Tu l'as déjà fait ? 👇 #radiateur #chauffage #astuce #bricolage #hiver"},
+  {"id": "mac-j04-aerer", "jour": 4,
+   "hook": ["Ouvrir les fenêtres en hiver ?", "Oui, mais pas n'importe comment"],
+   "steps": [
+     ["5 à 10 minutes, pas plus", "Grand ouvert, en courant d'air : l'air est renouvelé sans refroidir les murs."],
+     ["Coupe les radiateurs avant", "Sinon ils chauffent dehors pour rien."],
+     ["Matin et soir", "Un air sec chauffe plus vite qu'un air humide."]
+   ],
+   "caption": "Jour 4/30 – Aérer en hiver, ça fait économiser (si c'est bien fait) 🪟 Tu aères combien de temps ? 👇 #aeration #humidite #astuce #hiver #maison"},
+  {"id": "mac-j05-porte", "jour": 5,
+   "hook": ["Le courant d'air sous ta porte", "se règle en 2 minutes"],
+   "steps": [
+     ["Fais le test", "Passe la main au ras du sol devant la porte d'entrée : tu sens le froid ?"],
+     ["Pose un bas de porte", "Une brosse ou une bande adhésive qui se colle en dessous."],
+     ["Ou un boudin", "Pour les portes intérieures, un simple boudin suffit."]
+   ],
+   "caption": "Jour 5/30 – L'air froid passe sous ta porte d'entrée 🚪 Tu as fait le test ? 👇 #courantdair #isolation #astuce #hiver #bricolage"},
+  {"id": "mac-j06-reflecteur", "jour": 6,
+   "hook": ["Ton radiateur chauffe", "aussi le mur derrière"],
+   "steps": [
+     ["Le problème", "Sur un mur donnant dehors, une partie de la chaleur part dans le mur."],
+     ["Le panneau réflecteur", "Une feuille isolante posée derrière le radiateur renvoie la chaleur dans la pièce."],
+     ["Et dégage le devant", "Pas de canapé ni de linge devant : la chaleur doit circuler."]
+   ],
+   "caption": "Jour 6/30 – Ce qu'il y a derrière ton radiateur compte aussi 🔥 Ton radiateur est sur un mur extérieur ? 👇 #radiateur #chauffage #astuce #isolation #hiver"},
+  {"id": "mac-j07-chambre", "jour": 7,
+   "hook": ["Chambre trop chauffée ?", "Tu dors moins bien"],
+   "steps": [
+     ["16 à 17 °C suffisent", "C'est la température conseillée pour une chambre."],
+     ["Couette plutôt que radiateur", "Une bonne couette coûte moins cher qu'un radiateur allumé toute la nuit."],
+     ["Porte fermée", "Garde la chaleur dans les pièces de vie, pas dans le couloir."]
+   ],
+   "caption": "Jour 7/30 – Ta chambre est chauffée à combien ? 😴 #sommeil #chauffage #astuce #hiver #economie"}
+]

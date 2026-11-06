@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Signature mail – Cyrille Bon</title>
+<style>
+  body{font-family:Arial,Helvetica,sans-serif;color:#1f2a22;max-width:760px;margin:30px auto;padding:0 20px;line-height:1.55}
+  h1{font-size:22px}
+  .cadre{border:2px dashed #2e7d32;border-radius:10px;padding:22px;margin:18px 0 26px;background:#fff}
+  ol li{margin-bottom:8px}
+  button{background:#2e7d32;color:#fff;border:0;border-radius:8px;padding:11px 18px;font-weight:bold;font-size:15px;cursor:pointer}
+  #ok{color:#2e7d32;font-weight:bold;margin-left:10px}
+</style>
+</head>
+<body>
+<h1>Signature mail – Cyrille Bon</h1>
+<p>1. Clique sur le bouton pour copier la signature (ou sélectionne tout ce qui est dans le cadre et fais Ctrl+C).</p>
+<p><button id="copier" type="button">Copier la signature</button><span id="ok"></span></p>
+
+<div class="cadre" id="signature"><table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif;border-collapse:collapse">
+<tr>
+<td style="padding:0 14px 0 0;vertical-align:middle"><img src="https://skyeco.fr/signature/cyrille-bon.jpg" alt="Cyrille Bon" width="88" height="107" style="display:block;width:88px;height:107px;border-radius:8px"></td>
+<td style="padding:0 14px 0 0;vertical-align:middle;font-size:13px;color:#333333;line-height:1.5">
+<strong style="font-size:15px;color:#1f2a22">Cyrille Bon</strong><br>
+Dirigeant – EcoSky by RMS<br>
+📞 06 45 68 83 94<br>
+✉️ <a href="mailto:infos@ecosky.fr" style="color:#2e7d32;text-decoration:none">infos@ecosky.fr</a><br>
+🌐 <a href="https://www.ecoskybyrms.fr" style="color:#2e7d32;text-decoration:none">www.ecoskybyrms.fr</a><br>
+23 route de Corn er Hoet 56400 Brech
+</td>
+<td style="padding:0 0 0 14px;vertical-align:middle;border-left:1px solid #dddddd"><img src="https://skyeco.fr/signature/logo-ecosky.jpg" alt="EcoSky by RMS" width="100" height="78" style="display:block;width:100px;height:78px"></td>
+</tr>
+</table></div>
+
+<p>2. Dans Gmail sur ordinateur :</p>
+<ol>
+  <li>Clique sur la roue dentée en haut à droite, puis sur <strong>Voir tous les paramètres</strong>.</li>
+  <li>Onglet <strong>Général</strong>, descends jusqu'à <strong>Signature</strong>, clique sur <strong>Créer</strong> et nomme-la « EcoSky ».</li>
+  <li>Clique dans la grande zone de texte et colle (<strong>Ctrl+V</strong>). La photo et le logo doivent apparaître.</li>
+  <li>Juste en dessous, dans <strong>Paramètres par défaut des signatures</strong>, choisis « EcoSky » pour les nouveaux e-mails et pour les réponses (et pour l'adresse infos@ecosky.fr si elle est dans la liste).</li>
+  <li>Tout en bas de la page, clique sur <strong>Enregistrer les modifications</strong>.</li>
+</ol>
+<p>Fais ensuite un mail test vers une autre adresse pour vérifier.</p>
+
+<script>
+document.getElementById('copier').addEventListener('click', function () {
+  var zone = document.getElementById('signature');
+  var r = document.createRange(); r.selectNodeContents(zone);
+  var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  var ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) {}
+  document.getElementById('ok').textContent = ok ? 'Copiée ✓ — colle-la dans Gmail' : 'Fais Ctrl+C maintenant';
+});
+</script>
+</body>
+</html>

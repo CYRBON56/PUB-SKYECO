@@ -28,23 +28,29 @@ body{width:1080px;height:1920px;font-family:'Inter',sans-serif;color:#fff;overfl
 .handle{margin-top:36px;font-size:44px;font-weight:700;color:#ffb27f}
 """
 
-def page(body, jour):
+def page(body, badge):
     return f"<html><head><style>{CSS}</style></head><body><div class='top'>🔥 MAISON AU CHAUD</div>" \
-           f"<div class='badge'>JOUR {jour}/{SERIE_TOTAL}</div>{body}</body></html>"
+           f"<div class='badge'>{html.escape(badge)}</div>{body}</body></html>"
 
 def slides(s):
     def e(t):
         for a in (" ?", " !", " :", " °C", " %"):
             t = t.replace(a, " " + a[1:])
         return html.escape(t)
-    out = [page(f"<div class='center'><div class='h1'>{e(s['hook'][0])}</div><div class='h2'>{e(s['hook'][1])}</div></div>", s['jour'])]
+    # Champ optionnel "label" (ex. "TROUVAILLE N°3") : remplace le badge "JOUR X/30" et la phrase de fin.
+    badge = s['label'] if s.get('label') else f"JOUR {s['jour']}/{SERIE_TOTAL}"
+    out = [page(f"<div class='center'><div class='h1'>{e(s['hook'][0])}</div><div class='h2'>{e(s['hook'][1])}</div></div>", badge)]
     for i, (t, d) in enumerate(s['steps'], 1):
         dots = "".join("<b>●</b>" if k == i else "●" for k in range(1, 4))
         out.append(page(f"<div class='center'><div class='card'><div class='num'>{i}</div><div class='t'>{e(t)}</div>"
-                        f"<div class='d'>{e(d)}</div></div></div><div class='dots'>{dots}</div>", s['jour']))
-    nxt = "Demain : jour %d" % (s['jour'] + 1) if s['jour'] < SERIE_TOTAL else "Merci d'avoir suivi !"
-    out.append(page(f"<div class='center'><div class='h1'>{e(nxt)}</div><div class='h2'>Abonne-toi pour ne pas le rater</div>"
-                    f"<div class='btn'>S'abonner</div><div class='handle'>@maisonauchaud3</div></div>", s['jour']))
+                        f"<div class='d'>{e(d)}</div></div></div><div class='dots'>{dots}</div>", badge))
+    if s.get('label'):
+        nxt, sub = "Abonne-toi :", "une trouvaille anti-froid chaque jour"
+    else:
+        nxt = "Demain : jour %d" % (s['jour'] + 1) if s['jour'] < SERIE_TOTAL else "Merci d'avoir suivi !"
+        sub = "Abonne-toi pour ne pas le rater"
+    out.append(page(f"<div class='center'><div class='h1'>{e(nxt)}</div><div class='h2'>{e(sub)}</div>"
+                    f"<div class='btn'>S'abonner</div><div class='handle'>@maisonauchaud3</div></div>", badge))
     return out
 
 DUR = [3.5, 4.0, 4.0, 4.0, 4.5]  # secondes par écran

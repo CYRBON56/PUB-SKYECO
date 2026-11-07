@@ -1,0 +1,83 @@
+[
+  {"id": "mac-t01-top3", "label": "TROUVAILLE N°1",
+   "title": "Trouvaille n°1 – 3 objets anti-froid à petit prix",
+   "hook": ["3 trouvailles anti-froid", "à petit prix"],
+   "steps": [
+     ["Le boudin de porte", "Posé au pied d'une porte, il bloque l'air froid qui passe dessous."],
+     ["La bouillotte", "Glissée dans le lit 10 minutes avant, elle réchauffe les draps sans radiateur."],
+     ["Le thermo-hygromètre", "Il affiche température et humidité : tu sais enfin si ton salon est vraiment à 19 °C."]
+   ],
+   "caption": "Trouvaille n°1 – 3 objets anti-froid à petit prix 🧦 Lequel tu as déjà chez toi ? 👇 #trouvaille #hiver #astuce #maison #froid"},
+  {"id": "mac-t02-minichauffage", "label": "TROUVAILLE N°2",
+   "title": "Trouvaille n°2 – Le mini-chauffage des pubs",
+   "hook": ["Le mini-chauffage des pubs", "ça chauffe vraiment ?"],
+   "steps": [
+     ["Ce que c'est", "Un petit radiateur électrique qui se branche directement dans la prise."],
+     ["Pas de magie", "Tous les chauffages d'appoint électriques ont le même rendement, petit ou grand."],
+     ["Le verdict", "Utile pour un petit coin, pas pour chauffer une pièce : méfie-toi des promesses."]
+   ],
+   "caption": "Trouvaille n°2 – Vrai ou arnaque : le mini-chauffage qui se branche dans la prise 🔌 Tu l'as déjà vu passer dans ton fil ? 👇 #trouvaille #hiver #vraioufaux #chauffage #astuce"},
+  {"id": "mac-t03-rideau-thermique", "label": "TROUVAILLE N°3",
+   "title": "Trouvaille n°3 – Le rideau thermique",
+   "hook": ["Arrête de grelotter", "près de ta fenêtre"],
+   "steps": [
+     ["Le rideau thermique", "Un rideau doublé et épais, fait pour couper le froid de la vitre."],
+     ["Avant", "Un voilage fin : le froid de la fenêtre se sent jusqu'au canapé."],
+     ["Après", "Tiré le soir, du haut jusqu'au sol, il fait écran entre la vitre et la pièce."]
+   ],
+   "caption": "Trouvaille n°3 – Le rideau thermique, avant / après 🪟 Chez toi, plutôt voilage ou gros rideaux ? 👇 #trouvaille #hiver #rideau #isolation #maison"},
+  {"id": "mac-t04-chaussons", "label": "TROUVAILLE N°4",
+   "title": "Trouvaille n°4 – Les chaussons chauffants",
+   "hook": ["Pieds gelés devant la télé ?", "Regarde ça"],
+   "steps": [
+     ["Les chaussons chauffants", "Des chaussons avec une petite résistance, rechargeables ou branchés en USB."],
+     ["Avant", "Pieds froids : on monte le chauffage de toute la maison."],
+     ["Après", "Pieds au chaud, on supporte bien mieux 19 °C dans le salon."]
+   ],
+   "caption": "Trouvaille n°4 – Les chaussons chauffants, gadget ou vraie trouvaille ? 🧦 Tu as toujours les pieds froids ? 👇 #trouvaille #hiver #chaussons #froid #cocooning"},
+  {"id": "mac-t05-absorbeur", "label": "TROUVAILLE N°5",
+   "title": "Trouvaille n°5 – Les absorbeurs d'humidité",
+   "hook": ["Les boîtes anti-humidité", "ça marche vraiment ?"],
+   "steps": [
+     ["Ce que c'est", "Un bac avec des cristaux qui captent l'eau de l'air et la gardent au fond."],
+     ["Là où ça marche", "Dans un petit espace fermé : armoire, placard, cave, voiture."],
+     ["Là où ça ne suffit pas", "Pour une pièce entière très humide, il faut un déshumidificateur électrique."]
+   ],
+   "caption": "Trouvaille n°5 – Vrai ou arnaque : les absorbeurs d'humidité 💧 Tu en as un chez toi ? 👇 #trouvaille #hiver #humidite #vraioufaux #maison"},
+  {"id": "mac-t06-joint-porte", "label": "TROUVAILLE N°6",
+   "title": "Trouvaille n°6 – Le joint de porte adhésif",
+   "hook": ["Ta porte d'entrée", "siffle quand il vente ?"],
+   "steps": [
+     ["Le joint adhésif", "Une bande souple qui se colle dans le cadre, tout autour de la porte."],
+     ["Avant", "Un jour sur le côté : l'air froid entre même porte fermée."],
+     ["Après", "La porte vient s'écraser sur le joint : plus de filet d'air."]
+   ],
+   "caption": "Trouvaille n°6 – Le joint de porte adhésif, avant / après 🚪 Ta porte laisse passer l'air ? 👇 #trouvaille #hiver #isolation #courantdair #bricolage"},
+  {"id": "mac-t07-rideau-porte", "label": "TROUVAILLE N°7",
+   "title": "Trouvaille n°7 – Le rideau de porte isolant",
+   "hook": ["L'entrée glaciale", "qui refroidit tout"],
+   "steps": [
+     ["Le rideau de porte", "Un rideau épais posé devant la porte d'entrée ou l'escalier."],
+     ["Avant", "Chaque fois qu'on ouvre, l'air froid file jusqu'au salon."],
+     ["Après", "Le rideau fait sas : l'air froid reste dans l'entrée."]
+   ],
+   "caption": "Trouvaille n°7 – Le rideau de porte isolant, avant / après 🏠 Ta porte d'entrée donne directement dans le salon ? 👇 #trouvaille #hiver #isolation #maison #astuce"},
+  {"id": "mac-t08-plaid", "label": "TROUVAILLE N°8",
+   "title": "Trouvaille n°8 – Le plaid chauffant",
+   "hook": ["Le plaid chauffant", "vraie trouvaille ou gadget ?"],
+   "steps": [
+     ["Le principe", "Il chauffe ton corps directement, pas l'air de toute la pièce."],
+     ["Le bon usage", "Sur le canapé le soir, plutôt que de monter le thermostat."],
+     ["La prudence", "Ne le plie pas allumé et choisis un modèle avec arrêt automatique."]
+   ],
+   "caption": "Trouvaille n°8 – Vrai ou arnaque : le plaid chauffant 🛋️ Team plaid chauffant ou team gros pull ? 👇 #trouvaille #hiver #plaid #cocooning #froid"},
+  {"id": "mac-t09-petit-budget", "label": "TROUVAILLE N°9",
+   "title": "Trouvaille n°9 – Mon kit anti-froid petit budget",
+   "hook": ["Petit budget ?", "J'achète ces 3 trucs"],
+   "steps": [
+     ["Un bas de porte", "Le courant d'air sous la porte d'entrée, c'est le premier à régler."],
+     ["Des chaussettes thermiques", "Pieds au chaud, tout le corps a moins froid."],
+     ["Un plaid épais", "Sur le canapé le soir, plutôt que de monter le chauffage."]
+   ],
+   "caption": "Trouvaille n°9 – Petit budget ? Les 3 premiers trucs que j'achèterais pour avoir moins froid 💸 Et toi, tu commencerais par quoi ? 👇 #trouvaille #hiver #petitbudget #astuce #froid"}
+]

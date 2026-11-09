@@ -433,6 +433,16 @@
             <div class="field">
               <label for="telephone">Téléphone</label>
               <input id="telephone" name="telephone" type="tel" required>
+              <button type="button" class="btn" id="btnEnvoyerCode" style="margin-top:8px; padding:8px 14px; font-size:0.85rem;">Recevoir un code par SMS</button>
+              <div id="champCode" style="display:none; margin-top:8px;">
+                <label for="codeVerif">Code reçu par SMS</label>
+                <div style="display:flex; gap:8px;">
+                  <input id="codeVerif" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" style="flex:1;">
+                  <button type="button" class="btn" id="btnVerifierCode" style="padding:8px 14px; font-size:0.85rem;">Valider</button>
+                </div>
+              </div>
+              <p id="statutVerif" style="display:none; margin-top:6px; font-size:0.85rem; color:var(--sauge); font-weight:600;">✓ Numéro vérifié</p>
+              <p id="erreurVerif" style="display:none; margin-top:6px; font-size:0.85rem; color:#b3261e;"></p>
             </div>
             <div class="field">
               <label for="email">Email</label>
@@ -742,11 +752,73 @@
   elHauteur.value = 1486;
   calculer();
 
+  // ---- Vérification du téléphone par SMS (Twilio Verify, mêmes API que la page résine) ----
+  let telephoneVerifie = false;
+  let telephoneVerifieValeur = '';
+  const elTel = document.getElementById('telephone');
+  const elErreurVerif = document.getElementById('erreurVerif');
+  function erreurVerif(t){ elErreurVerif.textContent = t; elErreurVerif.style.display = t ? 'block' : 'none'; }
+
+  elTel.addEventListener('input', () => {
+    if (telephoneVerifie && elTel.value.trim() !== telephoneVerifieValeur) {
+      telephoneVerifie = false;
+      document.getElementById('statutVerif').style.display = 'none';
+      document.getElementById('btnEnvoyerCode').style.display = '';
+    }
+  });
+
+  document.getElementById('btnEnvoyerCode').addEventListener('click', async () => {
+    erreurVerif('');
+    const telephone = elTel.value.trim();
+    if (!telephone) { erreurVerif('Merci de renseigner votre numéro de téléphone.'); return; }
+    const b = document.getElementById('btnEnvoyerCode');
+    b.disabled = true; b.textContent = 'Envoi…';
+    try {
+      const r = await fetch('/api/verify-send-code', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telephone })
+      });
+      const d = await r.json();
+      if (!d.success) erreurVerif(d.error || "Impossible d'envoyer le code.");
+      else { document.getElementById('champCode').style.display = 'block'; document.getElementById('codeVerif').focus(); }
+    } catch (_) { erreurVerif('Erreur réseau — réessayez.'); }
+    b.disabled = false; b.textContent = 'Renvoyer un code';
+  });
+
+  document.getElementById('btnVerifierCode').addEventListener('click', async () => {
+    erreurVerif('');
+    const telephone = elTel.value.trim();
+    const code = document.getElementById('codeVerif').value.trim();
+    if (!code) { erreurVerif('Saisissez le code reçu par SMS.'); return; }
+    const b = document.getElementById('btnVerifierCode');
+    b.disabled = true;
+    try {
+      const r = await fetch('/api/verify-check-code', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telephone, code })
+      });
+      const d = await r.json();
+      if (d.success && d.verified) {
+        telephoneVerifie = true; telephoneVerifieValeur = telephone;
+        document.getElementById('statutVerif').style.display = 'block';
+        document.getElementById('champCode').style.display = 'none';
+        document.getElementById('btnEnvoyerCode').style.display = 'none';
+      } else erreurVerif(d.error || 'Code incorrect.');
+    } catch (_) { erreurVerif('Erreur réseau — réessayez.'); }
+    b.disabled = false;
+  });
+
   document.getElementById('formPortail').addEventListener('submit', async function (e) {
     e.preventDefault();
     const btn = document.getElementById('btnEnvoyer');
     const msg = document.getElementById('formMsg');
     const f = e.target;
+
+    if (!telephoneVerifie) {
+      erreurVerif('Merci de vérifier votre numéro : cliquez sur « Recevoir un code par SMS » puis saisissez le code.');
+      elTel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
 
     const prenom = f.prenom.value.trim();
     const nom = f.nom.value.trim();

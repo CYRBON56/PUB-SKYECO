@@ -318,8 +318,8 @@
   <!-- CONFIGURATEUR + FORMULAIRE -->
   <section class="wrap" id="devis-portail" style="padding: 80px 0 100px;">
     <p class="eyebrow">Votre projet de portail</p>
-    <h2 style="margin-top:16px; max-width:26ch;">Configurez votre portail et obtenez un tarif indicatif.</h2>
-    <p class="lead" style="margin-top:16px;">Sélectionnez vos dimensions et options ci-dessous : le tarif s'actualise en direct, à partir de nos grilles fournisseur. Le prix ferme est confirmé après relevé de côtes sur place.</p>
+    <h2 style="margin-top:16px; max-width:26ch;">Configurez votre portail et voyez tout de suite son ordre de prix.</h2>
+    <p class="lead" style="margin-top:16px;">Sélectionnez vos dimensions et options : une fourchette de prix s'affiche en direct, pose comprise. Laissez vos coordonnées pour obtenir le prix exact et son détail ligne par ligne. Le prix ferme est confirmé après relevé de côtes sur place.</p>
 
     <div id="configLayout" style="margin-top:44px; display:grid; grid-template-columns: 1.15fr 0.85fr; gap:56px; align-items:start;">
 
@@ -448,7 +448,7 @@
             </div>
           </div>
 
-          <button type="submit" class="btn" id="btnEnvoyer" style="align-self:flex-start; margin-top:22px;">Envoyer ma demande</button>
+          <button type="submit" class="btn" id="btnEnvoyer" style="align-self:flex-start; margin-top:22px;">Voir le détail de mon prix</button>
           <p id="formMsg" style="font-size:0.85rem; color:var(--ardoise-2); min-height:1.2em; margin-top:14px;">Réponse sous 48h. Tarif indicatif avant relevé de côtes — le prix ferme est confirmé après visite technique.</p>
         </form>
       </div>
@@ -706,8 +706,13 @@
     const tauxTVA = neuf ? 0.20 : 0.10;
     const ttcTotal = htTotal * (1 + tauxTVA);
 
-    elPrixTTC.textContent = fmtEUR(ttcTotal) + ' TTC';
-    elPrixDetail.innerHTML = `Pose comprise. TVA ${Math.round(tauxTVA*100)} % incluse (soit ${fmtEUR(htTotal)} HT).`;
+    // Fourchette publique : le prix exact et le détail ligne par ligne ne sont
+    // donnés qu'après envoi du formulaire (affichés sur /merci-portail.html).
+    const bas = Math.floor(ttcTotal * 0.92 / 100) * 100;
+    const haut = Math.ceil(ttcTotal * 1.08 / 100) * 100;
+    const fmtRond = v => v.toLocaleString('fr-FR', {maximumFractionDigits:0}) + ' €';
+    elPrixTTC.textContent = 'Entre ' + fmtRond(bas) + ' et ' + fmtRond(haut) + ' TTC';
+    elPrixDetail.innerHTML = `Pose comprise, TVA ${Math.round(tauxTVA*100)} % incluse.<br><strong>Recevez votre prix exact et le détail ligne par ligne</strong> en remplissant vos coordonnées ci-dessous — gratuit et sans engagement.`;
 
     return { htProduit, htPortillon, htOptions, htPeinture, htTotal, tauxTVA, ttcTotal, opts };
   }
@@ -793,11 +798,30 @@
       }
       f.style.display = 'none';
       msg.style.color = 'var(--sauge)';
-      msg.textContent = '✓ Merci ! Votre demande a bien été reçue. Un conseiller vous recontacte sous 48h.';
+      msg.textContent = '✓ Merci ! Votre demande a bien été reçue. Affichage du détail de votre prix…';
+      // Détail du prix transmis à la page de remerciement (affiché seulement après envoi).
+      try {
+        if (calc) {
+          const lignes = [[produitCourant().label + ' — ' + elStyle.value + ', ' + fmtM(Number(elLargeur.value)) + ' × ' + fmtM(Number(elHauteur.value)), calc.htProduit]];
+          if (calc.htPortillon) lignes.push(['Portillon piéton assorti', calc.htPortillon]);
+          calc.opts.forEach(o => lignes.push([o[0], o[1]]));
+          if (calc.htPeinture) lignes.push(['Teinte RAL spéciale', calc.htPeinture]);
+          lignes.push(['Pose par nos équipes', POSE_HT]);
+          sessionStorage.setItem('detailPortail', JSON.stringify({
+            lignes: lignes.map(l => [l[0], fmtEUR(l[1]) + ' HT']),
+            ht: fmtEUR(calc.htTotal),
+            tva: Math.round(calc.tauxTVA * 100) + ' %',
+            montantTva: fmtEUR(calc.ttcTotal - calc.htTotal),
+            ttc: fmtEUR(calc.ttcTotal)
+          }));
+        } else {
+          sessionStorage.removeItem('detailPortail');
+        }
+      } catch (_) {}
       setTimeout(() => { window.location.href = '/merci-portail.html'; }, 800);
     } catch (err) {
       btn.disabled = false;
-      btn.textContent = 'Envoyer ma demande';
+      btn.textContent = 'Voir le détail de mon prix';
       msg.style.color = '#b04242';
       msg.textContent = "Une erreur est survenue. Vous pouvez aussi nous écrire directement à infos@ecosky.fr ou appeler au 06 45 68 83 94.";
     }

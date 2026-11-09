@@ -17,15 +17,47 @@ main{max-width:560px;text-align:center}
 .ok{font-size:3rem;color:var(--sauge);margin:0}
 h1{font-family:Georgia,"Times New Roman",serif;color:var(--nuit);font-size:2rem;line-height:1.2;margin:8px 0 14px}
 a{color:var(--sauge);font-weight:600}
+.detail{text-align:left;margin:24px 0;padding:20px 22px;border:1px solid rgba(95,122,97,.35);border-radius:12px}
+.detail h2{font-family:Georgia,"Times New Roman",serif;color:var(--nuit);font-size:1.25rem;margin:0 0 12px}
+.detail table{width:100%;border-collapse:collapse;font-size:.92rem}
+.detail td{padding:6px 0;border-bottom:1px solid rgba(127,127,127,.2);vertical-align:top}
+.detail td:last-child{text-align:right;white-space:nowrap;padding-left:12px}
+.detail tr.total td{font-weight:700;font-size:1.05rem;border-bottom:none;padding-top:10px}
+.detail .mention{font-size:.8rem;opacity:.8;margin:12px 0 0}
 </style>
 </head>
 <body>
 <main>
   <p class="ok" aria-hidden="true">✓</p>
   <h1>Merci, votre demande est bien reçue</h1>
+  <div id="detailPrix" class="detail" hidden>
+    <h2>Le détail de votre prix</h2>
+    <table id="detailTable"></table>
+    <p class="mention">Prix indicatif établi à partir de nos grilles fournisseur, pose comprise. Le prix ferme est confirmé après relevé de côtes sur place.</p>
+  </div>
   <p>Un conseiller vous recontacte sous 48 h pour préciser votre projet de portail et vous envoyer votre devis.</p>
   <p>Une question d'ici là ? Appelez le <a href="tel:+33645688394">06 45 68 83 94</a> ou écrivez à <a href="mailto:infos@ecosky.fr">infos@ecosky.fr</a>.</p>
   <p><a href="/devis-portails.html">Retour à la page portails</a></p>
 </main>
+<script>
+(function(){
+  try {
+    var d = JSON.parse(sessionStorage.getItem('detailPortail') || 'null');
+    if (!d) return;
+    var t = document.getElementById('detailTable');
+    function ligne(a, b, cls){
+      var tr = document.createElement('tr'); if (cls) tr.className = cls;
+      var c1 = document.createElement('td'); c1.textContent = a;
+      var c2 = document.createElement('td'); c2.textContent = b;
+      tr.appendChild(c1); tr.appendChild(c2); t.appendChild(tr);
+    }
+    d.lignes.forEach(function(l){ ligne(l[0], l[1]); });
+    ligne('Total HT', d.ht);
+    ligne('TVA ' + d.tva, d.montantTva);
+    ligne('Total TTC', d.ttc, 'total');
+    document.getElementById('detailPrix').hidden = false;
+  } catch (e) {}
+})();
+</script>
 </body>
 </html>

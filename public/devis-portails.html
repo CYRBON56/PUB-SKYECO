@@ -867,7 +867,18 @@
           telephone: telephone,
           email: email || null,
           telephoneVerifie: true,
-          reponses: { adresse: adresse, message: message, produit: produitCourant().label, recap: recap },
+          reponses: { adresse: adresse, message: message, produit: produitCourant().label, recap: recap,
+            // Estimation Pennylane (créée côté serveur par un déclencheur Supabase) : lignes chiffrées HT
+            pennylane: calc ? {
+              titre: 'Portail ' + produitCourant().label,
+              tva: document.getElementById('age_neuf').checked ? 'FR_200' : 'FR_100',
+              lignes: [[produitCourant().label + ' – ' + elStyle.value + ', ' + fmtM(Number(elLargeur.value)) + ' × ' + fmtM(Number(elHauteur.value)) + (elLame ? ', ' + elLame.options[elLame.selectedIndex].text : ''), calc.htProduit]]
+                .concat(calc.htPortillon ? [['Portillon piéton assorti', calc.htPortillon]] : [])
+                .concat(calc.opts.map(o => [o[0], o[1]]))
+                .concat(calc.htPeinture ? [['Teinte RAL spéciale', calc.htPeinture]] : [])
+                .concat([['Pose par nos équipes', POSE_HT]])
+                .map(l => ({ label: l[0], prix_ht: Math.round(Number(l[1]) * 100) / 100 }))
+            } : null },
           recap: recap,
           estimationTexte: calc ? `Estimation indicative : ${fmtEUR(calc.ttcTotal)} TTC (pose incluse, hors relevé de côtes définitif).` : null
         })

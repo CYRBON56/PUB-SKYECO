@@ -56,6 +56,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--navy2)}
 .chips{padding:12px;display:flex;flex-wrap:wrap;gap:8px;border-top:1px solid var(--line)}
 .chip{border:1.5px solid var(--navy2);color:var(--navy2);background:#fff;border-radius:99px;padding:8px 13px;font-weight:600;font-size:14px;cursor:pointer}
 .chip.sel{background:var(--navy2);color:#fff}
+.stk{width:100%;border-collapse:collapse;font-size:14px}.stk td,.stk th{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left}.stk th{font-size:12px;color:var(--muted);text-transform:uppercase}.stk tr.low td{background:#FEF2F2}.stk input{padding:6px 8px;width:64px}
+.mv{display:flex;gap:4px;align-items:center}
 .rec{display:inline-block;background:var(--yellow);color:var(--navy);font-size:11px;font-weight:800;padding:1px 7px;border-radius:99px;margin-left:5px}
 .reco{background:#FFFBEB;border:2px solid var(--yellow);border-radius:16px;padding:16px;margin-bottom:14px}
 .reco a.btn{display:inline-block;text-decoration:none;margin-top:10px}
@@ -134,8 +136,9 @@ const KEY='map_state_v1';
 const PENNYLANE_URL='https://www.pennylane.com/fr/tarifs'; // à remplacer par le lien d'affiliation
 const FREE_SIRET=['93999787000018']; // comptes offerts (RMS EcoSky, client test)
 const isFree=()=>FREE_SIRET.includes((S.co&&S.co.siret)||'');
-let S={step:0,co:{},bot:{},conn:{},tasks:{},vol:{devis:8,factures:6,rdv:12,posts:3},tier:null,started:null,used:0,feed:[]};
+let S={products:[],moves:[],docs:[],step:0,co:{},bot:{},conn:{},tasks:{},vol:{devis:8,factures:6,rdv:12,posts:3},tier:null,started:null,used:0,feed:[]};
 try{const s=localStorage.getItem(KEY);if(s)S=Object.assign(S,JSON.parse(s))}catch(e){}
+S.products=S.products||[];S.moves=S.moves||[];S.docs=S.docs||[];
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -362,18 +365,21 @@ function vDash(){
  const pct=Math.min(100,Math.round(S.used/T.q*100));
  const nconn=CONN.filter(c=>S.conn[c.id]).length;
  $('app').innerHTML=`<h1>Bonjour ${esc(S.co.first)} 👋</h1><p class="sub">${esc(S.co.name)} · forfait ${T.n} · ${isFree()?'<b style="color:#166534">compte offert</b>':`essai gratuit : ${left} jour${left>1?'s':''} restant${left>1?'s':''}`}</p>
- <div class="tabs">${[['home','Accueil'],['chat','Mon assistant'],['conn','Connexions'],['tasks','Tâches & forfait']].map(([k,l])=>`<button class="${tab===k?'on':''}" onclick="tab='${k}';vDash()">${l}</button>`).join('')}</div>
+ <div class="tabs">${[['home','Accueil'],['chat','Mon assistant'],['stock','Produits & stock'],['conn','Connexions'],['tasks','Tâches & forfait']].map(([k,l])=>`<button class="${tab===k?'on':''}" onclick="tab='${k}';vDash()">${l}</button>`).join('')}</div>
  <div id="pane"></div>`;
  const p=$('pane');
  if(tab==='home'){
   p.innerHTML=`<div class="stats"><div class="stat"><b>${S.used}/${T.q}</b><small>actions ce mois</small><div class="meter"><div class="${pct>=80?'hot':''}" style="width:${Math.max(2,pct)}%"></div></div></div><div class="stat"><b>${nconn}/${CONN.length}</b><small>outils connectés</small></div><div class="stat"><b>${TASKS.filter(t=>S.tasks[t.id]&&t.tier<=S.tier).length}</b><small>tâches actives</small></div></div>
   ${pct>=80?'<div class="card" style="margin-top:14px;background:#FFFBEB;border-color:#F5B700"><b>⚠️ Vous avez utilisé '+pct+' % de vos actions.</b><div class="hint">Passez au forfait supérieur ou attendez le mois prochain.</div></div>':''}
+  ${lowStock().length?`<div class="card" style="margin-top:14px;background:#FEF2F2;border-color:#FCA5A5"><b>📦 Stock bas</b><div class="hint">${lowStock().map(p=>esc(p.code)+' – '+esc(p.name)+' : '+p.stock+' '+esc(p.unit)).join('<br>')}</div><button class="btn sm dark" style="margin-top:8px" onclick="tab='stock';vDash()">Voir le stock</button></div>`:''}
   <div class="card" style="margin-top:14px"><b>Dernières actions</b><div class="feed">${S.feed.slice().reverse().map(f=>`<div><span>${f[0]}</span><span>${esc(f[1])}</span></div>`).join('')}</div></div>
   <button class="btn full" onclick="tab='chat';vDash()">🎙️ Dicter un devis</button>`;
  }else if(tab==='chat'){
-  p.innerHTML=`<div class="chat"><div class="msgs" id="msgs"></div><div class="chatin"><input id="q" placeholder="Ex. Devis pour M. Durand à Auray, 40 m² de résine à 85 € le m²"><button class="btn sm" onclick="send()">Envoyer</button></div></div><p class="hint">Essayez : « Devis pour Mme Le Gall à Vannes, terrasse 30 m² à 90 € le m², et 500 € de préparation ».</p>`;
+  p.innerHTML=`<div class="chat"><div class="msgs" id="msgs"></div><div class="chatin"><input id="q" placeholder="Ex. Devis pour M. Durand à Auray, 40 m² de résine à 85 € le m²"><button class="btn sm" onclick="send()">Envoyer</button></div></div><p class="hint">Essayez : « Devis pour Mme Le Gall à Vannes, terrasse 30 m² à 90 € le m², et 500 € de préparation ». Avec vos produits : « Devis pour M. Durand à Auray, 12 RES-EPDM-25 ».</p>`;
   add('Je vous écoute. Dictez-moi un devis, ou demandez-moi de relancer un client.','a');
   $('q').onkeydown=e=>{if(e.key==='Enter')send()};
+ }else if(tab==='stock'){
+  vStock(p);
  }else if(tab==='conn'){
   S.step=5;vConnInto(p);
  }else{
@@ -384,10 +390,47 @@ function vConnInto(p){p.innerHTML=`<div class="card">${CONN.map(c=>`<div class="
 // recharger le bon écran après connexion depuis le tableau de bord
 const _doConn=doConn;doConn=async function(id){await _doConn(id);if(S.step===5){tab='conn';vDash()}};
 
+
+/* ---------- produits & stock ---------- */
+const lowStock=()=>S.products.filter(p=>p.stock<=p.min);
+function vStock(p){
+ const rows=S.products.map((x,i)=>`<tr class="${x.stock<=x.min?'low':''}"><td><b>${esc(x.code)}</b></td><td>${esc(x.name)}<br><small class="hint">${eur(x.price)} HT / ${esc(x.unit)}</small></td><td><b>${x.stock}</b> ${esc(x.unit)}${x.stock<=x.min?'<br><small style="color:#DC2626">⚠️ seuil '+x.min+'</small>':''}</td><td><div class="mv"><input id="q${i}" type="number" min="0" value="1"><button class="btn sm" title="Entrée en stock" onclick="mvt(${i},1)">＋</button><button class="btn sm light" title="Sortie de stock" onclick="mvt(${i},-1)">－</button></div></td></tr>`).join('');
+ p.innerHTML=`<div class="card"><b>Nouveau produit</b>
+  <div class="row"><div><label>Code produit</label><input id="pc" placeholder="Ex. RES-EPDM-25"></div><div><label>Désignation</label><input id="pn" placeholder="Ex. Résine EPDM sac 25 kg"></div></div>
+  <div class="row"><div><label>Prix de vente HT (€)</label><input id="pp" type="number" min="0" step="0.01"></div><div><label>Unité</label><select id="pu">${['u','m²','ml','kg','sac','m³','h','forfait'].map(u=>`<option>${u}</option>`).join('')}</select></div></div>
+  <div class="row"><div><label>Stock initial</label><input id="ps" type="number" value="0"></div><div><label>Alerte si stock ≤</label><input id="pm" type="number" min="0" value="2"></div></div>
+  <div id="perr"></div><button class="btn full" style="margin-top:12px" onclick="addProduct()">Ajouter le produit</button></div>
+ <div class="card"><b>Mes produits (${S.products.length})</b>${S.products.length?`<div style="overflow-x:auto"><table class="stk"><tr><th>Code</th><th>Produit</th><th>Stock</th><th>Entrée / sortie</th></tr>${rows}</table></div>`:'<p class="hint">Aucun produit pour l\'instant. Ajoutez-les ici : dans vos devis dictés, il suffit ensuite de donner le code, par ex. « 12 RES-EPDM-25 ».</p>'}</div>
+ ${S.moves.length?`<div class="card"><b>Derniers mouvements</b><div class="feed">${S.moves.slice(-15).reverse().map(m=>`<div><span>${m.q>0?'📥':'📤'}</span><span>${new Date(m.d).toLocaleDateString('fr-FR')} · ${esc(m.c)} · ${m.q>0?'+':''}${m.q} · ${esc(m.r)}</span></div>`).join('')}</div></div>`:''}
+ <p class="hint">Les produits seront synchronisés avec Pennylane (même code produit) quand vous le connecterez.</p>`;
+}
+function addProduct(){
+ const c=$('pc').value.trim().toUpperCase().replace(/\s+/g,'-'),n=$('pn').value.trim(),pr=parseFloat(($('pp').value||'').replace(',','.')),st=parseFloat($('ps').value)||0,mn=parseFloat($('pm').value)||0;
+ if(!c||!n||!(pr>=0)){$('perr').innerHTML='<div class="err">Il faut un code, une désignation et un prix.</div>';return}
+ if(S.products.some(x=>x.code===c)){$('perr').innerHTML='<div class="err">Ce code existe déjà.</div>';return}
+ S.products.push({code:c,name:n,price:pr,unit:$('pu').value,stock:st,min:mn});
+ if(st)S.moves.push({d:Date.now(),c:c,q:st,r:'Stock initial'});
+ save();vDash();
+}
+function mvt(i,sign){
+ const q=Math.abs(parseFloat($('q'+i).value)||0);if(!q)return;const x=S.products[i];
+ x.stock=Math.round((x.stock+sign*q)*100)/100;S.moves.push({d:Date.now(),c:x.code,q:sign*q,r:sign>0?'Entrée manuelle':'Sortie manuelle'});
+ save();vDash();
+}
+function stockOut(lines,ref){
+ const alerts=[];
+ lines.filter(l=>l[4]).forEach(l=>{const x=S.products.find(p=>p.code===l[4]);if(!x)return;const q=parseFloat(l[1])||0;x.stock=Math.round((x.stock-q)*100)/100;S.moves.push({d:Date.now(),c:x.code,q:-q,r:ref});if(x.stock<=x.min)alerts.push(x)});
+ save();return alerts;
+}
+
 function parseDevis(t){
  const cli=(t.match(/pour\s+((?:M\.|Mme|Monsieur|Madame|M\.\s*et\s*Mme)\s+[A-ZÉÈ][\wéèêàç'-]+(?:\s+[A-ZÉÈ][\wéèêàç'-]+)?)/i)||[])[1]||'Nouveau client';
  const ville=(t.match(/(?:^|\s)à\s+([A-ZÉÈ][\wéèêàç'-]+(?:[- ][A-ZÉÈ][\wéèêàç'-]+)*)/)||[])[1]||'';
  const lines=[];
+ S.products.forEach(p=>{const c=p.code.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const r1=new RegExp('(\\d+[.,]?\\d*)\\s*(?:x|×|fois)?\\s*(?:'+c+')(?![\\w-])','i'),r2=new RegExp('(?:'+c+')\\s*(?:x|×)\\s*(\\d+[.,]?\\d*)','i');
+  let m=t.match(r1)||t.match(r2);
+  if(m){const q=parseFloat(m[1].replace(',','.'));lines.push([p.name+' ('+p.code+')',q+' '+p.unit,p.price,q*p.price,p.code]);t=t.replace(m[0],' ')}});
  const re=/(\d+[.,]?\d*)\s*(m²|m2|m|mètres?|ml|u|unités?|pièces?)?\s*(?:de\s+)?([^,.;]*?)\s*(?:à|a)\s*(\d+[.,]?\d*)\s*€?\s*(?:le|la|par|du)?\s*(m²|m2|mètre|m|unité|pièce)?/gi;
  let m;while((m=re.exec(t))){const q=parseFloat(m[1].replace(',','.')),pu=parseFloat(m[4].replace(',','.'));if(m[2]||m[5]){let ds=(m[3]||'').trim();if(!ds){const b=t.slice(0,m.index).trim().split(/[\s,]+/).pop();ds=b&&!/^(et|plus|pour)$/i.test(b)?b:'Prestation'}lines.push([ds.charAt(0).toUpperCase()+ds.slice(1),q+' '+(m[2]||m[5]),pu,q*pu])}}
  const re2=/(\d[\d\s]*[.,]?\d*)\s*€\s*(?:de|pour)\s+(?:la\s+|l'|le\s+)?([^,.;]+)/gi;
@@ -409,7 +452,12 @@ async function send(){
  box.innerHTML=`<b>Devis – ${esc(name)}</b><table>${d.lines.map(l=>`<tr><td>${esc(l[0])} <small style="color:#5D6678">(${esc(l[1])}${l[1]!=='forfait'?' × '+eur(l[2]):''})</small></td><td>${eur(l[3])}</td></tr>`).join('')}<tr><td><b>Total HT</b></td><td><b>${eur(ht)}</b></td></tr><tr><td>TVA 20 %</td><td>${eur(ht*.2)}</td></tr><tr><td><b>Total TTC</b></td><td><b>${eur(ht*1.2)}</b></td></tr></table><div style="display:flex;gap:8px;margin-top:10px"><button class="btn sm">✅ Envoyer au client</button><button class="btn sm light">✏️ Modifier</button></div>`;
  $('msgs').appendChild(box);
  const [ok,ed]=box.querySelectorAll('button');
- ok.onclick=async()=>{ok.parentElement.remove();add('Devis envoyé avec signature électronique ✓','s');log('📄','Devis envoyé : '+name+' ('+eur(ht*1.2)+' TTC)');await say("Je relancerai le client dans 7 jours s'il n'a pas signé.")};
+ ok.onclick=async()=>{ok.parentElement.remove();add('Devis envoyé avec signature électronique ✓','s');log('📄','Devis envoyé : '+name+' ('+eur(ht*1.2)+' TTC)');await say("Je relancerai le client dans 7 jours s'il n'a pas signé.");
+  const num='F-'+new Date().getFullYear()+'-'+String(S.docs.length+1).padStart(3,'0');
+  const fb=document.createElement('button');fb.className='btn sm dark';fb.style.alignSelf='flex-start';fb.textContent='🧾 Devis signé : transformer en facture';$('msgs').appendChild(fb);
+  fb.onclick=async()=>{fb.remove();S.docs.push({n:num,cli:name,lines:d.lines,ht:ht,d:Date.now()});const al=stockOut(d.lines,'Facture '+num);add('Facture '+num+' créée et envoyée ✓','s');log('🧾','Facture '+num+' : '+name);
+   const nb=d.lines.filter(l=>l[4]).length;if(nb)await say('Stock mis à jour pour '+nb+' produit'+(nb>1?'s':'')+'.');
+   for(const x of al){await say('⚠️ Stock bas : '+x.code+' – '+x.name+' ('+x.stock+' '+x.unit+' restant). Je prépare une commande fournisseur ?');log('📦','Stock bas : '+x.code)}}};
  ed.onclick=()=>{$('q').focus();say('Dites-moi ce qu\'il faut changer : une ligne, un prix, une remise ?')};
  log('📝','Brouillon de devis créé : '+name);
 }

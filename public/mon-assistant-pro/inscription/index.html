@@ -251,7 +251,7 @@ const CONN=[
  {id:'soft',ico:'🧾',name:()=>S.bot.soft==='Pennylane'?'Pennylane (offre Essentiel)':S.bot.soft&&!['Aucun logiciel','Autre','Obat','Tiime'].includes(S.bot.soft)?S.bot.soft:'Devis et factures intégrés',desc:'Créer clients, devis, factures et relances',key:true,imp:true},
  {id:'mail',ico:'📬',name:()=>'Messagerie (Gmail, Outlook, IONOS…)',desc:'Trier vos mails, alertes, réponses aux demandes',imp:true},
  {id:'cal',ico:'📅',name:()=>'Agenda (Google, Outlook)',desc:'Rendez-vous, visites, rappels'},
- {id:'bank',ico:'🏦',name:()=>'Banque (Qonto, CIC…)',desc:'Voir les paiements reçus pour arrêter les relances'},
+ {id:'bank',ico:'🏦',name:()=>'Paiement des acomptes (votre banque)',desc:'RIB et lien de paiement envoyés au client à la signature'},
  {id:'sms',ico:'💬',name:()=>'SMS et WhatsApp',desc:'Valider les devis depuis votre téléphone'},
  {id:'fb',ico:'📘',name:()=>'Facebook et Instagram',desc:'Publications, messages, publicités',tier:'Pro'},
  {id:'tt',ico:'🎵',name:()=>'TikTok',desc:'Vidéos de chantier',tier:'Pro'},
@@ -274,16 +274,35 @@ function connect(id){
  else if(id==='soft'&&['Evoliz','Axonaut','Sellsy'].includes(soft))body=`<p class="sub">Vous allez être redirigé vers ${soft} pour autoriser l'accès.</p><ol><li>Connectez-vous à votre compte ${soft}.</li><li>Cliquez sur <b>Autoriser</b>.</li></ol>`;
  else if(id==='soft')body=`<p class="sub">Facturation intégrée : je fais vos devis et factures, prêts à être synchronisés avec Pennylane quand vous l'ouvrirez. Ajoutez votre logo et vos mentions.</p><label>Mentions de bas de devis <small>(assurance décennale, conditions de paiement)</small></label><textarea id="tok" rows="3" placeholder="Ex. Assurance décennale n°… Acompte de 30 % à la commande."></textarea>`;
  else if(id==='mail')body=`<p class="sub">Choisissez votre messagerie.</p><div class="tiers" style="grid-template-columns:1fr 1fr"><div class="tier on">Gmail</div><div class="tier">Outlook</div><div class="tier">IONOS</div><div class="tier">Autre</div></div><ol><li>Connectez-vous à votre compte.</li><li>Autorisez la lecture et l'envoi de mails.</li></ol><p class="hint">Je ne supprime jamais un mail. Chaque mail envoyé en votre nom apparaît dans vos messages envoyés.</p>`;
- else if(id==='bank')body=`<p class="sub">Accès en lecture seule : je vois les paiements reçus pour savoir qui relancer. Je ne peux faire aucun virement.</p><ol><li>Choisissez votre banque.</li><li>Validez l'accès dans l'application de votre banque.</li></ol>`;
+ else if(id==='bank'){const P=S.pay||{};body=`<p class="sub">Facultatif. Quand un client signe son devis, je peux lui envoyer par mail la demande d'acompte avec votre RIB et/ou un lien pour payer en ligne.</p>
+<label>Votre banque</label><select id="pBank" onchange="bankHint()">${BANKS.map(b=>`<option ${P.bank===b?'selected':''}>${b}</option>`).join('')}</select>
+<div id="pHint" class="hint" style="background:#EEF1F8;padding:10px;border-radius:10px;margin-top:8px"></div>
+<label>IBAN <small>(pour le virement)</small></label><input id="pIban" value="${esc(P.iban)}" placeholder="FR76 …">
+<label>Lien de paiement <small>(facultatif)</small></label><input id="pLink" value="${esc(P.link)}" placeholder="https://…">
+<div class="row"><div><label>Acompte (%)</label><input id="pPct" type="number" min="1" max="100" value="${P.pct||30}"></div><div><label>Envoi</label><select id="pAuto"><option value="1" ${P.auto!==false?'selected':''}>Automatique à la signature</option><option value="0" ${P.auto===false?'selected':''}>Je valide avant</option></select></div></div>
+<p class="hint">Je ne vois ni ne touche votre compte : le client paie directement chez vous.</p><div id="pErr"></div>`;setTimeout(bankHint,0)}
  else if(id==='sms')body=`<p class="sub">Je vous enverrai les devis à valider au <b>${esc(S.co.tel)}</b>. Répondez « OK » pour envoyer, ou dictez vos modifications.</p><label>Code reçu par SMS</label><input placeholder="6 chiffres" inputmode="numeric">`;
  else body=`<p class="sub">Vous allez être redirigé pour autoriser Mon Assistant Pro à accéder à votre compte ${esc(nm)}.</p><ol><li>Connectez-vous.</li><li>Choisissez la page ou le compte à relier.</li><li>Cliquez sur <b>Autoriser</b>.</li></ol>`;
  $('modal').innerHTML=`<h3>${c.ico} ${esc(nm)}</h3>${body}<div class="demo">Version de test : la connexion réelle sera branchée ensuite.</div><div class="actions"><button class="btn light" onclick="closeM()">Annuler</button><button class="btn" onclick="doConn('${id}')">Connecter</button></div>`;
  $('ov').classList.add('on');
 }
 async function doConn(id){
+ if(id==='bank'){const iban=$('pIban').value.replace(/\s+/g,'').toUpperCase(),link=$('pLink').value.trim(),pct=parseFloat($('pPct').value);
+  if(iban&&!/^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/.test(iban)){$('pErr').innerHTML='<div class="err">IBAN invalide.</div>';return}
+  if(link&&!/^https:\/\//.test(link)){$('pErr').innerHTML='<div class="err">Le lien doit commencer par https://</div>';return}
+  if(!iban&&!link){$('pErr').innerHTML='<div class="err">Indiquez au moins un IBAN ou un lien de paiement.</div>';return}
+  S.pay={bank:$('pBank').value,iban:iban.replace(/(.{4})/g,'$1 ').trim(),link,pct:pct>0&&pct<=100?pct:30,auto:$('pAuto').value==='1'};save()}
  $('modal').innerHTML='<div class="spin"></div><p style="text-align:center" class="sub">Connexion en cours…</p>';
  await wait(1100);S.conn[id]=true;save();closeM();vConn();
 }
+const BANKS=['Qonto','CIC','Crédit Mutuel','Crédit Agricole','Banque Populaire',"Caisse d'Épargne",'BNP Paribas','Société Générale','LCL','La Banque Postale','Shine','Autre banque','Je préfère le virement seul'];
+const BANK_HINT={
+ 'Qonto':"Qonto propose des liens de paiement : créez-en un depuis votre appli Qonto et collez-le ci-dessous.",
+ 'CIC':"Le CIC propose le paiement par lien avec sa solution Monetico : demandez-la à votre conseiller, puis collez votre lien ci-dessous.",
+ 'Crédit Mutuel':"Le Crédit Mutuel propose le paiement par lien avec sa solution Monetico : demandez-la à votre conseiller, puis collez votre lien ci-dessous.",
+ 'Crédit Agricole':"Le Crédit Agricole propose l'encaissement en ligne avec Up2pay : demandez-le à votre conseiller, puis collez votre lien ci-dessous.",
+ 'Je préfère le virement seul':"Pas de lien : le client recevra seulement votre IBAN pour faire un virement."};
+function bankHint(){const b=$('pBank');if(!b)return;$('pHint').textContent=BANK_HINT[b.value]||"Demandez à votre conseiller sa solution de lien de paiement, ou créez un lien gratuit chez SumUp, Stripe ou PayPal, puis collez-le ci-dessous. Sinon, l'IBAN suffit.";}
 function closeM(){$('ov').classList.remove('on')}
 $('ov').onclick=e=>{if(e.target.id==='ov')closeM()};
 
@@ -453,7 +472,7 @@ async function send(){
  box.innerHTML=`<b>Devis – ${esc(name)}</b><table>${d.lines.map(l=>`<tr><td>${esc(l[0])} <small style="color:#5D6678">(${esc(l[1])}${l[1]!=='forfait'?' × '+eur(l[2]):''})</small></td><td>${eur(l[3])}</td></tr>`).join('')}<tr><td><b>Total HT</b></td><td><b>${eur(ht)}</b></td></tr><tr><td>TVA 20 %</td><td>${eur(ht*.2)}</td></tr><tr><td><b>Total TTC</b></td><td><b>${eur(ht*1.2)}</b></td></tr></table><div style="display:flex;gap:8px;margin-top:10px"><button class="btn sm">✅ Envoyer au client</button><button class="btn sm light">✏️ Modifier</button></div>`;
  $('msgs').appendChild(box);
  const [ok,ed]=box.querySelectorAll('button');
- ok.onclick=async()=>{ok.parentElement.remove();add('Devis envoyé avec signature électronique ✓','s');log('📄','Devis envoyé : '+name+' ('+eur(ht*1.2)+' TTC)');await say("Je relancerai le client dans 7 jours s'il n'a pas signé.");
+ ok.onclick=async()=>{ok.parentElement.remove();add('Devis envoyé avec signature électronique ✓','s');log('📄','Devis envoyé : '+name+' ('+eur(ht*1.2)+' TTC)');await say("Le client a reçu le devis par mail avec le bouton « Signer mon devis ». Je le relancerai dans 7 jours s'il n'a pas signé."+(S.pay?" Dès qu'il signe, il reçoit la demande d'acompte de "+S.pay.pct+" % ("+eur(ht*1.2*S.pay.pct/100)+")"+(S.pay.link?" avec votre lien de paiement.":" avec votre IBAN."):""));
   const num='F-'+new Date().getFullYear()+'-'+String(S.docs.length+1).padStart(3,'0');
   const fb=document.createElement('button');fb.className='btn sm dark';fb.style.alignSelf='flex-start';fb.textContent='🧾 Devis signé : transformer en facture';$('msgs').appendChild(fb);
   fb.onclick=async()=>{fb.remove();S.docs.push({n:num,cli:name,lines:d.lines,ht:ht,d:Date.now()});const al=stockOut(d.lines,'Facture '+num);add('Facture '+num+' créée et envoyée ✓','s');log('🧾','Facture '+num+' : '+name);

@@ -82,6 +82,19 @@
     <div class="vide" id="videProduits" style="display:none;">Aucun produit enregistré pour l'instant — ajoute tes prestations récurrentes pour les réutiliser dans chaque devis.</div>
   </div>
 
+  <div class="card" id="cartePaiement">
+    <h2 style="margin:0 0 6px 0;">💶 Paiement des acomptes</h2>
+    <p style="margin:0 0 12px 0;color:#555;font-size:14px;">Quand un client signe son devis, il peut recevoir automatiquement par mail la demande d'acompte, avec votre IBAN et/ou votre lien de paiement.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;">
+      <label style="font-size:13px;font-weight:600;">Banque<br><select id="payBanque" style="width:100%;padding:8px;"><option value="">—</option><option>Qonto</option><option>CIC</option><option>Crédit Mutuel</option><option>Crédit Agricole</option><option>Banque Populaire</option><option>Caisse d'Épargne</option><option>BNP Paribas</option><option>Société Générale</option><option>LCL</option><option>La Banque Postale</option><option>Shine</option><option>Autre</option></select></label>
+      <label style="font-size:13px;font-weight:600;">IBAN<br><input id="payIban" placeholder="FR76 …" style="width:100%;padding:8px;"></label>
+      <label style="font-size:13px;font-weight:600;">Lien de paiement (facultatif)<br><input id="payLien" placeholder="https://…" style="width:100%;padding:8px;"></label>
+      <label style="font-size:13px;font-weight:600;">Acompte (%)<br><input id="payPct" type="number" min="1" max="100" placeholder="30" style="width:100%;padding:8px;"></label>
+    </div>
+    <label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:14px;"><input type="checkbox" id="payAuto"> Envoyer la demande d'acompte automatiquement dès la signature</label>
+    <button class="btn btn-orange" style="margin-top:10px;" onclick="sauverPaiement()">Enregistrer</button>
+  </div>
+
   <div class="card">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
       <h2 style="margin:0;">📄 Devis &amp; factures</h2>
@@ -225,7 +238,7 @@
 
     await chargerEntreprise();
     if (leadId) await chargerLeadInfos();
-    await Promise.all([chargerProduits(), chargerDevis()]);
+    await Promise.all([chargerProduits(), chargerDevis(), chargerPaiement()]);
     afficherBanniereClient();
     proposerImportPwa();
     document.getElementById('chargement').style.display = 'none';
@@ -431,17 +444,19 @@
       const badgeStatut = d.statut === 'brouillon' ? ' <span class="badge badge-brouillon">brouillon</span>' : '';
       const badgeEnvoye = d.envoye_email_le ? ' <span class="badge" style="background:#eaf1ee;color:#1e6f4c;">📧 envoyé</span>' : '';
       const badgeSigne = d.signe_le ? ' <span class="badge" style="background:#eaf1ee;color:#1e6f4c;">✍️ signé</span>' : '';
+      const badgeAcompte = d.acompte_demande_le ? ' <span class="badge" style="background:#fff4d6;color:#8a5a00;">💶 acompte demandé</span>' : '';
       let actions = `<button class="btn btn-secondaire btn-petit" onclick="telechargerPdf('${d.id}')">Télécharger</button>`;
       if (d.client_email) actions += ` <button class="btn btn-secondaire btn-petit" onclick="envoyerParEmail('${d.id}')">📧 Email</button>`;
       if (entreprise.sms_signature_actif && d.client_telephone && !d.signe_le) actions += ` <button class="btn btn-secondaire btn-petit" onclick="envoyerPourSignature('${d.id}')">✍️ Signature SMS</button>`;
       const nbMedias = (d.medias || []).length;
       actions += ` <button class="btn btn-secondaire btn-petit" onclick="ouvrirMedias('${d.id}')">📷 Photos${nbMedias ? ' (' + nbMedias + ')' : ''}</button>`;
+      if (d.type === 'devis' && d.client_email) actions += ` <button class="btn btn-secondaire btn-petit" onclick="demanderAcompte('${d.id}')">💶 Acompte</button>`;
       if (d.type === 'devis') {
         actions += ` <button class="btn btn-secondaire btn-petit" onclick="ouvrirDevis('${d.id}')">Modifier</button>`;
         actions += ` <button class="btn btn-orange btn-petit" onclick="transformerEnFacture('${d.id}')">→ Facture</button>`;
         actions += ` <button class="btn btn-danger btn-petit" onclick="supprimerDevis('${d.id}')">Suppr.</button>`;
       }
-      tr.innerHTML = `<td>${d.numero}</td><td>${badgeType}${badgeStatut}${badgeEnvoye}${badgeSigne}</td><td>${echapper(d.client_nom || '—')}</td><td>${fmt(d.total_ttc)}</td><td class="actions-ligne">${actions}</td>`;
+      tr.innerHTML = `<td>${d.numero}</td><td>${badgeType}${badgeStatut}${badgeEnvoye}${badgeSigne}${badgeAcompte}</td><td>${echapper(d.client_nom || '—')}</td><td>${fmt(d.total_ttc)}</td><td class="actions-ligne">${actions}</td>`;
       corps.appendChild(tr);
     });
   }
@@ -698,6 +713,44 @@
       await appelerApi('devis_envoyer_email', { devisId: id, pdfBase64 });
       await chargerDevis();
       toastSimple(`✅ Envoyé par email à ${data.document.client_email}`);
+    } catch (e) {
+      alert('Erreur : ' + e.message);
+      bouton.disabled = false; bouton.textContent = texteInitial;
+    }
+  };
+
+  // ---------- Paiement des acomptes (13/11/2026) ----------
+  async function chargerPaiement() {
+    try {
+      const { parametres: p } = await appelerApi('paiement_parametres_get');
+      document.getElementById('payBanque').value = p.banque || '';
+      document.getElementById('payIban').value = p.iban || '';
+      document.getElementById('payLien').value = p.lien_paiement || '';
+      document.getElementById('payPct').value = p.acompte_pourcentage != null ? p.acompte_pourcentage : '';
+      document.getElementById('payAuto').checked = !!p.acompte_auto;
+    } catch (e) { /* carte laissée vide */ }
+  }
+  window.sauverPaiement = async function () {
+    try {
+      await appelerApi('paiement_parametres_sauver', {
+        banque: document.getElementById('payBanque').value,
+        iban: document.getElementById('payIban').value,
+        lienPaiement: document.getElementById('payLien').value.trim(),
+        acomptePourcentage: document.getElementById('payPct').value,
+        acompteAuto: document.getElementById('payAuto').checked,
+      });
+      toastSimple('✅ Paiement des acomptes enregistré');
+      chargerPaiement();
+    } catch (e) { alert('Erreur : ' + e.message); }
+  };
+  window.demanderAcompte = async function (id) {
+    const bouton = event.target;
+    const texteInitial = bouton.textContent;
+    bouton.disabled = true; bouton.textContent = 'Envoi…';
+    try {
+      const r = await appelerApi('devis_demander_acompte', { devisId: id });
+      await chargerDevis();
+      toastSimple(`✅ Demande d'acompte envoyée (${fmt(r.montant)})`);
     } catch (e) {
       alert('Erreur : ' + e.message);
       bouton.disabled = false; bouton.textContent = texteInitial;

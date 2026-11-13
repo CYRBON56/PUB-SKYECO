@@ -21,6 +21,9 @@
 //   'produits_importer_catalogue' { draftId, token, remplacer? }  -- pré-remplit skyeco_pro_produits avec le catalogue BTP (123 refs) ; remplacer:true réimporte en écrasant l'ancien import
 //   'devis_envoyer_email' { draftId, token, devisId, pdfBase64 }  -- envoie le PDF (généré côté navigateur) par email au client via Resend
 //   'devis_envoyer_sms_signature' { draftId, token, devisId }     -- envoie un SMS avec lien de signature (nécessite sms_signature_actif=true sur le compte)
+//   'paiement_parametres_get' / 'paiement_parametres_sauver' { banque, iban, lienPaiement, acomptePourcentage, acompteAuto }  -- moyens de paiement de l'acompte (13/11/2026)
+//   'devis_demander_acompte' { draftId, token, devisId }          -- envoie la demande d'acompte par mail (IBAN et/ou lien de paiement)
+//   (13/11/2026) devis_envoyer_email ajoute aussi le bouton « Signer mon devis » (même lien que le SMS)
 //   'devis_ajouter_media'  { draftId, token, devisId, fichierBase64, contentType, type? } -- ajoute une photo/vidéo de chantier (max ~3,5 Mo, limite Vercel)
 //   'devis_supprimer_media' { draftId, token, devisId, url }      -- retire une photo/vidéo de la liste (le fichier reste dans le bucket)
 //
@@ -43,6 +46,7 @@
 
 import crypto from 'crypto';
 import { CATALOGUE_BTP } from './_lib/catalogue-btp.js';
+import { envoyerDemandeAcompte, lienPaiementValide } from './_lib/acompte.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -219,7 +223,7 @@ function echapperHtml(s) {
   return String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-function emailDevisHtml({ entrepriseNom, clientNom, numero, type, totalTtc, franchiseTva }) {
+function emailDevisHtml({ entrepriseNom, clientNom, numero, type, totalTtc, franchiseTva, lienSignature }) {
   const libelle = type === 'facture' ? 'facture' : 'devis';
   const totalTxt = (Number(totalTtc) || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"></head>
@@ -230,6 +234,7 @@ function emailDevisHtml({ entrepriseNom, clientNom, numero, type, totalTtc, fran
 <tr><td style="padding:32px;font-family:Arial,sans-serif;">
 <p style="font-size:15px;line-height:23px;color:#1a1a1a;margin:0 0 16px 0;">Bonjour${clientNom ? ' ' + echapperHtml(clientNom) : ''},</p>
 <p style="font-size:15px;line-height:23px;color:#1a1a1a;margin:0 0 16px 0;">Veuillez trouver ci-joint votre ${libelle} n° ${echapperHtml(numero)}${franchiseTva ? '' : ' (Total TTC : ' + totalTxt + ')'} de la part de ${echapperHtml(entrepriseNom)}.</p>
+${lienSignature ? `<p style="margin:0 0 20px 0;"><a href="${lienSignature}" style="display:inline-block;background:#F5B700;color:#14213D;font-weight:800;text-decoration:none;padding:14px 22px;border-radius:8px;font-size:15px;">Consulter et signer mon devis</a></p>` : ''}
 <p style="font-size:13px;line-height:20px;color:#555;margin:0;">N'hésitez pas à répondre directement à cet email pour toute question.</p>
 </td></tr>
 <tr><td style="padding:16px 32px;border-top:1px solid #eee;font-family:Arial,sans-serif;">
@@ -339,7 +344,7 @@ export default async function handler(req, res) {
         const { leadId } = req.body;
         const filtreLead = leadId ? `&lead_id=eq.${leadId}` : '';
         const resp = await fetch(
-          `${SUPABASE_URL}/rest/v1/skyeco_pro_devis?draft_id=eq.${draftId}${filtreLead}&select=id,type,statut,numero,client_nom,client_email,client_telephone,total_ttc,devis_origine_id,lead_id,created_at,envoye_email_le,signe_le,medias&order=created_at.desc`,
+          `${SUPABASE_URL}/rest/v1/skyeco_pro_devis?draft_id=eq.${draftId}${filtreLead}&select=id,type,statut,numero,client_nom,client_email,client_telephone,total_ttc,devis_origine_id,lead_id,created_at,envoye_email_le,signe_le,acompte_demande_le,medias&order=created_at.desc`,
           { headers: supaHeaders() }
         );
         const documents = await resp.json();
@@ -576,18 +581,23 @@ export default async function handler(req, res) {
         const draft = draftRows[0] || {};
         const entrepriseNom = draft.entreprise || 'Votre artisan';
         const libelle = d.type === 'facture' ? 'Facture' : 'Devis';
+        // Signature par mail (13/11/2026) : même lien que le SMS de signature.
+        const avecSignature = d.type === 'devis' && !d.signe_le;
+        const tokenSignature = avecSignature ? (d.devis_token || genererTokenDevis()) : null;
+        const lienSignature = avecSignature ? `${SITE_BASE_URL}/signer-mon-devis.html?t=${tokenSignature}` : null;
 
         await envoyerEmailAvecPJ({
           to: d.client_email,
           replyTo: draft.email,
           entrepriseNom,
           sujet: `${entrepriseNom} — ${libelle} n° ${d.numero}`,
-          html: emailDevisHtml({ entrepriseNom, clientNom: d.client_nom, numero: d.numero, type: d.type, totalTtc: d.total_ttc, franchiseTva: draft.franchise_tva }),
+          html: emailDevisHtml({ entrepriseNom, clientNom: d.client_nom, numero: d.numero, type: d.type, totalTtc: d.total_ttc, franchiseTva: draft.franchise_tva, lienSignature }),
           pdfBase64,
           nomFichier: `${d.type}-${d.numero}.pdf`,
         });
 
         const patch = { envoye_email_le: new Date().toISOString() };
+        if (tokenSignature) patch.devis_token = tokenSignature;
         if (d.type === 'devis' && d.statut === 'brouillon') patch.statut = 'envoye';
         await fetch(
           `${SUPABASE_URL}/rest/v1/skyeco_pro_devis?id=eq.${devisId}`,
@@ -595,6 +605,64 @@ export default async function handler(req, res) {
         );
 
         return res.status(200).json({ success: true });
+      }
+
+      case 'paiement_parametres_get': {
+        const rows = await fetch(
+          `${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=banque,iban,lien_paiement,acompte_pourcentage,acompte_auto`,
+          { headers: supaHeaders() }
+        ).then(r => r.json());
+        return res.status(200).json({ success: true, parametres: rows[0] || {} });
+      }
+
+      case 'paiement_parametres_sauver': {
+        const { banque, iban, lienPaiement, acomptePourcentage, acompteAuto } = req.body;
+        const ibanPropre = String(iban || '').replace(/\s+/g, '').toUpperCase();
+        if (ibanPropre && !/^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/.test(ibanPropre)) {
+          return res.status(400).json({ success: false, error: 'IBAN invalide.' });
+        }
+        if (lienPaiement && !lienPaiementValide(lienPaiement)) {
+          return res.status(400).json({ success: false, error: 'Le lien de paiement doit commencer par https://' });
+        }
+        const pct = acomptePourcentage === '' || acomptePourcentage == null ? null : Number(acomptePourcentage);
+        if (pct != null && !(pct > 0 && pct <= 100)) {
+          return res.status(400).json({ success: false, error: "Pourcentage d'acompte invalide." });
+        }
+        const patch = {
+          banque: banque ? String(banque).slice(0, 60) : null,
+          iban: ibanPropre ? ibanPropre.replace(/(.{4})/g, '$1 ').trim() : null,
+          lien_paiement: lienPaiement || null,
+          acompte_pourcentage: pct,
+          acompte_auto: !!acompteAuto,
+        };
+        const r = await fetch(
+          `${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}`,
+          { method: 'PATCH', headers: supaHeaders(), body: JSON.stringify(patch) }
+        );
+        if (!r.ok) return res.status(500).json({ success: false, error: "Échec de l'enregistrement." });
+        return res.status(200).json({ success: true });
+      }
+
+      case 'devis_demander_acompte': {
+        const { devisId } = req.body;
+        if (!devisId) return res.status(400).json({ success: false, error: 'devisId manquant.' });
+        const rows = await fetch(
+          `${SUPABASE_URL}/rest/v1/skyeco_pro_devis?id=eq.${devisId}&draft_id=eq.${draftId}&select=*`,
+          { headers: supaHeaders() }
+        ).then(r => r.json());
+        if (!rows.length) return res.status(404).json({ success: false, error: 'Document introuvable.' });
+        const d = rows[0];
+        if (d.type !== 'devis') return res.status(400).json({ success: false, error: "L'acompte se demande sur un devis." });
+        const draftRows = await fetch(
+          `${SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${draftId}&select=entreprise,email,iban,lien_paiement,acompte_pourcentage`,
+          { headers: supaHeaders() }
+        ).then(r => r.json());
+        const acompte = await envoyerDemandeAcompte(d, draftRows[0] || {});
+        await fetch(
+          `${SUPABASE_URL}/rest/v1/skyeco_pro_devis?id=eq.${devisId}`,
+          { method: 'PATCH', headers: supaHeaders(), body: JSON.stringify({ acompte_demande_le: new Date().toISOString() }) }
+        );
+        return res.status(200).json({ success: true, ...acompte });
       }
 
       case 'devis_envoyer_sms_signature': {

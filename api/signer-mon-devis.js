@@ -20,6 +20,8 @@
 // Variables d'environnement requises :
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
+import { envoyerDemandeAcompte, notifierSignature } from './_lib/acompte.js';
+
 export default async function handler(req, res) {
   const supaHeaders = {
     apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
@@ -34,7 +36,7 @@ export default async function handler(req, res) {
 
   try {
     const resp = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_devis?devis_token=eq.${encodeURIComponent(token)}&select=id,draft_id,type,numero,client_nom,client_adresse,lignes,total_ht,total_tva,total_ttc,statut,signe_le,created_at`,
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_devis?devis_token=eq.${encodeURIComponent(token)}&select=id,draft_id,type,numero,client_nom,client_email,client_adresse,lignes,total_ht,total_tva,total_ttc,statut,signe_le,acompte_demande_le,created_at`,
       { headers: supaHeaders }
     );
     const rows = await resp.json();
@@ -91,7 +93,31 @@ export default async function handler(req, res) {
         throw new Error(`Échec de l'enregistrement de la signature : ${errData}`);
       }
 
-      return res.status(200).json({ success: true, signeLe: new Date().toISOString() });
+      // 13/11/2026 : demande d'acompte automatique par mail + notification de
+      // l'artisan. Ne bloque jamais la signature si l'envoi échoue.
+      let acompteEnvoye = false;
+      try {
+        const dr = await fetch(
+          `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${d.draft_id}&select=entreprise,email,iban,lien_paiement,acompte_pourcentage,acompte_auto`,
+          { headers: supaHeaders }
+        ).then(r => r.json());
+        const draft = dr[0] || {};
+        let acompte = null;
+        if (d.type === 'devis' && draft.acompte_auto && d.client_email && !d.acompte_demande_le && (draft.iban || draft.lien_paiement)) {
+          acompte = await envoyerDemandeAcompte(d, draft);
+          acompteEnvoye = true;
+          await fetch(`${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_devis?id=eq.${d.id}`, {
+            method: 'PATCH',
+            headers: { ...supaHeaders, Prefer: 'return=minimal' },
+            body: JSON.stringify({ acompte_demande_le: new Date().toISOString() }),
+          });
+        }
+        await notifierSignature(d, draft, acompte);
+      } catch (e) {
+        console.error('Acompte / notification après signature :', e);
+      }
+
+      return res.status(200).json({ success: true, signeLe: new Date().toISOString(), acompteEnvoye });
     }
 
     return res.status(405).json({ error: 'Méthode non autorisée' });

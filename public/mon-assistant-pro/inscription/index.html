@@ -128,6 +128,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--navy2)}
 <script>
 /* ---------- état ---------- */
 const KEY='map_state_v1';
+const FREE_SIRET=['93999787000018']; // comptes offerts (RMS EcoSky, client test)
+const isFree=()=>FREE_SIRET.includes((S.co&&S.co.siret)||'');
 let S={step:0,co:{},bot:{},conn:{},tasks:{},vol:{devis:8,factures:6,rdv:12,posts:3},tier:null,started:null,used:0,feed:[]};
 try{const s=localStorage.getItem(KEY);if(s)S=Object.assign(S,JSON.parse(s))}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
@@ -192,7 +194,9 @@ function signup(){
  if(g('pw').length<8&&!S.co.pwok)e.push('un mot de passe de 8 caractères');
  if(!c.cgu)e.push("l'acceptation des conditions");
  if(e.length){$('formerr').innerHTML='<div class="err">Il manque : '+e.join(', ')+'.</div>';return}
- c.pwok=true;S.co=c;go(1);
+ c.pwok=true;S.co=c;
+ if(isFree())S.free=true;
+ go(1);
 }
 
 /* ---------- 2. présentation (conversation) ---------- */
@@ -327,8 +331,9 @@ function vQuote(){
  $('app').innerHTML=`<h1>Votre tarif, ${esc(S.co.first)}</h1><p class="sub">Calculé à partir de vos réponses : ${S.vol.devis} devis, ${S.vol.factures} factures et ${S.vol.rdv} rendez-vous par mois.</p>
  <div class="tiers">${[1,2,3].map(i=>`<div class="tier ${i===t?'on':''}" onclick="S.tier=${i};save();vQuote()"><b>${TIERS[i].n}</b><span>${TIERS[i].p} €</span><small>HT/mois · ${TIERS[i].q} actions</small>${i===need?'<small style="color:#92400E;font-weight:700">Conseillé</small>':''}</div>`).join('')}</div>
  <div class="card" style="margin-top:14px">
-  <div class="big">${T.p} €<small> HT / mois</small></div>
-  <p class="hint">soit ${eur(ht+tva)} TTC · sans engagement · 14 jours gratuits</p>
+  ${isFree()?`<div class="big">0 €<small> HT / mois</small></div>
+  <p class="hint"><s>${T.p} € HT/mois</s> · <b style="color:#166534">Compte offert – ${esc(S.co.name)} (client test)</b><br>Toutes les fonctions du forfait ${T.n}, sans limite de durée.</p>`:`<div class="big">${T.p} €<small> HT / mois</small></div>
+  <p class="hint">soit ${eur(ht+tva)} TTC · sans engagement · 14 jours gratuits</p>`}
   <h2 style="margin-top:16px">Votre consommation estimée</h2>
   <div class="meter"><div class="${pct>=80?'hot':''}" style="width:${pct}%"></div></div>
   <p class="hint">≈ ${acts} actions sur ${T.q} incluses (${pct} %). Je vous préviens à 80 %, vous choisissez alors de passer au forfait du dessus ou d'attendre le mois suivant.</p>
@@ -339,9 +344,9 @@ function vQuote(){
   <tr class="tot"><td>Total actions estimées</td><td>≈ ${sel.filter(x=>x.tier<=t).reduce((s,x)=>s+x.n(S.vol),0)}</td></tr></table>
   <p class="hint" style="margin-top:8px">Une action = un devis, une facture, une relance, une publication, un résumé de mails…</p></div>
  <div class="card"><h2 style="margin-top:0">Comparé à une embauche</h2><div class="vs"><div><small>Secrétaire à mi-temps</small><b>+ de 1 000 €/mois</b><small>charges comprises, 20 h par semaine</small></div><div class="g"><small>Votre assistant ${T.n}</small><b>${T.p} €/mois</b><small>disponible 24h/24, 7j/7</small></div></div></div>
- <div class="actions"><button class="btn light" onclick="go(3)">Modifier mes tâches</button><button class="btn" onclick="startTrial(${t})">Démarrer l'essai gratuit</button></div>`;
+ <div class="actions"><button class="btn light" onclick="go(3)">Modifier mes tâches</button><button class="btn" onclick="startTrial(${t})">${isFree()?'Activer mon compte offert':"Démarrer l'essai gratuit"}</button></div>`;
 }
-function startTrial(t){S.tier=t;S.started=new Date().toISOString();S.used=0;S.feed=[['✦','Compte créé, essai gratuit de 14 jours démarré']];go(5)}
+function startTrial(t){S.tier=t;S.started=new Date().toISOString();S.used=0;S.feed=[['✦',isFree()?'Compte offert activé (client test, forfait '+TIERS[t].n+')':'Compte créé, essai gratuit de 14 jours démarré']];go(5)}
 
 /* ---------- 6. tableau de bord ---------- */
 let tab='home';
@@ -350,7 +355,7 @@ function vDash(){
  const left=Math.max(0,Math.ceil((end-Date.now())/864e5));
  const pct=Math.min(100,Math.round(S.used/T.q*100));
  const nconn=CONN.filter(c=>S.conn[c.id]).length;
- $('app').innerHTML=`<h1>Bonjour ${esc(S.co.first)} 👋</h1><p class="sub">${esc(S.co.name)} · forfait ${T.n} · essai gratuit : ${left} jour${left>1?'s':''} restant${left>1?'s':''}</p>
+ $('app').innerHTML=`<h1>Bonjour ${esc(S.co.first)} 👋</h1><p class="sub">${esc(S.co.name)} · forfait ${T.n} · ${isFree()?'<b style="color:#166534">compte offert</b>':`essai gratuit : ${left} jour${left>1?'s':''} restant${left>1?'s':''}`}</p>
  <div class="tabs">${[['home','Accueil'],['chat','Mon assistant'],['conn','Connexions'],['tasks','Tâches & forfait']].map(([k,l])=>`<button class="${tab===k?'on':''}" onclick="tab='${k}';vDash()">${l}</button>`).join('')}</div>
  <div id="pane"></div>`;
  const p=$('pane');
@@ -366,7 +371,7 @@ function vDash(){
  }else if(tab==='conn'){
   S.step=5;vConnInto(p);
  }else{
-  p.innerHTML=`<div class="card"><b>Forfait ${T.n} : ${T.p} € HT/mois</b><div class="hint">${T.q} actions incluses</div></div>`+TASKS.map(t=>`<label class="task card" style="margin-bottom:8px"><input type="checkbox" ${S.tasks[t.id]?'checked':''} onchange="S.tasks['${t.id}']=this.checked;save()"><div class="t">${t.t}${t.tier>S.tier?'<span class="tag">'+TIERS[t.tier].n+'</span>':''}<small>${t.d}</small></div></label>`).join('')+`<button class="btn full dark" onclick="go(4)">Recalculer mon forfait</button>`;
+  p.innerHTML=`<div class="card"><b>Forfait ${T.n} : ${isFree()?'offert (0 €)':T.p+' € HT/mois'}</b><div class="hint">${T.q} actions incluses</div></div>`+TASKS.map(t=>`<label class="task card" style="margin-bottom:8px"><input type="checkbox" ${S.tasks[t.id]?'checked':''} onchange="S.tasks['${t.id}']=this.checked;save()"><div class="t">${t.t}${t.tier>S.tier?'<span class="tag">'+TIERS[t.tier].n+'</span>':''}<small>${t.d}</small></div></label>`).join('')+`<button class="btn full dark" onclick="go(4)">Recalculer mon forfait</button>`;
  }
 }
 function vConnInto(p){p.innerHTML=`<div class="card">${CONN.map(c=>`<div class="conn"><div class="ico">${c.ico}</div><div class="t"><b>${esc(c.name())}</b><small>${c.desc}</small></div>${S.conn[c.id]?'<span class="pill ok">Connecté ✓</span>':`<button class="btn sm dark" onclick="connect('${c.id}')">Connecter</button>`}</div>`).join('')}</div>`;}

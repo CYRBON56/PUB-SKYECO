@@ -109,7 +109,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--navy2)}
 .feed div{padding:10px 0;border-bottom:1px solid var(--line);font-size:14px;display:flex;gap:10px}
 .feed div:last-child{border:0}
 .devis{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;font-size:13.5px;width:94%}
-.devis table{width:100%;border-collapse:collapse}.devis td{padding:4px 0;border-bottom:1px dashed var(--line)}.devis td:last-child{text-align:right}
+.devis table{width:100%;border-collapse:collapse}.devis td{padding:4px 0;border-bottom:1px dashed var(--line)}.devis td:last-child{text-align:right}.devis>div{flex-wrap:wrap}
 /* modal */
 .ov{position:fixed;inset:0;background:rgba(10,16,32,.55);display:none;align-items:flex-end;justify-content:center;z-index:20}
 .ov.on{display:flex}
@@ -378,37 +378,110 @@ function vQuote(){
 function startTrial(t){S.tier=t;S.started=new Date().toISOString();S.used=0;S.feed=[['✦',isFree()?'Compte offert activé (client test, forfait '+TIERS[t].n+')':'Compte créé, essai gratuit de 14 jours démarré']];go(5)}
 
 /* ---------- 6. tableau de bord ---------- */
-let tab='home';
+let tab='jour';
+/* ---------- données d'exemple (tant que la messagerie n'est pas branchée pour de vrai) ---------- */
+const DEMO_MAILS=[
+ {h:'07:12',from:'Mme Le Gall',subj:"Fuite sous l'évier, c'est urgent !",tag:'Urgent',c:'#DC2626',bg:'#FEE2E2',act:"Rappel prévu à 8 h 30, créneau proposé ce matin"},
+ {h:'06:48',from:'M. Riou',subj:'Demande de devis terrasse 35 m²',tag:'Demande de devis',c:'#1E3160',bg:'#E0E7FF',act:'Réponse envoyée, photos demandées, visite proposée jeudi'},
+ {h:'06:30',from:'Négoce Matériaux Ouest',subj:'Votre facture n° F-88412',tag:'Facture fournisseur',c:'#92400E',bg:'#FEF3C7',act:'Facture 1 248,60 € récupérée et envoyée à Pennylane'},
+ {h:'Hier',from:'SCI Les Pins',subj:'Re : Devis 2026-112',tag:'Client',c:'#166534',bg:'#DCFCE7',act:"Devis accepté : demande d'acompte envoyée"},
+ {h:'Hier',from:'Mairie',subj:'Consultation travaux de voirie',tag:'Opportunité',c:'#6D28D9',bg:'#EDE9FE',act:"Appel d'offres repéré, date limite le 28/11"},
+ {h:'Hier',from:'Quincaillerie du Port',subj:'Votre facture de novembre',tag:'Facture fournisseur',c:'#92400E',bg:'#FEF3C7',act:'Facture 312,40 € récupérée et envoyée à Pennylane'},
+ {h:'Hier',from:'Assurance',subj:'Attestation décennale à renouveler',tag:'Administratif',c:'#475569',bg:'#F1F5F9',act:'Rappel ajouté au 1er décembre'},
+ {h:'Hier',from:'Promo Outillage',subj:'-30 % ce week-end seulement',tag:'Publicité',c:'#64748B',bg:'#F1F5F9',act:'Rangé dans « Promotions »'}
+];
+const isDemoData=()=>!S.realMail;
+const VIDEO=/[?&]video=1/.test(location.search);
+function demoBadge(){return isDemoData()&&!VIDEO?'<p class="hint" style="background:#FEF3C7;color:#92400E;padding:6px 10px;border-radius:8px;margin-bottom:10px">Exemple : vos vrais mails apparaîtront ici une fois la messagerie branchée.</p>':''}
+function stg(i){return `style="animation:pop .35s ease ${(i*0.12).toFixed(2)}s both"`}
+function vJour(p){
+ const pend=(S.pending||[]);
+ p.innerHTML=`${demoBadge()}
+ <div class="card" style="background:#14213D;color:#fff;border:0" ${stg(0)}><b style="font-size:17px">☀️ Votre synthèse du matin</b><p style="color:#C9D1E4;margin-top:6px;font-size:14px">J'ai lu vos 8 nouveaux mails. 2 urgences, 1 demande de devis, 2 factures fournisseurs récupérées. Voici ce qu'il faut faire aujourd'hui.</p><button class="btn sm" style="margin-top:10px" onclick="smsSynth(this)">📱 Recevoir la synthèse par SMS</button></div>
+ <div class="card" ${stg(1)}><b>🚨 Urgences (2)</b><div class="feed">
+  <div><span>💧</span><span><b>Mme Le Gall</b> : fuite sous l'évier. <small class="hint">Créneau proposé ce matin, rappel à 8 h 30.</small></span></div>
+  <div><span>💶</span><span><b>SCI Les Pins</b> : facture de 2 340 € impayée depuis 15 jours. <small class="hint">Relance prête, à valider.</small></span></div></div></div>
+ <div class="card" ${stg(2)}><b>📅 Votre programme</b><div class="feed">
+  <div><span>08:30</span><span>Appeler Mme Le Gall (urgence)</span></div>
+  <div><span>10:00</span><span>Chantier Durand, Auray : terrasse résine, jour 2/3</span></div>
+  <div><span>14:00</span><span>Visite M. Riou, Vannes : devis terrasse 35 m²</span></div>
+  <div><span>17:30</span><span>Livraison matériaux au dépôt</span></div></div></div>
+ <div class="card" ${stg(3)}><b>✍️ À valider (${2+pend.length})</b><div class="feed">
+  ${pend.map(x=>`<div><span>📄</span><span>Devis ${esc(x)} : prêt, en attente de votre validation</span></div>`).join('')}
+  <div><span>📄</span><span>Devis M. Kerhervé, 1 780 € : prêt à envoyer</span></div>
+  <div><span>🔔</span><span>Relance SCI Les Pins : prête à partir</span></div></div>
+  <button class="btn sm dark" style="margin-top:8px" onclick="tab='chat';vDash()">Voir et valider</button></div>
+ <div class="card" ${stg(4)}><b>🧾 Factures fournisseurs récupérées (2)</b><div class="feed">
+  <div><span>✓</span><span>Négoce Matériaux Ouest : 1 248,60 € <small class="hint">→ Pennylane</small></span></div>
+  <div><span>✓</span><span>Quincaillerie du Port : 312,40 € <small class="hint">→ Pennylane</small></span></div></div></div>
+ <div class="card" ${stg(5)}><b>📈 Côté commercial et marketing</b><div class="feed">
+  <div><span>🔔</span><span>3 devis relancés cette semaine, 1 signé</span></div>
+  <div><span>📱</span><span>2 publications prêtes pour vos réseaux</span></div>
+  <div><span>⭐</span><span>1 nouvel avis Google 5 étoiles, réponse prête</span></div></div></div>
+ ${lowStock().length?`<div class="card" style="background:#FEF2F2;border-color:#FCA5A5" ${stg(6)}><b>📦 Stock bas</b><div class="hint">${lowStock().map(x=>esc(x.code)+' – '+esc(x.name)+' : '+x.stock+' '+esc(x.unit)).join('<br>')}</div></div>`:''}
+ <button class="btn full" onclick="tab='chat';vDash()">🎙️ Dicter un devis</button>`;
+}
+function smsSynth(b){b.disabled=true;b.textContent='✓ Synthèse envoyée au '+(S.co.tel||'votre portable');log('📱','Synthèse du matin envoyée par SMS')}
+function vMails(p){
+ p.innerHTML=`${demoBadge()}<div class="card"><b>📬 Boîte de réception triée par votre secrétaire</b><p class="hint">Chaque mail est lu, classé, et traité quand c'est possible.</p></div>`+DEMO_MAILS.map((m,i)=>`<div class="card" style="padding:14px" ${stg(i)}>
+  <div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(m.from)}</b><small class="hint">${m.h}</small></div>
+  <div style="font-size:14px">${esc(m.subj)}</div>
+  <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center"><span class="pill" style="background:${m.bg};color:${m.c};animation:pop .3s ease ${(0.5+i*0.25).toFixed(2)}s both">${m.tag}</span><small style="color:#166534;animation:pop .3s ease ${(0.7+i*0.25).toFixed(2)}s both">✓ ${esc(m.act)}</small></div></div>`).join('')+
+ `<div class="card" style="background:#DCFCE7;border-color:#86EFAC;animation:pop .4s ease 2.8s both"><b>✅ Tri terminé</b><div class="hint">2 factures fournisseurs envoyées à Pennylane · 1 réponse envoyée · synthèse prête dans « Ma journée ».</div></div>`;
+}
+function vComm(p){
+ const L=(i,a,b,c)=>`<div ${stg(i)}><span>${a}</span><span>${b}${c?` <small class="hint">${c}</small>`:''}</span></div>`;
+ p.innerHTML=`${demoBadge()}
+ <div class="card" ${stg(0)}><b>💬 Demandes reçues</b><div class="feed">${L(1,'✓','M. Riou : terrasse 35 m²','réponse envoyée en 2 min, visite jeudi')}${L(2,'✓','Mme Allanic : entretien jardin','estimation envoyée')}${L(3,'✓','Appel manqué 06 xx xx xx 12','SMS de réponse envoyé')}</div></div>
+ <div class="card" ${stg(1)}><b>🔔 Relances de devis</b><div class="feed">${L(2,'✓','Devis 2026-109 · M. Tanguy · 2 450 €','relancé à J+7')}${L(3,'✓','Devis 2026-111 · Mme Morvan · 980 €','relancé à J+15')}${L(4,'🎉','Devis 2026-104 · M. Guillo · 3 900 €','signé après relance')}</div></div>
+ <div class="card" ${stg(2)}><b>💶 Impayés</b><div class="feed">${L(3,'⏳','SCI Les Pins · 2 340 € · 15 jours','relance ferme prête, à valider')}${L(4,'✓','M. Le Floch · 140 €','payé après 1 relance')}</div></div>
+ <div class="card" ${stg(3)}><b>✉️ Prospection</b><div class="feed">${L(4,'📨','12 architectes contactés','3 réponses, 1 rendez-vous')}${L(5,'📨','Anciens clients 2024','8 relancés pour l\'entretien annuel')}</div><span class="tag">Premium</span></div>`;
+}
+function vMkt(p){
+ const post=(i,t,txt,g)=>`<div class="card" ${stg(i)}><div style="height:150px;border-radius:12px;background:${g};display:flex;align-items:flex-end;padding:12px;color:#fff;font-weight:800;font-size:18px">${t}</div><p style="font-size:14px;margin:10px 0">${txt}</p><div style="display:flex;gap:8px"><button class="btn sm" onclick="this.textContent='✓ Publié';this.disabled=true;log('📱','Publication : ${t.replace(/'/g,'')}')">Publier</button><button class="btn sm light">Modifier</button></div><small class="hint">Facebook · Instagram · TikTok</small></div>`;
+ p.innerHTML=`${demoBadge()}<div class="card" ${stg(0)}><b>📣 Votre agent marketing</b><p class="hint">Il prépare, vous validez d'un clic.</p></div>
+ ${post(1,'Avant / après : terrasse à Auray',"Transformation terminée chez M. Durand : 40 m² de résine drainante, prête pour l'été. 🌿 Devis gratuit en message privé.",'linear-gradient(135deg,#1E3160,#3B5B9A)')}
+ ${post(2,'Conseil de saison',"3 gestes simples pour protéger votre terrasse avant l'hiver. Enregistrez ce post !",'linear-gradient(135deg,#B07F00,#F5B700)')}
+ <div class="card" ${stg(3)}><b>⭐ Avis Google · 4,8/5</b><div class="feed"><div><span>⭐</span><span>« Travail soigné, équipe ponctuelle » · Mme Tanguy <small class="hint">réponse prête</small></span></div><div><span>📨</span><span>5 demandes d'avis envoyées aux chantiers terminés</span></div></div></div>
+ <div class="card" ${stg(4)}><b>🎯 Publicité</b><div class="feed"><div><span>📊</span><span>Campagne terrasses : 9 demandes ce mois, 14 € la demande</span></div><div><span>💡</span><span>Conseil : augmenter de 5 € par jour le week-end</span></div></div><span class="tag">Premium</span></div>`;
+}
+function vPlus(p){
+ const it=[['🧾','Facture électronique','Factures transmises via Pennylane, prêtes pour 2027'],['💶','Acomptes automatiques','Demande envoyée dès la signature, avec votre lien de paiement'],['📦','Stock','Codes produits, sorties à la facturation, alertes'],['📅','Agenda','Créneaux proposés aux clients, rappels la veille'],['📊','Rapport du mois','Chiffre, devis signés, impayés, ce qui marche'],['🏛️','Appels d\'offres','Repérage des marchés publics près de chez vous'],['📷','Photos de chantier','Classées par client, prêtes pour vos réseaux'],['🧑‍🔧','Équipe','Planning envoyé à vos salariés chaque lundi'],['🛠️','Sur mesure','Une tâche propre à votre métier ? On l\'ajoute']];
+ p.innerHTML=`<div class="card" ${stg(0)}><b>➕ Et aussi…</b><p class="hint">Tout ce que votre assistant peut prendre en charge en plus.</p></div><div class="stats" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr))">${it.map((x,i)=>`<div class="stat" ${stg(i+1)}><b style="font-size:22px">${x[0]}</b><b style="font-size:15px">${x[1]}</b><small>${x[2]}</small></div>`).join('')}</div><a class="btn full" style="display:block;text-align:center;text-decoration:none;margin-top:14px" href="/mon-assistant-pro/exemples/">Voir 240 exemples de demandes</a>`;
+}
+function vReg(p){
+ const T=TIERS[S.tier||1];const pct=Math.min(100,Math.round(S.used/T.q*100));const nconn=CONN.filter(c=>S.conn[c.id]).length;
+ p.innerHTML=`<div class="stats"><div class="stat"><b>${S.used}/${T.q}</b><small>actions ce mois</small><div class="meter"><div class="${pct>=80?'hot':''}" style="width:${Math.max(2,pct)}%"></div></div></div><div class="stat"><b>${nconn}/${CONN.length}</b><small>outils connectés</small></div><div class="stat"><b>${TASKS.filter(t=>S.tasks[t.id]&&t.tier<=S.tier).length}</b><small>tâches actives</small></div></div>
+ ${pct>=80?'<div class="card" style="margin-top:14px;background:#FFFBEB;border-color:#F5B700"><b>⚠️ Vous avez utilisé '+pct+' % de vos actions.</b><div class="hint">Passez au forfait supérieur ou attendez le mois prochain.</div></div>':''}
+ <div class="card" style="margin-top:14px"><b>Dernières actions</b><div class="feed">${S.feed.slice().reverse().map(f=>`<div><span>${f[0]}</span><span>${esc(f[1])}</span></div>`).join('')}</div></div>
+ <h2>Connexions</h2><div id="regConn"></div>
+ <h2>Tâches & forfait</h2><div class="card"><b>Forfait ${T.n} : ${isFree()?'offert (0 €)':T.p+' € HT/mois'}</b><div class="hint">${T.q} actions incluses</div></div>`+TASKS.map(t=>`<label class="task card" style="margin-bottom:8px"><input type="checkbox" ${S.tasks[t.id]?'checked':''} onchange="S.tasks['${t.id}']=this.checked;save()"><div class="t">${t.t}${t.tier>S.tier?'<span class="tag">'+TIERS[t.tier].n+'</span>':''}<small>${t.d}</small></div></label>`).join('')+`<button class="btn full dark" onclick="go(4)">Recalculer mon forfait</button>`;
+ vConnInto($('regConn'));
+}
 function vDash(){
  const T=TIERS[S.tier||1];const d=new Date(S.started||Date.now());const end=new Date(d.getTime()+14*864e5);
  const left=Math.max(0,Math.ceil((end-Date.now())/864e5));
- const pct=Math.min(100,Math.round(S.used/T.q*100));
- const nconn=CONN.filter(c=>S.conn[c.id]).length;
  $('app').innerHTML=`<h1>Bonjour ${esc(S.co.first)} 👋</h1><p class="sub">${esc(S.co.name)} · forfait ${T.n} · ${isFree()?'<b style="color:#166534">compte offert</b>':`essai gratuit : ${left} jour${left>1?'s':''} restant${left>1?'s':''}`}</p>
- <div class="tabs">${[['home','Accueil'],['chat','Mon assistant'],['stock','Produits & stock'],['conn','Connexions'],['tasks','Tâches & forfait']].map(([k,l])=>`<button class="${tab===k?'on':''}" onclick="tab='${k}';vDash()">${l}</button>`).join('')}</div>
+ <div class="tabs">${[['jour','☀️ Ma journée'],['chat','🎙️ Assistant'],['mails','📬 Mails'],['comm','💬 Commercial'],['mkt','📣 Marketing'],['stock','📦 Stock'],['plus','➕ Plus'],['reg','⚙️ Réglages']].map(([k,l])=>`<button class="${tab===k?'on':''}" data-tab="${k}" onclick="tab='${k}';vDash()">${l}</button>`).join('')}</div>
  <div id="pane"></div>`;
  const p=$('pane');
- if(tab==='home'){
-  p.innerHTML=`<div class="stats"><div class="stat"><b>${S.used}/${T.q}</b><small>actions ce mois</small><div class="meter"><div class="${pct>=80?'hot':''}" style="width:${Math.max(2,pct)}%"></div></div></div><div class="stat"><b>${nconn}/${CONN.length}</b><small>outils connectés</small></div><div class="stat"><b>${TASKS.filter(t=>S.tasks[t.id]&&t.tier<=S.tier).length}</b><small>tâches actives</small></div></div>
-  ${pct>=80?'<div class="card" style="margin-top:14px;background:#FFFBEB;border-color:#F5B700"><b>⚠️ Vous avez utilisé '+pct+' % de vos actions.</b><div class="hint">Passez au forfait supérieur ou attendez le mois prochain.</div></div>':''}
-  ${lowStock().length?`<div class="card" style="margin-top:14px;background:#FEF2F2;border-color:#FCA5A5"><b>📦 Stock bas</b><div class="hint">${lowStock().map(p=>esc(p.code)+' – '+esc(p.name)+' : '+p.stock+' '+esc(p.unit)).join('<br>')}</div><button class="btn sm dark" style="margin-top:8px" onclick="tab='stock';vDash()">Voir le stock</button></div>`:''}
-  <div class="card" style="margin-top:14px"><b>Dernières actions</b><div class="feed">${S.feed.slice().reverse().map(f=>`<div><span>${f[0]}</span><span>${esc(f[1])}</span></div>`).join('')}</div></div>
-  <button class="btn full" onclick="tab='chat';vDash()">🎙️ Dicter un devis</button>`;
- }else if(tab==='chat'){
-  p.innerHTML=`<div class="chat"><div class="msgs" id="msgs"></div><div class="chatin"><input id="q" placeholder="Ex. Devis pour M. Durand à Auray, 40 m² de résine à 85 € le m²"><button class="btn sm" onclick="send()">Envoyer</button></div></div><p class="hint">Essayez : « Devis pour Mme Le Gall à Vannes, terrasse 30 m² à 90 € le m², et 500 € de préparation ». Avec vos produits : « Devis pour M. Durand à Auray, 12 RES-EPDM-25 ».</p>`;
-  add('Je vous écoute. Dictez-moi un devis, ou demandez-moi de relancer un client.','a');
+ if(tab==='jour')vJour(p);
+ else if(tab==='chat'){
+  p.innerHTML=`<div class="chat"><div class="msgs" id="msgs"></div><div class="chatin"><input id="q" placeholder="Dictez votre devis…"><button class="btn sm" onclick="send()">Envoyer</button></div></div><p class="hint">Essayez : « Devis pour Mme Le Gall à Vannes, terrasse 30 m² à 90 € le m², et 500 € de préparation ». Avec vos produits : « Devis pour M. Durand à Auray, 12 RES-EPDM-25 ».</p>`;
+  add('Je vous écoute. Dictez-moi ce qui doit apparaître dans le devis : je le prépare, vous vérifiez, puis vous l\'envoyez.','a');
   $('q').onkeydown=e=>{if(e.key==='Enter')send()};
- }else if(tab==='stock'){
-  vStock(p);
- }else if(tab==='conn'){
-  S.step=5;vConnInto(p);
- }else{
-  p.innerHTML=`<div class="card"><b>Forfait ${T.n} : ${isFree()?'offert (0 €)':T.p+' € HT/mois'}</b><div class="hint">${T.q} actions incluses</div></div>`+TASKS.map(t=>`<label class="task card" style="margin-bottom:8px"><input type="checkbox" ${S.tasks[t.id]?'checked':''} onchange="S.tasks['${t.id}']=this.checked;save()"><div class="t">${t.t}${t.tier>S.tier?'<span class="tag">'+TIERS[t.tier].n+'</span>':''}<small>${t.d}</small></div></label>`).join('')+`<button class="btn full dark" onclick="go(4)">Recalculer mon forfait</button>`;
  }
+ else if(tab==='mails')vMails(p);
+ else if(tab==='comm')vComm(p);
+ else if(tab==='mkt')vMkt(p);
+ else if(tab==='stock')vStock(p);
+ else if(tab==='plus')vPlus(p);
+ else vReg(p);
+ const on=document.querySelector('.tabs .on');if(on)on.scrollIntoView({inline:'center',block:'nearest'});
 }
 function vConnInto(p){p.innerHTML=`<div class="card">${CONN.map(c=>`<div class="conn"><div class="ico">${c.ico}</div><div class="t"><b>${esc(c.name())}</b><small>${c.desc}</small></div>${S.conn[c.id]?'<span class="pill ok">Connecté ✓</span>':`<button class="btn sm dark" onclick="connect('${c.id}')">Connecter</button>`}</div>`).join('')}</div>`;}
 // recharger le bon écran après connexion depuis le tableau de bord
-const _doConn=doConn;doConn=async function(id){await _doConn(id);if(S.step===5){tab='conn';vDash()}};
+const _doConn=doConn;doConn=async function(id){await _doConn(id);if(S.step===5){tab='reg';vDash()}};
 
 
 /* ---------- produits & stock ---------- */
@@ -467,19 +540,19 @@ async function send(){
  add('Client introuvable : fiche « '+name+' » créée ✓','s');
  const ht=d.lines.reduce((s,l)=>s+l[3],0);
  const src=S.conn.soft&&['Pennylane','Evoliz','Axonaut','Sellsy'].includes(S.bot.soft)?S.bot.soft:'PDF';
- await say('Voici le brouillon, enregistré dans '+src+' :',600);
+ await say('Brouillon prêt, enregistré dans '+src+'. Vérifiez-le : rien ne part sans votre accord.',600);
  const box=document.createElement('div');box.className='devis';
- box.innerHTML=`<b>Devis – ${esc(name)}</b><table>${d.lines.map(l=>`<tr><td>${esc(l[0])} <small style="color:#5D6678">(${esc(l[1])}${l[1]!=='forfait'?' × '+eur(l[2]):''})</small></td><td>${eur(l[3])}</td></tr>`).join('')}<tr><td><b>Total HT</b></td><td><b>${eur(ht)}</b></td></tr><tr><td>TVA 20 %</td><td>${eur(ht*.2)}</td></tr><tr><td><b>Total TTC</b></td><td><b>${eur(ht*1.2)}</b></td></tr></table><div style="display:flex;gap:8px;margin-top:10px"><button class="btn sm">✅ Envoyer au client</button><button class="btn sm light">✏️ Modifier</button></div>`;
+ box.innerHTML=`<b>Devis – ${esc(name)}</b><table>${d.lines.map(l=>`<tr><td>${esc(l[0])} <small style="color:#5D6678">(${esc(l[1])}${l[1]!=='forfait'?' × '+eur(l[2]):''})</small></td><td>${eur(l[3])}</td></tr>`).join('')}<tr><td><b>Total HT</b></td><td><b>${eur(ht)}</b></td></tr><tr><td>TVA 20 %</td><td>${eur(ht*.2)}</td></tr><tr><td><b>Total TTC</b></td><td><b>${eur(ht*1.2)}</b></td></tr></table><div style="display:flex;gap:8px;margin-top:10px"><div class="hint" style="width:100%;margin:-2px 0 4px;color:#92400E">⏳ En attente de votre validation</div><button class="btn sm">✅ J'ai vérifié, j'envoie</button><button class="btn sm light">✏️ Modifier</button></div>`;
  $('msgs').appendChild(box);
  const [ok,ed]=box.querySelectorAll('button');
- ok.onclick=async()=>{ok.parentElement.remove();add('Devis envoyé avec signature électronique ✓','s');log('📄','Devis envoyé : '+name+' ('+eur(ht*1.2)+' TTC)');await say("Le client a reçu le devis par mail avec le bouton « Signer mon devis ». Je le relancerai dans 7 jours s'il n'a pas signé."+(S.pay?" Dès qu'il signe, il reçoit la demande d'acompte de "+S.pay.pct+" % ("+eur(ht*1.2*S.pay.pct/100)+")"+(S.pay.link?" avec votre lien de paiement.":" avec votre IBAN."):""));
+ ok.onclick=async()=>{ok.parentElement.remove();S.pending=(S.pending||[]).filter(x=>x!==name);save();add('Devis envoyé avec signature électronique ✓','s');log('📄','Devis envoyé : '+name+' ('+eur(ht*1.2)+' TTC)');await say("Le client a reçu le devis par mail avec le bouton « Signer mon devis ». Je le relancerai dans 7 jours s'il n'a pas signé."+(S.pay?" Dès qu'il signe, il reçoit la demande d'acompte de "+S.pay.pct+" % ("+eur(ht*1.2*S.pay.pct/100)+")"+(S.pay.link?" avec votre lien de paiement.":" avec votre IBAN."):""));
   const num='F-'+new Date().getFullYear()+'-'+String(S.docs.length+1).padStart(3,'0');
   const fb=document.createElement('button');fb.className='btn sm dark';fb.style.alignSelf='flex-start';fb.textContent='🧾 Devis signé : transformer en facture';$('msgs').appendChild(fb);
   fb.onclick=async()=>{fb.remove();S.docs.push({n:num,cli:name,lines:d.lines,ht:ht,d:Date.now()});const al=stockOut(d.lines,'Facture '+num);add('Facture '+num+' créée et envoyée ✓','s');log('🧾','Facture '+num+' : '+name);
    const nb=d.lines.filter(l=>l[4]).length;if(nb)await say('Stock mis à jour pour '+nb+' produit'+(nb>1?'s':'')+'.');
    for(const x of al){await say('⚠️ Stock bas : '+x.code+' – '+x.name+' ('+x.stock+' '+x.unit+' restant). Je prépare une commande fournisseur ?');log('📦','Stock bas : '+x.code)}}};
  ed.onclick=()=>{$('q').focus();say('Dites-moi ce qu\'il faut changer : une ligne, un prix, une remise ?')};
- log('📝','Brouillon de devis créé : '+name);
+ log('📝','Brouillon de devis créé : '+name);S.pending=(S.pending||[]).concat([name]);save();
 }
 function log(i,t){S.used++;S.feed.push([i,t]);if(S.feed.length>30)S.feed.shift();save()}
 

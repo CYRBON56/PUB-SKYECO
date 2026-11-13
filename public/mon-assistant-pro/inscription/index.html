@@ -221,7 +221,7 @@ async function runBot(){
  b.pain=await ask(['Les devis','Les factures','Les relances','Les mails','Les rendez-vous','Les réseaux sociaux','Trouver des clients'],true);
  await say('Quel logiciel utilisez-vous pour vos devis et factures ?');
  b.soft=await ask(SOFTS);
- const cmp={Pennylane:'compatible ✅ Je travaillerai directement dans votre compte.',Evoliz:'compatible ✅ Connexion en un clic.',Axonaut:'compatible ✅',Sellsy:'compatible ✅',Tiime:"bientôt compatible 🟡 En attendant, je fais vos devis moi-même en PDF.",Obat:"pas encore relié ⏳ En attendant, je fais vos devis en PDF avec signature électronique.",'Aucun logiciel':"pas de souci 👍 Je ferai vos devis et factures moi-même, avec signature électronique.",Autre:"je vérifie avec l'équipe et je vous tiens au courant. En attendant, je peux faire vos devis en PDF."};
+ const cmp={Pennylane:"compatible ✅ avec l'abonnement Pennylane Essentiel (ou supérieur). Je travaillerai directement dans votre compte.\nVous êtes en offre Basique ? Il faudra passer en Essentiel, sinon je fais vos devis en PDF en attendant.",Evoliz:'compatible ✅ Connexion en un clic.',Axonaut:'compatible ✅',Sellsy:'compatible ✅',Tiime:"bientôt compatible 🟡 En attendant, je fais vos devis moi-même en PDF.",Obat:"pas encore relié ⏳ En attendant, je fais vos devis en PDF avec signature électronique.",'Aucun logiciel':"pas de souci 👍 Je ferai vos devis et factures moi-même, avec signature électronique.",Autre:"je vérifie avec l'équipe et je vous tiens au courant. En attendant, je peux faire vos devis en PDF."};
  await say(b.soft==='Aucun logiciel'?cmp[b.soft]:b.soft+' : '+cmp[b.soft],800);
  await say('Pour estimer votre forfait : combien de devis faites-vous par mois, environ ?');
  S.vol.devis=await askNum('',S.vol.devis);
@@ -235,7 +235,7 @@ async function runBot(){
 
 /* ---------- 3. connexions ---------- */
 const CONN=[
- {id:'soft',ico:'🧾',name:()=>S.bot.soft&&!['Aucun logiciel','Autre','Obat','Tiime'].includes(S.bot.soft)?S.bot.soft:'Devis et factures intégrés',desc:'Créer clients, devis, factures et relances',key:true,imp:true},
+ {id:'soft',ico:'🧾',name:()=>S.bot.soft==='Pennylane'?'Pennylane (offre Essentiel)':S.bot.soft&&!['Aucun logiciel','Autre','Obat','Tiime'].includes(S.bot.soft)?S.bot.soft:'Devis et factures intégrés',desc:'Créer clients, devis, factures et relances',key:true,imp:true},
  {id:'mail',ico:'📬',name:()=>'Messagerie (Gmail, Outlook, IONOS…)',desc:'Trier vos mails, alertes, réponses aux demandes',imp:true},
  {id:'cal',ico:'📅',name:()=>'Agenda (Google, Outlook)',desc:'Rendez-vous, visites, rappels'},
  {id:'bank',ico:'🏦',name:()=>'Banque (Qonto, CIC…)',desc:'Voir les paiements reçus pour arrêter les relances'},
@@ -256,7 +256,7 @@ function vConn(){
 function connect(id){
  const c=CONN.find(x=>x.id===id);const nm=c.name();let body='';
  const soft=S.bot.soft;
- if(id==='soft'&&soft==='Pennylane')body=`<p class="sub">Je vais créer vos devis et factures directement dans Pennylane.</p><ol><li>Ouvrez Pennylane, puis <b>Paramètres</b>.</li><li>Allez dans <b>Connectivité</b>, puis <b>Développeurs</b>.</li><li>Cliquez sur <b>Générer un jeton API</b>, cochez les droits « Ventes » et copiez le jeton.</li></ol><label>Collez votre jeton ici</label><input id="tok" placeholder="Jeton API Pennylane">`;
+ if(id==='soft'&&soft==='Pennylane')body=`<p class="sub">Je vais créer vos devis et factures directement dans Pennylane.</p><p class="hint" style="background:#FEF3C7;color:#92400E;padding:8px 10px;border-radius:8px;margin-bottom:8px">⚠️ Abonnement Pennylane <b>Essentiel</b> minimum requis (l'offre Basique ne suffit pas).</p><ol><li>Ouvrez Pennylane, puis <b>Paramètres</b>.</li><li>Allez dans <b>Connectivité</b>, puis <b>Développeurs</b>.</li><li>Cliquez sur <b>Générer un jeton API</b>, cochez les droits « Ventes » et copiez le jeton.</li></ol><label>Collez votre jeton ici</label><input id="tok" placeholder="Jeton API Pennylane">`;
  else if(id==='soft'&&['Evoliz','Axonaut','Sellsy'].includes(soft))body=`<p class="sub">Vous allez être redirigé vers ${soft} pour autoriser l'accès.</p><ol><li>Connectez-vous à votre compte ${soft}.</li><li>Cliquez sur <b>Autoriser</b>.</li></ol>`;
  else if(id==='soft')body=`<p class="sub">Je ferai vos devis et factures moi-même. Ajoutez votre logo et vos mentions.</p><label>Mentions de bas de devis <small>(assurance décennale, conditions de paiement)</small></label><textarea id="tok" rows="3" placeholder="Ex. Assurance décennale n°… Acompte de 30 % à la commande."></textarea>`;
  else if(id==='mail')body=`<p class="sub">Choisissez votre messagerie.</p><div class="tiers" style="grid-template-columns:1fr 1fr"><div class="tier on">Gmail</div><div class="tier">Outlook</div><div class="tier">IONOS</div><div class="tier">Autre</div></div><ol><li>Connectez-vous à votre compte.</li><li>Autorisez la lecture et l'envoi de mails.</li></ol><p class="hint">Je ne supprime jamais un mail. Chaque mail envoyé en votre nom apparaît dans vos messages envoyés.</p>`;

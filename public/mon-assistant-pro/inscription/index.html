@@ -273,7 +273,9 @@ function connect(id){
  if(id==='soft'&&soft==='Pennylane')body=`<p class="sub">Je vais créer vos devis et factures directement dans Pennylane.</p><p class="hint" style="background:#FEF3C7;color:#92400E;padding:8px 10px;border-radius:8px;margin-bottom:8px">⚠️ Abonnement Pennylane <b>Essentiel</b> minimum requis (l'offre Basique ne suffit pas).</p><ol><li>Ouvrez Pennylane, puis <b>Paramètres</b>.</li><li>Allez dans <b>Connectivité</b>, puis <b>Développeurs</b>.</li><li>Cliquez sur <b>Générer un jeton API</b>, cochez les droits « Ventes » et copiez le jeton.</li></ol><label>Collez votre jeton ici</label><input id="tok" placeholder="Jeton API Pennylane">`;
  else if(id==='soft'&&['Evoliz','Axonaut','Sellsy'].includes(soft))body=`<p class="sub">Vous allez être redirigé vers ${soft} pour autoriser l'accès.</p><ol><li>Connectez-vous à votre compte ${soft}.</li><li>Cliquez sur <b>Autoriser</b>.</li></ol>`;
  else if(id==='soft')body=`<p class="sub">Facturation intégrée : je fais vos devis et factures, prêts à être synchronisés avec Pennylane quand vous l'ouvrirez. Ajoutez votre logo et vos mentions.</p><label>Mentions de bas de devis <small>(assurance décennale, conditions de paiement)</small></label><textarea id="tok" rows="3" placeholder="Ex. Assurance décennale n°… Acompte de 30 % à la commande."></textarea>`;
- else if(id==='mail')body=`<p class="sub">Choisissez votre messagerie.</p><div class="tiers" style="grid-template-columns:1fr 1fr"><div class="tier on">Gmail</div><div class="tier">Outlook</div><div class="tier">IONOS</div><div class="tier">Autre</div></div><ol><li>Connectez-vous à votre compte.</li><li>Autorisez la lecture et l'envoi de mails.</li></ol><p class="hint">Je ne supprime jamais un mail. Chaque mail envoyé en votre nom apparaît dans vos messages envoyés.</p>`;
+ else if(id==='mail')body=`<p class="sub">Choisissez votre messagerie.</p><div class="tiers" style="grid-template-columns:1fr 1fr"><div class="tier on">Gmail</div><div class="tier">Outlook</div><div class="tier">IONOS</div><div class="tier">Autre</div></div><ol><li>Connectez-vous à votre compte.</li><li>Autorisez la lecture et l'envoi de mails.</li></ol><label>Pubs et newsletters</label><select id="mrPub"><option value="archive">Les archiver dans « Promotions »</option><option value="trash">Les mettre à la corbeille</option><option value="none">Ne rien faire</option></select>
+<label>Spams</label><select id="mrSpam"><option value="trash">Les mettre à la corbeille</option><option value="spam">Les déplacer dans « Spam »</option><option value="none">Ne rien faire</option></select>
+<p class="hint">🛡️ Clients, fournisseurs et contacts habituels ne sont jamais touchés. Rien n'est supprimé définitivement (la corbeille se vide seule au bout de 30 jours). Chaque mail envoyé en votre nom apparaît dans vos messages envoyés.</p>`;
  else if(id==='bank'){const P=S.pay||{};body=`<p class="sub">Facultatif. Quand un client signe son devis, je peux lui envoyer par mail la demande d'acompte avec votre RIB et/ou un lien pour payer en ligne.</p>
 <label>Votre banque</label><select id="pBank" onchange="bankHint()">${BANKS.map(b=>`<option ${P.bank===b?'selected':''}>${b}</option>`).join('')}</select>
 <div id="pHint" class="hint" style="background:#EEF1F8;padding:10px;border-radius:10px;margin-top:8px"></div>
@@ -287,6 +289,7 @@ function connect(id){
  $('ov').classList.add('on');
 }
 async function doConn(id){
+ if(id==='mail'&&$('mrPub')){S.mailRules={pub:$('mrPub').value,spam:$('mrSpam').value};save()}
  if(id==='bank'){const iban=$('pIban').value.replace(/\s+/g,'').toUpperCase(),link=$('pLink').value.trim(),pct=parseFloat($('pPct').value);
   if(iban&&!/^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/.test(iban)){$('pErr').innerHTML='<div class="err">IBAN invalide.</div>';return}
   if(link&&!/^https:\/\//.test(link)){$('pErr').innerHTML='<div class="err">Le lien doit commencer par https://</div>';return}
@@ -388,8 +391,15 @@ const DEMO_MAILS=[
  {h:'Hier',from:'Mairie',subj:'Consultation travaux de voirie',tag:'Opportunité',c:'#6D28D9',bg:'#EDE9FE',act:"Appel d'offres repéré, date limite le 28/11"},
  {h:'Hier',from:'Quincaillerie du Port',subj:'Votre facture de novembre',tag:'Facture fournisseur',c:'#92400E',bg:'#FEF3C7',act:'Facture 312,40 € récupérée et envoyée à Pennylane'},
  {h:'Hier',from:'Assurance',subj:'Attestation décennale à renouveler',tag:'Administratif',c:'#475569',bg:'#F1F5F9',act:'Rappel ajouté au 1er décembre'},
- {h:'Hier',from:'Promo Outillage',subj:'-30 % ce week-end seulement',tag:'Publicité',c:'#64748B',bg:'#F1F5F9',act:'Rangé dans « Promotions »'}
+ {h:'Hier',from:'Promo Outillage',subj:'-30 % ce week-end seulement',tag:'Publicité',c:'#64748B',bg:'#F1F5F9',kind:'pub'},
+ {h:'Hier',from:'Colis-Livraison-Info',subj:'Votre colis est bloqué : payez 1,99 €',tag:'Spam',c:'#B91C1C',bg:'#FEE2E2',kind:'spam'}
 ];
+const MR_PUB={archive:'Archivé dans « Promotions »',trash:'Mis à la corbeille (récupérable 30 jours)',none:'Laissé dans la boîte de réception'};
+const MR_SPAM={trash:'Mis à la corbeille (récupérable 30 jours)',spam:'Déplacé dans « Spam »',none:'Laissé dans la boîte de réception'};
+function mr(){S.mailRules=S.mailRules||{pub:'archive',spam:'trash'};return S.mailRules}
+function mailAct(m){return m.kind==='pub'?MR_PUB[mr().pub]:m.kind==='spam'?MR_SPAM[mr().spam]:m.act}
+function setMR(k,v){mr()[k]=v;save();log('⚙️','Tri des mails : réglage modifié');vDash()}
+function notPub(b){b.disabled=true;b.textContent='✓ Noté : ce contact ne sera plus traité comme une pub';log('✅','Expéditeur ajouté à la liste de sécurité')}
 const isDemoData=()=>!S.realMail;
 const VIDEO=/[?&]video=1/.test(location.search);
 function demoBadge(){return isDemoData()&&!VIDEO?'<p class="hint" style="background:#FEF3C7;color:#92400E;padding:6px 10px;border-radius:8px;margin-bottom:10px">Exemple : vos vrais mails apparaîtront ici une fois la messagerie branchée.</p>':''}
@@ -423,11 +433,17 @@ function vJour(p){
 }
 function smsSynth(b){b.disabled=true;b.textContent='✓ Synthèse envoyée au '+(S.co.tel||'votre portable');log('📱','Synthèse du matin envoyée par SMS')}
 function vMails(p){
- p.innerHTML=`${demoBadge()}<div class="card"><b>📬 Boîte de réception triée par votre secrétaire</b><p class="hint">Chaque mail est lu, classé, et traité quand c'est possible.</p></div>`+DEMO_MAILS.map((m,i)=>`<div class="card" style="padding:14px" ${stg(i)}>
+ const R=mr();
+ p.innerHTML=`${demoBadge()}<div class="card"><b>📬 Boîte de réception triée par votre secrétaire</b><p class="hint">Chaque mail est lu, classé, et traité quand c'est possible.</p>
+ <div class="row" style="margin-top:6px"><div><label>Pubs et newsletters</label><select onchange="setMR('pub',this.value)">${[['archive','Archiver'],['trash','Corbeille'],['none','Ne rien faire']].map(([v,l])=>`<option value="${v}" ${R.pub===v?'selected':''}>${l}</option>`).join('')}</select></div>
+ <div><label>Spams</label><select onchange="setMR('spam',this.value)">${[['trash','Corbeille'],['spam','Dossier Spam'],['none','Ne rien faire']].map(([v,l])=>`<option value="${v}" ${R.spam===v?'selected':''}>${l}</option>`).join('')}</select></div></div>
+ <p class="hint">🛡️ Vos clients, fournisseurs et contacts habituels ne sont jamais touchés. Rien n'est supprimé définitivement.</p></div>`+DEMO_MAILS.map((m,i)=>`<div class="card" style="padding:14px" ${stg(i)}>
   <div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(m.from)}</b><small class="hint">${m.h}</small></div>
   <div style="font-size:14px">${esc(m.subj)}</div>
-  <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center"><span class="pill" style="background:${m.bg};color:${m.c};animation:pop .3s ease ${(0.5+i*0.25).toFixed(2)}s both">${m.tag}</span><small style="color:#166534;animation:pop .3s ease ${(0.7+i*0.25).toFixed(2)}s both">✓ ${esc(m.act)}</small></div></div>`).join('')+
- `<div class="card" style="background:#DCFCE7;border-color:#86EFAC;animation:pop .4s ease 2.8s both"><b>✅ Tri terminé</b><div class="hint">2 factures fournisseurs envoyées à Pennylane · 1 réponse envoyée · synthèse prête dans « Ma journée ».</div></div>`;
+  <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center"><span class="pill" style="background:${m.bg};color:${m.c};animation:pop .3s ease ${(0.5+i*0.25).toFixed(2)}s both">${m.tag}</span><small style="color:#166534;animation:pop .3s ease ${(0.7+i*0.25).toFixed(2)}s both">✓ ${esc(mailAct(m))}</small></div></div>`).join('')+
+ `<div class="card" style="background:#DCFCE7;border-color:#86EFAC;animation:pop .4s ease 2.8s both"><b>✅ Tri terminé</b><div class="hint">2 factures fournisseurs envoyées à Pennylane · 1 réponse envoyée · synthèse prête dans « Ma journée ».</div></div>
+ <div class="card" style="animation:pop .4s ease 3.1s both"><b>🗂️ Récap de la semaine</b><div class="hint">${R.pub==='none'?'Pubs laissées en place':R.pub==='trash'?'37 pubs mises à la corbeille':'37 pubs archivées dans « Promotions »'} · ${R.spam==='none'?'spams laissés en place':R.spam==='spam'?'4 spams déplacés dans « Spam »':'4 spams mis à la corbeille'}.</div>
+ <div class="feed" style="margin-top:6px"><div><span>📰</span><span>Lettre d'info Fournisseur Bois <small class="hint">archivée</small> <button class="btn sm light" style="margin-top:6px" onclick="notPub(this)">Ce n'était pas une pub</button></span></div></div></div>`;
 }
 function vComm(p){
  const L=(i,a,b,c)=>`<div ${stg(i)}><span>${a}</span><span>${b}${c?` <small class="hint">${c}</small>`:''}</span></div>`;

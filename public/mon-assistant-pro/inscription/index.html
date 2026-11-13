@@ -56,6 +56,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--navy2)}
 .chips{padding:12px;display:flex;flex-wrap:wrap;gap:8px;border-top:1px solid var(--line)}
 .chip{border:1.5px solid var(--navy2);color:var(--navy2);background:#fff;border-radius:99px;padding:8px 13px;font-weight:600;font-size:14px;cursor:pointer}
 .chip.sel{background:var(--navy2);color:#fff}
+.rec{display:inline-block;background:var(--yellow);color:var(--navy);font-size:11px;font-weight:800;padding:1px 7px;border-radius:99px;margin-left:5px}
+.reco{background:#FFFBEB;border:2px solid var(--yellow);border-radius:16px;padding:16px;margin-bottom:14px}
+.reco a.btn{display:inline-block;text-decoration:none;margin-top:10px}
 .chatin{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}
 .chatin input{flex:1}
 /* connections */
@@ -128,6 +131,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--navy2)}
 <script>
 /* ---------- état ---------- */
 const KEY='map_state_v1';
+const PENNYLANE_URL='https://www.pennylane.com/fr/tarifs'; // à remplacer par le lien d'affiliation
 const FREE_SIRET=['93999787000018']; // comptes offerts (RMS EcoSky, client test)
 const isFree=()=>FREE_SIRET.includes((S.co&&S.co.siret)||'');
 let S={step:0,co:{},bot:{},conn:{},tasks:{},vol:{devis:8,factures:6,rdv:12,posts:3},tier:null,started:null,used:0,feed:[]};
@@ -210,7 +214,7 @@ function vBot(){
 function add(t,w){const d=document.createElement('div');d.className='m '+w;d.textContent=t;$('msgs').appendChild(d);d.scrollIntoView({block:'nearest'});return d}
 async function say(t,ms=650){const ty=document.createElement('div');ty.className='typing';ty.innerHTML='<i></i><i></i><i></i>';$('msgs').appendChild(ty);await wait(ms);ty.remove();add(t,'a')}
 function ask(opts,multi){return new Promise(res=>{const box=$('chips');box.innerHTML='';const sel=new Set();
- opts.forEach(o=>{const b=document.createElement('button');b.className='chip';b.textContent=o;b.onclick=()=>{
+ opts.forEach(o=>{const b=document.createElement('button');b.className='chip';b.innerHTML=esc(o)+(o==='Pennylane'?'<span class="rec">⭐ Conseillé</span>':'');b.onclick=()=>{
   if(!multi){box.innerHTML='';add(o,'u');res(o)}else{sel.has(o)?sel.delete(o):sel.add(o);b.classList.toggle('sel')}};box.appendChild(b)});
  if(multi){const ok=document.createElement('button');ok.className='btn sm';ok.textContent='Valider';ok.onclick=()=>{if(!sel.size)return;box.innerHTML='';const a=[...sel];add(a.join(', '),'u');res(a)};box.appendChild(ok)}
 })}
@@ -223,10 +227,11 @@ async function runBot(){
  b.job=await ask(['Plombier / chauffagiste','Électricien','Paysagiste / aménagement extérieur','Maçon / gros œuvre','Revêtements de sol','Menuisier','Autre artisan']);
  await say("Qu'est-ce qui vous prend le plus de temps aujourd'hui ? (plusieurs choix possibles)");
  b.pain=await ask(['Les devis','Les factures','Les relances','Les mails','Les rendez-vous','Les réseaux sociaux','Trouver des clients'],true);
- await say('Quel logiciel utilisez-vous pour vos devis et factures ?');
+ await say('Quel logiciel utilisez-vous pour vos devis et factures ?\n(Nous conseillons Pennylane, offre Essentiel.)');
  b.soft=await ask(SOFTS);
  const cmp={Pennylane:"compatible ✅ avec l'abonnement Pennylane Essentiel (ou supérieur). Je travaillerai directement dans votre compte.\nVous êtes en offre Basique ? Il faudra passer en Essentiel, sinon je fais vos devis en PDF en attendant.",Evoliz:'compatible ✅ Connexion en un clic.',Axonaut:'compatible ✅',Sellsy:'compatible ✅',Tiime:"bientôt compatible 🟡 En attendant, je fais vos devis moi-même en PDF.",Obat:"pas encore relié ⏳ En attendant, je fais vos devis en PDF avec signature électronique.",'Aucun logiciel':"pas de souci 👍 Je ferai vos devis et factures moi-même, avec signature électronique.",Autre:"je vérifie avec l'équipe et je vous tiens au courant. En attendant, je peux faire vos devis en PDF."};
  await say(b.soft==='Aucun logiciel'?cmp[b.soft]:b.soft+' : '+cmp[b.soft],800);
+ if(b.soft!=='Pennylane'){await say("💡 Mon conseil : Pennylane Essentiel. Devis, factures, comptabilité automatisée et lien direct avec votre comptable : avec moi en plus, votre comptable n'a plus qu'à valider.",900);const a=document.createElement('a');a.href=PENNYLANE_URL;a.target='_blank';a.rel='noopener';a.className='btn sm';a.style.cssText='align-self:flex-start;text-decoration:none';a.textContent='⭐ Découvrir Pennylane (conseillé)';$('msgs').appendChild(a);}
  await say('Pour estimer votre forfait : combien de devis faites-vous par mois, environ ?');
  S.vol.devis=await askNum('',S.vol.devis);
  await say('Et combien de factures par mois ?');
@@ -252,6 +257,7 @@ const CONN=[
 function vConn(){
  const n=CONN.filter(c=>S.conn[c.id]).length;
  $('app').innerHTML=`<h1>Connectez vos outils</h1><p class="sub">Connectez au moins votre logiciel de devis et votre messagerie. Le reste peut attendre, vous pourrez le faire plus tard.</p>
+ ${S.bot.soft!=='Pennylane'?`<div class="reco"><b>⭐ Conseillé : Pennylane Essentiel</b><div class="hint">Devis, factures, comptabilité automatisée et collaboration avec votre expert-comptable. Branché à votre assistant, votre comptable n'a plus qu'à valider.</div><a class="btn sm" href="${PENNYLANE_URL}" target="_blank" rel="noopener">Découvrir Pennylane</a></div>`:''}
  <div class="card">${CONN.map(c=>`<div class="conn"><div class="ico">${c.ico}</div><div class="t"><b>${esc(c.name())}${c.tier?`<span class="tag">${c.tier}</span>`:''}${c.imp?'<span class="tag" style="background:#FEF3C7;color:#92400E">Important</span>':''}</b><small>${c.desc}</small></div>
  ${S.conn[c.id]?'<span class="pill ok">Connecté ✓</span>':`<button class="btn sm dark" onclick="connect('${c.id}')">Connecter</button>`}</div>`).join('')}</div>
  <p class="hint">${n} outil${n>1?'s':''} connecté${n>1?'s':''} sur ${CONN.length}.</p>

@@ -27,6 +27,7 @@ header.top{background:var(--navy);color:#fff}
 .points b{color:#fff}
 /* phone */
 .phone{background:#0B1328;border-radius:34px;padding:12px;box-shadow:0 30px 60px rgba(0,0,0,.35);max-width:390px;margin:0 auto;width:100%}
+.phone.vid{padding:10px}.phone.vid video{display:block;width:100%;border-radius:24px;aspect-ratio:9/16;background:#0B1328}
 .screen{background:#fff;border-radius:24px;overflow:hidden;display:flex;flex-direction:column;height:600px}
 .chathead{background:var(--navy2);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px}
 .av{width:36px;height:36px;border-radius:50%;background:var(--yellow);display:grid;place-items:center;color:var(--navy);font-weight:800}
@@ -115,15 +116,12 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding:0 0 40px}
    <div>
     <h1>Votre secrétaire, votre commercial et votre agent marketing, <span>disponibles 24h/24</span>.</h1>
     <p>Un seul assistant, trois métiers. Secrétaire : il fait vos devis, envoie vos factures et trie vos mails. Commercial : il répond aux demandes et relance vos clients. Agent marketing : il gère vos réseaux sociaux, vos avis Google et vos pubs. Le tout pour le prix d'un plein de camionnette.</p>
-    <a class="btn" href="/mon-assistant-pro/inscription/">Créer mon assistant</a><a class="btn ghost" href="#demo">Essayer la démo</a>
+    <a class="btn" href="/mon-assistant-pro/inscription/">Créer mon assistant</a><a class="btn ghost" href="#demo">▶ Voir la démo</a>
     <div class="points"><div><b>Sans engagement</b></div><div><b>Se connecte</b> à votre logiciel</div><div><b>Vous validez</b> avant chaque envoi</div></div>
    </div>
    <div id="demo">
-    <div class="phone"><div class="screen">
-     <div class="chathead"><div class="av" style="background:none"><svg width="36" height="36" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#F5B700"/><path d="M13 32v4M19 27v14M25 30v8" stroke="#14213D" stroke-width="4" stroke-linecap="round"/><path d="M31 33l7 7 14-17" fill="none" stroke="#14213D" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><b>Votre assistant</b><small>en ligne</small></div><button class="restart" onclick="start()">↻ Recommencer</button></div>
-     <div class="msgs" id="msgs"></div>
-     <div class="chips" id="chips"></div>
-    </div></div>
+    <div class="phone vid"><video src="/mon-assistant-pro/demo.mp4" poster="/mon-assistant-pro/demo-poster.jpg" autoplay muted loop playsinline controls preload="metadata" aria-label="Vidéo de démonstration de Mon Assistant Pro"></video></div>
+    <p style="text-align:center;color:#C9D1E4;font-size:14px;margin-top:12px">Démo en 1 minute : secrétaire, commercial et agent marketing</p>
    </div>
   </div>
  </div>
@@ -292,7 +290,7 @@ async function devis(){
   });
  });
 }
-start();
+if(document.getElementById("msgs"))start();
 </script>
 </body>
 </html>

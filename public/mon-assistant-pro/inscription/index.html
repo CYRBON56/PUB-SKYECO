@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mon Assistant Pro – application</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#14213D;--navy2:#1E3160;--yellow:#F5B700;--bg:#F4F6FA;--line:#E2E6EF;--text:#1A1F2E;--muted:#5D6678;--ok:#16A34A;--okbg:#DCFCE7;--warnbg:#FEF3C7;--warn:#92400E;--red:#DC2626}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;font-size:15px}
+button,input,select,textarea{font:inherit}
+.top{background:var(--navy);color:#fff;position:sticky;top:0;z-index:5}
+.top .in{max-width:760px;margin:0 auto;padding:12px 18px;display:flex;align-items:center;gap:10px}
+.logo{display:flex;align-items:center;gap:8px;font-weight:800}
+.logo i{font-style:normal;width:30px;height:30px;border-radius:9px;background:var(--yellow);color:var(--navy);display:grid;place-items:center}
+.top .who{margin-left:auto;font-size:13px;color:#C6CFE3}
+.prog{max-width:760px;margin:0 auto;padding:0 18px 12px;display:flex;gap:6px}
+.prog span{flex:1;height:4px;border-radius:4px;background:rgba(255,255,255,.18)}
+.prog span.on{background:var(--yellow)}
+main{max-width:760px;margin:0 auto;padding:22px 18px 80px}
+h1{font-size:26px;line-height:1.2;margin-bottom:6px}
+h2{font-size:19px;margin:22px 0 10px}
+.sub{color:var(--muted);margin-bottom:20px}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px}
+label{display:block;font-weight:600;font-size:14px;margin:12px 0 5px}
+label small{font-weight:400;color:var(--muted)}
+input,select,textarea{width:100%;padding:12px 13px;border:1.5px solid var(--line);border-radius:11px;background:#fff;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--navy2)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.inl{display:flex;gap:8px}.inl input{flex:1}
+.btn{background:var(--yellow);color:var(--navy);font-weight:700;border:0;border-radius:12px;padding:13px 20px;cursor:pointer;font-size:15px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.dark{background:var(--navy2);color:#fff}
+.btn.light{background:#fff;color:var(--navy2);border:1.5px solid var(--navy2)}
+.btn.sm{padding:8px 14px;font-size:14px;border-radius:10px}
+.btn.full{width:100%}
+.actions{display:flex;gap:10px;justify-content:space-between;margin-top:22px}
+.hint{font-size:13px;color:var(--muted);margin-top:5px}
+.err{font-size:13px;color:var(--red);margin-top:5px}
+.okmsg{font-size:13px;color:var(--ok);margin-top:5px}
+.check{display:flex;gap:10px;align-items:flex-start;margin-top:14px;font-size:14px}
+.check input{width:20px;height:20px;margin-top:2px;flex:none}
+/* chat */
+.chat{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.msgs{padding:14px;display:flex;flex-direction:column;gap:10px;background:#F3F5FA;min-height:320px}
+.m{max-width:88%;padding:10px 13px;border-radius:16px;white-space:pre-line;animation:pop .25s}
+.m.a{background:#fff;border:1px solid var(--line);border-bottom-left-radius:4px}
+.m.u{background:var(--navy2);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.m.s{align-self:center;background:var(--okbg);color:#14632F;font-size:13px;border-radius:99px;padding:5px 12px}
+@keyframes pop{from{opacity:0;transform:translateY(5px)}to{opacity:1}}
+.typing{background:#fff;border:1px solid var(--line);border-radius:16px;padding:10px 14px;display:flex;gap:4px;align-self:flex-start}
+.typing i{width:6px;height:6px;border-radius:50%;background:#9AA3B5;animation:bl 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes bl{0%,60%,100%{opacity:.3}30%{opacity:1}}
+.chips{padding:12px;display:flex;flex-wrap:wrap;gap:8px;border-top:1px solid var(--line)}
+.chip{border:1.5px solid var(--navy2);color:var(--navy2);background:#fff;border-radius:99px;padding:8px 13px;font-weight:600;font-size:14px;cursor:pointer}
+.chip.sel{background:var(--navy2);color:#fff}
+.chatin{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}
+.chatin input{flex:1}
+/* connections */
+.conn{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
+.conn:last-child{border:0}
+.conn .ico{width:42px;height:42px;border-radius:12px;background:#EEF1F8;display:grid;place-items:center;font-size:20px;flex:none}
+.conn .t{flex:1;min-width:0}
+.conn .t b{display:block}
+.conn .t small{color:var(--muted);font-size:13px}
+.pill{font-size:12px;font-weight:700;padding:4px 10px;border-radius:99px;white-space:nowrap}
+.pill.ok{background:var(--okbg);color:#166534}
+.pill.wait{background:var(--warnbg);color:var(--warn)}
+.pill.off{background:#F1F2F5;color:#6B7280}
+.tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:#EEF1F8;color:var(--navy2);margin-left:6px;vertical-align:middle}
+/* tasks */
+.task{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.task:last-child{border:0}
+.task input{width:22px;height:22px;flex:none;margin-top:2px;accent-color:var(--navy2)}
+.task .t{flex:1}
+.task .t small{display:block;color:var(--muted);font-size:13px}
+.task .n{font-size:13px;color:var(--muted);white-space:nowrap}
+.grp{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--navy2);margin:6px 0 2px;display:flex;justify-content:space-between}
+/* quote */
+.big{font-size:40px;font-weight:800;line-height:1}
+.big small{font-size:16px;color:var(--muted);font-weight:500}
+.lines td{padding:8px 0;border-bottom:1px solid var(--line)}
+.lines{width:100%;border-collapse:collapse;font-size:14px}
+.lines td:last-child{text-align:right;white-space:nowrap;font-weight:600}
+.lines tr.tot td{border:0;font-size:16px;font-weight:800}
+.meter{height:12px;border-radius:99px;background:#EEF1F8;overflow:hidden;margin:8px 0 4px}
+.meter div{height:100%;background:var(--navy2);border-radius:99px;transition:width .5s}
+.meter div.hot{background:var(--yellow)}
+.tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tier{border:1.5px solid var(--line);border-radius:14px;padding:12px;text-align:center;cursor:pointer;background:#fff}
+.tier.on{border-color:var(--yellow);background:#FFFBEB;box-shadow:0 0 0 2px var(--yellow) inset}
+.tier b{display:block}.tier span{font-size:20px;font-weight:800}.tier small{display:block;color:var(--muted);font-size:12px}
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.vs div{border-radius:14px;padding:14px;background:#F3F5FA}
+.vs div.g{background:var(--navy);color:#fff}
+.vs b{font-size:22px;display:block}
+/* dashboard */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px}
+.stat b{font-size:24px;display:block}.stat small{color:var(--muted);font-size:13px}
+.feed div{padding:10px 0;border-bottom:1px solid var(--line);font-size:14px;display:flex;gap:10px}
+.feed div:last-child{border:0}
+.devis{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;font-size:13.5px;width:94%}
+.devis table{width:100%;border-collapse:collapse}.devis td{padding:4px 0;border-bottom:1px dashed var(--line)}.devis td:last-child{text-align:right}
+/* modal */
+.ov{position:fixed;inset:0;background:rgba(10,16,32,.55);display:none;align-items:flex-end;justify-content:center;z-index:20}
+.ov.on{display:flex}
+.modal{background:#fff;width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:22px;max-height:88vh;overflow:auto;animation:up .25s}
+@keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.modal h3{font-size:19px;margin-bottom:4px}
+.modal ol{padding-left:20px;margin:12px 0;display:grid;gap:6px;font-size:14px}
+.demo{font-size:12px;background:var(--warnbg);color:var(--warn);padding:6px 10px;border-radius:8px;margin-top:12px}
+.spin{width:22px;height:22px;border:3px solid #E2E6EF;border-top-color:var(--navy2);border-radius:50%;animation:sp 0.8s linear infinite;margin:16px auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+.tabs{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto}
+.tabs button{border:0;background:#fff;border:1px solid var(--line);padding:9px 14px;border-radius:99px;font-weight:600;cursor:pointer;white-space:nowrap}
+.tabs button.on{background:var(--navy2);color:#fff;border-color:var(--navy2)}
+@media(max-width:600px){.row,.tiers,.stats{grid-template-columns:1fr}.vs{grid-template-columns:1fr}h1{font-size:23px}.big{font-size:34px}}
+</style>
+</head>
+<body>
+<div class="top"><div class="in"><a class="logo" href="/mon-assistant-pro/" style="color:#fff;text-decoration:none"><i>✦</i>Mon Assistant Pro</a><div class="who" id="who"></div></div><div class="prog" id="prog"></div></div>
+<main id="app"></main>
+<div class="ov" id="ov"><div class="modal" id="modal"></div></div>
+
+<script>
+/* ---------- état ---------- */
+const KEY='map_state_v1';
+let S={step:0,co:{},bot:{},conn:{},tasks:{},vol:{devis:8,factures:6,rdv:12,posts:3},tier:null,started:null,used:0,feed:[]};
+try{const s=localStorage.getItem(KEY);if(s)S=Object.assign(S,JSON.parse(s))}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const eur=n=>{const d=Math.round(n*100)%100?2:0;return n.toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d})+' €'};
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const STEPS=['Inscription','Présentation','Connexions','Tâches','Votre tarif','Tableau de bord'];
+function go(n){S.step=n;save();render();window.scrollTo(0,0)}
+function render(){
+ $('prog').innerHTML=S.step<5?STEPS.slice(0,5).map((_,i)=>'<span class="'+(i<=S.step?'on':'')+'"></span>').join(''):'';
+ $('who').textContent=S.co.name||'';
+ [vSignup,vBot,vConn,vTasks,vQuote,vDash][S.step]();
+}
+
+/* ---------- 1. inscription ---------- */
+function luhn(s){let sum=0;for(let i=0;i<s.length;i++){let d=+s[s.length-1-i];if(i%2){d*=2;if(d>9)d-=9}sum+=d}return sum%10===0}
+function vSignup(){
+ const c=S.co;
+ $('app').innerHTML=`
+ <h1>Créez votre assistant</h1><p class="sub">2 minutes. 14 jours d'essai gratuit, sans carte bancaire.</p>
+ <div class="card">
+  <label>Numéro de SIRET <small>(facultatif, il remplit le reste pour vous)</small></label>
+  <div class="inl"><input id="siret" inputmode="numeric" placeholder="14 chiffres" value="${esc(c.siret)}"><button class="btn dark sm" onclick="lookup()">Rechercher</button></div>
+  <div id="sirmsg"></div>
+  <label>Nom de l'entreprise</label><input id="name" value="${esc(c.name)}" placeholder="Ex. RMS EcoSky">
+  <label>Adresse</label><input id="addr" value="${esc(c.addr)}">
+  <div class="row"><div><label>Activité (code APE)</label><input id="ape" value="${esc(c.ape)}"></div>
+  <div><label>Taille</label><select id="size">${['Seul','2 à 5 personnes','6 à 10 personnes','Plus de 10'].map(o=>`<option ${c.size===o?'selected':''}>${o}</option>`).join('')}</select></div></div>
+ </div>
+ <div class="card">
+  <div class="row"><div><label>Prénom</label><input id="first" value="${esc(c.first)}"></div><div><label>Nom</label><input id="last" value="${esc(c.last)}"></div></div>
+  <label>Téléphone portable <small>(pour valider vos devis par SMS)</small></label><input id="tel" inputmode="tel" value="${esc(c.tel)}" placeholder="06 12 34 56 78">
+  <label>E-mail</label><input id="mail" inputmode="email" value="${esc(c.mail)}">
+  <label>Mot de passe</label><input id="pw" type="password" placeholder="8 caractères minimum">
+  <label class="check"><input type="checkbox" id="cgu" ${c.cgu?'checked':''}> J'accepte les conditions d'utilisation. Rien n'est envoyé à mes clients sans ma validation.</label>
+  <div id="formerr"></div>
+ </div>
+ <button class="btn full" onclick="signup()">Créer mon compte</button>`;
+}
+async function lookup(){
+ const v=$('siret').value.replace(/\s/g,'');const m=$('sirmsg');
+ if(!/^\d{14}$/.test(v)){m.innerHTML='<div class="err">Le SIRET doit faire 14 chiffres.</div>';return}
+ if(!luhn(v)&&!v.startsWith('356000000'))m.innerHTML='<div class="err">Ce numéro semble incorrect, vérifiez-le.</div>';
+ m.innerHTML='<div class="hint">Recherche en cours…</div>';
+ try{
+  const r=await fetch('https://recherche-entreprises.api.gouv.fr/search?q='+v);const j=await r.json();const e=j.results&&j.results[0];
+  if(!e)throw 0;
+  const et=(e.matching_etablissements&&e.matching_etablissements[0])||e.siege||{};
+  $('name').value=e.nom_complet||'';$('addr').value=et.adresse||'';$('ape').value=e.activite_principale||'';
+  m.innerHTML='<div class="okmsg">✓ Entreprise trouvée, vérifiez les informations.</div>';
+ }catch(err){m.innerHTML='<div class="hint">Recherche automatique indisponible ici : remplissez les champs à la main.</div>'}
+}
+function signup(){
+ const g=id=>$(id).value.trim();
+ const c={siret:g('siret').replace(/\s/g,''),name:g('name'),addr:g('addr'),ape:g('ape'),size:g('size'),first:g('first'),last:g('last'),tel:g('tel'),mail:g('mail'),cgu:$('cgu').checked};
+ const e=[];
+ if(!c.name)e.push("le nom de l'entreprise");
+ if(!c.first||!c.last)e.push('votre prénom et votre nom');
+ if(!/^0[67]\d{8}$/.test(c.tel.replace(/[\s.]/g,'')))e.push('un portable valide (06 ou 07)');
+ if(!/^\S+@\S+\.\S+$/.test(c.mail))e.push('un e-mail valide');
+ if(g('pw').length<8&&!S.co.pwok)e.push('un mot de passe de 8 caractères');
+ if(!c.cgu)e.push("l'acceptation des conditions");
+ if(e.length){$('formerr').innerHTML='<div class="err">Il manque : '+e.join(', ')+'.</div>';return}
+ c.pwok=true;S.co=c;go(1);
+}
+
+/* ---------- 2. présentation (conversation) ---------- */
+const SOFTS=['Pennylane','Evoliz','Axonaut','Sellsy','Tiime','Obat','Aucun logiciel','Autre'];
+function vBot(){
+ $('app').innerHTML=`<h1>Faisons connaissance</h1><p class="sub">Votre assistant vous pose quelques questions pour s'adapter à votre entreprise.</p>
+ <div class="chat"><div class="msgs" id="msgs"></div><div class="chips" id="chips"></div></div>
+ <div class="actions"><button class="btn light" onclick="go(0)">Retour</button><button class="btn" id="nx" onclick="go(2)" disabled>Continuer</button></div>`;
+ runBot();
+}
+function add(t,w){const d=document.createElement('div');d.className='m '+w;d.textContent=t;$('msgs').appendChild(d);d.scrollIntoView({block:'nearest'});return d}
+async function say(t,ms=650){const ty=document.createElement('div');ty.className='typing';ty.innerHTML='<i></i><i></i><i></i>';$('msgs').appendChild(ty);await wait(ms);ty.remove();add(t,'a')}
+function ask(opts,multi){return new Promise(res=>{const box=$('chips');box.innerHTML='';const sel=new Set();
+ opts.forEach(o=>{const b=document.createElement('button');b.className='chip';b.textContent=o;b.onclick=()=>{
+  if(!multi){box.innerHTML='';add(o,'u');res(o)}else{sel.has(o)?sel.delete(o):sel.add(o);b.classList.toggle('sel')}};box.appendChild(b)});
+ if(multi){const ok=document.createElement('button');ok.className='btn sm';ok.textContent='Valider';ok.onclick=()=>{if(!sel.size)return;box.innerHTML='';const a=[...sel];add(a.join(', '),'u');res(a)};box.appendChild(ok)}
+})}
+function askNum(q,def){return new Promise(res=>{const box=$('chips');box.innerHTML=`<div class="inl" style="width:100%"><input id="nb" type="number" min="0" value="${def}"><button class="btn sm" id="nbok">OK</button></div>`;
+ $('nbok').onclick=()=>{const v=Math.max(0,parseInt($('nb').value)||0);box.innerHTML='';add(String(v),'u');res(v)}})}
+async function runBot(){
+ const b=S.bot;
+ await say(`Bonjour ${S.co.first} 👋 Je suis votre assistant virtuel.\nJe peux être votre secrétaire, votre commercial et votre agent marketing. Vous choisirez ce que vous me confiez.`,500);
+ await say('Quel est votre métier ?');
+ b.job=await ask(['Plombier / chauffagiste','Électricien','Paysagiste / aménagement extérieur','Maçon / gros œuvre','Revêtements de sol','Menuisier','Autre artisan']);
+ await say("Qu'est-ce qui vous prend le plus de temps aujourd'hui ? (plusieurs choix possibles)");
+ b.pain=await ask(['Les devis','Les factures','Les relances','Les mails','Les rendez-vous','Les réseaux sociaux','Trouver des clients'],true);
+ await say('Quel logiciel utilisez-vous pour vos devis et factures ?');
+ b.soft=await ask(SOFTS);
+ const cmp={Pennylane:'compatible ✅ Je travaillerai directement dans votre compte.',Evoliz:'compatible ✅ Connexion en un clic.',Axonaut:'compatible ✅',Sellsy:'compatible ✅',Tiime:"bientôt compatible 🟡 En attendant, je fais vos devis moi-même en PDF.",Obat:"pas encore relié ⏳ En attendant, je fais vos devis en PDF avec signature électronique.",'Aucun logiciel':"pas de souci 👍 Je ferai vos devis et factures moi-même, avec signature électronique.",Autre:"je vérifie avec l'équipe et je vous tiens au courant. En attendant, je peux faire vos devis en PDF."};
+ await say(b.soft==='Aucun logiciel'?cmp[b.soft]:b.soft+' : '+cmp[b.soft],800);
+ await say('Pour estimer votre forfait : combien de devis faites-vous par mois, environ ?');
+ S.vol.devis=await askNum('',S.vol.devis);
+ await say('Et combien de factures par mois ?');
+ S.vol.factures=await askNum('',S.vol.factures);
+ await say('Combien de rendez-vous ou visites de chantier par mois ?');
+ S.vol.rdv=await askNum('',S.vol.rdv);
+ await say('Parfait, j\'ai tout ce qu\'il me faut. Prochaine étape : connecter vos outils pour que je puisse travailler 🔌',700);
+ save();$('chips').innerHTML='';$('nx').disabled=false;
+}
+
+/* ---------- 3. connexions ---------- */
+const CONN=[
+ {id:'soft',ico:'🧾',name:()=>S.bot.soft&&!['Aucun logiciel','Autre','Obat','Tiime'].includes(S.bot.soft)?S.bot.soft:'Devis et factures intégrés',desc:'Créer clients, devis, factures et relances',key:true,imp:true},
+ {id:'mail',ico:'📬',name:()=>'Messagerie (Gmail, Outlook, IONOS…)',desc:'Trier vos mails, alertes, réponses aux demandes',imp:true},
+ {id:'cal',ico:'📅',name:()=>'Agenda (Google, Outlook)',desc:'Rendez-vous, visites, rappels'},
+ {id:'bank',ico:'🏦',name:()=>'Banque (Qonto, CIC…)',desc:'Voir les paiements reçus pour arrêter les relances'},
+ {id:'sms',ico:'💬',name:()=>'SMS et WhatsApp',desc:'Valider les devis depuis votre téléphone'},
+ {id:'fb',ico:'📘',name:()=>'Facebook et Instagram',desc:'Publications, messages, publicités',tier:'Pro'},
+ {id:'tt',ico:'🎵',name:()=>'TikTok',desc:'Vidéos de chantier',tier:'Pro'},
+ {id:'gmb',ico:'⭐',name:()=>'Fiche Google (avis)',desc:'Demander et répondre aux avis',tier:'Pro'},
+ {id:'ads',ico:'🎯',name:()=>'Google Ads',desc:'Campagnes publicitaires',tier:'Premium'}
+];
+function vConn(){
+ const n=CONN.filter(c=>S.conn[c.id]).length;
+ $('app').innerHTML=`<h1>Connectez vos outils</h1><p class="sub">Connectez au moins votre logiciel de devis et votre messagerie. Le reste peut attendre, vous pourrez le faire plus tard.</p>
+ <div class="card">${CONN.map(c=>`<div class="conn"><div class="ico">${c.ico}</div><div class="t"><b>${esc(c.name())}${c.tier?`<span class="tag">${c.tier}</span>`:''}${c.imp?'<span class="tag" style="background:#FEF3C7;color:#92400E">Important</span>':''}</b><small>${c.desc}</small></div>
+ ${S.conn[c.id]?'<span class="pill ok">Connecté ✓</span>':`<button class="btn sm dark" onclick="connect('${c.id}')">Connecter</button>`}</div>`).join('')}</div>
+ <p class="hint">${n} outil${n>1?'s':''} connecté${n>1?'s':''} sur ${CONN.length}.</p>
+ <div class="actions"><button class="btn light" onclick="go(1)">Retour</button><button class="btn" onclick="go(3)">${n?'Continuer':'Passer pour l\'instant'}</button></div>`;
+}
+function connect(id){
+ const c=CONN.find(x=>x.id===id);const nm=c.name();let body='';
+ const soft=S.bot.soft;
+ if(id==='soft'&&soft==='Pennylane')body=`<p class="sub">Je vais créer vos devis et factures directement dans Pennylane.</p><ol><li>Ouvrez Pennylane, puis <b>Paramètres</b>.</li><li>Allez dans <b>Connectivité</b>, puis <b>Développeurs</b>.</li><li>Cliquez sur <b>Générer un jeton API</b>, cochez les droits « Ventes » et copiez le jeton.</li></ol><label>Collez votre jeton ici</label><input id="tok" placeholder="Jeton API Pennylane">`;
+ else if(id==='soft'&&['Evoliz','Axonaut','Sellsy'].includes(soft))body=`<p class="sub">Vous allez être redirigé vers ${soft} pour autoriser l'accès.</p><ol><li>Connectez-vous à votre compte ${soft}.</li><li>Cliquez sur <b>Autoriser</b>.</li></ol>`;
+ else if(id==='soft')body=`<p class="sub">Je ferai vos devis et factures moi-même. Ajoutez votre logo et vos mentions.</p><label>Mentions de bas de devis <small>(assurance décennale, conditions de paiement)</small></label><textarea id="tok" rows="3" placeholder="Ex. Assurance décennale n°… Acompte de 30 % à la commande."></textarea>`;
+ else if(id==='mail')body=`<p class="sub">Choisissez votre messagerie.</p><div class="tiers" style="grid-template-columns:1fr 1fr"><div class="tier on">Gmail</div><div class="tier">Outlook</div><div class="tier">IONOS</div><div class="tier">Autre</div></div><ol><li>Connectez-vous à votre compte.</li><li>Autorisez la lecture et l'envoi de mails.</li></ol><p class="hint">Je ne supprime jamais un mail. Chaque mail envoyé en votre nom apparaît dans vos messages envoyés.</p>`;
+ else if(id==='bank')body=`<p class="sub">Accès en lecture seule : je vois les paiements reçus pour savoir qui relancer. Je ne peux faire aucun virement.</p><ol><li>Choisissez votre banque.</li><li>Validez l'accès dans l'application de votre banque.</li></ol>`;
+ else if(id==='sms')body=`<p class="sub">Je vous enverrai les devis à valider au <b>${esc(S.co.tel)}</b>. Répondez « OK » pour envoyer, ou dictez vos modifications.</p><label>Code reçu par SMS</label><input placeholder="6 chiffres" inputmode="numeric">`;
+ else body=`<p class="sub">Vous allez être redirigé pour autoriser Mon Assistant Pro à accéder à votre compte ${esc(nm)}.</p><ol><li>Connectez-vous.</li><li>Choisissez la page ou le compte à relier.</li><li>Cliquez sur <b>Autoriser</b>.</li></ol>`;
+ $('modal').innerHTML=`<h3>${c.ico} ${esc(nm)}</h3>${body}<div class="demo">Version de test : la connexion réelle sera branchée ensuite.</div><div class="actions"><button class="btn light" onclick="closeM()">Annuler</button><button class="btn" onclick="doConn('${id}')">Connecter</button></div>`;
+ $('ov').classList.add('on');
+}
+async function doConn(id){
+ $('modal').innerHTML='<div class="spin"></div><p style="text-align:center" class="sub">Connexion en cours…</p>';
+ await wait(1100);S.conn[id]=true;save();closeM();vConn();
+}
+function closeM(){$('ov').classList.remove('on')}
+$('ov').onclick=e=>{if(e.target.id==='ov')closeM()};
+
+/* ---------- 4. tâches ---------- */
+const TASKS=[
+ {g:'Secrétariat',id:'devis',t:'Devis à la voix',d:'Vous dictez, je crée le client et le devis',n:v=>v.devis,tier:1},
+ {g:'Secrétariat',id:'fact',t:'Factures et acomptes',d:"Dès qu'un devis est signé",n:v=>v.factures,tier:1},
+ {g:'Secrétariat',id:'mails',t:'Tri des mails et résumé du matin',d:'Demandes de devis, urgences, à traiter',n:v=>30,tier:1},
+ {g:'Secrétariat',id:'agenda',t:'Rendez-vous et rappels',d:'Créneaux proposés aux clients, rappel la veille',n:v=>v.rdv,tier:1},
+ {g:'Commercial',id:'reldev',t:'Relance des devis non signés',d:'À 7 jours puis à 15 jours',n:v=>Math.round(v.devis*1.2),tier:1},
+ {g:'Commercial',id:'relfac',t:'Relance des impayés',d:'Ton cordial, puis plus ferme',n:v=>Math.max(2,Math.round(v.factures*0.4)),tier:1},
+ {g:'Commercial',id:'rep',t:'Réponse immédiate aux demandes',d:'Le soir et le week-end aussi',n:v=>v.devis,tier:1},
+ {g:'Marketing',id:'social',t:'Publications Facebook, Instagram, TikTok',d:'À partir de vos photos de chantier',n:v=>Math.round(v.posts*4.3*2),tier:2},
+ {g:'Marketing',id:'avis',t:'Avis Google',d:'Demande après chaque chantier, réponse aux avis',n:v=>v.factures*2,tier:2},
+ {g:'Développement',id:'ads',t:'Campagnes publicitaires',d:'Création, suivi, coût par demande',n:v=>25,tier:3},
+ {g:'Développement',id:'prosp',t:'Prospection par mail',d:'Architectes, syndics, anciens clients',n:v=>120,tier:3},
+ {g:'Développement',id:'report',t:'Rapport du mois',d:'Chiffre, devis signés, impayés',n:v=>2,tier:3}
+];
+function defaults(){
+ if(Object.keys(S.tasks).length)return;
+ const p=S.bot.pain||[];
+ TASKS.filter(t=>t.tier===1).forEach(t=>S.tasks[t.id]=true);
+ if(p.includes('Les réseaux sociaux'))S.tasks.social=true;
+ if(p.includes('Trouver des clients'))S.tasks.avis=true;
+}
+function vTasks(){
+ defaults();
+ const groups=[...new Set(TASKS.map(t=>t.g))];
+ const tierName=['','Essentiel','Pro','Premium'];
+ $('app').innerHTML=`<h1>Que me confiez-vous ?</h1><p class="sub">J'ai présélectionné les tâches utiles pour vous. Cochez ou décochez librement, le prix se met à jour à l'étape suivante.</p>
+ ${groups.map(g=>`<div class="card"><div class="grp"><span>${g}</span></div>${TASKS.filter(t=>t.g===g).map(t=>`
+ <label class="task"><input type="checkbox" ${S.tasks[t.id]?'checked':''} onchange="S.tasks['${t.id}']=this.checked;save();est()"><div class="t">${t.t}${t.tier>1?`<span class="tag">${tierName[t.tier]}</span>`:''}<small>${t.d}</small></div><div class="n">≈ ${t.n(S.vol)}/mois</div></label>`).join('')}</div>`).join('')}
+ <div class="card"><label>Publications par semaine souhaitées <small>(si réseaux sociaux)</small></label><input type="number" min="0" value="${S.vol.posts}" onchange="S.vol.posts=Math.max(0,+this.value||0);save();vTasks()"></div>
+ <div class="card" id="est"></div>
+ <div class="actions"><button class="btn light" onclick="go(2)">Retour</button><button class="btn" onclick="S.tier=null;go(4)">Voir mon tarif</button></div>`;
+ est();
+}
+
+/* ---------- 5. tarif ---------- */
+const TIERS=[null,{n:'Essentiel',p:89,q:300},{n:'Pro',p:159,q:800},{n:'Premium',p:279,q:2000}];
+function calc(){
+ const sel=TASKS.filter(t=>S.tasks[t.id]);
+ const acts=sel.reduce((s,t)=>s+t.n(S.vol),0);
+ let need=Math.max(1,...sel.map(t=>t.tier));
+ while(need<3&&acts>TIERS[need].q*0.8)need++;
+ return{sel,acts,need};
+}
+function est(){const{acts,need}=calc();if($('est'))$('est').innerHTML=`<b>Estimation : ≈ ${acts} actions par mois</b><div class="hint">Forfait conseillé : ${TIERS[need].n} (${TIERS[need].p} € HT/mois)</div>`}
+function vQuote(){
+ const{sel,acts,need}=calc();
+ const t=S.tier||need;const T=TIERS[t];
+ const pct=Math.min(100,Math.round(acts/T.q*100));
+ const extra=sel.filter(x=>x.tier>t);
+ const ht=T.p,tva=ht*0.2;
+ $('app').innerHTML=`<h1>Votre tarif, ${esc(S.co.first)}</h1><p class="sub">Calculé à partir de vos réponses : ${S.vol.devis} devis, ${S.vol.factures} factures et ${S.vol.rdv} rendez-vous par mois.</p>
+ <div class="tiers">${[1,2,3].map(i=>`<div class="tier ${i===t?'on':''}" onclick="S.tier=${i};save();vQuote()"><b>${TIERS[i].n}</b><span>${TIERS[i].p} €</span><small>HT/mois · ${TIERS[i].q} actions</small>${i===need?'<small style="color:#92400E;font-weight:700">Conseillé</small>':''}</div>`).join('')}</div>
+ <div class="card" style="margin-top:14px">
+  <div class="big">${T.p} €<small> HT / mois</small></div>
+  <p class="hint">soit ${eur(ht+tva)} TTC · sans engagement · 14 jours gratuits</p>
+  <h2 style="margin-top:16px">Votre consommation estimée</h2>
+  <div class="meter"><div class="${pct>=80?'hot':''}" style="width:${pct}%"></div></div>
+  <p class="hint">≈ ${acts} actions sur ${T.q} incluses (${pct} %). Je vous préviens à 80 %, vous choisissez alors de passer au forfait du dessus ou d'attendre le mois suivant.</p>
+  ${extra.length?`<p class="err" style="margin-top:10px">⚠️ Non inclus dans ce forfait : ${extra.map(x=>x.t).join(', ')}. Ces tâches restent en pause.</p>`:''}
+ </div>
+ <div class="card"><h2 style="margin-top:0">Détail du mois</h2><table class="lines">
+  ${sel.filter(x=>x.tier<=t).map(x=>`<tr><td>${x.t}</td><td>≈ ${x.n(S.vol)}</td></tr>`).join('')}
+  <tr class="tot"><td>Total actions estimées</td><td>≈ ${sel.filter(x=>x.tier<=t).reduce((s,x)=>s+x.n(S.vol),0)}</td></tr></table>
+  <p class="hint" style="margin-top:8px">Une action = un devis, une facture, une relance, une publication, un résumé de mails…</p></div>
+ <div class="card"><h2 style="margin-top:0">Comparé à une embauche</h2><div class="vs"><div><small>Secrétaire à mi-temps</small><b>+ de 1 000 €/mois</b><small>charges comprises, 20 h par semaine</small></div><div class="g"><small>Votre assistant ${T.n}</small><b>${T.p} €/mois</b><small>disponible 24h/24, 7j/7</small></div></div></div>
+ <div class="actions"><button class="btn light" onclick="go(3)">Modifier mes tâches</button><button class="btn" onclick="startTrial(${t})">Démarrer l'essai gratuit</button></div>`;
+}
+function startTrial(t){S.tier=t;S.started=new Date().toISOString();S.used=0;S.feed=[['✦','Compte créé, essai gratuit de 14 jours démarré']];go(5)}
+
+/* ---------- 6. tableau de bord ---------- */
+let tab='home';
+function vDash(){
+ const T=TIERS[S.tier||1];const d=new Date(S.started||Date.now());const end=new Date(d.getTime()+14*864e5);
+ const left=Math.max(0,Math.ceil((end-Date.now())/864e5));
+ const pct=Math.min(100,Math.round(S.used/T.q*100));
+ const nconn=CONN.filter(c=>S.conn[c.id]).length;
+ $('app').innerHTML=`<h1>Bonjour ${esc(S.co.first)} 👋</h1><p class="sub">${esc(S.co.name)} · forfait ${T.n} · essai gratuit : ${left} jour${left>1?'s':''} restant${left>1?'s':''}</p>
+ <div class="tabs">${[['home','Accueil'],['chat','Mon assistant'],['conn','Connexions'],['tasks','Tâches & forfait']].map(([k,l])=>`<button class="${tab===k?'on':''}" onclick="tab='${k}';vDash()">${l}</button>`).join('')}</div>
+ <div id="pane"></div>`;
+ const p=$('pane');
+ if(tab==='home'){
+  p.innerHTML=`<div class="stats"><div class="stat"><b>${S.used}/${T.q}</b><small>actions ce mois</small><div class="meter"><div class="${pct>=80?'hot':''}" style="width:${Math.max(2,pct)}%"></div></div></div><div class="stat"><b>${nconn}/${CONN.length}</b><small>outils connectés</small></div><div class="stat"><b>${TASKS.filter(t=>S.tasks[t.id]&&t.tier<=S.tier).length}</b><small>tâches actives</small></div></div>
+  ${pct>=80?'<div class="card" style="margin-top:14px;background:#FFFBEB;border-color:#F5B700"><b>⚠️ Vous avez utilisé '+pct+' % de vos actions.</b><div class="hint">Passez au forfait supérieur ou attendez le mois prochain.</div></div>':''}
+  <div class="card" style="margin-top:14px"><b>Dernières actions</b><div class="feed">${S.feed.slice().reverse().map(f=>`<div><span>${f[0]}</span><span>${esc(f[1])}</span></div>`).join('')}</div></div>
+  <button class="btn full" onclick="tab='chat';vDash()">🎙️ Dicter un devis</button>`;
+ }else if(tab==='chat'){
+  p.innerHTML=`<div class="chat"><div class="msgs" id="msgs"></div><div class="chatin"><input id="q" placeholder="Ex. Devis pour M. Durand à Auray, 40 m² de résine à 85 € le m²"><button class="btn sm" onclick="send()">Envoyer</button></div></div><p class="hint">Essayez : « Devis pour Mme Le Gall à Vannes, terrasse 30 m² à 90 € le m², et 500 € de préparation ».</p>`;
+  add('Je vous écoute. Dictez-moi un devis, ou demandez-moi de relancer un client.','a');
+  $('q').onkeydown=e=>{if(e.key==='Enter')send()};
+ }else if(tab==='conn'){
+  S.step=5;vConnInto(p);
+ }else{
+  p.innerHTML=`<div class="card"><b>Forfait ${T.n} : ${T.p} € HT/mois</b><div class="hint">${T.q} actions incluses</div></div>`+TASKS.map(t=>`<label class="task card" style="margin-bottom:8px"><input type="checkbox" ${S.tasks[t.id]?'checked':''} onchange="S.tasks['${t.id}']=this.checked;save()"><div class="t">${t.t}${t.tier>S.tier?'<span class="tag">'+TIERS[t.tier].n+'</span>':''}<small>${t.d}</small></div></label>`).join('')+`<button class="btn full dark" onclick="go(4)">Recalculer mon forfait</button>`;
+ }
+}
+function vConnInto(p){p.innerHTML=`<div class="card">${CONN.map(c=>`<div class="conn"><div class="ico">${c.ico}</div><div class="t"><b>${esc(c.name())}</b><small>${c.desc}</small></div>${S.conn[c.id]?'<span class="pill ok">Connecté ✓</span>':`<button class="btn sm dark" onclick="connect('${c.id}')">Connecter</button>`}</div>`).join('')}</div>`;}
+// recharger le bon écran après connexion depuis le tableau de bord
+const _doConn=doConn;doConn=async function(id){await _doConn(id);if(S.step===5){tab='conn';vDash()}};
+
+function parseDevis(t){
+ const cli=(t.match(/pour\s+((?:M\.|Mme|Monsieur|Madame|M\.\s*et\s*Mme)\s+[A-ZÉÈ][\wéèêàç'-]+(?:\s+[A-ZÉÈ][\wéèêàç'-]+)?)/i)||[])[1]||'Nouveau client';
+ const ville=(t.match(/(?:^|\s)à\s+([A-ZÉÈ][\wéèêàç'-]+(?:[- ][A-ZÉÈ][\wéèêàç'-]+)*)/)||[])[1]||'';
+ const lines=[];
+ const re=/(\d+[.,]?\d*)\s*(m²|m2|m|mètres?|ml|u|unités?|pièces?)?\s*(?:de\s+)?([^,.;]*?)\s*(?:à|a)\s*(\d+[.,]?\d*)\s*€?\s*(?:le|la|par|du)?\s*(m²|m2|mètre|m|unité|pièce)?/gi;
+ let m;while((m=re.exec(t))){const q=parseFloat(m[1].replace(',','.')),pu=parseFloat(m[4].replace(',','.'));if(m[2]||m[5]){let ds=(m[3]||'').trim();if(!ds){const b=t.slice(0,m.index).trim().split(/[\s,]+/).pop();ds=b&&!/^(et|plus|pour)$/i.test(b)?b:'Prestation'}lines.push([ds.charAt(0).toUpperCase()+ds.slice(1),q+' '+(m[2]||m[5]),pu,q*pu])}}
+ const re2=/(\d[\d\s]*[.,]?\d*)\s*€\s*(?:de|pour)\s+(?:la\s+|l'|le\s+)?([^,.;]+)/gi;
+ while((m=re2.exec(t))){const v=parseFloat(m[1].replace(/\s/g,'').replace(',','.'));lines.push([m[2].trim().charAt(0).toUpperCase()+m[2].trim().slice(1),'forfait',v,v])}
+ return{cli,ville,lines};
+}
+async function send(){
+ const q=$('q').value.trim();if(!q)return;$('q').value='';add(q,'u');
+ if(/relan/i.test(q)){await say('Je regarde les factures impayées…',800);add('Relance envoyée au client (copie dans vos messages envoyés) ✓','s');log('🔔','Relance envoyée');return}
+ const d=parseDevis(q);
+ if(!d.lines.length){await say("Je n'ai pas trouvé de quantités ni de prix. Dites-moi par exemple : « 40 m² de résine à 85 € le m² ».");return}
+ await say('Je cherche le client…',800);
+ const name=d.cli+(d.ville?' – '+d.ville:'');
+ add('Client introuvable : fiche « '+name+' » créée ✓','s');
+ const ht=d.lines.reduce((s,l)=>s+l[3],0);
+ const src=S.conn.soft&&['Pennylane','Evoliz','Axonaut','Sellsy'].includes(S.bot.soft)?S.bot.soft:'PDF';
+ await say('Voici le brouillon, enregistré dans '+src+' :',600);
+ const box=document.createElement('div');box.className='devis';
+ box.innerHTML=`<b>Devis – ${esc(name)}</b><table>${d.lines.map(l=>`<tr><td>${esc(l[0])} <small style="color:#5D6678">(${esc(l[1])}${l[1]!=='forfait'?' × '+eur(l[2]):''})</small></td><td>${eur(l[3])}</td></tr>`).join('')}<tr><td><b>Total HT</b></td><td><b>${eur(ht)}</b></td></tr><tr><td>TVA 20 %</td><td>${eur(ht*.2)}</td></tr><tr><td><b>Total TTC</b></td><td><b>${eur(ht*1.2)}</b></td></tr></table><div style="display:flex;gap:8px;margin-top:10px"><button class="btn sm">✅ Envoyer au client</button><button class="btn sm light">✏️ Modifier</button></div>`;
+ $('msgs').appendChild(box);
+ const [ok,ed]=box.querySelectorAll('button');
+ ok.onclick=async()=>{ok.parentElement.remove();add('Devis envoyé avec signature électronique ✓','s');log('📄','Devis envoyé : '+name+' ('+eur(ht*1.2)+' TTC)');await say("Je relancerai le client dans 7 jours s'il n'a pas signé.")};
+ ed.onclick=()=>{$('q').focus();say('Dites-moi ce qu\'il faut changer : une ligne, un prix, une remise ?')};
+ log('📝','Brouillon de devis créé : '+name);
+}
+function log(i,t){S.used++;S.feed.push([i,t]);if(S.feed.length>30)S.feed.shift();save()}
+
+render();
+</script>
+</body>
+</html>

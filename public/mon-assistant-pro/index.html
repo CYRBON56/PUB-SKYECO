@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mon Assistant Pro – démo</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#14213D;--navy2:#1E3160;--yellow:#F5B700;--bg:#F6F7FB;--card:#fff;--text:#1A1F2E;--muted:#5B6476;--line:#E3E6EE;--ok:#16A34A;--warn:#D97706;--no:#9CA3AF}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
+a{color:inherit}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+header.top{background:var(--navy);color:#fff}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:16px 0}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px}
+.logo .dot{width:34px;height:34px;border-radius:10px;background:var(--yellow);display:grid;place-items:center;color:var(--navy);font-size:18px}
+.badge{font-size:12px;background:rgba(255,255,255,.12);padding:4px 10px;border-radius:99px}
+.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;padding:40px 0 60px}
+.hero h1{font-size:40px;line-height:1.15;font-weight:800}
+.hero h1 span{color:var(--yellow)}
+.hero p{color:#C9D1E4;font-size:18px;margin:18px 0 26px}
+.btn{display:inline-block;background:var(--yellow);color:var(--navy);font-weight:700;padding:14px 22px;border-radius:12px;border:0;cursor:pointer;font-size:16px;text-decoration:none}
+.btn.ghost{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.35);margin-left:8px}
+.points{display:flex;gap:18px;flex-wrap:wrap;margin-top:26px;font-size:14px;color:#C9D1E4}
+.points b{color:#fff}
+/* phone */
+.phone{background:#0B1328;border-radius:34px;padding:12px;box-shadow:0 30px 60px rgba(0,0,0,.35);max-width:390px;margin:0 auto;width:100%}
+.screen{background:#fff;border-radius:24px;overflow:hidden;display:flex;flex-direction:column;height:600px}
+.chathead{background:var(--navy2);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px}
+.av{width:36px;height:36px;border-radius:50%;background:var(--yellow);display:grid;place-items:center;color:var(--navy);font-weight:800}
+.chathead small{display:block;color:#A9B6D6;font-size:12px}
+.restart{margin-left:auto;background:none;border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:4px 8px;font-size:12px;cursor:pointer}
+.msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:#F3F5FA}
+.m{max-width:86%;padding:10px 13px;border-radius:16px;font-size:14.5px;white-space:pre-line;animation:pop .25s ease}
+.m.a{background:#fff;border:1px solid var(--line);border-bottom-left-radius:4px;align-self:flex-start}
+.m.u{background:var(--navy2);color:#fff;border-bottom-right-radius:4px;align-self:flex-end}
+.m.sys{align-self:center;background:#E8F7EE;color:#14632F;font-size:12.5px;border-radius:99px;padding:5px 12px}
+@keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+.typing{align-self:flex-start;background:#fff;border:1px solid var(--line);border-radius:16px;padding:10px 14px;display:flex;gap:4px}
+.typing i{width:6px;height:6px;border-radius:50%;background:#9AA3B5;animation:b 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes b{0%,60%,100%{opacity:.3}30%{opacity:1}}
+.chips{padding:10px 12px 14px;display:flex;flex-wrap:wrap;gap:8px;border-top:1px solid var(--line);background:#fff;min-height:58px}
+.chip{border:1.5px solid var(--navy2);color:var(--navy2);background:#fff;border-radius:99px;padding:7px 12px;font-size:13.5px;font-weight:600;cursor:pointer;text-align:left}
+.chip:hover{background:var(--navy2);color:#fff}
+.chip.long{border-radius:12px;font-weight:500}
+.devis{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;font-size:13px;align-self:flex-start;width:92%;animation:pop .25s}
+.devis h4{font-size:14px;display:flex;justify-content:space-between}
+.devis h4 em{font-style:normal;font-size:11px;background:#FEF3C7;color:#92400E;padding:2px 8px;border-radius:99px}
+.devis .cl{color:var(--muted);margin:4px 0 8px}
+.devis table{width:100%;border-collapse:collapse}
+.devis td{padding:4px 0;border-bottom:1px dashed var(--line)}
+.devis td:last-child{text-align:right;white-space:nowrap}
+.devis .tot td{border:0;font-weight:700}
+/* sections */
+section{padding:60px 0}
+.kicker{color:var(--navy2);font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.08em}
+h2{font-size:30px;line-height:1.2;margin:6px 0 10px}
+.lead{color:var(--muted);max-width:640px;margin-bottom:28px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+.card .ic{font-size:24px;margin-bottom:8px}
+.card h3{font-size:17px;margin-bottom:6px}
+.card p{color:var(--muted);font-size:14.5px}
+.tag{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px;margin-top:10px}
+.tag.inc{background:#DCFCE7;color:#166534}
+.tag.opt{background:#FEF3C7;color:#92400E}
+.compat{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.cp{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;justify-content:space-between;align-items:center;font-weight:600}
+.cp span{font-size:12px;font-weight:700;padding:3px 8px;border-radius:99px}
+.s-ok{background:#DCFCE7;color:#166534}.s-mid{background:#FEF3C7;color:#92400E}.s-no{background:#F1F2F5;color:#6B7280}
+.note{font-size:13px;color:var(--muted);margin-top:14px}
+.prices{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:stretch}
+.price{background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px;display:flex;flex-direction:column}
+.price.hl{border:2px solid var(--yellow);box-shadow:0 10px 30px rgba(245,183,0,.15);position:relative}
+.price.hl:before{content:"Le plus choisi";position:absolute;top:-12px;left:24px;background:var(--yellow);color:var(--navy);font-size:12px;font-weight:800;padding:3px 10px;border-radius:99px}
+.price h3{font-size:20px}
+.price .amt{font-size:36px;font-weight:800;margin:8px 0 2px}
+.price .amt small{font-size:15px;color:var(--muted);font-weight:500}
+.price .q{color:var(--muted);font-size:14px;margin-bottom:14px}
+.price ul{list-style:none;display:grid;gap:8px;font-size:14.5px;flex:1}
+.price li:before{content:"✓ ";color:var(--ok);font-weight:800}
+.vs{margin-top:24px;background:var(--navy);color:#fff;border-radius:18px;padding:24px;display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.vs div{background:rgba(255,255,255,.07);border-radius:14px;padding:18px}
+.vs b{font-size:26px;display:block;margin:4px 0}
+.vs .good b{color:var(--yellow)}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;counter-reset:s}
+.step{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;counter-increment:s}
+.step:before{content:counter(s);display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--yellow);color:var(--navy);font-weight:800;margin-bottom:10px}
+.step h3{font-size:16px;margin-bottom:4px}.step p{font-size:14px;color:var(--muted)}
+.cta{background:var(--navy);color:#fff;text-align:center;border-radius:22px;padding:44px 24px;margin-bottom:60px}
+.cta h2{color:#fff}.cta p{color:#C9D1E4;margin-bottom:20px}
+footer{text-align:center;color:var(--muted);font-size:13px;padding:0 0 40px}
+@media(max-width:860px){
+ .hero{grid-template-columns:1fr;padding-top:20px}.hero h1{font-size:30px}
+ .grid,.prices{grid-template-columns:1fr}.compat{grid-template-columns:1fr 1fr}
+ .steps{grid-template-columns:1fr 1fr}.vs{grid-template-columns:1fr}
+ .btn.ghost{margin:10px 0 0}
+ h2{font-size:25px}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+ <div class="wrap">
+  <div class="nav">
+   <div class="logo"><div class="dot">✦</div>Mon Assistant Pro</div>
+   <a class="badge" style="text-decoration:none" href="/mon-assistant-pro/inscription/">Se connecter</a>
+  </div>
+  <div class="hero">
+   <div>
+    <h1>Votre secrétaire virtuelle, <span>disponible 24h/24</span>, pour le prix d'un plein de camionnette.</h1>
+    <p>Vous lui parlez comme à une vraie secrétaire. Elle fait vos devis, envoie vos factures, relance vos clients, trie vos mails et peut même gérer vos réseaux sociaux.</p>
+    <a class="btn" href="/mon-assistant-pro/inscription/">Créer mon assistant</a><a class="btn ghost" href="#demo">Essayer la démo</a>
+    <div class="points"><div><b>Sans engagement</b></div><div><b>Se connecte</b> à votre logiciel</div><div><b>Vous validez</b> avant chaque envoi</div></div>
+   </div>
+   <div id="demo">
+    <div class="phone"><div class="screen">
+     <div class="chathead"><div class="av">✦</div><div><b>Votre assistant</b><small>en ligne</small></div><button class="restart" onclick="start()">↻ Recommencer</button></div>
+     <div class="msgs" id="msgs"></div>
+     <div class="chips" id="chips"></div>
+    </div></div>
+   </div>
+  </div>
+ </div>
+</header>
+
+<section>
+ <div class="wrap">
+  <div class="kicker">Dès le premier mois</div>
+  <h2>Ce que votre assistant fait pour vous tout de suite</h2>
+  <p class="lead">Tout est inclus dans le forfait Essentiel. Vous gardez la main : rien ne part sans votre accord.</p>
+  <div class="grid">
+   <div class="card"><div class="ic">📄</div><h3>Vos devis à la voix</h3><p>Vous expliquez le chantier, il retrouve le client (ou crée sa fiche), rédige le devis et vous l'envoie à valider.</p><span class="tag inc">Inclus</span></div>
+   <div class="card"><div class="ic">🧾</div><h3>Factures et acomptes</h3><p>Devis signé ? Il prépare la facture d'acompte puis la facture finale, et les envoie au client.</p><span class="tag inc">Inclus</span></div>
+   <div class="card"><div class="ic">🔔</div><h3>Relances automatiques</h3><p>Devis non signé après 7 jours, facture impayée après 15 jours : il relance poliment, à votre place.</p><span class="tag inc">Inclus</span></div>
+   <div class="card"><div class="ic">📬</div><h3>Tri des mails et alertes</h3><p>Il range vos mails, repère les demandes de devis et les urgences, et vous envoie un résumé chaque matin.</p><span class="tag inc">Inclus</span></div>
+   <div class="card"><div class="ic">📅</div><h3>Agenda et rendez-vous</h3><p>Il propose des créneaux aux clients, note les visites de chantier et vous rappelle la veille.</p><span class="tag inc">Inclus</span></div>
+   <div class="card"><div class="ic">💬</div><h3>Réponses aux demandes</h3><p>Une demande arrive le soir ? Il répond tout de suite au client et vous prépare le dossier.</p><span class="tag inc">Inclus</span></div>
+  </div>
+ </div>
+</section>
+
+<section style="background:#fff">
+ <div class="wrap">
+  <div class="kicker">Ensuite, à votre rythme</div>
+  <h2>Votre assistant grandit avec votre entreprise</h2>
+  <p class="lead">Chaque option s'ajoute quand vous en avez besoin. Même avec tout, ça reste moins cher qu'un salarié.</p>
+  <div class="grid">
+   <div class="card"><div class="ic">📱</div><h3>Réseaux sociaux</h3><p>Publications Facebook, Instagram et TikTok à partir de vos photos de chantier, avec les textes rédigés pour vous.</p><span class="tag opt">Forfait Pro</span></div>
+   <div class="card"><div class="ic">⭐</div><h3>Avis Google</h3><p>Il demande un avis à chaque client satisfait et répond aux avis reçus.</p><span class="tag opt">Forfait Pro</span></div>
+   <div class="card"><div class="ic">🎯</div><h3>Campagnes publicitaires</h3><p>Il crée et suit vos pubs Facebook et Google, et vous dit ce que chaque demande vous coûte.</p><span class="tag opt">Forfait Premium</span></div>
+   <div class="card"><div class="ic">✉️</div><h3>Prospection par mail</h3><p>Il contacte architectes, syndics ou anciens clients avec des mails personnalisés, puis les relance.</p><span class="tag opt">Forfait Premium</span></div>
+   <div class="card"><div class="ic">📊</div><h3>Rapport du mois</h3><p>Chiffre d'affaires, devis signés, impayés, ce qui marche : un bilan clair chaque mois.</p><span class="tag opt">Forfait Premium</span></div>
+   <div class="card"><div class="ic">🛠️</div><h3>Tâches sur mesure</h3><p>Une tâche répétitive propre à votre métier ? On la met en place pour vous.</p><span class="tag opt">Sur devis</span></div>
+  </div>
+ </div>
+</section>
+
+<section>
+ <div class="wrap">
+  <div class="kicker">Compatibilité</div>
+  <h2>Il se branche sur vos outils</h2>
+  <p class="lead">Votre assistant travaille directement dans votre logiciel de devis et factures. Pas de logiciel ? Il fait vos devis lui-même, en PDF avec signature électronique.</p>
+  <div class="compat">
+   <div class="cp">Pennylane<span class="s-ok">Compatible</span></div>
+   <div class="cp">Evoliz<span class="s-ok">Compatible</span></div>
+   <div class="cp">Axonaut<span class="s-ok">Compatible</span></div>
+   <div class="cp">Sellsy<span class="s-ok">Compatible</span></div>
+   <div class="cp">QuickBooks<span class="s-ok">Compatible</span></div>
+   <div class="cp">Tiime<span class="s-mid">Bientôt</span></div>
+   <div class="cp">Obat<span class="s-no">À l'étude</span></div>
+   <div class="cp">Aucun logiciel<span class="s-ok">Devis intégré</span></div>
+   <div class="cp">Gmail / Outlook<span class="s-ok">Compatible</span></div>
+   <div class="cp">Google Agenda<span class="s-ok">Compatible</span></div>
+   <div class="cp">Facebook / Instagram<span class="s-mid">Forfait Pro</span></div>
+   <div class="cp">TikTok<span class="s-mid">Forfait Pro</span></div>
+  </div>
+ </div>
+</section>
+
+<section style="background:#fff">
+ <div class="wrap">
+  <div class="kicker">Comment ça marche</div>
+  <h2>Opérationnel en 15 minutes</h2>
+  <p class="lead">Pas d'installation, pas de formation.</p>
+  <div class="steps">
+   <div class="step"><h3>Vous discutez</h3><p>Vous expliquez votre métier et ce qui vous prend du temps.</p></div>
+   <div class="step"><h3>Vous connectez</h3><p>Votre logiciel, vos mails, votre agenda : on vérifie la compatibilité avec vous.</p></div>
+   <div class="step"><h3>Vous choisissez</h3><p>Vous cochez les tâches à confier. Le reste, vous le gardez.</p></div>
+   <div class="step"><h3>Il travaille</h3><p>Vous validez d'un clic depuis votre téléphone, même sur le chantier.</p></div>
+  </div>
+ </div>
+</section>
+
+<section id="tarifs">
+ <div class="wrap">
+  <div class="kicker">Tarifs</div>
+  <h2>Un forfait clair, sans mauvaise surprise</h2>
+  <p class="lead">Chaque forfait comprend un nombre d'actions par mois (un devis, une relance, une publication…). On vous prévient à 80 %, et vous choisissez : passer au forfait du dessus ou attendre le mois suivant.</p>
+  <div class="prices">
+   <div class="price"><h3>Essentiel</h3><div class="amt">89 €<small> HT/mois</small></div><div class="q">La secrétaire · 300 actions/mois</div>
+    <ul><li>Devis et factures à la voix</li><li>Relances devis et impayés</li><li>Tri des mails et alertes</li><li>Agenda et rappels</li><li>Réponses aux demandes</li></ul></div>
+   <div class="price hl"><h3>Pro</h3><div class="amt">159 €<small> HT/mois</small></div><div class="q">Secrétaire + marketing · 800 actions/mois</div>
+    <ul><li>Tout l'Essentiel</li><li>Facebook, Instagram, TikTok</li><li>Demandes et réponses aux avis Google</li><li>Idées de publications chaque semaine</li></ul></div>
+   <div class="price"><h3>Premium</h3><div class="amt">279 €<small> HT/mois</small></div><div class="q">L'équipe complète · 2 000 actions/mois</div>
+    <ul><li>Tout le Pro</li><li>Campagnes Facebook et Google Ads</li><li>Prospection par mail</li><li>Rapport mensuel</li><li>Tâches sur mesure</li></ul></div>
+  </div>
+  <div class="vs">
+   <div><small>Une secrétaire à mi-temps</small><b>plus de 1 000 €/mois</b><small>charges comprises, 20 h par semaine, absente le soir et le week-end</small></div>
+   <div class="good"><small>Votre assistant Pro</small><b>159 €/mois</b><small>disponible 24h/24, 7j/7, sans congés ni arrêt maladie</small></div>
+  </div>
+  
+ </div>
+</section>
+
+<div class="wrap">
+ <div class="cta">
+  <h2>Et si vous rentriez du chantier avec la paperasse déjà faite ?</h2>
+  <p>Essayez gratuitement pendant 14 jours. Sans carte bancaire.</p>
+  <a class="btn" href="/mon-assistant-pro/inscription/">Démarrer mon essai gratuit</a>
+ </div>
+</div>
+<footer>Mon Assistant Pro · version de démonstration</footer>
+
+<script>
+const $m=document.getElementById('msgs'),$c=document.getElementById('chips');
+let st={};
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+function scroll(){$m.scrollTop=$m.scrollHeight}
+function add(text,who){const d=document.createElement('div');d.className='m '+who;d.textContent=text;$m.appendChild(d);scroll();return d}
+async function say(text,delay=700){const t=document.createElement('div');t.className='typing';t.innerHTML='<i></i><i></i><i></i>';$m.appendChild(t);scroll();await wait(delay);t.remove();add(text,'a')}
+function sys(text){add(text,'sys')}
+function chips(list,cb,long){$c.innerHTML='';list.forEach(l=>{const b=document.createElement('button');b.className='chip'+(long?' long':'');b.textContent=l;b.onclick=()=>{$c.innerHTML='';add(l,'u');cb(l)};$c.appendChild(b)})}
+
+const ex={
+ 'Plombier':{txt:"Devis pour Mme Le Gall à Vannes : remplacement du chauffe-eau 200 L, 980 € le chauffe-eau, 350 € de pose, et 90 € pour l'évacuation de l'ancien.",client:'Mme Le Gall – Vannes',lines:[['Chauffe-eau électrique 200 L',980],['Dépose, pose et raccordement',350],["Évacuation de l'ancien appareil",90]]},
+ 'Électricien':{txt:"Devis pour M. Riou à Auray : mise aux normes du tableau électrique 1 200 €, et 6 prises supplémentaires à 65 € pièce.",client:'M. Riou – Auray',lines:[['Mise aux normes du tableau électrique',1200],['Prises supplémentaires (6 × 65 €)',390]]},
+ 'Paysagiste':{txt:"Devis pour M. et Mme Durand à Carnac : 40 m² de terrasse en résine à 85 € le m², plus 600 € de préparation du support.",client:'M. et Mme Durand – Carnac',lines:[['Terrasse résine drainante (40 m² × 85 €)',3400],['Préparation du support',600]]},
+ 'Maçon':{txt:"Devis pour M. Tanguy à Ploërmel : muret de clôture de 15 mètres à 140 € le mètre, et 450 € de terrassement.",client:'M. Tanguy – Ploërmel',lines:[['Muret de clôture (15 m × 140 €)',2100],['Terrassement et évacuation',450]]},
+ 'Autre artisan':{txt:"Devis pour Mme Martin à Lorient : 2 jours d'intervention à 450 € la journée, plus 320 € de fournitures.",client:'Mme Martin – Lorient',lines:[["Main-d'œuvre (2 jours × 450 €)",900],['Fournitures',320]]}
+};
+const soft={
+ 'Pennylane':"Pennylane : compatible ✅\nJe crée vos clients, vos devis et vos factures directement dans votre compte. Il suffit de me donner une clé d'accès, je vous guide.",
+ 'Evoliz':"Evoliz : compatible ✅\nLa connexion se fait en un clic avec vos identifiants Evoliz.",
+ 'Axonaut':"Axonaut : compatible ✅\nJe travaille directement dans votre compte Axonaut.",
+ 'Sellsy':"Sellsy : compatible ✅\nJe crée vos devis et factures dans Sellsy.",
+ 'Tiime':"Tiime : bientôt disponible 🟡\nEn attendant, je fais vos devis moi-même en PDF, et vous les retrouvez tous ici.",
+ 'Obat':"Obat : pas encore relié ⏳\nEn attendant, je prépare vos devis en PDF avec signature électronique, au même endroit.",
+ 'Aucun logiciel':"Pas de souci 👍\nJe fais vos devis et factures moi-même, en PDF avec signature électronique pour vos clients."
+};
+const eur=n=>n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+
+async function start(){
+ $m.innerHTML='';$c.innerHTML='';st={};
+ await say("Bonjour 👋 Je suis votre assistant virtuel.\nJe peux être votre secrétaire, votre commercial, et même votre agent marketing.\n\nQuel est votre métier ?",600);
+ chips(Object.keys(ex),async v=>{st.job=v;
+  await say("Très bien ! Qu'est-ce qui vous prend le plus de temps aujourd'hui ?");
+  chips(['Les devis et factures','Les mails','Les relances clients','Les réseaux sociaux'],async v2=>{
+   await say("Je peux vous enlever ça. Et pour vos devis, vous utilisez quel logiciel ?");
+   chips(Object.keys(soft),async v3=>{st.soft=v3;
+    await say(soft[v3],900);
+    await say("On essaie tout de suite ? Expliquez-moi votre prochain devis, comme vous le diriez à une secrétaire 🎙️");
+    chips([ex[st.job].txt],devis,true);
+   });
+  });
+ });
+}
+async function devis(){
+ const e=ex[st.job];
+ await say("Je cherche le client…",900);
+ sys("Client introuvable : fiche « "+e.client+" » créée ✓");
+ await say("Voici votre devis, prêt à partir :",700);
+ const ht=e.lines.reduce((s,l)=>s+l[1],0),tva=ht*0.2;
+ const d=document.createElement('div');d.className='devis';
+ const src=(st.soft==='Aucun logiciel'||st.soft==='Tiime'||st.soft==='Obat')?'PDF':st.soft;
+ d.innerHTML='<h4>Devis n° 2026-118 <em>Brouillon '+src+'</em></h4><div class="cl">'+e.client+'</div><table>'+e.lines.map(l=>'<tr><td>'+l[0]+'</td><td>'+eur(l[1])+'</td></tr>').join('')+'<tr class="tot"><td>Total HT</td><td>'+eur(ht)+'</td></tr><tr><td>TVA 20 %</td><td>'+eur(tva)+'</td></tr><tr class="tot"><td>Total TTC</td><td>'+eur(ht+tva)+'</td></tr></table>';
+ $m.appendChild(d);scroll();
+ chips(['✅ Valider et envoyer','✏️ Modifier'],async v=>{
+  if(v.startsWith('✏️')){await say("Dites-moi ce qu'il faut changer : un prix, une ligne, une remise ? (Dans la démo, on passe à l'envoi 😉)");}
+  sys("Devis envoyé au client avec signature électronique ✓");
+  await say("C'est parti ! S'il n'a pas signé dans 7 jours, je le relance. Et dès qu'il signe, je prépare la facture d'acompte.",900);
+  await say("Au fait, pendant que vous étiez sur le chantier :\n📬 3 mails importants, dont une nouvelle demande de devis\n🧾 1 facture de 1 840 € impayée depuis 15 jours\n\nJe relance le client ?",1100);
+  chips(['Oui, relance-le','Non, j\'appelle moi-même'],async v4=>{
+   if(v4.startsWith('Oui')){sys("Relance envoyée ✓");await say("C'est fait, avec un ton cordial. Je vous préviens dès que le paiement arrive 💶");}
+   else{await say("Entendu, je vous mets un rappel demain à 8 h pour l'appeler 📞");}
+   await say("Voilà un aperçu de ce que je fais chaque jour. On crée le vôtre ?",900);
+   chips(['🚀 Créer mon assistant','↻ Recommencer la démo'],v=>{if(v.startsWith('🚀'))location.href='/mon-assistant-pro/inscription/';else start()});
+  });
+ });
+}
+start();
+</script>
+</body>
+</html>

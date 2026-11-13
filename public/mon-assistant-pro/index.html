@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mon Assistant Pro – démo</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20width%3D%2264%22%20height%3D%2264%22%20viewBox%3D%220%200%2064%2064%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Ccircle%20cx%3D%2232%22%20cy%3D%2232%22%20r%3D%2230%22%20fill%3D%22%2314213D%22/%3E%3Cpath%20d%3D%22M13%2032v4M19%2027v14M25%2030v8%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%224%22%20stroke-linecap%3D%22round%22/%3E%3Cpath%20d%3D%22M31%2033l7%207%2014-17%22%20fill%3D%22none%22%20stroke%3D%22%23F5B700%22%20stroke-width%3D%226%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--navy:#14213D;--navy2:#1E3160;--yellow:#F5B700;--bg:#F6F7FB;--card:#fff;--text:#1A1F2E;--muted:#5B6476;--line:#E3E6EE;--ok:#16A34A;--warn:#D97706;--no:#9CA3AF}
@@ -63,6 +64,7 @@ h2{font-size:30px;line-height:1.2;margin:6px 0 10px}
 .card .ic{font-size:24px;margin-bottom:8px}
 .card h3{font-size:17px;margin-bottom:6px}
 .card p{color:var(--muted);font-size:14.5px}
+.exl{display:block;margin-top:12px;font-weight:700;font-size:14px;color:var(--navy2);text-decoration:none}.exl:hover{text-decoration:underline}
 .tag{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px;margin-top:10px}
 .tag.inc{background:#DCFCE7;color:#166534}
 .tag.opt{background:#FEF3C7;color:#92400E}
@@ -106,7 +108,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding:0 0 40px}
 <header class="top">
  <div class="wrap">
   <div class="nav">
-   <div class="logo"><div class="dot">✦</div>Mon Assistant Pro</div>
+   <div class="logo"><svg width="36" height="36" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#F5B700"/><path d="M13 32v4M19 27v14M25 30v8" stroke="#14213D" stroke-width="4" stroke-linecap="round"/><path d="M31 33l7 7 14-17" fill="none" stroke="#14213D" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>Mon Assistant Pro</div>
    <a class="badge" style="text-decoration:none" href="/mon-assistant-pro/inscription/">Se connecter</a>
   </div>
   <div class="hero">
@@ -118,7 +120,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding:0 0 40px}
    </div>
    <div id="demo">
     <div class="phone"><div class="screen">
-     <div class="chathead"><div class="av">✦</div><div><b>Votre assistant</b><small>en ligne</small></div><button class="restart" onclick="start()">↻ Recommencer</button></div>
+     <div class="chathead"><div class="av" style="background:none"><svg width="36" height="36" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#F5B700"/><path d="M13 32v4M19 27v14M25 30v8" stroke="#14213D" stroke-width="4" stroke-linecap="round"/><path d="M31 33l7 7 14-17" fill="none" stroke="#14213D" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><b>Votre assistant</b><small>en ligne</small></div><button class="restart" onclick="start()">↻ Recommencer</button></div>
      <div class="msgs" id="msgs"></div>
      <div class="chips" id="chips"></div>
     </div></div>
@@ -133,12 +135,12 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding:0 0 40px}
   <h2>Ce que votre assistant fait pour vous tout de suite</h2>
   <p class="lead">Tout est inclus dans le forfait Essentiel. Vous gardez la main : rien ne part sans votre accord.</p>
   <div class="grid">
-   <div class="card"><div class="ic">📄</div><h3>Vos devis à la voix</h3><p>Vous expliquez le chantier, il retrouve le client (ou crée sa fiche), rédige le devis et vous l'envoie à valider.</p><span class="tag inc">Inclus</span></div>
-   <div class="card"><div class="ic">🧾</div><h3>Factures et acomptes</h3><p>Devis signé ? Il prépare la facture d'acompte puis la facture finale, et les envoie au client.</p><span class="tag inc">Inclus</span></div>
-   <div class="card"><div class="ic">🔔</div><h3>Relances automatiques</h3><p>Devis non signé après 7 jours, facture impayée après 15 jours : il relance poliment, à votre place.</p><span class="tag inc">Inclus</span></div>
-   <div class="card"><div class="ic">📬</div><h3>Tri des mails et alertes</h3><p>Il range vos mails, repère les demandes de devis et les urgences, et vous envoie un résumé chaque matin.</p><span class="tag inc">Inclus</span></div>
-   <div class="card"><div class="ic">📅</div><h3>Agenda et rendez-vous</h3><p>Il propose des créneaux aux clients, note les visites de chantier et vous rappelle la veille.</p><span class="tag inc">Inclus</span></div>
-   <div class="card"><div class="ic">💬</div><h3>Réponses aux demandes</h3><p>Une demande arrive le soir ? Il répond tout de suite au client et vous prépare le dossier.</p><span class="tag inc">Inclus</span></div>
+   <div class="card"><div class="ic">📄</div><h3>Vos devis à la voix</h3><p>Vous expliquez le chantier, il retrouve le client (ou crée sa fiche), rédige le devis et vous l'envoie à valider.</p><a class="exl" href="/mon-assistant-pro/exemples/#devis">Voir 20 exemples →</a><span class="tag inc">Inclus</span></div>
+   <div class="card"><div class="ic">🧾</div><h3>Factures et acomptes</h3><p>Devis signé ? Il prépare la facture d'acompte puis la facture finale, et les envoie au client.</p><a class="exl" href="/mon-assistant-pro/exemples/#factures">Voir 20 exemples →</a><span class="tag inc">Inclus</span></div>
+   <div class="card"><div class="ic">🔔</div><h3>Relances automatiques</h3><p>Devis non signé après 7 jours, facture impayée après 15 jours : il relance poliment, à votre place.</p><a class="exl" href="/mon-assistant-pro/exemples/#relances">Voir 20 exemples →</a><span class="tag inc">Inclus</span></div>
+   <div class="card"><div class="ic">📬</div><h3>Tri des mails et alertes</h3><p>Il range vos mails, repère les demandes de devis et les urgences, et vous envoie un résumé chaque matin.</p><a class="exl" href="/mon-assistant-pro/exemples/#mails">Voir 20 exemples →</a><span class="tag inc">Inclus</span></div>
+   <div class="card"><div class="ic">📅</div><h3>Agenda et rendez-vous</h3><p>Il propose des créneaux aux clients, note les visites de chantier et vous rappelle la veille.</p><a class="exl" href="/mon-assistant-pro/exemples/#agenda">Voir 20 exemples →</a><span class="tag inc">Inclus</span></div>
+   <div class="card"><div class="ic">💬</div><h3>Réponses aux demandes</h3><p>Une demande arrive le soir ? Il répond tout de suite au client et vous prépare le dossier.</p><a class="exl" href="/mon-assistant-pro/exemples/#demandes">Voir 20 exemples →</a><span class="tag inc">Inclus</span></div>
   </div>
  </div>
 </section>
@@ -149,12 +151,12 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding:0 0 40px}
   <h2>Votre assistant grandit avec votre entreprise</h2>
   <p class="lead">Chaque option s'ajoute quand vous en avez besoin. Même avec tout, ça reste moins cher qu'un salarié.</p>
   <div class="grid">
-   <div class="card"><div class="ic">📱</div><h3>Réseaux sociaux</h3><p>Publications Facebook, Instagram et TikTok à partir de vos photos de chantier, avec les textes rédigés pour vous.</p><span class="tag opt">Forfait Pro</span></div>
-   <div class="card"><div class="ic">⭐</div><h3>Avis Google</h3><p>Il demande un avis à chaque client satisfait et répond aux avis reçus.</p><span class="tag opt">Forfait Pro</span></div>
-   <div class="card"><div class="ic">🎯</div><h3>Campagnes publicitaires</h3><p>Il crée et suit vos pubs Facebook et Google, et vous dit ce que chaque demande vous coûte.</p><span class="tag opt">Forfait Premium</span></div>
-   <div class="card"><div class="ic">✉️</div><h3>Prospection par mail</h3><p>Il contacte architectes, syndics ou anciens clients avec des mails personnalisés, puis les relance.</p><span class="tag opt">Forfait Premium</span></div>
-   <div class="card"><div class="ic">📊</div><h3>Rapport du mois</h3><p>Chiffre d'affaires, devis signés, impayés, ce qui marche : un bilan clair chaque mois.</p><span class="tag opt">Forfait Premium</span></div>
-   <div class="card"><div class="ic">🛠️</div><h3>Tâches sur mesure</h3><p>Une tâche répétitive propre à votre métier ? On la met en place pour vous.</p><span class="tag opt">Sur devis</span></div>
+   <div class="card"><div class="ic">📱</div><h3>Réseaux sociaux</h3><p>Publications Facebook, Instagram et TikTok à partir de vos photos de chantier, avec les textes rédigés pour vous.</p><a class="exl" href="/mon-assistant-pro/exemples/#social">Voir 20 exemples →</a><span class="tag opt">Forfait Pro</span></div>
+   <div class="card"><div class="ic">⭐</div><h3>Avis Google</h3><p>Il demande un avis à chaque client satisfait et répond aux avis reçus.</p><a class="exl" href="/mon-assistant-pro/exemples/#avis">Voir 20 exemples →</a><span class="tag opt">Forfait Pro</span></div>
+   <div class="card"><div class="ic">🎯</div><h3>Campagnes publicitaires</h3><p>Il crée et suit vos pubs Facebook et Google, et vous dit ce que chaque demande vous coûte.</p><a class="exl" href="/mon-assistant-pro/exemples/#pub">Voir 20 exemples →</a><span class="tag opt">Forfait Premium</span></div>
+   <div class="card"><div class="ic">✉️</div><h3>Prospection par mail</h3><p>Il contacte architectes, syndics ou anciens clients avec des mails personnalisés, puis les relance.</p><a class="exl" href="/mon-assistant-pro/exemples/#prospection">Voir 20 exemples →</a><span class="tag opt">Forfait Premium</span></div>
+   <div class="card"><div class="ic">📊</div><h3>Rapport du mois</h3><p>Chiffre d'affaires, devis signés, impayés, ce qui marche : un bilan clair chaque mois.</p><a class="exl" href="/mon-assistant-pro/exemples/#rapport">Voir 20 exemples →</a><span class="tag opt">Forfait Premium</span></div>
+   <div class="card"><div class="ic">🛠️</div><h3>Tâches sur mesure</h3><p>Une tâche répétitive propre à votre métier ? On la met en place pour vous.</p><a class="exl" href="/mon-assistant-pro/exemples/#surmesure">Voir 20 exemples →</a><span class="tag opt">Sur devis</span></div>
   </div>
  </div>
 </section>

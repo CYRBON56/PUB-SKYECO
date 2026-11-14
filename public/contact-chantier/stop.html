@@ -1,0 +1,11 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Désinscription – Contact Chantier</title><meta name="robots" content="noindex">
+<style>body{font-family:-apple-system,Segoe UI,Arial,sans-serif;background:#EDF1F4;color:#0E1822;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0}.c{background:#fff;border-radius:18px;padding:32px;max-width:460px;margin:16px;text-align:center}h1{font-size:22px}p{color:#33404D;line-height:1.5}button{background:#163A63;color:#fff;border:0;border-radius:12px;padding:15px 24px;font-size:16px;font-weight:700;cursor:pointer;margin-top:8px}</style></head>
+<body><div class="c"><h1 id="t">Ne plus recevoir de message ?</h1><p id="m">Cliquez sur le bouton pour confirmer : vous ne recevrez plus aucun message de Contact Chantier.</p><button id="b">Confirmer ma désinscription</button></div>
+<script>
+const t=new URLSearchParams(location.search).get('t'), b=document.getElementById('b');
+const fin=(a,c)=>{document.getElementById('t').textContent=a;document.getElementById('m').textContent=c;b.style.display='none';};
+if(!t) fin('Lien incomplet','Répondez simplement « STOP » au mail reçu, nous vous retirerons de la liste.');
+b.onclick=()=>{b.disabled=true;fetch('https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/rpc/prospect_stop',{method:'POST',headers:{'apikey':'sb_publishable_nacX-UD9ZwjpJ1C9Za8xxQ_tIhHW8nO','Content-Type':'application/json'},body:JSON.stringify({p_jeton:t})})
+ .then(r=>r.json()).then(j=>j&&j.ok?fin('C’est fait','Vous ne recevrez plus de message de Contact Chantier. Désolé pour le dérangement.'):fin('Lien non reconnu','Répondez simplement « STOP » au mail reçu, nous vous retirerons de la liste.'))
+ .catch(()=>fin('Erreur réseau','Répondez simplement « STOP » au mail reçu, nous vous retirerons de la liste.'));};
+</script></body></html>

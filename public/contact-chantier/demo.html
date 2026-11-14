@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Contact Chantier – la démo</title>
+<meta name="description" content="Contact Chantier, l’application des donneurs d’ordre : CCTP découpé par lot, artisans, photos, avancement jusqu’au hors d’eau et hors d’air.">
+<meta property="og:title" content="Contact Chantier – la démo en 3 minutes">
+<meta property="og:image" content="https://www.skyeco.fr/contact-chantier/demo-poster.jpg">
+<link rel="icon" href="icon.svg">
+<style>
+  *{box-sizing:border-box;margin:0}
+  html,body{height:100%;background:#0E1822;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Arial,sans-serif}
+  .page{min-height:100dvh;display:flex;flex-direction:column}
+  .stage{position:relative;flex:1;display:flex;align-items:center;justify-content:center;background:#0E1822;min-height:0}
+  video{width:100%;height:100%;max-height:calc(100dvh - 86px);object-fit:contain;background:#0E1822;display:block}
+  .son{position:absolute;left:50%;bottom:28px;transform:translateX(-50%);border:0;border-radius:999px;background:#FFC72C;color:#0E1822;font:800 17px/1 inherit;padding:15px 24px;box-shadow:0 10px 30px rgba(0,0,0,.4);cursor:pointer;display:none;white-space:nowrap}
+  .son.on{display:block}
+  .bar{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;padding:14px 16px calc(14px + env(safe-area-inset-bottom));background:#163A63}
+  .bar a{display:inline-block;border-radius:12px;padding:13px 18px;font-weight:800;font-size:15.5px;text-decoration:none}
+  .j{background:#FFC72C;color:#0E1822;border-bottom:3px solid #C99A10}
+  .b{background:transparent;color:#fff;border:2px solid rgba(255,255,255,.7)}
+  .logo{position:absolute;top:14px;left:16px;display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px;opacity:.9;pointer-events:none}
+</style>
+</head>
+<body>
+<a id="skyeco-retour" href="/" style="display:block;background:#14304A;color:#fff;font:600 14px/1.2 system-ui,sans-serif;padding:9px 16px;text-decoration:none;position:relative;z-index:9999">← Skyeco · toutes les applis</a>
+<style>@media (display-mode: standalone){#skyeco-retour{display:none!important}}</style>
+<div class="page">
+  <div class="stage">
+    <video id="v" playsinline autoplay muted controls preload="auto"></video>
+    <button class="son" id="son" type="button">🔊 Touchez pour activer le son</button>
+  </div>
+  <div class="bar">
+    <a class="j" href="./?src=demo#/connexion/inscription">Créer mon espace gratuit · 3 mois offerts ›</a>
+    <a class="b" id="rdv" href="rdv.html?src=demo">📅 Réserver 15 min avec Cyrille ›</a>
+  </div>
+</div>
+<script>
+  const v = document.getElementById('v'), son = document.getElementById('son');
+  const portrait = matchMedia('(orientation: portrait) and (max-width: 820px)').matches;
+  const f = /artisan|equipe/i.test(new URLSearchParams(location.search).get('v')||'') ? 'demo-artisans' : 'demo';
+  v.poster = '/' + f + '-poster' + (portrait ? '-v' : '') + '.jpg';
+  v.src = '/' + f + (portrait ? '-vertical' : '') + '.mp4';
+  document.getElementById('rdv').href = 'rdv.html?src=demo&p=' + (f === 'demo' ? 'architecte' : 'artisan');
+  function avecSon(){ v.muted = false; v.volume = 1; son.classList.remove('on'); if(v.paused) v.play().catch(()=>{}); }
+  // 1) on tente avec le son ; 2) si le navigateur refuse, on démarre sans le son et on propose de l'activer
+  v.muted = false;
+  v.play().then(()=>{ if(v.muted) son.classList.add('on'); }).catch(()=>{ v.muted = true; v.play().catch(()=>{}); son.classList.add('on'); });
+  son.addEventListener('click', e => { e.stopPropagation(); avecSon(); });
+  document.addEventListener('pointerdown', e => { if(v.muted && !e.target.closest('a')) avecSon(); }, {once:false});
+  v.addEventListener('volumechange', () => { if(!v.muted) son.classList.remove('on'); });
+</script>
+<script>
+(function(){ try{
+  var q = new URLSearchParams(location.search), t = q.get('t');
+  if(t) try{ sessionStorage.setItem('cc_t', t); }catch(e){}
+  var ref = ''; try{ ref = document.referrer ? new URL(document.referrer).hostname : ''; }catch(e){}
+  if(ref === location.hostname) ref = '';
+  var body = {p_page: location.pathname + (location.hash||'').split('/').slice(0,2).join('/'), p_src: q.get('src'), p_ref: ref || null,
+    p_appareil: /Mobi|Android|iPhone/i.test(navigator.userAgent) ? 'mobile' : 'ordinateur', p_t: /^[0-9a-f-]{36}$/i.test(t||'') ? t : null};
+  fetch('https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/rpc/visite', {method:'POST', keepalive:true, headers:{'apikey':'sb_publishable_nacX-UD9ZwjpJ1C9Za8xxQ_tIhHW8nO','Content-Type':'application/json'}, body: JSON.stringify(body)}).catch(function(){});
+}catch(e){} })();
+</script>
+</body>
+</html>

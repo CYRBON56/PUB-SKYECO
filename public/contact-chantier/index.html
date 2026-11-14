@@ -523,7 +523,7 @@ const DEMOS = {
   arch: {f:'demo', txt:'Architecte, maître d’œuvre, constructeur : le CCTP découpé par lot, vos artisans choisis dans votre carnet, la photo laissée par le plombier à l’électricien, et la maison qui passe hors d’eau puis hors d’air.'},
   art: {f:'demo-artisans', txt:'Artisan, paysagiste, entreprise du bâtiment : votre devis devient la liste des tâches de vos équipes (sans les prix), chaque chef d’équipe coche ce qui est fait, et votre client suit son chantier par mail.'}
 };
-function demoSrc(k){ const v = matchMedia('(max-width:700px)').matches, d = DEMOS[k]; return {src:'/'+d.f+(v?'-vertical':'')+'.mp4', poster:'/'+d.f+'-poster'+(v?'-v':'')+'.jpg'}; }
+function demoSrc(k){ const v = matchMedia('(max-width:700px)').matches, d = DEMOS[k]; return {src:d.f+(v?'-vertical':'')+'.mp4', poster:d.f+'-poster'+(v?'-v':'')+'.jpg'}; }
 function demoChoix(k){ const v = document.getElementById('demoVid'); if(!v) return; const s = demoSrc(k); v.pause(); v.poster = s.poster; v.src = s.src;
   document.getElementById('demoTxt').textContent = DEMOS[k].txt;
   document.querySelectorAll('.demoTab').forEach(b => { const on = b.dataset.d===k; b.classList.toggle('j', on); b.classList.toggle('o', !on); });

@@ -40,8 +40,8 @@
   const v = document.getElementById('v'), son = document.getElementById('son');
   const portrait = matchMedia('(orientation: portrait) and (max-width: 820px)').matches;
   const f = /artisan|equipe/i.test(new URLSearchParams(location.search).get('v')||'') ? 'demo-artisans' : 'demo';
-  v.poster = '/' + f + '-poster' + (portrait ? '-v' : '') + '.jpg';
-  v.src = '/' + f + (portrait ? '-vertical' : '') + '.mp4';
+  v.poster = f + '-poster' + (portrait ? '-v' : '') + '.jpg';
+  v.src = f + (portrait ? '-vertical' : '') + '.mp4';
   document.getElementById('rdv').href = 'rdv.html?src=demo&p=' + (f === 'demo' ? 'architecte' : 'artisan');
   function avecSon(){ v.muted = false; v.volume = 1; son.classList.remove('on'); if(v.paused) v.play().catch(()=>{}); }
   // 1) on tente avec le son ; 2) si le navigateur refuse, on démarre sans le son et on propose de l'activer

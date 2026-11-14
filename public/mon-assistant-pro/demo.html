@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mon Assistant Pro – la démo</title>
+<meta name="description" content="Une journée avec Mon Assistant Pro : votre secrétaire, votre commercial et votre agent marketing, dans votre téléphone.">
+<meta property="og:title" content="Mon Assistant Pro – une journée avec votre assistant">
+<meta property="og:image" content="https://www.skyeco.fr/mon-assistant-pro/demo-poster.jpg">
+<style>
+  *{box-sizing:border-box;margin:0}
+  html,body{height:100%;background:#0E1830;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Arial,sans-serif}
+  .retour{display:block;background:#14213D;color:#fff;font:600 14px/1.2 system-ui,sans-serif;padding:9px 16px;text-decoration:none}
+  .page{min-height:calc(100dvh - 34px);display:flex;flex-direction:column}
+  .stage{position:relative;flex:1;display:flex;align-items:center;justify-content:center;min-height:0}
+  video{width:100%;height:100%;max-height:calc(100dvh - 130px);object-fit:contain;background:#0E1830;display:block}
+  .son{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);border:0;border-radius:999px;background:#F5B700;color:#14213D;font:800 17px/1 inherit;padding:15px 24px;box-shadow:0 10px 30px rgba(0,0,0,.4);cursor:pointer;display:none;white-space:nowrap}
+  .son.on{display:block}
+  .bar{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;padding:14px 16px calc(14px + env(safe-area-inset-bottom));background:#14213D}
+  .bar a{display:inline-block;border-radius:12px;padding:13px 18px;font-weight:800;font-size:15.5px;text-decoration:none}
+  .j{background:#F5B700;color:#14213D}
+  .b{background:transparent;color:#fff;border:2px solid rgba(255,255,255,.7)}
+</style>
+</head>
+<body>
+<a class="retour" href="/">← Skyeco · toutes les applis</a>
+<div class="page">
+  <div class="stage">
+    <video id="v" src="/mon-assistant-pro/demo.mp4?v=4" poster="/mon-assistant-pro/demo-poster.jpg" playsinline autoplay muted controls preload="auto"></video>
+    <button class="son" id="son" type="button">🔊 Touchez pour activer le son</button>
+  </div>
+  <div class="bar">
+    <a class="j" id="go" href="/mon-assistant-pro/">Je découvre mon assistant ›</a>
+    <a class="b" id="rap" href="/mon-assistant-pro/rappel.html">📞 Être rappelé ›</a>
+  </div>
+</div>
+<script>
+  // Garde le suivi (src, t) sur les boutons
+  var qs = location.search;
+  document.getElementById('go').href += qs; document.getElementById('rap').href += qs;
+  var v = document.getElementById('v'), son = document.getElementById('son');
+  function avecSon(){ v.muted = false; v.volume = 1; son.classList.remove('on'); if(v.paused) v.play().catch(function(){}); }
+  // 1) on tente avec le son ; 2) si le navigateur refuse, on démarre sans le son et on propose de l'activer
+  v.muted = false;
+  v.play().then(function(){ if(v.muted) son.classList.add('on'); }).catch(function(){ v.muted = true; v.play().catch(function(){}); son.classList.add('on'); });
+  son.addEventListener('click', function(e){ e.stopPropagation(); avecSon(); });
+  document.addEventListener('pointerdown', function(e){ if(v.muted && !e.target.closest('a')) avecSon(); });
+  (function(){ try{
+    var q = new URLSearchParams(location.search), t = q.get('t');
+    fetch('https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/rpc/visite', {method:'POST', keepalive:true, headers:{'apikey':'sb_publishable_nacX-UD9ZwjpJ1C9Za8xxQ_tIhHW8nO','Content-Type':'application/json'},
+      body: JSON.stringify({p_page: location.pathname, p_src: q.get('src'), p_ref: null, p_appareil: /Mobi|Android|iPhone/i.test(navigator.userAgent) ? 'mobile' : 'ordinateur', p_t: /^[0-9a-f-]{36}$/i.test(t||'') && t !== '00000000-0000-0000-0000-000000000000' ? t : null})}).catch(function(){});
+  }catch(e){} })();
+</script>
+</body>
+</html>

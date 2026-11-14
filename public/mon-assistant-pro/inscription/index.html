@@ -346,7 +346,7 @@ function defaults(){
 function vTasks(){
  defaults();
  const groups=[...new Set(TASKS.map(t=>t.g))];
- const tierName=['','Essentiel','Pro','Premium'];
+ const tierName=['','Starter','Pro','Premium'];
  $('app').innerHTML=`<h1>Que me confiez-vous ?</h1><p class="sub">J'ai présélectionné les tâches utiles pour vous. Cochez ou décochez librement, le prix se met à jour à l'étape suivante.</p>
  ${groups.map(g=>`<div class="card"><div class="grp"><span>${g}</span></div>${TASKS.filter(t=>t.g===g).map(t=>`
  <label class="task"><input type="checkbox" ${S.tasks[t.id]?'checked':''} onchange="S.tasks['${t.id}']=this.checked;save();est()"><div class="t">${t.t}${t.tier>1?`<span class="tag">${tierName[t.tier]}</span>`:''}<small>${t.d}</small></div><div class="n">≈ ${t.n(S.vol)}/mois</div></label>`).join('')}</div>`).join('')}
@@ -357,7 +357,7 @@ function vTasks(){
 }
 
 /* ---------- 5. tarif ---------- */
-const TIERS=[null,{n:'Essentiel',p:89,q:300,c:50},{n:'Pro',p:159,q:800,c:120},{n:'Premium',p:279,q:2000,c:300}];
+const TIERS=[null,{n:'Starter',p:89,q:300,c:50},{n:'Pro',p:159,q:800,c:120},{n:'Premium',p:279,q:2000,c:300}];
 function calc(){
  const sel=TASKS.filter(t=>S.tasks[t.id]);
  const acts=sel.reduce((s,t)=>s+t.n(S.vol),0);

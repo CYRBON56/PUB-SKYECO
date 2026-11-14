@@ -136,6 +136,16 @@
   },
   "redirects": [
     {
+      "source": "/S",
+      "destination": "/?src=banderole",
+      "permanent": false
+    },
+    {
+      "source": "/s",
+      "destination": "/?src=banderole",
+      "permanent": false
+    },
+    {
       "source": "/petitepart",
       "missing": [
         {

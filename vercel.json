@@ -15,6 +15,10 @@
   ],
   "rewrites": [
     {
+      "source": "/api/dropbox-callback",
+      "destination": "/api/documents?action=retour"
+    },
+    {
       "source": "/robots.txt",
       "has": [
         {

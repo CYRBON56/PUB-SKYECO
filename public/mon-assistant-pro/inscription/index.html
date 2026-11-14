@@ -250,6 +250,7 @@ async function runBot(){
 const CONN=[
  {id:'soft',ico:'🧾',name:()=>S.bot.soft==='Pennylane'?'Pennylane (offre Essentiel)':S.bot.soft&&!['Aucun logiciel','Autre','Obat','Tiime'].includes(S.bot.soft)?S.bot.soft:'Devis et factures intégrés',desc:'Créer clients, devis, factures et relances',key:true,imp:true},
  {id:'mail',ico:'📬',name:()=>'Messagerie (Gmail, Outlook, IONOS…)',desc:'Trier vos mails, alertes, réponses aux demandes',imp:true},
+ {id:'docs',ico:'📁',name:()=>S.docs&&S.docs.prov?'Documents : '+S.docs.prov:'Documents (Dropbox ou Google Drive)',desc:'Ranger devis, factures, mails et photos par client, avec un journal',imp:true},
  {id:'cal',ico:'📅',name:()=>'Agenda (Google, Outlook)',desc:'Rendez-vous, visites, rappels'},
  {id:'bank',ico:'🏦',name:()=>'Paiement des acomptes (votre banque)',desc:'RIB et lien de paiement envoyés au client à la signature'},
  {id:'sms',ico:'💬',name:()=>'SMS et WhatsApp',desc:'Valider les devis depuis votre téléphone'},
@@ -273,9 +274,19 @@ function connect(id){
  if(id==='soft'&&soft==='Pennylane')body=`<p class="sub">Je vais créer vos devis et factures directement dans Pennylane.</p><p class="hint" style="background:#FEF3C7;color:#92400E;padding:8px 10px;border-radius:8px;margin-bottom:8px">⚠️ Abonnement Pennylane <b>Essentiel</b> minimum requis (l'offre Basique ne suffit pas).</p><ol><li>Ouvrez Pennylane, puis <b>Paramètres</b>.</li><li>Allez dans <b>Connectivité</b>, puis <b>Développeurs</b>.</li><li>Cliquez sur <b>Générer un jeton API</b>, cochez les droits « Ventes » et copiez le jeton.</li></ol><label>Collez votre jeton ici</label><input id="tok" placeholder="Jeton API Pennylane">`;
  else if(id==='soft'&&['Evoliz','Axonaut','Sellsy'].includes(soft))body=`<p class="sub">Vous allez être redirigé vers ${soft} pour autoriser l'accès.</p><ol><li>Connectez-vous à votre compte ${soft}.</li><li>Cliquez sur <b>Autoriser</b>.</li></ol>`;
  else if(id==='soft')body=`<p class="sub">Facturation intégrée : je fais vos devis et factures, prêts à être synchronisés avec Pennylane quand vous l'ouvrirez. Ajoutez votre logo et vos mentions.</p><label>Mentions de bas de devis <small>(assurance décennale, conditions de paiement)</small></label><textarea id="tok" rows="3" placeholder="Ex. Assurance décennale n°… Acompte de 30 % à la commande."></textarea>`;
- else if(id==='mail')body=`<p class="sub">Choisissez votre messagerie.</p><div class="tiers" style="grid-template-columns:1fr 1fr"><div class="tier on">Gmail</div><div class="tier">Outlook</div><div class="tier">IONOS</div><div class="tier">Autre</div></div><ol><li>Connectez-vous à votre compte.</li><li>Autorisez la lecture et l'envoi de mails.</li></ol><label>Pubs et newsletters</label><select id="mrPub"><option value="archive">Les archiver dans « Promotions »</option><option value="trash">Les mettre à la corbeille</option><option value="none">Ne rien faire</option></select>
+ else if(id==='mail')body=`<p class="sub">Choisissez votre messagerie.</p><div class="tiers" style="grid-template-columns:1fr 1fr"><div class="tier on">Gmail</div><div class="tier">Outlook</div><div class="tier">IONOS</div><div class="tier">Autre</div></div><ol><li>Connectez-vous à votre compte.</li><li>Autorisez la lecture et l'envoi de mails.</li></ol><label>Pubs et newsletters</label><select id="mrPub"><option value="purge30">Les ranger dans « À supprimer », effacées au bout de 30 jours</option><option value="archive">Les archiver dans « Promotions »</option><option value="trash">Les mettre à la corbeille</option><option value="none">Ne rien faire</option></select>
 <label>Spams</label><select id="mrSpam"><option value="trash">Les mettre à la corbeille</option><option value="spam">Les déplacer dans « Spam »</option><option value="none">Ne rien faire</option></select>
-<p class="hint">🛡️ Clients, fournisseurs et contacts habituels ne sont jamais touchés. Rien n'est supprimé définitivement (la corbeille se vide seule au bout de 30 jours). Chaque mail envoyé en votre nom apparaît dans vos messages envoyés.</p>`;
+<p class="hint">🛡️ Clients, fournisseurs et contacts habituels ne sont jamais touchés. Rien n'est effacé tout de suite : « À supprimer » et la corbeille se vident seuls au bout de 30 jours, et vous recevez un récap chaque semaine pour repêcher un mail si besoin. Chaque mail envoyé en votre nom apparaît dans vos messages envoyés.</p>`;
+ else if(id==='docs'){const D=S.docs||{};body=`<p class="sub">Je range automatiquement vos documents dans <b>votre</b> espace : ils restent à vous, même si vous arrêtez l'abonnement.</p>
+<label>Votre espace de stockage</label><select id="dProv">${['Dropbox','Google Drive'].map(o=>`<option ${D.prov===o?'selected':''}>${o}</option>`).join('')}</select>
+<p class="hint">Pas encore de compte ? Ils sont gratuits pour commencer : <a href="https://www.dropbox.com/basic" target="_blank" rel="noopener">Dropbox</a> (2 Go) ou <a href="https://drive.google.com" target="_blank" rel="noopener">Google Drive</a> (15 Go, partagés avec Gmail). Vous passerez à l'offre payante seulement si vous manquez de place.</p>
+<div class="card" style="font-size:14px;line-height:1.55;margin-top:10px"><b>📁 Mon Assistant Pro</b><br>
+&nbsp;&nbsp;📂 Clients › <i>Nom – Commune</i> › Devis · Factures · Mails · Photos chantier · Notes vocales<br>
+&nbsp;&nbsp;📂 Fournisseurs › <i>Nom</i> › Factures<br>
+&nbsp;&nbsp;📂 Administratif › Assurances · URSSAF · Contrats<br>
+&nbsp;&nbsp;📂 Compta › <i>Année</i> › <i>Mois</i><br>
+&nbsp;&nbsp;📄 Journal (tout ce que j'ai rangé, date par date)</div>
+<p class="hint">Noms de fichiers clairs : <code>2026-11-14_Devis-D2026-109_Le-Gall.pdf</code>. Je ne supprime jamais un document : je range, et je note tout dans le journal.</p>`}
  else if(id==='bank'){const P=S.pay||{};body=`<p class="sub">Facultatif. Quand un client signe son devis, je peux lui envoyer par mail la demande d'acompte avec votre RIB et/ou un lien pour payer en ligne.</p>
 <label>Votre banque</label><select id="pBank" onchange="bankHint()">${BANKS.map(b=>`<option ${P.bank===b?'selected':''}>${b}</option>`).join('')}</select>
 <div id="pHint" class="hint" style="background:#EEF1F8;padding:10px;border-radius:10px;margin-top:8px"></div>
@@ -290,6 +301,7 @@ function connect(id){
 }
 async function doConn(id){
  if(id==='mail'&&$('mrPub')){S.mailRules={pub:$('mrPub').value,spam:$('mrSpam').value};save()}
+ if(id==='docs'&&$('dProv')){S.docs={prov:$('dProv').value};save()}
  if(id==='bank'){const iban=$('pIban').value.replace(/\s+/g,'').toUpperCase(),link=$('pLink').value.trim(),pct=parseFloat($('pPct').value);
   if(iban&&!/^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/.test(iban)){$('pErr').innerHTML='<div class="err">IBAN invalide.</div>';return}
   if(link&&!/^https:\/\//.test(link)){$('pErr').innerHTML='<div class="err">Le lien doit commencer par https://</div>';return}
@@ -474,11 +486,26 @@ function vReg(p){
  <h2>Tâches & forfait</h2><div class="card"><b>Forfait ${T.n} : ${isFree()?'offert (0 €)':T.p+' € HT/mois'}</b><div class="hint">${T.q} actions incluses</div></div>`+TASKS.map(t=>`<label class="task card" style="margin-bottom:8px"><input type="checkbox" ${S.tasks[t.id]?'checked':''} onchange="S.tasks['${t.id}']=this.checked;save()"><div class="t">${t.t}${t.tier>S.tier?'<span class="tag">'+TIERS[t.tier].n+'</span>':''}<small>${t.d}</small></div></label>`).join('')+`<button class="btn full dark" onclick="go(4)">Recalculer mon forfait</button>`;
  vConnInto($('regConn'));
 }
+function vDocs(p){
+ const prov=S.docs&&S.docs.prov;
+ if(!S.conn.docs){p.innerHTML=`<div class="card"><b>📁 Rangez tout automatiquement</b><p class="hint">Connectez votre Dropbox ou votre Google Drive : je classe devis, factures, mails et photos par client, et je note tout dans un journal.</p><button class="btn" onclick="connect('docs')">Connecter mes documents</button></div>`;return}
+ const J=[['14/11 · 06:31','Facture F-88412 · Négoce Matériaux Ouest','Fournisseurs › Négoce Matériaux Ouest › Factures','mail'],
+  ['14/11 · 09:12','Devis D2026-109 signé · M. Le Gall','Clients › Le Gall – Vannes › Devis','signature'],
+  ['14/11 · 09:13','Facture d\'acompte F-2026-031 · M. Le Gall','Clients › Le Gall – Vannes › Factures','assistant'],
+  ['14/11 · 14:06','Note vocale chantier (0:42) · M. et Mme Riou','Clients › Riou – Auray › Notes vocales','téléphone'],
+  ['14/11 · 17:20','Vidéo de chantier · terrassement Pluvigner','Clients › Morvan – Pluvigner › Photos chantier','téléphone'],
+  ['13/11 · 18:02','Attestation décennale 2027','Administratif › Assurances','mail']];
+ p.innerHTML=`<div class="card"><b>📁 ${esc(prov||'Documents')} · rangement automatique</b><div class="hint">Tout est dans le dossier « Mon Assistant Pro » de votre ${esc(prov||'espace')}. Les fichiers restent à vous.</div></div>
+ <div class="card"><b>📂 Vos dossiers</b><div style="font-size:14px;line-height:1.7;margin-top:6px">📂 Clients <span class="hint">· 23 dossiers</span><br>📂 Fournisseurs <span class="hint">· 9 dossiers</span><br>📂 Administratif<br>📂 Compta › 2026 › Novembre <span class="hint">· envoyé à Pennylane</span></div></div>
+ <div class="card"><b>🧾 Journal : ce que j'ai rangé</b>${J.map(j=>`<div style="padding:9px 0;border-bottom:1px solid #E5E7EB"><b style="font-size:14px">${esc(j[1])}</b><div class="hint">${esc(j[0])} · reçu par ${esc(j[3])} → ${esc(j[2])}</div></div>`).join('')}</div>
+ <div class="card"><b>🗑️ Pubs « À supprimer »</b><div class="hint">47 mails publicitaires mis de côté ce mois-ci, effacés automatiquement au bout de 30 jours. Récap envoyé chaque lundi.</div></div>
+ <p class="hint">Demandez-moi « où est la facture de la Quincaillerie ? » dans l'onglet Assistant : je la retrouve.</p>`;
+}
 function vDash(){
  const T=TIERS[S.tier||1];const d=new Date(S.started||Date.now());const end=new Date(d.getTime()+14*864e5);
  const left=Math.max(0,Math.ceil((end-Date.now())/864e5));
  $('app').innerHTML=`<h1>Bonjour ${esc(S.co.first)} 👋</h1><p class="sub">${esc(S.co.name)} · forfait ${T.n} · ${isFree()?'<b style="color:#166534">compte offert</b>':`essai gratuit : ${left} jour${left>1?'s':''} restant${left>1?'s':''}`}</p>
- <div class="tabs">${[['jour','☀️ Ma journée'],['chat','🎙️ Assistant'],['mails','📬 Mails'],['comm','💬 Commercial'],['mkt','📣 Marketing'],['stock','📦 Stock'],['plus','➕ Plus'],['reg','⚙️ Réglages']].map(([k,l])=>`<button class="${tab===k?'on':''}" data-tab="${k}" onclick="tab='${k}';vDash()">${l}</button>`).join('')}</div>
+ <div class="tabs">${[['jour','☀️ Ma journée'],['chat','🎙️ Assistant'],['mails','📬 Mails'],['docs','📁 Documents'],['comm','💬 Commercial'],['mkt','📣 Marketing'],['stock','📦 Stock'],['plus','➕ Plus'],['reg','⚙️ Réglages']].map(([k,l])=>`<button class="${tab===k?'on':''}" data-tab="${k}" onclick="tab='${k}';vDash()">${l}</button>`).join('')}</div>
  <div id="pane"></div>`;
  const p=$('pane');
  if(tab==='jour')vJour(p);
@@ -488,6 +515,7 @@ function vDash(){
   $('q').onkeydown=e=>{if(e.key==='Enter')send()};
  }
  else if(tab==='mails')vMails(p);
+ else if(tab==='docs')vDocs(p);
  else if(tab==='comm')vComm(p);
  else if(tab==='mkt')vMkt(p);
  else if(tab==='stock')vStock(p);

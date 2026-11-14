@@ -296,5 +296,15 @@ async function devis(){
 }
 if(document.getElementById("msgs"))start();
 </script>
+<script>
+(function(){ try{
+  var q = new URLSearchParams(location.search), t = q.get('t');
+  var ref = ''; try{ ref = document.referrer ? new URL(document.referrer).hostname : ''; }catch(e){}
+  if(ref === location.hostname) ref = '';
+  var body = {p_page: location.pathname, p_src: q.get('src'), p_ref: ref || null,
+    p_appareil: /Mobi|Android|iPhone/i.test(navigator.userAgent) ? 'mobile' : 'ordinateur', p_t: /^[0-9a-f-]{36}$/i.test(t||'') ? t : null};
+  fetch('https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/rpc/visite', {method:'POST', keepalive:true, headers:{'apikey':'sb_publishable_nacX-UD9ZwjpJ1C9Za8xxQ_tIhHW8nO','Content-Type':'application/json'}, body: JSON.stringify(body)}).catch(function(){});
+}catch(e){} })();
+</script>
 </body>
 </html>

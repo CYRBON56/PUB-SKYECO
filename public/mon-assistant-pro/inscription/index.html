@@ -130,7 +130,7 @@ body.dash .card{background:rgba(255,255,255,.93);backdrop-filter:blur(3px)}
 </style>
 </head>
 <body>
-<div class="top"><div class="in"><a class="logo" href="/mon-assistant-pro/" style="color:#fff;text-decoration:none"><span style="display:flex"><svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#F5B700"/><path d="M13 32v4M19 27v14M25 30v8" stroke="#14213D" stroke-width="4" stroke-linecap="round"/><path d="M31 33l7 7 14-17" fill="none" stroke="#14213D" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Mon Assistant Pro</a><div class="who" id="who"></div></div><div class="prog" id="prog"></div></div>
+<div class="top"><div class="in"><a class="logo" href="/mon-assistant-pro/" style="color:#fff;text-decoration:none"><span style="display:flex"><svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#F5B700"/><path d="M13 32v4M19 27v14M25 30v8" stroke="#14213D" stroke-width="4" stroke-linecap="round"/><path d="M31 33l7 7 14-17" fill="none" stroke="#14213D" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Mon Assistant Pro</a><div class="who" id="who"></div><button id="btnDeco" onclick="deconnexion(this)" style="display:none;margin-left:12px;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:6px 10px;font-weight:700;font-size:13px;cursor:pointer">⏻ Se déconnecter</button></div><div class="prog" id="prog"></div></div>
 <main id="app"></main>
 <div class="ov" id="ov"><div class="modal" id="modal"></div></div>
 
@@ -150,7 +150,7 @@ const eur=n=>{const d=Math.round(n*100)%100?2:0;return n.toLocaleString('fr-FR',
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const STEPS=['Inscription','Présentation','Connexions','Tâches','Votre tarif','Tableau de bord'];
 function go(n){S.step=n;save();render();window.scrollTo(0,0)}
-function render(){document.body.classList.remove('dash');
+function render(){document.body.classList.remove('dash');{const d=$('btnDeco');if(d)d.style.display=S.step>=5?'':'none'}
  $('prog').innerHTML=S.step<5?STEPS.slice(0,5).map((_,i)=>'<span class="'+(i<=S.step?'on':'')+'"></span>').join(''):'';
  $('who').textContent=S.co.name||'';
  [vSignup,vBot,vConn,vTasks,vQuote,vDash][S.step]();
@@ -643,13 +643,19 @@ async function creerFond(b){const t=($('fondTxt').value||'').trim();if(t.length<
    if(e.status==='completed'&&e.url){S.fondsPerso=[e.url,...(S.fondsPerso||[])].slice(0,6);S.fondsGen=[...(S.fondsGen||[]),Date.now()];log('🖼️','Fond d\'écran créé');choisirFond(e.url);return}
    if(e.status==='failed')throw new Error(e.error||'échec')}
   throw new Error('trop long')}catch(x){$('fondEtat').textContent='Impossible de créer l\'image pour le moment ('+x.message+'). Réessayez.';b.disabled=false}}
+
+/* ===== Déconnexion (15/11/2026) ===== */
+function deconnexion(b){if(b&&!b.dataset.ok){b.dataset.ok=1;const t=b.textContent;b.textContent='Confirmer la déconnexion ?';b.style.background='#B91C1C';setTimeout(()=>{if(b.isConnected){delete b.dataset.ok;b.textContent=t;b.style.background=''}},4000);return}
+ try{if(typeof ecranStop==='function')ecranStop()}catch(e){}
+ try{localStorage.removeItem(KEY);sessionStorage.clear()}catch(e){}
+ location.href='/mon-assistant-pro/'}
 function vPlus(p){
  const it=[['🧾','Facture électronique','Factures transmises via Pennylane, prêtes pour 2027'],['💶','Acomptes automatiques','Demande envoyée dès la signature, avec votre lien de paiement'],['📦','Stock','Codes produits, sorties à la facturation, alertes'],['📅','Agenda','Créneaux proposés aux clients, rappels la veille'],['📊','Rapport du mois','Chiffre, devis signés, impayés, ce qui marche'],['🏛️','Appels d\'offres','Repérage des marchés publics près de chez vous'],['📷','Photos de chantier','Classées par client, prêtes pour vos réseaux'],['🧑‍🔧','Équipe','Planning envoyé à vos salariés chaque lundi'],['🛠️','Sur mesure','Une tâche propre à votre métier ? On l\'ajoute']];
  p.innerHTML=ecranHTML()+`<div class="card" ${stg(0)}><b>➕ Et aussi…</b><p class="hint">Tout ce que votre assistant peut prendre en charge en plus.</p></div><div class="stats" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr))">${it.map((x,i)=>`<div class="stat" ${stg(i+1)}><b style="font-size:22px">${x[0]}</b><b style="font-size:15px">${x[1]}</b><small>${x[2]}</small>${(()=>{const ok={'Stock':1,'Agenda':1,'Photos de chantier':1}[x[1]];return `<span class="pill" style="margin-top:6px;align-self:flex-start;background:${ok?'#DCFCE7':'#F3F4F6'};color:${ok?'#166534':'#6B7280'}">${ok?'✓ Actif':'Bientôt'}</span>`})()}</div>`).join('')}</div><a class="btn full" style="display:block;text-align:center;text-decoration:none;margin-top:14px" href="/mon-assistant-pro/exemples/">Voir 240 exemples de demandes</a>`;
 }
 function vReg(p){
  const T=TIERS[S.tier||1];const pct=Math.min(100,Math.round(S.used/T.q*100));const nconn=CONN.filter(c=>S.conn[c.id]).length;
- p.innerHTML=ecranHTML()+fondHTML()+invHTML()+`<div class="stats"><div class="stat"><b>${S.used}/${T.q}</b><small>actions ce mois</small><div class="meter"><div class="${pct>=80?'hot':''}" style="width:${Math.max(2,pct)}%"></div></div></div><div class="stat"><b>${nconn}/${CONN.length}</b><small>outils connectés</small></div><div class="stat"><b>${TASKS.filter(t=>S.tasks[t.id]&&t.tier<=S.tier).length}</b><small>tâches actives</small></div></div>
+ p.innerHTML=ecranHTML()+fondHTML()+invHTML()+`<div class="card"><b>⏻ Se déconnecter</b><p class="hint">Ferme votre session sur cet appareil. Vos données réelles (appels, devis, documents) restent enregistrées chez Skyeco.</p><button class="btn sm dark" onclick="deconnexion(this)">Se déconnecter</button></div>`+`<div class="stats"><div class="stat"><b>${S.used}/${T.q}</b><small>actions ce mois</small><div class="meter"><div class="${pct>=80?'hot':''}" style="width:${Math.max(2,pct)}%"></div></div></div><div class="stat"><b>${nconn}/${CONN.length}</b><small>outils connectés</small></div><div class="stat"><b>${TASKS.filter(t=>S.tasks[t.id]&&t.tier<=S.tier).length}</b><small>tâches actives</small></div></div>
  ${pct>=80?'<div class="card" style="margin-top:14px;background:#FFFBEB;border-color:#F5B700"><b>⚠️ Vous avez utilisé '+pct+' % de vos actions.</b><div class="hint">Passez au forfait supérieur ou attendez le mois prochain.</div></div>':''}
  <div class="card" style="margin-top:14px"><b>Dernières actions</b><div class="feed">${S.feed.slice().reverse().map(f=>`<div><span>${f[0]}</span><span>${esc(f[1])}</span></div>`).join('')}</div></div>
  <h2>Connexions</h2><div id="regConn"></div>
@@ -673,7 +679,7 @@ function vDocs(p){
  <p class="hint">Demandez-moi « où est la facture de la Quincaillerie ? » dans l'onglet Assistant : je la retrouve.</p>`;
 }
 function vDash(){
- document.body.classList.add('dash');appliquerFond();
+ document.body.classList.add('dash');{const d=$('btnDeco');if(d)d.style.display=''}appliquerFond();
  const T=TIERS[S.tier||1];const d=new Date(S.started||Date.now());const end=new Date(d.getTime()+14*864e5);
  const left=Math.max(0,Math.ceil((end-Date.now())/864e5));
  $('app').innerHTML=`<h1>Bonjour ${esc(S.co.first)} 👋</h1><p class="sub">${esc(S.co.name)} · forfait ${T.n} · ${isFree()?'<b style="color:#166534">compte offert</b>':`essai gratuit : ${left} jour${left>1?'s':''} restant${left>1?'s':''}`}</p>

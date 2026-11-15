@@ -527,6 +527,7 @@ function vJourR(p){
  <div class="card"><b>📅 Votre programme</b><div class="feed">${ag.slice(0,8).map(x=>ligne(new Date(x.quand).toLocaleString('fr-FR',{weekday:'short',hour:'2-digit',minute:'2-digit'}),esc(x.titre),esc(x.detail||''))).join('')||vide("Rien dans l'agenda pour les prochains jours (l'assistant lit votre Google Agenda toutes les 2 heures).")}</div></div>
  <div class="card"><b>📞 Appels pris par la secrétaire</b><div class="feed">${ap.map(x=>ligne('📞',esc(x.fiche.nom||x.appelant)+(x.fiche.commune?' · '+esc(x.fiche.commune):''),esc([x.fiche.type_projet||x.fiche.motif,x.fiche.details].filter(Boolean).join(' – '))+' · '+fd(x.quand))).join('')||vide('Aucun appel ces 2 derniers jours.')}</div></div>
  <div class="card"><b>🎉 Devis signés cette semaine</b><div class="feed">${sig.map(d=>ligne('✍️',esc(d.client)+' · '+eur0(d.ttc),esc(d.projet||'')+' · '+fd(d.signe))).join('')||vide('Aucun cette semaine.')}</div></div>
+ ${fx('ads').length?`<div class="card"><b>🎯 Google Ads</b><div class="feed">${fx('ads').map(x=>ligne(x.statut==='Active'?'🟢':'⏸️',esc(x.titre),esc(x.detail||''))).join('')}</div></div>`:''}
  <div class="card"><b>🧾 Factures fournisseurs rangées (7 jours)</b><div class="feed">${fac.slice(0,8).map(x=>ligne('✓',esc((x.path||'').split('/').pop()),'Dropbox')).join('')||vide('Aucune cette semaine.')}</div></div>`;
 }
 function vMailsR(p){const m=fx('mails');
@@ -546,6 +547,7 @@ function vCommR(p){const dem=D.demandes||[],rel=devisRelance(),dv=D.devis||[],im
 function vMktR(p){const po=D.posts||[],pu=(D.pub||[])[0];
  const div=document.createElement('div');vMkt(div);const aa=div.querySelector('.card');
  p.innerHTML=vrai()+(aa?aa.outerHTML:'')+`<div class="card"><b>📱 Vos dernières publications</b>${po.slice(0,6).map(x=>`<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #E5E7EB">${x.photo?`<img src="${esc(x.photo)}" style="width:64px;height:64px;object-fit:cover;border-radius:8px">`:''}<div><div style="font-size:14px">${esc(x.legende||'')}</div><small class="hint">${esc(x.statut||'')} · ${fd(x.quand)}</small></div></div>`).join('')||vide('Aucune publication.')}</div>
+ ${(()=>{const c=fx('ads'),j=fx('ads_jour').sort((a,b)=>new Date(b.quand)-new Date(a.quand));return `<div class="card"><b>🎯 Google Ads</b><div class="feed">${c.map(x=>ligne(x.statut==='Active'?'🟢':'⏸️',esc(x.titre)+(x.statut?' <small class="hint">· '+esc(x.statut)+'</small>':''),esc(x.detail||''))).join('')||vide('Aucune campagne trouvée.')}</div>${j.length?`<div class="hint" style="margin-top:8px"><b>Par jour</b></div><div class="feed">${j.slice(0,7).map(x=>ligne('📊',esc(x.titre),esc(x.detail||''))).join('')}</div>`:''}</div>`})()}
  ${pu?`<div class="card"><b>🎯 Publicité · dernier rapport (${esc(pu.periode||'')})</b><div class="feed">${((pu.analyse&&pu.analyse.actions)||[]).slice(0,4).map(a=>ligne('💡',esc(a.titre),esc(a.pourquoi||''))).join('')}</div></div>`:''}`;
 }
 function vPlus(p){

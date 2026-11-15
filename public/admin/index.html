@@ -5,13 +5,13 @@
 .card{background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;border:1px solid #E3E9EE}.btn{display:inline-block;background:#F5B700;color:#14213D;border:0;border-radius:10px;padding:10px 16px;font-weight:800;cursor:pointer;text-decoration:none}.btn.d{background:#14213D;color:#fff}.btn.l{background:#fff;border:1px solid #CBD5E1}
 .hint{color:#5B6876;font-size:14px}.row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.pill{display:inline-block;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700;background:#E0E7FF;color:#1E3160}
 .code{font-size:28px;font-weight:900;letter-spacing:3px;background:#FFF4CC;border-radius:10px;padding:8px 14px;display:inline-block}video{width:100%;background:#000;border-radius:12px;max-height:78vh}input{padding:10px;border:1px solid #CBD5E1;border-radius:10px;width:320px;max-width:100%}
-.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#DC2626;margin-right:6px;animation:b 1s infinite}@keyframes b{50%{opacity:.3}}</style></head>
-<body><div class="top"><span>⚙️ Administration Skyeco</span><span id="badge" class="hint" style="color:#C9D1E4"></span></div><div class="in" id="app"></div>
+.nav{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:6px 10px;font-weight:700;cursor:pointer;text-decoration:none;font-size:14px}.nav:hover{background:rgba(255,255,255,.22)}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#DC2626;margin-right:6px;animation:b 1s infinite}@keyframes b{50%{opacity:.3}}</style></head>
+<body><div class="top"><span style="display:flex;gap:8px;align-items:center"><button class="nav" onclick="history.back()" title="Retour">◀ Retour</button><button class="nav" onclick="history.forward()" title="Avancer">Avancer ▶</button><a class="nav" href="/" title="Accueil skyeco.fr">🏠 skyeco.fr</a><span style="margin-left:6px">⚙️ Administration Skyeco</span></span><span id="badge" class="hint" style="color:#C9D1E4"></span></div><div class="in" id="app"></div>
 <script>
 const SB='https://wklddwumirkdjkbxvzyj.supabase.co',K='sb_publishable_nacX-UD9ZwjpJ1C9Za8xxQ_tIhHW8nO',$=i=>document.getElementById(i);
 const rpc=(f,b)=>fetch(SB+'/rest/v1/rpc/'+f,{method:'POST',headers:{apikey:K,Authorization:'Bearer '+K,'Content-Type':'application/json'},body:JSON.stringify(b)}).then(r=>r.json());
 let A=new URLSearchParams(location.search).get('k')||localStorage.getItem('map_admin')||'';if(A){localStorage.setItem('map_admin',A);if(location.search)history.replaceState(null,'',location.pathname)}
-let T='aide',D=null,pc=null,cur=null,vu=0;
+let T=(location.hash.slice(1)||'aide'),D=null,pc=null,cur=null,vu=0;
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fd=x=>x?new Date(x).toLocaleString('fr-FR',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
 const crd=c=>c?c.slice(0,4)+' '+c.slice(4,8)+' '+c.slice(8):'';
@@ -21,7 +21,7 @@ function vue(){
  if(!A){$('app').innerHTML=`<div class="card"><b>Clé administrateur</b><p class="hint">Collez votre clé (une seule fois sur cet appareil).</p><input id="k"> <button class="btn" onclick="A=$('k').value.trim();localStorage.setItem('map_admin',A);charger()">Entrer</button></div>`;return}
  if(cur)return;if(!D){$('app').innerHTML='<div class="card hint">Chargement…</div>';return}
  const tabs=[['aide','🆘 Aide en direct ('+D.aide.length+')'],['rdv','📅 Rendez-vous et rappels ('+(D.rappels.length+D.rdv.length)+')'],['applis','🧰 Applis et clients']];
- let h=`<div class="tabs">${tabs.map(([k,l])=>`<button class="${T===k?'on':''}" onclick="T='${k}';vue()">${l}</button>`).join('')}</div>`;
+ let h=`<div class="tabs">${tabs.map(([k,l])=>`<button class="${T===k?'on':''}" onclick="location.hash='${k}'">${l}</button>`).join('')}</div>`;
  if(T==='aide'){h+=`<div class="card hint">Les clients demandent de l'aide depuis l'appli (bouton « 🆘 Besoin d'aide »). <b>Voir l'écran</b> : vous regardez en direct. <b>Prendre la main</b> : ils vous donnent un code Chrome Bureau à distance, vous contrôlez souris et clavier pour faire les branchements avec eux.</div>`+
   (D.aide.map(a=>a.type==='controle'?`<div class="card"><div class="row"><div><b>🖱️ ${esc(a.nom)}</b> <span class="pill">${esc(a.app||'')}</span><div class="hint">${fd(a.quand)}${a.tel?' · <a href="tel:'+esc(a.tel)+'">'+esc(a.tel)+'</a>':''} · le code expire 5 min après sa création</div></div><button class="btn l" onclick="finir('${a.id}')">Terminé</button></div>
    <p style="margin:12px 0 6px">Code d'accès :</p><span class="code">${crd(a.code_crd)}</span> <button class="btn l" onclick="navigator.clipboard.writeText('${a.code_crd}');this.textContent='✓ Copié'">Copier</button>
@@ -34,7 +34,7 @@ function vue(){
   <div class="card"><b>👥 Comptes Mon Assistant Pro</b>${D.comptes.map(c=>`<div style="padding:8px 0;border-bottom:1px solid #EEF1F4"><b>${esc(c.nom)}</b><div class="hint">SIRET ${esc(c.siret)} · créé ${fd(c.cree)}</div></div>`).join('')}</div>`}
  $('app').innerHTML=h}
 async function finir(id){await rpc('skyeco_aide_fin',{p_admin:A,p_id:id});charger()}
-async function voir(id){const l=await rpc('map_ecran_liste',{p_admin:A});const s=l.find(x=>x.id===id);if(!s||!s.offre)return alert("Le partage n'est plus disponible.");cur=s;
+async function voir(id){const l=await rpc('map_ecran_liste',{p_admin:A});const s=l.find(x=>x.id===id);if(!s||!s.offre)return alert("Le partage n'est plus disponible.");cur=s;history.pushState(null,'','#ecran');
  $('app').innerHTML=`<div class="card row"><div><b>Écran de ${esc(s.nom)}</b><div class="hint" id="st">Connexion…</div></div><button class="btn" onclick="arreter()">Terminer</button></div><video id="v" autoplay playsinline muted></video>`;
  pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]});
  pc.ontrack=e=>{$('v').srcObject=e.streams[0];$('st').textContent='En direct (lecture seule)'};
@@ -42,6 +42,7 @@ async function voir(id){const l=await rpc('map_ecran_liste',{p_admin:A});const s
  await pc.setRemoteDescription({type:'offer',sdp:s.offre});await pc.setLocalDescription(await pc.createAnswer());
  await new Promise(r=>{if(pc.iceGatheringState==='complete')return r();pc.onicegatheringstatechange=()=>{if(pc.iceGatheringState==='complete')r()};setTimeout(r,4000)});
  await rpc('map_ecran_repondre',{p_admin:A,p_id:id,p_sdp:pc.localDescription.sdp})}
-async function arreter(){if(cur)await rpc('map_ecran_admin_fin',{p_admin:A,p_id:cur.id});if(pc)pc.close();pc=null;cur=null;charger()}
+async function arreter(){const c=cur;cur=null;if(c)await rpc('map_ecran_admin_fin',{p_admin:A,p_id:c.id});if(pc)pc.close();pc=null;if(location.hash==='#ecran')history.replaceState(null,'','#aide');T='aide';charger()}
+window.addEventListener('hashchange',()=>{const t=location.hash.slice(1)||'aide';if(cur&&t!=='ecran'){arreter();}T=['aide','rdv','applis'].includes(t)?t:'aide';vue()});
 vue();charger();setInterval(charger,5000);
 </script></body></html>

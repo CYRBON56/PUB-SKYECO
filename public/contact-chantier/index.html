@@ -334,6 +334,8 @@ footer{text-align:center;font-size:12px;color:var(--mute);padding:30px 16px 10px
 <div id="layer"></div>
 
 <script>
+const IC={"check": "<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#2F8F5B\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"vertical-align:-3px;flex:none\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"m8 12 3 3 5-6\"/></svg>", "ok": "<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"vertical-align:-3px;flex:none\" aria-hidden=\"true\"><path d=\"M5 12l5 5L20 7\"/></svg>", "work": "<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#E8590C\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"vertical-align:-3px;flex:none\" aria-hidden=\"true\"><path d=\"M14 6l4 4M3 21l9-9M12 4l8 8-3 3-8-8z\"/></svg>", "todo": "<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#8A9891\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"vertical-align:-3px;flex:none\" aria-hidden=\"true\"><rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"3\"/></svg>", "lock": "<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"vertical-align:-3px;flex:none\" aria-hidden=\"true\"><rect x=\"5\" y=\"11\" width=\"14\" height=\"10\" rx=\"2\"/><path d=\"M8 11V7a4 4 0 0 1 8 0v4\"/></svg>", "play": "<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"vertical-align:-3px;flex:none\" aria-hidden=\"true\"><path d=\"M7 5v14l11-7z\"/></svg>", "feed": "<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"vertical-align:-3px;flex:none\" aria-hidden=\"true\"><path d=\"M4 10v4h3l6 4V6L7 10z\"/><path d=\"M17 9a4 4 0 0 1 0 6\"/></svg>"};
+
 /* ====================== CONFIG ====================== */
 const SB = 'https://wklddwumirkdjkbxvzyj.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrbGRkd3VtaXJrZGprYnh2enlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMTMzNDksImV4cCI6MjA5ODc4OTM0OX0._2cVv3rmhHb-7VLTCqiMRq0F2S30NMnD8qRhTiBM7nc';
@@ -1071,7 +1073,7 @@ function suiviView(){
     h += `<h2>${esc(String(ph||'').replace(/^Devis · /,''))}</h2><div class="card" style="padding:4px 14px">`;
     et.filter(e=>e.phase===ph).forEach(e=>{
       const fait = e.statut==='validé', cours = e.statut==='en cours'||e.statut==='déclaré';
-      h += `<div class="row" style="gap:10px;padding:10px 0;border-top:1px solid var(--line);align-items:flex-start"><span style="font-size:18px;line-height:1.2">${fait?'✅':cours?'🔨':'⬜'}</span><div style="flex:1;min-width:0"><div style="font-weight:${fait?700:500}">${esc(e.nom)}</div><div class="meta" style="margin:2px 0 0">${fait?'Terminé'+(e.valide_le?' le '+new Date(e.valide_le).toLocaleDateString('fr-FR'):''):cours?'En cours':'À venir'}</div></div></div>`;
+      h += `<div class="row" style="gap:10px;padding:10px 0;border-top:1px solid var(--line);align-items:flex-start"><span style="font-size:18px;line-height:1.2">${fait?IC.check:cours?IC.work:IC.todo}</span><div style="flex:1;min-width:0"><div style="font-weight:${fait?700:500}">${esc(e.nom)}</div><div class="meta" style="margin:2px 0 0">${fait?'Terminé'+(e.valide_le?' le '+new Date(e.valide_le).toLocaleDateString('fr-FR'):''):cours?'En cours':'À venir'}</div></div></div>`;
     });
     h += `</div>`;
   });
@@ -1632,7 +1634,7 @@ function bienvenue(){
 function tachesView(){
   const et = D().etapes||[], m = me(), st = (D().membres.find(x=>x.id===m.id)||{}).statut_lot;
   let h = bienvenue() + `<div class="card row" style="gap:12px">${vignette(m.lot||'Autre',52)}<div style="flex:1"><b>${EQ()?'':'Lot '}${esc(m.lot||'—')}</b><div class="meta">${EQ()?'Statut de votre équipe':'Statut de votre lot'} : ${esc(st||'à venir')}</div></div></div>
-  <div class="quick">${st!=='en cours'&&st!=='terminé'?`<button class="chip" onclick="lotStatut('en cours')">▶️ ${EQ()?'On démarre':'Je démarre mon lot'}</button>`:''}${st!=='terminé'?`<button class="chip" onclick="lotStatut('terminé')">✅ ${EQ()?'Tout est terminé':'J’ai terminé mon lot'}</button>`:''}</div>`;
+  <div class="quick">${st!=='en cours'&&st!=='terminé'?`<button class="chip" onclick="lotStatut('en cours')">${IC.play} ${EQ()?'On démarre':'Je démarre mon lot'}</button>`:''}${st!=='terminé'?`<button class="chip" onclick="lotStatut('terminé')">✅ ${EQ()?'Tout est terminé':'J’ai terminé mon lot'}</button>`:''}</div>`;
   if(!et.length) return h + `<div class="empty">Aucune tâche attribuée ${EQ()?'à votre équipe':'à votre lot'} pour l’instant.</div>`;
   const okA = et.filter(e=>e.statut==='validé').length, declA = et.filter(e=>e.statut==='déclaré').length;
   h += `<div class="card"><div class="row between"><b>${okA} / ${et.length} validées par ${PILOTE()}</b>${declA?`<span class="pill p-acc">${declA} en vérification</span>`:''}</div><div class="bar"><i style="width:${et.length?Math.round(okA*100/et.length):0}%"></i></div></div>
@@ -1643,7 +1645,7 @@ function tachesView(){
       const s = ET[e.statut]||ET['à faire'];
       h += `<div class="card"><div class="row" style="gap:12px">${vignette(e.lot||'Autre',44)}<div style="flex:1;min-width:0"><div class="ptitle">${esc(e.nom)}</div>${e.note?`<div class="meta" style="color:var(--bad)">Note ${EQ()?'du chef d’entreprise':'de l’architecte'} : ${esc(e.note)}</div>`:''}</div><span class="pill ${s[1]}">${e.statut==='déclaré'?'En vérification':s[0]}</span></div>
       ${e.detail?`<details style="margin-top:8px"><summary style="cursor:pointer;font-weight:700;font-size:13.5px;color:var(--blue)">Lire l’article du CCTP</summary><p style="white-space:pre-wrap;font-size:14px;line-height:1.5;margin-top:6px;background:#F8F6F2;border-radius:10px;padding:10px">${esc(e.detail)}</p></details>`:''}
-      ${e.statut==='à faire'||e.statut==='en cours'?`<div class="btns" style="margin-top:10px">${e.statut==='à faire'?`<button class="btn" onclick="tache('${e.id}','en cours')">Je commence</button>`:''}<button class="btn ok" onclick="tache('${e.id}','déclaré')">✅ C’est fait</button></div>`:''}</div>`;
+      ${e.statut==='à faire'||e.statut==='en cours'?`<div class="btns" style="margin-top:10px">${e.statut==='à faire'?`<button class="btn" onclick="tache('${e.id}','en cours')">Je commence</button>`:''}<button class="btn ok" onclick="tache('${e.id}','déclaré')">${IC.ok} C’est fait</button></div>`:''}</div>`;
     });
   });
   return h;
@@ -1789,7 +1791,7 @@ function msgView(){
     const l = lastMsg(x=>x.conversation_id===c.id), mine = c.membres.includes(me().id);
     const faces = c.membres.filter(x=>x!==me().id).slice(0,3).map(id=>{ const x=M(id); return vignette(x.lot||'Autre',30,x.role); }).join('');
     h += `<div class="card tap row" style="gap:12px" onclick="openConv('${c.id}')"><div class="row" style="gap:3px;flex:none">${faces||vignette('Autre',30)}</div>
-      <div style="flex:1;min-width:0"><div class="ptitle">🔒 ${esc(convName(c))}</div><div class="meta" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l?esc(M(l.auteur_id).nom.split(' ')[0]+' : '+(l.texte||'📎 pièce jointe')):'Pas encore de message'}</div></div>
+      <div style="flex:1;min-width:0"><div class="ptitle">${IC.lock} ${esc(convName(c))}</div><div class="meta" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l?esc(M(l.auteur_id).nom.split(' ')[0]+' : '+(l.texte||'📎 pièce jointe')):'Pas encore de message'}</div></div>
       ${isMoe()&&!mine?'<span class="pill p-mute">👁 supervision</span>':''}</div>`;
   });
   if(me().role!=='client') h += `<button class="btn pri full" style="margin-top:12px" onclick="newConv()">${I.plus} Nouvelle conversation privée</button>`;
@@ -1801,11 +1803,11 @@ function chatView(cid){
   if(!general && !c){ S.conv=null; return msgView(); }
   const msgs = D().messages.filter(x=>!x.probleme_id && (general ? !x.conversation_id : x.conversation_id===cid));
   let h = `<button class="chip" style="margin-bottom:10px" onclick="S.conv=null;render()">‹ Conversations</button>
-  <div class="row" style="gap:8px;margin-bottom:12px"><b style="font-size:16px">${general?'📢 Fil général du chantier':'🔒 '+esc(convName(c))}</b></div>
+  <div class="row" style="gap:8px;margin-bottom:12px"><b style="font-size:16px">${general?IC.feed+' Fil général du chantier':IC.lock+' '+esc(convName(c))}</b></div>
   ${!general?`<div class="filters">${c.membres.map(id=>{ const x=M(id); return `<span class="chip">${vignette(x.lot||'Autre',22,x.role)}${esc(x.nom.split(' ')[0])}</span>`; }).join('')}${!c.membres.includes(D().membres.find(x=>x.role==='moe').id)?`<span class="chip">${vignette('',22,'moe')}Architecte (supervision)</span>`:''}</div>`:''}`;
   if(!msgs.length) h += `<div class="empty">Pas encore de message.</div>`;
   msgs.forEach(x=>{
-    if(x.systeme){ h += `<div class="msg sys ${/BLOQUANT/.test(x.texte)?'alert':''}"><div class="bubble">${x.prive_moe?'🔒 ':''}${esc(x.texte)}</div><div class="mwho" style="margin-top:3px">${x.prive_moe?'visible par vous seul · ':''}${ago(x.created_at)}</div></div>`; return; }
+    if(x.systeme){ h += `<div class="msg sys ${/BLOQUANT/.test(x.texte)?'alert':''}"><div class="bubble">${x.prive_moe?IC.lock+' ':''}${esc(x.texte)}</div><div class="mwho" style="margin-top:3px">${x.prive_moe?'visible par vous seul · ':''}${ago(x.created_at)}</div></div>`; return; }
     const u = M(x.auteur_id), mine = x.auteur_id===m.id;
     const md = mediasOf('message_id', x.id);
     h += `<div class="msg ${mine?'me':''}"><div class="mwho">${mine?'':esc(u.nom)+(u.role==='moe'?' · Architecte':u.lot?' · '+esc(u.lot):'')+' · '}${ago(x.created_at)}</div><div class="bubble">${x.texte?mentions(x.texte):''}${md.map(z=>mediaHtml(z)).join('')}</div></div>`;

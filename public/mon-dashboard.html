@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mon tableau de bord — Skyeco Pro</title>
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#7c3aed">
+<meta name="theme-color" content="#163A63">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -14,7 +14,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f6f5fb; color:#211a35; padding:28px 24px 60px; position:relative; overflow-x:hidden; }
+  body { font-family:Manrope, system-ui, sans-serif; background:#F3F5F8; color:#1E2328; padding:28px 24px 60px; position:relative; overflow-x:hidden; }
   .leaf-bg { position:fixed; z-index:0; pointer-events:none; }
   .leaf-bg svg { display:block; filter:blur(0.5px); }
   .wrap { position:relative; z-index:1; max-width:980px; margin:0 auto; }
@@ -29,11 +29,11 @@
   }
   .sidebar-brand-logo {
     width:38px; height:38px; border-radius:11px; flex-shrink:0;
-    background:linear-gradient(135deg, #a78bfa, #ec4899); display:flex; align-items:center; justify-content:center;
+    background:#E8590C; display:flex; align-items:center; justify-content:center;
     font-size:1.15rem;
   }
-  .sidebar-brand-texte { font-size:0.98rem; font-weight:800; color:#211a35; line-height:1.2; }
-  .sidebar-brand-sous { font-size:0.68rem; color:#8a8296; font-weight:600; }
+  .sidebar-brand-texte { font-size:0.98rem; font-weight:800; color:#1E2328; line-height:1.2; }
+  .sidebar-brand-sous { font-size:0.68rem; color:#6B7480; font-weight:600; }
   .dash-main { flex:1; min-width:0; }
   @media (max-width:860px) {
     .dash-shell { flex-direction:column; }
@@ -42,7 +42,7 @@
   }
   .header {
     display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:16px;
-    background:linear-gradient(120deg, #ffffff 55%, #f5f3ff); border-radius:18px; padding:20px 26px;
+    background:#EEF3F8; border-radius:18px; padding:20px 26px;
     box-shadow:0 8px 26px rgba(76,29,149,0.08);
   }
   .header-titre { display:flex; align-items:center; gap:16px; }
@@ -52,13 +52,13 @@
   }
   h1 { font-size:1.6rem; font-weight:800; letter-spacing:-0.01em; }
   .btn-fonds {
-    display:inline-flex; align-items:center; gap:8px; background:linear-gradient(120deg, #f9a8d4, #ec4899 60%, #be185d);
+    display:inline-flex; align-items:center; gap:8px; background:#E8590C;
     color:#fff; text-decoration:none; padding:12px 22px; border-radius:11px; font-weight:700; font-size:0.92rem;
     box-shadow:0 6px 16px rgba(199,79,32,0.28); transition:transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
   }
   .btn-fonds:hover { transform:translateY(-1px); filter:brightness(1.05); box-shadow:0 9px 20px rgba(199,79,32,0.34); }
   .btn-elements {
-    display:inline-flex; align-items:center; gap:8px; background:#7c3aed; color:#fff; text-decoration:none;
+    display:inline-flex; align-items:center; gap:8px; background:#163A63; color:#fff; text-decoration:none;
     padding:12px 22px; border-radius:11px; font-weight:700; font-size:0.92rem;
     box-shadow:0 6px 16px rgba(30,111,76,0.24); transition:transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
   }
@@ -71,7 +71,7 @@
   }
   .stat-card::before {
     content:'📈'; position:absolute; top:20px; left:18px; width:34px; height:34px; border-radius:10px;
-    background:linear-gradient(135deg, #ede9fe, #fce7f3); display:flex; align-items:center; justify-content:center;
+    background:#FFF1E6; display:flex; align-items:center; justify-content:center;
     font-size:1rem; line-height:1;
   }
   .stat-card:nth-child(2)::before { content:'🖱️'; }
@@ -79,10 +79,10 @@
   .stat-value { font-size:2.05rem; font-weight:800; }
   .stat-label { font-size:0.78rem; color:#8a9891; margin-top:2px; }
 
-  .solde-box { background:#fff; border:2px solid #7c3aed; border-radius:14px; padding:22px; margin-bottom:28px; }
+  .solde-box { background:#fff; border:2px solid #163A63; border-radius:14px; padding:22px; margin-bottom:28px; }
   .btn-pause-diffusion {
     display:inline-flex; align-items:center; gap:10px;
-    background:linear-gradient(120deg, #f9a8d4, #ec4899 55%, #be185d);
+    background:#E8590C;
     color:#fff; border:none; border-radius:14px;
     padding:17px 32px; font-size:1.05rem; font-weight:800; letter-spacing:0.01em;
     cursor:pointer; margin-top:16px;
@@ -92,7 +92,7 @@
   .btn-pause-diffusion:hover { transform:translateY(-2px); filter:brightness(1.05); box-shadow:0 14px 30px rgba(199,79,32,0.4); }
   .btn-pause-diffusion:active { transform:translateY(0); }
   .btn-pause-diffusion.actif-pause {
-    background:linear-gradient(120deg, #a78bfa, #7c3aed 60%, #5b21b6);
+    background:#163A63;
     box-shadow:0 10px 24px rgba(30,111,76,0.32);
   }
   .btn-pause-diffusion.actif-pause:hover { box-shadow:0 14px 30px rgba(30,111,76,0.4); }
@@ -100,10 +100,10 @@
   .pause-note { font-size:0.76rem; color:#8a9891; margin-top:6px; }
   .solde-box h3 { font-size:0.95rem; margin-bottom:14px; }
   .solde-bar-track { background:#eef1f0; border-radius:8px; height:12px; overflow:hidden; margin-bottom:10px; }
-  .solde-bar-fill { background:#ec4899; height:100%; transition:width 0.4s ease; }
+  .solde-bar-fill { background:#E8590C; height:100%; transition:width 0.4s ease; }
   .solde-bar-fill.alerte { background:#c0392b; }
   .solde-stats { display:flex; justify-content:space-between; font-size:0.85rem; color:#5b6b64; margin-bottom:14px; }
-  .solde-stats strong { color:#211a35; font-size:1.05rem; }
+  .solde-stats strong { color:#1E2328; font-size:1.05rem; }
   .solde-detail { font-size:0.76rem; color:#8a9891; line-height:1.6; }
 
   .liste-panel { background:#fff; border-radius:16px; padding:24px; box-shadow:0 6px 22px rgba(20,49,42,0.08); }
@@ -115,15 +115,15 @@
     cursor:pointer; transition:background 0.15s, transform 0.1s;
   }
   .panel-tab:hover { background:#f7f5fb; }
-  .panel-tab.active { background:linear-gradient(120deg, #7c3aed, #ec4899); box-shadow:0 8px 20px rgba(124,58,237,0.28); }
+  .panel-tab.active { background:#E8590C; box-shadow:0 8px 20px rgba(22,58,99,0.28); }
   .panel-tab-icone {
     font-size:1.15rem; flex-shrink:0; width:34px; height:34px; border-radius:10px; background:#f2f4f1;
     display:flex; align-items:center; justify-content:center;
   }
   .panel-tab.active .panel-tab-icone { background:rgba(255,255,255,0.22); }
-  .panel-tab-texte { font-size:0.88rem; font-weight:800; color:#211a35; display:flex; flex-direction:column; gap:1px; }
+  .panel-tab-texte { font-size:0.88rem; font-weight:800; color:#1E2328; display:flex; flex-direction:column; gap:1px; }
   .panel-tab.active .panel-tab-texte { color:#fff; }
-  .panel-tab-sous { font-size:0.68rem; font-weight:400; color:#8a8296; }
+  .panel-tab-sous { font-size:0.68rem; font-weight:400; color:#6B7480; }
   .panel-tab.active .panel-tab-sous { color:rgba(255,255,255,0.85); }
   @media (max-width:860px) {
     .panel-tabs { flex-direction:row; flex-wrap:wrap; gap:8px; }
@@ -134,31 +134,31 @@
   .zone-ligne { display:flex; align-items:center; gap:12px; }
   .zone-ligne .zone-nom { flex:0 0 180px; font-size:0.85rem; color:#3a4a43; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .zone-ligne .zone-barre-track { flex:1; background:#eef1f0; border-radius:6px; height:10px; overflow:hidden; }
-  .zone-ligne .zone-barre-fill { background:#7c3aed; height:100%; border-radius:6px; }
-  .zone-ligne .zone-clics { flex:0 0 70px; text-align:right; font-size:0.85rem; font-weight:700; color:#211a35; }
+  .zone-ligne .zone-barre-fill { background:#163A63; height:100%; border-radius:6px; }
+  .zone-ligne .zone-clics { flex:0 0 70px; text-align:right; font-size:0.85rem; font-weight:700; color:#1E2328; }
 
   .devis-badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:0.72rem; font-weight:700; white-space:nowrap; }
   .devis-badge.aucun { background:#eef1f0; color:#8a9891; }
   .devis-badge.envoye { background:#e6f0ff; color:#2f5fa8; }
-  .devis-badge.relance { background:#fdf2f8; color:#b8571f; }
-  .devis-badge.signe { background:#e3f5ea; color:#7c3aed; }
+  .devis-badge.relance { background:#FFF6EF; color:#b8571f; }
+  .devis-badge.signe { background:#e3f5ea; color:#163A63; }
   .devis-actions { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
   .btn-devis { border:none; border-radius:8px; padding:6px 10px; font-size:0.74rem; font-weight:700; cursor:pointer; white-space:nowrap; }
-  .btn-devis.envoyer { background:#7c3aed; color:#fff; }
-  .btn-devis.relancer { background:#ec4899; color:#fff; }
+  .btn-devis.envoyer { background:#163A63; color:#fff; }
+  .btn-devis.relancer { background:#E8590C; color:#fff; }
   .btn-devis.voir { background:#eef1f0; color:#3a4a43; text-decoration:none; }
   .btn-devis:disabled { opacity:0.6; cursor:wait; }
 
-  .estim-box { background:#fff; border:2px solid #ec4899; border-radius:14px; padding:22px; margin-bottom:28px; }
+  .estim-box { background:#fff; border:2px solid #E8590C; border-radius:14px; padding:22px; margin-bottom:28px; }
   .estim-box h3 { font-size:0.95rem; margin-bottom:14px; }
   .estim-row { display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
   .estim-row label { font-size:0.85rem; font-weight:700; }
   .estim-row input {
     width:110px; font-size:1.15rem; font-weight:800; padding:8px 12px; border:2px solid #d7dedb;
-    border-radius:10px; color:#211a35;
+    border-radius:10px; color:#1E2328;
   }
   .estim-resultat { display:flex; gap:28px; }
-  .estim-resultat .chiffre { font-size:1.5rem; font-weight:800; color:#ec4899; }
+  .estim-resultat .chiffre { font-size:1.5rem; font-weight:800; color:#E8590C; }
   .estim-resultat .label { font-size:0.76rem; color:#5b6b64; }
   .estim-note { font-size:0.74rem; color:#8a9891; margin-top:10px; }
 
@@ -172,22 +172,22 @@
   .motscles-hint { font-size:0.8rem; color:#5b6b64; margin-bottom:12px; line-height:1.5; }
   .motscles-textarea {
     width:100%; min-height:70px; padding:11px 12px; border:1.5px solid #d7dedb; border-radius:9px;
-    font-size:0.88rem; font-family:inherit; resize:vertical; color:#211a35;
+    font-size:0.88rem; font-family:inherit; resize:vertical; color:#1E2328;
   }
-  .motscles-textarea:focus { outline:none; border-color:#7c3aed; }
+  .motscles-textarea:focus { outline:none; border-color:#163A63; }
   .btn-suggerer {
-    margin-top:10px; background:#7c3aed; color:#fff; border:none; border-radius:9px;
+    margin-top:10px; background:#163A63; color:#fff; border:none; border-radius:9px;
     padding:10px 16px; font-size:0.85rem; font-weight:700; cursor:pointer;
   }
   .btn-suggerer:hover:not(:disabled) { filter:brightness(1.08); }
   .btn-suggerer:disabled { opacity:0.6; cursor:wait; }
   .motscles-liste { margin-top:14px; display:flex; flex-direction:column; gap:8px; }
   .motscle-item { display:flex; align-items:center; gap:8px; font-size:0.86rem; }
-  .motscle-item input[type="checkbox"] { width:16px; height:16px; accent-color:#7c3aed; flex-shrink:0; }
+  .motscle-item input[type="checkbox"] { width:16px; height:16px; accent-color:#163A63; flex-shrink:0; }
   .motscle-texte { flex:1; }
   .motscle-potentiel-badge {
     font-size:0.7rem; font-weight:700; white-space:nowrap; border-radius:6px; padding:2px 8px;
-    background:#eaf5ef; color:#7c3aed; flex-shrink:0;
+    background:#eaf5ef; color:#163A63; flex-shrink:0;
   }
   .motscle-potentiel-badge.faible { background:#f2f4f1; color:#8a9891; }
   .motscles-ajout { display:flex; gap:8px; margin-top:12px; }
@@ -195,15 +195,15 @@
     flex:1; padding:9px 11px; border:1.5px solid #d7dedb; border-radius:8px; font-size:0.85rem; font-family:inherit;
   }
   .motscles-ajout button {
-    background:#f2f4f1; color:#211a35; border:none; border-radius:8px; padding:9px 14px;
+    background:#f2f4f1; color:#1E2328; border:none; border-radius:8px; padding:9px 14px;
     font-size:0.82rem; font-weight:700; cursor:pointer; white-space:nowrap;
   }
   .motscles-note { font-size:0.76rem; color:#8a9891; margin-top:10px; }
   .motscles-potentiel {
-    margin-top:14px; background:#fdf2f8; border:1.5px solid #fbcfe8; border-radius:10px;
+    margin-top:14px; background:#FFF6EF; border:1.5px solid #FBD3B5; border-radius:10px;
     padding:14px 16px;
   }
-  .motscles-potentiel .chiffre { font-size:1.4rem; font-weight:800; color:#ec4899; }
+  .motscles-potentiel .chiffre { font-size:1.4rem; font-weight:800; color:#E8590C; }
   .motscles-potentiel .detail { font-size:0.82rem; color:#5b6b64; margin-top:4px; line-height:1.5; }
 
   .annonce-hint { font-size:0.8rem; color:#5b6b64; margin-bottom:16px; line-height:1.5; }
@@ -216,102 +216,102 @@
   .annonce-preview .titre-annonce { font-size:19px; color:#1a0dab; font-weight:400; margin-top:3px; line-height:1.3; }
   .annonce-preview .desc-annonce { font-size:13.5px; color:#4d5156; margin-top:4px; line-height:1.5; }
   .annonce-champ { margin-bottom:12px; }
-  .annonce-champ label { display:flex; justify-content:space-between; font-size:0.78rem; font-weight:700; margin-bottom:5px; color:#211a35; }
+  .annonce-champ label { display:flex; justify-content:space-between; font-size:0.78rem; font-weight:700; margin-bottom:5px; color:#1E2328; }
   .annonce-champ label .compteur { font-weight:400; color:#8a9891; }
   .annonce-champ input, .annonce-champ textarea {
     width:100%; padding:9px 11px; border:1.5px solid #d7dedb; border-radius:8px; font-size:0.85rem;
-    font-family:inherit; color:#211a35;
+    font-family:inherit; color:#1E2328;
   }
-  .annonce-champ input:focus, .annonce-champ textarea:focus { outline:none; border-color:#7c3aed; }
+  .annonce-champ input:focus, .annonce-champ textarea:focus { outline:none; border-color:#163A63; }
   .annonce-champ textarea { resize:vertical; min-height:50px; }
   .annonce-champ input.trop-long, .annonce-champ textarea.trop-long { border-color:#c0392b; }
   .annonce-sauvegarde-note { font-size:0.74rem; color:#8a9891; margin-top:4px; min-height:1em; }
 
   .slider-row { display:flex; align-items:center; gap:14px; margin-bottom:14px; }
-  .slider-row input[type="range"] { flex:1; accent-color:#7c3aed; height:6px; }
-  .slider-row .slider-value { font-weight:800; font-size:1.05rem; min-width:78px; text-align:right; color:#211a35; }
+  .slider-row input[type="range"] { flex:1; accent-color:#163A63; height:6px; }
+  .slider-row .slider-value { font-weight:800; font-size:1.05rem; min-width:78px; text-align:right; color:#1E2328; }
 
   .kw-table { width:100%; border-collapse:collapse; font-size:0.82rem; }
   .kw-table th { text-align:left; padding:8px 6px; color:#8a9891; font-weight:700; font-size:0.68rem; text-transform:uppercase; border-bottom:1.5px solid #eef1f0; }
   .kw-table td { padding:9px 6px; border-bottom:1px solid #eef1f0; vertical-align:middle; }
   .kw-table tr:last-child td { border-bottom:none; }
   .kw-pertinence { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }
-  .kw-pertinence.haute { background:#7c3aed; }
+  .kw-pertinence.haute { background:#163A63; }
   .kw-pertinence.moyenne { background:#e8b93c; }
   .kw-pertinence.faible { background:#c0392b; }
-  .btn-exclure-kw { background:#fdf2f8; color:#c0392b; border:none; border-radius:8px; padding:5px 10px; font-size:0.72rem; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .btn-exclure-kw { background:#FFF6EF; color:#c0392b; border:none; border-radius:8px; padding:5px 10px; font-size:0.72rem; font-weight:700; cursor:pointer; white-space:nowrap; }
   .btn-exclure-kw:hover { background:#fbe0d5; }
   .kw-negatif { color:#c0392b; font-size:0.7rem; font-weight:700; }
 
   .ajout-kw-row { display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
   .ajout-kw-row input[type="text"] { flex:1; min-width:160px; padding:9px 12px; border:1.5px solid #d7dedb; border-radius:9px; font-size:0.85rem; }
   .ajout-kw-row select { padding:9px 10px; border:1.5px solid #d7dedb; border-radius:9px; font-size:0.82rem; background:#fff; }
-  .ajout-kw-row button { background:#7c3aed; color:#fff; border:none; border-radius:9px; padding:9px 16px; font-weight:700; font-size:0.82rem; cursor:pointer; white-space:nowrap; }
+  .ajout-kw-row button { background:#163A63; color:#fff; border:none; border-radius:9px; padding:9px 16px; font-weight:700; font-size:0.82rem; cursor:pointer; white-space:nowrap; }
   .ajout-kw-row button:disabled { opacity:0.5; cursor:not-allowed; }
 
   .heures-chart { display:flex; align-items:flex-end; gap:3px; height:120px; margin-bottom:6px; }
   .heure-barre-wrap { flex:1; display:flex; flex-direction:column; justify-content:flex-end; height:100%; }
   .heure-barre { width:100%; background:#cfe3d7; border-radius:3px 3px 0 0; min-height:2px; transition:background 0.15s; }
-  .heure-barre.pointe { background:#ec4899; }
+  .heure-barre.pointe { background:#E8590C; }
   .heures-labels { display:flex; gap:3px; }
   .heures-labels span { flex:1; text-align:center; font-size:0.62rem; color:#8a9891; }
   .heures-note { font-size:0.8rem; color:#5b6b64; margin-top:12px; }
-  .heures-note strong { color:#ec4899; }
+  .heures-note strong { color:#E8590C; }
 
   .zone-affichage { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; }
   .zone-affichage span { font-weight:700; font-size:0.98rem; }
-  .btn-modifier-zone { background:#f2f4f1; color:#211a35; border:none; border-radius:8px; padding:8px 14px; font-size:0.82rem; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .btn-modifier-zone { background:#f2f4f1; color:#1E2328; border:none; border-radius:8px; padding:8px 14px; font-size:0.82rem; font-weight:700; cursor:pointer; white-space:nowrap; }
   .btn-modifier-zone:hover { background:#e6ebe8; }
   .zone-edition { display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
   .zone-edition input { flex:1; min-width:220px; padding:10px 12px; border:1.5px solid #d7dedb; border-radius:9px; font-size:0.9rem; font-family:inherit; }
   .zone-edition button { border:none; border-radius:9px; padding:10px 16px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap; }
-  #btnEnregistrerZone { background:#7c3aed; color:#fff; }
-  .btn-annuler-zone { background:#f2f4f1; color:#211a35; }
+  #btnEnregistrerZone { background:#163A63; color:#fff; }
+  .btn-annuler-zone { background:#f2f4f1; color:#1E2328; }
 
-  .coaching-panel { background:#f5f3ff; border:1.5px solid #ddd6fe; border-radius:14px; padding:18px 20px; margin-top:20px !important; }
+  .coaching-panel { background:#EEF3F8; border:1.5px solid #C9D8E8; border-radius:14px; padding:18px 20px; margin-top:20px !important; }
   .coaching-panel-header { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
   .coaching-panel-header h3 { margin-bottom:0; flex:1; }
   .coaching-logo { flex-shrink:0; border-radius:11px; }
   .btn-toggle-coach { flex-shrink:0; background:#fff; color:#5b6b64; border:1.5px solid #d8e3de; border-radius:8px; padding:8px 14px; font-size:0.78rem; font-weight:700; cursor:pointer; white-space:nowrap; }
   .btn-toggle-coach:hover { background:#f2f4f1; }
-  .btn-toggle-coach.coach-est-en-pause { background:#7c3aed; color:#fff; border-color:#7c3aed; }
+  .btn-toggle-coach.coach-est-en-pause { background:#163A63; color:#fff; border-color:#163A63; }
   .coaching-ia-pause { font-size:0.85rem; line-height:1.5; color:#5b6b64; background:#fff; border:1.5px dashed #d8e3de; border-radius:10px; padding:14px 16px; }
   .coaching-liste { list-style:none; display:flex; flex-direction:column; gap:10px; }
   .coaching-liste li { font-size:0.85rem; line-height:1.5; color:#294038; padding-left:24px; position:relative; }
-  .coaching-liste li::before { content:'✓'; position:absolute; left:0; top:0; color:#7c3aed; font-weight:800; }
-  .coaching-liste li strong { color:#211a35; }
-  .coaching-liste li.alerte::before { content:'⚠'; color:#ec4899; }
+  .coaching-liste li::before { content:'✓'; position:absolute; left:0; top:0; color:#163A63; font-weight:800; }
+  .coaching-liste li strong { color:#1E2328; }
+  .coaching-liste li.alerte::before { content:'⚠'; color:#E8590C; }
 
   .coaching-ia-reponse { font-size:0.85rem; line-height:1.6; color:#294038; white-space:pre-wrap; }
   .coaching-ia-actions { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
-  .coaching-ia-action { font-size:0.78rem; font-weight:700; color:#7c3aed; background:#ede9fe; border:1px solid #ddd6fe; border-radius:8px; padding:8px 12px; }
+  .coaching-ia-action { font-size:0.78rem; font-weight:700; color:#163A63; background:#E3ECF5; border:1px solid #C9D8E8; border-radius:8px; padding:8px 12px; }
   .coaching-chat { margin-top:18px; border-top:1.5px solid #e2ede6; padding-top:14px; }
   .coaching-chat-historique { display:flex; flex-direction:column; gap:10px; margin-bottom:12px; max-height:320px; overflow-y:auto; }
   .coaching-chat-historique:empty { display:none; }
   .coaching-bulle { font-size:0.83rem; line-height:1.5; padding:9px 13px; border-radius:12px; max-width:88%; white-space:pre-wrap; }
-  .coaching-bulle-artisan { align-self:flex-end; background:#7c3aed; color:#fff; border-bottom-right-radius:3px; }
+  .coaching-bulle-artisan { align-self:flex-end; background:#163A63; color:#fff; border-bottom-right-radius:3px; }
   .coaching-bulle-coach { align-self:flex-start; background:#fff; color:#294038; border:1.5px solid #e2ede6; border-bottom-left-radius:3px; }
   .coaching-bulle-erreur { align-self:flex-start; background:#fdecea; color:#b3261e; border:1.5px solid #f6c9c4; }
   .coaching-chat-form { display:flex; gap:8px; }
   .coaching-chat-form input { flex:1; border:1.5px solid #d8e3de; border-radius:8px; padding:10px 12px; font-size:0.85rem; font-family:inherit; }
   .coaching-chat-form input:disabled { background:#f2f4f1; color:#8a9891; }
-  .coaching-chat-form button { background:#7c3aed; color:#fff; border:none; border-radius:8px; padding:10px 18px; font-size:0.82rem; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .coaching-chat-form button { background:#163A63; color:#fff; border:none; border-radius:8px; padding:10px 18px; font-size:0.82rem; font-weight:700; cursor:pointer; white-space:nowrap; }
   .coaching-chat-form button:disabled { background:#a9c4b7; cursor:default; }
 
   .liste-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px; }
   .liste-header h3 { font-size:1.05rem; display:flex; align-items:center; gap:9px; }
   .liste-header h3::before { content:'👥'; font-size:1.1rem; }
   .btn-pdf {
-    background:#fff; border:1.5px solid #7c3aed; border-radius:10px; padding:10px 18px; font-size:0.82rem;
-    font-weight:700; color:#7c3aed; cursor:pointer; transition:background 0.15s ease, transform 0.15s ease;
+    background:#fff; border:1.5px solid #163A63; border-radius:10px; padding:10px 18px; font-size:0.82rem;
+    font-weight:700; color:#163A63; cursor:pointer; transition:background 0.15s ease, transform 0.15s ease;
   }
-  .btn-pdf:hover { background:#f5f3ff; transform:translateY(-1px); }
+  .btn-pdf:hover { background:#EEF3F8; transform:translateY(-1px); }
 
   table { width:100%; border-collapse:collapse; font-size:0.85rem; }
   th { text-align:left; padding:10px 8px; color:#8a9891; font-weight:700; font-size:0.72rem; text-transform:uppercase; border-bottom:1.5px solid #eef1f0; }
   td { padding:10px 8px; border-bottom:1px solid #eef1f0; }
   tr:last-child td { border-bottom:none; }
-  .statut-badge { font-size:0.7rem; font-weight:700; padding:4px 11px; border-radius:999px; background:#f5f3ff; color:#7c3aed; display:inline-flex; align-items:center; gap:5px; white-space:nowrap; }
+  .statut-badge { font-size:0.7rem; font-weight:700; padding:4px 11px; border-radius:999px; background:#EEF3F8; color:#163A63; display:inline-flex; align-items:center; gap:5px; white-space:nowrap; }
 
   .table-scroll { overflow-x:auto; margin:0 -4px; padding:0 4px; }
   table.table-clients { border-collapse:separate; border-spacing:0; min-width:640px; }
@@ -324,17 +324,17 @@
   .client-identite { display:flex; align-items:center; gap:10px; }
   .client-avatar {
     flex-shrink:0; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-    background:linear-gradient(135deg, #f9a8d4, #ec4899); color:#fff; font-size:0.72rem; font-weight:800;
+    background:#E8590C; color:#fff; font-size:0.72rem; font-weight:800;
   }
-  .client-nom { font-weight:700; color:#211a35; white-space:nowrap; }
+  .client-nom { font-weight:700; color:#1E2328; white-space:nowrap; }
   .client-contact { display:block; color:#3a4a43; text-decoration:none; font-size:0.82rem; white-space:nowrap; }
   .client-floute-demo { filter:blur(4.5px); opacity:0.65; user-select:none; pointer-events:none; }
-  .client-contact:hover { text-decoration:underline; color:#7c3aed; }
+  .client-contact:hover { text-decoration:underline; color:#163A63; }
   .btn-modifier-contact {
     margin-top:4px; background:none; border:1px solid #dde5e1; border-radius:6px;
     color:#5f6368; font-size:0.72rem; padding:2px 7px; cursor:pointer;
   }
-  .btn-modifier-contact:hover { background:#f0f4f2; color:#7c3aed; border-color:#c7d3cd; }
+  .btn-modifier-contact:hover { background:#f0f4f2; color:#163A63; border-color:#c7d3cd; }
   .btn-demander-photos { margin-top:4px; margin-left:4px; }
   .btn-archiver-lead { margin-top:4px; margin-left:4px; }
 
@@ -362,14 +362,14 @@
     box-shadow:0 4px 16px rgba(20,49,42,0.05); transition:box-shadow 0.15s, border-color 0.15s;
   }
   .jour-carte:hover { box-shadow:0 8px 24px rgba(20,49,42,0.09); }
-  .jour-carte.aujourdhui { border-color:#7c3aed; }
+  .jour-carte.aujourdhui { border-color:#163A63; }
   .jour-entete { text-align:center; margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid #eef1f0; }
   .jour-jour { font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:#8a9891; }
-  .jour-numero { font-size:1.5rem; font-weight:800; color:#211a35; line-height:1.15; }
+  .jour-numero { font-size:1.5rem; font-weight:800; color:#1E2328; line-height:1.15; }
   .jour-mois { font-size:0.68rem; color:#8a9891; text-transform:capitalize; }
   .jour-badge-auj {
     display:inline-block; margin-top:5px; font-size:0.58rem; font-weight:700; color:#fff;
-    background:#7c3aed; border-radius:999px; padding:2px 9px;
+    background:#163A63; border-radius:999px; padding:2px 9px;
   }
   .bloquer-jour {
     width:100%; padding:7px 0; margin-bottom:9px; border:1.5px dashed #eef1f0; background:transparent;
@@ -383,14 +383,14 @@
     transition:border-color 0.15s, background 0.15s, transform 0.1s;
   }
   .creneau .heure { font-weight:700; }
-  .creneau.libre:hover { border-color:#7c3aed; background:#f5f8f6; transform:translateY(-1px); }
-  .creneau.confirme { background:#eaf5ef; border-color:#7c3aed; color:#7c3aed; cursor:default; }
-  .creneau.confirme .client { display:block; font-size:0.7rem; font-weight:500; margin-top:2px; color:#211a35; opacity:0.8; }
+  .creneau.libre:hover { border-color:#163A63; background:#f5f8f6; transform:translateY(-1px); }
+  .creneau.confirme { background:#eaf5ef; border-color:#163A63; color:#163A63; cursor:default; }
+  .creneau.confirme .client { display:block; font-size:0.7rem; font-weight:500; margin-top:2px; color:#1E2328; opacity:0.8; }
   .creneau.indisponible { background:#f2f4f1; border-color:#c7cdc9; color:#8a9891; text-decoration:line-through; }
   .creneau.indisponible:hover { text-decoration:none; border-color:#c0392b; color:#c0392b; }
   .calendrier-toast {
     position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(10px); z-index:3000;
-    background:#211a35; color:#fff; padding:11px 20px; border-radius:10px; font-size:0.85rem; font-weight:600;
+    background:#1E2328; color:#fff; padding:11px 20px; border-radius:10px; font-size:0.85rem; font-weight:600;
     opacity:0; transition:opacity 0.2s, transform 0.2s; pointer-events:none; box-shadow:0 8px 24px rgba(0,0,0,0.18);
   }
   .calendrier-toast.visible { opacity:1; transform:translateX(-50%) translateY(0); }
@@ -403,11 +403,11 @@
 
   /* ---- Réseaux sociaux (27/09) ---- */
   .rs-status { display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
-  .rs-status-dot { width:10px; height:10px; border-radius:50%; background:#7c3aed; flex-shrink:0; }
-  .rs-status-dot.off { background:#ec4899; }
+  .rs-status-dot { width:10px; height:10px; border-radius:50%; background:#163A63; flex-shrink:0; }
+  .rs-status-dot.off { background:#E8590C; }
   .rs-status-text { flex:1; min-width:200px; }
-  .rs-status-text strong { display:block; color:#211a35; font-size:0.95rem; margin-bottom:2px; }
-  .rs-btn { background:#7c3aed; color:#fff; border:none; padding:10px 18px; border-radius:10px; font-size:0.85rem; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .rs-status-text strong { display:block; color:#1E2328; font-size:0.95rem; margin-bottom:2px; }
+  .rs-btn { background:#163A63; color:#fff; border:none; padding:10px 18px; border-radius:10px; font-size:0.85rem; font-weight:700; cursor:pointer; white-space:nowrap; }
   .vid-form { display:grid; gap:8px; max-width:560px; margin:6px 0 22px; }
   .vid-form label { font-size:0.85rem; font-weight:700; color:#374151; }
   .vid-form select, .vid-form textarea { font:inherit; font-size:0.9rem; padding:9px 11px; border:1.5px solid #e5e1f5; border-radius:9px; background:#fff; }
@@ -417,58 +417,60 @@
   .vid-script { border:1.5px solid #eef1f0; border-radius:12px; padding:16px 18px; margin-bottom:16px; background:#fff; }
   .vid-script header { display:flex; flex-wrap:wrap; justify-content:space-between; gap:6px; margin-bottom:8px; }
   .vid-date { font-size:0.8rem; color:#6b7a72; }
-  .vid-accroche { font-weight:800; color:#7c3aed; letter-spacing:0.01em; margin:0 0 10px; }
+  .vid-accroche { font-weight:800; color:#163A63; letter-spacing:0.01em; margin:0 0 10px; }
   .vid-script h4 { font-size:0.8rem; color:#6b7a72; margin:12px 0 4px; }
   .vid-script p, .vid-script li { font-size:0.9rem; line-height:1.5; }
   .vid-script ul { margin:0; padding-left:18px; }
-  .vid-texte { background:#faf8ff; border-radius:9px; padding:10px 12px; }
-  .vid-tags { color:#7c3aed; }
+  .vid-texte { background:#F7F9FB; border-radius:9px; padding:10px 12px; }
+  .vid-tags { color:#163A63; }
   .vid-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
-  .rs-btn.secondary { background:#fff; color:#7c3aed; border:1.5px solid #7c3aed; }
+  .rs-btn.secondary { background:#fff; color:#163A63; border:1.5px solid #163A63; }
   .rs-row { display:grid; grid-template-columns:52px 1fr auto auto; align-items:center; gap:14px; padding:14px 0; border-top:1px solid #eef1f0; }
   .rs-row:first-child { border-top:none; }
-  .rs-thumb { width:52px; height:52px; border-radius:8px; background:#f5f3ff; background-size:cover; background-position:center; }
-  .rs-caption { font-size:0.86rem; color:#211a35; line-height:1.4; }
+  .rs-thumb { width:52px; height:52px; border-radius:8px; background:#EEF3F8; background-size:cover; background-position:center; }
+  .rs-caption { font-size:0.86rem; color:#1E2328; line-height:1.4; }
   .rs-meta { font-size:0.74rem; color:#8a9891; margin-top:3px; }
   .rs-pill { font-size:0.72rem; font-weight:700; padding:4px 10px; border-radius:999px; white-space:nowrap; }
-  .rs-pill.planned { background:#f5f3ff; color:#7c3aed; }
+  .rs-pill.planned { background:#EEF3F8; color:#163A63; }
   .rs-pill.draft { background:#f0ece0; color:#8a6d1f; }
   .rs-pill.failed { background:#fdeaea; color:#991b1b; }
   .rs-pill.done { background:#e4eef4; color:#2c5f8a; }
-  .rs-action { font-size:0.78rem; color:#7c3aed; font-weight:700; background:none; border:none; cursor:pointer; }
+  .rs-action { font-size:0.78rem; color:#163A63; font-weight:700; background:none; border:none; cursor:pointer; }
 </style>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>h1,h2,h3{font-family:Archivo,Manrope,system-ui,sans-serif}</style>
 </head>
 <body>
 
 <div class="verif-acces-overlay" id="verifAccesOverlay">Vérification de votre accès…</div>
 
-<div id="messageAdminBanniere" style="display:none;position:fixed;left:16px;right:16px;bottom:16px;max-width:420px;margin:0 auto;z-index:10000;background:#fff;border:1.5px solid #ec4899;border-radius:14px;padding:16px 18px;box-shadow:0 8px 30px rgba(20,49,42,0.18);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <div style="font-weight:800;color:#ec4899;margin-bottom:6px;">✉️ Message de Cyrille</div>
-  <div id="messageAdminContenu" style="color:#211a35;font-size:0.92rem;line-height:1.4;margin-bottom:10px;"></div>
-  <button type="button" id="btnMessageAdminLu" style="background:#7c3aed;color:#fff;border:none;padding:8px 16px;border-radius:9px;font-weight:700;cursor:pointer;font-size:0.85rem;">J'ai vu, merci</button>
+<div id="messageAdminBanniere" style="display:none;position:fixed;left:16px;right:16px;bottom:16px;max-width:420px;margin:0 auto;z-index:10000;background:#fff;border:1.5px solid #E8590C;border-radius:14px;padding:16px 18px;box-shadow:0 8px 30px rgba(20,49,42,0.18);font-family:Manrope, system-ui, sans-serif;">
+  <div style="font-weight:800;color:#E8590C;margin-bottom:6px;">✉️ Message de Cyrille</div>
+  <div id="messageAdminContenu" style="color:#1E2328;font-size:0.92rem;line-height:1.4;margin-bottom:10px;"></div>
+  <button type="button" id="btnMessageAdminLu" style="background:#163A63;color:#fff;border:none;padding:8px 16px;border-radius:9px;font-weight:700;cursor:pointer;font-size:0.85rem;">J'ai vu, merci</button>
 </div>
 
-<div id="ecranPartageConsentement" style="display:none;position:fixed;inset:0;z-index:10003;background:rgba(20,49,42,0.55);align-items:center;justify-content:center;padding:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<div id="ecranPartageConsentement" style="display:none;position:fixed;inset:0;z-index:10003;background:rgba(20,49,42,0.55);align-items:center;justify-content:center;padding:20px;font-family:Manrope, system-ui, sans-serif;">
   <div style="background:#fff;border-radius:16px;padding:26px 24px;max-width:400px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.25);">
-    <div style="font-size:1.05rem;font-weight:800;color:#211a35;margin-bottom:10px;">🎥 Cyrille souhaite voir votre écran en direct</div>
+    <div style="font-size:1.05rem;font-weight:800;color:#1E2328;margin-bottom:10px;">🎥 Cyrille souhaite voir votre écran en direct</div>
     <p style="font-size:0.88rem;color:#6b7a72;line-height:1.4;margin-bottom:18px;">Pour vous aider sur votre dashboard. Si vous acceptez, votre navigateur vous demandera de choisir quoi partager — sélectionnez cet onglet. Il ne peut rien cliquer ni taper à votre place, il voit seulement votre écran.</p>
     <div style="display:flex;gap:10px;justify-content:center;">
       <button type="button" id="btnEcranPartageRefuser" style="background:#f0f1ec;color:#6b7a72;border:none;padding:11px 18px;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.88rem;">Refuser</button>
-      <button type="button" id="btnEcranPartageAutoriser" style="background:#7c3aed;color:#fff;border:none;padding:11px 18px;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.88rem;">Autoriser</button>
+      <button type="button" id="btnEcranPartageAutoriser" style="background:#163A63;color:#fff;border:none;padding:11px 18px;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.88rem;">Autoriser</button>
     </div>
   </div>
 </div>
-<div id="ecranPartageBanniereArtisan" style="display:none;position:fixed;top:0;left:0;right:0;z-index:10001;background:#c0392b;color:#fff;text-align:center;padding:10px 16px;font-weight:700;font-size:0.9rem;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<div id="ecranPartageBanniereArtisan" style="display:none;position:fixed;top:0;left:0;right:0;z-index:10001;background:#c0392b;color:#fff;text-align:center;padding:10px 16px;font-weight:700;font-size:0.9rem;font-family:Manrope, system-ui, sans-serif;">
   🔴 Votre écran est partagé avec Cyrille en direct
   <button type="button" id="btnEcranPartageArreter" style="margin-left:12px;background:rgba(255,255,255,0.25);color:#fff;border:none;padding:4px 12px;border-radius:8px;font-weight:700;font-size:0.78rem;cursor:pointer;">Arrêter le partage</button>
 </div>
 
-<div id="ecranPartageVideoWrap" style="display:none;position:fixed;bottom:16px;right:16px;z-index:10001;background:#211a35;border-radius:14px;padding:10px;box-shadow:0 10px 40px rgba(0,0,0,0.35);">
+<div id="ecranPartageVideoWrap" style="display:none;position:fixed;bottom:16px;right:16px;z-index:10001;background:#1E2328;border-radius:14px;padding:10px;box-shadow:0 10px 40px rgba(0,0,0,0.35);">
   <video id="ecranPartageVideo" autoplay playsinline style="max-width:46vw;max-height:60vh;border-radius:8px;display:block;"></video>
 </div>
 
-<div class="leaf-bg" style="top:-120px; right:-120px; width:420px; height:420px; border-radius:50%; background:radial-gradient(circle, #c4b5fd, transparent 70%); filter:blur(40px); opacity:0.5;"></div>
-<div class="leaf-bg" style="bottom:-140px; left:-120px; width:460px; height:460px; border-radius:50%; background:radial-gradient(circle, #f9a8d4, transparent 70%); filter:blur(46px); opacity:0.35;"></div>
+<div class="leaf-bg" style="top:-120px; right:-120px; width:420px; height:420px; border-radius:50%; background:radial-gradient(circle, #8FB0D3, transparent 70%); filter:blur(40px); opacity:0.5;"></div>
+<div class="leaf-bg" style="bottom:-140px; left:-120px; width:460px; height:460px; border-radius:50%; background:radial-gradient(circle, #F6A26B, transparent 70%); filter:blur(46px); opacity:0.35;"></div>
 
 <div class="wrap dash-shell">
   <aside class="dash-sidebar">
@@ -520,36 +522,36 @@
       <h1>Mon tableau de bord</h1>
     </div>
     <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-      <select id="selecteurSite" style="display:none; border:1.5px solid #7c3aed; border-radius:10px; padding:9px 12px; font-weight:700; font-size:0.85rem; color:#211a35; background:#fff; cursor:pointer;"></select>
-      <button type="button" id="btnAjouterVitrine" title="Chaque vitrine est un site et un forfait séparés, facturés indépendamment" style="display:none; background:#fff; color:#7c3aed; border:1.5px dashed #7c3aed; border-radius:10px; padding:9px 14px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap;">+ Nouvelle vitrine</button>
+      <select id="selecteurSite" style="display:none; border:1.5px solid #163A63; border-radius:10px; padding:9px 12px; font-weight:700; font-size:0.85rem; color:#1E2328; background:#fff; cursor:pointer;"></select>
+      <button type="button" id="btnAjouterVitrine" title="Chaque vitrine est un site et un forfait séparés, facturés indépendamment" style="display:none; background:#fff; color:#163A63; border:1.5px dashed #163A63; border-radius:10px; padding:9px 14px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap;">+ Nouvelle vitrine</button>
       <button type="button" id="btnVoirArchives" style="display:none; background:none; border:none; color:#8a9891; font-size:0.78rem; font-weight:700; cursor:pointer; text-decoration:underline; padding:0 4px; white-space:nowrap;">📦 Vitrines archivées</button>
-      <button type="button" class="btn-elements" id="btnMesRdv" style="background:#fff; color:#7c3aed; border:1.5px solid #7c3aed;">📅 Mes rendez-vous</button>
-      <a class="btn-elements" id="btnMesDevis" href="#" style="background:#fff; color:#7c3aed; border:1.5px solid #7c3aed;">📄 Devis &amp; factures</a>
+      <button type="button" class="btn-elements" id="btnMesRdv" style="background:#fff; color:#163A63; border:1.5px solid #163A63;">📅 Mes rendez-vous</button>
+      <a class="btn-elements" id="btnMesDevis" href="#" style="background:#fff; color:#163A63; border:1.5px solid #163A63;">📄 Devis &amp; factures</a>
       <a class="btn-elements" id="btnElements" href="#">✏️ Modifier mes éléments</a>
-      <button type="button" id="btnInstallerTelephone" style="background:#fff; color:#7c3aed; border:1.5px solid #7c3aed;" class="btn-elements">📲 Installer sur mon téléphone</button>
+      <button type="button" id="btnInstallerTelephone" style="background:#fff; color:#163A63; border:1.5px solid #163A63;" class="btn-elements">📲 Installer sur mon téléphone</button>
       <a class="btn-elements" id="btnMettreEnLigneAccueil" href="#" style="background:#e8622c; display:none;">🚀 Mettre en ligne</a>
     </div>
   </div>
 
-  <div id="vitrinesArchiveesPanel" style="display:none; margin-bottom:22px; background:#f5f3ff; border:1.5px solid #ddd6fe; border-radius:14px; padding:16px 18px;">
-    <div style="font-weight:800; font-size:0.85rem; color:#211a35; margin-bottom:10px;">Vitrines archivées</div>
+  <div id="vitrinesArchiveesPanel" style="display:none; margin-bottom:22px; background:#EEF3F8; border:1.5px solid #C9D8E8; border-radius:14px; padding:16px 18px;">
+    <div style="font-weight:800; font-size:0.85rem; color:#1E2328; margin-bottom:10px;">Vitrines archivées</div>
     <div id="vitrinesArchiveesContenu"><div class="loading">Chargement…</div></div>
   </div>
 
-  <div id="banniereePause" style="display:none; background:#fdf2f8; border:1.5px solid #ec4899; border-radius:14px; padding:16px 20px; margin-bottom:20px; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
+  <div id="banniereePause" style="display:none; background:#FFF6EF; border:1.5px solid #E8590C; border-radius:14px; padding:16px 20px; margin-bottom:20px; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
     <div>
-      <strong style="color:#ec4899;">⏸️ Votre abonnement est en pause</strong>
+      <strong style="color:#E8590C;">⏸️ Votre abonnement est en pause</strong>
       <p style="font-size:0.85rem; color:#5b6b64; margin-top:4px;">Votre site n'est pas visible par vos prospects tant que la pause dure.</p>
     </div>
-    <button id="btnReprendreMaintenant" style="background:#ec4899; color:#fff; border:none; border-radius:10px; padding:10px 18px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap;">Reprendre maintenant</button>
+    <button id="btnReprendreMaintenant" style="background:#E8590C; color:#fff; border:none; border-radius:10px; padding:10px 18px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap;">Reprendre maintenant</button>
   </div>
 
-  <div id="banniereMettreEnLigne" style="display:none; background:#f5f3ff; border:1.5px solid #7c3aed; border-radius:14px; padding:16px 20px; margin-bottom:20px; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
+  <div id="banniereMettreEnLigne" style="display:none; background:#EEF3F8; border:1.5px solid #163A63; border-radius:14px; padding:16px 20px; margin-bottom:20px; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
     <div>
-      <strong style="color:#7c3aed;">🚀 Votre site n'est pas encore en ligne</strong>
+      <strong style="color:#163A63;">🚀 Votre site n'est pas encore en ligne</strong>
       <p style="font-size:0.85rem; color:#5b6b64; margin-top:4px;">Une fois vos mots-clés et votre annonce prêts, mettez votre vitrine en ligne pour commencer à recevoir des demandes.</p>
     </div>
-    <a id="btnMettreEnLigne" href="#" style="background:#7c3aed; color:#fff; border:none; border-radius:10px; padding:10px 18px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap; text-decoration:none; display:inline-block;">Mettre en ligne</a>
+    <a id="btnMettreEnLigne" href="#" style="background:#163A63; color:#fff; border:none; border-radius:10px; padding:10px 18px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap; text-decoration:none; display:inline-block;">Mettre en ligne</a>
   </div>
 
   <!-- Écran de choix "3 options" (14/09/2026) — présenté dès l'arrivée sur le
@@ -561,24 +563,24 @@
        Masqué dès que "entreprise" est renseignée (construire-ma-vitrine.html déjà fait),
        pour ne pas revenir dessus à chaque visite. -->
   <style>
-    .cvd-box { background:#fff; border:1.5px solid #7c3aed; border-radius:16px; padding:22px 24px; margin-bottom:22px; }
-    .cvd-titre { font-size:1.05rem; font-weight:800; color:#211a35; margin-bottom:4px; }
-    .cvd-sous { font-size:0.85rem; color:#8a8296; margin-bottom:16px; line-height:1.5; }
+    .cvd-box { background:#fff; border:1.5px solid #163A63; border-radius:16px; padding:22px 24px; margin-bottom:22px; }
+    .cvd-titre { font-size:1.05rem; font-weight:800; color:#1E2328; margin-bottom:4px; }
+    .cvd-sous { font-size:0.85rem; color:#6B7480; margin-bottom:16px; line-height:1.5; }
     .cvd-options { display:grid; gap:12px; }
-    .cvd-option { display:flex; align-items:flex-start; gap:12px; border:1.5px solid #ddd6fe; border-radius:14px; padding:14px 16px; cursor:pointer; transition:border-color .15s ease, background .15s ease; }
-    .cvd-option:hover { border-color:#7c3aed; }
-    .cvd-option.selected { border-color:#7c3aed; background:#f5f3ff; }
-    .cvd-option input[type="radio"] { margin-top:3px; width:18px; height:18px; accent-color:#7c3aed; flex-shrink:0; cursor:pointer; }
-    .cvd-option-titre { font-size:0.92rem; font-weight:700; color:#211a35; display:flex; align-items:center; gap:6px; }
-    .cvd-option-badge { font-size:0.66rem; font-weight:800; text-transform:uppercase; letter-spacing:0.03em; background:#f5f3ff; color:#7c3aed; padding:2px 8px; border-radius:999px; }
-    .cvd-option-desc { font-size:0.82rem; color:#8a8296; line-height:1.5; margin-top:3px; }
-    .cvd-detail { margin-top:12px; padding-top:12px; border-top:1px dashed #ddd6fe; }
-    .cvd-detail input[type="text"], .cvd-detail textarea { width:100%; font-size:0.9rem; padding:10px 12px; border:1.5px solid #ddd6fe; border-radius:10px; font-family:inherit; color:#211a35; }
+    .cvd-option { display:flex; align-items:flex-start; gap:12px; border:1.5px solid #C9D8E8; border-radius:14px; padding:14px 16px; cursor:pointer; transition:border-color .15s ease, background .15s ease; }
+    .cvd-option:hover { border-color:#163A63; }
+    .cvd-option.selected { border-color:#163A63; background:#EEF3F8; }
+    .cvd-option input[type="radio"] { margin-top:3px; width:18px; height:18px; accent-color:#163A63; flex-shrink:0; cursor:pointer; }
+    .cvd-option-titre { font-size:0.92rem; font-weight:700; color:#1E2328; display:flex; align-items:center; gap:6px; }
+    .cvd-option-badge { font-size:0.66rem; font-weight:800; text-transform:uppercase; letter-spacing:0.03em; background:#EEF3F8; color:#163A63; padding:2px 8px; border-radius:999px; }
+    .cvd-option-desc { font-size:0.82rem; color:#6B7480; line-height:1.5; margin-top:3px; }
+    .cvd-detail { margin-top:12px; padding-top:12px; border-top:1px dashed #C9D8E8; }
+    .cvd-detail input[type="text"], .cvd-detail textarea { width:100%; font-size:0.9rem; padding:10px 12px; border:1.5px solid #C9D8E8; border-radius:10px; font-family:inherit; color:#1E2328; }
     .cvd-detail textarea { resize:vertical; min-height:60px; }
-    .cvd-detail input[type="text"]:focus, .cvd-detail textarea:focus { outline:none; border-color:#7c3aed; }
-    .cvd-detail .cvd-btn { margin-top:10px; background:#7c3aed; color:#fff; border:none; border-radius:10px; padding:9px 16px; font-size:0.84rem; font-weight:700; cursor:pointer; }
+    .cvd-detail input[type="text"]:focus, .cvd-detail textarea:focus { outline:none; border-color:#163A63; }
+    .cvd-detail .cvd-btn { margin-top:10px; background:#163A63; color:#fff; border:none; border-radius:10px; padding:9px 16px; font-size:0.84rem; font-weight:700; cursor:pointer; }
     .cvd-detail .cvd-btn:disabled { opacity:.55; cursor:wait; }
-    .cvd-note { font-size:0.78rem; color:#8a8296; margin-top:8px; line-height:1.5; }
+    .cvd-note { font-size:0.78rem; color:#6B7480; margin-top:8px; line-height:1.5; }
     .cvd-statut { font-size:0.8rem; font-weight:700; margin-top:8px; }
     .cvd-statut.ok { color:#1e6f4c; }
     .cvd-statut.err { color:#c0392b; }
@@ -649,11 +651,11 @@
 
     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:12px; margin:18px 0 24px;">
       <div style="background:#f8f9fa; border:1px solid #e8eaed; border-radius:12px; padding:16px;">
-        <div style="font-size:1.6rem; font-weight:800; color:#211a35;" id="metricClics">—</div>
+        <div style="font-size:1.6rem; font-weight:800; color:#1E2328;" id="metricClics">—</div>
         <div style="font-size:0.78rem; color:#5f6368;">Clics ce mois-ci</div>
       </div>
       <div style="background:#f8f9fa; border:1px solid #e8eaed; border-radius:12px; padding:16px;">
-        <div style="font-size:1.6rem; font-weight:800; color:#211a35;" id="metricCout">—</div>
+        <div style="font-size:1.6rem; font-weight:800; color:#1E2328;" id="metricCout">—</div>
         <div style="font-size:0.78rem; color:#5f6368;">Consommé sur votre solde</div>
       </div>
       <div style="background:#f8f9fa; border:1px solid #e8eaed; border-radius:12px; padding:16px;">
@@ -661,7 +663,7 @@
         <div style="font-size:0.78rem; color:#5f6368;">Conversions (demandes reçues)</div>
       </div>
     </div>
-    <a href="#" id="btnApprovisionnerRapide" style="display:inline-flex; align-items:center; gap:8px; background:#7c3aed; color:#fff; text-decoration:none; border-radius:10px; padding:11px 18px; font-size:0.85rem; font-weight:700; margin-bottom:24px;">💳 Approvisionner mon budget</a>
+    <a href="#" id="btnApprovisionnerRapide" style="display:inline-flex; align-items:center; gap:8px; background:#163A63; color:#fff; text-decoration:none; border-radius:10px; padding:11px 18px; font-size:0.85rem; font-weight:700; margin-bottom:24px;">💳 Approvisionner mon budget</a>
 
     <div class="ads-souspanel" id="sectionZoneCiblee">
       <h3>Où voulez-vous être visible ?</h3>
@@ -737,7 +739,7 @@
         <div class="titre-annonce" id="previewTitre">—</div>
         <div class="desc-annonce" id="previewDesc">—</div>
       </div>
-      <button type="button" id="btnRegenererAnnonce" style="margin:12px 0 18px; background:#fff; color:#7c3aed; border:1.5px solid #7c3aed; border-radius:8px; padding:9px 14px; font-size:0.82rem; font-weight:700; cursor:pointer;">🔄 Régénérer depuis mes mots-clés</button>
+      <button type="button" id="btnRegenererAnnonce" style="margin:12px 0 18px; background:#fff; color:#163A63; border:1.5px solid #163A63; border-radius:8px; padding:9px 14px; font-size:0.82rem; font-weight:700; cursor:pointer;">🔄 Régénérer depuis mes mots-clés</button>
       <div class="annonce-champ">
         <label>Titre 1 <span class="compteur" id="cptTitre1">0/30</span></label>
         <input type="text" id="annonceTitre1" maxlength="30">
@@ -759,7 +761,7 @@
         <textarea id="annonceDesc2" maxlength="90"></textarea>
       </div>
       <div class="annonce-sauvegarde-note" id="annonceSauvegardeNote"></div>
-      <button type="button" id="btnAppliquerAnnonceAds" style="display:none; margin-top:6px; background:#7c3aed; color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:0.85rem; font-weight:700; cursor:pointer;">🚀 Appliquer ce texte dans Google Ads</button>
+      <button type="button" id="btnAppliquerAnnonceAds" style="display:none; margin-top:6px; background:#163A63; color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:0.85rem; font-weight:700; cursor:pointer;">🚀 Appliquer ce texte dans Google Ads</button>
       <div class="annonce-hint" id="annonceAppliquerHint" style="display:none; margin-top:8px; margin-bottom:0;">Ces textes sont enregistrés ici, mais votre annonce déjà en ligne dans Google Ads garde son texte actuel tant que vous ne cliquez pas sur ce bouton.</div>
       <div class="annonce-sauvegarde-note" id="annonceAppliqueeNote"></div>
     </div>
@@ -805,7 +807,7 @@
       <div class="heures-labels" id="heuresLabels"></div>
       <div class="heures-note" id="heuresNote"></div>
       <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;">
-        <button type="button" id="btnHorairesPointe" style="background:#7c3aed; color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:0.82rem; font-weight:700; cursor:pointer;">🕐 Limiter la diffusion aux heures de pointe</button>
+        <button type="button" id="btnHorairesPointe" style="background:#163A63; color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:0.82rem; font-weight:700; cursor:pointer;">🕐 Limiter la diffusion aux heures de pointe</button>
         <button type="button" id="btnHorairesToute" style="background:#fff; color:#5b6b64; border:1.5px solid #d8e3de; border-radius:8px; padding:10px 16px; font-size:0.82rem; font-weight:700; cursor:pointer;">Revenir à une diffusion 24h/24</button>
       </div>
       <div id="horairesNote" style="font-size:0.78rem; color:#8a9891; margin-top:8px;"></div>
@@ -827,9 +829,9 @@
         <svg class="coaching-logo" width="40" height="40" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <defs>
             <linearGradient id="coachBg" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stop-color="#f9a8d4"/>
-              <stop offset="55%" stop-color="#ec4899"/>
-              <stop offset="100%" stop-color="#be185d"/>
+              <stop offset="0%" stop-color="#F6A26B"/>
+              <stop offset="55%" stop-color="#E8590C"/>
+              <stop offset="100%" stop-color="#B8440A"/>
             </linearGradient>
             <linearGradient id="coachVisor" x1="0" y1="0" x2="1" y2="1">
               <stop offset="0%" stop-color="#1c3d5a"/>
@@ -850,10 +852,10 @@
           <circle cx="52" cy="59" r="4.4" fill="#f9f5ee"/>
           <circle cx="68" cy="59" r="4.4" fill="#f9f5ee"/>
           <path d="M46 74 q14 12 28 0" fill="none" stroke="#14304a" stroke-width="4.5" stroke-linecap="round"/>
-          <circle cx="40" cy="70" r="4" fill="#ec4899" opacity="0.35"/>
-          <circle cx="80" cy="70" r="4" fill="#ec4899" opacity="0.35"/>
-          <circle cx="92" cy="90" r="16" fill="#f9f5ee" stroke="#be185d" stroke-width="2.5"/>
-          <path d="M88 96 v-9 c0-1.6 1.3-2.4 2.4-2.4 c0.5-2.6 1-4.6 1-6 c0-1.7 1.2-2.6 2.3-2.2 c1 .4 1.5 1.6 1.3 2.8 l-0.7 3.4 h4.6 c1.3 0 2.3 1.1 2 2.4 l-1.4 7.4 c-0.3 1.5-1.6 2.6-3.1 2.6 h-6.4 c-1.1 0-2-.9-2-2 Z" fill="#ec4899"/>
+          <circle cx="40" cy="70" r="4" fill="#E8590C" opacity="0.35"/>
+          <circle cx="80" cy="70" r="4" fill="#E8590C" opacity="0.35"/>
+          <circle cx="92" cy="90" r="16" fill="#f9f5ee" stroke="#B8440A" stroke-width="2.5"/>
+          <path d="M88 96 v-9 c0-1.6 1.3-2.4 2.4-2.4 c0.5-2.6 1-4.6 1-6 c0-1.7 1.2-2.6 2.3-2.2 c1 .4 1.5 1.6 1.3 2.8 l-0.7 3.4 h4.6 c1.3 0 2.3 1.1 2 2.4 l-1.4 7.4 c-0.3 1.5-1.6 2.6-3.1 2.6 h-6.4 c-1.1 0-2-.9-2-2 Z" fill="#E8590C"/>
         </svg>
         <h3>Coach IA Ads</h3>
         <button type="button" id="btnToggleCoach" class="btn-toggle-coach">⏸️ Mettre en pause</button>
@@ -889,7 +891,7 @@
         <button class="btn-pdf" id="btnExportPdf">📄 Exporter en PDF</button>
       </div>
     </div>
-    <div id="clientsArchivesPanel" style="display:none; margin-bottom:18px; background:#f5f3ff; border:1.5px solid #ddd6fe; border-radius:14px; padding:16px 18px;">
+    <div id="clientsArchivesPanel" style="display:none; margin-bottom:18px; background:#EEF3F8; border:1.5px solid #C9D8E8; border-radius:14px; padding:16px 18px;">
       <div style="font-size:0.82rem; font-weight:700; color:#3a4a43; margin-bottom:10px;">Clients archivés</div>
       <div id="clientsArchivesContenu"><div class="loading">Chargement…</div></div>
     </div>
@@ -938,7 +940,7 @@
       <h3 class="calendrier-titre">Mon calendrier</h3>
       <div class="calendrier-legende">
         <span class="legende-item"><span class="pastille" style="background:#fff;border:1.5px solid #eef1f0"></span>Libre</span>
-        <span class="legende-item"><span class="pastille" style="background:#eaf5ef;border:1.5px solid #7c3aed"></span>RDV confirmé</span>
+        <span class="legende-item"><span class="pastille" style="background:#eaf5ef;border:1.5px solid #163A63"></span>RDV confirmé</span>
         <span class="legende-item"><span class="pastille" style="background:#f2f4f1;border:1.5px solid #c7cdc9"></span>Bloqué par vous</span>
       </div>
     </div>
@@ -953,10 +955,10 @@
         <h3 class="calendrier-titre">Appel vidéo avec Cyrille</h3>
       </div>
       <p class="calendrier-note">Un souci sur votre campagne ou votre vitrine ? Demandez un rendez-vous en visio — Cyrille valide le créneau puis vous appelle directement au moment convenu.</p>
-      <button type="button" id="btnDemanderAppelVideo" class="btn-action" style="background:#ec4899;color:#fff;border:none;padding:12px 20px;border-radius:10px;font-weight:700;cursor:pointer;">📅 Demander un appel vidéo</button>
-      <div id="appelVideoBanniere" style="display:none;margin-top:18px;padding:16px 18px;border-radius:12px;background:#fdeceb;border:1.5px solid #ec4899;">
+      <button type="button" id="btnDemanderAppelVideo" class="btn-action" style="background:#E8590C;color:#fff;border:none;padding:12px 20px;border-radius:10px;font-weight:700;cursor:pointer;">📅 Demander un appel vidéo</button>
+      <div id="appelVideoBanniere" style="display:none;margin-top:18px;padding:16px 18px;border-radius:12px;background:#fdeceb;border:1.5px solid #E8590C;">
         <div style="font-weight:800;color:#c0392b;margin-bottom:6px;">🔴 Cyrille vous appelle maintenant</div>
-        <a id="lienRejoindreAppel" href="#" target="_blank" rel="noopener" style="display:inline-block;margin-top:4px;background:#7c3aed;color:#fff;padding:10px 18px;border-radius:9px;font-weight:700;text-decoration:none;">Rejoindre l'appel</a>
+        <a id="lienRejoindreAppel" href="#" target="_blank" rel="noopener" style="display:inline-block;margin-top:4px;background:#163A63;color:#fff;padding:10px 18px;border-radius:9px;font-weight:700;text-decoration:none;">Rejoindre l'appel</a>
       </div>
     </div>
   </div>
@@ -967,7 +969,7 @@
         <h3 class="calendrier-titre">🧮 Estimateur BTP</h3>
       </div>
       <p class="calendrier-note">Vous avez déjà accès à l'Estimateur BTP — retrouvez-le ici pour chiffrer un devis chantier en 30 secondes, sur place, avec votre catalogue de prix préintégré.</p>
-      <button type="button" id="btnOuvrirEstimateur" class="btn-action" style="background:#7c3aed;color:#fff;border:none;padding:12px 20px;border-radius:10px;font-weight:700;cursor:pointer;">🧮 Ouvrir l'Estimateur BTP</button>
+      <button type="button" id="btnOuvrirEstimateur" class="btn-action" style="background:#163A63;color:#fff;border:none;padding:12px 20px;border-radius:10px;font-weight:700;cursor:pointer;">🧮 Ouvrir l'Estimateur BTP</button>
     </div>
   </div>
   </div><!-- /dash-main -->
@@ -1280,14 +1282,14 @@
         const estActuelle = s.id === draftId;
         const diffusionPausee = s.status === 'en_pause' || s.pausee;
         const diffusionLabel = diffusionPausee ? '⏸️ Diffusion en pause' : '● Diffusion active';
-        const diffusionCouleur = diffusionPausee ? '#ec4899' : '#7c3aed';
+        const diffusionCouleur = diffusionPausee ? '#E8590C' : '#163A63';
         const estEssai = s.status === 'essai';
         const supprimable = !s.tarif_actif && !s.google_ads_campaign_resource;
         return `
-          <div style="min-width:180px; flex:1; max-width:260px; background:#fff; border:1.5px solid ${estActuelle ? '#7c3aed' : '#e4e9e6'}; border-radius:14px; padding:14px 16px; box-shadow:${estActuelle ? '0 4px 14px rgba(30,111,76,0.14)' : 'none'};">
+          <div style="min-width:180px; flex:1; max-width:260px; background:#fff; border:1.5px solid ${estActuelle ? '#163A63' : '#e4e9e6'}; border-radius:14px; padding:14px 16px; box-shadow:${estActuelle ? '0 4px 14px rgba(30,111,76,0.14)' : 'none'};">
             <a href="/mon-dashboard.html?id=${s.id}" style="text-decoration:none; display:block;">
-              <div style="font-weight:800; color:#211a35; font-size:0.92rem; margin-bottom:6px;">${s.entreprise || 'Vitrine sans nom'}</div>
-              <div style="font-size:1.4rem; font-weight:800; color:#211a35;">${s.clics === null ? '—' : s.clics}<span style="font-size:0.75rem; font-weight:600; color:#5b6b64;"> clics ce mois-ci</span></div>
+              <div style="font-weight:800; color:#1E2328; font-size:0.92rem; margin-bottom:6px;">${s.entreprise || 'Vitrine sans nom'}</div>
+              <div style="font-size:1.4rem; font-weight:800; color:#1E2328;">${s.clics === null ? '—' : s.clics}<span style="font-size:0.75rem; font-weight:600; color:#5b6b64;"> clics ce mois-ci</span></div>
               <div style="font-size:0.78rem; font-weight:700; color:${diffusionCouleur}; margin-top:6px;">${diffusionLabel}</div>
               ${estEssai ? `<div style="font-size:0.72rem; font-weight:600; color:#5b6b64; margin-top:2px;">🎁 Essai gratuit</div>` : ''}
             </a>
@@ -1397,7 +1399,7 @@
       contenu.innerHTML = archivees.map(s => `
         <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px solid #e4e9e6;">
           <span style="font-size:0.85rem; font-weight:700; color:#3a4a43;">${s.entreprise || 'Vitrine sans nom'}</span>
-          <button type="button" class="btn-tuile-action" data-id="${s.id}" onclick="desarchiverVitrine(this)" style="background:#f5f3ff; border:1px solid #7c3aed; color:#7c3aed; border-radius:8px; padding:5px 10px; font-size:0.75rem; font-weight:700; cursor:pointer;">↩️ Désarchiver</button>
+          <button type="button" class="btn-tuile-action" data-id="${s.id}" onclick="desarchiverVitrine(this)" style="background:#EEF3F8; border:1px solid #163A63; color:#163A63; border-radius:8px; padding:5px 10px; font-size:0.75rem; font-weight:700; cursor:pointer;">↩️ Désarchiver</button>
         </div>
       `).join('');
     } catch (e) {
@@ -1524,7 +1526,7 @@
       const pillClass = { planifie: 'planned', brouillon: 'draft', echec: 'failed', erreur: 'failed', publie: 'done' };
 
       content.innerHTML = `
-        <div class="rs-status" style="margin-bottom:20px; padding-bottom:18px; border-bottom:1.5px solid #eef1f0; background:#faf8ff; border-radius:12px; padding:16px;">
+        <div class="rs-status" style="margin-bottom:20px; padding-bottom:18px; border-bottom:1.5px solid #eef1f0; background:#F7F9FB; border-radius:12px; padding:16px;">
           <span class="rs-status-dot ${agentActif ? '' : 'off'}"></span>
           <div class="rs-status-text">
             <strong>${agentActif ? '🤖 Agent IA actif' : '⏸️ Agent IA en pause'}</strong>
@@ -1541,7 +1543,7 @@
             <strong>${connexion && connexion.facebook_page_id ? `Facebook connecté — ${escapeHtmlDash(connexion.facebook_page_name || '')}` : 'Facebook + Instagram non connectés'}</strong>
             ${connexion && connexion.facebook_page_id
               ? (connexion.ig_username ? `Instagram @${escapeHtmlDash(connexion.ig_username)} connecté aussi (même autorisation).` : "Page Facebook connectée — aucun compte Instagram professionnel relié à cette Page n'a été trouvé.")
-              : 'Une seule connexion pour les deux réseaux à la fois (votre compte Instagram doit être relié à votre Page Facebook). <a href="#" id="lienCreerPageFacebook" style="color:#7c3aed;font-weight:700;">Pas encore de Page ?</a>'}
+              : 'Une seule connexion pour les deux réseaux à la fois (votre compte Instagram doit être relié à votre Page Facebook). <a href="#" id="lienCreerPageFacebook" style="color:#163A63;font-weight:700;">Pas encore de Page ?</a>'}
           </div>
           <button type="button" class="rs-btn ${connexion && connexion.facebook_page_id ? 'secondary' : ''}" id="btnConnecterFacebook">${connexion && connexion.facebook_page_id ? 'Gérer la connexion' : 'Connecter Facebook + Instagram'}</button>
         </div>
@@ -1663,18 +1665,18 @@
     const statutSocial = params.get('social');
     if (!statutSocial) return;
     const messages = {
-      fb_succes: { texte: '✓ Facebook (et Instagram si relié) connecté avec succès.', couleur: '#7c3aed' },
+      fb_succes: { texte: '✓ Facebook (et Instagram si relié) connecté avec succès.', couleur: '#163A63' },
       fb_refuse: { texte: "Connexion Facebook annulée — vous n'avez pas autorisé l'accès.", couleur: '#8a9891' },
       fb_sans_page: { texte: "Aucune Page Facebook trouvée sur ce compte. Créez d'abord votre Page professionnelle Facebook, puis réessayez.", couleur: '#c0392b' },
       fb_erreur: { texte: 'Une erreur est survenue pendant la connexion à Facebook — réessayez.', couleur: '#c0392b' },
-      tiktok_succes: { texte: '✓ TikTok connecté avec succès.', couleur: '#7c3aed' },
+      tiktok_succes: { texte: '✓ TikTok connecté avec succès.', couleur: '#163A63' },
       tiktok_refuse: { texte: "Connexion TikTok annulée — vous n'avez pas autorisé l'accès.", couleur: '#8a9891' },
       tiktok_erreur: { texte: 'Une erreur est survenue pendant la connexion à TikTok — réessayez.', couleur: '#c0392b' },
-      gbp_succes: { texte: '✓ Fiche Google Business Profile connectée avec succès.', couleur: '#7c3aed' },
+      gbp_succes: { texte: '✓ Fiche Google Business Profile connectée avec succès.', couleur: '#163A63' },
       gbp_refuse: { texte: "Connexion Google annulée — vous n'avez pas autorisé l'accès.", couleur: '#8a9891' },
       gbp_sans_fiche: { texte: "Aucune fiche Google Business Profile trouvée sur ce compte Google. Créez d'abord votre fiche sur google.com/business, puis réessayez.", couleur: '#c0392b' },
       gbp_erreur: { texte: 'Une erreur est survenue pendant la connexion à Google Business Profile — réessayez.', couleur: '#c0392b' },
-      pinterest_succes: { texte: '✓ Pinterest connecté avec succès.', couleur: '#7c3aed' },
+      pinterest_succes: { texte: '✓ Pinterest connecté avec succès.', couleur: '#163A63' },
       pinterest_refuse: { texte: "Connexion Pinterest annulée — vous n'avez pas autorisé l'accès.", couleur: '#8a9891' },
       pinterest_erreur: { texte: 'Une erreur est survenue pendant la connexion à Pinterest — réessayez.', couleur: '#c0392b' },
     };
@@ -1840,7 +1842,7 @@
     let offreDejaTraitee = false;
 
     const badge = document.createElement('div');
-    badge.style.cssText = 'position:fixed;top:10px;right:10px;z-index:10001;background:#211a35;color:#fff;padding:9px 14px;border-radius:10px;font-weight:700;font-size:0.82rem;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,0.2);';
+    badge.style.cssText = 'position:fixed;top:10px;right:10px;z-index:10001;background:#1E2328;color:#fff;padding:9px 14px;border-radius:10px;font-weight:700;font-size:0.82rem;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,0.2);';
     badge.textContent = "🕓 En attente de l'autorisation de l'artisan…";
     document.body.appendChild(badge);
 
@@ -1875,20 +1877,20 @@
         if (data.statut !== statutConnu) {
           statutConnu = data.statut;
           if (data.statut === 'refuse') { badge.textContent = "🚫 L'artisan a refusé le partage d'écran"; badge.style.background = '#c0392b'; nettoyer(); }
-          else if (data.statut === 'demande') { badge.textContent = "🕓 En attente de l'autorisation de l'artisan…"; badge.style.background = '#211a35'; }
+          else if (data.statut === 'demande') { badge.textContent = "🕓 En attente de l'autorisation de l'artisan…"; badge.style.background = '#1E2328'; }
           else if (data.statut === 'termine') { badge.textContent = 'Partage terminé'; badge.style.background = '#6b7a72'; nettoyer(); offreDejaTraitee = false; }
         }
 
         if (data.statut === 'offre_prete' && data.offreSdp && !offreDejaTraitee) {
           offreDejaTraitee = true;
           badge.textContent = '🟡 Connexion en cours…';
-          badge.style.background = '#ec4899';
+          badge.style.background = '#E8590C';
           pc = new RTCPeerConnection(RTC_CONFIG);
           pc.ontrack = (e) => {
             videoEl.srcObject = e.streams[0];
             videoWrap.style.display = '';
             badge.textContent = '🟢 Vous voyez son écran en direct';
-            badge.style.background = '#7c3aed';
+            badge.style.background = '#163A63';
           };
           pc.onconnectionstatechange = () => {
             if (['disconnected', 'failed', 'closed'].includes(pc.connectionState)) nettoyer();
@@ -2097,7 +2099,7 @@
           if (!dejaDemarre) {
             const btnDemarrer = document.createElement('span');
             btnDemarrer.textContent = '🎥 Démarrer l\'appel';
-            btnDemarrer.style.cssText = 'display:block;margin-top:6px;background:#7c3aed;color:#fff;padding:6px 10px;border-radius:7px;font-weight:700;font-size:0.78rem;text-align:center;';
+            btnDemarrer.style.cssText = 'display:block;margin-top:6px;background:#163A63;color:#fff;padding:6px 10px;border-radius:7px;font-weight:700;font-size:0.78rem;text-align:center;';
             btnDemarrer.addEventListener('click', (ev) => { ev.stopPropagation(); demarrerAppelVideoDepuisCalendrier(c.id, btnDemarrer); });
             btn.appendChild(btnDemarrer);
           } else if (c.appel_statut === 'en_cours') {
@@ -2322,7 +2324,7 @@
       if (statut === 'essai' && rows[0]?.essai_gratuit_fin) {
         const joursRestants = Math.max(0, Math.ceil((new Date(rows[0].essai_gratuit_fin) - Date.now()) / (24 * 60 * 60 * 1000)));
         const banniereEssai = document.createElement('div');
-        banniereEssai.style.cssText = 'background:#e8f5ee; color:#7c3aed; text-align:center; padding:10px; font-size:0.85rem; font-weight:600;';
+        banniereEssai.style.cssText = 'background:#e8f5ee; color:#163A63; text-align:center; padding:10px; font-size:0.85rem; font-weight:600;';
         banniereEssai.textContent = `🎁 Essai gratuit — ${joursRestants} jour${joursRestants > 1 ? 's' : ''} restant${joursRestants > 1 ? 's' : ''}`;
         document.body.prepend(banniereEssai);
       }
@@ -2558,8 +2560,8 @@
       const statutBadge = data.enAttenteVerification
         ? '<span class="statut-badge" style="background:#fff7ed; color:#c2660d;">🕐 Vérification en cours</span>'
         : (data.diffusionPausee
-          ? '<span class="statut-badge" style="background:#fdf2f8; color:#ec4899;">⏸️ En pause</span>'
-          : '<span class="statut-badge" style="background:#f5f3ff; color:#7c3aed;">🟢 Active</span>');
+          ? '<span class="statut-badge" style="background:#FFF6EF; color:#E8590C;">⏸️ En pause</span>'
+          : '<span class="statut-badge" style="background:#EEF3F8; color:#163A63;">🟢 Active</span>');
       box.innerHTML = `
         <h3>Solde publicitaire ${statutBadge}</h3>
         <div class="solde-bar-track"><div class="solde-bar-fill ${alerte}" style="width:${data.pourcentageConsomme}%"></div></div>
@@ -2736,7 +2738,7 @@
       <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px solid #e4e9e6;">
         <span style="font-size:0.85rem; font-weight:700; color:#3a4a43;">${escapeHtmlDash((l.prenom || '') + ' ' + (l.nom || '')) || 'Client sans nom'}</span>
         <span style="display:flex; gap:8px;">
-          <button type="button" class="btn-tuile-action" data-id="${l.id}" onclick="desarchiverLead(this)" style="background:#f5f3ff; border:1px solid #7c3aed; color:#7c3aed; border-radius:8px; padding:5px 10px; font-size:0.75rem; font-weight:700; cursor:pointer;">↩️ Désarchiver</button>
+          <button type="button" class="btn-tuile-action" data-id="${l.id}" onclick="desarchiverLead(this)" style="background:#EEF3F8; border:1px solid #163A63; color:#163A63; border-radius:8px; padding:5px 10px; font-size:0.75rem; font-weight:700; cursor:pointer;">↩️ Désarchiver</button>
           <button type="button" class="btn-tuile-action" data-id="${l.id}" onclick="supprimerLeadDefinitif(this)" style="background:none; border:1px solid #e3b3a8; color:#c0392b; border-radius:8px; padding:5px 10px; font-size:0.75rem; font-weight:700; cursor:pointer;">🗑️ Supprimer</button>
         </span>
       </div>
@@ -2895,7 +2897,7 @@
     };
     const lienVoir = l.devis_pdf_url ? `<a class="btn-devis voir" href="${l.devis_pdf_url}" target="_blank" rel="noopener">Voir</a>` : '';
     const suffixeToken = params.get('admin_token') ? '&admin_token=' + params.get('admin_token') : '';
-    const lienDevisNatif = `<a class="btn-devis" href="/mes-devis.html?id=${l.draft_id}&leadId=${l.id}${suffixeToken}" style="background:#7c3aed;">🧾 Devis</a>`;
+    const lienDevisNatif = `<a class="btn-devis" href="/mes-devis.html?id=${l.draft_id}&leadId=${l.id}${suffixeToken}" style="background:#163A63;">🧾 Devis</a>`;
 
     if (statut === 'aucun') {
       return `<div class="devis-actions">${lienDevisNatif}<button type="button" class="btn-devis envoyer" data-action="envoyer-devis" data-lead="${l.id}" data-site="${l.draft_id}">📄 Envoyer un devis</button></div>`;
@@ -4239,7 +4241,7 @@
       const data = await res.json();
       if (data.success) {
         feedback.textContent = `✓ "${texte}" ajouté — les nouvelles statistiques apparaîtront après les premiers clics.`;
-        feedback.style.color = '#7c3aed';
+        feedback.style.color = '#163A63';
         input.value = '';
       } else {
         feedback.textContent = data.error || "Erreur lors de l'ajout.";
@@ -4255,12 +4257,12 @@
   });
 </script>
 
-<div id="skyecoChatBubble" style="position:fixed; bottom:22px; right:22px; z-index:999; background:linear-gradient(135deg, #f9a8d4 0%, #ec4899 55%, #be185d 100%); color:#fff; display:flex; align-items:center; gap:9px; padding:14px 22px 14px 18px; border-radius:999px; font-size:15px; font-weight:700; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; cursor:pointer; box-shadow:0 8px 26px rgba(232,98,44,0.4); transition:transform 0.15s ease, box-shadow 0.15s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 32px rgba(232,98,44,0.5)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 8px 26px rgba(232,98,44,0.4)';">
+<div id="skyecoChatBubble" style="position:fixed; bottom:22px; right:22px; z-index:999; background:#E8590C; color:#fff; display:flex; align-items:center; gap:9px; padding:14px 22px 14px 18px; border-radius:999px; font-size:15px; font-weight:700; font-family:Manrope, system-ui, sans-serif; cursor:pointer; box-shadow:0 8px 26px rgba(232,98,44,0.4); transition:transform 0.15s ease, box-shadow 0.15s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 32px rgba(232,98,44,0.5)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 8px 26px rgba(232,98,44,0.4)';">
   <span style="font-size:19px; line-height:1;">💬</span><span>Besoin d'aide ?</span>
 </div>
 
-<div id="skyecoChatWindow" style="display:none; position:fixed; bottom:92px; right:22px; z-index:999; width:340px; max-width:calc(100vw - 32px); height:460px; max-height:70vh; background:#fff; border-radius:16px; box-shadow:0 10px 40px rgba(0,0,0,0.25); flex-direction:column; overflow:hidden; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-  <div style="background:#211a35; color:#fff; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
+<div id="skyecoChatWindow" style="display:none; position:fixed; bottom:92px; right:22px; z-index:999; width:340px; max-width:calc(100vw - 32px); height:460px; max-height:70vh; background:#fff; border-radius:16px; box-shadow:0 10px 40px rgba(0,0,0,0.25); flex-direction:column; overflow:hidden; font-family:Manrope, system-ui, sans-serif;">
+  <div style="background:#1E2328; color:#fff; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
     <div>
       <div style="font-weight:700; font-size:0.92rem;">Skyeco Pro</div>
       <div style="font-size:0.72rem; opacity:0.75;">Réponse en quelques secondes</div>
@@ -4275,8 +4277,8 @@
   <div id="skyecoChatMessages" style="flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:10px; background:#f7f5f0;"></div>
   <div style="padding:10px; border-top:1px solid #eef1ec; display:flex; gap:8px; background:#fff;">
     <input type="text" id="skyecoChatInput" placeholder="Pose ta question ou parle…" style="flex:1; border:1.5px solid #e0e5df; border-radius:10px; padding:9px 12px; font-size:0.86rem;">
-    <button id="skyecoChatMic" title="Parler au lieu d'écrire" style="background:#f2f4f1; color:#211a35; border:none; border-radius:10px; padding:9px 12px; font-weight:700; cursor:pointer; font-size:0.9rem;">🎤</button>
-    <button id="skyecoChatSend" style="background:#7c3aed; color:#fff; border:none; border-radius:10px; padding:9px 14px; font-weight:700; cursor:pointer; font-size:0.86rem;">→</button>
+    <button id="skyecoChatMic" title="Parler au lieu d'écrire" style="background:#f2f4f1; color:#1E2328; border:none; border-radius:10px; padding:9px 12px; font-weight:700; cursor:pointer; font-size:0.9rem;">🎤</button>
+    <button id="skyecoChatSend" style="background:#163A63; color:#fff; border:none; border-radius:10px; padding:9px 14px; font-weight:700; cursor:pointer; font-size:0.86rem;">→</button>
   </div>
 </div>
 
@@ -4297,8 +4299,8 @@
   function ajouterMessage(role, texte) {
     const bulle = document.createElement('div');
     bulle.style.cssText = role === 'user'
-      ? 'align-self:flex-end; background:#7c3aed; color:#fff; padding:9px 13px; border-radius:14px 14px 3px 14px; font-size:0.85rem; max-width:80%; line-height:1.45;'
-      : 'align-self:flex-start; background:#fff; color:#211a35; padding:9px 13px; border-radius:14px 14px 14px 3px; font-size:0.85rem; max-width:85%; line-height:1.45; box-shadow:0 1px 3px rgba(0,0,0,0.08);';
+      ? 'align-self:flex-end; background:#163A63; color:#fff; padding:9px 13px; border-radius:14px 14px 3px 14px; font-size:0.85rem; max-width:80%; line-height:1.45;'
+      : 'align-self:flex-start; background:#fff; color:#1E2328; padding:9px 13px; border-radius:14px 14px 14px 3px; font-size:0.85rem; max-width:85%; line-height:1.45; box-shadow:0 1px 3px rgba(0,0,0,0.08);';
     bulle.textContent = texte;
     messagesEl.appendChild(bulle);
     messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -4461,7 +4463,7 @@
     if (dejaInstalle) return;
 
     const banniere = document.createElement('div');
-    banniere.style.cssText = 'position:fixed; left:14px; right:14px; bottom:14px; z-index:10010; background:#211a35; color:#fff; border-radius:14px; padding:16px 18px; box-shadow:0 10px 30px rgba(0,0,0,0.35); font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width:420px; margin:0 auto;';
+    banniere.style.cssText = 'position:fixed; left:14px; right:14px; bottom:14px; z-index:10010; background:#1E2328; color:#fff; border-radius:14px; padding:16px 18px; box-shadow:0 10px 30px rgba(0,0,0,0.35); font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width:420px; margin:0 auto;';
     banniere.innerHTML = estIOS
       ? `<div style="font-weight:800; margin-bottom:6px;">📲 Installez Skyeco Pro sur votre téléphone</div>
          <div style="font-size:0.85rem; line-height:1.5; opacity:0.9; margin-bottom:10px;">Appuyez sur le bouton Partager <strong>⬆️</strong> en bas de l'écran, puis sur <strong>« Sur l'écran d'accueil »</strong>.</div>
@@ -4469,7 +4471,7 @@
       : `<div style="font-weight:800; margin-bottom:6px;">📲 Installez Skyeco Pro sur votre téléphone</div>
          <div style="font-size:0.85rem; line-height:1.5; opacity:0.9; margin-bottom:10px;">Un raccourci sur votre écran d'accueil, comme une vraie application.</div>
          <div style="display:flex; gap:10px;">
-           <button id="btnInstallBanniereAction" style="display:none; background:#7c3aed; color:#fff; border:none; border-radius:9px; padding:8px 14px; font-weight:700; cursor:pointer; font-size:0.82rem;">Installer maintenant</button>
+           <button id="btnInstallBanniereAction" style="display:none; background:#163A63; color:#fff; border:none; border-radius:9px; padding:8px 14px; font-weight:700; cursor:pointer; font-size:0.82rem;">Installer maintenant</button>
            <button id="btnFermerBanniereInstall" style="background:rgba(255,255,255,0.15); color:#fff; border:none; border-radius:9px; padding:8px 14px; font-weight:700; cursor:pointer; font-size:0.82rem;">Plus tard</button>
          </div>`;
     document.body.appendChild(banniere);

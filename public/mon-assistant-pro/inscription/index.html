@@ -9,7 +9,7 @@
 <style>
 :root{--navy:#14213D;--navy2:#1E3160;--yellow:#F5B700;--bg:#F4F6FA;--line:#E2E6EF;--text:#1A1F2E;--muted:#5D6678;--ok:#16A34A;--okbg:#DCFCE7;--warnbg:#FEF3C7;--warn:#92400E;--red:#DC2626}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;font-size:15px}
+body{font-family:Manrope,system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;font-size:15px}
 button,input,select,textarea{font:inherit}
 .top{background:var(--navy);color:#fff;position:sticky;top:0;z-index:5}
 .top .in{max-width:760px;margin:0 auto;padding:12px 18px;display:flex;align-items:center;gap:10px}
@@ -128,6 +128,8 @@ body.dash::before{content:"";position:fixed;inset:0;z-index:-1;background:var(--
 body.dash.sansfond::before{display:none}
 body.dash .card{background:rgba(255,255,255,.93);backdrop-filter:blur(3px)}
 </style>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>h1,h2,h3{font-family:Archivo,Manrope,system-ui,sans-serif}</style>
 </head>
 <body>
 <div class="top"><div class="in"><a class="logo" href="/mon-assistant-pro/" style="color:#fff;text-decoration:none"><span style="display:flex"><svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#F5B700"/><path d="M13 32v4M19 27v14M25 30v8" stroke="#14213D" stroke-width="4" stroke-linecap="round"/><path d="M31 33l7 7 14-17" fill="none" stroke="#14213D" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Mon Assistant Pro</a><div class="who" id="who"></div><button id="btnDeco" onclick="deconnexion(this)" style="display:none;margin-left:12px;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:6px 10px;font-weight:700;font-size:13px;cursor:pointer">⏻ Se déconnecter</button></div><div class="prog" id="prog"></div></div>
@@ -277,16 +279,16 @@ function invHTML(){const O=S.outils||{};
  const all=OUTILS.flatMap(g=>g[1]),oui=all.filter(x=>O[x[0]]==='oui'),non=all.filter(x=>O[x[0]]==='non'),rep=oui.length+non.length;
  const cnx=oui.map(x=>`<div class="conn" style="padding:6px 0"><div class="t"><b style="font-size:14px">${esc(x[1])}</b></div>${x[2]&&S.conn[x[2]]?'<span class="pill ok">Connecté ✓</span>':x[2]?`<button class="btn sm dark" onclick="connect('${x[2]}')">Connecter</button>`:'<small class="hint">noté</small>'}</div>`).join('');
  const cre=non.map(x=>`<div class="conn" style="padding:6px 0"><div class="t"><b style="font-size:14px">${esc(x[1])}</b><small>${x[3]?'Gratuit à créer : on vous guide pas à pas':'Pas indispensable : on fait sans'}</small></div>${x[3]?`<a class="btn sm light" href="${x[3]}" target="_blank" rel="noopener">Créer</a>`:''}</div>`).join('');
- return`<div class="card" id="invBox"><b>🧰 Ce que vous avez déjà</b><p class="hint">Cochez ce que vous utilisez. Je vous dis ensuite ce qu'on peut connecter tout de suite, et ce qu'il vaut mieux créer.</p>
+ return`<div class="card" id="invBox"><b>Ce que vous avez déjà</b><p class="hint">Cochez ce que vous utilisez. Je vous dis ensuite ce qu'on peut connecter tout de suite, et ce qu'il vaut mieux créer.</p>
  ${OUTILS.map(g=>`<div style="margin-top:10px"><b style="font-size:13px;color:#5B6876;text-transform:uppercase;letter-spacing:.04em">${g[0]}</b>${g[1].map(row).join('')}</div>`).join('')}
  ${rep?`<div style="margin-top:14px;display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))">
-  <div style="background:#F0FDF4;border-radius:12px;padding:12px"><b>✅ À connecter (${oui.length})</b>${cnx||'<div class="hint">Rien pour l\'instant.</div>'}</div>
+  <div style="background:#F0FDF4;border-radius:12px;padding:12px"><b>À connecter (${oui.length})</b>${cnx||'<div class="hint">Rien pour l\'instant.</div>'}</div>
   <div style="background:#FFFBEB;border-radius:12px;padding:12px"><b>🆕 À créer (${non.length})</b>${cre||'<div class="hint">Rien à créer.</div>'}</div></div>
   <p class="hint" style="margin-top:8px">${rep} réponse${rep>1?'s':''} sur ${all.length}. Vous pourrez modifier ces choix plus tard dans Réglages.</p>`:''}</div>`}
 function vConn(){
  const n=CONN.filter(c=>S.conn[c.id]).length;
  $('app').innerHTML=`<h1>Connectez vos outils</h1><p class="sub">Connectez au moins votre logiciel de devis et votre messagerie. Le reste peut attendre, vous pourrez le faire plus tard.</p>
- ${S.bot.soft!=='Pennylane'?`<div class="reco"><b>⭐ Conseillé : Pennylane Essentiel</b><div class="hint">Devis, factures, comptabilité automatisée et collaboration avec votre expert-comptable. Branché à votre assistant, votre comptable n'a plus qu'à valider.</div><a class="btn sm" href="${PENNYLANE_URL}" target="_blank" rel="noopener">Découvrir Pennylane</a></div>`:''}
+ ${S.bot.soft!=='Pennylane'?`<div class="reco"><b>Conseillé : Pennylane Essentiel</b><div class="hint">Devis, factures, comptabilité automatisée et collaboration avec votre expert-comptable. Branché à votre assistant, votre comptable n'a plus qu'à valider.</div><a class="btn sm" href="${PENNYLANE_URL}" target="_blank" rel="noopener">Découvrir Pennylane</a></div>`:''}
  ${invHTML()}
  <h2 style="margin:18px 0 8px;font-size:18px">Connexions</h2><div class="card">${CONN.map(c=>`<div class="conn"><div class="ico">${c.ico}</div><div class="t"><b>${esc(c.name())}${c.tier?`<span class="tag">${c.tier}</span>`:''}${c.imp?'<span class="tag" style="background:#FEF3C7;color:#92400E">Important</span>':''}</b><small>${c.desc}</small></div>
  ${S.conn[c.id]?'<span class="pill ok">Connecté ✓</span>':`<button class="btn sm dark" onclick="connect('${c.id}')">Connecter</button>`}</div>`).join('')}</div>
@@ -305,7 +307,7 @@ function connect(id){
  else if(id==='docs'){const D=S.docs||{};body=`<p class="sub">Je range automatiquement vos documents dans <b>votre</b> espace : ils restent à vous, même si vous arrêtez l'abonnement.</p>
 <label>Votre espace de stockage</label><select id="dProv">${['Dropbox','Google Drive'].map(o=>`<option ${D.prov===o?'selected':''}>${o}</option>`).join('')}</select>
 <p class="hint">Pas encore de compte ? Ils sont gratuits pour commencer : <a href="https://www.dropbox.com/basic" target="_blank" rel="noopener">Dropbox</a> (2 Go) ou <a href="https://drive.google.com" target="_blank" rel="noopener">Google Drive</a> (15 Go, partagés avec Gmail). Vous passerez à l'offre payante seulement si vous manquez de place.</p>
-<div class="card" style="font-size:14px;line-height:1.55;margin-top:10px"><b>📁 Mon Assistant Pro</b><br>
+<div class="card" style="font-size:14px;line-height:1.55;margin-top:10px"><b>Mon Assistant Pro</b><br>
 &nbsp;&nbsp;📂 Clients › <i>Nom – Commune</i> › Devis · Factures · Mails · Photos chantier · Notes vocales<br>
 &nbsp;&nbsp;📂 Fournisseurs › <i>Nom</i> › Factures<br>
 &nbsp;&nbsp;📂 Administratif › Assurances · URSSAF · Contrats<br>
@@ -425,7 +427,7 @@ const DEMO_MAILS=[
  {h:'06:48',from:'M. Riou',subj:'Demande de devis terrasse 35 m²',tag:'Demande de devis',c:'#1E3160',bg:'#E0E7FF',act:'Réponse envoyée, photos demandées, visite proposée jeudi'},
  {h:'06:30',from:'Négoce Matériaux Ouest',subj:'Votre facture n° F-88412',tag:'Facture fournisseur',c:'#92400E',bg:'#FEF3C7',act:'Facture 1 248,60 € récupérée et envoyée à Pennylane'},
  {h:'Hier',from:'SCI Les Pins',subj:'Re : Devis 2026-112',tag:'Client',c:'#166534',bg:'#DCFCE7',act:"Devis accepté : demande d'acompte envoyée"},
- {h:'Hier',from:'Mairie',subj:'Consultation travaux de voirie',tag:'Opportunité',c:'#6D28D9',bg:'#EDE9FE',act:"Appel d'offres repéré, date limite le 28/11"},
+ {h:'Hier',from:'Mairie',subj:'Consultation travaux de voirie',tag:'Opportunité',c:'#14213D',bg:'#E3ECF5',act:"Appel d'offres repéré, date limite le 28/11"},
  {h:'Hier',from:'Quincaillerie du Port',subj:'Votre facture de novembre',tag:'Facture fournisseur',c:'#92400E',bg:'#FEF3C7',act:'Facture 312,40 € récupérée et envoyée à Pennylane'},
  {h:'Hier',from:'Assurance',subj:'Attestation décennale à renouveler',tag:'Administratif',c:'#475569',bg:'#F1F5F9',act:'Rappel ajouté au 1er décembre'},
  {h:'Hier',from:'Promo Outillage',subj:'-30 % ce week-end seulement',tag:'Publicité',c:'#64748B',bg:'#F1F5F9',kind:'pub'},
@@ -446,66 +448,66 @@ function vJour(p){
  const pend=(S.pending||[]);
  p.innerHTML=`${demoBadge()}
  <div class="card" style="background:#14213D;color:#fff;border:0" ${stg(0)}><b style="font-size:17px">☀️ Votre synthèse du matin</b><p style="color:#C9D1E4;margin-top:6px;font-size:14px">J'ai lu vos 8 nouveaux mails. 2 urgences, 1 demande de devis, 2 factures fournisseurs récupérées. Voici ce qu'il faut faire aujourd'hui.</p><button class="btn sm" style="margin-top:10px" onclick="smsSynth(this)">📱 Recevoir la synthèse par SMS</button></div>
- <div class="card" ${stg(1)}><b>🚨 Urgences (2)</b><div class="feed">
+ <div class="card" ${stg(1)}><b>Urgences (2)</b><div class="feed">
   <div><span>💧</span><span><b>Mme Le Gall</b> : fuite sous l'évier. <small class="hint">Créneau proposé ce matin, rappel à 8 h 30.</small></span></div>
   <div><span>💶</span><span><b>SCI Les Pins</b> : facture de 2 340 € impayée depuis 15 jours. <small class="hint">Relance prête, à valider.</small></span></div></div></div>
- <div class="card" ${stg(2)}><b>📅 Votre programme</b><div class="feed">
+ <div class="card" ${stg(2)}><b>Votre programme</b><div class="feed">
   <div><span>08:30</span><span>Appeler Mme Le Gall (urgence)</span></div>
   <div><span>10:00</span><span>Chantier Durand, Auray : terrasse résine, jour 2/3</span></div>
   <div><span>14:00</span><span>Visite M. Riou, Vannes : devis terrasse 35 m²</span></div>
   <div><span>17:30</span><span>Livraison matériaux au dépôt</span></div></div></div>
- <div class="card" ${stg(3)}><b>✍️ À valider (${2+pend.length})</b><div class="feed">
+ <div class="card" ${stg(3)}><b>À valider (${2+pend.length})</b><div class="feed">
   ${pend.map(x=>`<div><span>📄</span><span>Devis ${esc(x)} : prêt, en attente de votre validation</span></div>`).join('')}
   <div><span>📄</span><span>Devis M. Kerhervé, 1 780 € : prêt à envoyer</span></div>
   <div><span>🔔</span><span>Relance SCI Les Pins : prête à partir</span></div></div>
   <button class="btn sm dark" style="margin-top:8px" onclick="tab='chat';vDash()">Voir et valider</button></div>
- <div class="card" ${stg(4)}><b>🧾 Factures fournisseurs récupérées (2)</b><div class="feed">
+ <div class="card" ${stg(4)}><b>Factures fournisseurs récupérées (2)</b><div class="feed">
   <div><span>✓</span><span>Négoce Matériaux Ouest : 1 248,60 € <small class="hint">→ Pennylane</small></span></div>
   <div><span>✓</span><span>Quincaillerie du Port : 312,40 € <small class="hint">→ Pennylane</small></span></div></div></div>
- <div class="card" ${stg(5)}><b>📈 Côté commercial et marketing</b><div class="feed">
+ <div class="card" ${stg(5)}><b>Côté commercial et marketing</b><div class="feed">
   <div><span>🔔</span><span>3 devis relancés cette semaine, 1 signé</span></div>
   <div><span>📱</span><span>2 publications prêtes pour vos réseaux</span></div>
   <div><span>⭐</span><span>1 nouvel avis Google 5 étoiles, réponse prête</span></div></div></div>
- ${lowStock().length?`<div class="card" style="background:#FEF2F2;border-color:#FCA5A5" ${stg(6)}><b>📦 Stock bas</b><div class="hint">${lowStock().map(x=>esc(x.code)+' – '+esc(x.name)+' : '+x.stock+' '+esc(x.unit)).join('<br>')}</div></div>`:''}
+ ${lowStock().length?`<div class="card" style="background:#FEF2F2;border-color:#FCA5A5" ${stg(6)}><b>Stock bas</b><div class="hint">${lowStock().map(x=>esc(x.code)+' – '+esc(x.name)+' : '+x.stock+' '+esc(x.unit)).join('<br>')}</div></div>`:''}
  <button class="btn full" onclick="tab='chat';vDash()">🎙️ Dicter un devis</button>`;
 }
 function smsSynth(b){b.disabled=true;b.textContent='✓ Synthèse envoyée au '+(S.co.tel||'votre portable');log('📱','Synthèse du matin envoyée par SMS')}
 function vMails(p){
  if(D)return vMailsR(p);
  const R=mr();
- p.innerHTML=`${demoBadge()}<div class="card"><b>📬 Boîte de réception triée par votre secrétaire</b><p class="hint">Chaque mail est lu, classé, et traité quand c'est possible.</p>
+ p.innerHTML=`${demoBadge()}<div class="card"><b>Boîte de réception triée par votre secrétaire</b><p class="hint">Chaque mail est lu, classé, et traité quand c'est possible.</p>
  <div class="row" style="margin-top:6px"><div><label>Pubs et newsletters</label><select onchange="setMR('pub',this.value)">${[['archive','Archiver'],['trash','Corbeille'],['none','Ne rien faire']].map(([v,l])=>`<option value="${v}" ${R.pub===v?'selected':''}>${l}</option>`).join('')}</select></div>
  <div><label>Spams</label><select onchange="setMR('spam',this.value)">${[['trash','Corbeille'],['spam','Dossier Spam'],['none','Ne rien faire']].map(([v,l])=>`<option value="${v}" ${R.spam===v?'selected':''}>${l}</option>`).join('')}</select></div></div>
  <p class="hint">🛡️ Vos clients, fournisseurs et contacts habituels ne sont jamais touchés. Rien n'est supprimé définitivement.</p></div>`+DEMO_MAILS.map((m,i)=>`<div class="card" style="padding:14px" ${stg(i)}>
   <div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(m.from)}</b><small class="hint">${m.h}</small></div>
   <div style="font-size:14px">${esc(m.subj)}</div>
   <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center"><span class="pill" style="background:${m.bg};color:${m.c};animation:pop .3s ease ${(0.5+i*0.25).toFixed(2)}s both">${m.tag}</span><small style="color:#166534;animation:pop .3s ease ${(0.7+i*0.25).toFixed(2)}s both">✓ ${esc(mailAct(m))}</small></div></div>`).join('')+
- `<div class="card" style="background:#DCFCE7;border-color:#86EFAC;animation:pop .4s ease 2.8s both"><b>✅ Tri terminé</b><div class="hint">2 factures fournisseurs envoyées à Pennylane · 1 réponse envoyée · synthèse prête dans « Ma journée ».</div></div>
- <div class="card" style="animation:pop .4s ease 3.1s both"><b>🗂️ Récap de la semaine</b><div class="hint">${R.pub==='none'?'Pubs laissées en place':R.pub==='trash'?'37 pubs mises à la corbeille':'37 pubs archivées dans « Promotions »'} · ${R.spam==='none'?'spams laissés en place':R.spam==='spam'?'4 spams déplacés dans « Spam »':'4 spams mis à la corbeille'}.</div>
+ `<div class="card" style="background:#DCFCE7;border-color:#86EFAC;animation:pop .4s ease 2.8s both"><b>Tri terminé</b><div class="hint">2 factures fournisseurs envoyées à Pennylane · 1 réponse envoyée · synthèse prête dans « Ma journée ».</div></div>
+ <div class="card" style="animation:pop .4s ease 3.1s both"><b>Récap de la semaine</b><div class="hint">${R.pub==='none'?'Pubs laissées en place':R.pub==='trash'?'37 pubs mises à la corbeille':'37 pubs archivées dans « Promotions »'} · ${R.spam==='none'?'spams laissés en place':R.spam==='spam'?'4 spams déplacés dans « Spam »':'4 spams mis à la corbeille'}.</div>
  <div class="feed" style="margin-top:6px"><div><span>📰</span><span>Lettre d'info Fournisseur Bois <small class="hint">archivée</small> <button class="btn sm light" style="margin-top:6px" onclick="notPub(this)">Ce n'était pas une pub</button></span></div></div></div>`;
 }
 function vComm(p){
  if(D)return vCommR(p);
  const L=(i,a,b,c)=>`<div ${stg(i)}><span>${a}</span><span>${b}${c?` <small class="hint">${c}</small>`:''}</span></div>`;
  p.innerHTML=`${demoBadge()}
- <div class="card" ${stg(0)}><b>💬 Demandes reçues</b><div class="feed">${L(1,'✓','M. Riou : terrasse 35 m²','réponse envoyée en 2 min, visite jeudi')}${L(2,'✓','Mme Allanic : entretien jardin','estimation envoyée')}${L(3,'✓','Appel manqué 06 xx xx xx 12','SMS de réponse envoyé')}</div></div>
- <div class="card" ${stg(1)}><b>🔔 Relances de devis</b><div class="feed">${L(2,'✓','Devis 2026-109 · M. Tanguy · 2 450 €','relancé à J+7')}${L(3,'✓','Devis 2026-111 · Mme Morvan · 980 €','relancé à J+15')}${L(4,'🎉','Devis 2026-104 · M. Guillo · 3 900 €','signé après relance')}</div></div>
- <div class="card" ${stg(2)}><b>💶 Impayés</b><div class="feed">${L(3,'⏳','SCI Les Pins · 2 340 € · 15 jours','relance ferme prête, à valider')}${L(4,'✓','M. Le Floch · 140 €','payé après 1 relance')}</div></div>
- <div class="card" ${stg(3)}><b>✉️ Prospection</b><div class="feed">${L(4,'📨','12 architectes contactés','3 réponses, 1 rendez-vous')}${L(5,'📨','Anciens clients 2024','8 relancés pour l\'entretien annuel')}</div><span class="tag">Premium</span></div>`;
+ <div class="card" ${stg(0)}><b>Demandes reçues</b><div class="feed">${L(1,'✓','M. Riou : terrasse 35 m²','réponse envoyée en 2 min, visite jeudi')}${L(2,'✓','Mme Allanic : entretien jardin','estimation envoyée')}${L(3,'✓','Appel manqué 06 xx xx xx 12','SMS de réponse envoyé')}</div></div>
+ <div class="card" ${stg(1)}><b>Relances de devis</b><div class="feed">${L(2,'✓','Devis 2026-109 · M. Tanguy · 2 450 €','relancé à J+7')}${L(3,'✓','Devis 2026-111 · Mme Morvan · 980 €','relancé à J+15')}${L(4,'🎉','Devis 2026-104 · M. Guillo · 3 900 €','signé après relance')}</div></div>
+ <div class="card" ${stg(2)}><b>Impayés</b><div class="feed">${L(3,'⏳','SCI Les Pins · 2 340 € · 15 jours','relance ferme prête, à valider')}${L(4,'✓','M. Le Floch · 140 €','payé après 1 relance')}</div></div>
+ <div class="card" ${stg(3)}><b>Prospection</b><div class="feed">${L(4,'📨','12 architectes contactés','3 réponses, 1 rendez-vous')}${L(5,'📨','Anciens clients 2024','8 relancés pour l\'entretien annuel')}</div><span class="tag">Premium</span></div>`;
 }
 function vMkt(p){
  const post=(i,t,txt,g)=>`<div class="card" ${stg(i)}><div style="height:150px;border-radius:12px;background:${g};display:flex;align-items:flex-end;padding:12px;color:#fff;font-weight:800;font-size:18px">${t}</div><p style="font-size:14px;margin:10px 0">${txt}</p><div style="display:flex;gap:8px"><button class="btn sm" onclick="this.textContent='✓ Publié';this.disabled=true;log('📱','Publication : ${t.replace(/'/g,'')}')">Publier</button><button class="btn sm light">Modifier</button></div><small class="hint">Facebook · Instagram · TikTok</small></div>`;
- p.innerHTML=`<div class="card" ${stg(0)}><b>📸 Créer un avant / après</b><p class="hint">Prenez une photo avant les travaux et une après. Je monte l'image et j'écris le texte, prêts à publier.</p>
+ p.innerHTML=`<div class="card" ${stg(0)}><b>Créer un avant / après</b><p class="hint">Prenez une photo avant les travaux et une après. Je monte l'image et j'écris le texte, prêts à publier.</p>
  <div class="row"><div><label>Photo AVANT</label><input type="file" id="aaAv" accept="image/*" onchange="aaGen()"></div><div><label>Photo APRÈS</label><input type="file" id="aaAp" accept="image/*" onchange="aaGen()"></div></div>
  <div class="row"><div><label>Travaux</label><input id="aaT" placeholder="Ex. terrasse en résine drainante" oninput="aaTxt()"></div><div><label>Commune</label><input id="aaC" placeholder="Ex. Auray" oninput="aaTxt();aaGen()"></div></div>
  <div id="aaRes" style="display:none;margin-top:12px"><img id="aaImg" style="width:100%;max-width:420px;border-radius:12px;display:block;margin:0 auto" alt="Avant / après"><label style="margin-top:10px">Texte de la publication</label><textarea id="aaTx" rows="4"></textarea>
  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn sm" onclick="aaShare()">📤 Publier / partager</button><button class="btn sm light" onclick="aaDl()">⬇️ Télécharger l'image</button><button class="btn sm light" onclick="navigator.clipboard.writeText($('aaTx').value);this.textContent='✓ Texte copié'">📋 Copier le texte</button></div>
  <small class="hint">Sur téléphone, « Publier / partager » ouvre directement Instagram, Facebook ou TikTok avec l'image.</small></div></div>
- ${demoBadge()}<div class="card" ${stg(0)}><b>📣 Votre agent marketing</b><p class="hint">Il prépare, vous validez d'un clic.</p></div>
+ ${demoBadge()}<div class="card" ${stg(0)}><b>Votre agent marketing</b><p class="hint">Il prépare, vous validez d'un clic.</p></div>
  ${post(1,'Avant / après : terrasse à Auray',"Transformation terminée chez M. Durand : 40 m² de résine drainante, prête pour l'été. 🌿 Devis gratuit en message privé.",'linear-gradient(135deg,#1E3160,#3B5B9A)')}
  ${post(2,'Conseil de saison',"3 gestes simples pour protéger votre terrasse avant l'hiver. Enregistrez ce post !",'linear-gradient(135deg,#B07F00,#F5B700)')}
- <div class="card" ${stg(3)}><b>⭐ Avis Google · 4,8/5</b><div class="feed"><div><span>⭐</span><span>« Travail soigné, équipe ponctuelle » · Mme Tanguy <small class="hint">réponse prête</small></span></div><div><span>📨</span><span>5 demandes d'avis envoyées aux chantiers terminés</span></div></div></div>
- <div class="card" ${stg(4)}><b>🎯 Publicité</b><div class="feed"><div><span>📊</span><span>Campagne terrasses : 9 demandes ce mois, 14 € la demande</span></div><div><span>💡</span><span>Conseil : augmenter de 5 € par jour le week-end</span></div></div><span class="tag">Premium</span></div>`;
+ <div class="card" ${stg(3)}><b>Avis Google · 4,8/5</b><div class="feed"><div><span>⭐</span><span>« Travail soigné, équipe ponctuelle » · Mme Tanguy <small class="hint">réponse prête</small></span></div><div><span>📨</span><span>5 demandes d'avis envoyées aux chantiers terminés</span></div></div></div>
+ <div class="card" ${stg(4)}><b>Publicité</b><div class="feed"><div><span>📊</span><span>Campagne terrasses : 9 demandes ce mois, 14 € la demande</span></div><div><span>💡</span><span>Conseil : augmenter de 5 € par jour le week-end</span></div></div><span class="tag">Premium</span></div>`;
 }
 
 function aaLoad(inp){return new Promise(r=>{const f=inp&&inp.files&&inp.files[0];if(!f)return r(null);const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src=URL.createObjectURL(f)})}
@@ -539,7 +541,7 @@ function syncEtat(now){if(!S.cle||S.step<5)return Promise.resolve();clearTimeout
 async function restaurer(cle){try{const r=await rpcP('map_etat_lire',{p_cle:cle});if(r&&r.etat){const keep=S.cle;Object.keys(S).forEach(k=>delete S[k]);Object.assign(S,r.etat);S.cle=cle||keep;if(!S.step||S.step<5)S.step=5;localStorage.setItem(KEY,JSON.stringify(S));render();return true}}catch(e){}return false}
 if(S.cle&&(!S.step||S.step<5))restaurer(S.cle);
 async function creerCompteServeur(){if(S.cle)return;try{const r=await rpcP('map_compte_creer',{p_siret:S.co.siret||'',p_nom:S.co.name||'',p_email:S.co.mail||'',p_etat:etatPropre()});if(r&&r.ok){S.cle=r.cle;save()}else if(r&&r.existe){S.compteExiste=true;save()}}catch(e){}}
-function loginHTML(){return`<div class="card" id="loginBox" style="background:#EEF2FF;border-color:#C7D2FE"><b>🔑 Déjà un compte ? Connectez-vous</b><p class="hint">Entrez l'e-mail de votre compte : je vous envoie un code à 6 chiffres.</p>
+function loginHTML(){return`<div class="card" id="loginBox" style="background:#EEF2FF;border-color:#C7D2FE"><b>Déjà un compte ? Connectez-vous</b><p class="hint">Entrez l'e-mail de votre compte : je vous envoie un code à 6 chiffres.</p>
  <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="lgMail" type="email" autocomplete="email" placeholder="votre@email.fr" style="flex:1;min-width:200px"><button class="btn sm dark" onclick="loginCode(this)">Recevoir mon code</button></div>
  <div id="lgStep2" style="display:none;margin-top:10px"><div style="display:flex;gap:8px;flex-wrap:wrap"><input id="lgCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Code à 6 chiffres" style="flex:1;min-width:160px;letter-spacing:4px;font-size:18px" onkeydown="if(event.key==='Enter')loginOk(this)"><button class="btn sm" onclick="loginOk(this)">Se connecter</button></div></div>
  <div id="lgMsg" class="hint" style="margin-top:6px"></div></div>`}
@@ -576,41 +578,41 @@ function vJourR(p){
   ag=fx('agenda').filter(x=>new Date(x.quand)>=new Date(new Date().toDateString())).sort((a,b)=>new Date(a.quand)-new Date(b.quand)),
   urg=fx('mails').filter(x=>/urgent|important/i.test(x.statut||'')),fac=uniq(D.docs).filter(x=>/fournisseur/i.test(x.src||x.path)&&age(x.quand)<7),imp=fx('impayes');
  p.innerHTML=vrai()+`<div class="card" style="background:#14213D;color:#fff;border:0"><b style="font-size:17px">☀️ Votre point du jour</b><p style="color:#C9D1E4;margin-top:6px;font-size:14px">${dem.length} nouvelle(s) demande(s) en 3 jours · ${ap.length} appel(s) pris par la secrétaire · ${sig.length} devis signé(s) cette semaine · ${rel.length} devis à relancer.</p></div>
- ${urg.length||imp.length?`<div class="card"><b>🚨 À traiter</b><div class="feed">${urg.map(x=>ligne(x.icone,esc(x.titre),esc(x.detail||''))).join('')}${imp.map(x=>ligne('💶',esc(x.titre),esc(x.detail||''))).join('')}</div></div>`:''}
- <div class="card"><b>📅 Votre programme</b><div class="feed">${ag.slice(0,8).map(x=>ligne(new Date(x.quand).toLocaleString('fr-FR',{weekday:'short',hour:'2-digit',minute:'2-digit'}),esc(x.titre),esc(x.detail||''))).join('')||vide("Rien dans l'agenda pour les prochains jours (l'assistant lit votre Google Agenda toutes les 2 heures).")}</div></div>
- <div class="card"><b>📞 Appels pris par la secrétaire</b><div class="feed">${ap.map(x=>ligne('📞',esc(x.fiche.nom||x.appelant)+(x.fiche.commune?' · '+esc(x.fiche.commune):''),esc([x.fiche.type_projet||x.fiche.motif,x.fiche.details].filter(Boolean).join(' – '))+' · '+fd(x.quand))).join('')||vide('Aucun appel ces 2 derniers jours.')}</div></div>
- <div class="card"><b>🎉 Devis signés cette semaine</b><div class="feed">${sig.map(d=>ligne('✍️',esc(d.client)+' · '+eur0(d.ttc),esc(d.projet||'')+' · '+fd(d.signe)+'<br>'+lienDevis(d))).join('')||vide('Aucun cette semaine.')}</div></div>
- ${fx('ads').length?`<div class="card"><b>🎯 Google Ads</b><div class="feed">${fx('ads').map(x=>ligne(x.statut==='Active'?'🟢':'⏸️',esc(x.titre),esc(x.detail||''))).join('')}</div></div>`:''}
- <div class="card"><b>🧾 Factures fournisseurs rangées (7 jours)</b><div class="feed">${fac.slice(0,8).map(x=>ligne('✓',`<a href="${dbx(x.path)}" target="_blank" rel="noopener" style="color:inherit">${esc((x.path||'').split('/').pop())}</a>`,lienDoc(x))).join('')||vide('Aucune cette semaine.')}</div></div>`;
+ ${urg.length||imp.length?`<div class="card"><b>À traiter</b><div class="feed">${urg.map(x=>ligne(x.icone,esc(x.titre),esc(x.detail||''))).join('')}${imp.map(x=>ligne('💶',esc(x.titre),esc(x.detail||''))).join('')}</div></div>`:''}
+ <div class="card"><b>Votre programme</b><div class="feed">${ag.slice(0,8).map(x=>ligne(new Date(x.quand).toLocaleString('fr-FR',{weekday:'short',hour:'2-digit',minute:'2-digit'}),esc(x.titre),esc(x.detail||''))).join('')||vide("Rien dans l'agenda pour les prochains jours (l'assistant lit votre Google Agenda toutes les 2 heures).")}</div></div>
+ <div class="card"><b>Appels pris par la secrétaire</b><div class="feed">${ap.map(x=>ligne('📞',esc(x.fiche.nom||x.appelant)+(x.fiche.commune?' · '+esc(x.fiche.commune):''),esc([x.fiche.type_projet||x.fiche.motif,x.fiche.details].filter(Boolean).join(' – '))+' · '+fd(x.quand))).join('')||vide('Aucun appel ces 2 derniers jours.')}</div></div>
+ <div class="card"><b>Devis signés cette semaine</b><div class="feed">${sig.map(d=>ligne('✍️',esc(d.client)+' · '+eur0(d.ttc),esc(d.projet||'')+' · '+fd(d.signe)+'<br>'+lienDevis(d))).join('')||vide('Aucun cette semaine.')}</div></div>
+ ${fx('ads').length?`<div class="card"><b>Google Ads</b><div class="feed">${fx('ads').map(x=>ligne(x.statut==='Active'?'🟢':'⏸️',esc(x.titre),esc(x.detail||''))).join('')}</div></div>`:''}
+ <div class="card"><b>Factures fournisseurs rangées (7 jours)</b><div class="feed">${fac.slice(0,8).map(x=>ligne('✓',`<a href="${dbx(x.path)}" target="_blank" rel="noopener" style="color:inherit">${esc((x.path||'').split('/').pop())}</a>`,lienDoc(x))).join('')||vide('Aucune cette semaine.')}</div></div>`;
 }
 function vMailsR(p){const m=fx('mails');
- p.innerHTML=vrai()+`<div class="card"><b>📬 Vos mails importants (tri automatique chaque jour)</b><p class="hint">Les pubs et notifications partent à la corbeille ou aux archives. Ici, ce qui demande votre attention.</p></div>`+
+ p.innerHTML=vrai()+`<div class="card"><b>Vos mails importants (tri automatique chaque jour)</b><p class="hint">Les pubs et notifications partent à la corbeille ou aux archives. Ici, ce qui demande votre attention.</p></div>`+
  (m.map(x=>`<div class="card" style="padding:14px"><div style="display:flex;justify-content:space-between;gap:8px"><b>${lienMail(x)?`<a href="${lienMail(x)}" target="_blank" rel="noopener" style="color:inherit">${esc(x.titre)}</a>`:esc(x.titre)}</b><small class="hint">${fd(x.quand)}</small></div><div style="font-size:14px">${esc(x.detail||'')}</div>${lienMail(x)?`<a href="${lienMail(x)}" target="_blank" rel="noopener" class="hint" style="color:#1E3160">✉️ Ouvrir dans Gmail</a> `:''}${x.statut?`<span class="pill" style="background:#E0E7FF;color:#1E3160;margin-top:6px;display:inline-block">${esc(x.statut)}</span>`:''}</div>`).join('')||'<div class="card hint">L\'assistant n\'a pas encore fait son premier passage. Il lit vos mails toutes les 2 heures.</div>');
 }
 function vDocsR(p){const d=uniq(D.docs);
- p.innerHTML=vrai()+`<div class="card"><b>📁 Dropbox · rangement automatique</b><div class="hint">Factures fournisseurs, devis et documents rangés dans vos dossiers Dropbox (01 à 05 RMS).</div></div>
- <div class="card"><b>🧾 Journal : ce que j'ai rangé</b>${d.map(j=>{const pa=(j.path||'').split('/');return`<div style="padding:9px 0;border-bottom:1px solid #E5E7EB"><a href="${dbx(j.path)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none"><b style="font-size:14px">📄 ${esc(pa.pop())}</b></a><div class="hint">${fd(j.quand)} · <a href="${dbxDir(j.path)}" target="_blank" rel="noopener" style="color:#5B6876">${esc(pa.join(' › ').replace(/^ › /,''))}</a> · ${lienDoc(j)}${j.statut&&j.statut!=='ok'?' · <b style="color:#B91C1C">'+esc(j.statut)+'</b>':''}</div></div>`}).join('')||vide('Rien de rangé pour le moment.')}</div>`;
+ p.innerHTML=vrai()+`<div class="card"><b>Dropbox · rangement automatique</b><div class="hint">Factures fournisseurs, devis et documents rangés dans vos dossiers Dropbox (01 à 05 RMS).</div></div>
+ <div class="card"><b>Journal : ce que j'ai rangé</b>${d.map(j=>{const pa=(j.path||'').split('/');return`<div style="padding:9px 0;border-bottom:1px solid #E5E7EB"><a href="${dbx(j.path)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none"><b style="font-size:14px">📄 ${esc(pa.pop())}</b></a><div class="hint">${fd(j.quand)} · <a href="${dbxDir(j.path)}" target="_blank" rel="noopener" style="color:#5B6876">${esc(pa.join(' › ').replace(/^ › /,''))}</a> · ${lienDoc(j)}${j.statut&&j.statut!=='ok'?' · <b style="color:#B91C1C">'+esc(j.statut)+'</b>':''}</div></div>`}).join('')||vide('Rien de rangé pour le moment.')}</div>`;
 }
 function vCommR(p){const dem=D.demandes||[],rel=devisRelance(),dv=D.devis||[],imp=fx('impayes'),pay=fx('paiements');
- p.innerHTML=vrai()+`<div class="card"><b>💬 Demandes reçues</b><div class="feed">${dem.slice(0,15).map(x=>ligne(x.statut==='nouveau'||x.statut==='à rappeler'?'🆕':'✓',esc(x.nom||'Sans nom')+' · '+esc(x.quoi||''),esc(x.src)+' · '+(x.tel?esc(x.tel)+' · ':'')+fd(x.quand))).join('')||vide('Aucune demande.')}</div></div>
- <div class="card"><b>🔔 Devis envoyés, pas encore signés</b><div class="feed">${rel.slice(0,15).map(d=>ligne(age(d.envoye)>=7?'⏰':'📄',esc(d.numero||'')+' · '+esc(d.client||'')+' · '+eur0(d.ttc),esc(d.projet||'')+' · envoyé '+fd(d.envoye)+(age(d.envoye)>=7?' · <b>à relancer</b>':'')+(lienDevis(d)?'<br>'+lienDevis(d):''))).join('')||vide('Aucun devis en attente.')}</div></div>
- <div class="card"><b>✍️ Derniers devis signés</b><div class="feed">${dv.filter(d=>d.signe).slice(0,8).map(d=>ligne('🎉',esc(d.client)+' · '+eur0(d.ttc),esc(d.projet||'')+' · '+fd(d.signe)+'<br>'+lienDevis(d))).join('')||vide('Aucun.')}</div></div>
- <div class="card"><b>💶 Paiements et impayés (Qonto)</b><div class="feed">${imp.map(x=>ligne('⏳',esc(x.titre),esc(x.detail||''))).join('')}${pay.slice(0,10).map(x=>ligne('✓',esc(x.titre),esc(x.detail||'')+' · '+fd(x.quand))).join('')||(!imp.length?vide("L'assistant n'a pas encore fait son premier passage sur Qonto."):'')}</div></div>`;
+ p.innerHTML=vrai()+`<div class="card"><b>Demandes reçues</b><div class="feed">${dem.slice(0,15).map(x=>ligne(x.statut==='nouveau'||x.statut==='à rappeler'?'🆕':'✓',esc(x.nom||'Sans nom')+' · '+esc(x.quoi||''),esc(x.src)+' · '+(x.tel?esc(x.tel)+' · ':'')+fd(x.quand))).join('')||vide('Aucune demande.')}</div></div>
+ <div class="card"><b>Devis envoyés, pas encore signés</b><div class="feed">${rel.slice(0,15).map(d=>ligne(age(d.envoye)>=7?'⏰':'📄',esc(d.numero||'')+' · '+esc(d.client||'')+' · '+eur0(d.ttc),esc(d.projet||'')+' · envoyé '+fd(d.envoye)+(age(d.envoye)>=7?' · <b>à relancer</b>':'')+(lienDevis(d)?'<br>'+lienDevis(d):''))).join('')||vide('Aucun devis en attente.')}</div></div>
+ <div class="card"><b>Derniers devis signés</b><div class="feed">${dv.filter(d=>d.signe).slice(0,8).map(d=>ligne('🎉',esc(d.client)+' · '+eur0(d.ttc),esc(d.projet||'')+' · '+fd(d.signe)+'<br>'+lienDevis(d))).join('')||vide('Aucun.')}</div></div>
+ <div class="card"><b>Paiements et impayés (Qonto)</b><div class="feed">${imp.map(x=>ligne('⏳',esc(x.titre),esc(x.detail||''))).join('')}${pay.slice(0,10).map(x=>ligne('✓',esc(x.titre),esc(x.detail||'')+' · '+fd(x.quand))).join('')||(!imp.length?vide("L'assistant n'a pas encore fait son premier passage sur Qonto."):'')}</div></div>`;
 }
 function vMktR(p){const po=D.posts||[],pu=(D.pub||[])[0];
  const div=document.createElement('div');vMkt(div);const aa=div.querySelector('.card');
- p.innerHTML=vrai()+(aa?aa.outerHTML:'')+`<div class="card"><b>📱 Vos dernières publications</b>${po.slice(0,6).map(x=>`<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #E5E7EB">${x.photo?`<img src="${esc(x.photo)}" style="width:64px;height:64px;object-fit:cover;border-radius:8px">`:''}<div><div style="font-size:14px">${esc(x.legende||'')}</div><small class="hint">${esc(x.statut||'')} · ${fd(x.quand)}</small></div></div>`).join('')||vide('Aucune publication.')}</div>
- ${(()=>{const c=fx('ads'),j=fx('ads_jour').sort((a,b)=>new Date(b.quand)-new Date(a.quand));return `<div class="card"><b>🎯 Google Ads</b><div class="feed">${c.map(x=>ligne(x.statut==='Active'?'🟢':'⏸️',esc(x.titre)+(x.statut?' <small class="hint">· '+esc(x.statut)+'</small>':''),esc(x.detail||''))).join('')||vide('Aucune campagne trouvée.')}</div>${j.length?`<div class="hint" style="margin-top:8px"><b>Par jour</b></div><div class="feed">${j.slice(0,7).map(x=>ligne('📊',esc(x.titre),esc(x.detail||''))).join('')}</div>`:''}</div>`})()}
- ${pu?`<div class="card"><b>🎯 Publicité · dernier rapport (${esc(pu.periode||'')})</b><div class="feed">${((pu.analyse&&pu.analyse.actions)||[]).slice(0,4).map(a=>ligne('💡',esc(a.titre),esc(a.pourquoi||''))).join('')}</div></div>`:''}`;
+ p.innerHTML=vrai()+(aa?aa.outerHTML:'')+`<div class="card"><b>Vos dernières publications</b>${po.slice(0,6).map(x=>`<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #E5E7EB">${x.photo?`<img src="${esc(x.photo)}" style="width:64px;height:64px;object-fit:cover;border-radius:8px">`:''}<div><div style="font-size:14px">${esc(x.legende||'')}</div><small class="hint">${esc(x.statut||'')} · ${fd(x.quand)}</small></div></div>`).join('')||vide('Aucune publication.')}</div>
+ ${(()=>{const c=fx('ads'),j=fx('ads_jour').sort((a,b)=>new Date(b.quand)-new Date(a.quand));return `<div class="card"><b>Google Ads</b><div class="feed">${c.map(x=>ligne(x.statut==='Active'?'🟢':'⏸️',esc(x.titre)+(x.statut?' <small class="hint">· '+esc(x.statut)+'</small>':''),esc(x.detail||''))).join('')||vide('Aucune campagne trouvée.')}</div>${j.length?`<div class="hint" style="margin-top:8px"><b>Par jour</b></div><div class="feed">${j.slice(0,7).map(x=>ligne('📊',esc(x.titre),esc(x.detail||''))).join('')}</div>`:''}</div>`})()}
+ ${pu?`<div class="card"><b>Publicité · dernier rapport (${esc(pu.periode||'')})</b><div class="feed">${((pu.analyse&&pu.analyse.actions)||[]).slice(0,4).map(a=>ligne('💡',esc(a.titre),esc(a.pourquoi||''))).join('')}</div></div>`:''}`;
 }
 
 /* ===== Partage d'écran avec Skyeco (15/11/2026) ===== */
 let EC=null;
 let rpcA=(f,b)=>fetch(SB+'/rest/v1/rpc/'+f,{method:'POST',headers:{apikey:SBK,Authorization:'Bearer '+SBK,'Content-Type':'application/json'},body:JSON.stringify(b)}).then(r=>r.json());
 function ecranHTML(){return`<div class="card" id="ecBox" style="background:#EEF2FF;border-color:#C7D2FE"><b>🆘 Besoin d'aide ? Skyeco vous aide à tout brancher</b>${EC?`<p style="font-size:15px">✅ Partage en cours · code <b>${EC.code}</b> <span id="ecSt" class="hint">${EC.vu?'Un conseiller Skyeco regarde votre écran.':'En attente d\'un conseiller Skyeco…'}</span></p><button class="btn sm dark" onclick="ecranStop()">⏹ Arrêter le partage</button>`:`<div style="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-top:8px">
- <div style="background:#fff;border-radius:12px;padding:12px"><b>👀 Montrer mon écran</b><div class="hint">Un conseiller Skyeco regarde et vous guide. Il ne touche à rien.</div><button class="btn sm dark" style="margin-top:8px" onclick="ecranStart(this)">🖥️ Partager mon écran</button></div>
- <div style="background:#fff;border-radius:12px;padding:12px"><b>🖱️ Laisser Skyeco prendre la main</b><div class="hint">Il fait les branchements (Google, Dropbox, Pennylane…) pendant que vous regardez. Vous tapez vous-même vos mots de passe.</div><button class="btn sm dark" style="margin-top:8px" onclick="ctrlOuvrir()">Commencer</button><div id="ctrlBox"></div></div>
- <div style="background:#fff;border-radius:12px;padding:12px"><b>📅 Prendre rendez-vous</b><div class="hint">Installation ensemble, au téléphone ou à distance, au moment qui vous arrange.</div><button class="btn sm dark" style="margin-top:8px" onclick="rdvOuvrir()">Choisir un créneau</button><div id="rdvBox"></div></div>
+ <div style="background:#fff;border-radius:12px;padding:12px"><b>Montrer mon écran</b><div class="hint">Un conseiller Skyeco regarde et vous guide. Il ne touche à rien.</div><button class="btn sm dark" style="margin-top:8px" onclick="ecranStart(this)">🖥️ Partager mon écran</button></div>
+ <div style="background:#fff;border-radius:12px;padding:12px"><b>Laisser Skyeco prendre la main</b><div class="hint">Il fait les branchements (Google, Dropbox, Pennylane…) pendant que vous regardez. Vous tapez vous-même vos mots de passe.</div><button class="btn sm dark" style="margin-top:8px" onclick="ctrlOuvrir()">Commencer</button><div id="ctrlBox"></div></div>
+ <div style="background:#fff;border-radius:12px;padding:12px"><b>Prendre rendez-vous</b><div class="hint">Installation ensemble, au téléphone ou à distance, au moment qui vous arrange.</div><button class="btn sm dark" style="margin-top:8px" onclick="rdvOuvrir()">Choisir un créneau</button><div id="rdvBox"></div></div>
  </div><div class="hint" style="margin-top:6px">Le partage d'écran et la prise en main fonctionnent sur ordinateur (Chrome, Edge, Firefox, Safari).</div>`}</div>`}
 function ctrlOuvrir(){$('ctrlBox').innerHTML=`<ol class="hint" style="padding-left:18px;margin:10px 0">
  <li>Ouvrez <a href="https://remotedesktop.google.com/support/" target="_blank" rel="noopener"><b>Chrome Bureau à distance</b></a> (gratuit, Google).</li>
@@ -650,7 +652,7 @@ function appliquerFond(){const f=S.fond||'vallee';document.body.classList.toggle
 function choisirFond(id){S.fond=id;save();appliquerFond();const b=$('fondBox');if(b)b.outerHTML=fondHTML()}
 function fondHTML(){const cur=S.fond||'vallee',mesF=S.fondsPerso||[];
  const vign=(id,lab,src)=>`<button onclick="choisirFond('${id}')" title="${esc(lab)}" style="border:${cur===id?'3px solid #F5B700':'1px solid #E3E9EE'};border-radius:10px;padding:0;overflow:hidden;cursor:pointer;background:#fff;text-align:left"><img src="${src}" alt="" loading="lazy" style="width:100%;height:72px;object-fit:cover;display:block"><span style="display:block;font-size:12px;padding:4px 6px">${cur===id?'✓ ':''}${esc(lab)}</span></button>`;
- return`<div class="card" id="fondBox"><b>🖼️ Fond d'écran</b><p class="hint">Choisissez une image apaisante, ou décrivez celle que vous voulez et je la crée.</p>
+ return`<div class="card" id="fondBox"><b>Fond d'écran</b><p class="hint">Choisissez une image apaisante, ou décrivez celle que vous voulez et je la crée.</p>
  <div style="display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));margin-top:8px">${FONDS.map(([id,l])=>vign(id,l,'/mon-assistant-pro/fonds/'+id+'-mini.jpg')).join('')}${mesF.map((u,i)=>vign(u,'Mon image '+(i+1),u)).join('')}
  <button onclick="choisirFond('aucun')" style="border:${cur==='aucun'?'3px solid #F5B700':'1px solid #E3E9EE'};border-radius:10px;background:#F3F5F8;cursor:pointer;font-size:13px">${cur==='aucun'?'✓ ':''}Sans image</button></div>
  <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn sm light" onclick="choisirFond(FONDS[Math.floor(Math.random()*FONDS.length)][0])">🎲 Au hasard</button></div>
@@ -673,12 +675,12 @@ function deconnexion(b){if(b&&!b.dataset.ok){b.dataset.ok=1;const t=b.textConten
  location.href='/mon-assistant-pro/inscription/'})}
 function vPlus(p){
  const it=[['🧾','Facture électronique','Factures transmises via Pennylane, prêtes pour 2027'],['💶','Acomptes automatiques','Demande envoyée dès la signature, avec votre lien de paiement'],['📦','Stock','Codes produits, sorties à la facturation, alertes'],['📅','Agenda','Créneaux proposés aux clients, rappels la veille'],['📊','Rapport du mois','Chiffre, devis signés, impayés, ce qui marche'],['🏛️','Appels d\'offres','Repérage des marchés publics près de chez vous'],['📷','Photos de chantier','Classées par client, prêtes pour vos réseaux'],['🧑‍🔧','Équipe','Planning envoyé à vos salariés chaque lundi'],['🛠️','Sur mesure','Une tâche propre à votre métier ? On l\'ajoute']];
- p.innerHTML=ecranHTML()+`<div class="card" ${stg(0)}><b>➕ Et aussi…</b><p class="hint">Tout ce que votre assistant peut prendre en charge en plus.</p></div><div class="stats" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr))">${it.map((x,i)=>`<div class="stat" ${stg(i+1)}><b style="font-size:22px">${x[0]}</b><b style="font-size:15px">${x[1]}</b><small>${x[2]}</small>${(()=>{const ok={'Stock':1,'Agenda':1,'Photos de chantier':1}[x[1]];return `<span class="pill" style="margin-top:6px;align-self:flex-start;background:${ok?'#DCFCE7':'#F3F4F6'};color:${ok?'#166534':'#6B7280'}">${ok?'✓ Actif':'Bientôt'}</span>`})()}</div>`).join('')}</div><a class="btn full" style="display:block;text-align:center;text-decoration:none;margin-top:14px" href="/mon-assistant-pro/exemples/">Voir 240 exemples de demandes</a>`;
+ p.innerHTML=ecranHTML()+`<div class="card" ${stg(0)}><b>Et aussi…</b><p class="hint">Tout ce que votre assistant peut prendre en charge en plus.</p></div><div class="stats" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr))">${it.map((x,i)=>`<div class="stat" ${stg(i+1)}><b style="font-size:22px">${x[0]}</b><b style="font-size:15px">${x[1]}</b><small>${x[2]}</small>${(()=>{const ok={'Stock':1,'Agenda':1,'Photos de chantier':1}[x[1]];return `<span class="pill" style="margin-top:6px;align-self:flex-start;background:${ok?'#DCFCE7':'#F3F4F6'};color:${ok?'#166534':'#6B7280'}">${ok?'✓ Actif':'Bientôt'}</span>`})()}</div>`).join('')}</div><a class="btn full" style="display:block;text-align:center;text-decoration:none;margin-top:14px" href="/mon-assistant-pro/exemples/">Voir 240 exemples de demandes</a>`;
 }
 function vReg(p){
  const T=TIERS[S.tier||1];const pct=Math.min(100,Math.round(S.used/T.q*100));const nconn=CONN.filter(c=>S.conn[c.id]).length;
- p.innerHTML=ecranHTML()+fondHTML()+invHTML()+`<div class="card"><b>⏻ Se déconnecter</b><p class="hint">Ferme votre session sur cet appareil. Vos données réelles (appels, devis, documents) restent enregistrées chez Skyeco.</p><button class="btn sm dark" onclick="deconnexion(this)">Se déconnecter</button></div>`+`<div class="stats"><div class="stat"><b>${S.used}/${T.q}</b><small>actions ce mois</small><div class="meter"><div class="${pct>=80?'hot':''}" style="width:${Math.max(2,pct)}%"></div></div></div><div class="stat"><b>${nconn}/${CONN.length}</b><small>outils connectés</small></div><div class="stat"><b>${TASKS.filter(t=>S.tasks[t.id]&&t.tier<=S.tier).length}</b><small>tâches actives</small></div></div>
- ${pct>=80?'<div class="card" style="margin-top:14px;background:#FFFBEB;border-color:#F5B700"><b>⚠️ Vous avez utilisé '+pct+' % de vos actions.</b><div class="hint">Passez au forfait supérieur ou attendez le mois prochain.</div></div>':''}
+ p.innerHTML=ecranHTML()+fondHTML()+invHTML()+`<div class="card"><b>Se déconnecter</b><p class="hint">Ferme votre session sur cet appareil. Vos données réelles (appels, devis, documents) restent enregistrées chez Skyeco.</p><button class="btn sm dark" onclick="deconnexion(this)">Se déconnecter</button></div>`+`<div class="stats"><div class="stat"><b>${S.used}/${T.q}</b><small>actions ce mois</small><div class="meter"><div class="${pct>=80?'hot':''}" style="width:${Math.max(2,pct)}%"></div></div></div><div class="stat"><b>${nconn}/${CONN.length}</b><small>outils connectés</small></div><div class="stat"><b>${TASKS.filter(t=>S.tasks[t.id]&&t.tier<=S.tier).length}</b><small>tâches actives</small></div></div>
+ ${pct>=80?'<div class="card" style="margin-top:14px;background:#FFFBEB;border-color:#F5B700"><b>Vous avez utilisé '+pct+' % de vos actions.</b><div class="hint">Passez au forfait supérieur ou attendez le mois prochain.</div></div>':''}
  <div class="card" style="margin-top:14px"><b>Dernières actions</b><div class="feed">${S.feed.slice().reverse().map(f=>`<div><span>${f[0]}</span><span>${esc(f[1])}</span></div>`).join('')}</div></div>
  <h2>Connexions</h2><div id="regConn"></div>
  <h2>Tâches & forfait</h2><div class="card"><b>Forfait ${T.n} : ${isFree()?'offert (0 €)':T.p+' € HT/mois'}</b><div class="hint">${T.q} actions et ${T.c} appels inclus · appel en plus : 0,50 € HT</div></div>`+TASKS.map(t=>`<label class="task card" style="margin-bottom:8px"><input type="checkbox" ${S.tasks[t.id]?'checked':''} onchange="S.tasks['${t.id}']=this.checked;save()"><div class="t">${t.t}${t.tier>S.tier?'<span class="tag">'+TIERS[t.tier].n+'</span>':''}<small>${t.d}</small></div></label>`).join('')+`<button class="btn full dark" onclick="go(4)">Recalculer mon forfait</button>`;
@@ -687,17 +689,17 @@ function vReg(p){
 function vDocs(p){
  if(D)return vDocsR(p);
  const prov=S.docs&&S.docs.prov;
- if(!S.conn.docs){p.innerHTML=`<div class="card"><b>📁 Rangez tout automatiquement</b><p class="hint">Connectez votre Dropbox ou votre Google Drive : je classe devis, factures, mails et photos par client, et je note tout dans un journal.</p><button class="btn" onclick="connect('docs')">Connecter mes documents</button></div>`;return}
+ if(!S.conn.docs){p.innerHTML=`<div class="card"><b>Rangez tout automatiquement</b><p class="hint">Connectez votre Dropbox ou votre Google Drive : je classe devis, factures, mails et photos par client, et je note tout dans un journal.</p><button class="btn" onclick="connect('docs')">Connecter mes documents</button></div>`;return}
  const J=[['14/11 · 06:31','Facture F-88412 · Négoce Matériaux Ouest','Fournisseurs › Négoce Matériaux Ouest › Factures','mail'],
   ['14/11 · 09:12','Devis D2026-109 signé · M. Le Gall','Clients › Le Gall – Vannes › Devis','signature'],
   ['14/11 · 09:13','Facture d\'acompte F-2026-031 · M. Le Gall','Clients › Le Gall – Vannes › Factures','assistant'],
   ['14/11 · 14:06','Note vocale chantier (0:42) · M. et Mme Riou','Clients › Riou – Auray › Notes vocales','téléphone'],
   ['14/11 · 17:20','Vidéo de chantier · terrassement Pluvigner','Clients › Morvan – Pluvigner › Photos chantier','téléphone'],
   ['13/11 · 18:02','Attestation décennale 2027','Administratif › Assurances','mail']];
- p.innerHTML=`<div class="card"><b>📁 ${esc(prov||'Documents')} · rangement automatique</b><div class="hint">Tout est dans le dossier « Mon Assistant Pro » de votre ${esc(prov||'espace')}. Les fichiers restent à vous.</div></div>
- <div class="card"><b>📂 Vos dossiers</b><div style="font-size:14px;line-height:1.7;margin-top:6px">📂 Clients <span class="hint">· 23 dossiers</span><br>📂 Fournisseurs <span class="hint">· 9 dossiers</span><br>📂 Administratif<br>📂 Compta › 2026 › Novembre <span class="hint">· envoyé à Pennylane</span></div></div>
- <div class="card"><b>🧾 Journal : ce que j'ai rangé</b>${J.map(j=>`<div style="padding:9px 0;border-bottom:1px solid #E5E7EB"><b style="font-size:14px">${esc(j[1])}</b><div class="hint">${esc(j[0])} · reçu par ${esc(j[3])} → ${esc(j[2])}</div></div>`).join('')}</div>
- <div class="card"><b>🗑️ Pubs « À supprimer »</b><div class="hint">47 mails publicitaires mis de côté ce mois-ci, effacés automatiquement au bout de 30 jours. Récap envoyé chaque lundi.</div></div>
+ p.innerHTML=`<div class="card"><b>${esc(prov||'Documents')} · rangement automatique</b><div class="hint">Tout est dans le dossier « Mon Assistant Pro » de votre ${esc(prov||'espace')}. Les fichiers restent à vous.</div></div>
+ <div class="card"><b>Vos dossiers</b><div style="font-size:14px;line-height:1.7;margin-top:6px">📂 Clients <span class="hint">· 23 dossiers</span><br>📂 Fournisseurs <span class="hint">· 9 dossiers</span><br>📂 Administratif<br>📂 Compta › 2026 › Novembre <span class="hint">· envoyé à Pennylane</span></div></div>
+ <div class="card"><b>Journal : ce que j'ai rangé</b>${J.map(j=>`<div style="padding:9px 0;border-bottom:1px solid #E5E7EB"><b style="font-size:14px">${esc(j[1])}</b><div class="hint">${esc(j[0])} · reçu par ${esc(j[3])} → ${esc(j[2])}</div></div>`).join('')}</div>
+ <div class="card"><b>Pubs « À supprimer »</b><div class="hint">47 mails publicitaires mis de côté ce mois-ci, effacés automatiquement au bout de 30 jours. Récap envoyé chaque lundi.</div></div>
  <p class="hint">Demandez-moi « où est la facture de la Quincaillerie ? » dans l'onglet Assistant : je la retrouve.</p>`;
 }
 function vDash(){
@@ -805,6 +807,6 @@ function log(i,t){S.used++;S.feed.push([i,t]);if(S.feed.length>30)S.feed.shift()
 
 render();
 </script>
-<div style="text-align:center;font-size:12px;color:#7A8794;padding:18px 12px 24px;font-family:Inter,Arial,sans-serif">Skyeco by RMS — RESINE MARBRE SOL, 23 route de Corn er Hoet, 56400 Brech · <a href="/mentions-legales.html" style="color:inherit">Mentions légales</a> · <a href="/politique-confidentialite.html" style="color:inherit">Confidentialité</a> · <a href="/cgv.html" style="color:inherit">CGV</a></div>
+<div style="text-align:center;font-size:12px;color:#7A8794;padding:18px 12px 24px;font-family:Manrope,Arial,sans-serif">Skyeco by RMS — RESINE MARBRE SOL, 23 route de Corn er Hoet, 56400 Brech · <a href="/mentions-legales.html" style="color:inherit">Mentions légales</a> · <a href="/politique-confidentialite.html" style="color:inherit">Confidentialité</a> · <a href="/cgv.html" style="color:inherit">CGV</a></div>
 </body>
 </html>

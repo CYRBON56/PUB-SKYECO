@@ -467,12 +467,37 @@ function vComm(p){
 }
 function vMkt(p){
  const post=(i,t,txt,g)=>`<div class="card" ${stg(i)}><div style="height:150px;border-radius:12px;background:${g};display:flex;align-items:flex-end;padding:12px;color:#fff;font-weight:800;font-size:18px">${t}</div><p style="font-size:14px;margin:10px 0">${txt}</p><div style="display:flex;gap:8px"><button class="btn sm" onclick="this.textContent='✓ Publié';this.disabled=true;log('📱','Publication : ${t.replace(/'/g,'')}')">Publier</button><button class="btn sm light">Modifier</button></div><small class="hint">Facebook · Instagram · TikTok</small></div>`;
- p.innerHTML=`${demoBadge()}<div class="card" ${stg(0)}><b>📣 Votre agent marketing</b><p class="hint">Il prépare, vous validez d'un clic.</p></div>
+ p.innerHTML=`<div class="card" ${stg(0)}><b>📸 Créer un avant / après</b><p class="hint">Prenez une photo avant les travaux et une après. Je monte l'image et j'écris le texte, prêts à publier.</p>
+ <div class="row"><div><label>Photo AVANT</label><input type="file" id="aaAv" accept="image/*" onchange="aaGen()"></div><div><label>Photo APRÈS</label><input type="file" id="aaAp" accept="image/*" onchange="aaGen()"></div></div>
+ <div class="row"><div><label>Travaux</label><input id="aaT" placeholder="Ex. terrasse en résine drainante" oninput="aaTxt()"></div><div><label>Commune</label><input id="aaC" placeholder="Ex. Auray" oninput="aaTxt();aaGen()"></div></div>
+ <div id="aaRes" style="display:none;margin-top:12px"><img id="aaImg" style="width:100%;max-width:420px;border-radius:12px;display:block;margin:0 auto" alt="Avant / après"><label style="margin-top:10px">Texte de la publication</label><textarea id="aaTx" rows="4"></textarea>
+ <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn sm" onclick="aaShare()">📤 Publier / partager</button><button class="btn sm light" onclick="aaDl()">⬇️ Télécharger l'image</button><button class="btn sm light" onclick="navigator.clipboard.writeText($('aaTx').value);this.textContent='✓ Texte copié'">📋 Copier le texte</button></div>
+ <small class="hint">Sur téléphone, « Publier / partager » ouvre directement Instagram, Facebook ou TikTok avec l'image.</small></div></div>
+ ${demoBadge()}<div class="card" ${stg(0)}><b>📣 Votre agent marketing</b><p class="hint">Il prépare, vous validez d'un clic.</p></div>
  ${post(1,'Avant / après : terrasse à Auray',"Transformation terminée chez M. Durand : 40 m² de résine drainante, prête pour l'été. 🌿 Devis gratuit en message privé.",'linear-gradient(135deg,#1E3160,#3B5B9A)')}
  ${post(2,'Conseil de saison',"3 gestes simples pour protéger votre terrasse avant l'hiver. Enregistrez ce post !",'linear-gradient(135deg,#B07F00,#F5B700)')}
  <div class="card" ${stg(3)}><b>⭐ Avis Google · 4,8/5</b><div class="feed"><div><span>⭐</span><span>« Travail soigné, équipe ponctuelle » · Mme Tanguy <small class="hint">réponse prête</small></span></div><div><span>📨</span><span>5 demandes d'avis envoyées aux chantiers terminés</span></div></div></div>
  <div class="card" ${stg(4)}><b>🎯 Publicité</b><div class="feed"><div><span>📊</span><span>Campagne terrasses : 9 demandes ce mois, 14 € la demande</span></div><div><span>💡</span><span>Conseil : augmenter de 5 € par jour le week-end</span></div></div><span class="tag">Premium</span></div>`;
 }
+
+function aaLoad(inp){return new Promise(r=>{const f=inp&&inp.files&&inp.files[0];if(!f)return r(null);const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src=URL.createObjectURL(f)})}
+function aaTxt(){const t=($('aaT')?.value||'vos travaux').trim(),c=($('aaC')?.value||'').trim(),x=$('aaTx');if(!x)return;
+ x.value=`Avant / après${c?' à '+c:''} ✨\n${t.charAt(0).toUpperCase()+t.slice(1)} : chantier terminé.\nVous avez un projet ? Devis gratuit en message privé ou au ${(S.co&&S.co.tel)||''}.\n${(S.co&&S.co.name)||''}\n#avantapres #renovation #artisan${c?' #'+c.toLowerCase().replace(/[^a-z0-9]/g,''):''}`}
+async function aaGen(){const a=await aaLoad($('aaAv')),b=await aaLoad($('aaAp'));if(!a||!b)return;
+ const W=1080,H=1350,cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');
+ const band=110,hh=(H-band)/2;
+ const fit=(im,y)=>{const s=Math.max(W/im.width,hh/im.height),w=im.width*s,h2=im.height*s;g.save();g.beginPath();g.rect(0,y,W,hh);g.clip();g.drawImage(im,(W-w)/2,y+(hh-h2)/2,w,h2);g.restore()};
+ fit(a,0);fit(b,hh);g.fillStyle='#fff';g.fillRect(0,hh-3,W,6);
+ const lab=(t,y,bg,fg)=>{g.font='800 48px Inter,Arial,sans-serif';const w=g.measureText(t).width+48;g.fillStyle=bg;g.beginPath();g.roundRect?g.roundRect(28,y,w,78,16):g.rect(28,y,w,78);g.fill();g.fillStyle=fg;g.fillText(t,52,y+56)};
+ lab('AVANT',28,'rgba(20,33,61,.88)','#fff');lab('APRÈS',hh+28,'#F5B700','#14213D');
+ g.fillStyle='#14213D';g.fillRect(0,H-band,W,band);g.fillStyle='#fff';g.font='800 40px Inter,Arial,sans-serif';
+ const c=($('aaC').value||'').trim();g.fillText(((S.co&&S.co.name)||'')+(c?' · '+c:''),36,H-band+52,W-72);
+ g.fillStyle='#F5B700';g.font='600 30px Inter,Arial,sans-serif';g.fillText(((S.co&&S.co.tel)?'Devis gratuit · '+S.co.tel:'Devis gratuit'),36,H-band+92,W-72);
+ cv.toBlob(bl=>{window._aaBlob=bl;$('aaImg').src=URL.createObjectURL(bl);$('aaRes').style.display='block';if(!$('aaTx').value)aaTxt();log&&log('📸','Avant / après préparé')},'image/jpeg',.9)}
+function aaDl(){if(!window._aaBlob)return;const a=document.createElement('a');a.href=URL.createObjectURL(window._aaBlob);a.download='avant-apres.jpg';a.click()}
+async function aaShare(){if(!window._aaBlob)return;const file=new File([window._aaBlob],'avant-apres.jpg',{type:'image/jpeg'}),text=$('aaTx').value;
+ try{await navigator.clipboard.writeText(text)}catch(e){}
+ if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],text})}catch(e){}}else{aaDl();alert("Image téléchargée et texte copié : collez-les dans Instagram, Facebook ou TikTok.")}}
 function vPlus(p){
  const it=[['🧾','Facture électronique','Factures transmises via Pennylane, prêtes pour 2027'],['💶','Acomptes automatiques','Demande envoyée dès la signature, avec votre lien de paiement'],['📦','Stock','Codes produits, sorties à la facturation, alertes'],['📅','Agenda','Créneaux proposés aux clients, rappels la veille'],['📊','Rapport du mois','Chiffre, devis signés, impayés, ce qui marche'],['🏛️','Appels d\'offres','Repérage des marchés publics près de chez vous'],['📷','Photos de chantier','Classées par client, prêtes pour vos réseaux'],['🧑‍🔧','Équipe','Planning envoyé à vos salariés chaque lundi'],['🛠️','Sur mesure','Une tâche propre à votre métier ? On l\'ajoute']];
  p.innerHTML=`<div class="card" ${stg(0)}><b>➕ Et aussi…</b><p class="hint">Tout ce que votre assistant peut prendre en charge en plus.</p></div><div class="stats" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr))">${it.map((x,i)=>`<div class="stat" ${stg(i+1)}><b style="font-size:22px">${x[0]}</b><b style="font-size:15px">${x[1]}</b><small>${x[2]}</small></div>`).join('')}</div><a class="btn full" style="display:block;text-align:center;text-decoration:none;margin-top:14px" href="/mon-assistant-pro/exemples/">Voir 240 exemples de demandes</a>`;

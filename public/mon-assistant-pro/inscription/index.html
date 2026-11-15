@@ -143,7 +143,7 @@ const isFree=()=>FREE_SIRET.includes((S.co&&S.co.siret)||'');
 let S={products:[],moves:[],docs:[],step:0,co:{},bot:{},conn:{},tasks:{},vol:{devis:8,factures:6,rdv:12,posts:3},tier:null,started:null,used:0,feed:[]};
 try{const s=localStorage.getItem(KEY);if(s)S=Object.assign(S,JSON.parse(s))}catch(e){}
 S.products=S.products||[];S.moves=S.moves||[];S.docs=S.docs||[];
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}if(typeof syncEtat==='function')syncEtat()}
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const eur=n=>{const d=Math.round(n*100)%100?2:0;return n.toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d})+' €'};
@@ -160,7 +160,7 @@ function render(){document.body.classList.remove('dash');{const d=$('btnDeco');i
 function luhn(s){let sum=0;for(let i=0;i<s.length;i++){let d=+s[s.length-1-i];if(i%2){d*=2;if(d>9)d-=9}sum+=d}return sum%10===0}
 function vSignup(){
  const c=S.co;
- $('app').innerHTML=`
+ $('app').innerHTML=loginHTML()+`
  <h1>Créez votre assistant</h1><p class="sub">2 minutes. 30 jours d'essai gratuit, sans carte bancaire.</p>
  <div class="card">
   <label>Numéro de SIRET <small>(facultatif, il remplit le reste pour vous)</small></label>
@@ -415,7 +415,7 @@ function vQuote(){
  <div class="card"><h2 style="margin-top:0">Comparé à une embauche</h2><div class="vs"><div><small>Secrétaire à mi-temps</small><b>+ de 1 000 €/mois</b><small>charges comprises, 20 h par semaine</small></div><div class="g"><small>Votre assistant ${T.n}</small><b>${T.p} €/mois</b><small>disponible 24h/24, 7j/7</small></div></div></div>
  <div class="actions"><button class="btn light" onclick="go(3)">Modifier mes tâches</button><button class="btn" onclick="startTrial(${t})">${isFree()?'Activer mon compte offert':"Démarrer l'essai gratuit"}</button></div>`;
 }
-function startTrial(t){S.tier=t;S.started=new Date().toISOString();S.used=0;S.feed=[['✦',isFree()?'Compte offert activé (client test, forfait '+TIERS[t].n+')':'Compte créé, essai gratuit de 30 jours démarré']];go(5)}
+function startTrial(t){S.tier=t;S.started=new Date().toISOString();S.used=0;S.feed=[['✦',isFree()?'Compte offert activé (client test, forfait '+TIERS[t].n+')':'Compte créé, essai gratuit de 30 jours démarré']];go(5);creerCompteServeur()}
 
 /* ---------- 6. tableau de bord ---------- */
 let tab='jour';
@@ -531,6 +531,27 @@ async function aaShare(){if(!window._aaBlob)return;const file=new File([window._
 const SB='https://wklddwumirkdjkbxvzyj.supabase.co',SBK='sb_publishable_nacX-UD9ZwjpJ1C9Za8xxQ_tIhHW8nO';
 (function(){const m=location.search.match(/[?&]cle=([a-f0-9]{20,})/);if(m){S.cle=m[1];save();history.replaceState(null,'',location.pathname)}})();
 let D=null,Dload=false;
+/* ===== Comptes : connexion par code e-mail, état sauvegardé (15/11/2026) ===== */
+const rpcP=(f,b)=>fetch(SB+'/rest/v1/rpc/'+f,{method:'POST',headers:{apikey:SBK,Authorization:'Bearer '+SBK,'Content-Type':'application/json'},body:JSON.stringify(b)}).then(r=>r.json());
+let _syncT=null;
+function etatPropre(){const e=JSON.parse(JSON.stringify(S));delete e.cle;return e}
+function syncEtat(now){if(!S.cle||S.step<5)return Promise.resolve();clearTimeout(_syncT);if(now)return rpcP('map_etat_sauver',{p_cle:S.cle,p_etat:etatPropre()}).catch(()=>{});_syncT=setTimeout(()=>{rpcP('map_etat_sauver',{p_cle:S.cle,p_etat:etatPropre()}).catch(()=>{})},1500);return Promise.resolve()}
+async function restaurer(cle){try{const r=await rpcP('map_etat_lire',{p_cle:cle});if(r&&r.etat){const keep=S.cle;Object.keys(S).forEach(k=>delete S[k]);Object.assign(S,r.etat);S.cle=cle||keep;if(!S.step||S.step<5)S.step=5;localStorage.setItem(KEY,JSON.stringify(S));render();return true}}catch(e){}return false}
+if(S.cle&&(!S.step||S.step<5))restaurer(S.cle);
+async function creerCompteServeur(){if(S.cle)return;try{const r=await rpcP('map_compte_creer',{p_siret:S.co.siret||'',p_nom:S.co.name||'',p_email:S.co.mail||'',p_etat:etatPropre()});if(r&&r.ok){S.cle=r.cle;save()}else if(r&&r.existe){S.compteExiste=true;save()}}catch(e){}}
+function loginHTML(){return`<div class="card" id="loginBox" style="background:#EEF2FF;border-color:#C7D2FE"><b>🔑 Déjà un compte ? Connectez-vous</b><p class="hint">Entrez l'e-mail de votre compte : je vous envoie un code à 6 chiffres.</p>
+ <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="lgMail" type="email" autocomplete="email" placeholder="votre@email.fr" style="flex:1;min-width:200px"><button class="btn sm dark" onclick="loginCode(this)">Recevoir mon code</button></div>
+ <div id="lgStep2" style="display:none;margin-top:10px"><div style="display:flex;gap:8px;flex-wrap:wrap"><input id="lgCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Code à 6 chiffres" style="flex:1;min-width:160px;letter-spacing:4px;font-size:18px" onkeydown="if(event.key==='Enter')loginOk(this)"><button class="btn sm" onclick="loginOk(this)">Se connecter</button></div></div>
+ <div id="lgMsg" class="hint" style="margin-top:6px"></div></div>`}
+async function loginCode(b){const m=($('lgMail').value||'').trim();if(!/^\S+@\S+\.\S+$/.test(m)){$('lgMsg').textContent='E-mail invalide.';return}
+ b.disabled=true;await rpcP('map_code_envoyer',{p_email:m}).catch(()=>{});b.disabled=false;b.textContent='Renvoyer le code';
+ $('lgStep2').style.display='';$('lgMsg').textContent='Si un compte existe avec cet e-mail, un code vient de vous être envoyé (pensez à regarder dans les spams).';setTimeout(()=>$('lgCode')&&$('lgCode').focus(),50)}
+async function loginOk(b){const m=$('lgMail').value.trim(),c=$('lgCode').value.trim();b.disabled=true;const r=await rpcP('map_code_verifier',{p_email:m,p_code:c}).catch(()=>({ok:false,erreur:'Connexion impossible'}));b.disabled=false;
+ if(!r||!r.ok){$('lgMsg').textContent=(r&&(r.erreur||r.message))||'Code incorrect';return}
+ Object.keys(S).forEach(k=>delete S[k]);Object.assign(S,{products:[],moves:[],docs:[],co:{},bot:{},conn:{},tasks:{},vol:{devis:8,factures:6,rdv:12,posts:3},feed:[],used:0},r.etat||{});
+ S.cle=r.cle;if(!S.co||!S.co.name)S.co=Object.assign(S.co||{},{name:r.nom,siret:r.siret,mail:r.email});if(!S.step||S.step<5){S.step=r.etat?5:0}
+ localStorage.setItem(KEY,JSON.stringify(S));D=null;tab='jour';render()}
+
 async function chargerD(){if(!S.cle||Dload)return;Dload=true;try{const r=await fetch(SB+'/rest/v1/rpc/map_lire',{method:'POST',headers:{apikey:SBK,Authorization:'Bearer '+SBK,'Content-Type':'application/json'},body:JSON.stringify({p_cle:S.cle})});const j=await r.json();if(j&&!j.erreur){D=j;D.t=Date.now();if(typeof tab!=='undefined'&&$('pane'))vDash()}}catch(e){}Dload=false}
 setInterval(()=>{if(S.cle&&document.visibilityState==='visible'){Dload=false;chargerD()}},120000);
 const fd=x=>{if(!x)return'';const d=new Date(x),n=new Date();const j=d.toDateString()===n.toDateString()?"aujourd'hui":(new Date(n-864e5).toDateString()===d.toDateString()?'hier':d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}));return j+' · '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})};
@@ -647,8 +668,9 @@ async function creerFond(b){const t=($('fondTxt').value||'').trim();if(t.length<
 /* ===== Déconnexion (15/11/2026) ===== */
 function deconnexion(b){if(b&&!b.dataset.ok){b.dataset.ok=1;const t=b.textContent;b.textContent='Confirmer la déconnexion ?';b.style.background='#B91C1C';setTimeout(()=>{if(b.isConnected){delete b.dataset.ok;b.textContent=t;b.style.background=''}},4000);return}
  try{if(typeof ecranStop==='function')ecranStop()}catch(e){}
+ b&&(b.disabled=true);Promise.resolve(syncEtat(true)).finally(()=>{
  try{localStorage.removeItem(KEY);sessionStorage.clear()}catch(e){}
- location.href='/mon-assistant-pro/'}
+ location.href='/mon-assistant-pro/inscription/'})}
 function vPlus(p){
  const it=[['🧾','Facture électronique','Factures transmises via Pennylane, prêtes pour 2027'],['💶','Acomptes automatiques','Demande envoyée dès la signature, avec votre lien de paiement'],['📦','Stock','Codes produits, sorties à la facturation, alertes'],['📅','Agenda','Créneaux proposés aux clients, rappels la veille'],['📊','Rapport du mois','Chiffre, devis signés, impayés, ce qui marche'],['🏛️','Appels d\'offres','Repérage des marchés publics près de chez vous'],['📷','Photos de chantier','Classées par client, prêtes pour vos réseaux'],['🧑‍🔧','Équipe','Planning envoyé à vos salariés chaque lundi'],['🛠️','Sur mesure','Une tâche propre à votre métier ? On l\'ajoute']];
  p.innerHTML=ecranHTML()+`<div class="card" ${stg(0)}><b>➕ Et aussi…</b><p class="hint">Tout ce que votre assistant peut prendre en charge en plus.</p></div><div class="stats" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr))">${it.map((x,i)=>`<div class="stat" ${stg(i+1)}><b style="font-size:22px">${x[0]}</b><b style="font-size:15px">${x[1]}</b><small>${x[2]}</small>${(()=>{const ok={'Stock':1,'Agenda':1,'Photos de chantier':1}[x[1]];return `<span class="pill" style="margin-top:6px;align-self:flex-start;background:${ok?'#DCFCE7':'#F3F4F6'};color:${ok?'#166534':'#6B7280'}">${ok?'✓ Actif':'Bientôt'}</span>`})()}</div>`).join('')}</div><a class="btn full" style="display:block;text-align:center;text-decoration:none;margin-top:14px" href="/mon-assistant-pro/exemples/">Voir 240 exemples de demandes</a>`;

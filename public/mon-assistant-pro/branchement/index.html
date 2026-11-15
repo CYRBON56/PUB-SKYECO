@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Branchement de votre assistant – Mon Assistant Pro</title>
+<meta name="robots" content="noindex">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#14213D;--navy2:#1E3160;--yellow:#F5B700;--bg:#F6F7FB;--card:#fff;--text:#1A1F2E;--muted:#5B6476;--line:#E3E6EE;--ok:#16A34A}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
+a{color:inherit}
+.wrap{max-width:760px;margin:0 auto;padding:0 18px}
+header{background:var(--navy);color:#fff;padding:22px 0 26px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;text-decoration:none;color:#fff}
+.logo i{width:30px;height:30px;border-radius:9px;background:var(--yellow);display:grid;place-items:center;color:var(--navy);font-style:normal}
+h1{font-size:28px;line-height:1.2;margin:18px 0 8px;font-weight:800}
+header p{color:#C9D1E4}
+.bar{height:10px;background:rgba(255,255,255,.15);border-radius:99px;margin-top:18px;overflow:hidden}
+.bar b{display:block;height:100%;width:0;background:var(--yellow);transition:width .3s}
+.pct{font-size:13px;color:#C9D1E4;margin-top:6px}
+.help{background:#fff;border:2px solid var(--yellow);border-radius:16px;padding:18px;margin:22px 0}
+.help h2{font-size:18px;margin-bottom:6px}
+.help ol{margin:10px 0 14px 20px;font-size:15px}
+.help li{margin:4px 0}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.btn{display:inline-block;background:var(--yellow);color:var(--navy);font-weight:700;padding:12px 18px;border-radius:12px;border:0;cursor:pointer;font-size:15px;text-decoration:none;font-family:inherit}
+.btn.dark{background:var(--navy);color:#fff}
+.warn{background:#FEF3C7;color:#78350F;border-radius:12px;padding:12px 14px;font-size:14px;margin-bottom:18px}
+.step{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px}
+.step.done{border-color:#BBF7D0;background:#F0FDF4}
+.step h3{display:flex;align-items:center;gap:10px;font-size:17px}
+.num{flex:none;width:30px;height:30px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-size:14px}
+.step.done .num{background:var(--ok)}
+.step .why{color:var(--muted);font-size:14px;margin:6px 0 10px 40px}
+.step ul{margin:0 0 12px 58px;font-size:15px}
+.step li{margin:4px 0}
+code{background:#EEF1F7;padding:2px 6px;border-radius:6px;font-weight:700}
+label.ok{display:flex;align-items:center;gap:10px;margin-left:40px;font-weight:600;cursor:pointer;font-size:15px}
+label.ok input{width:22px;height:22px;accent-color:var(--ok)}
+.end{text-align:center;padding:10px 0 50px}
+.end p{color:var(--muted);margin:8px 0 14px}
+footer{text-align:center;font-size:13px;color:var(--muted);padding:0 0 30px}
+@media(max-width:560px){h1{font-size:23px}.step ul{margin-left:22px}.step .why,label.ok{margin-left:0}}
+</style>
+</head>
+<body>
+<header>
+ <div class="wrap">
+  <a class="logo" href="/mon-assistant-pro/"><i>✓</i>Mon Assistant Pro</a>
+  <h1>On branche votre assistant ensemble</h1>
+  <p>Suivez les étapes pendant notre appel. Comptez environ 1 heure. Cochez chaque étape une fois faite : votre progression est gardée sur cet appareil.</p>
+  <div class="bar"><b id="bar"></b></div>
+  <div class="pct" id="pct">0 étape sur 7</div>
+ </div>
+</header>
+
+<main class="wrap">
+ <div class="help">
+  <h2>🖥️ Vous êtes bloqué ? On prend la main sur votre ordinateur</h2>
+  <p style="font-size:15px;color:var(--muted)">Uniquement pendant l'appel et avec votre accord. Vous voyez tout ce qu'on fait, et vous pouvez couper à tout moment.</p>
+  <ol>
+   <li>Sur votre ordinateur, ouvrez le lien « Partager mon écran » ci-dessous (Google Chrome conseillé).</li>
+   <li>La première fois, acceptez l'installation du petit module Google (gratuit).</li>
+   <li>Cliquez sur <b>« Générer le code »</b> et lisez-nous le code à 12 chiffres.</li>
+  </ol>
+  <div class="btns">
+   <a class="btn" href="https://remotedesktop.google.com/support" target="_blank" rel="noopener">Partager mon écran</a>
+   <a class="btn dark" href="tel:+33645688394">Appeler : 06 45 68 83 94</a>
+  </div>
+ </div>
+
+ <div class="warn">🔒 Ne nous envoyez jamais vos mots de passe par mail ou par SMS. Pour chaque service, c'est <b>vous</b> qui vous connectez et qui cliquez sur « Autoriser ».</div>
+
+ <div id="steps"></div>
+
+ <div class="end">
+  <h2>C'est terminé ?</h2>
+  <p>Envoyez-nous le récapitulatif : on vérifie que tout fonctionne et on vous confirme le démarrage.</p>
+  <button class="btn dark" id="fin" type="button">Envoyer le récapitulatif</button>
+ </div>
+</main>
+<footer>Mon Assistant Pro · Skyeco by RMS — RESINE MARBRE SOL, 23 route de Corn er Hoet, 56400 Brech</footer>
+
+<script>
+const STEPS=[
+ {t:"Préparez vos accès",w:"Pour ne pas chercher pendant l'appel.",l:["Votre ordinateur et votre téléphone professionnel à portée de main","Les identifiants de votre boîte mail, de Pennylane, de Dropbox ou Google Drive, et de vos réseaux sociaux","Un fichier de vos clients et de vos prix, si vous en avez un (Excel, CSV ou export de votre logiciel)"]},
+ {t:"Vos mails",w:"Pour que l'assistant trie vos mails, repère les demandes de devis et vous alerte.",l:["On vous envoie un lien de connexion","Vous vous connectez à votre boîte (Gmail, Outlook ou autre)","Vous cliquez sur « Autoriser »"]},
+ {t:"Pennylane",w:"Pour que vos devis et factures dictés à la voix arrivent directement dans votre comptabilité.",l:["Connectez-vous à Pennylane","Dans les paramètres, on vous guide jusqu'à la rubrique qui permet de créer une clé d'accès","On la saisit ensemble pendant l'appel (jamais par mail)"]},
+ {t:"Dropbox ou Google Drive",w:"Pour que l'assistant range vos factures, devis et photos de chantier au bon endroit.",l:["Dites-nous lequel vous utilisez","Vous vous connectez, puis vous cliquez sur « Autoriser »","On choisit ensemble le dossier de rangement"]},
+ {t:"Réseaux sociaux et avis Google",w:"Pour les publications et les réponses aux avis (forfaits Pro et Premium).",l:["Facebook et Instagram : une seule autorisation pour les deux","Votre fiche Google (avis clients) : vous vous connectez et vous autorisez","TikTok si vous l'utilisez"]},
+ {t:"Votre téléphone : renvoi d'appel",w:"Quand vous ne décrochez pas, la secrétaire répond à votre place.",l:["On vous donne le numéro de votre secrétaire","Sur votre portable, tapez <code>**61*</code> puis ce numéro, puis <code>#</code>, et appuyez sur Appeler","Pour couper le renvoi plus tard : tapez <code>##61#</code> et appuyez sur Appeler","On fait un appel test ensemble"]},
+ {t:"Vos clients, vos prix et la prise en main",w:"Pour que l'assistant connaisse vos clients et chiffre avec vos tarifs.",l:["Envoyez votre fichier clients et prix à infos@ecosky.fr, ou montrez-le-nous à l'écran","On fait ensemble un premier devis dicté à la voix","On règle vos préférences : horaires, ton des messages, relances"]}
+];
+const KEY='map-branchement';
+let st={};try{st=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}};
+function render(){
+ const el=document.getElementById('steps');
+ el.innerHTML=STEPS.map((s,i)=>`<div class="step ${st[i]?'done':''}"><h3><span class="num">${st[i]?'✓':i+1}</span>${s.t}</h3><p class="why">${s.w}</p><ul>${s.l.map(x=>`<li>${x}</li>`).join('')}</ul><label class="ok"><input type="checkbox" data-i="${i}" ${st[i]?'checked':''}> C'est fait</label></div>`).join('');
+ const n=STEPS.filter((_,i)=>st[i]).length;
+ document.getElementById('bar').style.width=(n/STEPS.length*100)+'%';
+ document.getElementById('pct').textContent=`${n} étape${n>1?'s':''} sur ${STEPS.length}`;
+}
+document.getElementById('steps').addEventListener('change',e=>{const i=e.target.dataset.i;if(i===undefined)return;st[i]=e.target.checked;save();render()});
+document.getElementById('fin').onclick=()=>{
+ const lignes=STEPS.map((s,i)=>`${st[i]?'✅':'⬜'} ${s.t}`).join('\n');
+ const body=`Bonjour,\n\nVoici où j'en suis dans le branchement de mon assistant :\n\n${lignes}\n\nMon entreprise : \nMon téléphone : \n`;
+ location.href='mailto:infos@ecosky.fr?subject='+encodeURIComponent('Branchement Mon Assistant Pro')+'&body='+encodeURIComponent(body);
+};
+render();
+</script>
+</body>
+</html>

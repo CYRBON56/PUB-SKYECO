@@ -580,12 +580,12 @@ function vMktR(p){const po=D.posts||[],pu=(D.pub||[])[0];
  ${pu?`<div class="card"><b>🎯 Publicité · dernier rapport (${esc(pu.periode||'')})</b><div class="feed">${((pu.analyse&&pu.analyse.actions)||[]).slice(0,4).map(a=>ligne('💡',esc(a.titre),esc(a.pourquoi||''))).join('')}</div></div>`:''}`;
 }
 
-/* ===== Partage d'écran avec Cyrille (15/11/2026) ===== */
+/* ===== Partage d'écran avec Skyeco (15/11/2026) ===== */
 let EC=null;
 let rpcA=(f,b)=>fetch(SB+'/rest/v1/rpc/'+f,{method:'POST',headers:{apikey:SBK,Authorization:'Bearer '+SBK,'Content-Type':'application/json'},body:JSON.stringify(b)}).then(r=>r.json());
-function ecranHTML(){return`<div class="card" id="ecBox" style="background:#EEF2FF;border-color:#C7D2FE"><b>🆘 Besoin d'aide ? Cyrille vous aide à tout brancher</b>${EC?`<p style="font-size:15px">✅ Partage en cours · code <b>${EC.code}</b> <span id="ecSt" class="hint">${EC.vu?'Cyrille regarde votre écran.':'En attente de Cyrille…'}</span></p><button class="btn sm dark" onclick="ecranStop()">⏹ Arrêter le partage</button>`:`<div style="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-top:8px">
- <div style="background:#fff;border-radius:12px;padding:12px"><b>👀 Montrer mon écran</b><div class="hint">Cyrille regarde et vous guide. Il ne touche à rien.</div><button class="btn sm dark" style="margin-top:8px" onclick="ecranStart(this)">🖥️ Partager mon écran</button></div>
- <div style="background:#fff;border-radius:12px;padding:12px"><b>🖱️ Laisser Cyrille prendre la main</b><div class="hint">Il fait les branchements (Google, Dropbox, Pennylane…) pendant que vous regardez. Vous tapez vous-même vos mots de passe.</div><button class="btn sm dark" style="margin-top:8px" onclick="ctrlOuvrir()">Commencer</button><div id="ctrlBox"></div></div>
+function ecranHTML(){return`<div class="card" id="ecBox" style="background:#EEF2FF;border-color:#C7D2FE"><b>🆘 Besoin d'aide ? Skyeco vous aide à tout brancher</b>${EC?`<p style="font-size:15px">✅ Partage en cours · code <b>${EC.code}</b> <span id="ecSt" class="hint">${EC.vu?'Un conseiller Skyeco regarde votre écran.':'En attente d\'un conseiller Skyeco…'}</span></p><button class="btn sm dark" onclick="ecranStop()">⏹ Arrêter le partage</button>`:`<div style="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-top:8px">
+ <div style="background:#fff;border-radius:12px;padding:12px"><b>👀 Montrer mon écran</b><div class="hint">Un conseiller Skyeco regarde et vous guide. Il ne touche à rien.</div><button class="btn sm dark" style="margin-top:8px" onclick="ecranStart(this)">🖥️ Partager mon écran</button></div>
+ <div style="background:#fff;border-radius:12px;padding:12px"><b>🖱️ Laisser Skyeco prendre la main</b><div class="hint">Il fait les branchements (Google, Dropbox, Pennylane…) pendant que vous regardez. Vous tapez vous-même vos mots de passe.</div><button class="btn sm dark" style="margin-top:8px" onclick="ctrlOuvrir()">Commencer</button><div id="ctrlBox"></div></div>
  <div style="background:#fff;border-radius:12px;padding:12px"><b>📅 Prendre rendez-vous</b><div class="hint">Installation ensemble, au téléphone ou à distance, au moment qui vous arrange.</div><button class="btn sm dark" style="margin-top:8px" onclick="rdvOuvrir()">Choisir un créneau</button><div id="rdvBox"></div></div>
  </div><div class="hint" style="margin-top:6px">Le partage d'écran et la prise en main fonctionnent sur ordinateur (Chrome, Edge, Firefox, Safari).</div>`}</div>`}
 function ctrlOuvrir(){$('ctrlBox').innerHTML=`<ol class="hint" style="padding-left:18px;margin:10px 0">
@@ -593,16 +593,16 @@ function ctrlOuvrir(){$('ctrlBox').innerHTML=`<ol class="hint" style="padding-le
  <li>Rubrique « Obtenir de l'aide » : la 1re fois, cliquez sur le bouton de téléchargement et installez le petit module, puis cliquez <b>« Générer le code »</b>.</li>
  <li>Recopiez les 12 chiffres ici :</li></ol>
  <input id="ctrlCode" inputmode="numeric" placeholder="1234 5678 9012" style="width:100%"><input id="ctrlTel" type="tel" placeholder="Votre téléphone (facultatif)" style="width:100%;margin-top:6px">
- <button class="btn sm" style="margin-top:8px" onclick="ctrlEnvoyer(this)">Envoyer le code à Cyrille</button><div class="hint">Ensuite, laissez la page Chrome ouverte et cliquez « Partager » quand Cyrille se connecte. Vous pouvez arrêter à tout moment.</div>`}
+ <button class="btn sm" style="margin-top:8px" onclick="ctrlEnvoyer(this)">Envoyer le code à Skyeco</button><div class="hint">Ensuite, laissez la page Chrome ouverte et cliquez « Partager » quand le conseiller Skyeco se connecte. Vous pouvez arrêter à tout moment.</div>`}
 async function ctrlEnvoyer(b){const c=$('ctrlCode').value.replace(/\D/g,'');if(c.length!==12){b.insertAdjacentHTML('afterend','<div class="hint" style="color:#B91C1C">Le code fait 12 chiffres.</div>');return}
  b.disabled=true;b.textContent='Envoi…';const r=await rpcA('map_controle_demander',{p_nom:((S.co&&S.co.name)||'Client')+(S.co&&S.co.first?' – '+S.co.first:''),p_code:c,p_tel:$('ctrlTel').value||(S.co&&S.co.tel)||null,p_app:'Mon Assistant Pro'});
- b.textContent=r&&r.ok?'✓ Code envoyé : Cyrille va se connecter':'Erreur, réessayez';if(!(r&&r.ok))b.disabled=false;else log('🖱️','Prise en main demandée')}
+ b.textContent=r&&r.ok?'✓ Code envoyé : un conseiller Skyeco va se connecter':'Erreur, réessayez';if(!(r&&r.ok))b.disabled=false;else log('🖱️','Prise en main demandée')}
 function rdvOuvrir(){$('rdvBox').innerHTML=`<input id="rvTel" type="tel" placeholder="Votre téléphone" value="${esc((S.co&&S.co.tel)||'')}" style="width:100%;margin-top:8px"><select id="rvCr" style="width:100%;margin-top:6px"><option>Dès que possible</option><option>Demain matin</option><option>Demain après-midi</option><option>En fin de journée (après 18 h)</option><option>Samedi matin</option></select><button class="btn sm" style="margin-top:8px" onclick="rdvEnvoyer(this)">Demander le rendez-vous</button>`}
 async function rdvEnvoyer(b){b.disabled=true;const r=await rpcA('map_demande_rappel',{p_nom:(S.co&&S.co.first)||'Client',p_entreprise:(S.co&&S.co.name)||'',p_telephone:$('rvTel').value,p_creneau:$('rvCr').value,p_message:'Rendez-vous d\'installation Mon Assistant Pro (branchements)',p_source:'installation'});
- b.textContent=r&&r.ok?'✓ Demande envoyée : Cyrille vous rappelle':'Erreur : '+((r&&r.erreur)||'réessayez');if(!(r&&r.ok))b.disabled=false}
+ b.textContent=r&&r.ok?'✓ Demande envoyée : l\'équipe Skyeco vous rappelle':'Erreur : '+((r&&r.erreur)||'réessayez');if(!(r&&r.ok))b.disabled=false}
 function ecranMaj(){const b=$('ecBox');if(b)b.outerHTML=ecranHTML()}
 async function ecranStart(btn){
- if(!navigator.mediaDevices||!navigator.mediaDevices.getDisplayMedia){btn.insertAdjacentHTML('afterend','<div class="hint" style="color:#B91C1C;margin-top:6px">Votre appareil ne permet pas de partager l\'écran. Ouvrez l\'appli sur un ordinateur, ou appelez Cyrille.</div>');return}
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getDisplayMedia){btn.insertAdjacentHTML('afterend','<div class="hint" style="color:#B91C1C;margin-top:6px">Votre appareil ne permet pas de partager l\'écran. Ouvrez l\'appli sur un ordinateur, ou demandez un rendez-vous ci-dessous.</div>');return}
  let st;try{st=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:15},audio:false})}catch(e){return}
  btn.disabled=true;btn.textContent='Connexion…';
  const r=await rpcA('map_ecran_creer',{p_nom:((S.co&&S.co.name)||'Client')+(S.co&&S.co.first?' – '+S.co.first:'')});if(!r||!r.ok){btn.disabled=false;btn.textContent='Réessayer';st.getTracks().forEach(t=>t.stop());return}
@@ -611,7 +611,7 @@ async function ecranStart(btn){
  await pc.setLocalDescription(await pc.createOffer());
  await new Promise(res=>{if(pc.iceGatheringState==='complete')return res();pc.onicegatheringstatechange=()=>{if(pc.iceGatheringState==='complete')res()};setTimeout(res,4000)});
  await rpcA('map_ecran_offre',{p_id:r.id,p_code:r.code,p_sdp:pc.localDescription.sdp});
- EC={id:r.id,code:r.code,pc,st,vu:false};ecranMaj();log('🖥️','Partage d\'écran avec Cyrille');
+ EC={id:r.id,code:r.code,pc,st,vu:false};ecranMaj();log('🖥️','Partage d\'écran avec Skyeco');
  EC.t=setInterval(async()=>{if(!EC)return;const e=await rpcA('map_ecran_etat',{p_id:EC.id,p_code:EC.code});if(!e)return;
   if(e.statut==='fini'){ecranStop();return}
   if(e.reponse&&!EC.vu){try{await EC.pc.setRemoteDescription({type:'answer',sdp:e.reponse});EC.vu=true;ecranMaj()}catch(x){}}},1500);
@@ -651,7 +651,7 @@ function vDash(){
  const left=Math.max(0,Math.ceil((end-Date.now())/864e5));
  $('app').innerHTML=`<h1>Bonjour ${esc(S.co.first)} 👋</h1><p class="sub">${esc(S.co.name)} · forfait ${T.n} · ${isFree()?'<b style="color:#166534">compte offert</b>':`essai gratuit : ${left} jour${left>1?'s':''} restant${left>1?'s':''}`}</p>
  <div class="tabs">${[['jour','☀️ Ma journée'],['chat','🎙️ Assistant'],['mails','📬 Mails'],['docs','📁 Documents'],['comm','💬 Commercial'],['mkt','📣 Marketing'],['stock','📦 Stock'],['plus','➕ Plus'],['reg','⚙️ Réglages']].map(([k,l])=>`<button class="${tab===k?'on':''}" data-tab="${k}" onclick="tab='${k}';vDash()">${l}</button>`).join('')}</div>
- <div style="text-align:right;margin:-4px 0 8px"><a href="#" onclick="tab='reg';vDash();return false" class="hint" style="color:#1E3160">🆘 Besoin d'aide ? Partager mon écran avec Cyrille</a></div>
+ <div style="text-align:right;margin:-4px 0 8px"><a href="#" onclick="tab='reg';vDash();return false" class="hint" style="color:#1E3160">🆘 Besoin d'aide ? Partager mon écran avec Skyeco</a></div>
  <div id="pane"></div>`;
  const p=$('pane');
  if(S.cle&&!D)chargerD();

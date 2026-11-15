@@ -537,6 +537,11 @@ const vrai=()=>`<p class="hint" style="background:#DCFCE7;color:#166534;padding:
 const ligne=(ic,t,d)=>`<div><span>${ic}</span><span>${t}${d?` <small class="hint">${d}</small>`:''}</span></div>`;
 const vide=t=>`<div class="hint">${t}</div>`;
 const age=x=>(Date.now()-new Date(x))/864e5;
+
+const dbx=p=>{const a=(p||'').split('/').filter(Boolean),n=a.pop();return 'https://www.dropbox.com/home/'+a.map(encodeURIComponent).join('/')+'?preview='+encodeURIComponent(n||'')};
+const dbxDir=p=>{const a=(p||'').split('/').filter(Boolean);a.pop();return 'https://www.dropbox.com/home/'+a.map(encodeURIComponent).join('/')};
+const lienDoc=x=>`<a href="${dbx(x.path)}" target="_blank" rel="noopener" style="color:#1E3160">📂 Dropbox</a>${x.url&&/^https:\/\/app\.pennylane\.com\//.test(x.url)?` · <a href="${esc(x.url)}" target="_blank" rel="noopener" style="color:#1E3160">🧾 Pennylane (PDF)</a>`:''}`;
+const lienMail=x=>x.cle&&/^mail:/.test(x.cle)?'https://mail.google.com/mail/u/0/#all/'+encodeURIComponent(x.cle.slice(5)):'';
 const uniq=a=>{const s=new Set;return(a||[]).filter(x=>!s.has(x.path)&&s.add(x.path))};
 function devisRelance(){return(D.devis||[]).filter(d=>d.type!=='facture'&&!d.signe&&d.envoye&&!/refus|annul/i.test(d.statut||''))}
 function vJourR(p){
@@ -550,15 +555,15 @@ function vJourR(p){
  <div class="card"><b>📞 Appels pris par la secrétaire</b><div class="feed">${ap.map(x=>ligne('📞',esc(x.fiche.nom||x.appelant)+(x.fiche.commune?' · '+esc(x.fiche.commune):''),esc([x.fiche.type_projet||x.fiche.motif,x.fiche.details].filter(Boolean).join(' – '))+' · '+fd(x.quand))).join('')||vide('Aucun appel ces 2 derniers jours.')}</div></div>
  <div class="card"><b>🎉 Devis signés cette semaine</b><div class="feed">${sig.map(d=>ligne('✍️',esc(d.client)+' · '+eur0(d.ttc),esc(d.projet||'')+' · '+fd(d.signe))).join('')||vide('Aucun cette semaine.')}</div></div>
  ${fx('ads').length?`<div class="card"><b>🎯 Google Ads</b><div class="feed">${fx('ads').map(x=>ligne(x.statut==='Active'?'🟢':'⏸️',esc(x.titre),esc(x.detail||''))).join('')}</div></div>`:''}
- <div class="card"><b>🧾 Factures fournisseurs rangées (7 jours)</b><div class="feed">${fac.slice(0,8).map(x=>ligne('✓',esc((x.path||'').split('/').pop()),'Dropbox')).join('')||vide('Aucune cette semaine.')}</div></div>`;
+ <div class="card"><b>🧾 Factures fournisseurs rangées (7 jours)</b><div class="feed">${fac.slice(0,8).map(x=>ligne('✓',`<a href="${dbx(x.path)}" target="_blank" rel="noopener" style="color:inherit">${esc((x.path||'').split('/').pop())}</a>`,lienDoc(x))).join('')||vide('Aucune cette semaine.')}</div></div>`;
 }
 function vMailsR(p){const m=fx('mails');
  p.innerHTML=vrai()+`<div class="card"><b>📬 Vos mails importants (tri automatique chaque jour)</b><p class="hint">Les pubs et notifications partent à la corbeille ou aux archives. Ici, ce qui demande votre attention.</p></div>`+
- (m.map(x=>`<div class="card" style="padding:14px"><div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(x.titre)}</b><small class="hint">${fd(x.quand)}</small></div><div style="font-size:14px">${esc(x.detail||'')}</div>${x.statut?`<span class="pill" style="background:#E0E7FF;color:#1E3160;margin-top:6px;display:inline-block">${esc(x.statut)}</span>`:''}</div>`).join('')||'<div class="card hint">L\'assistant n\'a pas encore fait son premier passage. Il lit vos mails toutes les 2 heures.</div>');
+ (m.map(x=>`<div class="card" style="padding:14px"><div style="display:flex;justify-content:space-between;gap:8px"><b>${lienMail(x)?`<a href="${lienMail(x)}" target="_blank" rel="noopener" style="color:inherit">${esc(x.titre)}</a>`:esc(x.titre)}</b><small class="hint">${fd(x.quand)}</small></div><div style="font-size:14px">${esc(x.detail||'')}</div>${lienMail(x)?`<a href="${lienMail(x)}" target="_blank" rel="noopener" class="hint" style="color:#1E3160">✉️ Ouvrir dans Gmail</a> `:''}${x.statut?`<span class="pill" style="background:#E0E7FF;color:#1E3160;margin-top:6px;display:inline-block">${esc(x.statut)}</span>`:''}</div>`).join('')||'<div class="card hint">L\'assistant n\'a pas encore fait son premier passage. Il lit vos mails toutes les 2 heures.</div>');
 }
 function vDocsR(p){const d=uniq(D.docs);
  p.innerHTML=vrai()+`<div class="card"><b>📁 Dropbox · rangement automatique</b><div class="hint">Factures fournisseurs, devis et documents rangés dans vos dossiers Dropbox (01 à 05 RMS).</div></div>
- <div class="card"><b>🧾 Journal : ce que j'ai rangé</b>${d.map(j=>{const pa=(j.path||'').split('/');return`<div style="padding:9px 0;border-bottom:1px solid #E5E7EB"><b style="font-size:14px">${esc(pa.pop())}</b><div class="hint">${fd(j.quand)} · ${esc(pa.join(' › ').replace(/^ › /,''))}${j.statut&&j.statut!=='ok'?' · <b style="color:#B91C1C">'+esc(j.statut)+'</b>':''}</div></div>`}).join('')||vide('Rien de rangé pour le moment.')}</div>`;
+ <div class="card"><b>🧾 Journal : ce que j'ai rangé</b>${d.map(j=>{const pa=(j.path||'').split('/');return`<div style="padding:9px 0;border-bottom:1px solid #E5E7EB"><a href="${dbx(j.path)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none"><b style="font-size:14px">📄 ${esc(pa.pop())}</b></a><div class="hint">${fd(j.quand)} · <a href="${dbxDir(j.path)}" target="_blank" rel="noopener" style="color:#5B6876">${esc(pa.join(' › ').replace(/^ › /,''))}</a> · ${lienDoc(j)}${j.statut&&j.statut!=='ok'?' · <b style="color:#B91C1C">'+esc(j.statut)+'</b>':''}</div></div>`}).join('')||vide('Rien de rangé pour le moment.')}</div>`;
 }
 function vCommR(p){const dem=D.demandes||[],rel=devisRelance(),dv=D.devis||[],imp=fx('impayes'),pay=fx('paiements');
  p.innerHTML=vrai()+`<div class="card"><b>💬 Demandes reçues</b><div class="feed">${dem.slice(0,15).map(x=>ligne(x.statut==='nouveau'||x.statut==='à rappeler'?'🆕':'✓',esc(x.nom||'Sans nom')+' · '+esc(x.quoi||''),esc(x.src)+' · '+(x.tel?esc(x.tel)+' · ':'')+fd(x.quand))).join('')||vide('Aucune demande.')}</div></div>

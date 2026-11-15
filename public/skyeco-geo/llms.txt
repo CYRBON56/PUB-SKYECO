@@ -12,7 +12,6 @@
 ## Pour les artisans du BTP
 
 - [Estimateur BTP](https://www.skyeco.fr/estimateur-btp.html) : calculer un devis de chantier en quelques secondes, chez le client
-- [Météo Chantier](https://www.skyeco.fr/meteo-chantier.html) : chaque matin, feu vert ou feu rouge par chantier selon le gel, le point de rosée, l'humidité et la pluie croisés avec les règles de chaque métier
 - [Kit Pro Artisan BTP](https://www.skyeco.fr/kit-pro-artisan-btp.html) : modèle de devis conforme aux mentions légales 2026 et visuels pour les réseaux sociaux
 - [Skyeco Pro](https://www.skyeco.fr/skyeco-pro-landing.html) : suivi des demandes de chantier, devis et relances pour artisans
 

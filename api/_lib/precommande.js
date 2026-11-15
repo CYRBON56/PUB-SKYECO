@@ -11,7 +11,6 @@ const H = { apikey: KEY, Authorization: `Bearer ${KEY}`, 'Content-Type': 'applic
 export const DATE_LIMITE = '30 novembre 2026';
 
 export const PRODUITS = {
-  'meteo-chantier': { nom: 'Météo Chantier', prix: 19.9, page: 'meteo-chantier.html', pitch: "l'appli qui vous dit chaque matin, chantier par chantier, si vous pouvez couler, poser ou peindre" },
   'stock-granules': { nom: 'Mon Stock Granulés', prix: 9.9, page: 'stock-granules.html', pitch: "l'appli qui vous dit jusqu'à quand tiendra votre stock de granulés ou de bois et quand recommander" },
   'facture-chauffage': { nom: 'Ma Facture Chauffage', prix: 9.9, page: 'facture-chauffage.html', pitch: "l'appli qui prévoit votre facture de chauffage de l'hiver et vous alerte quand la consommation dérape" },
 };

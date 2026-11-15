@@ -259,11 +259,33 @@ const CONN=[
  {id:'gmb',ico:'⭐',name:()=>'Fiche Google (avis)',desc:'Demander et répondre aux avis',tier:'Pro'},
  {id:'ads',ico:'🎯',name:()=>'Google Ads',desc:'Campagnes publicitaires',tier:'Premium'}
 ];
+
+/* ===== Inventaire des outils (15/11/2026) ===== */
+const OUTILS=[
+ ['Messagerie et agenda',[['gmail','Gmail','mail','https://accounts.google.com/signup'],['outlook','Outlook / Hotmail','mail','https://outlook.live.com/'],['ionos','Mail IONOS, Orange, Free…','mail',''],['gcal','Google Agenda','cal','https://calendar.google.com/']]],
+ ['Documents',[['gdrive','Google Drive','docs','https://drive.google.com/'],['dropbox','Dropbox','docs','https://www.dropbox.com/register'],['onedrive','OneDrive','docs','']]],
+ ['Devis, factures et banque',[['pennylane','Pennylane','soft',typeof PENNYLANE_URL!=='undefined'?PENNYLANE_URL:'https://www.pennylane.com/'],['logiciel','Autre logiciel de devis (Obat, Tolteck, Batappli…)','soft',''],['qonto','Qonto','bank','https://qonto.com/fr'],['banque','Autre banque pro','bank','']]],
+ ['Clients et publicité',[['gmb','Fiche Google (avis Google)','gmb','https://business.google.com/create'],['site','Site internet','',''],['gads','Google Ads','ads','https://ads.google.com/'],['fbpage','Page Facebook','fb','https://www.facebook.com/pages/create'],['insta','Compte Instagram pro','fb','https://www.instagram.com/'],['tiktok','TikTok','tt','https://www.tiktok.com/signup'],['linkedin','LinkedIn','','https://www.linkedin.com/signup'],['wab','WhatsApp Business','sms','https://business.whatsapp.com/']]]
+];
+function outil(id){return OUTILS.flatMap(g=>g[1]).find(x=>x[0]===id)}
+function setOutil(id,v){S.outils=S.outils||{};S.outils[id]=S.outils[id]===v?undefined:v;save();const b=$('invBox');if(b)b.outerHTML=invHTML()}
+function invHTML(){const O=S.outils||{};
+ const row=x=>{const v=O[x[0]];return`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #EEF1F4"><span style="font-size:14px">${esc(x[1])}</span><span style="display:flex;gap:6px;flex-shrink:0"><button class="btn sm ${v==='oui'?'':'light'}" style="padding:7px 10px" onclick="setOutil('${x[0]}','oui')">${v==='oui'?'✓ ':''}Je l'ai</button><button class="btn sm ${v==='non'?'dark':'light'}" style="padding:7px 10px" onclick="setOutil('${x[0]}','non')">Je ne l'ai pas</button></span></div>`};
+ const all=OUTILS.flatMap(g=>g[1]),oui=all.filter(x=>O[x[0]]==='oui'),non=all.filter(x=>O[x[0]]==='non'),rep=oui.length+non.length;
+ const cnx=oui.map(x=>`<div class="conn" style="padding:6px 0"><div class="t"><b style="font-size:14px">${esc(x[1])}</b></div>${x[2]&&S.conn[x[2]]?'<span class="pill ok">Connecté ✓</span>':x[2]?`<button class="btn sm dark" onclick="connect('${x[2]}')">Connecter</button>`:'<small class="hint">noté</small>'}</div>`).join('');
+ const cre=non.map(x=>`<div class="conn" style="padding:6px 0"><div class="t"><b style="font-size:14px">${esc(x[1])}</b><small>${x[3]?'Gratuit à créer : on vous guide pas à pas':'Pas indispensable : on fait sans'}</small></div>${x[3]?`<a class="btn sm light" href="${x[3]}" target="_blank" rel="noopener">Créer</a>`:''}</div>`).join('');
+ return`<div class="card" id="invBox"><b>🧰 Ce que vous avez déjà</b><p class="hint">Cochez ce que vous utilisez. Je vous dis ensuite ce qu'on peut connecter tout de suite, et ce qu'il vaut mieux créer.</p>
+ ${OUTILS.map(g=>`<div style="margin-top:10px"><b style="font-size:13px;color:#5B6876;text-transform:uppercase;letter-spacing:.04em">${g[0]}</b>${g[1].map(row).join('')}</div>`).join('')}
+ ${rep?`<div style="margin-top:14px;display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))">
+  <div style="background:#F0FDF4;border-radius:12px;padding:12px"><b>✅ À connecter (${oui.length})</b>${cnx||'<div class="hint">Rien pour l\'instant.</div>'}</div>
+  <div style="background:#FFFBEB;border-radius:12px;padding:12px"><b>🆕 À créer (${non.length})</b>${cre||'<div class="hint">Rien à créer.</div>'}</div></div>
+  <p class="hint" style="margin-top:8px">${rep} réponse${rep>1?'s':''} sur ${all.length}. Vous pourrez modifier ces choix plus tard dans Réglages.</p>`:''}</div>`}
 function vConn(){
  const n=CONN.filter(c=>S.conn[c.id]).length;
  $('app').innerHTML=`<h1>Connectez vos outils</h1><p class="sub">Connectez au moins votre logiciel de devis et votre messagerie. Le reste peut attendre, vous pourrez le faire plus tard.</p>
  ${S.bot.soft!=='Pennylane'?`<div class="reco"><b>⭐ Conseillé : Pennylane Essentiel</b><div class="hint">Devis, factures, comptabilité automatisée et collaboration avec votre expert-comptable. Branché à votre assistant, votre comptable n'a plus qu'à valider.</div><a class="btn sm" href="${PENNYLANE_URL}" target="_blank" rel="noopener">Découvrir Pennylane</a></div>`:''}
- <div class="card">${CONN.map(c=>`<div class="conn"><div class="ico">${c.ico}</div><div class="t"><b>${esc(c.name())}${c.tier?`<span class="tag">${c.tier}</span>`:''}${c.imp?'<span class="tag" style="background:#FEF3C7;color:#92400E">Important</span>':''}</b><small>${c.desc}</small></div>
+ ${invHTML()}
+ <h2 style="margin:18px 0 8px;font-size:18px">Connexions</h2><div class="card">${CONN.map(c=>`<div class="conn"><div class="ico">${c.ico}</div><div class="t"><b>${esc(c.name())}${c.tier?`<span class="tag">${c.tier}</span>`:''}${c.imp?'<span class="tag" style="background:#FEF3C7;color:#92400E">Important</span>':''}</b><small>${c.desc}</small></div>
  ${S.conn[c.id]?'<span class="pill ok">Connecté ✓</span>':`<button class="btn sm dark" onclick="connect('${c.id}')">Connecter</button>`}</div>`).join('')}</div>
  <p class="hint">${n} outil${n>1?'s':''} connecté${n>1?'s':''} sur ${CONN.length}.</p>
  <div class="actions"><button class="btn light" onclick="go(1)">Retour</button><button class="btn" onclick="go(3)">${n?'Continuer':'Passer pour l\'instant'}</button></div>`;
@@ -556,7 +578,7 @@ function vPlus(p){
 }
 function vReg(p){
  const T=TIERS[S.tier||1];const pct=Math.min(100,Math.round(S.used/T.q*100));const nconn=CONN.filter(c=>S.conn[c.id]).length;
- p.innerHTML=`<div class="stats"><div class="stat"><b>${S.used}/${T.q}</b><small>actions ce mois</small><div class="meter"><div class="${pct>=80?'hot':''}" style="width:${Math.max(2,pct)}%"></div></div></div><div class="stat"><b>${nconn}/${CONN.length}</b><small>outils connectés</small></div><div class="stat"><b>${TASKS.filter(t=>S.tasks[t.id]&&t.tier<=S.tier).length}</b><small>tâches actives</small></div></div>
+ p.innerHTML=invHTML()+`<div class="stats"><div class="stat"><b>${S.used}/${T.q}</b><small>actions ce mois</small><div class="meter"><div class="${pct>=80?'hot':''}" style="width:${Math.max(2,pct)}%"></div></div></div><div class="stat"><b>${nconn}/${CONN.length}</b><small>outils connectés</small></div><div class="stat"><b>${TASKS.filter(t=>S.tasks[t.id]&&t.tier<=S.tier).length}</b><small>tâches actives</small></div></div>
  ${pct>=80?'<div class="card" style="margin-top:14px;background:#FFFBEB;border-color:#F5B700"><b>⚠️ Vous avez utilisé '+pct+' % de vos actions.</b><div class="hint">Passez au forfait supérieur ou attendez le mois prochain.</div></div>':''}
  <div class="card" style="margin-top:14px"><b>Dernières actions</b><div class="feed">${S.feed.slice().reverse().map(f=>`<div><span>${f[0]}</span><span>${esc(f[1])}</span></div>`).join('')}</div></div>
  <h2>Connexions</h2><div id="regConn"></div>

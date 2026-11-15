@@ -417,6 +417,7 @@ const VIDEO=/[?&]video=1/.test(location.search);
 function demoBadge(){return isDemoData()&&!VIDEO?'<p class="hint" style="background:#FEF3C7;color:#92400E;padding:6px 10px;border-radius:8px;margin-bottom:10px">Exemple : vos vrais mails apparaîtront ici une fois la messagerie branchée.</p>':''}
 function stg(i){return `style="animation:pop .35s ease ${(i*0.12).toFixed(2)}s both"`}
 function vJour(p){
+ if(D)return vJourR(p);
  const pend=(S.pending||[]);
  p.innerHTML=`${demoBadge()}
  <div class="card" style="background:#14213D;color:#fff;border:0" ${stg(0)}><b style="font-size:17px">☀️ Votre synthèse du matin</b><p style="color:#C9D1E4;margin-top:6px;font-size:14px">J'ai lu vos 8 nouveaux mails. 2 urgences, 1 demande de devis, 2 factures fournisseurs récupérées. Voici ce qu'il faut faire aujourd'hui.</p><button class="btn sm" style="margin-top:10px" onclick="smsSynth(this)">📱 Recevoir la synthèse par SMS</button></div>
@@ -445,6 +446,7 @@ function vJour(p){
 }
 function smsSynth(b){b.disabled=true;b.textContent='✓ Synthèse envoyée au '+(S.co.tel||'votre portable');log('📱','Synthèse du matin envoyée par SMS')}
 function vMails(p){
+ if(D)return vMailsR(p);
  const R=mr();
  p.innerHTML=`${demoBadge()}<div class="card"><b>📬 Boîte de réception triée par votre secrétaire</b><p class="hint">Chaque mail est lu, classé, et traité quand c'est possible.</p>
  <div class="row" style="margin-top:6px"><div><label>Pubs et newsletters</label><select onchange="setMR('pub',this.value)">${[['archive','Archiver'],['trash','Corbeille'],['none','Ne rien faire']].map(([v,l])=>`<option value="${v}" ${R.pub===v?'selected':''}>${l}</option>`).join('')}</select></div>
@@ -458,6 +460,7 @@ function vMails(p){
  <div class="feed" style="margin-top:6px"><div><span>📰</span><span>Lettre d'info Fournisseur Bois <small class="hint">archivée</small> <button class="btn sm light" style="margin-top:6px" onclick="notPub(this)">Ce n'était pas une pub</button></span></div></div></div>`;
 }
 function vComm(p){
+ if(D)return vCommR(p);
  const L=(i,a,b,c)=>`<div ${stg(i)}><span>${a}</span><span>${b}${c?` <small class="hint">${c}</small>`:''}</span></div>`;
  p.innerHTML=`${demoBadge()}
  <div class="card" ${stg(0)}><b>💬 Demandes reçues</b><div class="feed">${L(1,'✓','M. Riou : terrasse 35 m²','réponse envoyée en 2 min, visite jeudi')}${L(2,'✓','Mme Allanic : entretien jardin','estimation envoyée')}${L(3,'✓','Appel manqué 06 xx xx xx 12','SMS de réponse envoyé')}</div></div>
@@ -498,9 +501,56 @@ function aaDl(){if(!window._aaBlob)return;const a=document.createElement('a');a.
 async function aaShare(){if(!window._aaBlob)return;const file=new File([window._aaBlob],'avant-apres.jpg',{type:'image/jpeg'}),text=$('aaTx').value;
  try{await navigator.clipboard.writeText(text)}catch(e){}
  if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],text})}catch(e){}}else{aaDl();alert("Image téléchargée et texte copié : collez-les dans Instagram, Facebook ou TikTok.")}}
+
+/* ===== Données réelles (15/11/2026) ===== */
+const SB='https://wklddwumirkdjkbxvzyj.supabase.co',SBK='sb_publishable_nacX-UD9ZwjpJ1C9Za8xxQ_tIhHW8nO';
+(function(){const m=location.search.match(/[?&]cle=([a-f0-9]{20,})/);if(m){S.cle=m[1];save();history.replaceState(null,'',location.pathname)}})();
+let D=null,Dload=false;
+async function chargerD(){if(!S.cle||Dload)return;Dload=true;try{const r=await fetch(SB+'/rest/v1/rpc/map_lire',{method:'POST',headers:{apikey:SBK,Authorization:'Bearer '+SBK,'Content-Type':'application/json'},body:JSON.stringify({p_cle:S.cle})});const j=await r.json();if(j&&!j.erreur){D=j;D.t=Date.now();if(typeof tab!=='undefined'&&$('pane'))vDash()}}catch(e){}Dload=false}
+setInterval(()=>{if(S.cle&&document.visibilityState==='visible'){Dload=false;chargerD()}},120000);
+const fd=x=>{if(!x)return'';const d=new Date(x),n=new Date();const j=d.toDateString()===n.toDateString()?"aujourd'hui":(new Date(n-864e5).toDateString()===d.toDateString()?'hier':d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}));return j+' · '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})};
+const eur0=n=>n==null?'':Number(n).toLocaleString('fr-FR',{maximumFractionDigits:0})+' €';
+const fx=o=>(D&&D.flux||[]).filter(x=>x.onglet===o);
+const vrai=()=>`<p class="hint" style="background:#DCFCE7;color:#166534;padding:6px 10px;border-radius:8px;margin-bottom:10px">✅ Vos vraies données · actualisé ${fd(D.t)}${D.maj?' · dernier passage de l\'assistant '+fd(D.maj):''} <a href="#" onclick="Dload=false;chargerD();return false" style="color:#166534">Actualiser</a></p>`;
+const ligne=(ic,t,d)=>`<div><span>${ic}</span><span>${t}${d?` <small class="hint">${d}</small>`:''}</span></div>`;
+const vide=t=>`<div class="hint">${t}</div>`;
+const age=x=>(Date.now()-new Date(x))/864e5;
+const uniq=a=>{const s=new Set;return(a||[]).filter(x=>!s.has(x.path)&&s.add(x.path))};
+function devisRelance(){return(D.devis||[]).filter(d=>d.type!=='facture'&&!d.signe&&d.envoye&&!/refus|annul/i.test(d.statut||''))}
+function vJourR(p){
+ const dem=(D.demandes||[]).filter(x=>age(x.quand)<3),ap=(D.appels||[]).filter(x=>age(x.quand)<2&&x.fiche&&x.fiche.nom),
+  sig=(D.devis||[]).filter(d=>d.signe&&age(d.signe)<7),rel=devisRelance().filter(d=>age(d.envoye)>=7),
+  ag=fx('agenda').filter(x=>new Date(x.quand)>=new Date(new Date().toDateString())).sort((a,b)=>new Date(a.quand)-new Date(b.quand)),
+  urg=fx('mails').filter(x=>/urgent|important/i.test(x.statut||'')),fac=uniq(D.docs).filter(x=>/fournisseur/i.test(x.src||x.path)&&age(x.quand)<7),imp=fx('impayes');
+ p.innerHTML=vrai()+`<div class="card" style="background:#14213D;color:#fff;border:0"><b style="font-size:17px">☀️ Votre point du jour</b><p style="color:#C9D1E4;margin-top:6px;font-size:14px">${dem.length} nouvelle(s) demande(s) en 3 jours · ${ap.length} appel(s) pris par la secrétaire · ${sig.length} devis signé(s) cette semaine · ${rel.length} devis à relancer.</p></div>
+ ${urg.length||imp.length?`<div class="card"><b>🚨 À traiter</b><div class="feed">${urg.map(x=>ligne(x.icone,esc(x.titre),esc(x.detail||''))).join('')}${imp.map(x=>ligne('💶',esc(x.titre),esc(x.detail||''))).join('')}</div></div>`:''}
+ <div class="card"><b>📅 Votre programme</b><div class="feed">${ag.slice(0,8).map(x=>ligne(new Date(x.quand).toLocaleString('fr-FR',{weekday:'short',hour:'2-digit',minute:'2-digit'}),esc(x.titre),esc(x.detail||''))).join('')||vide("Rien dans l'agenda pour les prochains jours (l'assistant lit votre Google Agenda toutes les 2 heures).")}</div></div>
+ <div class="card"><b>📞 Appels pris par la secrétaire</b><div class="feed">${ap.map(x=>ligne('📞',esc(x.fiche.nom||x.appelant)+(x.fiche.commune?' · '+esc(x.fiche.commune):''),esc([x.fiche.type_projet||x.fiche.motif,x.fiche.details].filter(Boolean).join(' – '))+' · '+fd(x.quand))).join('')||vide('Aucun appel ces 2 derniers jours.')}</div></div>
+ <div class="card"><b>🎉 Devis signés cette semaine</b><div class="feed">${sig.map(d=>ligne('✍️',esc(d.client)+' · '+eur0(d.ttc),esc(d.projet||'')+' · '+fd(d.signe))).join('')||vide('Aucun cette semaine.')}</div></div>
+ <div class="card"><b>🧾 Factures fournisseurs rangées (7 jours)</b><div class="feed">${fac.slice(0,8).map(x=>ligne('✓',esc((x.path||'').split('/').pop()),'Dropbox')).join('')||vide('Aucune cette semaine.')}</div></div>`;
+}
+function vMailsR(p){const m=fx('mails');
+ p.innerHTML=vrai()+`<div class="card"><b>📬 Vos mails importants (tri automatique chaque jour)</b><p class="hint">Les pubs et notifications partent à la corbeille ou aux archives. Ici, ce qui demande votre attention.</p></div>`+
+ (m.map(x=>`<div class="card" style="padding:14px"><div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(x.titre)}</b><small class="hint">${fd(x.quand)}</small></div><div style="font-size:14px">${esc(x.detail||'')}</div>${x.statut?`<span class="pill" style="background:#E0E7FF;color:#1E3160;margin-top:6px;display:inline-block">${esc(x.statut)}</span>`:''}</div>`).join('')||'<div class="card hint">L\'assistant n\'a pas encore fait son premier passage. Il lit vos mails toutes les 2 heures.</div>');
+}
+function vDocsR(p){const d=uniq(D.docs);
+ p.innerHTML=vrai()+`<div class="card"><b>📁 Dropbox · rangement automatique</b><div class="hint">Factures fournisseurs, devis et documents rangés dans vos dossiers Dropbox (01 à 05 RMS).</div></div>
+ <div class="card"><b>🧾 Journal : ce que j'ai rangé</b>${d.map(j=>{const pa=(j.path||'').split('/');return`<div style="padding:9px 0;border-bottom:1px solid #E5E7EB"><b style="font-size:14px">${esc(pa.pop())}</b><div class="hint">${fd(j.quand)} · ${esc(pa.join(' › ').replace(/^ › /,''))}${j.statut&&j.statut!=='ok'?' · <b style="color:#B91C1C">'+esc(j.statut)+'</b>':''}</div></div>`}).join('')||vide('Rien de rangé pour le moment.')}</div>`;
+}
+function vCommR(p){const dem=D.demandes||[],rel=devisRelance(),dv=D.devis||[],imp=fx('impayes'),pay=fx('paiements');
+ p.innerHTML=vrai()+`<div class="card"><b>💬 Demandes reçues</b><div class="feed">${dem.slice(0,15).map(x=>ligne(x.statut==='nouveau'||x.statut==='à rappeler'?'🆕':'✓',esc(x.nom||'Sans nom')+' · '+esc(x.quoi||''),esc(x.src)+' · '+(x.tel?esc(x.tel)+' · ':'')+fd(x.quand))).join('')||vide('Aucune demande.')}</div></div>
+ <div class="card"><b>🔔 Devis envoyés, pas encore signés</b><div class="feed">${rel.slice(0,15).map(d=>ligne(age(d.envoye)>=7?'⏰':'📄',esc(d.numero||'')+' · '+esc(d.client||'')+' · '+eur0(d.ttc),esc(d.projet||'')+' · envoyé '+fd(d.envoye)+(age(d.envoye)>=7?' · <b>à relancer</b>':''))).join('')||vide('Aucun devis en attente.')}</div></div>
+ <div class="card"><b>✍️ Derniers devis signés</b><div class="feed">${dv.filter(d=>d.signe).slice(0,8).map(d=>ligne('🎉',esc(d.client)+' · '+eur0(d.ttc),esc(d.projet||'')+' · '+fd(d.signe))).join('')||vide('Aucun.')}</div></div>
+ <div class="card"><b>💶 Paiements et impayés (Qonto)</b><div class="feed">${imp.map(x=>ligne('⏳',esc(x.titre),esc(x.detail||''))).join('')}${pay.slice(0,10).map(x=>ligne('✓',esc(x.titre),esc(x.detail||'')+' · '+fd(x.quand))).join('')||(!imp.length?vide("L'assistant n'a pas encore fait son premier passage sur Qonto."):'')}</div></div>`;
+}
+function vMktR(p){const po=D.posts||[],pu=(D.pub||[])[0];
+ const div=document.createElement('div');vMkt(div);const aa=div.querySelector('.card');
+ p.innerHTML=vrai()+(aa?aa.outerHTML:'')+`<div class="card"><b>📱 Vos dernières publications</b>${po.slice(0,6).map(x=>`<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #E5E7EB">${x.photo?`<img src="${esc(x.photo)}" style="width:64px;height:64px;object-fit:cover;border-radius:8px">`:''}<div><div style="font-size:14px">${esc(x.legende||'')}</div><small class="hint">${esc(x.statut||'')} · ${fd(x.quand)}</small></div></div>`).join('')||vide('Aucune publication.')}</div>
+ ${pu?`<div class="card"><b>🎯 Publicité · dernier rapport (${esc(pu.periode||'')})</b><div class="feed">${((pu.analyse&&pu.analyse.actions)||[]).slice(0,4).map(a=>ligne('💡',esc(a.titre),esc(a.pourquoi||''))).join('')}</div></div>`:''}`;
+}
 function vPlus(p){
  const it=[['🧾','Facture électronique','Factures transmises via Pennylane, prêtes pour 2027'],['💶','Acomptes automatiques','Demande envoyée dès la signature, avec votre lien de paiement'],['📦','Stock','Codes produits, sorties à la facturation, alertes'],['📅','Agenda','Créneaux proposés aux clients, rappels la veille'],['📊','Rapport du mois','Chiffre, devis signés, impayés, ce qui marche'],['🏛️','Appels d\'offres','Repérage des marchés publics près de chez vous'],['📷','Photos de chantier','Classées par client, prêtes pour vos réseaux'],['🧑‍🔧','Équipe','Planning envoyé à vos salariés chaque lundi'],['🛠️','Sur mesure','Une tâche propre à votre métier ? On l\'ajoute']];
- p.innerHTML=`<div class="card" ${stg(0)}><b>➕ Et aussi…</b><p class="hint">Tout ce que votre assistant peut prendre en charge en plus.</p></div><div class="stats" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr))">${it.map((x,i)=>`<div class="stat" ${stg(i+1)}><b style="font-size:22px">${x[0]}</b><b style="font-size:15px">${x[1]}</b><small>${x[2]}</small></div>`).join('')}</div><a class="btn full" style="display:block;text-align:center;text-decoration:none;margin-top:14px" href="/mon-assistant-pro/exemples/">Voir 240 exemples de demandes</a>`;
+ p.innerHTML=`<div class="card" ${stg(0)}><b>➕ Et aussi…</b><p class="hint">Tout ce que votre assistant peut prendre en charge en plus.</p></div><div class="stats" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr))">${it.map((x,i)=>`<div class="stat" ${stg(i+1)}><b style="font-size:22px">${x[0]}</b><b style="font-size:15px">${x[1]}</b><small>${x[2]}</small>${(()=>{const ok={'Stock':1,'Agenda':1,'Photos de chantier':1}[x[1]];return `<span class="pill" style="margin-top:6px;align-self:flex-start;background:${ok?'#DCFCE7':'#F3F4F6'};color:${ok?'#166534':'#6B7280'}">${ok?'✓ Actif':'Bientôt'}</span>`})()}</div>`).join('')}</div><a class="btn full" style="display:block;text-align:center;text-decoration:none;margin-top:14px" href="/mon-assistant-pro/exemples/">Voir 240 exemples de demandes</a>`;
 }
 function vReg(p){
  const T=TIERS[S.tier||1];const pct=Math.min(100,Math.round(S.used/T.q*100));const nconn=CONN.filter(c=>S.conn[c.id]).length;
@@ -512,6 +562,7 @@ function vReg(p){
  vConnInto($('regConn'));
 }
 function vDocs(p){
+ if(D)return vDocsR(p);
  const prov=S.docs&&S.docs.prov;
  if(!S.conn.docs){p.innerHTML=`<div class="card"><b>📁 Rangez tout automatiquement</b><p class="hint">Connectez votre Dropbox ou votre Google Drive : je classe devis, factures, mails et photos par client, et je note tout dans un journal.</p><button class="btn" onclick="connect('docs')">Connecter mes documents</button></div>`;return}
  const J=[['14/11 · 06:31','Facture F-88412 · Négoce Matériaux Ouest','Fournisseurs › Négoce Matériaux Ouest › Factures','mail'],
@@ -533,6 +584,8 @@ function vDash(){
  <div class="tabs">${[['jour','☀️ Ma journée'],['chat','🎙️ Assistant'],['mails','📬 Mails'],['docs','📁 Documents'],['comm','💬 Commercial'],['mkt','📣 Marketing'],['stock','📦 Stock'],['plus','➕ Plus'],['reg','⚙️ Réglages']].map(([k,l])=>`<button class="${tab===k?'on':''}" data-tab="${k}" onclick="tab='${k}';vDash()">${l}</button>`).join('')}</div>
  <div id="pane"></div>`;
  const p=$('pane');
+ if(S.cle&&!D)chargerD();
+ if(tab==='mkt'&&D){vMktR(p);return}
  if(tab==='jour')vJour(p);
  else if(tab==='chat'){
   p.innerHTML=`<div class="chat"><div class="msgs" id="msgs"></div><div class="chatin"><input id="q" placeholder="Dictez votre devis…"><button class="btn sm" onclick="send()">Envoyer</button></div></div><p class="hint">Essayez : « Devis pour Mme Le Gall à Vannes, terrasse 30 m² à 90 € le m², et 500 € de préparation ». Avec vos produits : « Devis pour M. Durand à Auray, 12 RES-EPDM-25 ».</p>`;

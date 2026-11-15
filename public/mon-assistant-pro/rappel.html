@@ -66,7 +66,7 @@ button:disabled{opacity:.6}
   var URL_SB = 'https://wklddwumirkdjkbxvzyj.supabase.co/rest/v1/rpc/';
   var H = {'apikey':'sb_publishable_nacX-UD9ZwjpJ1C9Za8xxQ_tIhHW8nO','Content-Type':'application/json'};
   try { fetch(URL_SB+'visite',{method:'POST',keepalive:true,headers:H,body:JSON.stringify({p_page:location.pathname,p_src:q.get('src'),p_ref:null,p_appareil:/Mobi|Android|iPhone/i.test(navigator.userAgent)?'mobile':'ordinateur',p_t:jeton})}).catch(function(){}); } catch(e){}
-  if(q.get('src')==='mise-en-place'){ document.getElementById('msg').value='Je suis intéressé par la mise en place clé en main (290 € HT).'; document.querySelector('h1').textContent='Mise en place clé en main'; }
+  if(q.get('src')==='mise-en-place'){ document.getElementById('msg').value='Je suis intéressé par la mise en place clé en main (290 € HT, déduits de l\'abonnement si je continue après l\'essai).'; document.querySelector('h1').textContent='Mise en place clé en main'; }
   var f = document.getElementById('f'), err = document.getElementById('err'), go = document.getElementById('go');
   f.addEventListener('submit', function(e){
     e.preventDefault(); err.textContent=''; go.disabled = true;

@@ -542,6 +542,8 @@ const dbx=p=>{const a=(p||'').split('/').filter(Boolean),n=a.pop();return 'https
 const dbxDir=p=>{const a=(p||'').split('/').filter(Boolean);a.pop();return 'https://www.dropbox.com/home/'+a.map(encodeURIComponent).join('/')};
 const lienDoc=x=>`<a href="${dbx(x.path)}" target="_blank" rel="noopener" style="color:#1E3160">📂 Dropbox</a>${x.url&&/^https:\/\/app\.pennylane\.com\//.test(x.url)?` · <a href="${esc(x.url)}" target="_blank" rel="noopener" style="color:#1E3160">🧾 Pennylane (PDF)</a>`:''}`;
 const lienMail=x=>x.cle&&/^mail:/.test(x.cle)?'https://mail.google.com/mail/u/0/#all/'+encodeURIComponent(x.cle.slice(5)):'';
+const okUrl=u=>/^https:\/\/(wklddwumirkdjkbxvzyj\.supabase\.co|app\.pennylane\.com|drive\.google\.com)\//.test(u||'');
+const lienDevis=d=>[okUrl(d.pdf_signe)?`<a href="${esc(d.pdf_signe)}" target="_blank" rel="noopener" style="color:#166534;font-weight:700">✍️ Devis signé (PDF)</a>`:'',okUrl(d.pdf)?`<a href="${esc(d.pdf)}" target="_blank" rel="noopener" style="color:#1E3160">📄 Devis</a>`:''].filter(Boolean).join(' · ');
 const uniq=a=>{const s=new Set;return(a||[]).filter(x=>!s.has(x.path)&&s.add(x.path))};
 function devisRelance(){return(D.devis||[]).filter(d=>d.type!=='facture'&&!d.signe&&d.envoye&&!/refus|annul/i.test(d.statut||''))}
 function vJourR(p){
@@ -553,7 +555,7 @@ function vJourR(p){
  ${urg.length||imp.length?`<div class="card"><b>🚨 À traiter</b><div class="feed">${urg.map(x=>ligne(x.icone,esc(x.titre),esc(x.detail||''))).join('')}${imp.map(x=>ligne('💶',esc(x.titre),esc(x.detail||''))).join('')}</div></div>`:''}
  <div class="card"><b>📅 Votre programme</b><div class="feed">${ag.slice(0,8).map(x=>ligne(new Date(x.quand).toLocaleString('fr-FR',{weekday:'short',hour:'2-digit',minute:'2-digit'}),esc(x.titre),esc(x.detail||''))).join('')||vide("Rien dans l'agenda pour les prochains jours (l'assistant lit votre Google Agenda toutes les 2 heures).")}</div></div>
  <div class="card"><b>📞 Appels pris par la secrétaire</b><div class="feed">${ap.map(x=>ligne('📞',esc(x.fiche.nom||x.appelant)+(x.fiche.commune?' · '+esc(x.fiche.commune):''),esc([x.fiche.type_projet||x.fiche.motif,x.fiche.details].filter(Boolean).join(' – '))+' · '+fd(x.quand))).join('')||vide('Aucun appel ces 2 derniers jours.')}</div></div>
- <div class="card"><b>🎉 Devis signés cette semaine</b><div class="feed">${sig.map(d=>ligne('✍️',esc(d.client)+' · '+eur0(d.ttc),esc(d.projet||'')+' · '+fd(d.signe))).join('')||vide('Aucun cette semaine.')}</div></div>
+ <div class="card"><b>🎉 Devis signés cette semaine</b><div class="feed">${sig.map(d=>ligne('✍️',esc(d.client)+' · '+eur0(d.ttc),esc(d.projet||'')+' · '+fd(d.signe)+'<br>'+lienDevis(d))).join('')||vide('Aucun cette semaine.')}</div></div>
  ${fx('ads').length?`<div class="card"><b>🎯 Google Ads</b><div class="feed">${fx('ads').map(x=>ligne(x.statut==='Active'?'🟢':'⏸️',esc(x.titre),esc(x.detail||''))).join('')}</div></div>`:''}
  <div class="card"><b>🧾 Factures fournisseurs rangées (7 jours)</b><div class="feed">${fac.slice(0,8).map(x=>ligne('✓',`<a href="${dbx(x.path)}" target="_blank" rel="noopener" style="color:inherit">${esc((x.path||'').split('/').pop())}</a>`,lienDoc(x))).join('')||vide('Aucune cette semaine.')}</div></div>`;
 }
@@ -567,8 +569,8 @@ function vDocsR(p){const d=uniq(D.docs);
 }
 function vCommR(p){const dem=D.demandes||[],rel=devisRelance(),dv=D.devis||[],imp=fx('impayes'),pay=fx('paiements');
  p.innerHTML=vrai()+`<div class="card"><b>💬 Demandes reçues</b><div class="feed">${dem.slice(0,15).map(x=>ligne(x.statut==='nouveau'||x.statut==='à rappeler'?'🆕':'✓',esc(x.nom||'Sans nom')+' · '+esc(x.quoi||''),esc(x.src)+' · '+(x.tel?esc(x.tel)+' · ':'')+fd(x.quand))).join('')||vide('Aucune demande.')}</div></div>
- <div class="card"><b>🔔 Devis envoyés, pas encore signés</b><div class="feed">${rel.slice(0,15).map(d=>ligne(age(d.envoye)>=7?'⏰':'📄',esc(d.numero||'')+' · '+esc(d.client||'')+' · '+eur0(d.ttc),esc(d.projet||'')+' · envoyé '+fd(d.envoye)+(age(d.envoye)>=7?' · <b>à relancer</b>':''))).join('')||vide('Aucun devis en attente.')}</div></div>
- <div class="card"><b>✍️ Derniers devis signés</b><div class="feed">${dv.filter(d=>d.signe).slice(0,8).map(d=>ligne('🎉',esc(d.client)+' · '+eur0(d.ttc),esc(d.projet||'')+' · '+fd(d.signe))).join('')||vide('Aucun.')}</div></div>
+ <div class="card"><b>🔔 Devis envoyés, pas encore signés</b><div class="feed">${rel.slice(0,15).map(d=>ligne(age(d.envoye)>=7?'⏰':'📄',esc(d.numero||'')+' · '+esc(d.client||'')+' · '+eur0(d.ttc),esc(d.projet||'')+' · envoyé '+fd(d.envoye)+(age(d.envoye)>=7?' · <b>à relancer</b>':'')+(lienDevis(d)?'<br>'+lienDevis(d):''))).join('')||vide('Aucun devis en attente.')}</div></div>
+ <div class="card"><b>✍️ Derniers devis signés</b><div class="feed">${dv.filter(d=>d.signe).slice(0,8).map(d=>ligne('🎉',esc(d.client)+' · '+eur0(d.ttc),esc(d.projet||'')+' · '+fd(d.signe)+'<br>'+lienDevis(d))).join('')||vide('Aucun.')}</div></div>
  <div class="card"><b>💶 Paiements et impayés (Qonto)</b><div class="feed">${imp.map(x=>ligne('⏳',esc(x.titre),esc(x.detail||''))).join('')}${pay.slice(0,10).map(x=>ligne('✓',esc(x.titre),esc(x.detail||'')+' · '+fd(x.quand))).join('')||(!imp.length?vide("L'assistant n'a pas encore fait son premier passage sur Qonto."):'')}</div></div>`;
 }
 function vMktR(p){const po=D.posts||[],pu=(D.pub||[])[0];

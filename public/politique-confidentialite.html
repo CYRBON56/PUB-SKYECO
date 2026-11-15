@@ -20,7 +20,7 @@
 
 <h2>Qui traite vos données ?</h2>
 <p>
-  RMS EcoSky (Skyeco Pro), 23 Route de Corn Er Hoet, 56400 Brech, est responsable du traitement des données collectées sur ce site et via le service Skyeco Pro.
+  RESINE MARBRE SOL (marques RMS EcoSky et Skyeco), 23 route de Corn er Hoet, 56400 Brech, est responsable du traitement des données collectées sur ce site et via les services Skyeco (dont Mon Assistant Pro, Contact Chantier et Skyeco Pro).
 </p>
 
 <h2>Quelles données collectons-nous ?</h2>
@@ -28,7 +28,11 @@
   <tr><th>Qui</th><th>Données</th><th>Pourquoi</th></tr>
   <tr><td>Artisan (client Skyeco Pro)</td><td>Nom d'entreprise, SIRET, téléphone, email, zone d'intervention, photos</td><td>Créer et faire fonctionner sa vitrine, facturer son abonnement</td></tr>
   <tr><td>Prospect (visiteur de la vitrine)</td><td>Nom, prénom, téléphone, email, réponses au formulaire</td><td>Transmettre sa demande d'estimation à l'artisan concerné</td></tr>
+  <tr><td>Client Mon Assistant Pro (entreprise)</td><td>Nom d'entreprise, SIRET, adresse, prénom, nom, téléphone, email, réglages de l'assistant, outils connectés (messagerie, agenda, documents, banque, logiciel de facturation) et les données que ces outils transmettent à l'assistant</td><td>Faire fonctionner l'assistant (secrétariat, devis, relances, rangement des documents, publications), se connecter à son compte (code envoyé par email), l'aider à distance à sa demande (partage d'écran)</td></tr>
+  <tr><td>Personne qui appelle une ligne gérée par l'assistant (secrétaire téléphonique ou ligne de démonstration)</td><td>Numéro de téléphone, contenu de la conversation retranscrit automatiquement, informations données pendant l'appel (prénom, entreprise, besoin, moment pour être rappelé)</td><td>Répondre à l'appel, transmettre la demande par SMS ou email au professionnel concerné, envoyer à l'appelant un SMS de confirmation ou le lien demandé</td></tr>
+  <tr><td>Professionnel qui demande à être rappelé ou un rendez-vous</td><td>Nom, entreprise, téléphone, créneau souhaité, message</td><td>Le rappeler et organiser le rendez-vous</td></tr>
 </table>
+<p>Les appels reçus par l'assistant téléphonique sont traités par un système automatique : la voix est transcrite en texte pour permettre la réponse, l'appel n'est pas enregistré en audio. L'assistant l'indique s'il lui est demandé s'il s'agit d'une intelligence artificielle.</p>
 
 <h2>Avec qui partageons-nous ces données ?</h2>
 <p>
@@ -36,8 +40,12 @@
 </p>
 <ul>
   <li><strong>Supabase</strong> (hébergement de la base de données)</li>
-  <li><strong>Twilio</strong> (envoi des SMS)</li>
+  <li><strong>Twilio</strong> (téléphonie, reconnaissance vocale des appels et envoi des SMS)</li>
+  <li><strong>Anthropic</strong> (intelligence artificielle qui formule les réponses de l'assistant)</li>
+  <li><strong>Vercel</strong> (hébergement du site et des applications)</li>
   <li><strong>Resend</strong> (envoi des emails)</li>
+  <li><strong>Google, Microsoft, Dropbox, Pennylane, Qonto</strong> (uniquement les services que le client Mon Assistant Pro choisit de connecter, et uniquement pour les tâches qu'il confie à l'assistant)</li>
+  <li><strong>Gamma</strong> (création des images de fond demandées par le client)</li>
   <li><strong>Stripe</strong> (paiement des abonnements, pour les artisans uniquement)</li>
   <li><strong>Google Ads</strong> (diffusion des annonces publicitaires, pour les artisans qui financent une campagne)</li>
 </ul>

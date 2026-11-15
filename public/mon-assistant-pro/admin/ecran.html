@@ -1,0 +1,28 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>Écrans partagés – Mon Assistant Pro</title>
+<style>body{margin:0;font-family:Inter,Arial,sans-serif;background:#F3F5F8;color:#14213D}.top{background:#14213D;color:#fff;padding:14px 20px;font-weight:800}.in{max-width:1100px;margin:0 auto;padding:18px}
+.card{background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;border:1px solid #E3E9EE}.btn{background:#F5B700;color:#14213D;border:0;border-radius:10px;padding:10px 16px;font-weight:800;cursor:pointer}.btn.d{background:#14213D;color:#fff}.hint{color:#5B6876;font-size:14px}
+video{width:100%;background:#000;border-radius:12px;max-height:78vh}input{padding:10px;border:1px solid #CBD5E1;border-radius:10px;width:320px;max-width:100%}</style></head>
+<body><div class="top">🖥️ Mon Assistant Pro · écrans partagés par vos clients</div><div class="in" id="app"></div>
+<script>
+const SB='https://wklddwumirkdjkbxvzyj.supabase.co',K='sb_publishable_nacX-UD9ZwjpJ1C9Za8xxQ_tIhHW8nO',$=i=>document.getElementById(i);
+const rpc=(f,b)=>fetch(SB+'/rest/v1/rpc/'+f,{method:'POST',headers:{apikey:K,Authorization:'Bearer '+K,'Content-Type':'application/json'},body:JSON.stringify(b)}).then(r=>r.json());
+let A=new URLSearchParams(location.search).get('k')||localStorage.getItem('map_admin')||'';if(A){localStorage.setItem('map_admin',A);history.replaceState(null,'',location.pathname)}
+let pc=null,cur=null;
+function esc(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+async function liste(){if(!A){$('app').innerHTML=`<div class="card"><b>Clé administrateur</b><p class="hint">Collez la clé reçue (une seule fois sur cet appareil).</p><input id="k"> <button class="btn" onclick="A=$('k').value.trim();localStorage.setItem('map_admin',A);liste()">OK</button></div>`;return}
+ if(cur)return;const l=await rpc('map_ecran_liste',{p_admin:A});
+ $('app').innerHTML=`<div class="card"><b>Demandes en cours</b><p class="hint">Quand un client clique sur « Partager mon écran avec Cyrille », il apparaît ici (et vous recevez un mail). Actualisation automatique.</p></div>`+
+ (l.length?l.map(s=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><b>${esc(s.nom)}</b><div class="hint">Code ${esc(s.code)} · ${new Date(s.cree_le).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}${s.statut==='vu'?' · déjà ouvert':''}</div></div><button class="btn d" onclick='voir(${JSON.stringify(s.id)})'>👀 Voir son écran</button></div>`).join(''):'<div class="card hint">Aucun client ne partage son écran pour le moment.</div>');
+ window._l=l}
+async function voir(id){const s=(window._l||[]).find(x=>x.id===id);if(!s||!s.offre)return;cur=s;
+ $('app').innerHTML=`<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div><b>Écran de ${esc(s.nom)}</b><div class="hint" id="st">Connexion…</div></div><button class="btn" onclick="fin()">Terminer</button></div><video id="v" autoplay playsinline muted></video>`;
+ pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]});
+ pc.ontrack=e=>{$('v').srcObject=e.streams[0];$('st').textContent='En direct (lecture seule)'};
+ pc.onconnectionstatechange=()=>{if(['failed','disconnected'].includes(pc.connectionState))$('st').textContent='Connexion perdue. Demandez au client de relancer le partage.'};
+ await pc.setRemoteDescription({type:'offer',sdp:s.offre});const a=await pc.createAnswer();await pc.setLocalDescription(a);
+ await new Promise(r=>{if(pc.iceGatheringState==='complete')return r();pc.onicegatheringstatechange=()=>{if(pc.iceGatheringState==='complete')r()};setTimeout(r,4000)});
+ await rpc('map_ecran_repondre',{p_admin:A,p_id:id,p_sdp:pc.localDescription.sdp})}
+async function fin(){if(cur)await rpc('map_ecran_admin_fin',{p_admin:A,p_id:cur.id});if(pc)pc.close();pc=null;cur=null;liste()}
+liste();setInterval(liste,4000);
+</script></body></html>

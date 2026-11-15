@@ -577,13 +577,35 @@ function vMktR(p){const po=D.posts||[],pu=(D.pub||[])[0];
  ${(()=>{const c=fx('ads'),j=fx('ads_jour').sort((a,b)=>new Date(b.quand)-new Date(a.quand));return `<div class="card"><b>🎯 Google Ads</b><div class="feed">${c.map(x=>ligne(x.statut==='Active'?'🟢':'⏸️',esc(x.titre)+(x.statut?' <small class="hint">· '+esc(x.statut)+'</small>':''),esc(x.detail||''))).join('')||vide('Aucune campagne trouvée.')}</div>${j.length?`<div class="hint" style="margin-top:8px"><b>Par jour</b></div><div class="feed">${j.slice(0,7).map(x=>ligne('📊',esc(x.titre),esc(x.detail||''))).join('')}</div>`:''}</div>`})()}
  ${pu?`<div class="card"><b>🎯 Publicité · dernier rapport (${esc(pu.periode||'')})</b><div class="feed">${((pu.analyse&&pu.analyse.actions)||[]).slice(0,4).map(a=>ligne('💡',esc(a.titre),esc(a.pourquoi||''))).join('')}</div></div>`:''}`;
 }
+
+/* ===== Partage d'écran avec Cyrille (15/11/2026) ===== */
+let EC=null;
+let rpcA=(f,b)=>fetch(SB+'/rest/v1/rpc/'+f,{method:'POST',headers:{apikey:SBK,Authorization:'Bearer '+SBK,'Content-Type':'application/json'},body:JSON.stringify(b)}).then(r=>r.json());
+function ecranHTML(){return`<div class="card" id="ecBox" style="background:#EEF2FF;border-color:#C7D2FE"><b>🆘 Besoin d'aide ? Partagez votre écran</b><p class="hint">Cyrille voit votre écran en direct pour vous guider. Il ne peut rien toucher ni cliquer, et vous arrêtez quand vous voulez.</p>${EC?`<p style="font-size:15px">✅ Partage en cours · code <b>${EC.code}</b> <span id="ecSt" class="hint">${EC.vu?'Cyrille regarde votre écran.':'En attente de Cyrille…'}</span></p><button class="btn sm dark" onclick="ecranStop()">⏹ Arrêter le partage</button>`:`<button class="btn sm dark" onclick="ecranStart(this)">🖥️ Partager mon écran avec Cyrille</button><div class="hint" style="margin-top:6px">Fonctionne sur ordinateur (Chrome, Edge, Firefox, Safari). Pas disponible sur téléphone.</div>`}</div>`}
+function ecranMaj(){const b=$('ecBox');if(b)b.outerHTML=ecranHTML()}
+async function ecranStart(btn){
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getDisplayMedia){btn.insertAdjacentHTML('afterend','<div class="hint" style="color:#B91C1C;margin-top:6px">Votre appareil ne permet pas de partager l\'écran. Ouvrez l\'appli sur un ordinateur, ou appelez Cyrille.</div>');return}
+ let st;try{st=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:15},audio:false})}catch(e){return}
+ btn.disabled=true;btn.textContent='Connexion…';
+ const r=await rpcA('map_ecran_creer',{p_nom:((S.co&&S.co.name)||'Client')+(S.co&&S.co.first?' – '+S.co.first:'')});if(!r||!r.ok){btn.disabled=false;btn.textContent='Réessayer';st.getTracks().forEach(t=>t.stop());return}
+ const pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]});
+ st.getTracks().forEach(t=>{pc.addTrack(t,st);t.onended=ecranStop});
+ await pc.setLocalDescription(await pc.createOffer());
+ await new Promise(res=>{if(pc.iceGatheringState==='complete')return res();pc.onicegatheringstatechange=()=>{if(pc.iceGatheringState==='complete')res()};setTimeout(res,4000)});
+ await rpcA('map_ecran_offre',{p_id:r.id,p_code:r.code,p_sdp:pc.localDescription.sdp});
+ EC={id:r.id,code:r.code,pc,st,vu:false};ecranMaj();log('🖥️','Partage d\'écran avec Cyrille');
+ EC.t=setInterval(async()=>{if(!EC)return;const e=await rpcA('map_ecran_etat',{p_id:EC.id,p_code:EC.code});if(!e)return;
+  if(e.statut==='fini'){ecranStop();return}
+  if(e.reponse&&!EC.vu){try{await EC.pc.setRemoteDescription({type:'answer',sdp:e.reponse});EC.vu=true;ecranMaj()}catch(x){}}},1500);
+}
+async function ecranStop(){if(!EC)return;const e=EC;EC=null;clearInterval(e.t);try{e.st.getTracks().forEach(t=>t.stop());e.pc.close()}catch(x){}rpcA('map_ecran_fin',{p_id:e.id,p_code:e.code});ecranMaj()}
 function vPlus(p){
  const it=[['🧾','Facture électronique','Factures transmises via Pennylane, prêtes pour 2027'],['💶','Acomptes automatiques','Demande envoyée dès la signature, avec votre lien de paiement'],['📦','Stock','Codes produits, sorties à la facturation, alertes'],['📅','Agenda','Créneaux proposés aux clients, rappels la veille'],['📊','Rapport du mois','Chiffre, devis signés, impayés, ce qui marche'],['🏛️','Appels d\'offres','Repérage des marchés publics près de chez vous'],['📷','Photos de chantier','Classées par client, prêtes pour vos réseaux'],['🧑‍🔧','Équipe','Planning envoyé à vos salariés chaque lundi'],['🛠️','Sur mesure','Une tâche propre à votre métier ? On l\'ajoute']];
- p.innerHTML=`<div class="card" ${stg(0)}><b>➕ Et aussi…</b><p class="hint">Tout ce que votre assistant peut prendre en charge en plus.</p></div><div class="stats" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr))">${it.map((x,i)=>`<div class="stat" ${stg(i+1)}><b style="font-size:22px">${x[0]}</b><b style="font-size:15px">${x[1]}</b><small>${x[2]}</small>${(()=>{const ok={'Stock':1,'Agenda':1,'Photos de chantier':1}[x[1]];return `<span class="pill" style="margin-top:6px;align-self:flex-start;background:${ok?'#DCFCE7':'#F3F4F6'};color:${ok?'#166534':'#6B7280'}">${ok?'✓ Actif':'Bientôt'}</span>`})()}</div>`).join('')}</div><a class="btn full" style="display:block;text-align:center;text-decoration:none;margin-top:14px" href="/mon-assistant-pro/exemples/">Voir 240 exemples de demandes</a>`;
+ p.innerHTML=ecranHTML()+`<div class="card" ${stg(0)}><b>➕ Et aussi…</b><p class="hint">Tout ce que votre assistant peut prendre en charge en plus.</p></div><div class="stats" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr))">${it.map((x,i)=>`<div class="stat" ${stg(i+1)}><b style="font-size:22px">${x[0]}</b><b style="font-size:15px">${x[1]}</b><small>${x[2]}</small>${(()=>{const ok={'Stock':1,'Agenda':1,'Photos de chantier':1}[x[1]];return `<span class="pill" style="margin-top:6px;align-self:flex-start;background:${ok?'#DCFCE7':'#F3F4F6'};color:${ok?'#166534':'#6B7280'}">${ok?'✓ Actif':'Bientôt'}</span>`})()}</div>`).join('')}</div><a class="btn full" style="display:block;text-align:center;text-decoration:none;margin-top:14px" href="/mon-assistant-pro/exemples/">Voir 240 exemples de demandes</a>`;
 }
 function vReg(p){
  const T=TIERS[S.tier||1];const pct=Math.min(100,Math.round(S.used/T.q*100));const nconn=CONN.filter(c=>S.conn[c.id]).length;
- p.innerHTML=invHTML()+`<div class="stats"><div class="stat"><b>${S.used}/${T.q}</b><small>actions ce mois</small><div class="meter"><div class="${pct>=80?'hot':''}" style="width:${Math.max(2,pct)}%"></div></div></div><div class="stat"><b>${nconn}/${CONN.length}</b><small>outils connectés</small></div><div class="stat"><b>${TASKS.filter(t=>S.tasks[t.id]&&t.tier<=S.tier).length}</b><small>tâches actives</small></div></div>
+ p.innerHTML=ecranHTML()+invHTML()+`<div class="stats"><div class="stat"><b>${S.used}/${T.q}</b><small>actions ce mois</small><div class="meter"><div class="${pct>=80?'hot':''}" style="width:${Math.max(2,pct)}%"></div></div></div><div class="stat"><b>${nconn}/${CONN.length}</b><small>outils connectés</small></div><div class="stat"><b>${TASKS.filter(t=>S.tasks[t.id]&&t.tier<=S.tier).length}</b><small>tâches actives</small></div></div>
  ${pct>=80?'<div class="card" style="margin-top:14px;background:#FFFBEB;border-color:#F5B700"><b>⚠️ Vous avez utilisé '+pct+' % de vos actions.</b><div class="hint">Passez au forfait supérieur ou attendez le mois prochain.</div></div>':''}
  <div class="card" style="margin-top:14px"><b>Dernières actions</b><div class="feed">${S.feed.slice().reverse().map(f=>`<div><span>${f[0]}</span><span>${esc(f[1])}</span></div>`).join('')}</div></div>
  <h2>Connexions</h2><div id="regConn"></div>
@@ -611,6 +633,7 @@ function vDash(){
  const left=Math.max(0,Math.ceil((end-Date.now())/864e5));
  $('app').innerHTML=`<h1>Bonjour ${esc(S.co.first)} 👋</h1><p class="sub">${esc(S.co.name)} · forfait ${T.n} · ${isFree()?'<b style="color:#166534">compte offert</b>':`essai gratuit : ${left} jour${left>1?'s':''} restant${left>1?'s':''}`}</p>
  <div class="tabs">${[['jour','☀️ Ma journée'],['chat','🎙️ Assistant'],['mails','📬 Mails'],['docs','📁 Documents'],['comm','💬 Commercial'],['mkt','📣 Marketing'],['stock','📦 Stock'],['plus','➕ Plus'],['reg','⚙️ Réglages']].map(([k,l])=>`<button class="${tab===k?'on':''}" data-tab="${k}" onclick="tab='${k}';vDash()">${l}</button>`).join('')}</div>
+ <div style="text-align:right;margin:-4px 0 8px"><a href="#" onclick="tab='reg';vDash();return false" class="hint" style="color:#1E3160">🆘 Besoin d'aide ? Partager mon écran avec Cyrille</a></div>
  <div id="pane"></div>`;
  const p=$('pane');
  if(S.cle&&!D)chargerD();

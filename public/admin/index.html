@@ -1,0 +1,47 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+<title>Administration Skyeco</title>
+<style>*{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:#F3F5F8;color:#14213D}.top{background:#14213D;color:#fff;padding:14px 20px;font-weight:800;display:flex;justify-content:space-between;align-items:center}.in{max-width:1100px;margin:0 auto;padding:18px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.tabs button{border:1px solid #CBD5E1;background:#fff;border-radius:999px;padding:9px 14px;font-weight:700;cursor:pointer}.tabs button.on{background:#14213D;color:#fff;border-color:#14213D}
+.card{background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;border:1px solid #E3E9EE}.btn{display:inline-block;background:#F5B700;color:#14213D;border:0;border-radius:10px;padding:10px 16px;font-weight:800;cursor:pointer;text-decoration:none}.btn.d{background:#14213D;color:#fff}.btn.l{background:#fff;border:1px solid #CBD5E1}
+.hint{color:#5B6876;font-size:14px}.row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.pill{display:inline-block;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700;background:#E0E7FF;color:#1E3160}
+.code{font-size:28px;font-weight:900;letter-spacing:3px;background:#FFF4CC;border-radius:10px;padding:8px 14px;display:inline-block}video{width:100%;background:#000;border-radius:12px;max-height:78vh}input{padding:10px;border:1px solid #CBD5E1;border-radius:10px;width:320px;max-width:100%}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#DC2626;margin-right:6px;animation:b 1s infinite}@keyframes b{50%{opacity:.3}}</style></head>
+<body><div class="top"><span>⚙️ Administration Skyeco</span><span id="badge" class="hint" style="color:#C9D1E4"></span></div><div class="in" id="app"></div>
+<script>
+const SB='https://wklddwumirkdjkbxvzyj.supabase.co',K='sb_publishable_nacX-UD9ZwjpJ1C9Za8xxQ_tIhHW8nO',$=i=>document.getElementById(i);
+const rpc=(f,b)=>fetch(SB+'/rest/v1/rpc/'+f,{method:'POST',headers:{apikey:K,Authorization:'Bearer '+K,'Content-Type':'application/json'},body:JSON.stringify(b)}).then(r=>r.json());
+let A=new URLSearchParams(location.search).get('k')||localStorage.getItem('map_admin')||'';if(A){localStorage.setItem('map_admin',A);if(location.search)history.replaceState(null,'',location.pathname)}
+let T='aide',D=null,pc=null,cur=null,vu=0;
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fd=x=>x?new Date(x).toLocaleString('fr-FR',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+const crd=c=>c?c.slice(0,4)+' '+c.slice(4,8)+' '+c.slice(8):'';
+async function charger(){if(!A||cur)return;const r=await rpc('skyeco_admin',{p_admin:A});if(r.erreur){A='';localStorage.removeItem('map_admin');return vue()}D=r;
+ const n=(D.aide||[]).length;$('badge').innerHTML=n?`<span class="dot"></span>${n} demande(s) d'aide en direct`:'';if(n>vu&&vu>=0)try{new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=').play()}catch(e){}vu=n;document.title=(n?'('+n+') ':'')+'Administration Skyeco';vue()}
+function vue(){
+ if(!A){$('app').innerHTML=`<div class="card"><b>Clé administrateur</b><p class="hint">Collez votre clé (une seule fois sur cet appareil).</p><input id="k"> <button class="btn" onclick="A=$('k').value.trim();localStorage.setItem('map_admin',A);charger()">Entrer</button></div>`;return}
+ if(cur)return;if(!D){$('app').innerHTML='<div class="card hint">Chargement…</div>';return}
+ const tabs=[['aide','🆘 Aide en direct ('+D.aide.length+')'],['rdv','📅 Rendez-vous et rappels ('+(D.rappels.length+D.rdv.length)+')'],['applis','🧰 Applis et clients']];
+ let h=`<div class="tabs">${tabs.map(([k,l])=>`<button class="${T===k?'on':''}" onclick="T='${k}';vue()">${l}</button>`).join('')}</div>`;
+ if(T==='aide'){h+=`<div class="card hint">Les clients demandent de l'aide depuis l'appli (bouton « 🆘 Besoin d'aide »). <b>Voir l'écran</b> : vous regardez en direct. <b>Prendre la main</b> : ils vous donnent un code Chrome Bureau à distance, vous contrôlez souris et clavier pour faire les branchements avec eux.</div>`+
+  (D.aide.map(a=>a.type==='controle'?`<div class="card"><div class="row"><div><b>🖱️ ${esc(a.nom)}</b> <span class="pill">${esc(a.app||'')}</span><div class="hint">${fd(a.quand)}${a.tel?' · <a href="tel:'+esc(a.tel)+'">'+esc(a.tel)+'</a>':''} · le code expire 5 min après sa création</div></div><button class="btn l" onclick="finir('${a.id}')">Terminé</button></div>
+   <p style="margin:12px 0 6px">Code d'accès :</p><span class="code">${crd(a.code_crd)}</span> <button class="btn l" onclick="navigator.clipboard.writeText('${a.code_crd}');this.textContent='✓ Copié'">Copier</button>
+   <p><a class="btn d" href="https://remotedesktop.google.com/support/" target="_blank" rel="noopener">🖱️ Prendre la main</a></p><div class="hint">Sur la page qui s'ouvre, rubrique « Donner de l'aide », collez le code puis « Se connecter ». Le client doit cliquer « Partager » de son côté.</div></div>`
+   :`<div class="card row"><div><b>🖥️ ${esc(a.nom)}</b> <span class="pill">${esc(a.app||'')}</span><div class="hint">Partage d'écran (lecture seule) · code ${esc(a.code)} · ${fd(a.quand)}${a.statut==='vu'?' · déjà ouvert':''}</div></div><div style="display:flex;gap:8px"><button class="btn d" ${a.offre?'':'disabled'} onclick="voir('${a.id}')">👀 Voir son écran</button><button class="btn l" onclick="finir('${a.id}')">Terminé</button></div></div>`).join('')||'<div class="card hint">Aucune demande d\'aide en ce moment. Cette page se met à jour toute seule et le titre de l\'onglet affiche le nombre de demandes.</div>')}
+ if(T==='rdv'){h+=`<div class="card"><b>📅 Rendez-vous à venir</b>${D.rdv.map(r=>`<div style="padding:8px 0;border-bottom:1px solid #EEF1F4"><b>${fd(r.quand)}</b> · ${esc(r.nom)} ${r.tel?'· <a href="tel:'+esc(r.tel)+'">'+esc(r.tel)+'</a>':''} <span class="pill">${esc(r.type||'rendez-vous')}</span><div class="hint">${esc(r.msg||'')}</div></div>`).join('')||'<div class="hint">Aucun.</div>'}</div>
+  <div class="card"><b>📞 Demandes de rappel et d'installation (60 jours)</b>${D.rappels.map(r=>`<div style="padding:8px 0;border-bottom:1px solid #EEF1F4"><div class="row"><span><b>${esc(r.nom)}</b> ${r.tel?'· <a href="tel:'+esc(r.tel)+'">'+esc(r.tel)+'</a>':''} <span class="pill">${esc(r.app)}</span></span><span class="hint">${fd(r.quand)}</span></div><div class="hint">${esc(r.quoi||'')}${r.msg?' · '+esc(r.msg):''}${r.statut?' · '+esc(r.statut):''}</div></div>`).join('')||'<div class="hint">Aucune.</div>'}</div>`}
+ if(T==='applis'){const L=[['Mon Assistant Pro','/mon-assistant-pro/','Page de présentation'],['Mon Assistant Pro – inscription / appli','/mon-assistant-pro/inscription/','L\'appli des clients'],['Contact Chantier','/contact-chantier/','Appli de suivi de chantier'],['Accueil Skyeco','/','skyeco.fr'],['Écrans partagés (page seule)','/mon-assistant-pro/admin/ecran.html','Ancienne page, même contenu que « Aide en direct »']];
+  h+=`<div class="card"><b>🧰 Vos applis</b>${L.map(l=>`<div class="row" style="padding:8px 0;border-bottom:1px solid #EEF1F4"><span><b>${l[0]}</b><div class="hint">${l[2]}</div></span><a class="btn l" href="${l[1]}" target="_blank">Ouvrir</a></div>`).join('')}</div>
+  <div class="card"><b>👥 Comptes Mon Assistant Pro</b>${D.comptes.map(c=>`<div style="padding:8px 0;border-bottom:1px solid #EEF1F4"><b>${esc(c.nom)}</b><div class="hint">SIRET ${esc(c.siret)} · créé ${fd(c.cree)}</div></div>`).join('')}</div>`}
+ $('app').innerHTML=h}
+async function finir(id){await rpc('skyeco_aide_fin',{p_admin:A,p_id:id});charger()}
+async function voir(id){const l=await rpc('map_ecran_liste',{p_admin:A});const s=l.find(x=>x.id===id);if(!s||!s.offre)return alert("Le partage n'est plus disponible.");cur=s;
+ $('app').innerHTML=`<div class="card row"><div><b>Écran de ${esc(s.nom)}</b><div class="hint" id="st">Connexion…</div></div><button class="btn" onclick="arreter()">Terminer</button></div><video id="v" autoplay playsinline muted></video>`;
+ pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]});
+ pc.ontrack=e=>{$('v').srcObject=e.streams[0];$('st').textContent='En direct (lecture seule)'};
+ pc.onconnectionstatechange=()=>{if(['failed','disconnected'].includes(pc.connectionState))$('st').textContent='Connexion perdue. Demandez au client de relancer le partage.'};
+ await pc.setRemoteDescription({type:'offer',sdp:s.offre});await pc.setLocalDescription(await pc.createAnswer());
+ await new Promise(r=>{if(pc.iceGatheringState==='complete')return r();pc.onicegatheringstatechange=()=>{if(pc.iceGatheringState==='complete')r()};setTimeout(r,4000)});
+ await rpc('map_ecran_repondre',{p_admin:A,p_id:id,p_sdp:pc.localDescription.sdp})}
+async function arreter(){if(cur)await rpc('map_ecran_admin_fin',{p_admin:A,p_id:cur.id});if(pc)pc.close();pc=null;cur=null;charger()}
+vue();charger();setInterval(charger,5000);
+</script></body></html>

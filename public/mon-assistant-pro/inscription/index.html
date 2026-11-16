@@ -856,7 +856,7 @@ function vDash(){
  const left=Math.max(0,Math.ceil((end-Date.now())/864e5));
  $('app').innerHTML=`<h1>Bonjour ${esc(S.co.first)} 👋</h1><p class="sub">${esc(S.co.name)} · forfait ${T.n} · ${isFree()?'<b style="color:#166534">compte offert</b>':`essai gratuit : ${left} jour${left>1?'s':''} restant${left>1?'s':''}`}</p>
  <div class="tabs">${[['jour','☀️ Ma journée'],['chat','🎙️ Assistant'],['mails','📬 Mails'],['docs','📁 Documents'],['comm','💬 Commercial'],['mkt','📣 Marketing'],['stock','📦 Stock'],['plus','➕ Plus'],['reg','⚙️ Réglages']].map(([k,l])=>`<button class="${tab===k?'on':''}" data-tab="${k}" onclick="tab='${k}';vDash()">${l}</button>`).join('')}</div>
- <div style="text-align:right;margin:-4px 0 8px"><a href="#" onclick="tab='reg';vDash();return false" class="hint" style="color:#1E3160">🆘 Besoin d'aide ? Partager mon écran avec Skyeco</a></div>
+ <div style="text-align:right;margin:-4px 0 8px"><a href="#" onclick="tab='plus';vDash();return false" class="hint" style="color:#1E3160">🆘 Besoin d'aide ? Partager mon écran avec Skyeco</a></div>
  <div id="pane"></div>`;
  const p=$('pane');
  if(S.cle&&!D)chargerD();

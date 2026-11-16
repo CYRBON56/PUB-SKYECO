@@ -4340,18 +4340,36 @@
       micBtn.textContent = '🎤';
       micBtn.style.background = '#f2f4f1';
     });
-    recognition.addEventListener('error', () => {
+    recognition.addEventListener('error', (e) => {
       enEcoute = false;
       micBtn.textContent = '🎤';
       micBtn.style.background = '#f2f4f1';
+      let msg = "Je n'ai pas pu t'écouter — réessaie.";
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        msg = "Le micro est bloqué pour ce site. Clique sur le cadenas 🔒 à côté de l'adresse du site, autorise le micro, puis recharge la page.";
+      } else if (e.error === 'no-speech') {
+        msg = "Je n'ai rien entendu — clique sur 🎤 et parle juste après.";
+      } else if (e.error === 'audio-capture') {
+        msg = "Aucun micro détecté sur cet appareil. Vérifie qu'un micro est bien branché et activé.";
+      } else if (e.error === 'network') {
+        msg = "La reconnaissance vocale a besoin d'une connexion internet — vérifie ta connexion.";
+      }
+      ajouterMessage('assistant', msg);
     });
 
     micBtn.addEventListener('click', () => {
       if (enEcoute) { recognition.stop(); return; }
-      enEcoute = true;
-      micBtn.textContent = '🔴';
-      micBtn.style.background = '#fdeceb';
-      recognition.start();
+      try {
+        enEcoute = true;
+        micBtn.textContent = '🔴';
+        micBtn.style.background = '#fdeceb';
+        recognition.start();
+      } catch (err) {
+        enEcoute = false;
+        micBtn.textContent = '🎤';
+        micBtn.style.background = '#f2f4f1';
+        ajouterMessage('assistant', 'Impossible de démarrer le micro — recharge la page et réessaie.');
+      }
     });
   }
 

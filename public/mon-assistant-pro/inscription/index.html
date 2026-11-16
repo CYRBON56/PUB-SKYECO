@@ -349,6 +349,14 @@ const OUTILS=[
 // vraie connexion vérifiée côté serveur. true = réellement branché ;
 // 'attente' = enregistré mais pas encore réellement connecté (on le dit) ;
 // sinon, un bouton pour demander la connexion.
+// Sélecteur générique "une seule case active" dans une modale de connexion
+// (ex : choix de la messagerie) : met à jour S.bot[key] et rafraîchit juste
+// les classes .on dans le conteneur, sans réafficher toute la modale.
+function choisirTier(boxId,key,val){
+ S.bot=S.bot||{};S.bot[key]=val;save();
+ const box=document.getElementById(boxId);
+ if(box)box.querySelectorAll('.tier').forEach(e=>e.classList.toggle('on',e.dataset.v===val));
+}
 function pillConn(id){
  const v=S.conn[id];
  if(v===true)return '<span class="pill ok">Connecté ✓</span>';
@@ -384,9 +392,9 @@ function connect(id){
  if(id==='soft'&&soft==='Pennylane')body=`<p class="sub">Je vais créer vos devis et factures directement dans Pennylane. Je vérifie vraiment votre jeton auprès de Pennylane avant de le connecter.</p><p class="hint" style="background:#FEF3C7;color:#92400E;padding:8px 10px;border-radius:8px;margin-bottom:8px">⚠️ Abonnement Pennylane <b>Essentiel</b> minimum requis (l'offre Basique ne suffit pas).</p><ol><li>Ouvrez Pennylane, puis <b>Paramètres</b>.</li><li>Allez dans <b>Connectivité</b>, puis <b>Développeurs</b>.</li><li>Cliquez sur <b>Générer un jeton API</b>, cochez les droits « Ventes » et copiez le jeton.</li></ol><label>Collez votre jeton ici</label><input id="tok" placeholder="Jeton API Pennylane"><div id="tokErr"></div>`;
  else if(id==='soft'&&['Evoliz','Axonaut','Sellsy'].includes(soft))body=`<p class="sub">Vous allez être redirigé vers ${soft} pour autoriser l'accès.</p><ol><li>Connectez-vous à votre compte ${soft}.</li><li>Cliquez sur <b>Autoriser</b>.</li></ol>`;
  else if(id==='soft')body=`<p class="sub">Facturation intégrée : je fais vos devis et factures, prêts à être synchronisés avec Pennylane quand vous l'ouvrirez. Ajoutez votre logo et vos mentions.</p><label>Mentions de bas de devis <small>(assurance décennale, conditions de paiement)</small></label><textarea id="tok" rows="3" placeholder="Ex. Assurance décennale n°… Acompte de 30 % à la commande."></textarea>`;
- else if(id==='mail')body=`<p class="sub">Choisissez votre messagerie.</p><div class="tiers" style="grid-template-columns:1fr 1fr"><div class="tier on">Gmail</div><div class="tier">Outlook</div><div class="tier">IONOS</div><div class="tier">Autre</div></div><ol><li>Connectez-vous à votre compte.</li><li>Autorisez la lecture et l'envoi de mails.</li></ol><label>Pubs et newsletters</label><select id="mrPub"><option value="purge30">Les ranger dans « À supprimer », effacées au bout de 30 jours</option><option value="archive">Les archiver dans « Promotions »</option><option value="trash">Les mettre à la corbeille</option><option value="none">Ne rien faire</option></select>
+ else if(id==='mail'){const mp=S.bot.mail||'Gmail';body=`<p class="sub">Choisissez votre messagerie.</p><div class="tiers" id="mTiers" style="grid-template-columns:1fr 1fr">${['Gmail','Outlook','IONOS','Autre'].map(m=>`<div class="tier ${mp===m?'on':''}" data-v="${m}" onclick="choisirTier('mTiers','mail','${m}')">${m}</div>`).join('')}</div><ol><li>Connectez-vous à votre compte.</li><li>Autorisez la lecture et l'envoi de mails.</li></ol><label>Pubs et newsletters</label><select id="mrPub"><option value="purge30">Les ranger dans « À supprimer », effacées au bout de 30 jours</option><option value="archive">Les archiver dans « Promotions »</option><option value="trash">Les mettre à la corbeille</option><option value="none">Ne rien faire</option></select>
 <label>Spams</label><select id="mrSpam"><option value="trash">Les mettre à la corbeille</option><option value="spam">Les déplacer dans « Spam »</option><option value="none">Ne rien faire</option></select>
-<p class="hint">🛡️ Clients, fournisseurs et contacts habituels ne sont jamais touchés. Rien n'est effacé tout de suite : « À supprimer » et la corbeille se vident seuls au bout de 30 jours, et vous recevez un récap chaque semaine pour repêcher un mail si besoin. Chaque mail envoyé en votre nom apparaît dans vos messages envoyés.</p>`;
+<p class="hint">🛡️ Clients, fournisseurs et contacts habituels ne sont jamais touchés. Rien n'est effacé tout de suite : « À supprimer » et la corbeille se vident seuls au bout de 30 jours, et vous recevez un récap chaque semaine pour repêcher un mail si besoin. Chaque mail envoyé en votre nom apparaît dans vos messages envoyés.</p>`}
  else if(id==='docs'){const D=S.docs||{};body=`<p class="sub">Je range automatiquement vos documents dans <b>votre</b> espace : ils restent à vous, même si vous arrêtez l'abonnement.</p>
 <label>Votre espace de stockage</label><select id="dProv">${['Dropbox','Google Drive'].map(o=>`<option ${D.prov===o?'selected':''}>${o}</option>`).join('')}</select>
 <p class="hint">Pas encore de compte ? Ils sont gratuits pour commencer : <a href="https://www.dropbox.com/basic" target="_blank" rel="noopener">Dropbox</a> (2 Go) ou <a href="https://drive.google.com" target="_blank" rel="noopener">Google Drive</a> (15 Go, partagés avec Gmail). Vous passerez à l'offre payante seulement si vous manquez de place.</p>
@@ -429,7 +437,7 @@ async function doConn(id){
   }
   return
  }
- if(id==='mail'&&$('mrPub')){S.mailRules={pub:$('mrPub').value,spam:$('mrSpam').value};save()}
+ if(id==='mail'&&$('mrPub')){S.mailRules={prov:S.bot.mail||'Gmail',pub:$('mrPub').value,spam:$('mrSpam').value};save()}
  if(id==='docs'&&$('dProv')){S.docs={prov:$('dProv').value};save()}
  if(id==='bank'){const iban=$('pIban').value.replace(/\s+/g,'').toUpperCase(),link=$('pLink').value.trim(),pct=parseFloat($('pPct').value);
   if(iban&&!/^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/.test(iban)){$('pErr').innerHTML='<div class="err">IBAN invalide.</div>';return}

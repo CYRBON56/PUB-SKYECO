@@ -64,6 +64,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--navy2)}
 .reco a.btn{display:inline-block;text-decoration:none;margin-top:10px}
 .chatin{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}
 .chatin input{flex:1}
+.pj{display:flex;align-items:center;gap:8px;margin:0 12px;padding:8px 10px;background:#EEF1F8;border-radius:10px;font-size:13px;color:var(--navy2)}
+.pj span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pj button{background:none;border:0;color:var(--navy2);font-size:16px;font-weight:700;cursor:pointer;padding:0 4px;line-height:1}
 /* connections */
 .conn{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
 .conn:last-child{border:0}
@@ -244,6 +247,39 @@ function initMic(){
   try{_recoEcoute=true;btn.textContent='🔴';btn.classList.add('dark');_reco.start()}
   catch(err){_recoEcoute=false;btn.textContent='🎤';btn.classList.remove('dark');add('Impossible de démarrer le micro — recharge la page et réessaie.','a')}
  };
+}
+/* ---------- document joint à la conversation ---------- */
+const TYPES_PJ={pdf:'application/pdf',jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp'};
+let _pj=null; // {nom, media_type, data (base64 sans préfixe)}
+function majPjZone(){
+ const z=$('pjZone');if(!z)return;
+ z.innerHTML=_pj?`<div class="pj">📎<span>${esc(_pj.nom)}</span><button type="button" onclick="retirerPj()" title="Retirer le document">✕</button></div>`:'';
+}
+function retirerPj(){_pj=null;majPjZone();const inp=$('pjInput');if(inp)inp.value=''}
+function onFichierChoisi(input){
+ const f=input.files&&input.files[0];if(!f)return;
+ const ext=(f.name.split('.').pop()||'').toLowerCase();
+ const media_type=TYPES_PJ[ext];
+ if(!media_type){add("Ce type de fichier n'est pas pris en charge — joignez un PDF, JPG, PNG ou WEBP.",'a');input.value='';return}
+ if(f.size>4_000_000){add('Ce document est trop volumineux (4 Mo maximum).','a');input.value='';return}
+ const reader=new FileReader();
+ reader.onload=()=>{
+  const data=String(reader.result).split(',').pop();
+  _pj={nom:f.name,media_type,data};
+  majPjZone();
+  add('Document joint : « '+f.name+' » — posez votre question dessus, par exemple « vérifie les montants » ou « quel est le délai de validité ? ».','a');
+ };
+ reader.onerror=()=>add("Je n'ai pas pu lire ce fichier — réessayez.",'a');
+ reader.readAsDataURL(f);
+}
+async function demanderSurDocument(question){
+ const pj=_pj;retirerPj();
+ await say('Je lis le document…',600);
+ try{
+  const r=await fetch('/api/assistant-document-qa',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question,fichier:pj.data,media_type:pj.media_type,siret:(S.co&&S.co.siret)||''})}).then(r=>r.json());
+  if(r&&r.success)add(r.reponse,'a');
+  else add((r&&r.error)||"Je n'ai pas pu analyser ce document pour le moment.",'a');
+ }catch(e){add("Je n'ai pas pu analyser ce document — vérifiez votre connexion et réessayez.",'a')}
 }
 async function say(t,ms=650){const ty=document.createElement('div');ty.className='typing';ty.innerHTML='<i></i><i></i><i></i>';$('msgs').appendChild(ty);await wait(ms);ty.remove();add(t,'a')}
 function ask(opts,multi){return new Promise(res=>{const box=$('chips');box.innerHTML='';const sel=new Set();
@@ -739,10 +775,11 @@ function vDash(){
  if(tab==='mkt'&&D){vMktR(p);return}
  if(tab==='jour')vJour(p);
  else if(tab==='chat'){
-  p.innerHTML=`<div class="chat"><div class="msgs" id="msgs"></div><div class="chatin"><input id="q" placeholder="Dictez votre devis…"><button class="btn sm light" id="micBtn" type="button" title="Parler au lieu d'écrire">🎤</button><button class="btn sm" onclick="send()">Envoyer</button></div></div><p class="hint">Essayez : « Devis pour Mme Le Gall à Vannes, terrasse 30 m² à 90 € le m², et 500 € de préparation ». Avec vos produits : « Devis pour M. Durand à Auray, 12 RES-EPDM-25 ».</p>`;
-  add('Je vous écoute. Dictez-moi ce qui doit apparaître dans le devis : je le prépare, vous vérifiez, puis vous l\'envoyez.','a');
+  p.innerHTML=`<div class="chat"><div class="msgs" id="msgs"></div><div id="pjZone"></div><div class="chatin"><input type="file" id="pjInput" accept=".pdf,.jpg,.jpeg,.png,.webp" style="display:none" onchange="onFichierChoisi(this)"><button class="btn sm light" id="pjBtn" type="button" title="Joindre un document (devis, facture, photo…)" onclick="$('pjInput').click()">📎</button><input id="q" placeholder="Dictez votre devis…"><button class="btn sm light" id="micBtn" type="button" title="Parler au lieu d'écrire">🎤</button><button class="btn sm" onclick="send()">Envoyer</button></div></div><p class="hint">Essayez : « Devis pour Mme Le Gall à Vannes, terrasse 30 m² à 90 € le m², et 500 € de préparation ». Avec vos produits : « Devis pour M. Durand à Auray, 12 RES-EPDM-25 ». Vous pouvez aussi joindre 📎 un document (devis reçu, facture, photo de chantier…) et poser une question dessus.</p>`;
+  add('Je vous écoute. Dictez-moi ce qui doit apparaître dans le devis : je le prépare, vous vérifiez, puis vous l\'envoyez. Vous pouvez aussi joindre 📎 un document et me poser une question dessus.','a');
   $('q').onkeydown=e=>{if(e.key==='Enter')send()};
   initMic();
+  majPjZone();
  }
  else if(tab==='mails')vMails(p);
  else if(tab==='docs')vDocs(p);
@@ -806,6 +843,7 @@ function parseDevis(t){
 }
 async function send(){
  const q=$('q').value.trim();if(!q)return;$('q').value='';add(q,'u');
+ if(_pj){await demanderSurDocument(q);return}
  if(/relan/i.test(q)){await say('Je regarde les factures impayées…',800);add('Relance envoyée au client (copie dans vos messages envoyés) ✓','s');log('🔔','Relance envoyée');return}
  const d=parseDevis(q);
  if(!d.lines.length){await say("Je n'ai pas trouvé de quantités ni de prix. Dites-moi par exemple : « 40 m² de résine à 85 € le m² ».");return}

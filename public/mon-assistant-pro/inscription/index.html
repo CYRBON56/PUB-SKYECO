@@ -224,16 +224,29 @@ function vBot(){
  runBot();
 }
 function add(t,w){const d=document.createElement('div');d.className='m '+w;d.textContent=t;$('msgs').appendChild(d);d.scrollIntoView({block:'nearest'});return d}
-let _reco=null,_recoEcoute=false;
+let _reco=null,_recoEcoute=false,_recoErreur=false;
 function initMic(){
  const btn=$('micBtn');if(!btn)return;
  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
  if(!SR){btn.style.display='none';return}
  if(!_reco){
-  _reco=new SR();_reco.lang='fr-FR';_reco.interimResults=false;_reco.maxAlternatives=1;
-  _reco.addEventListener('result',e=>{const q=$('q');if(q){q.value=e.results[0][0].transcript;send()}});
-  _reco.addEventListener('end',()=>{_recoEcoute=false;const b=$('micBtn');if(b){b.textContent='🎤';b.classList.remove('dark')}});
-  _reco.addEventListener('error',e=>{_recoEcoute=false;const b=$('micBtn');if(b){b.textContent='🎤';b.classList.remove('dark')}
+  // continuous=true : sans ça, le navigateur arrête d'écouter dès la première
+  // petite pause (quelques mots), au lieu de laisser la personne finir sa phrase.
+  _reco=new SR();_reco.lang='fr-FR';_reco.continuous=true;_reco.interimResults=true;_reco.maxAlternatives=1;
+  _reco.addEventListener('result',e=>{
+   const q=$('q');if(!q)return;
+   let texte='';for(let i=0;i<e.results.length;i++)texte+=e.results[i][0].transcript+' ';
+   q.value=texte.trim();
+  });
+  _reco.addEventListener('end',()=>{
+   _recoEcoute=false;const b=$('micBtn');if(b){b.textContent='🎤';b.classList.remove('dark')}
+   const q=$('q');
+   if(!_recoErreur&&q&&q.value.trim())send();
+   _recoErreur=false;
+  });
+  _reco.addEventListener('error',e=>{
+   _recoErreur=true;
+   _recoEcoute=false;const b=$('micBtn');if(b){b.textContent='🎤';b.classList.remove('dark')}
    let m="Je n'ai pas pu t'écouter — réessaie.";
    if(e.error==='not-allowed'||e.error==='service-not-allowed')m="Le micro est bloqué pour ce site. Clique sur le cadenas 🔒 à côté de l'adresse du site, autorise le micro, puis recharge la page.";
    else if(e.error==='no-speech')m="Je n'ai rien entendu — clique sur 🎤 et parle juste après.";
@@ -244,7 +257,7 @@ function initMic(){
  }
  btn.onclick=()=>{
   if(_recoEcoute){_reco.stop();return}
-  try{_recoEcoute=true;btn.textContent='🔴';btn.classList.add('dark');_reco.start()}
+  try{_recoErreur=false;_recoEcoute=true;btn.textContent='🔴';btn.classList.add('dark');_reco.start()}
   catch(err){_recoEcoute=false;btn.textContent='🎤';btn.classList.remove('dark');add('Impossible de démarrer le micro — recharge la page et réessaie.','a')}
  };
 }

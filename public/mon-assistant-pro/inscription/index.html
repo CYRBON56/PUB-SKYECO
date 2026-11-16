@@ -221,6 +221,30 @@ function vBot(){
  runBot();
 }
 function add(t,w){const d=document.createElement('div');d.className='m '+w;d.textContent=t;$('msgs').appendChild(d);d.scrollIntoView({block:'nearest'});return d}
+let _reco=null,_recoEcoute=false;
+function initMic(){
+ const btn=$('micBtn');if(!btn)return;
+ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!SR){btn.style.display='none';return}
+ if(!_reco){
+  _reco=new SR();_reco.lang='fr-FR';_reco.interimResults=false;_reco.maxAlternatives=1;
+  _reco.addEventListener('result',e=>{const q=$('q');if(q){q.value=e.results[0][0].transcript;send()}});
+  _reco.addEventListener('end',()=>{_recoEcoute=false;const b=$('micBtn');if(b){b.textContent='🎤';b.classList.remove('dark')}});
+  _reco.addEventListener('error',e=>{_recoEcoute=false;const b=$('micBtn');if(b){b.textContent='🎤';b.classList.remove('dark')}
+   let m="Je n'ai pas pu t'écouter — réessaie.";
+   if(e.error==='not-allowed'||e.error==='service-not-allowed')m="Le micro est bloqué pour ce site. Clique sur le cadenas 🔒 à côté de l'adresse du site, autorise le micro, puis recharge la page.";
+   else if(e.error==='no-speech')m="Je n'ai rien entendu — clique sur 🎤 et parle juste après.";
+   else if(e.error==='audio-capture')m="Aucun micro détecté sur cet appareil. Vérifie qu'un micro est bien branché et activé.";
+   else if(e.error==='network')m="La reconnaissance vocale a besoin d'une connexion internet — vérifie ta connexion.";
+   add(m,'a');
+  });
+ }
+ btn.onclick=()=>{
+  if(_recoEcoute){_reco.stop();return}
+  try{_recoEcoute=true;btn.textContent='🔴';btn.classList.add('dark');_reco.start()}
+  catch(err){_recoEcoute=false;btn.textContent='🎤';btn.classList.remove('dark');add('Impossible de démarrer le micro — recharge la page et réessaie.','a')}
+ };
+}
 async function say(t,ms=650){const ty=document.createElement('div');ty.className='typing';ty.innerHTML='<i></i><i></i><i></i>';$('msgs').appendChild(ty);await wait(ms);ty.remove();add(t,'a')}
 function ask(opts,multi){return new Promise(res=>{const box=$('chips');box.innerHTML='';const sel=new Set();
  opts.forEach(o=>{const b=document.createElement('button');b.className='chip';b.innerHTML=esc(o)+(o==='Pennylane'?'<span class="rec">⭐ Conseillé</span>':'');b.onclick=()=>{
@@ -715,9 +739,10 @@ function vDash(){
  if(tab==='mkt'&&D){vMktR(p);return}
  if(tab==='jour')vJour(p);
  else if(tab==='chat'){
-  p.innerHTML=`<div class="chat"><div class="msgs" id="msgs"></div><div class="chatin"><input id="q" placeholder="Dictez votre devis…"><button class="btn sm" onclick="send()">Envoyer</button></div></div><p class="hint">Essayez : « Devis pour Mme Le Gall à Vannes, terrasse 30 m² à 90 € le m², et 500 € de préparation ». Avec vos produits : « Devis pour M. Durand à Auray, 12 RES-EPDM-25 ».</p>`;
+  p.innerHTML=`<div class="chat"><div class="msgs" id="msgs"></div><div class="chatin"><input id="q" placeholder="Dictez votre devis…"><button class="btn sm light" id="micBtn" type="button" title="Parler au lieu d'écrire">🎤</button><button class="btn sm" onclick="send()">Envoyer</button></div></div><p class="hint">Essayez : « Devis pour Mme Le Gall à Vannes, terrasse 30 m² à 90 € le m², et 500 € de préparation ». Avec vos produits : « Devis pour M. Durand à Auray, 12 RES-EPDM-25 ».</p>`;
   add('Je vous écoute. Dictez-moi ce qui doit apparaître dans le devis : je le prépare, vous vérifiez, puis vous l\'envoyez.','a');
   $('q').onkeydown=e=>{if(e.key==='Enter')send()};
+  initMic();
  }
  else if(tab==='mails')vMails(p);
  else if(tab==='docs')vDocs(p);

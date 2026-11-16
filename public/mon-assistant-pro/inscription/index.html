@@ -352,11 +352,23 @@ const OUTILS=[
 // Sélecteur générique "une seule case active" dans une modale de connexion
 // (ex : choix de la messagerie) : met à jour S.bot[key] et rafraîchit juste
 // les classes .on dans le conteneur, sans réafficher toute la modale.
-function choisirTier(boxId,key,val){
+function choisirTier(boxId,key,val,apres){
  S.bot=S.bot||{};S.bot[key]=val;save();
  const box=document.getElementById(boxId);
  if(box)box.querySelectorAll('.tier').forEach(e=>e.classList.toggle('on',e.dataset.v===val));
+ if(apres&&typeof window[apres]==='function')window[apres]();
 }
+// Procédure réelle par messagerie : aucune n'est encore branchée
+// techniquement (pas de lecture/tri automatique pour l'instant), on le dit
+// clairement plutôt que de laisser croire à une connexion qui n'existe pas.
+// Pour IONOS, on donne quand même les vrais paramètres techniques (utiles
+// si l'artisan veut configurer cette boîte ailleurs en attendant).
+function instrMail(prov){
+ const base='⚠️ Je ne lis pas encore automatiquement cette messagerie pour l\'instant (cette fonction est en cours de construction) : rien ne sera trié ni envoyé avant que ce soit prêt. Votre choix est noté pour être branché en priorité dès que ce sera possible.';
+ if(prov==='IONOS')return `<p class="hint" style="background:#FEF3C7;color:#92400E;padding:10px;border-radius:10px">${base}</p><p class="hint">En attendant, si besoin pour une autre configuration : serveur IMAP <code>imap.ionos.fr</code> (port 993, SSL), serveur SMTP <code>smtp.ionos.fr</code> (port 465, TLS). Le mot de passe est celui défini à la création de cette adresse e-mail dans votre Espace Client IONOS — pas forcément celui de connexion à l'Espace Client lui-même ; vous pouvez le réinitialiser depuis « Modifier le mot de passe du compte de messagerie » dans votre Espace Client si besoin.</p>`;
+ return `<p class="hint" style="background:#FEF3C7;color:#92400E;padding:10px;border-radius:10px">${base}</p>`;
+}
+function majInstrMail(){const e=document.getElementById('mInstr');if(e)e.innerHTML=instrMail(S.bot.mail||'Gmail')}
 function pillConn(id){
  const v=S.conn[id];
  if(v===true)return '<span class="pill ok">Connecté ✓</span>';
@@ -392,7 +404,7 @@ function connect(id){
  if(id==='soft'&&soft==='Pennylane')body=`<p class="sub">Je vais créer vos devis et factures directement dans Pennylane. Je vérifie vraiment votre jeton auprès de Pennylane avant de le connecter.</p><p class="hint" style="background:#FEF3C7;color:#92400E;padding:8px 10px;border-radius:8px;margin-bottom:8px">⚠️ Abonnement Pennylane <b>Essentiel</b> minimum requis (l'offre Basique ne suffit pas).</p><ol><li>Ouvrez Pennylane, puis <b>Paramètres</b>.</li><li>Allez dans <b>Connectivité</b>, puis <b>Développeurs</b>.</li><li>Cliquez sur <b>Générer un jeton API</b>, cochez les droits « Ventes » et copiez le jeton.</li></ol><label>Collez votre jeton ici</label><input id="tok" placeholder="Jeton API Pennylane"><div id="tokErr"></div>`;
  else if(id==='soft'&&['Evoliz','Axonaut','Sellsy'].includes(soft))body=`<p class="sub">Vous allez être redirigé vers ${soft} pour autoriser l'accès.</p><ol><li>Connectez-vous à votre compte ${soft}.</li><li>Cliquez sur <b>Autoriser</b>.</li></ol>`;
  else if(id==='soft')body=`<p class="sub">Facturation intégrée : je fais vos devis et factures, prêts à être synchronisés avec Pennylane quand vous l'ouvrirez. Ajoutez votre logo et vos mentions.</p><label>Mentions de bas de devis <small>(assurance décennale, conditions de paiement)</small></label><textarea id="tok" rows="3" placeholder="Ex. Assurance décennale n°… Acompte de 30 % à la commande."></textarea>`;
- else if(id==='mail'){const mp=S.bot.mail||'Gmail';body=`<p class="sub">Choisissez votre messagerie.</p><div class="tiers" id="mTiers" style="grid-template-columns:1fr 1fr">${['Gmail','Outlook','IONOS','Autre'].map(m=>`<div class="tier ${mp===m?'on':''}" data-v="${m}" onclick="choisirTier('mTiers','mail','${m}')">${m}</div>`).join('')}</div><ol><li>Connectez-vous à votre compte.</li><li>Autorisez la lecture et l'envoi de mails.</li></ol><label>Pubs et newsletters</label><select id="mrPub"><option value="purge30">Les ranger dans « À supprimer », effacées au bout de 30 jours</option><option value="archive">Les archiver dans « Promotions »</option><option value="trash">Les mettre à la corbeille</option><option value="none">Ne rien faire</option></select>
+ else if(id==='mail'){const mp=S.bot.mail||'Gmail';body=`<p class="sub">Choisissez votre messagerie.</p><div class="tiers" id="mTiers" style="grid-template-columns:1fr 1fr">${['Gmail','Outlook','IONOS','Autre'].map(m=>`<div class="tier ${mp===m?'on':''}" data-v="${m}" onclick="choisirTier('mTiers','mail','${m}','majInstrMail')">${m}</div>`).join('')}</div><div id="mInstr">${instrMail(mp)}</div><label>Pubs et newsletters</label><select id="mrPub"><option value="purge30">Les ranger dans « À supprimer », effacées au bout de 30 jours</option><option value="archive">Les archiver dans « Promotions »</option><option value="trash">Les mettre à la corbeille</option><option value="none">Ne rien faire</option></select>
 <label>Spams</label><select id="mrSpam"><option value="trash">Les mettre à la corbeille</option><option value="spam">Les déplacer dans « Spam »</option><option value="none">Ne rien faire</option></select>
 <p class="hint">🛡️ Clients, fournisseurs et contacts habituels ne sont jamais touchés. Rien n'est effacé tout de suite : « À supprimer » et la corbeille se vident seuls au bout de 30 jours, et vous recevez un récap chaque semaine pour repêcher un mail si besoin. Chaque mail envoyé en votre nom apparaît dans vos messages envoyés.</p>`}
  else if(id==='docs'){const D=S.docs||{};body=`<p class="sub">Je range automatiquement vos documents dans <b>votre</b> espace : ils restent à vous, même si vous arrêtez l'abonnement.</p>
@@ -414,7 +426,7 @@ function connect(id){
 <p class="hint">Je ne vois ni ne touche votre compte : le client paie directement chez vous.</p><div id="pErr"></div>`;setTimeout(bankHint,0)}
  else if(id==='sms')body=`<p class="sub">Je vous enverrai les devis à valider au <b>${esc(S.co.tel)}</b>. Répondez « OK » pour envoyer, ou dictez vos modifications.</p><label>Code reçu par SMS</label><input placeholder="6 chiffres" inputmode="numeric">`;
  else body=`<p class="sub">Vous allez être redirigé pour autoriser Mon Assistant Pro à accéder à votre compte ${esc(nm)}.</p><ol><li>Connectez-vous.</li><li>Choisissez la page ou le compte à relier.</li><li>Cliquez sur <b>Autoriser</b>.</li></ol>`;
- const estReel=id==='bank'||(id==='soft'&&(soft==='Pennylane'||!['Evoliz','Axonaut','Sellsy'].includes(soft)));
+ const estReel=id==='bank'||id==='mail'||(id==='soft'&&(soft==='Pennylane'||!['Evoliz','Axonaut','Sellsy'].includes(soft)));
  const avertissement=estReel?'':`<div class="demo">Cette connexion n'est pas encore branchée techniquement : je note vos informations, mais je ne peux pas encore agir réellement sur ${esc(nm)} à votre place.</div>`;
  $('modal').innerHTML=`<h3>${c.ico} ${esc(nm)}</h3>${body}${avertissement}<div class="actions"><button class="btn light" onclick="closeM()">Annuler</button><button class="btn" onclick="doConn('${id}')">Connecter</button></div>`;
  $('ov').classList.add('on');
@@ -452,7 +464,9 @@ async function doConn(id){
   // encore d'intégration) → honnête : on note, sans dire "Connecté".
   if(['Evoliz','Axonaut','Sellsy'].includes(S.bot.soft)){
    $('modal').innerHTML='<div class="spin"></div><p style="text-align:center" class="sub">Enregistrement…</p>';
-   await wait(600);S.conn.soft='attente';save();closeM();vConn();return
+   await wait(600);S.conn.soft='attente';save();
+   $('modal').innerHTML=`<h3>🧾 ${esc(S.bot.soft)}</h3><p class="sub">C'est noté. ${esc(S.bot.soft)} n'est pas encore branché techniquement aujourd'hui (seul Pennylane l'est) : je ne peux pas encore créer ou modifier vos devis là-dedans. Elle restera affichée « ⏳ Pas encore connecté » jusqu'à ce que ce soit prêt.</p><div class="actions"><button class="btn" onclick="closeM();vConn()">Compris</button></div>`;
+   return
   }
   // Facturation intégrée à Mon Assistant Pro (pas de logiciel externe cité) :
   // c'est une fonctionnalité réelle de l'application, pas une fausse connexion.
@@ -463,8 +477,13 @@ async function doConn(id){
  // Tout le reste (mail, docs, agenda, SMS, réseaux sociaux, Google Ads…) :
  // aucun branchement technique réel pour l'instant. On enregistre les
  // informations utiles, mais on le dit honnêtement — jamais "Connecté ✓".
+ // On l'explique clairement avant de refermer, plutôt que de revenir
+ // silencieusement à l'écran précédent (ce qui donnait l'impression que le
+ // clic sur "Connecter" ne faisait rien).
  $('modal').innerHTML='<div class="spin"></div><p style="text-align:center" class="sub">Enregistrement…</p>';
- await wait(700);S.conn[id]='attente';save();closeM();vConn();
+ await wait(700);S.conn[id]='attente';save();
+ const c=CONN.find(x=>x.id===id);const nm=c?c.name():id;
+ $('modal').innerHTML=`<h3>${c?c.ico:''} ${esc(nm)}</h3><p class="sub">C'est noté. Cette connexion n'est pas encore branchée techniquement aujourd'hui : je ne peux pas encore agir réellement sur ${esc(nm)} à votre place. Elle restera affichée « ⏳ Pas encore connecté » jusqu'à ce que ce soit vraiment prêt — vous pourrez revenir ici à ce moment-là pour la connecter pour de vrai.</p><div class="actions"><button class="btn" onclick="closeM();vConn()">Compris</button></div>`;
 }
 const BANKS=['Qonto','CIC','Crédit Mutuel','Crédit Agricole','Banque Populaire',"Caisse d'Épargne",'BNP Paribas','Société Générale','LCL','La Banque Postale','Shine','Autre banque','Je préfère le virement seul'];
 const BANK_HINT={

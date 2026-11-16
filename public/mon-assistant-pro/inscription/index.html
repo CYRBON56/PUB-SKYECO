@@ -757,9 +757,9 @@ function vMktR(p){const po=D.posts||[],pu=(D.pub||[])[0];
 /* ===== Partage d'écran avec Skyeco (15/11/2026) ===== */
 let EC=null;
 let rpcA=(f,b)=>fetch(SB+'/rest/v1/rpc/'+f,{method:'POST',headers:{apikey:SBK,Authorization:'Bearer '+SBK,'Content-Type':'application/json'},body:JSON.stringify(b)}).then(r=>r.json());
-function ecranHTML(){return`<div class="card" id="ecBox" style="background:#EEF2FF;border-color:#C7D2FE"><b>🆘 Besoin d'aide ? Skyeco vous aide à tout brancher</b>${EC?`<p style="font-size:15px">✅ Partage en cours · code <b>${EC.code}</b> <span id="ecSt" class="hint">${EC.vu?'Un conseiller Skyeco regarde votre écran.':'En attente d\'un conseiller Skyeco…'}</span></p><button class="btn sm dark" onclick="ecranStop()">⏹ Arrêter le partage</button>`:`<div style="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-top:8px">
- <div style="background:#fff;border-radius:12px;padding:12px"><b>Montrer mon écran</b><div class="hint">Un conseiller Skyeco regarde et vous guide. Il ne touche à rien.</div><button class="btn sm dark" style="margin-top:8px" onclick="ecranStart(this)">🖥️ Partager mon écran</button></div>
- <div style="background:#fff;border-radius:12px;padding:12px"><b>Laisser Skyeco prendre la main</b><div class="hint">Il fait les branchements (Google, Dropbox, Pennylane…) pendant que vous regardez. Vous tapez vous-même vos mots de passe.</div><button class="btn sm dark" style="margin-top:8px" onclick="ctrlOuvrir()">Commencer</button><div id="ctrlBox"></div></div>
+function ecranHTML(){return`<div class="card" id="ecBox" style="background:#EEF2FF;border-color:#C7D2FE"><b>🆘 Besoin d'aide ? Skyeco vous aide à tout brancher</b>${EC?`<p style="font-size:15px">✅ Partage en cours · code <b>${EC.code}</b> <span id="ecSt" class="hint">${EC.vu?'Un conseiller Skyeco regarde votre écran et peut agir directement dans l\'application si besoin.':'En attente d\'un conseiller Skyeco…'}</span></p><button class="btn sm dark" onclick="ecranStop()">⏹ Arrêter le partage</button>`:`<div style="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-top:8px">
+ <div style="background:#fff;border-radius:12px;padding:12px"><b>⚡ Partager mon écran — rapide, rien à installer</b><div class="hint">Un conseiller Skyeco voit votre écran tout de suite, vous guide, et peut même cliquer à votre place dans l'application si vous le souhaitez. Aucun téléchargement.</div><button class="btn sm dark" style="margin-top:8px" onclick="ecranStart(this)">🖥️ Partager mon écran</button></div>
+ <div style="background:#fff;border-radius:12px;padding:12px"><b>Laisser Skyeco prendre la main sur tout l'ordinateur</b><div class="hint">Pour les cas qui dépassent l'application (ex. régler un logiciel installé sur votre ordinateur). Nécessite un petit logiciel gratuit à installer la première fois.</div><button class="btn sm dark" style="margin-top:8px" onclick="ctrlOuvrir()">Commencer</button><div id="ctrlBox"></div></div>
  <div style="background:#fff;border-radius:12px;padding:12px"><b>Prendre rendez-vous</b><div class="hint">Installation ensemble, au téléphone ou à distance, au moment qui vous arrange.</div><button class="btn sm dark" style="margin-top:8px" onclick="rdvOuvrir()">Choisir un créneau</button><div id="rdvBox"></div></div>
  </div><div class="hint" style="margin-top:6px">Le partage d'écran et la prise en main fonctionnent sur ordinateur (Chrome, Edge, Firefox, Safari).</div>`}</div>`}
 function ctrlOuvrir(){$('ctrlBox').innerHTML=`<ol class="hint" style="padding-left:18px;margin:10px 0">
@@ -775,6 +775,26 @@ function rdvOuvrir(){$('rdvBox').innerHTML=`<input id="rvTel" type="tel" placeho
 async function rdvEnvoyer(b){b.disabled=true;const r=await rpcA('map_demande_rappel',{p_nom:(S.co&&S.co.first)||'Client',p_entreprise:(S.co&&S.co.name)||'',p_telephone:$('rvTel').value,p_creneau:$('rvCr').value,p_message:'Rendez-vous d\'installation Mon Assistant Pro (branchements)',p_source:'installation'});
  b.textContent=r&&r.ok?'✓ Demande envoyée : l\'équipe Skyeco vous rappelle':'Erreur : '+((r&&r.erreur)||'réessayez');if(!(r&&r.ok))b.disabled=false}
 function ecranMaj(){const b=$('ecBox');if(b)b.outerHTML=ecranHTML()}
+// Applique une action de contrôle reçue de Skyeco via le canal de données
+// WebRTC — toujours limitée à l'intérieur de cette page (jamais au reste de
+// l'ordinateur, ce qu'une page web ne peut techniquement pas faire).
+function ecranAction(brut){
+ let a;try{a=JSON.parse(brut)}catch(e){return}
+ try{
+  if(a.t==='clic'){
+   const x=a.x*window.innerWidth,y=a.y*window.innerHeight,el=document.elementFromPoint(x,y);
+   if(el){['mousedown','mouseup','click'].forEach(ty=>el.dispatchEvent(new MouseEvent(ty,{bubbles:true,cancelable:true,clientX:x,clientY:y})));if(el.focus)try{el.focus()}catch(e){}}
+  } else if(a.t==='texte'){
+   const el=document.activeElement;
+   if(el&&(el.tagName==='INPUT'||el.tagName==='TEXTAREA')){el.value=String(a.v||'');el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}))}
+  } else if(a.t==='touche'){
+   const el=document.activeElement;
+   if(a.k==='Entree'&&el)el.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
+   else if(a.k==='Effacer'&&el&&(el.tagName==='INPUT'||el.tagName==='TEXTAREA')){el.value='';el.dispatchEvent(new Event('input',{bubbles:true}))}
+   else if(a.k==='Tab'){const f=[...document.querySelectorAll('input,textarea,select,button,a[href]')].filter(x=>x.offsetParent);const i=f.indexOf(el);if(i>=0&&f[i+1])f[i+1].focus()}
+  } else if(a.t==='defiler'){window.scrollBy(0,a.dy||0)}
+ }catch(e){}
+}
 async function ecranStart(btn){
  if(!navigator.mediaDevices||!navigator.mediaDevices.getDisplayMedia){btn.insertAdjacentHTML('afterend','<div class="hint" style="color:#B91C1C;margin-top:6px">Votre appareil ne permet pas de partager l\'écran. Ouvrez l\'appli sur un ordinateur, ou demandez un rendez-vous ci-dessous.</div>');return}
  let st;try{st=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:15},audio:false})}catch(e){return}
@@ -782,6 +802,7 @@ async function ecranStart(btn){
  const r=await rpcA('map_ecran_creer',{p_nom:((S.co&&S.co.name)||'Client')+(S.co&&S.co.first?' – '+S.co.first:'')});if(!r||!r.ok){btn.disabled=false;btn.textContent='Réessayer';st.getTracks().forEach(t=>t.stop());return}
  const pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]});
  st.getTracks().forEach(t=>{pc.addTrack(t,st);t.onended=ecranStop});
+ const dc=pc.createDataChannel('ctrl');dc.onmessage=e=>ecranAction(e.data);
  await pc.setLocalDescription(await pc.createOffer());
  await new Promise(res=>{if(pc.iceGatheringState==='complete')return res();pc.onicegatheringstatechange=()=>{if(pc.iceGatheringState==='complete')res()};setTimeout(res,4000)});
  await rpcA('map_ecran_offre',{p_id:r.id,p_code:r.code,p_sdp:pc.localDescription.sdp});

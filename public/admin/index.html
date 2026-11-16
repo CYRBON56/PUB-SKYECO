@@ -12,7 +12,7 @@ const SB='https://wklddwumirkdjkbxvzyj.supabase.co',K='sb_publishable_nacX-UD9Zw
 const rpc=(f,b)=>fetch(SB+'/rest/v1/rpc/'+f,{method:'POST',headers:{apikey:K,Authorization:'Bearer '+K,'Content-Type':'application/json'},body:JSON.stringify(b)}).then(r=>r.json());
 let A=new URLSearchParams(location.search).get('k')||localStorage.getItem('map_admin')||'';if(A){localStorage.setItem('map_admin',A);if(location.search)history.replaceState(null,'',location.pathname)}
 let PIN=sessionStorage.getItem('map_pin')||'',ACT=Date.now();const AUTH=()=>A+':'+PIN;
-let T=(location.hash.slice(1)||'aide'),D=null,pc=null,cur=null,vu=0;
+let T=(location.hash.slice(1)||'aide'),D=null,pc=null,cur=null,vu=0,dc=null,ctrlOn=false;
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fd=x=>x?new Date(x).toLocaleString('fr-FR',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
 const crd=c=>c?c.slice(0,4)+' '+c.slice(4,8)+' '+c.slice(8):'';
@@ -31,7 +31,7 @@ function vue(){
  if(cur)return;if(!D){$('app').innerHTML='<div class="card hint">Chargement…</div>';return}
  const tabs=[['aide','🆘 Aide en direct ('+D.aide.length+')'],['rdv','📅 Rendez-vous et rappels ('+(D.rappels.length+D.rdv.length)+')'],['applis','🧰 Applis et clients']];
  let h=`<div class="tabs">${tabs.map(([k,l])=>`<button class="${T===k?'on':''}" onclick="location.hash='${k}'">${l}</button>`).join('')}</div>`;
- if(T==='aide'){h+=`<div class="card hint">Les clients demandent de l'aide depuis l'appli (bouton « 🆘 Besoin d'aide »). <b>Voir l'écran</b> : vous regardez en direct. <b>Prendre la main</b> : ils vous donnent un code Chrome Bureau à distance, vous contrôlez souris et clavier pour faire les branchements avec eux.</div>`+
+ if(T==='aide'){h+=`<div class="card hint">Les clients demandent de l'aide depuis l'appli (bouton « 🆘 Besoin d'aide »). <b>Voir l'écran</b> : rien à installer, vous voyez en direct et pouvez cocher « Prise de contrôle » pour cliquer/écrire à leur place DANS l'application. <b>Prendre la main</b> : pour agir hors de l'application (tout l'ordinateur), ils vous donnent un code Chrome Bureau à distance, avec un petit logiciel à installer une seule fois.</div>`+
   (D.aide.map(a=>a.type==='controle'?`<div class="card"><div class="row"><div><b>🖱️ ${esc(a.nom)}</b> <span class="pill">${esc(a.app||'')}</span><div class="hint">${fd(a.quand)}${a.tel?' · <a href="tel:'+esc(a.tel)+'">'+esc(a.tel)+'</a>':''} · le code expire 5 min après sa création</div></div><button class="btn l" onclick="finir('${a.id}')">Terminé</button></div>
    <p style="margin:12px 0 6px">Code d'accès :</p><span class="code">${crd(a.code_crd)}</span> <button class="btn l" onclick="navigator.clipboard.writeText('${a.code_crd}');this.textContent='✓ Copié'">Copier</button>
    <p><a class="btn d" href="https://remotedesktop.google.com/support/" target="_blank" rel="noopener">🖱️ Prendre la main</a></p><div class="hint">Sur la page qui s'ouvre, rubrique « Donner de l'aide », collez le code puis « Se connecter ». Le client doit cliquer « Partager » de son côté.</div></div>`
@@ -43,15 +43,27 @@ function vue(){
   <div class="card"><b>👥 Comptes Mon Assistant Pro</b>${D.comptes.map(c=>`<div style="padding:8px 0;border-bottom:1px solid #EEF1F4"><b>${esc(c.nom)}</b><div class="hint">SIRET ${esc(c.siret)} · créé ${fd(c.cree)}</div></div>`).join('')}</div>`}
  $('app').innerHTML=h}
 async function finir(id){await rpc('skyeco_aide_fin',{p_admin:AUTH(),p_id:id});charger()}
-async function voir(id){const l=await rpc('map_ecran_liste',{p_admin:AUTH()});const s=l.find(x=>x.id===id);if(!s||!s.offre)return alert("Le partage n'est plus disponible.");cur=s;history.pushState(null,'','#ecran');
- $('app').innerHTML=`<div class="card row"><div><b>Écran de ${esc(s.nom)}</b><div class="hint" id="st">Connexion…</div></div><button class="btn" onclick="arreter()">Terminer</button></div><video id="v" autoplay playsinline muted></video>`;
+function dcEnvoyer(o){if(dc&&dc.readyState==='open')dc.send(JSON.stringify(o))}
+function ctrlBasc(c){ctrlOn=c.checked;const v=$('v');if(v)v.style.cursor=ctrlOn?'crosshair':'default'}
+function ctrlTexte(){const i=$('txtEnv');if(!i||!i.value)return;dcEnvoyer({t:'texte',v:i.value});i.value=''}
+function ctrlTouche(k){dcEnvoyer({t:'touche',k})}
+async function voir(id){const l=await rpc('map_ecran_liste',{p_admin:AUTH()});const s=l.find(x=>x.id===id);if(!s||!s.offre)return alert("Le partage n'est plus disponible.");cur=s;dc=null;ctrlOn=false;history.pushState(null,'','#ecran');
+ $('app').innerHTML=`<div class="card row"><div><b>Écran de ${esc(s.nom)}</b><div class="hint" id="st">Connexion…</div></div><button class="btn" onclick="arreter()">Terminer</button></div>
+ <video id="v" autoplay playsinline muted></video>
+ <div class="card"><label><input type="checkbox" id="ctrlChk" onchange="ctrlBasc(this)"> 🖱️ Activer la prise de contrôle dans l'application (un clic sur l'écran ci-dessus cliquera chez l'artisan)</label>
+ <div id="ctrlSt" class="hint" style="margin-top:4px">Le canal de contrôle n'est pas encore prêt — ça arrive quelques secondes après la connexion.</div>
+ <div class="row" style="margin-top:8px;gap:8px;flex-wrap:wrap"><input id="txtEnv" placeholder="Texte à écrire dans le champ actif de l'artisan" style="flex:1;min-width:220px">
+ <button class="btn l" onclick="ctrlTexte()">Écrire</button><button class="btn l" onclick="ctrlTouche('Entree')">⏎ Entrée</button><button class="btn l" onclick="ctrlTouche('Effacer')">⌫ Effacer</button><button class="btn l" onclick="ctrlTouche('Tab')">↹ Tab suivant</button></div></div>`;
  pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]});
- pc.ontrack=e=>{$('v').srcObject=e.streams[0];$('st').textContent='En direct (lecture seule)'};
+ pc.ontrack=e=>{$('v').srcObject=e.streams[0];$('st').textContent='En direct'};
+ pc.ondatachannel=e=>{dc=e.channel;dc.onopen=()=>{const t=$('ctrlSt');if(t)t.textContent="Prêt : cochez la case ci-dessus pour cliquer, écrire ou appuyer sur une touche à la place de l'artisan, dans l'application."}};
  pc.onconnectionstatechange=()=>{if(['failed','disconnected'].includes(pc.connectionState))$('st').textContent='Connexion perdue. Demandez au client de relancer le partage.'};
  await pc.setRemoteDescription({type:'offer',sdp:s.offre});await pc.setLocalDescription(await pc.createAnswer());
  await new Promise(r=>{if(pc.iceGatheringState==='complete')return r();pc.onicegatheringstatechange=()=>{if(pc.iceGatheringState==='complete')r()};setTimeout(r,4000)});
- await rpc('map_ecran_repondre',{p_admin:AUTH(),p_id:id,p_sdp:pc.localDescription.sdp})}
-async function arreter(){const c=cur;cur=null;if(c)await rpc('map_ecran_admin_fin',{p_admin:AUTH(),p_id:c.id});if(pc)pc.close();pc=null;if(location.hash==='#ecran')history.replaceState(null,'','#aide');T='aide';charger()}
+ await rpc('map_ecran_repondre',{p_admin:AUTH(),p_id:id,p_sdp:pc.localDescription.sdp});
+ $('v').addEventListener('click',e=>{if(!ctrlOn)return;const r=e.target.getBoundingClientRect();dcEnvoyer({t:'clic',x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height})});
+ $('v').addEventListener('wheel',e=>{if(!ctrlOn)return;e.preventDefault();dcEnvoyer({t:'defiler',dy:e.deltaY})},{passive:false})}
+async function arreter(){const c=cur;cur=null;dc=null;ctrlOn=false;if(c)await rpc('map_ecran_admin_fin',{p_admin:AUTH(),p_id:c.id});if(pc)pc.close();pc=null;if(location.hash==='#ecran')history.replaceState(null,'','#aide');T='aide';charger()}
 window.addEventListener('hashchange',()=>{const t=location.hash.slice(1)||'aide';if(cur&&t!=='ecran'){arreter();}T=['aide','rdv','applis'].includes(t)?t:'aide';vue()});
 ['click','keydown','mousemove','touchstart'].forEach(ev=>addEventListener(ev,()=>ACT=Date.now(),{passive:true}));
 setInterval(()=>{if(PIN&&!cur&&Date.now()-ACT>30*60*1000)verrouiller()},30000);

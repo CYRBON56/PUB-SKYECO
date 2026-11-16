@@ -345,12 +345,22 @@ const OUTILS=[
  ['Devis, factures et banque',[['pennylane','Pennylane','soft',typeof PENNYLANE_URL!=='undefined'?PENNYLANE_URL:'https://www.pennylane.com/'],['logiciel','Autre logiciel de devis (Obat, Tolteck, Batappli…)','soft',''],['qonto','Qonto','bank','https://qonto.com/fr'],['banque','Autre banque pro','bank','']]],
  ['Clients et publicité',[['gmb','Fiche Google (avis Google)','gmb','https://business.google.com/create'],['site','Site internet','',''],['gads','Google Ads','ads','https://ads.google.com/'],['fbpage','Page Facebook','fb','https://www.facebook.com/pages/create'],['insta','Compte Instagram pro','fb','https://www.instagram.com/'],['tiktok','TikTok','tt','https://www.tiktok.com/signup'],['linkedin','LinkedIn','','https://www.linkedin.com/signup'],['wab','WhatsApp Business','sms','https://business.whatsapp.com/']]]
 ];
+// Affiche honnêtement l'état d'un connecteur : jamais "Connecté ✓" sans
+// vraie connexion vérifiée côté serveur. true = réellement branché ;
+// 'attente' = enregistré mais pas encore réellement connecté (on le dit) ;
+// sinon, un bouton pour demander la connexion.
+function pillConn(id){
+ const v=S.conn[id];
+ if(v===true)return '<span class="pill ok">Connecté ✓</span>';
+ if(v==='attente')return '<span style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="pill wait">⏳ Pas encore connecté</span><button class="btn sm light" onclick="connect(\''+id+'\')">Voulez-vous connecter ?</button></span>';
+ return `<button class="btn sm dark" onclick="connect('${id}')">Connecter</button>`;
+}
 function outil(id){return OUTILS.flatMap(g=>g[1]).find(x=>x[0]===id)}
 function setOutil(id,v){S.outils=S.outils||{};S.outils[id]=S.outils[id]===v?undefined:v;save();const b=$('invBox');if(b)b.outerHTML=invHTML()}
 function invHTML(){const O=S.outils||{};
  const row=x=>{const v=O[x[0]];return`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #EEF1F4"><span style="font-size:14px">${esc(x[1])}</span><span style="display:flex;gap:6px;flex-shrink:0"><button class="btn sm ${v==='oui'?'':'light'}" style="padding:7px 10px" onclick="setOutil('${x[0]}','oui')">${v==='oui'?'✓ ':''}Je l'ai</button><button class="btn sm ${v==='non'?'dark':'light'}" style="padding:7px 10px" onclick="setOutil('${x[0]}','non')">Je ne l'ai pas</button></span></div>`};
  const all=OUTILS.flatMap(g=>g[1]),oui=all.filter(x=>O[x[0]]==='oui'),non=all.filter(x=>O[x[0]]==='non'),rep=oui.length+non.length;
- const cnx=oui.map(x=>`<div class="conn" style="padding:6px 0"><div class="t"><b style="font-size:14px">${esc(x[1])}</b></div>${x[2]&&S.conn[x[2]]?'<span class="pill ok">Connecté ✓</span>':x[2]?`<button class="btn sm dark" onclick="connect('${x[2]}')">Connecter</button>`:'<small class="hint">noté</small>'}</div>`).join('');
+ const cnx=oui.map(x=>`<div class="conn" style="padding:6px 0"><div class="t"><b style="font-size:14px">${esc(x[1])}</b></div>${x[2]?pillConn(x[2]):'<small class="hint">noté</small>'}</div>`).join('');
  const cre=non.map(x=>`<div class="conn" style="padding:6px 0"><div class="t"><b style="font-size:14px">${esc(x[1])}</b><small>${x[3]?'Gratuit à créer : on vous guide pas à pas':'Pas indispensable : on fait sans'}</small></div>${x[3]?`<a class="btn sm light" href="${x[3]}" target="_blank" rel="noopener">Créer</a>`:''}</div>`).join('');
  return`<div class="card" id="invBox"><b>Ce que vous avez déjà</b><p class="hint">Cochez ce que vous utilisez. Je vous dis ensuite ce qu'on peut connecter tout de suite, et ce qu'il vaut mieux créer.</p>
  ${OUTILS.map(g=>`<div style="margin-top:10px"><b style="font-size:13px;color:#5B6876;text-transform:uppercase;letter-spacing:.04em">${g[0]}</b>${g[1].map(row).join('')}</div>`).join('')}
@@ -359,19 +369,19 @@ function invHTML(){const O=S.outils||{};
   <div style="background:#FFFBEB;border-radius:12px;padding:12px"><b>🆕 À créer (${non.length})</b>${cre||'<div class="hint">Rien à créer.</div>'}</div></div>
   <p class="hint" style="margin-top:8px">${rep} réponse${rep>1?'s':''} sur ${all.length}. Vous pourrez modifier ces choix plus tard dans Réglages.</p>`:''}</div>`}
 function vConn(){
- const n=CONN.filter(c=>S.conn[c.id]).length;
+ const n=CONN.filter(c=>S.conn[c.id]===true).length;
  $('app').innerHTML=`<h1>Connectez vos outils</h1><p class="sub">Connectez au moins votre logiciel de devis et votre messagerie. Le reste peut attendre, vous pourrez le faire plus tard.</p>
  ${S.bot.soft!=='Pennylane'?`<div class="reco"><b>Conseillé : Pennylane Essentiel</b><div class="hint">Devis, factures, comptabilité automatisée et collaboration avec votre expert-comptable. Branché à votre assistant, votre comptable n'a plus qu'à valider.</div><a class="btn sm" href="${PENNYLANE_URL}" target="_blank" rel="noopener">Découvrir Pennylane</a></div>`:''}
  ${invHTML()}
  <h2 style="margin:18px 0 8px;font-size:18px">Connexions</h2><div class="card">${CONN.map(c=>`<div class="conn"><div class="ico">${c.ico}</div><div class="t"><b>${esc(c.name())}${c.tier?`<span class="tag">${c.tier}</span>`:''}${c.imp?'<span class="tag" style="background:#FEF3C7;color:#92400E">Important</span>':''}</b><small>${c.desc}</small></div>
- ${S.conn[c.id]?'<span class="pill ok">Connecté ✓</span>':`<button class="btn sm dark" onclick="connect('${c.id}')">Connecter</button>`}</div>`).join('')}</div>
+ ${pillConn(c.id)}</div>`).join('')}</div>
  <p class="hint">${n} outil${n>1?'s':''} connecté${n>1?'s':''} sur ${CONN.length}.</p>
  <div class="actions"><button class="btn light" onclick="go(1)">Retour</button><button class="btn" onclick="go(3)">${n?'Continuer':'Passer pour l\'instant'}</button></div>`;
 }
 function connect(id){
  const c=CONN.find(x=>x.id===id);const nm=c.name();let body='';
  const soft=S.bot.soft;
- if(id==='soft'&&soft==='Pennylane')body=`<p class="sub">Je vais créer vos devis et factures directement dans Pennylane.</p><p class="hint" style="background:#FEF3C7;color:#92400E;padding:8px 10px;border-radius:8px;margin-bottom:8px">⚠️ Abonnement Pennylane <b>Essentiel</b> minimum requis (l'offre Basique ne suffit pas).</p><ol><li>Ouvrez Pennylane, puis <b>Paramètres</b>.</li><li>Allez dans <b>Connectivité</b>, puis <b>Développeurs</b>.</li><li>Cliquez sur <b>Générer un jeton API</b>, cochez les droits « Ventes » et copiez le jeton.</li></ol><label>Collez votre jeton ici</label><input id="tok" placeholder="Jeton API Pennylane">`;
+ if(id==='soft'&&soft==='Pennylane')body=`<p class="sub">Je vais créer vos devis et factures directement dans Pennylane. Je vérifie vraiment votre jeton auprès de Pennylane avant de le connecter.</p><p class="hint" style="background:#FEF3C7;color:#92400E;padding:8px 10px;border-radius:8px;margin-bottom:8px">⚠️ Abonnement Pennylane <b>Essentiel</b> minimum requis (l'offre Basique ne suffit pas).</p><ol><li>Ouvrez Pennylane, puis <b>Paramètres</b>.</li><li>Allez dans <b>Connectivité</b>, puis <b>Développeurs</b>.</li><li>Cliquez sur <b>Générer un jeton API</b>, cochez les droits « Ventes » et copiez le jeton.</li></ol><label>Collez votre jeton ici</label><input id="tok" placeholder="Jeton API Pennylane"><div id="tokErr"></div>`;
  else if(id==='soft'&&['Evoliz','Axonaut','Sellsy'].includes(soft))body=`<p class="sub">Vous allez être redirigé vers ${soft} pour autoriser l'accès.</p><ol><li>Connectez-vous à votre compte ${soft}.</li><li>Cliquez sur <b>Autoriser</b>.</li></ol>`;
  else if(id==='soft')body=`<p class="sub">Facturation intégrée : je fais vos devis et factures, prêts à être synchronisés avec Pennylane quand vous l'ouvrirez. Ajoutez votre logo et vos mentions.</p><label>Mentions de bas de devis <small>(assurance décennale, conditions de paiement)</small></label><textarea id="tok" rows="3" placeholder="Ex. Assurance décennale n°… Acompte de 30 % à la commande."></textarea>`;
  else if(id==='mail')body=`<p class="sub">Choisissez votre messagerie.</p><div class="tiers" style="grid-template-columns:1fr 1fr"><div class="tier on">Gmail</div><div class="tier">Outlook</div><div class="tier">IONOS</div><div class="tier">Autre</div></div><ol><li>Connectez-vous à votre compte.</li><li>Autorisez la lecture et l'envoi de mails.</li></ol><label>Pubs et newsletters</label><select id="mrPub"><option value="purge30">Les ranger dans « À supprimer », effacées au bout de 30 jours</option><option value="archive">Les archiver dans « Promotions »</option><option value="trash">Les mettre à la corbeille</option><option value="none">Ne rien faire</option></select>
@@ -396,19 +406,57 @@ function connect(id){
 <p class="hint">Je ne vois ni ne touche votre compte : le client paie directement chez vous.</p><div id="pErr"></div>`;setTimeout(bankHint,0)}
  else if(id==='sms')body=`<p class="sub">Je vous enverrai les devis à valider au <b>${esc(S.co.tel)}</b>. Répondez « OK » pour envoyer, ou dictez vos modifications.</p><label>Code reçu par SMS</label><input placeholder="6 chiffres" inputmode="numeric">`;
  else body=`<p class="sub">Vous allez être redirigé pour autoriser Mon Assistant Pro à accéder à votre compte ${esc(nm)}.</p><ol><li>Connectez-vous.</li><li>Choisissez la page ou le compte à relier.</li><li>Cliquez sur <b>Autoriser</b>.</li></ol>`;
- $('modal').innerHTML=`<h3>${c.ico} ${esc(nm)}</h3>${body}<div class="demo">Version de test : la connexion réelle sera branchée ensuite.</div><div class="actions"><button class="btn light" onclick="closeM()">Annuler</button><button class="btn" onclick="doConn('${id}')">Connecter</button></div>`;
+ const estReel=id==='bank'||(id==='soft'&&(soft==='Pennylane'||!['Evoliz','Axonaut','Sellsy'].includes(soft)));
+ const avertissement=estReel?'':`<div class="demo">Cette connexion n'est pas encore branchée techniquement : je note vos informations, mais je ne peux pas encore agir réellement sur ${esc(nm)} à votre place.</div>`;
+ $('modal').innerHTML=`<h3>${c.ico} ${esc(nm)}</h3>${body}${avertissement}<div class="actions"><button class="btn light" onclick="closeM()">Annuler</button><button class="btn" onclick="doConn('${id}')">Connecter</button></div>`;
  $('ov').classList.add('on');
 }
 async function doConn(id){
+ // Pennylane : seule connexion aujourd'hui vraiment vérifiée côté serveur —
+ // on ne marque "Connecté" que si Pennylane a réellement accepté le jeton.
+ if(id==='soft'&&S.bot.soft==='Pennylane'){
+  const tok=($('tok')&&$('tok').value||'').trim();
+  if(!tok){const e=$('tokErr');if(e)e.innerHTML='<div class="err">Collez votre jeton API Pennylane.</div>';return}
+  $('modal').innerHTML='<div class="spin"></div><p style="text-align:center" class="sub">Vérification du jeton auprès de Pennylane…</p>';
+  try{
+   const r=await fetch('/api/pennylane-connecter',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cle:S.cle,siret:(S.co&&S.co.siret)||'',token:tok})});
+   const d=await r.json().catch(()=>({}));
+   if(d&&d.success){S.conn.soft=true;save();closeM();vConn();return}
+   const msg=(d&&d.error)||"Je n'ai pas réussi à vérifier ce jeton. Vérifiez qu'il a bien les droits « Ventes » et réessayez.";
+   $('modal').innerHTML=`<h3>🧾 Pennylane</h3><p class="sub">${esc(msg)}</p><label>Collez votre jeton ici</label><input id="tok" placeholder="Jeton API Pennylane" value="${esc(tok)}"><div id="tokErr"></div><div class="actions"><button class="btn light" onclick="closeM()">Annuler</button><button class="btn" onclick="doConn('soft')">Réessayer</button></div>`;
+  }catch(e){
+   $('modal').innerHTML=`<h3>🧾 Pennylane</h3><p class="sub">Connexion impossible pour le moment. Réessayez dans un instant.</p><div class="actions"><button class="btn light" onclick="closeM()">Fermer</button></div>`;
+  }
+  return
+ }
  if(id==='mail'&&$('mrPub')){S.mailRules={pub:$('mrPub').value,spam:$('mrSpam').value};save()}
  if(id==='docs'&&$('dProv')){S.docs={prov:$('dProv').value};save()}
  if(id==='bank'){const iban=$('pIban').value.replace(/\s+/g,'').toUpperCase(),link=$('pLink').value.trim(),pct=parseFloat($('pPct').value);
   if(iban&&!/^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/.test(iban)){$('pErr').innerHTML='<div class="err">IBAN invalide.</div>';return}
   if(link&&!/^https:\/\//.test(link)){$('pErr').innerHTML='<div class="err">Le lien doit commencer par https://</div>';return}
   if(!iban&&!link){$('pErr').innerHTML='<div class="err">Indiquez au moins un IBAN ou un lien de paiement.</div>';return}
-  S.pay={bank:$('pBank').value,iban:iban.replace(/(.{4})/g,'$1 ').trim(),link,pct:pct>0&&pct<=100?pct:30,auto:$('pAuto').value==='1'};save()}
- $('modal').innerHTML='<div class="spin"></div><p style="text-align:center" class="sub">Connexion en cours…</p>';
- await wait(1100);S.conn[id]=true;save();closeM();vConn();
+  S.pay={bank:$('pBank').value,iban:iban.replace(/(.{4})/g,'$1 ').trim(),link,pct:pct>0&&pct<=100?pct:30,auto:$('pAuto').value==='1'};save()
+  $('modal').innerHTML='<div class="spin"></div><p style="text-align:center" class="sub">Enregistrement…</p>';
+  await wait(600);S.conn.bank=true;save();closeM();vConn();return
+ }
+ if(id==='soft'){
+  // Pas de logiciel externe réellement branché (Evoliz/Axonaut/Sellsy : pas
+  // encore d'intégration) → honnête : on note, sans dire "Connecté".
+  if(['Evoliz','Axonaut','Sellsy'].includes(S.bot.soft)){
+   $('modal').innerHTML='<div class="spin"></div><p style="text-align:center" class="sub">Enregistrement…</p>';
+   await wait(600);S.conn.soft='attente';save();closeM();vConn();return
+  }
+  // Facturation intégrée à Mon Assistant Pro (pas de logiciel externe cité) :
+  // c'est une fonctionnalité réelle de l'application, pas une fausse connexion.
+  if($('tok'))S.mentionsDevis=$('tok').value;save();
+  $('modal').innerHTML='<div class="spin"></div><p style="text-align:center" class="sub">Enregistrement…</p>';
+  await wait(600);S.conn.soft=true;save();closeM();vConn();return
+ }
+ // Tout le reste (mail, docs, agenda, SMS, réseaux sociaux, Google Ads…) :
+ // aucun branchement technique réel pour l'instant. On enregistre les
+ // informations utiles, mais on le dit honnêtement — jamais "Connecté ✓".
+ $('modal').innerHTML='<div class="spin"></div><p style="text-align:center" class="sub">Enregistrement…</p>';
+ await wait(700);S.conn[id]='attente';save();closeM();vConn();
 }
 const BANKS=['Qonto','CIC','Crédit Mutuel','Crédit Agricole','Banque Populaire',"Caisse d'Épargne",'BNP Paribas','Société Générale','LCL','La Banque Postale','Shine','Autre banque','Je préfère le virement seul'];
 const BANK_HINT={
@@ -751,7 +799,7 @@ function vPlus(p){
  p.innerHTML=ecranHTML()+`<div class="card" ${stg(0)}><b>Et aussi…</b><p class="hint">Tout ce que votre assistant peut prendre en charge en plus.</p></div><div class="stats" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr))">${it.map((x,i)=>`<div class="stat" ${stg(i+1)}><b style="font-size:22px">${x[0]}</b><b style="font-size:15px">${x[1]}</b><small>${x[2]}</small>${(()=>{const ok={'Stock':1,'Agenda':1,'Photos de chantier':1}[x[1]];return `<span class="pill" style="margin-top:6px;align-self:flex-start;background:${ok?'#DCFCE7':'#F3F4F6'};color:${ok?'#166534':'#6B7280'}">${ok?'✓ Actif':'Bientôt'}</span>`})()}</div>`).join('')}</div><a class="btn full" style="display:block;text-align:center;text-decoration:none;margin-top:14px" href="/mon-assistant-pro/exemples/">Voir 240 exemples de demandes</a>`;
 }
 function vReg(p){
- const T=TIERS[S.tier||1];const pct=Math.min(100,Math.round(S.used/T.q*100));const nconn=CONN.filter(c=>S.conn[c.id]).length;
+ const T=TIERS[S.tier||1];const pct=Math.min(100,Math.round(S.used/T.q*100));const nconn=CONN.filter(c=>S.conn[c.id]===true).length;
  p.innerHTML=ecranHTML()+fondHTML()+invHTML()+`<div class="card"><b>Se déconnecter</b><p class="hint">Ferme votre session sur cet appareil. Vos données réelles (appels, devis, documents) restent enregistrées chez Skyeco.</p><button class="btn sm dark" onclick="deconnexion(this)">Se déconnecter</button></div>`+`<div class="stats"><div class="stat"><b>${S.used}/${T.q}</b><small>actions ce mois</small><div class="meter"><div class="${pct>=80?'hot':''}" style="width:${Math.max(2,pct)}%"></div></div></div><div class="stat"><b>${nconn}/${CONN.length}</b><small>outils connectés</small></div><div class="stat"><b>${TASKS.filter(t=>S.tasks[t.id]&&t.tier<=S.tier).length}</b><small>tâches actives</small></div></div>
  ${pct>=80?'<div class="card" style="margin-top:14px;background:#FFFBEB;border-color:#F5B700"><b>Vous avez utilisé '+pct+' % de vos actions.</b><div class="hint">Passez au forfait supérieur ou attendez le mois prochain.</div></div>':''}
  <div class="card" style="margin-top:14px"><b>Dernières actions</b><div class="feed">${S.feed.slice().reverse().map(f=>`<div><span>${f[0]}</span><span>${esc(f[1])}</span></div>`).join('')}</div></div>
@@ -803,7 +851,7 @@ function vDash(){
  else vReg(p);
  const on=document.querySelector('.tabs .on');if(on)on.scrollIntoView({inline:'center',block:'nearest'});
 }
-function vConnInto(p){p.innerHTML=`<div class="card">${CONN.map(c=>`<div class="conn"><div class="ico">${c.ico}</div><div class="t"><b>${esc(c.name())}</b><small>${c.desc}</small></div>${S.conn[c.id]?'<span class="pill ok">Connecté ✓</span>':`<button class="btn sm dark" onclick="connect('${c.id}')">Connecter</button>`}</div>`).join('')}</div>`;}
+function vConnInto(p){p.innerHTML=`<div class="card">${CONN.map(c=>`<div class="conn"><div class="ico">${c.ico}</div><div class="t"><b>${esc(c.name())}</b><small>${c.desc}</small></div>${pillConn(c.id)}</div>`).join('')}</div>`;}
 // recharger le bon écran après connexion depuis le tableau de bord
 const _doConn=doConn;doConn=async function(id){await _doConn(id);if(S.step===5){tab='reg';vDash()}};
 

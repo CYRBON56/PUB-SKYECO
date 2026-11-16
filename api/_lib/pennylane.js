@@ -14,13 +14,20 @@
 
 const BASE = 'https://app.pennylane.com/api/external/v2';
 
-function actif() {
-  return !!process.env.PENNYLANE_API_TOKEN;
+// Le jeton peut venir soit du compte de l'artisan (stocké côté serveur, par
+// artisan — voir /api/pennylane-connecter.js), soit, à défaut, de la variable
+// d'environnement globale PENNYLANE_API_TOKEN (compatibilité / compte unique).
+// Chaque fonction accepte un `token` en dernier paramètre, optionnel : on ne
+// garde JAMAIS le jeton dans une variable de module, pour qu'un jeton d'un
+// artisan ne puisse pas se retrouver utilisé pour un autre.
+function actif(token) {
+  return !!(token || process.env.PENNYLANE_API_TOKEN);
 }
 
-async function appel(path, options = {}) {
+async function appel(path, token, options = {}) {
+  const jeton = token || process.env.PENNYLANE_API_TOKEN;
   const headers = {
-    Authorization: `Bearer ${process.env.PENNYLANE_API_TOKEN}`,
+    Authorization: `Bearer ${jeton}`,
     Accept: 'application/json',
     ...(options.body ? { 'Content-Type': 'application/json' } : {}),
     ...(process.env.PENNYLANE_COMPANY_ID ? { 'X-Company-Id': process.env.PENNYLANE_COMPANY_ID } : {}),
@@ -45,11 +52,11 @@ function normaliser(s) {
 // Cherche un·e client·e par nom (contient, pas seulement "commence par" —
 // l'API ne propose que start_with/eq, donc on filtre nous-mêmes après coup
 // sur une liste plus large pour rester tolérant à l'ordre prénom/nom).
-async function chercherClients(nom) {
+async function chercherClients(nom, token) {
   const n = normaliser(nom);
   if (!n) return [];
   const motsCherches = n.split(/\s+/).filter(Boolean);
-  const data = await appel(`/customers?limit=100&sort=-id`);
+  const data = await appel(`/customers?limit=100&sort=-id`, token);
   const items = Array.isArray(data?.items) ? data.items : [];
   return items.filter((c) => {
     const nomClient = normaliser(c.name);
@@ -57,27 +64,46 @@ async function chercherClients(nom) {
   });
 }
 
-async function listerDevisClient(customerId) {
+async function listerDevisClient(customerId, token) {
   const filtre = encodeURIComponent(JSON.stringify([{ field: 'customer_id', operator: 'eq', value: customerId }]));
-  const data = await appel(`/quotes?limit=30&sort=-id&filter=${filtre}`);
+  const data = await appel(`/quotes?limit=30&sort=-id&filter=${filtre}`, token);
   return Array.isArray(data?.items) ? data.items : [];
 }
 
-async function obtenirDevis(id) {
-  return appel(`/quotes/${id}`);
+async function obtenirDevis(id, token) {
+  return appel(`/quotes/${id}`, token);
 }
 
 // Résout un champ "lien" du type {url:"/api/external/v2/quotes/123/invoice_lines"}
 // renvoyé par l'API (les lignes d'un devis ne sont pas incluses directement).
-async function resoudreLien(lien) {
+async function resoudreLien(lien, token) {
   if (!lien || !lien.url) return null;
-  return appel(lien.url);
+  return appel(lien.url, token);
 }
 
-async function lignesDevis(devis) {
-  const data = await resoudreLien(devis.invoice_lines);
+async function lignesDevis(devis, token) {
+  const data = await resoudreLien(devis.invoice_lines, token);
   const items = Array.isArray(data) ? data : (Array.isArray(data?.items) ? data.items : []);
   return items;
+}
+
+// Vérifie qu'un jeton est réellement valide auprès de Pennylane, sans rien
+// modifier (simple lecture d'un client max). Utilisé à la connexion de
+// l'artisan, pour ne JAMAIS marquer « Connecté » sur la base d'un jeton non
+// vérifié. Renvoie {ok:true} ou {ok:false, erreur}.
+async function validerToken(token) {
+  if (!token || typeof token !== 'string' || token.trim().length < 10) {
+    return { ok: false, erreur: 'Jeton manquant ou trop court.' };
+  }
+  try {
+    await appel('/customers?limit=1', token.trim());
+    return { ok: true };
+  } catch (e) {
+    if (e.status === 401 || e.status === 403) {
+      return { ok: false, erreur: "Ce jeton n'est pas accepté par Pennylane (vérifiez qu'il a bien les droits « Ventes »)." };
+    }
+    return { ok: false, erreur: "Pennylane n'a pas répondu correctement pour le moment." };
+  }
 }
 
 // Taux de TVA français → code Pennylane (ex: 20 → "FR_200"). Les codes
@@ -94,18 +120,18 @@ function codeVersTaux(code) {
 }
 
 // Change le taux de TVA de TOUTES les lignes d'un devis existant.
-async function changerTvaDevis(devisId, lignesActuelles, nouveauTauxPct) {
+async function changerTvaDevis(devisId, lignesActuelles, nouveauTauxPct, token) {
   const code = tauxVersCode(nouveauTauxPct);
   if (!code) throw new Error('Taux de TVA non reconnu : ' + nouveauTauxPct);
   const update = lignesActuelles.filter((l) => l && l.id != null).map((l) => ({ id: l.id, vat_rate: code }));
   if (!update.length) throw new Error('Aucune ligne modifiable trouvée sur ce devis.');
-  await appel(`/quotes/${devisId}`, { method: 'PUT', body: JSON.stringify({ invoice_lines: { update } }) });
-  return obtenirDevis(devisId);
+  await appel(`/quotes/${devisId}`, token, { method: 'PUT', body: JSON.stringify({ invoice_lines: { update } }) });
+  return obtenirDevis(devisId, token);
 }
 
-async function envoyerDevisParMail(devisId, recipients) {
+async function envoyerDevisParMail(devisId, recipients, token) {
   const body = recipients && recipients.length ? { recipients } : {};
-  await appel(`/quotes/${devisId}/send_by_email`, { method: 'POST', body: JSON.stringify(body) });
+  await appel(`/quotes/${devisId}/send_by_email`, token, { method: 'POST', body: JSON.stringify(body) });
 }
 
 function ligneAffichage(l) {
@@ -124,6 +150,7 @@ export {
   lignesDevis,
   changerTvaDevis,
   envoyerDevisParMail,
+  validerToken,
   tauxVersCode,
   codeVersTaux,
   ligneAffichage,

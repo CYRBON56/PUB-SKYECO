@@ -30,12 +30,34 @@ import * as pennylane from './_lib/pennylane.js';
 
 const ACTIONS = ['creer_devis', 'modifier_devis', 'envoyer_devis', 'relancer_devis', 'discussion'];
 
+// Jeton Pennylane PAR ARTISAN, stocké côté serveur (voir
+// /api/pennylane-connecter.js), jamais dans `etat` (renvoyée au navigateur).
+// En repli, la variable d'environnement globale PENNYLANE_API_TOKEN (compte
+// unique) pour compatibilité avec un déploiement mono-compte.
+async function obtenirTokenPennylane(siret) {
+  const SB = process.env.SUPABASE_URL;
+  const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (siret && SB && KEY) {
+    try {
+      const r = await fetch(`${SB}/rest/v1/map_comptes?siret=eq.${encodeURIComponent(siret)}&select=pennylane_token`, {
+        headers: { apikey: KEY, Authorization: `Bearer ${KEY}` },
+      });
+      if (r.ok) {
+        const lignes = await r.json();
+        const t = Array.isArray(lignes) && lignes[0] && lignes[0].pennylane_token;
+        if (t) return t;
+      }
+    } catch (e) { /* on retombe sur le jeton global ci-dessous */ }
+  }
+  return process.env.PENNYLANE_API_TOKEN || null;
+}
+
 // Retrouve, sans ambiguïté, UN SEUL devis Pennylane correspondant au nom de
 // client cité. Ne choisit jamais au hasard : si 0 client, plusieurs clients,
 // 0 devis ou plusieurs devis correspondent, renvoie {ambigu:true, reponse}
 // avec une question de clarification plutôt qu'un résultat.
-async function trouverDevisPennylane(nomClient) {
-  const clients = await pennylane.chercherClients(nomClient);
+async function trouverDevisPennylane(nomClient, token) {
+  const clients = await pennylane.chercherClients(nomClient, token);
   if (clients.length === 0) {
     return { trouve: false, reponse: `Je ne trouve pas de client « ${nomClient} » dans Pennylane. Voulez-vous que je vérifie l'orthographe, ou que j'en crée un nouveau ?` };
   }
@@ -44,7 +66,7 @@ async function trouverDevisPennylane(nomClient) {
     return { trouve: false, reponse: `Plusieurs clients Pennylane correspondent à « ${nomClient} » : ${noms}. Lequel voulez-vous ?` };
   }
   const client = clients[0];
-  const devisListe = await pennylane.listerDevisClient(client.id);
+  const devisListe = await pennylane.listerDevisClient(client.id, token);
   if (devisListe.length === 0) {
     return { trouve: false, reponse: `${client.name} n'a aucun devis dans Pennylane pour l'instant. Voulez-vous que j'en crée un ?` };
   }
@@ -53,7 +75,7 @@ async function trouverDevisPennylane(nomClient) {
     return { trouve: false, reponse: `${client.name} a plusieurs devis dans Pennylane : ${noms}. Lequel voulez-vous ?` };
   }
   const devisResume = devisListe[0];
-  const devisComplet = await pennylane.obtenirDevis(devisResume.id);
+  const devisComplet = await pennylane.obtenirDevis(devisResume.id, token);
   return { trouve: true, client, devis: devisComplet };
 }
 
@@ -104,11 +126,12 @@ export default async function handler(req, res) {
     if (!(await verifierLimite(cleD, 40, 10 * 60))) {
       return res.status(429).json({ success: false, error: 'Trop d\'envois. Merci de patienter quelques minutes.' });
     }
-    if (!pennylane.actif()) {
+    const jeton = await obtenirTokenPennylane(s);
+    if (!pennylane.actif(jeton)) {
       return res.status(400).json({ success: false, error: 'Pennylane n\'est plus connecté.' });
     }
     try {
-      await pennylane.envoyerDevisParMail(pennylane_id);
+      await pennylane.envoyerDevisParMail(pennylane_id, undefined, jeton);
       const avis = canal === 'sms' ? " (le SMS n'est pas disponible pour l'instant : seul le mail a été envoyé)" : '';
       return res.status(200).json({ success: true, action: 'envoyer_devis', source: 'pennylane', reponse: `Devis envoyé par mail au client depuis Pennylane ✓${avis}` });
     } catch (err) {
@@ -194,19 +217,20 @@ export default async function handler(req, res) {
     // On ne devine jamais lequel : voir trouverDevisPennylane. L'envoi réel
     // ne se déclenche QUE par le bouton de confirmation (direct_envoi_pennylane
     // ci-dessus) — jamais directement depuis cette décision de l'IA.
-    if (pennylane.actif() && sortie.client && (action === 'modifier_devis' || action === 'envoyer_devis') && !sortie.devis_id) {
+    const jetonPennylane = await obtenirTokenPennylane(siret);
+    if (pennylane.actif(jetonPennylane) && sortie.client && (action === 'modifier_devis' || action === 'envoyer_devis') && !sortie.devis_id) {
       try {
-        const trouve = await trouverDevisPennylane(sortie.client);
+        const trouve = await trouverDevisPennylane(sortie.client, jetonPennylane);
         if (!trouve.trouve) {
           sortie.action = 'discussion';
           sortie.reponse = trouve.reponse;
         } else if (action === 'modifier_devis') {
-          const lignesActuelles = await pennylane.lignesDevis(trouve.devis);
+          const lignesActuelles = await pennylane.lignesDevis(trouve.devis, jetonPennylane);
           let devisAJour = trouve.devis;
           if (typeof sortie.tva === 'number') {
-            devisAJour = await pennylane.changerTvaDevis(trouve.devis.id, lignesActuelles, sortie.tva);
+            devisAJour = await pennylane.changerTvaDevis(trouve.devis.id, lignesActuelles, sortie.tva, jetonPennylane);
           }
-          const lignesAJour = await pennylane.lignesDevis(devisAJour);
+          const lignesAJour = await pennylane.lignesDevis(devisAJour, jetonPennylane);
           sortie.source = 'pennylane';
           sortie.pennylane_id = devisAJour.id;
           sortie.client = trouve.client.name;
@@ -217,7 +241,7 @@ export default async function handler(req, res) {
           // L'IA a compris qu'il faut envoyer un devis Pennylane, mais
           // l'envoi réel attend toujours le bouton de confirmation : on
           // renvoie le devis à l'écran pour relecture au lieu d'envoyer.
-          const lignesAJour = await pennylane.lignesDevis(trouve.devis);
+          const lignesAJour = await pennylane.lignesDevis(trouve.devis, jetonPennylane);
           sortie.action = 'modifier_devis';
           sortie.source = 'pennylane';
           sortie.pennylane_id = trouve.devis.id;

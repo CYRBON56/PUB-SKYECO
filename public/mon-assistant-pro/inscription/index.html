@@ -870,7 +870,7 @@ function renderDevisBox(quote){
  box.innerHTML=`<b>Devis – ${esc(afficheNom(quote))}</b><table>${quote.lines.map(l=>`<tr><td>${esc(l[0])} <small style="color:#5D6678">(${esc(l[1])}${l[1]!=='forfait'?' × '+eur(l[2]):''})</small></td><td>${eur(l[3])}</td></tr>`).join('')}<tr><td><b>Total HT</b></td><td><b>${eur(ht)}</b></td></tr><tr><td>TVA ${tva} %</td><td>${eur(ht*tva/100)}</td></tr><tr><td><b>Total TTC</b></td><td><b>${eur(ttc)}</b></td></tr></table><div style="display:flex;gap:8px;margin-top:10px"><div class="hint" style="width:100%;margin:-2px 0 4px;color:#92400E">⏳ En attente de votre validation</div><button class="btn sm">✅ J'ai vérifié, j'envoie</button><button class="btn sm light">✏️ Modifier</button></div>`;
  $('msgs').appendChild(box);
  const [ok,ed]=box.querySelectorAll('button');
- ok.onclick=async()=>{ok.parentElement.remove();await confirmerEnvoi(quote,quote.canal||'mail')};
+ ok.onclick=async()=>{ok.parentElement.remove();if(quote.pennylane){await envoyerPennylaneReel(quote)}else{await confirmerEnvoi(quote,quote.canal||'mail')}};
  ed.onclick=()=>{$('q').focus();say('Dites-moi ce qu\'il faut changer : une ligne, un prix, une remise, la TVA… je mets le devis à jour.')};
 }
 async function confirmerEnvoi(quote,canal){
@@ -886,6 +886,18 @@ async function confirmerEnvoi(quote,canal){
  fb.onclick=async()=>{fb.remove();S.docs.push({n:num,cli:afficheNom(quote),lines:quote.lines,ht:ht,d:Date.now()});const al=stockOut(quote.lines,'Facture '+num);add('Facture '+num+' créée et envoyée ✓','s');log('🧾','Facture '+num+' : '+afficheNom(quote));
   const nb=quote.lines.filter(l=>l[4]).length;if(nb)await say('Stock mis à jour pour '+nb+' produit'+(nb>1?'s':'')+'.');
   for(const x of al){await say('⚠️ Stock bas : '+x.code+' – '+x.name+' ('+x.stock+' '+x.unit+' restant). Je prépare une commande fournisseur ?');log('📦','Stock bas : '+x.code)}};
+}
+// Devis réellement stocké dans Pennylane : l'envoi passe par l'API réelle de
+// Pennylane (mail uniquement — pas de SMS disponible côté Pennylane), et
+// seulement sur ce clic de confirmation explicite, jamais automatiquement.
+async function envoyerPennylaneReel(quote){
+ await say('Envoi en cours…',400);
+ let r=null;
+ try{
+  r=await fetch('/api/assistant-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({direct_envoi_pennylane:true,pennylane_id:quote.pennylane_id,canal:quote.canal||'mail',siret:(S.co&&S.co.siret)||''})}).then(x=>x.json());
+ }catch(e){r=null}
+ if(r&&r.success){quote.statut='envoye';save();add(r.reponse,'s');log('📄','Devis Pennylane envoyé : '+afficheNom(quote))}
+ else add((r&&r.error)||"L'envoi via Pennylane a échoué — réessayez dans un instant.",'a');
 }
 async function traiterSansIA(q){
  // Secours si l'IA ne répond pas (réseau, limite atteinte…) : l'ancienne
@@ -924,6 +936,13 @@ async function send(){
   return;
  }
  if(r.action==='modifier_devis'){
+  if(r.source==='pennylane'){
+   const quote={id:'pl'+r.pennylane_id,pennylane:true,pennylane_id:r.pennylane_id,client:r.client,ville:'',lines:r.lignes,tva:r.tva||20,canal:r.canal||null,statut:'brouillon'};
+   S.quotes=S.quotes.filter(x=>x.pennylane_id!==r.pennylane_id);S.quotes.push(quote);save();
+   add(r.reponse,'a');
+   renderDevisBox(quote);
+   return;
+  }
   const quote=trouverDevis(r.devis_id,r.client);
   if(!quote){add(r.reponse||"Je ne trouve pas ce devis — voulez-vous que j'en crée un nouveau ?",'a');return}
   if(r.tva!=null)quote.tva=r.tva;

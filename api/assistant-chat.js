@@ -13,12 +13,49 @@
 // Variable d'environnement requise : ANTHROPIC_API_KEY (déjà utilisée par
 // api/chat-skyeco.js et api/assistant-document-qa.js sur ce projet).
 //
+// Depuis le 16/11/2026 : si PENNYLANE_API_TOKEN est configuré (voir
+// ./_lib/pennylane.js), une demande de modification ou d'envoi qui cite un
+// client va vraiment chercher son devis dans Pennylane (sans jamais deviner
+// lequel s'il y a ambiguïté) et peut vraiment changer sa TVA. L'envoi réel
+// par mail ne part QUE sur confirmation explicite du bouton affiché
+// (requête avec direct_envoi_pennylane), jamais directement depuis une
+// phrase interprétée par l'IA.
+//
 // Entrée  : { message, devis: [{id,client,ville,ttc,tva,statut}], produits: [{code,name,price,unit}], siret }
-// Sortie  : { success, action, devis_id, client, ville, lignes, tva, canal, reponse }
+//        ou { direct_envoi_pennylane:true, pennylane_id, canal, siret }
+// Sortie  : { success, action, devis_id, client, ville, lignes, tva, canal, reponse, source?, pennylane_id? }
 
 import { ipDepuisRequete, verifierLimite } from './_lib/rate-limit.js';
+import * as pennylane from './_lib/pennylane.js';
 
 const ACTIONS = ['creer_devis', 'modifier_devis', 'envoyer_devis', 'relancer_devis', 'discussion'];
+
+// Retrouve, sans ambiguïté, UN SEUL devis Pennylane correspondant au nom de
+// client cité. Ne choisit jamais au hasard : si 0 client, plusieurs clients,
+// 0 devis ou plusieurs devis correspondent, renvoie {ambigu:true, reponse}
+// avec une question de clarification plutôt qu'un résultat.
+async function trouverDevisPennylane(nomClient) {
+  const clients = await pennylane.chercherClients(nomClient);
+  if (clients.length === 0) {
+    return { trouve: false, reponse: `Je ne trouve pas de client « ${nomClient} » dans Pennylane. Voulez-vous que je vérifie l'orthographe, ou que j'en crée un nouveau ?` };
+  }
+  if (clients.length > 1) {
+    const noms = clients.slice(0, 6).map((c) => c.name).join(', ');
+    return { trouve: false, reponse: `Plusieurs clients Pennylane correspondent à « ${nomClient} » : ${noms}. Lequel voulez-vous ?` };
+  }
+  const client = clients[0];
+  const devisListe = await pennylane.listerDevisClient(client.id);
+  if (devisListe.length === 0) {
+    return { trouve: false, reponse: `${client.name} n'a aucun devis dans Pennylane pour l'instant. Voulez-vous que j'en crée un ?` };
+  }
+  if (devisListe.length > 1) {
+    const noms = devisListe.slice(0, 6).map((d) => `${d.quote_number || ('#' + d.id)} (${d.status}, ${d.date || ''})`).join(', ');
+    return { trouve: false, reponse: `${client.name} a plusieurs devis dans Pennylane : ${noms}. Lequel voulez-vous ?` };
+  }
+  const devisResume = devisListe[0];
+  const devisComplet = await pennylane.obtenirDevis(devisResume.id);
+  return { trouve: true, client, devis: devisComplet };
+}
 
 function systemPrompt(devis, produits) {
   const listeDevis = devis.length
@@ -54,6 +91,30 @@ Règles pour choisir l'action (après avoir vérifié qu'aucune clarification n'
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Méthode non autorisée' });
+  }
+
+  // Envoi réel d'un devis Pennylane : déclenché uniquement par le clic du
+  // bouton "✅ J'ai vérifié, j'envoie" après relecture du devis affiché — pas
+  // par l'IA elle-même, pour qu'aucun envoi réel ne dépende d'une
+  // interprétation de langage. Pas d'appel à Claude sur ce chemin.
+  if (req.body && req.body.direct_envoi_pennylane) {
+    const { pennylane_id, canal, siret: s } = req.body;
+    if (!pennylane_id) return res.status(400).json({ success: false, error: 'Devis Pennylane manquant.' });
+    const cleD = s ? `assistant-chat:siret:${s}` : `assistant-chat:ip:${ipDepuisRequete(req)}`;
+    if (!(await verifierLimite(cleD, 40, 10 * 60))) {
+      return res.status(429).json({ success: false, error: 'Trop d\'envois. Merci de patienter quelques minutes.' });
+    }
+    if (!pennylane.actif()) {
+      return res.status(400).json({ success: false, error: 'Pennylane n\'est plus connecté.' });
+    }
+    try {
+      await pennylane.envoyerDevisParMail(pennylane_id);
+      const avis = canal === 'sms' ? " (le SMS n'est pas disponible pour l'instant : seul le mail a été envoyé)" : '';
+      return res.status(200).json({ success: true, action: 'envoyer_devis', source: 'pennylane', reponse: `Devis envoyé par mail au client depuis Pennylane ✓${avis}` });
+    } catch (err) {
+      console.error('Erreur envoi Pennylane :', err);
+      return res.status(500).json({ success: false, error: "L'envoi via Pennylane a échoué pour le moment." });
+    }
   }
 
   const { message, devis, produits, siret } = req.body || {};
@@ -109,12 +170,12 @@ export default async function handler(req, res) {
       throw new Error('JSON invalide : ' + texte.slice(0, 200));
     }
 
-    const action = ACTIONS.includes(r.action) ? r.action : 'discussion';
+    let action = ACTIONS.includes(r.action) ? r.action : 'discussion';
     const lignes = Array.isArray(r.lignes)
       ? r.lignes.filter((l) => Array.isArray(l) && l.length >= 4).map((l) => [String(l[0] || ''), String(l[1] || ''), Number(l[2]) || 0, Number(l[3]) || 0])
       : [];
 
-    return res.status(200).json({
+    const sortie = {
       success: true,
       action,
       devis_id: r.devis_id || null,
@@ -124,7 +185,56 @@ export default async function handler(req, res) {
       tva: typeof r.tva === 'number' ? r.tva : null,
       canal: r.canal === 'sms' ? 'sms' : (r.canal === 'mail' ? 'mail' : null),
       reponse: r.reponse || "D'accord.",
-    });
+    };
+
+    // Quand Pennylane est connecté et que la demande porte sur un devis qui
+    // existe réellement là-bas (plutôt qu'un des devis créés dans la
+    // conversation elle-même), on va vraiment le chercher et, pour
+    // "modifier_devis", on applique vraiment le changement de TVA demandé.
+    // On ne devine jamais lequel : voir trouverDevisPennylane. L'envoi réel
+    // ne se déclenche QUE par le bouton de confirmation (direct_envoi_pennylane
+    // ci-dessus) — jamais directement depuis cette décision de l'IA.
+    if (pennylane.actif() && sortie.client && (action === 'modifier_devis' || action === 'envoyer_devis') && !sortie.devis_id) {
+      try {
+        const trouve = await trouverDevisPennylane(sortie.client);
+        if (!trouve.trouve) {
+          sortie.action = 'discussion';
+          sortie.reponse = trouve.reponse;
+        } else if (action === 'modifier_devis') {
+          const lignesActuelles = await pennylane.lignesDevis(trouve.devis);
+          let devisAJour = trouve.devis;
+          if (typeof sortie.tva === 'number') {
+            devisAJour = await pennylane.changerTvaDevis(trouve.devis.id, lignesActuelles, sortie.tva);
+          }
+          const lignesAJour = await pennylane.lignesDevis(devisAJour);
+          sortie.source = 'pennylane';
+          sortie.pennylane_id = devisAJour.id;
+          sortie.client = trouve.client.name;
+          sortie.lignes = lignesAJour.map(pennylane.ligneAffichage);
+          sortie.tva = typeof sortie.tva === 'number' ? sortie.tva : (pennylane.codeVersTaux(lignesAJour[0]?.vat_rate) ?? 20);
+          sortie.reponse = (r.reponse || '') + ` (devis Pennylane ${devisAJour.quote_number || '#' + devisAJour.id} mis à jour — vérifiez avant de l'envoyer)`;
+        } else if (action === 'envoyer_devis') {
+          // L'IA a compris qu'il faut envoyer un devis Pennylane, mais
+          // l'envoi réel attend toujours le bouton de confirmation : on
+          // renvoie le devis à l'écran pour relecture au lieu d'envoyer.
+          const lignesAJour = await pennylane.lignesDevis(trouve.devis);
+          sortie.action = 'modifier_devis';
+          sortie.source = 'pennylane';
+          sortie.pennylane_id = trouve.devis.id;
+          sortie.client = trouve.client.name;
+          sortie.lignes = lignesAJour.map(pennylane.ligneAffichage);
+          sortie.tva = pennylane.codeVersTaux(lignesAJour[0]?.vat_rate) ?? 20;
+          sortie.canal = sortie.canal || 'mail';
+          sortie.reponse = `Voici le devis Pennylane ${trouve.devis.quote_number || '#' + trouve.devis.id} de ${trouve.client.name}. Vérifiez-le, puis cliquez sur « J'ai vérifié, j'envoie » pour l'envoyer vraiment par mail.`;
+        }
+      } catch (err) {
+        console.error('Erreur Pennylane (assistant-chat) :', err);
+        sortie.action = 'discussion';
+        sortie.reponse = "J'ai un souci pour accéder à Pennylane en ce moment — réessayez dans un instant, ou dites-le-moi si ça persiste.";
+      }
+    }
+
+    return res.status(200).json(sortie);
   } catch (err) {
     console.error('Erreur assistant-chat :', err);
     return res.status(500).json({ success: false, error: "Je n'ai pas pu traiter votre demande pour le moment." });

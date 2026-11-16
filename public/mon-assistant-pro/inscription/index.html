@@ -147,7 +147,7 @@ const FREE_SIRET=['93999787000018']; // comptes offerts (RMS EcoSky, client test
 const isFree=()=>FREE_SIRET.includes((S.co&&S.co.siret)||'');
 let S={products:[],moves:[],docs:[],step:0,co:{},bot:{},conn:{},tasks:{},vol:{devis:8,factures:6,rdv:12,posts:3},tier:null,started:null,used:0,feed:[]};
 try{const s=localStorage.getItem(KEY);if(s)S=Object.assign(S,JSON.parse(s))}catch(e){}
-S.products=S.products||[];S.moves=S.moves||[];S.docs=S.docs||[];
+S.products=S.products||[];S.moves=S.moves||[];S.docs=S.docs||[];S.quotes=S.quotes||[];
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}if(typeof syncEtat==='function')syncEtat()}
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -854,30 +854,99 @@ function parseDevis(t){
  while((m=re2.exec(t))){const v=parseFloat(m[1].replace(/\s/g,'').replace(',','.'));lines.push([m[2].trim().charAt(0).toUpperCase()+m[2].trim().slice(1),'forfait',v,v])}
  return{cli,ville,lines};
 }
+/* ---------- devis existants : aide pour l'IA de la conversation ---------- */
+function devisHT(q){return (q.lines||[]).reduce((s,l)=>s+(Number(l[3])||0),0)}
+function afficheNom(q){return q.client+(q.ville?' – '+q.ville:'')}
+function trouverDevis(id,nom){
+ if(id){const m=S.quotes.find(x=>x.id===id);if(m)return m}
+ if(!nom)return null;
+ const n=nom.toLowerCase().trim();if(!n)return null;
+ const m=S.quotes.filter(x=>x.client.toLowerCase().includes(n)||n.includes(x.client.toLowerCase()));
+ return m.length?m[m.length-1]:null;
+}
+function renderDevisBox(quote){
+ const ht=devisHT(quote),tva=quote.tva||20,ttc=ht*(1+tva/100);
+ const box=document.createElement('div');box.className='devis';
+ box.innerHTML=`<b>Devis – ${esc(afficheNom(quote))}</b><table>${quote.lines.map(l=>`<tr><td>${esc(l[0])} <small style="color:#5D6678">(${esc(l[1])}${l[1]!=='forfait'?' × '+eur(l[2]):''})</small></td><td>${eur(l[3])}</td></tr>`).join('')}<tr><td><b>Total HT</b></td><td><b>${eur(ht)}</b></td></tr><tr><td>TVA ${tva} %</td><td>${eur(ht*tva/100)}</td></tr><tr><td><b>Total TTC</b></td><td><b>${eur(ttc)}</b></td></tr></table><div style="display:flex;gap:8px;margin-top:10px"><div class="hint" style="width:100%;margin:-2px 0 4px;color:#92400E">⏳ En attente de votre validation</div><button class="btn sm">✅ J'ai vérifié, j'envoie</button><button class="btn sm light">✏️ Modifier</button></div>`;
+ $('msgs').appendChild(box);
+ const [ok,ed]=box.querySelectorAll('button');
+ ok.onclick=async()=>{ok.parentElement.remove();await confirmerEnvoi(quote,quote.canal||'mail')};
+ ed.onclick=()=>{$('q').focus();say('Dites-moi ce qu\'il faut changer : une ligne, un prix, une remise, la TVA… je mets le devis à jour.')};
+}
+async function confirmerEnvoi(quote,canal){
+ quote.statut='envoye';quote.canal=canal;
+ S.pending=(S.pending||[]).filter(x=>x!==afficheNom(quote));save();
+ const ht=devisHT(quote),tva=quote.tva||20,ttc=ht*(1+tva/100);
+ const parSms=canal==='sms';
+ add('Devis envoyé '+(parSms?'par SMS ✓':'par mail avec signature électronique ✓'),'s');
+ log('📄','Devis envoyé : '+afficheNom(quote)+' ('+eur(ttc)+' TTC)');
+ await say((parSms?'Le client a reçu le devis par SMS avec un lien pour le signer.':"Le client a reçu le devis par mail avec le bouton « Signer mon devis ».")+" Je le relancerai dans 7 jours s'il n'a pas signé."+(S.pay?" Dès qu'il signe, il reçoit la demande d'acompte de "+S.pay.pct+" % ("+eur(ttc*S.pay.pct/100)+")"+(S.pay.link?" avec votre lien de paiement.":" avec votre IBAN."):""));
+ const num='F-'+new Date().getFullYear()+'-'+String(S.docs.length+1).padStart(3,'0');
+ const fb=document.createElement('button');fb.className='btn sm dark';fb.style.alignSelf='flex-start';fb.textContent='🧾 Devis signé : transformer en facture';$('msgs').appendChild(fb);
+ fb.onclick=async()=>{fb.remove();S.docs.push({n:num,cli:afficheNom(quote),lines:quote.lines,ht:ht,d:Date.now()});const al=stockOut(quote.lines,'Facture '+num);add('Facture '+num+' créée et envoyée ✓','s');log('🧾','Facture '+num+' : '+afficheNom(quote));
+  const nb=quote.lines.filter(l=>l[4]).length;if(nb)await say('Stock mis à jour pour '+nb+' produit'+(nb>1?'s':'')+'.');
+  for(const x of al){await say('⚠️ Stock bas : '+x.code+' – '+x.name+' ('+x.stock+' '+x.unit+' restant). Je prépare une commande fournisseur ?');log('📦','Stock bas : '+x.code)}};
+}
+async function traiterSansIA(q){
+ // Secours si l'IA ne répond pas (réseau, limite atteinte…) : l'ancienne
+ // reconnaissance locale par mots-clés, pour ne jamais bloquer l'artisan.
+ if(/relan/i.test(q)){add('Relance envoyée au client (copie dans vos messages envoyés) ✓','s');log('🔔','Relance envoyée');return}
+ const d=parseDevis(q);
+ if(!d.lines.length){add("Je n'ai pas trouvé de quantités ni de prix. Dites-moi par exemple : « 40 m² de résine à 85 € le m² ».",'a');return}
+ const quote={id:'d'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),client:d.cli,ville:d.ville,lines:d.lines,tva:20,statut:'brouillon'};
+ S.quotes.push(quote);
+ add('Client introuvable : fiche « '+afficheNom(quote)+' » créée ✓','s');
+ renderDevisBox(quote);
+ log('📝','Brouillon de devis créé : '+afficheNom(quote));S.pending=(S.pending||[]).concat([afficheNom(quote)]);save();
+}
 async function send(){
  const q=$('q').value.trim();if(!q)return;$('q').value='';add(q,'u');
  if(_pj){await demanderSurDocument(q);return}
- if(/relan/i.test(q)){await say('Je regarde les factures impayées…',800);add('Relance envoyée au client (copie dans vos messages envoyés) ✓','s');log('🔔','Relance envoyée');return}
- const d=parseDevis(q);
- if(!d.lines.length){await say("Je n'ai pas trouvé de quantités ni de prix. Dites-moi par exemple : « 40 m² de résine à 85 € le m² ».");return}
- await say('Je cherche le client…',800);
- const name=d.cli+(d.ville?' – '+d.ville:'');
- add('Client introuvable : fiche « '+name+' » créée ✓','s');
- const ht=d.lines.reduce((s,l)=>s+l[3],0);
- const src=S.conn.soft&&['Pennylane','Evoliz','Axonaut','Sellsy'].includes(S.bot.soft)?S.bot.soft:'PDF';
- await say('Brouillon prêt, enregistré dans '+src+'. Vérifiez-le : rien ne part sans votre accord.',600);
- const box=document.createElement('div');box.className='devis';
- box.innerHTML=`<b>Devis – ${esc(name)}</b><table>${d.lines.map(l=>`<tr><td>${esc(l[0])} <small style="color:#5D6678">(${esc(l[1])}${l[1]!=='forfait'?' × '+eur(l[2]):''})</small></td><td>${eur(l[3])}</td></tr>`).join('')}<tr><td><b>Total HT</b></td><td><b>${eur(ht)}</b></td></tr><tr><td>TVA 20 %</td><td>${eur(ht*.2)}</td></tr><tr><td><b>Total TTC</b></td><td><b>${eur(ht*1.2)}</b></td></tr></table><div style="display:flex;gap:8px;margin-top:10px"><div class="hint" style="width:100%;margin:-2px 0 4px;color:#92400E">⏳ En attente de votre validation</div><button class="btn sm">✅ J'ai vérifié, j'envoie</button><button class="btn sm light">✏️ Modifier</button></div>`;
- $('msgs').appendChild(box);
- const [ok,ed]=box.querySelectorAll('button');
- ok.onclick=async()=>{ok.parentElement.remove();S.pending=(S.pending||[]).filter(x=>x!==name);save();add('Devis envoyé avec signature électronique ✓','s');log('📄','Devis envoyé : '+name+' ('+eur(ht*1.2)+' TTC)');await say("Le client a reçu le devis par mail avec le bouton « Signer mon devis ». Je le relancerai dans 7 jours s'il n'a pas signé."+(S.pay?" Dès qu'il signe, il reçoit la demande d'acompte de "+S.pay.pct+" % ("+eur(ht*1.2*S.pay.pct/100)+")"+(S.pay.link?" avec votre lien de paiement.":" avec votre IBAN."):""));
-  const num='F-'+new Date().getFullYear()+'-'+String(S.docs.length+1).padStart(3,'0');
-  const fb=document.createElement('button');fb.className='btn sm dark';fb.style.alignSelf='flex-start';fb.textContent='🧾 Devis signé : transformer en facture';$('msgs').appendChild(fb);
-  fb.onclick=async()=>{fb.remove();S.docs.push({n:num,cli:name,lines:d.lines,ht:ht,d:Date.now()});const al=stockOut(d.lines,'Facture '+num);add('Facture '+num+' créée et envoyée ✓','s');log('🧾','Facture '+num+' : '+name);
-   const nb=d.lines.filter(l=>l[4]).length;if(nb)await say('Stock mis à jour pour '+nb+' produit'+(nb>1?'s':'')+'.');
-   for(const x of al){await say('⚠️ Stock bas : '+x.code+' – '+x.name+' ('+x.stock+' '+x.unit+' restant). Je prépare une commande fournisseur ?');log('📦','Stock bas : '+x.code)}}};
- ed.onclick=()=>{$('q').focus();say('Dites-moi ce qu\'il faut changer : une ligne, un prix, une remise ?')};
- log('📝','Brouillon de devis créé : '+name);S.pending=(S.pending||[]).concat([name]);save();
+ let r=null;
+ try{
+  r=await fetch('/api/assistant-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+   message:q,
+   devis:S.quotes.map(dv=>({id:dv.id,client:dv.client,ville:dv.ville||'',ttc:devisHT(dv)*(1+(dv.tva||20)/100),tva:dv.tva||20,statut:dv.statut})),
+   produits:S.products.map(p=>({code:p.code,name:p.name,price:p.price,unit:p.unit})),
+   siret:(S.co&&S.co.siret)||''
+  })}).then(x=>x.json());
+ }catch(e){r=null}
+ if(!r||!r.success){await traiterSansIA(q);return}
+
+ if(r.action==='creer_devis'){
+  const lignes=r.lignes&&r.lignes.length?r.lignes:parseDevis(q).lines;
+  if(!lignes.length){add(r.reponse||"Je n'ai pas trouvé de quantités ni de prix. Dites-moi par exemple : « 40 m² de résine à 85 € le m² ».",'a');return}
+  const quote={id:'d'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),client:r.client||parseDevis(q).cli||'Nouveau client',ville:r.ville||'',lines:lignes,tva:r.tva||20,statut:'brouillon'};
+  S.quotes.push(quote);
+  add(r.reponse,'a');
+  renderDevisBox(quote);
+  log('📝','Brouillon de devis créé : '+afficheNom(quote));S.pending=(S.pending||[]).concat([afficheNom(quote)]);save();
+  return;
+ }
+ if(r.action==='modifier_devis'){
+  const quote=trouverDevis(r.devis_id,r.client);
+  if(!quote){add(r.reponse||"Je ne trouve pas ce devis — voulez-vous que j'en crée un nouveau ?",'a');return}
+  if(r.tva!=null)quote.tva=r.tva;
+  if(r.lignes&&r.lignes.length)quote.lines=r.lignes;
+  quote.statut='brouillon';save();
+  add(r.reponse,'a');
+  renderDevisBox(quote);
+  return;
+ }
+ if(r.action==='envoyer_devis'){
+  const quote=trouverDevis(r.devis_id,r.client);
+  if(!quote){add(r.reponse||"Je ne trouve pas ce devis.",'a');return}
+  add(r.reponse,'a');
+  await confirmerEnvoi(quote,r.canal||quote.canal||'mail');
+  return;
+ }
+ if(r.action==='relancer_devis'){
+  const quote=trouverDevis(r.devis_id,r.client);
+  add(r.reponse||'Relance envoyée.','a');
+  log('🔔','Relance envoyée'+(quote?' : '+afficheNom(quote):''));
+  return;
+ }
+ add(r.reponse||"D'accord.",'a');
 }
 function log(i,t){S.used++;S.feed.push([i,t]);if(S.feed.length>30)S.feed.shift();save()}
 

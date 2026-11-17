@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Avis Pro by Skyeco – On répond à vos avis Google</title>
+<meta name="description" content="Skyeco gère les avis Google des artisans : réponse à chaque avis, alerte sur les avis négatifs, demandes d'avis après chantier et bilan mensuel.">
+<style>
+:root{--bleu:#0b3d5c;--vert:#1fa67a;--or:#f5b301;--gris:#5b6770;--fond:#f5f8fa}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:#1d2a33;line-height:1.55;background:#fff}
+a{color:inherit}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+header{padding:16px 0;border-bottom:1px solid #e6ecef}
+header .wrap{display:flex;justify-content:space-between;align-items:center}
+.logo{font-weight:800;font-size:20px;color:var(--bleu);text-decoration:none}
+.logo span{color:var(--vert)}
+.btn{display:inline-block;background:var(--vert);color:#fff;text-decoration:none;font-weight:700;padding:14px 24px;border-radius:10px}
+.btn.small{padding:9px 16px;font-size:14px}
+.btn.ghost{background:transparent;color:var(--bleu);border:2px solid var(--bleu)}
+.hero{background:linear-gradient(160deg,var(--bleu),#145b82);color:#fff;padding:64px 0}
+.hero h1{font-size:clamp(28px,5vw,46px);line-height:1.15;margin-bottom:16px}
+.hero p{font-size:19px;opacity:.92;max-width:640px;margin-bottom:28px}
+.stars{color:var(--or);font-size:24px;letter-spacing:2px;margin-bottom:12px}
+.hero .ctas{display:flex;gap:12px;flex-wrap:wrap}
+.hero .btn.ghost{color:#fff;border-color:#fff}
+section{padding:56px 0}
+h2{font-size:clamp(24px,3.5vw,32px);color:var(--bleu);margin-bottom:12px}
+.lead{color:var(--gris);font-size:17px;margin-bottom:32px;max-width:700px}
+.grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.card{background:var(--fond);border-radius:14px;padding:22px}
+.card h3{font-size:18px;margin-bottom:6px;color:var(--bleu)}
+.num{display:inline-flex;width:34px;height:34px;border-radius:50%;background:var(--vert);color:#fff;font-weight:800;align-items:center;justify-content:center;margin-bottom:10px}
+.demo{background:var(--fond)}
+.review{background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.06);max-width:640px}
+.review .who{font-weight:700}
+.review .rate{color:var(--or)}
+.reply{margin-top:14px;border-left:4px solid var(--vert);padding:10px 14px;background:#eefaf5;border-radius:0 10px 10px 0}
+.reply b{color:var(--vert)}
+.price{background:#fff;border:2px solid #e6ecef;border-radius:16px;padding:26px}
+.price.best{border-color:var(--vert)}
+.price .p{font-size:36px;font-weight:800;color:var(--bleu)}
+.price .p small{font-size:16px;color:var(--gris);font-weight:400}
+.price ul{list-style:none;margin:16px 0 22px}
+.price li{padding:5px 0 5px 26px;position:relative}
+.price li:before{content:"✓";position:absolute;left:0;color:var(--vert);font-weight:800}
+.tag{display:inline-block;background:var(--vert);color:#fff;font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:8px}
+.note{color:var(--gris);font-size:14px;margin-top:18px}
+.engag{background:var(--bleu);color:#fff;border-radius:16px;padding:28px}
+.engag h2{color:#fff}
+.engag ul{margin:12px 0 0 20px}
+.cta-final{text-align:center}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.tab{border:2px solid var(--bleu);background:#fff;color:var(--bleu);padding:9px 14px;border-radius:30px;font-weight:700;cursor:pointer;font-size:14px}
+.tab.on{background:var(--bleu);color:#fff}
+.flow{display:grid;gap:16px;max-width:680px}
+.stl{font-weight:700;color:var(--bleu);margin-bottom:8px}
+.typing{color:var(--gris);font-style:italic}
+.phone{background:#1d2a33;border-radius:22px;padding:18px;max-width:340px}
+.bubble{background:#e9eef1;border-radius:14px;padding:12px;font-size:15px}
+.phbtns{display:flex;gap:8px;margin-top:12px}
+.phbtns button{flex:1;border:0;border-radius:10px;padding:11px;font-weight:700;background:var(--vert);color:#fff;cursor:pointer}
+.phbtns .alt{background:#fff;color:#1d2a33}
+.ok{background:#eefaf5;color:var(--vert);font-weight:700;padding:14px;border-radius:10px}
+.mois{margin-top:34px;max-width:680px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.kpis div{background:var(--fond);border-radius:12px;padding:14px;text-align:center}
+.kpis b{display:block;font-size:24px;color:var(--bleu)}
+.kpis span{font-size:13px;color:var(--gris)}
+footer{background:#0a2638;color:#c9d6de;padding:28px 0;font-size:14px}
+footer a{color:#fff}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="logo" href="https://skyeco.fr">Sky<span>eco</span> · Avis Pro</a>
+    <a class="btn small" href="#audit">Audit gratuit</a>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="wrap">
+    <div class="stars">★★★★★</div>
+    <h1>Vos avis Google gérés pour vous,<br>pendant que vous êtes sur le chantier.</h1>
+    <p>On répond à chaque avis, on vous alerte en cas d'avis négatif, on aide vos clients satisfaits à laisser un avis, et chaque mois vous recevez un bilan clair.</p>
+    <div class="ctas">
+      <a class="btn" href="#audit">Recevoir mon audit d'avis gratuit</a>
+      <a class="btn ghost" href="#demo">Voir comment ça marche</a>
+    </div>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <h2>Pourquoi c'est important</h2>
+    <p class="lead">Avant d'appeler un artisan, presque tous les particuliers regardent sa fiche Google. Une fiche avec des avis sans réponse, ou un avis négatif resté sans réponse, peut faire perdre des chantiers.</p>
+    <div class="grid">
+      <div class="card"><h3>Montrer que vous êtes sérieux</h3><p>Une réponse à chaque avis montre que vous êtes présent et que vous tenez à vos clients.</p></div>
+      <div class="card"><h3>Désamorcer un avis négatif</h3><p>Une réponse calme et professionnelle rassure les futurs clients bien plus que le silence.</p></div>
+      <div class="card"><h3>Mieux apparaître sur Google</h3><p>Une fiche active, avec des avis récents et des réponses, est mieux mise en avant dans les recherches locales.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="demo">
+  <div class="wrap">
+    <h2>Comment ça marche</h2>
+    <p class="lead">Aucun mot de passe à nous donner : vous nous ajoutez comme gestionnaire de votre fiche Google, c'est tout.</p>
+    <div class="grid">
+      <div class="card"><span class="num">1</span><h3>Branchement en 5 minutes</h3><p>On vous guide pas à pas, par téléphone ou à distance.</p></div>
+      <div class="card"><span class="num">2</span><h3>Chaque avis repéré</h3><p>Dès qu'un client laisse un avis, il est pris en charge.</p></div>
+      <div class="card"><span class="num">3</span><h3>Réponse personnalisée</h3><p>Une réponse humaine, avec le prénom du client et le chantier réalisé, jamais un copier-coller.</p></div>
+      <div class="card"><span class="num">4</span><h3>Vous gardez la main</h3><p>Avis de 3 étoiles ou moins : vous recevez la réponse proposée par SMS et vous la validez d'un clic.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="demo">
+  <div class="wrap">
+    <h2>Essayez : un avis arrive, voici ce qui se passe</h2>
+    <p class="lead">Choisissez un avis client et regardez le parcours complet.</p>
+    <div class="tabs">
+      <button class="tab on" data-i="0">★★★★★ Avis positif</button>
+      <button class="tab" data-i="1">★★★★ Avis mitigé</button>
+      <button class="tab" data-i="2">★★ Avis négatif</button>
+    </div>
+    <div class="flow">
+      <div class="step"><div class="stl">1. Nouvel avis sur votre fiche Google</div>
+        <div class="review"><div class="who" id="dWho"></div><p id="dTxt"></p></div></div>
+      <div class="step"><div class="stl">2. Skyeco prépare une réponse personnalisée</div>
+        <div class="review typing" id="dLoad">Rédaction de la réponse…</div>
+        <div class="reply" id="dRep" style="display:none"></div></div>
+      <div class="step" id="dSms" style="display:none"><div class="stl">3. Avis sensible : vous recevez un SMS pour valider</div>
+        <div class="phone"><div class="bubble">Skyeco Avis Pro : nouvel avis 2★ de Marc D. Réponse proposée prête. Répondez OK pour publier ou MODIF pour la changer.</div>
+        <div class="phbtns"><button id="dOk">OK, publier</button><button class="alt" id="dMod">Modifier</button></div></div></div>
+      <div class="step" id="dPub" style="display:none"><div class="stl" id="dPubT">3. Réponse publiée automatiquement</div>
+        <div class="ok">✓ Réponse visible sur Google sous l'avis du client</div></div>
+    </div>
+    <div class="mois">
+      <div class="stl">Et chaque mois, votre bilan par mail</div>
+      <div class="kpis"><div><b>4,8 ★</b><span>note moyenne</span></div><div><b>+7</b><span>nouveaux avis</span></div><div><b>100 %</b><span>avis répondus</span></div><div><b>2ᵉ</b><span>sur 5 concurrents du secteur</span></div></div>
+    </div>
+  </div>
+</section>
+<script>
+(function(){
+var D=[
+ {w:"Sophie L.",s:"★★★★★",t:"Terrasse refaite en 3 jours, équipe ponctuelle et chantier laissé propre. Je recommande !",r:"Merci beaucoup Sophie ! Toute l'équipe est ravie que votre nouvelle terrasse vous plaise. Profitez-en bien, et n'hésitez pas à nous recontacter pour l'entretien.",n:false},
+ {w:"Julien P.",s:"★★★★",t:"Bon travail sur notre allée, mais le chantier a pris deux jours de retard.",r:"Merci Julien pour votre retour. Nous sommes contents que l'allée vous plaise et nous sommes désolés pour ces deux jours de retard, liés à la météo. Nous aurions dû vous prévenir plus tôt : c'est noté pour la suite.",n:false},
+ {w:"Marc D.",s:"★★",t:"Devis envoyé avec une semaine de retard et personne ne m'a rappelé.",r:"Bonjour Marc, merci de nous l'avoir signalé et toutes nos excuses pour ce délai. Ce n'est pas notre façon de travailler. Nous vous appelons dès aujourd'hui pour reprendre votre projet dans de bonnes conditions.",n:true}
+];
+var $=function(i){return document.getElementById(i)},tm;
+function show(i){
+ clearTimeout(tm);var d=D[i];
+ document.querySelectorAll('.tab').forEach(function(b){b.classList.toggle('on',b.dataset.i==i)});
+ $('dWho').innerHTML=d.w+' <span class="rate">'+d.s+'</span>';$('dTxt').textContent=d.t;
+ $('dLoad').style.display='block';$('dRep').style.display='none';$('dSms').style.display='none';$('dPub').style.display='none';
+ tm=setTimeout(function(){
+  $('dLoad').style.display='none';$('dRep').innerHTML='<b>Réponse proposée</b><br>'+d.r;$('dRep').style.display='block';
+  if(d.n){$('dSms').style.display='block'}else{$('dPubT').textContent='3. Réponse publiée automatiquement';$('dPub').style.display='block'}
+ },1300);
+}
+document.querySelectorAll('.tab').forEach(function(b){b.onclick=function(){show(+b.dataset.i)}});
+$('dOk').onclick=function(){$('dSms').style.display='none';$('dPubT').textContent='4. Réponse validée et publiée';$('dPub').style.display='block'};
+$('dMod').onclick=function(){alertless()};
+function alertless(){$('dRep').innerHTML='<b>Réponse proposée</b><br><span contenteditable="true" style="outline:1px dashed #1fa67a;display:block;padding:4px">'+D[2].r+'</span><small>Modifiez le texte puis cliquez sur « OK, publier ».</small>'}
+show(0);
+})();
+</script>
+
+<section class="demo" id="tarifs">
+  <div class="wrap">
+    <h2>Tarifs simples, sans engagement</h2>
+    <p class="lead">Moins cher que le temps que vous y passeriez vous-même, et c'est fait à chaque fois.</p>
+    <div class="grid">
+      <div class="price">
+        <h3>Starter</h3>
+        <div class="p">29 € <small>HT / mois</small></div>
+        <ul>
+          <li>Réponse à tous vos avis Google</li>
+          <li>Alerte SMS sur les avis négatifs</li>
+          <li>Validation avant publication des réponses sensibles</li>
+          <li>Bilan mensuel par mail</li>
+        </ul>
+        <a class="btn" href="#audit">Démarrer</a>
+      </div>
+      <div class="price best">
+        <span class="tag">Le plus choisi</span>
+        <h3>Pro</h3>
+        <div class="p">49 € <small>HT / mois</small></div>
+        <ul>
+          <li>Tout le forfait Starter</li>
+          <li>SMS de demande d'avis après chaque chantier</li>
+          <li>Comparaison avec vos concurrents du secteur</li>
+          <li>Conseils pour améliorer votre fiche Google</li>
+        </ul>
+        <a class="btn" href="#audit">Démarrer</a>
+      </div>
+    </div>
+    <p class="note">Option mise en place clé en main : on s'occupe du branchement et de la remise à niveau de votre fiche (réponse aux anciens avis, photos, horaires). Paiement unique, sur devis.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="engag">
+      <h2>Nos engagements</h2>
+      <ul>
+        <li>Jamais de faux avis, jamais d'avis achetés : c'est interdit et Google sanctionne.</li>
+        <li>On demande un avis à tous vos clients, pas seulement aux plus contents.</li>
+        <li>Les réponses sont publiées au nom de votre entreprise, dans votre ton.</li>
+        <li>Vous pouvez arrêter quand vous voulez et nous retirer l'accès en un clic.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="demo cta-final" id="audit">
+  <div class="wrap">
+    <h2>Audit gratuit de vos avis Google</h2>
+    <p class="lead" style="margin:0 auto 24px">Envoyez-nous le nom de votre entreprise : on vous dit en 48 h votre note, le nombre d'avis sans réponse et comment vous vous situez face à vos concurrents.</p>
+    <a class="btn" href="mailto:infos@ecosky.fr?subject=Audit%20gratuit%20Avis%20Pro&body=Nom%20de%20l'entreprise%20%3A%0AVille%20%3A%0AT%C3%A9l%C3%A9phone%20%3A">Demander mon audit gratuit</a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Avis Pro est un service <a href="https://skyeco.fr">Skyeco</a> – des outils simples pour les artisans et les petites entreprises.
+  </div>
+</footer>
+
+</body>
+</html>

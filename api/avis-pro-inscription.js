@@ -41,7 +41,7 @@ export default async function handler(req, res) {
         subject: `Nouvelle inscription Avis Pro : ${f.entreprise}`,
         html: `<p><b>${esc(f.entreprise)}</b> (SIRET ${esc(f.siret)}) veut le forfait <b>${forfait === 'pro' ? 'Pro' : 'Starter'}</b>${ligne.mise_en_place ? ' + mise en place clé en main' : ''}.</p>
 <p>Contact : ${esc(ligne.contact_nom)} — ${esc(tel)} — ${esc(email)}<br>Fiche Google : ${esc(ligne.fiche_google) || 'non précisée'}<br>Compte Google : ${esc(compte)}<br>Ton des réponses : ${esc(ton)} — signature : ${esc(ligne.signature_reponse) || '(par défaut)'}</p>
-<p>À faire : le rappeler sous 24 h et lui envoyer l'adresse à ajouter comme gestionnaire de sa fiche.</p>` }) }).catch(() => {});
+<p>À faire : le rappeler sous 24 h, créer dans Qonto sa facture récurrente mensuelle (${forfait === 'pro' ? '49' : '29'} € HT) avec paiement par prélèvement SEPA, et lui envoyer l'adresse à ajouter comme gestionnaire de sa fiche.</p>` }) }).catch(() => {});
     return res.status(200).json({ ok: true, entreprise: f.entreprise, id: ins?.id, jeton: ins ? `${ins.siret}-${new Date(ins.created_at).getTime()}` : null });
   } catch (e) {
     console.error('avis-pro-inscription :', e.message);

@@ -67,6 +67,13 @@ h2{font-size:clamp(24px,3.5vw,32px);color:var(--bleu);margin-bottom:12px}
 .kpis div{background:var(--fond);border-radius:12px;padding:14px;text-align:center}
 .kpis b{display:block;font-size:24px;color:var(--bleu)}
 .kpis span{font-size:13px;color:var(--gris)}
+.formi{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;max-width:760px}
+.formi label{display:flex;flex-direction:column;font-weight:600;font-size:14px;gap:6px;color:var(--bleu)}
+.formi input,.formi select{font:inherit;font-weight:400;padding:11px;border:1px solid #cdd8de;border-radius:9px;color:#1d2a33}
+.formi .full{grid-column:1/-1}
+.formi .chk{flex-direction:row;align-items:flex-start;gap:10px;font-weight:400;color:#1d2a33}
+.formi .chk input{margin-top:4px;width:18px;height:18px}
+#fMsg{color:#c0392b}
 footer{background:#0a2638;color:#c9d6de;padding:28px 0;font-size:14px}
 footer a{color:#fff}
 </style>
@@ -76,7 +83,7 @@ footer a{color:#fff}
 <header>
   <div class="wrap">
     <a class="logo" href="https://skyeco.fr">Sky<span>eco</span> · Avis Pro</a>
-    <a class="btn small" href="#audit">Audit gratuit</a>
+    <a class="btn small" href="#inscription">S'inscrire</a>
   </div>
 </header>
 
@@ -86,7 +93,7 @@ footer a{color:#fff}
     <h1>Vos avis Google gérés pour vous,<br>pendant que vous êtes sur le chantier.</h1>
     <p>On répond à chaque avis, on vous alerte en cas d'avis négatif, on aide vos clients satisfaits à laisser un avis, et chaque mois vous recevez un bilan clair.</p>
     <div class="ctas">
-      <a class="btn" href="#audit">Recevoir mon audit d'avis gratuit</a>
+      <a class="btn" href="#inscription">Je m'inscris</a>
       <a class="btn ghost" href="#demo">Voir comment ça marche</a>
     </div>
   </div>
@@ -184,7 +191,7 @@ show(0);
           <li>Validation avant publication des réponses sensibles</li>
           <li>Bilan mensuel par mail</li>
         </ul>
-        <a class="btn" href="#audit">Démarrer</a>
+        <a class="btn" href="#inscription" data-f="starter">Choisir Starter</a>
       </div>
       <div class="price best">
         <span class="tag">Le plus choisi</span>
@@ -196,7 +203,7 @@ show(0);
           <li>Comparaison avec vos concurrents du secteur</li>
           <li>Conseils pour améliorer votre fiche Google</li>
         </ul>
-        <a class="btn" href="#audit">Démarrer</a>
+        <a class="btn" href="#inscription" data-f="pro">Choisir Pro</a>
       </div>
     </div>
     <p class="note">Option mise en place clé en main : on s'occupe du branchement et de la remise à niveau de votre fiche (réponse aux anciens avis, photos, horaires). Paiement unique, sur devis.</p>
@@ -217,9 +224,57 @@ show(0);
   </div>
 </section>
 
+<section id="inscription">
+  <div class="wrap">
+    <h2>Inscription en 2 minutes</h2>
+    <p class="lead">Voici tout ce dont nous avons besoin. Ensuite, on vous rappelle sous 24 h pour brancher votre fiche ensemble.</p>
+    <div class="grid" style="margin-bottom:28px">
+      <div class="card"><span class="num">1</span><h3>Vos coordonnées</h3><p>SIRET (on retrouve le reste tout seuls), un mobile pour valider les réponses sensibles par SMS, un mail pour le bilan mensuel.</p></div>
+      <div class="card"><span class="num">2</span><h3>Votre fiche Google</h3><p>Son nom ou son lien. Pas de compte Google ou fiche jamais récupérée ? Pas de souci, on s'en occupe avec vous.</p></div>
+      <div class="card"><span class="num">3</span><h3>Un accès gestionnaire</h3><p>Après l'inscription, vous ajoutez Skyeco comme gestionnaire de votre fiche. Aucun mot de passe à nous donner, et vous pouvez le retirer en un clic.</p></div>
+    </div>
+    <form id="fIns" class="formi" novalidate>
+      <label>SIRET *<input name="siret" inputmode="numeric" required placeholder="14 chiffres"></label>
+      <label>Votre nom *<input name="contact_nom" required></label>
+      <label>Mobile *<input name="telephone" type="tel" required placeholder="06 ..."></label>
+      <label>Email *<input name="email" type="email" required></label>
+      <label class="full">Nom ou lien de votre fiche Google<input name="fiche_google" placeholder="ex. « Dupont Paysage Auray » ou le lien Google Maps"></label>
+      <label>Avez-vous un compte Google pour votre fiche ?<select name="compte_google"><option value="oui">Oui</option><option value="non">Non</option><option value="ne-sais-pas" selected>Je ne sais pas</option></select></label>
+      <label>Forfait *<select name="forfait" id="fForfait"><option value="starter">Starter – 29 € HT/mois</option><option value="pro" selected>Pro – 49 € HT/mois</option></select></label>
+      <label>Ton des réponses<select name="ton"><option value="vous">Vouvoiement</option><option value="tu">Tutoiement</option></select></label>
+      <label>Signature des réponses<input name="signature_reponse" placeholder="ex. « L'équipe Dupont Paysage »"></label>
+      <label class="full chk"><input type="checkbox" name="mise_en_place"> Je souhaite la mise en place clé en main (récupération de la fiche, réponse aux anciens avis, photos) – sur devis</label>
+      <label class="full chk"><input type="checkbox" name="autorisation" required> J'autorise Skyeco à répondre aux avis Google publiés sur ma fiche, en mon nom et dans le ton choisi. Les réponses aux avis de 3 étoiles ou moins me sont soumises par SMS avant publication. *</label>
+      <div class="full"><button class="btn" type="submit" id="fBtn">Valider mon inscription</button><p id="fMsg" class="note"></p></div>
+    </form>
+    <div id="fOk" class="engag" style="display:none">
+      <h2>Merci, c'est enregistré !</h2>
+      <p id="fOkT"></p>
+      <ul><li>On vous appelle sous 24 h (jours ouvrés).</li><li>On vous guide pour ajouter Skyeco comme gestionnaire de votre fiche, ou pour la récupérer si besoin.</li><li>Vos premières réponses sont publiées dans les 48 h qui suivent.</li></ul>
+    </div>
+  </div>
+</section>
+<script>
+(function(){
+document.querySelectorAll('a[data-f]').forEach(function(a){a.addEventListener('click',function(){document.getElementById('fForfait').value=a.dataset.f})});
+var f=document.getElementById('fIns'),m=document.getElementById('fMsg'),bt=document.getElementById('fBtn');
+f.addEventListener('submit',function(e){e.preventDefault();m.textContent='';
+ var d={};new FormData(f).forEach(function(v,k){d[k]=v});
+ d.siret=String(d.siret||'').replace(/\D/g,'');d.autorisation=f.autorisation.checked;d.mise_en_place=f.mise_en_place.checked;
+ if(d.siret.length!==14){m.textContent='Le SIRET doit contenir 14 chiffres.';return}
+ if(!d.autorisation){m.textContent="Merci de cocher l'autorisation.";return}
+ bt.disabled=true;bt.textContent='Envoi…';
+ fetch('/api/avis-pro-inscription',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}).then(function(r){return r.json().then(function(j){return[r.ok,j]})}).then(function(x){
+  if(x[0]){f.style.display='none';document.getElementById('fOkT').textContent='Inscription de '+(x[1].entreprise||'votre entreprise')+' bien reçue.';document.getElementById('fOk').style.display='block'}
+  else{m.textContent=x[1].error||'Erreur, réessayez.';bt.disabled=false;bt.textContent='Valider mon inscription'}
+ }).catch(function(){m.textContent='Erreur réseau, réessayez.';bt.disabled=false;bt.textContent='Valider mon inscription'});
+});
+})();
+</script>
+
 <section class="demo cta-final" id="audit">
   <div class="wrap">
-    <h2>Audit gratuit de vos avis Google</h2>
+    <h2>Pas encore décidé ? Demandez un audit gratuit</h2>
     <p class="lead" style="margin:0 auto 24px">Envoyez-nous le nom de votre entreprise : on vous dit en 48 h votre note, le nombre d'avis sans réponse et comment vous vous situez face à vos concurrents.</p>
     <a class="btn" href="mailto:infos@ecosky.fr?subject=Audit%20gratuit%20Avis%20Pro&body=Nom%20de%20l'entreprise%20%3A%0AVille%20%3A%0AT%C3%A9l%C3%A9phone%20%3A">Demander mon audit gratuit</a>
   </div>

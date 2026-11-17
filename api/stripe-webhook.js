@@ -237,6 +237,12 @@ export default async function handler(req, res) {
       case 'customer.subscription.deleted': {
         // La période payée est réellement terminée → on éteint la vitrine.
         const subscription = event.data.object;
+        if (subscription.metadata?.service === 'avis-pro') {
+          await fetch(`${process.env.SUPABASE_URL}/rest/v1/avis_pro_inscriptions?stripe_subscription_id=eq.${subscription.id}`, {
+            method: 'PATCH', headers: { ...supaHeaders, Prefer: 'return=minimal' }, body: JSON.stringify({ statut: 'resilie' }),
+          });
+          break;
+        }
         await fetch(
           `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?stripe_subscription_id=eq.${subscription.id}`,
           {
@@ -384,6 +390,16 @@ export default async function handler(req, res) {
 
       case 'checkout.session.completed': {
         const session = event.data.object;
+
+        // Abonnement Avis Pro (gestion des avis Google) : on passe
+        // l'inscription en « abonne » (api/avis-pro-checkout.js).
+        if (session.metadata?.service === 'avis-pro' && session.metadata?.inscription_id) {
+          await fetch(`${process.env.SUPABASE_URL}/rest/v1/avis_pro_inscriptions?id=eq.${encodeURIComponent(session.metadata.inscription_id)}`, {
+            method: 'PATCH', headers: { ...supaHeaders, Prefer: 'return=minimal' },
+            body: JSON.stringify({ statut: 'abonne', stripe_subscription_id: session.subscription || null, stripe_customer_id: session.customer || null, paye_le: new Date().toISOString() }),
+          });
+          break;
+        }
 
         // Achat unique "Estimateur BTP" (29,90€ HT, pas d'abonnement — revu
         // le 25/09/2026 : l'essai gratuit de 2 jours reste présent, voir

@@ -34,14 +34,15 @@ export default async function handler(req, res) {
       mise_en_place: b.mise_en_place === true, ton, signature_reponse: txt(b.signature_reponse, 80),
       autorisation: true,
     };
-    await sb('avis_pro_inscriptions', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(ligne) });
+    const cree = await sb('avis_pro_inscriptions', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify(ligne) });
+    const ins = cree && cree[0];
     await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ from: 'Skyeco Avis Pro <chantiers@ecoskybyrms.fr>', to: [process.env.AGENT_RAPPORT_EMAIL || 'c.bon@ecosky.fr'],
         subject: `Nouvelle inscription Avis Pro : ${f.entreprise}`,
         html: `<p><b>${esc(f.entreprise)}</b> (SIRET ${esc(f.siret)}) veut le forfait <b>${forfait === 'pro' ? 'Pro' : 'Starter'}</b>${ligne.mise_en_place ? ' + mise en place clé en main' : ''}.</p>
 <p>Contact : ${esc(ligne.contact_nom)} — ${esc(tel)} — ${esc(email)}<br>Fiche Google : ${esc(ligne.fiche_google) || 'non précisée'}<br>Compte Google : ${esc(compte)}<br>Ton des réponses : ${esc(ton)} — signature : ${esc(ligne.signature_reponse) || '(par défaut)'}</p>
 <p>À faire : le rappeler sous 24 h et lui envoyer l'adresse à ajouter comme gestionnaire de sa fiche.</p>` }) }).catch(() => {});
-    return res.status(200).json({ ok: true, entreprise: f.entreprise });
+    return res.status(200).json({ ok: true, entreprise: f.entreprise, id: ins?.id, jeton: ins ? `${ins.siret}-${new Date(ins.created_at).getTime()}` : null });
   } catch (e) {
     console.error('avis-pro-inscription :', e.message);
     return res.status(500).json({ error: "L'inscription a échoué. Réessayez dans un instant." });

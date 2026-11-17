@@ -250,6 +250,7 @@ show(0);
     <div id="fOk" class="engag" style="display:none">
       <h2>Merci, c'est enregistré !</h2>
       <p id="fOkT"></p>
+      <p style="margin:14px 0"><button class="btn" id="fPay" type="button" style="border:0;cursor:pointer;font-size:16px">Activer mon abonnement (paiement sécurisé)</button></p><p id="fPayMsg" style="font-size:14px;opacity:.85">Sans engagement, résiliable à tout moment. Paiement par carte via Stripe.</p>
       <ul><li>On vous appelle sous 24 h (jours ouvrés).</li><li>On vous guide pour ajouter Skyeco comme gestionnaire de votre fiche, ou pour la récupérer si besoin.</li><li>Vos premières réponses sont publiées dans les 48 h qui suivent.</li></ul>
     </div>
   </div>
@@ -265,10 +266,16 @@ f.addEventListener('submit',function(e){e.preventDefault();m.textContent='';
  if(!d.autorisation){m.textContent="Merci de cocher l'autorisation.";return}
  bt.disabled=true;bt.textContent='Envoi…';
  fetch('/api/avis-pro-inscription',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}).then(function(r){return r.json().then(function(j){return[r.ok,j]})}).then(function(x){
-  if(x[0]){f.style.display='none';document.getElementById('fOkT').textContent='Inscription de '+(x[1].entreprise||'votre entreprise')+' bien reçue.';document.getElementById('fOk').style.display='block'}
+  if(x[0]){window._ins={id:x[1].id,jeton:x[1].jeton};f.style.display='none';document.getElementById('fOkT').textContent='Inscription de '+(x[1].entreprise||'votre entreprise')+' bien reçue.';document.getElementById('fOk').style.display='block'}
   else{m.textContent=x[1].error||'Erreur, réessayez.';bt.disabled=false;bt.textContent='Valider mon inscription'}
  }).catch(function(){m.textContent='Erreur réseau, réessayez.';bt.disabled=false;bt.textContent='Valider mon inscription'});
 });
+document.getElementById('fPay').addEventListener('click',function(){var b=this,pm=document.getElementById('fPayMsg');if(!window._ins||!window._ins.id){pm.textContent='Inscription introuvable, rechargez la page.';return}
+ b.disabled=true;b.textContent='Redirection vers le paiement…';
+ fetch('/api/avis-pro-checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(window._ins)}).then(function(r){return r.json()}).then(function(j){if(j.url){location.href=j.url}else{pm.textContent=j.error||'Erreur, réessayez.';b.disabled=false;b.textContent='Activer mon abonnement (paiement sécurisé)'}}).catch(function(){pm.textContent='Erreur réseau, réessayez.';b.disabled=false});
+});
+var q=location.search;if(q.indexOf('paiement=ok')>-1){f.style.display='none';var o=document.getElementById('fOk');o.style.display='block';o.querySelector('h2').textContent='Abonnement activé, merci !';document.getElementById('fOkT').textContent='Votre paiement est confirmé. On vous appelle sous 24 h pour brancher votre fiche.';document.getElementById('fPay').parentNode.style.display='none';document.getElementById('fPayMsg').style.display='none'}
+if(q.indexOf('paiement=annule')>-1){m.textContent="Paiement annulé. Votre inscription est bien enregistrée : on vous rappelle pour finaliser."}
 })();
 </script>
 

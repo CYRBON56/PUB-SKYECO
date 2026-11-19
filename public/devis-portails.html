@@ -320,6 +320,7 @@
     <p class="eyebrow">Votre projet de portail</p>
     <h2 style="margin-top:16px; max-width:26ch;">Configurez votre portail et recevez son prix détaillé par e-mail.</h2>
     <p class="lead" style="margin-top:16px;">Choisissez vos dimensions et vos options, puis laissez votre téléphone et votre e-mail : vous recevez aussitôt votre estimation, pose comprise, avec le détail ligne par ligne. Gratuit et sans engagement. Le prix ferme est confirmé après relevé de côtes sur place.</p>
+    <p style="margin-top:14px; font-family:var(--mono); font-size:0.76rem; letter-spacing:0.05em; color:var(--sauge); text-transform:uppercase;">4 étapes sur cette page : 1. Dimensions — 2. Options — 3. TVA — 4. Coordonnées</p>
 
     <div id="configLayout" style="margin-top:44px; display:grid; grid-template-columns: 1.15fr 0.85fr; gap:56px; align-items:start;">
 
@@ -362,7 +363,7 @@
             <div class="check-row">
               <input type="checkbox" id="portillon" name="portillon">
               <label for="portillon">Ajouter un portillon piéton assorti
-                <span class="note">Largeur de baie ~1,12 à 1,30 m selon pose — même gamme et finition que le portail.</span>
+                <span class="note">Largeur de l'ouverture du portillon (mesure différente de la « largeur de passage » du portail ci-dessus) : environ 1,12 à 1,30 m selon la pose — même gamme et finition que le portail.</span>
               </label>
             </div>
             <div class="check-row">
@@ -400,7 +401,7 @@
           </div>
 
           <div class="options-box">
-            <h3 style="font-size:1.05rem; margin-bottom:10px;">3. Pose et TVA</h3>
+            <h3 style="font-size:1.05rem; margin-bottom:10px;">3. TVA applicable</h3>
             <fieldset>
               <legend class="eyebrow">Votre logement</legend>
               <div class="check-row">
@@ -420,19 +421,21 @@
             <div class="prix-detail" id="prixDetail"></div>
           </div>
 
-          <h3 style="font-size:1.05rem; margin:26px 0 14px;">4. Vos coordonnées</h3>
+          <h3 style="font-size:1.05rem; margin:26px 0 6px;">4. Vos coordonnées</h3>
+          <p style="font-size:0.78rem; color:var(--ardoise-2); margin:0 0 14px;">Les champs marqués * sont obligatoires.</p>
           <div class="config-grid">
             <div class="field">
-              <label for="prenom">Prénom</label>
+              <label for="prenom">Prénom *</label>
               <input id="prenom" name="prenom" type="text" required>
             </div>
             <div class="field">
-              <label for="nom">Nom</label>
+              <label for="nom">Nom *</label>
               <input id="nom" name="nom" type="text" required>
             </div>
             <div class="field">
-              <label for="telephone">Téléphone</label>
+              <label for="telephone">Téléphone *</label>
               <input id="telephone" name="telephone" type="tel" required>
+              <p style="font-size:0.78rem; color:var(--ardoise-2); margin-top:6px;">Un code par SMS confirme ce numéro avant l'envoi de votre estimation — cette vérification est obligatoire pour valider la demande.</p>
               <button type="button" class="btn" id="btnEnvoyerCode" style="margin-top:8px; padding:8px 14px; font-size:0.85rem;">Recevoir un code par SMS</button>
               <div id="champCode" style="display:none; margin-top:8px;">
                 <label for="codeVerif">Code reçu par SMS</label>
@@ -445,11 +448,11 @@
               <p id="erreurVerif" style="display:none; margin-top:6px; font-size:0.85rem; color:#b3261e;"></p>
             </div>
             <div class="field">
-              <label for="email">E-mail</label>
+              <label for="email">E-mail *</label>
               <input id="email" name="email" type="email" required placeholder="Pour recevoir votre estimation">
             </div>
             <div class="field full">
-              <label for="adresse">Adresse du chantier</label>
+              <label for="adresse">Adresse du chantier *</label>
               <input id="adresse" name="adresse" type="text" placeholder="Rue, code postal, ville" required>
             </div>
             <div class="field full">
@@ -716,12 +719,14 @@
     const tauxTVA = neuf ? 0.20 : 0.10;
     const ttcTotal = htTotal * (1 + tauxTVA);
 
-    // Fourchette publique : le prix exact et le détail ligne par ligne ne sont
-    // donnés qu'après envoi du formulaire (affichés sur /merci-portail.html).
-    // Aucun prix affiché sur la page : l'estimation détaillée est envoyée par
-    // e-mail (et SMS) une fois le téléphone vérifié et l'e-mail renseigné.
-    elPrixTTC.textContent = 'Envoyée par e-mail';
-    elPrixDetail.innerHTML = `Pose comprise, TVA ${Math.round(tauxTVA*100)} % incluse.<br><strong>Renseignez votre téléphone et votre e-mail ci-dessous</strong> : vous recevez aussitôt votre prix avec le détail ligne par ligne — gratuit et sans engagement.`;
+    // Le prix TTC s'affiche désormais en direct pendant la configuration (il
+    // était déjà calculé côté client avant, juste jamais montré — le texte
+    // fixe "Envoyée par e-mail" donnait l'impression que rien ne se passait,
+    // voire qu'un e-mail était déjà parti). Le détail ligne par ligne et la
+    // confirmation écrite restent envoyés par e-mail + SMS une fois le
+    // téléphone vérifié, ce qui garde une bonne raison de laisser ses coordonnées.
+    elPrixTTC.textContent = fmtEUR(ttcTotal);
+    elPrixDetail.innerHTML = `Pose comprise, TVA ${Math.round(tauxTVA*100)} % incluse.<br><strong>Renseignez votre téléphone et votre e-mail ci-dessous</strong> pour recevoir ce chiffrage par e-mail et SMS, avec le détail ligne par ligne — gratuit et sans engagement.`;
 
     return { htProduit, htPortillon, htOptions, htPeinture, htTotal, tauxTVA, ttcTotal, opts };
   }

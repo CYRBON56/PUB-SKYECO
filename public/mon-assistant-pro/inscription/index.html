@@ -166,7 +166,7 @@ function luhn(s){let sum=0;for(let i=0;i<s.length;i++){let d=+s[s.length-1-i];if
 function vSignup(){
  const c=S.co;
  $('app').innerHTML=loginHTML()+`
- <h1>Créez votre assistant</h1><p class="sub">2 minutes. 30 jours d'essai gratuit, sans carte bancaire.</p>
+ <h1>Créez votre assistant</h1><p class="sub">2 minutes. 7 jours d'essai gratuit, sans carte bancaire.</p>
  <div class="card">
   <label>Numéro de SIRET <small>(facultatif, il remplit le reste pour vous)</small></label>
   <div class="inl"><input id="siret" inputmode="numeric" placeholder="14 chiffres" value="${esc(c.siret)}"><button class="btn dark sm" onclick="lookup()">Rechercher</button></div>
@@ -552,7 +552,7 @@ function vQuote(){
  <div class="card" style="margin-top:14px">
   ${isFree()?`<div class="big">0 €<small> HT / mois</small></div>
   <p class="hint"><s>${T.p} € HT/mois</s> · <b style="color:#166534">Compte offert – ${esc(S.co.name)} (client test)</b><br>Toutes les fonctions du forfait ${T.n}, sans limite de durée.</p>`:`<div class="big">${T.p} €<small> HT / mois</small></div>
-  <p class="hint">soit ${eur(ht+tva)} TTC · sans engagement · 30 jours gratuits</p>`}
+  <p class="hint">soit ${eur(ht+tva)} TTC · sans engagement · 7 jours gratuits</p>`}
   <h2 style="margin-top:16px">Votre consommation estimée</h2>
   <div class="meter"><div class="${pct>=80?'hot':''}" style="width:${pct}%"></div></div>
   <p class="hint">≈ ${acts} actions sur ${T.q} incluses (${pct} %). Je vous préviens à 80 %, vous choisissez alors de passer au forfait du dessus ou d'attendre le mois suivant.</p>
@@ -565,7 +565,7 @@ function vQuote(){
  <div class="card"><h2 style="margin-top:0">Comparé à une embauche</h2><div class="vs"><div><small>Secrétaire à mi-temps</small><b>+ de 1 000 €/mois</b><small>charges comprises, 20 h par semaine</small></div><div class="g"><small>Votre assistant ${T.n}</small><b>${T.p} €/mois</b><small>disponible 24h/24, 7j/7</small></div></div></div>
  <div class="actions"><button class="btn light" onclick="go(3)">Modifier mes tâches</button><button class="btn" onclick="startTrial(${t})">${isFree()?'Activer mon compte offert':"Démarrer l'essai gratuit"}</button></div>`;
 }
-function startTrial(t){S.tier=t;S.started=new Date().toISOString();S.used=0;S.feed=[['✦',isFree()?'Compte offert activé (client test, forfait '+TIERS[t].n+')':'Compte créé, essai gratuit de 30 jours démarré']];go(5);creerCompteServeur()}
+function startTrial(t){S.tier=t;S.started=new Date().toISOString();S.used=0;S.feed=[['✦',isFree()?'Compte offert activé (client test, forfait '+TIERS[t].n+')':'Compte créé, essai gratuit de 7 jours démarré']];go(5);creerCompteServeur()}
 
 /* ---------- 6. tableau de bord ---------- */
 let tab='jour';
@@ -873,7 +873,7 @@ function vDocs(p){
 }
 function vDash(){
  document.body.classList.add('dash');{const d=$('btnDeco');if(d)d.style.display=''}appliquerFond();
- const T=TIERS[S.tier||1];const d=new Date(S.started||Date.now());const end=new Date(d.getTime()+14*864e5);
+ const T=TIERS[S.tier||1];const d=new Date(S.started||Date.now());const end=new Date(d.getTime()+7*864e5);
  const left=Math.max(0,Math.ceil((end-Date.now())/864e5));
  $('app').innerHTML=`<h1>Bonjour ${esc(S.co.first)} 👋</h1><p class="sub">${esc(S.co.name)} · forfait ${T.n} · ${isFree()?'<b style="color:#166534">compte offert</b>':`essai gratuit : ${left} jour${left>1?'s':''} restant${left>1?'s':''}`}</p>
  <div class="tabs">${[['jour','☀️ Ma journée'],['chat','🎙️ Assistant'],['mails','📬 Mails'],['docs','📁 Documents'],['comm','💬 Commercial'],['mkt','📣 Marketing'],['stock','📦 Stock'],['plus','➕ Plus'],['reg','⚙️ Réglages']].map(([k,l])=>`<button class="${tab===k?'on':''}" data-tab="${k}" onclick="tab='${k}';vDash()">${l}</button>`).join('')}</div>

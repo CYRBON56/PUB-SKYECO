@@ -504,6 +504,22 @@
 
 <script>
   const DRAFT_ID = '89338dcc-a009-4815-a769-f0bede180f37';
+  // Origine de la visite (Google Ads / Meta / Site), mémorisée pour la session
+  // et transmise avec la demande pour l'afficher dans SalesFlow.
+  function getOrigine() {
+    try {
+      const qs = new URLSearchParams(location.search);
+      const src = (qs.get('utm_source') || '').toLowerCase();
+      let o = null;
+      if (qs.get('gclid') || qs.get('gbraid') || qs.get('wbraid') || src.includes('google')) o = { canal: 'Google Ads', click_id: qs.get('gclid') || qs.get('gbraid') || qs.get('wbraid'), utm_campaign: qs.get('utm_campaign') };
+      else if (qs.get('fbclid') || qs.get('ad_id') || src.includes('facebook') || src.includes('meta') || src.includes('instagram')) o = { canal: 'Meta', click_id: qs.get('fbclid') || qs.get('ad_id'), utm_campaign: qs.get('utm_campaign') };
+      if (o) { sessionStorage.setItem('ecosky_origine', JSON.stringify(o)); return o; }
+      const saved = sessionStorage.getItem('ecosky_origine');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return { canal: 'Site', click_id: null, utm_campaign: null };
+  }
+  getOrigine();
 
   // Grilles tarifaires Portaleco extraites du tarif fournisseur en vigueur au
   // 01/03/2026, recoupées avec le catalogue produit (Catalogue-portaleco.pdf,
@@ -889,6 +905,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           draftId: DRAFT_ID,
+          origine: getOrigine(),
           prenom: prenom,
           nom: nom,
           telephone: telephone,

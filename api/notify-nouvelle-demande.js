@@ -131,12 +131,15 @@ async function alerterAdminSiEchecs(echecs, contexte) {
   }
 }
 
+// Brouillon (vitrine) correspondant au site RMS EcoSky / devis-portails.html
+const RMS_DRAFT_ID = '89338dcc-a009-4815-a769-f0bede180f37';
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Méthode non autorisée' });
   }
 
-  const { draftId, nom, prenom, telephone, telephoneVerifie, email, reponses, recap, estimationTexte } = req.body || {};
+  const { draftId, nom, prenom, telephone, telephoneVerifie, email, reponses, recap, estimationTexte, origine } = req.body || {};
   if (!draftId) {
     return res.status(400).json({ error: 'draftId manquant' });
   }
@@ -188,6 +191,32 @@ export default async function handler(req, res) {
     // dessus (ex: bouton "Envoyer mes photos par SMS").
     const insertData = await insertResp.json().catch(() => []);
     const leadId = insertData[0]?.id || null;
+    // 2bis. Demandes du site RMS EcoSky (page devis-portails) : copie dans
+    // SalesFlow pour les voir avec toutes les autres demandes. Jamais bloquant.
+    if (draftId === RMS_DRAFT_ID && process.env.SALESFLOW_SYNC_SECRET) {
+      try {
+        await fetch('https://salesflow-ecosky.vercel.app/api/ingest-lead', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            key: process.env.SALESFLOW_SYNC_SECRET,
+            nom, prenom, telephone, email,
+            adresse_projet: reponses?.adresse || null,
+            type_projet: 'portail',
+            source: 'Formulaire portails skyeco.fr',
+            canal: origine?.canal || 'Site',
+            click_id: origine?.click_id || null,
+            utm_campaign: origine?.utm_campaign || null,
+            notes: [reponses?.produit ? 'Produit : ' + reponses.produit : null, reponses?.message ? 'Message : ' + reponses.message : null].filter(Boolean).join('\n'),
+            estimation_texte: estimationTexte || null,
+            notifier: false, // Cyrille reçoit déjà le SMS "artisan" ci-dessous
+          }),
+        });
+      } catch (e) {
+        console.error('Copie SalesFlow échouée :', e.message);
+      }
+    }
+
     // 3. Double notification — en parallèle, on continue même si l'un des envois échoue.
     const prenomAffiche = prenom || 'Bonjour';
     const nomEntreprise = draft.entreprise || 'votre artisan';

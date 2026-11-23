@@ -520,6 +520,15 @@
     return { canal: 'Site', click_id: null, utm_campaign: null };
   }
   getOrigine();
+  // Pré-remplissage depuis le lien personnel envoyé aux prospects Facebook
+  // (salesflow /api/l) : ?prenom=&nom=&tel=&email=
+  try {
+    const qsP = new URLSearchParams(location.search);
+    [['prenom','prenom'],['nom','nom'],['telephone','tel'],['email','email']].forEach(([id, k]) => {
+      const el = document.getElementById(id), v = qsP.get(k);
+      if (el && v && !el.value) el.value = v;
+    });
+  } catch (e) {}
 
   // Grilles tarifaires Portaleco extraites du tarif fournisseur en vigueur au
   // 01/03/2026, recoupées avec le catalogue produit (Catalogue-portaleco.pdf,

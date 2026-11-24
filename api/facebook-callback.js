@@ -110,6 +110,17 @@ export default async function handler(req, res) {
       champs.access_token = page.access_token; // Graph API Instagram utilise le même jeton de Page
     }
 
+    // Boîte « Réponses réseaux » (24/11/2026) : abonne la Page au webhook
+    // de l'app (api/meta-webhook.js) pour recevoir commentaires et messages.
+    try {
+      const abo = await fetch(`https://graph.facebook.com/v21.0/${page.id}/subscribed_apps?subscribed_fields=feed,messages&access_token=${encodeURIComponent(page.access_token)}`, { method: 'POST' });
+      const aboData = await abo.json().catch(() => ({}));
+      champs.inbox_abonne = !!(abo.ok && aboData.success);
+      if (!champs.inbox_abonne) console.error('facebook-callback : abonnement webhook refusé —', JSON.stringify(aboData));
+    } catch (e) {
+      champs.inbox_abonne = false;
+    }
+
     await supabaseUpsertConnexion(draftId, champs);
     return redirigerDashboard(res, draftId, 'fb_succes');
   } catch (err) {

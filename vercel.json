@@ -7,6 +7,10 @@
     {
       "path": "/api/petitepart-rappels",
       "schedule": "0 6-20 * * *"
+    },
+    {
+      "path": "/api/tiktok-comments",
+      "schedule": "23 6 * * *"
     }
   ],
   "rewrites": [

@@ -52,6 +52,14 @@ const SCOPES = [
   'instagram_basic',
   'instagram_content_publish',
   'business_management',
+  // Boîte « Réponses réseaux » (24/11/2026) : lire et répondre aux
+  // commentaires et messages privés Facebook / Instagram.
+  'pages_read_user_content',
+  'pages_manage_engagement',
+  'pages_manage_metadata',
+  'pages_messaging',
+  'instagram_manage_comments',
+  'instagram_manage_messages',
 ].join(',');
 
 export default async function handler(req, res) {

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Réponses réseaux — Mon Assistant Pro</title>
+<style>
+  :root{--bleu:#163A63;--vert:#2e7d32;--gris:#6B7280;--fond:#F5F7FA}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--fond);color:#1F2937}
+  header{background:var(--bleu);color:#fff;padding:16px 18px}
+  header h1{margin:0;font-size:1.2rem}
+  header p{margin:4px 0 0;font-size:.85rem;opacity:.85}
+  main{max-width:760px;margin:0 auto;padding:14px}
+  .filtres{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .filtres button{border:1.5px solid var(--bleu);background:#fff;color:var(--bleu);border-radius:20px;padding:6px 14px;font-size:.85rem;cursor:pointer}
+  .filtres button.actif{background:var(--bleu);color:#fff}
+  .carte{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .tete{display:flex;justify-content:space-between;gap:8px;font-size:.82rem;color:var(--gris)}
+  .badge{font-weight:bold;color:var(--bleu)}
+  .texte{margin:8px 0 10px;font-size:1rem;white-space:pre-wrap}
+  textarea{width:100%;min-height:80px;border:1px solid #D1D5DB;border-radius:8px;padding:10px;font:inherit;font-size:.95rem}
+  .actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+  .btn{border:0;border-radius:8px;padding:10px 16px;font-weight:bold;cursor:pointer;font-size:.9rem}
+  .btn-envoyer{background:var(--vert);color:#fff}
+  .btn-ignorer{background:#fff;color:var(--gris);border:1px solid #D1D5DB}
+  .ok{color:var(--vert);font-weight:bold;font-size:.9rem}
+  .err{color:#B91C1C;font-size:.85rem;margin-top:6px}
+  .vide{text-align:center;color:var(--gris);padding:30px 10px}
+  .info{background:#EEF4FB;border-radius:10px;padding:12px;font-size:.88rem;margin-bottom:12px}
+  a{color:var(--bleu)}
+</style>
+</head>
+<body>
+<header>
+  <h1>💬 Réponses réseaux</h1>
+  <p>Commentaires et messages de vos pages Facebook et Instagram. Une réponse vous est proposée : relisez, modifiez si besoin, puis envoyez.</p>
+</header>
+<main>
+  <div id="info" class="info" style="display:none"></div>
+  <div class="filtres">
+    <button data-f="à répondre" class="actif">À répondre</button>
+    <button data-f="répondu">Répondus</button>
+    <button data-f="tous">Tous</button>
+  </div>
+  <div id="liste"><div class="vide">Chargement…</div></div>
+  <p style="font-size:.85rem"><a id="retour" href="/mon-dashboard.html">← Retour à mon espace</a></p>
+</main>
+<script>
+const params = new URLSearchParams(location.search);
+const draftId = params.get('id');
+const token = params.get('admin_token') || sessionStorage.getItem('skyeco_dashboard_token_' + draftId) || sessionStorage.getItem('skyeco_dashboard_token');
+document.getElementById('retour').href = '/mon-dashboard.html?id=' + encodeURIComponent(draftId || '');
+let items = [], filtre = 'à répondre';
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fd = d => d ? new Date(d).toLocaleString('fr-FR', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}) : '';
+const ico = it => (it.plateforme === 'instagram' ? '📸 Instagram' : it.plateforme === 'tiktok' ? '🎵 TikTok' : '📘 Facebook') + (it.type === 'message' ? ' · message privé' : ' · commentaire');
+
+async function charger() {
+  if (!draftId || !token) { document.getElementById('liste').innerHTML = '<div class="vide">Ouvrez cette page depuis votre espace (session expirée).</div>'; return; }
+  const r = await fetch('/api/reseaux-inbox?id=' + encodeURIComponent(draftId) + '&token=' + encodeURIComponent(token));
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) { document.getElementById('liste').innerHTML = '<div class="vide">' + esc(j.erreur || 'Erreur de chargement') + '</div>'; return; }
+  items = j.items || [];
+  const c = j.connexion;
+  const info = document.getElementById('info');
+  if (!c || !c.facebook_page_name) { info.style.display = 'block'; info.innerHTML = 'Connectez d\'abord votre page Facebook (et son Instagram) depuis <a href="/mon-dashboard.html?id=' + encodeURIComponent(draftId) + '#reseaux">votre espace, rubrique Réseaux sociaux</a>.'; }
+  else if (!c.inbox_abonne) { info.style.display = 'block'; info.innerHTML = 'Page connectée : <b>' + esc(c.facebook_page_name) + '</b>. Pour recevoir les commentaires ici, reconnectez-la une fois depuis <a href="/mon-dashboard.html?id=' + encodeURIComponent(draftId) + '#reseaux">votre espace</a> (nouvelle autorisation « commentaires et messages »).'; }
+  afficher();
+}
+
+function afficher() {
+  const l = items.filter(it => filtre === 'tous' || (filtre === 'répondu' ? it.statut === 'répondu' : it.statut === 'à répondre'));
+  document.getElementById('liste').innerHTML = l.length ? l.map(it => `
+    <div class="carte" id="c${it.id}">
+      <div class="tete"><span class="badge">${ico(it)}${it.nom_page ? ' · ' + esc(it.nom_page) : ''}</span><span>${fd(it.recu_le)}</span></div>
+      <div class="texte"><b>${esc(it.auteur || 'Quelqu\'un')}</b> : ${esc(it.texte)}</div>
+      ${it.statut === 'répondu'
+        ? `<div class="ok">✓ Répondu ${fd(it.repondu_le)} : « ${esc(it.reponse_envoyee)} »</div>`
+        : it.statut && it.statut.startsWith('ignoré') ? `<div class="err" style="color:var(--gris)">${esc(it.statut)}</div>`
+        : `<textarea id="t${it.id}">${esc(it.reponse_proposee || '')}</textarea>
+           <div class="actions">
+             <button class="btn btn-envoyer" onclick="repondre(${it.id})">Envoyer la réponse</button>
+             <button class="btn btn-ignorer" onclick="ignorer(${it.id})">Ne pas répondre</button>
+           </div>
+           <div class="err" id="e${it.id}">${it.erreur ? 'Dernier essai : ' + esc(it.erreur) : ''}</div>`}
+    </div>`).join('') : '<div class="vide">Rien ici pour le moment. Les nouveaux commentaires arrivent automatiquement.</div>';
+}
+
+async function envoyer(corps) {
+  const r = await fetch('/api/reseaux-inbox', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id: draftId, token, ...corps }) });
+  return [r.ok, await r.json().catch(() => ({}))];
+}
+async function repondre(id) {
+  const texte = document.getElementById('t' + id).value.trim();
+  if (!texte) return;
+  const b = document.querySelector('#c' + id + ' .btn-envoyer'); b.disabled = true; b.textContent = 'Envoi…';
+  const [ok, j] = await envoyer({ action: 'repondre', itemId: id, texte });
+  if (ok) { const it = items.find(x => x.id === id); it.statut = 'répondu'; it.reponse_envoyee = texte; it.repondu_le = new Date().toISOString(); afficher(); }
+  else { document.getElementById('e' + id).textContent = j.erreur || 'Échec de l\'envoi'; b.disabled = false; b.textContent = 'Envoyer la réponse'; }
+}
+async function ignorer(id) {
+  const [ok] = await envoyer({ action: 'ignorer', itemId: id });
+  if (ok) { items.find(x => x.id === id).statut = 'ignoré'; afficher(); }
+}
+document.querySelectorAll('.filtres button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.filtres button').forEach(x => x.classList.remove('actif'));
+  b.classList.add('actif'); filtre = b.dataset.f; afficher();
+});
+charger();
+setInterval(charger, 60000);
+</script>
+</body>
+</html>

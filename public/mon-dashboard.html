@@ -527,6 +527,7 @@
       <button type="button" id="btnVoirArchives" style="display:none; background:none; border:none; color:#8a9891; font-size:0.78rem; font-weight:700; cursor:pointer; text-decoration:underline; padding:0 4px; white-space:nowrap;">📦 Vitrines archivées</button>
       <button type="button" class="btn-elements" id="btnMesRdv" style="background:#fff; color:#163A63; border:1.5px solid #163A63;">📅 Mes rendez-vous</button>
       <a class="btn-elements" id="btnMesDevis" href="#" style="background:#fff; color:#163A63; border:1.5px solid #163A63;">📄 Devis &amp; factures</a>
+      <a class="btn-elements" id="btnReponsesReseaux" href="#" style="background:#fff; color:#163A63; border:1.5px solid #163A63;">💬 Réponses réseaux</a>
       <a class="btn-elements" id="btnElements" href="#">✏️ Modifier mes éléments</a>
       <button type="button" id="btnInstallerTelephone" style="background:#fff; color:#163A63; border:1.5px solid #163A63;" class="btn-elements">📲 Installer sur mon téléphone</button>
       <a class="btn-elements" id="btnMettreEnLigneAccueil" href="#" style="background:#e8622c; display:none;">🚀 Mettre en ligne</a>
@@ -1006,6 +1007,7 @@
   verrouillerActionPayante('btnApprovisionnerRapide');
   verrouillerActionPayante('btnFondsInverse');
   document.getElementById('btnMesDevis').href = '/mes-devis.html?id=' + draftId + (params.get('admin_token') ? '&admin_token=' + params.get('admin_token') : '');
+  document.getElementById('btnReponsesReseaux').href = '/reponses-reseaux.html?id=' + draftId + (params.get('admin_token') ? '&admin_token=' + params.get('admin_token') : '');
   let sauvegardesEnCours = 0;
   function demarrerSauvegarde() { sauvegardesEnCours++; }
   function terminerSauvegarde() { sauvegardesEnCours = Math.max(0, sauvegardesEnCours - 1); }

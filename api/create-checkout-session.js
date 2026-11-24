@@ -147,6 +147,27 @@ async function estEligibleRemiseFideliteEstimateur(draftId) {
   }
 }
 
+// Date de fin de l'essai gratuit encore EN COURS pour ce brouillon (secondes
+// Unix, pour le trial_end Stripe), ou null si pas d'essai / essai terminé.
+// Stripe exige un trial_end au moins 48 h dans le futur : en dessous, on
+// débite simplement tout de suite.
+async function lireFinEssaiEnCours(draftId) {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) return null;
+  try {
+    const r = await fetch(
+      `${process.env.SUPABASE_URL}/rest/v1/skyeco_pro_vitrine_drafts?id=eq.${encodeURIComponent(draftId)}&select=essai_gratuit_fin`,
+      { headers: { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}` } }
+    );
+    if (!r.ok) return null;
+    const fin = (await r.json())?.[0]?.essai_gratuit_fin;
+    if (!fin) return null;
+    const sec = Math.floor(new Date(fin).getTime() / 1000);
+    return sec > Math.floor(Date.now() / 1000) + 48 * 3600 ? sec : null;
+  } catch (e) {
+    return null;
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Méthode non autorisée' });
@@ -190,10 +211,12 @@ export default async function handler(req, res) {
       : (avecRemiseFidelite ? COUPON_FIDELITE_ESTIMATEUR_ID : null);
 
     const description = avecRemise
-      ? `1er mois offert, puis sans engagement — vous arrêtez quand vous voulez. Prix HT : ${(forfait.centimesHT / 100).toFixed(2)} € — TVA 20% incluse. Prix spécial artisan : ${prixReduitHT} € HT/mois pendant les 12 premiers mois, puis ${(forfait.centimesHT / 100).toFixed(2)} € HT/mois. Votre formulaire vitrine en ligne, mis à jour et actif chaque mois.`
+      ? `Sans engagement — vous arrêtez quand vous voulez. Prix HT : ${(forfait.centimesHT / 100).toFixed(2)} € — TVA 20% incluse. Prix spécial artisan : ${prixReduitHT} € HT/mois pendant les 12 premiers mois, puis ${(forfait.centimesHT / 100).toFixed(2)} € HT/mois. Votre formulaire vitrine en ligne, mis à jour et actif chaque mois.`
       : avecRemiseFidelite
-      ? `1er mois offert, puis sans engagement — vous arrêtez quand vous voulez. Remise fidélité Estimateur BTP : ${prixReduitFideliteHT} € HT/mois pendant les 12 premiers mois (au lieu de ${(forfait.centimesHT / 100).toFixed(2)} € HT/mois), puis ${(forfait.centimesHT / 100).toFixed(2)} € HT/mois — TVA 20% incluse. Votre formulaire vitrine en ligne, mis à jour et actif chaque mois.`
-      : `1er mois offert, puis sans engagement — vous arrêtez quand vous voulez. ${(forfait.centimesHT / 100).toFixed(2)} € HT/mois — TVA 20% incluse, sans remise temporaire ni changement de tarif dans le temps. Votre formulaire vitrine en ligne, mis à jour et actif chaque mois.`;
+      ? `Sans engagement — vous arrêtez quand vous voulez. Remise fidélité Estimateur BTP : ${prixReduitFideliteHT} € HT/mois pendant les 12 premiers mois (au lieu de ${(forfait.centimesHT / 100).toFixed(2)} € HT/mois), puis ${(forfait.centimesHT / 100).toFixed(2)} € HT/mois — TVA 20% incluse. Votre formulaire vitrine en ligne, mis à jour et actif chaque mois.`
+      : `Sans engagement — vous arrêtez quand vous voulez. ${(forfait.centimesHT / 100).toFixed(2)} € HT/mois — TVA 20% incluse, sans remise temporaire ni changement de tarif dans le temps. Votre formulaire vitrine en ligne, mis à jour et actif chaque mois.`;
+
+    const finEssai = await lireFinEssaiEnCours(draftId);
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
@@ -221,16 +244,14 @@ export default async function handler(req, res) {
       ...(couponAAppliquer ? { discounts: [{ coupon: couponAAppliquer }] } : {}),
       metadata: { draft_id: draftId, plan: String(plan || 1), remise_fidelite_estimateur: String(avecRemiseFidelite) },
       subscription_data: {
-        // 17/09/2026 (soir) : "le premier mois est gratuit" — jusqu'ici,
-        // s'abonner via ce endpoint débitait la carte immédiatement, alors
-        // même qu'un artisan qui vient de "Mettre en ligne" peut être en
-        // plein milieu de son essai gratuit sans CB (statut 'essai', voir
-        // mon-dashboard-demo.html) : il aurait payé tout de suite EN PLUS de
-        // son mois gratuit en cours. Un essai Stripe de 30 jours sur
-        // l'abonnement lui-même règle ça : la carte est enregistrée mais
-        // jamais débitée avant J+30, qu'il ait ou non déjà démarré un essai
-        // par ailleurs.
-        trial_period_days: 30,
+        // 24/11/2026 : sur décision de Cyrille, plus de « 1er mois offert »
+        // en plus des 30 jours d'essai gratuit (ça faisait 2 mois gratuits).
+        // Le prélèvement commence donc à la fin de l'essai : si l'artisan
+        // s'abonne pendant son essai gratuit (statut 'essai'), la carte n'est
+        // débitée qu'à la date de fin de cet essai (essai_gratuit_fin) ; s'il
+        // s'abonne après (essai terminé), le premier mois est débité tout de
+        // suite.
+        ...(finEssai ? { trial_end: finEssai } : {}),
         metadata: { draft_id: draftId, plan: String(plan || 1) },
       },
       success_url: `${origin}/apercu.html?id=${draftId}&session_id={CHECKOUT_SESSION_ID}`,

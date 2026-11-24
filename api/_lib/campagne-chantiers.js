@@ -27,7 +27,7 @@ export function contenu(p, token) {
 <p><a href="${suivi('clic')}" style="display:inline-block;background:#E8622C;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:bold">Recevoir des chantiers</a></p>
 <p>Si un contact s'avère faux, il vous est remplacé.</p>
 <p>Cyrille Bon<br>Skyeco by RMS · 06 45 68 83 94</p>
-<p style="font-size:11px;color:#8A949C;border-top:1px solid #D5DEE5;padding-top:10px;margin-top:22px">RESINE MARBRE SOL (Skyeco by RMS), SASU, 23 route de Corn er Hoet, 56400 Brech, SIRET 939 997 870 00018. Vous recevez ce message en tant que professionnel du bâtiment. <a href="${suivi('stop')}" style="color:#8A949C">Ne plus recevoir de messages</a></p>
+<p style="font-size:11px;color:#8A949C;border-top:1px solid #D5DEE5;padding-top:10px;margin-top:22px">RESINE MARBRE SOL (Skyeco by RMS), SAS, 23 route de Corn er Hoet, 56400 Brech, SIRET 939 997 870 00018. Vous recevez ce message en tant que professionnel du bâtiment. <a href="${suivi('stop')}" style="color:#8A949C">Ne plus recevoir de messages</a></p>
 <img src="${suivi('ouv')}" width="1" height="1" alt="" style="display:block;border:0">
 </div>`;
   const texte = `Bonjour,\n\nDes particuliers ${p.departement ? 'du ' + p.departement : 'de votre secteur'} estiment leurs travaux sur Skyeco et demandent à être contactés par une entreprise près de chez eux.\n\nInscription gratuite, sans abonnement. Chaque projet est proposé à 3 entreprises au maximum. Votre premier chantier est offert, ensuite 19 € ou 39 € HT le contact, uniquement si vous le prenez.\n\nRecevoir des chantiers : ${suivi('clic')}\n\nCyrille Bon, Skyeco by RMS, 06 45 68 83 94\n\nNe plus recevoir de messages : ${suivi('stop')}`;

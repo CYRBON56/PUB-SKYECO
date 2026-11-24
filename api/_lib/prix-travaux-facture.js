@@ -8,7 +8,7 @@ import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 export const VENDEUR = {
   marque: 'Skyeco by RMS',
   raison: 'RESINE MARBRE SOL',
-  forme: 'SASU au capital de 50 000 €',
+  forme: 'SAS au capital de 50 000 €',
   adresse1: '23 route de Corn er Hoet',
   adresse2: '56400 Brech, France',
   siret: 'SIRET 939 997 870 00018',

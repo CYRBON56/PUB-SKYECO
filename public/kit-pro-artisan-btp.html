@@ -130,7 +130,7 @@
       <h1>Des devis conformes, des visuels pros et une appli pour chiffrer sur le chantier</h1>
       <p class="lead">Un modèle de devis à jour des mentions légales 2026, un kit complet de visuels pour vos réseaux sociaux (avant/après, avis clients, offres, réalisations), et une application pour chiffrer vos devis directement sur le chantier, depuis votre téléphone. Vous remplissez les blancs, vous êtes prêt à envoyer et à publier.</p>
       <div class="hero-cta-row">
-        <a href="#prix" class="btn btn-orange">Voir le kit — 29 €</a>
+        <a href="#prix" class="btn btn-orange">Voir le kit — 39 €</a>
         <span class="muted">Téléchargement immédiat après paiement</span>
       </div>
     </div>
@@ -158,7 +158,7 @@
       <div class="card bad">
         <h3>Sans le bon outil</h3>
         <ul>
-          <li>Un devis fait à la va-vite, avec des mentions légales oubliées (jusqu'à 15 000 € d'amende en cas de contrôle)</li>
+          <li>Un devis fait à la va-vite, avec des mentions légales oubliées (et un devis incomplet se conteste plus facilement)</li>
           <li>Des posts Instagram/Facebook improvisés, sans cohérence visuelle</li>
           <li>Des heures perdues à retaper la même trame à chaque client</li>
           <li>Une image « artisanale » qui ne reflète pas votre sérieux</li>
@@ -240,11 +240,11 @@
     <p style="color:#CFE0F5;">Pas d'abonnement, pas de frais cachés — vous payez une fois, le kit est à vous.</p>
     <div class="price-card">
       <div class="name">Kit Pro Artisan BTP</div>
-      <div class="amount">29<sup>€</sup> <small>TTC</small></div>
+      <div class="amount">39<sup>€</sup> <small>TTC</small></div>
       <ul>
         <li>Modèle de devis conforme 2026 (.docx)</li>
         <li>Kit visuels réseaux sociaux — 13 modèles (.pptx)</li>
-        <li>Application de chiffrage sur chantier (accès illimité par lien)</li>
+        <li>Estimateur BTP, l'appli de chiffrage sur chantier (vendue seule 29,90 € HT) : accès à vie</li>
         <li>Guide d'utilisation inclus</li>
         <li>Fichiers et lien livrés par email, à vie</li>
         <li>Mises à jour futures offertes</li>
@@ -281,7 +281,7 @@
     </div>
     <div class="faq-item">
       <h3>Y a-t-il un engagement ou un abonnement ?</h3>
-      <p>Non. C'est un paiement unique de 29 € TTC. Les fichiers sont à vous, sans limite de durée.</p>
+      <p>Non. C'est un paiement unique de 39 € TTC (32,50 € HT). L'Estimateur BTP, vendu seul 29,90 € HT, est inclus. Les fichiers sont à vous, sans limite de durée.</p>
     </div>
   </div>
 </section>
@@ -318,6 +318,21 @@
       btn.style.pointerEvents = 'auto';
     }
   });
+</script>
+
+<script>
+  (function () {
+    var p = new URLSearchParams(location.search).get('paiement');
+    if (p !== 'ok' && p !== 'annule') return;
+    var d = document.createElement('div');
+    d.setAttribute('role', 'status');
+    d.style.cssText = 'position:fixed;left:50%;top:16px;transform:translateX(-50%);z-index:9999;max-width:92vw;padding:14px 18px;border-radius:10px;font:600 15px/1.4 system-ui,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.18);' + (p === 'ok' ? 'background:#E1F2E8;color:#1D5E3A' : 'background:#FBF0D3;color:#6B4A00');
+    d.textContent = p === 'ok'
+      ? "Merci pour votre commande ! Vos fichiers et votre accès à l'Estimateur BTP arrivent par email dans quelques minutes (pensez à regarder les spams)."
+      : "Paiement annulé : rien n'a été prélevé. Vous pouvez recommencer quand vous voulez.";
+    document.body.appendChild(d);
+    setTimeout(function () { d.remove(); }, 12000);
+  })();
 </script>
 
 </body>

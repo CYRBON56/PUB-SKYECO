@@ -49,7 +49,7 @@ async function emailConfirmation(p, c) {
   <p><strong>Récapitulatif</strong><br>${echapper(p.nom)}, précommande<br>Montant : ${euros(p.prix)} TTC, payé par carte bancaire</p>
   <p>Une idée de fonction qui vous serait utile ? Répondez à cet email : les premiers clients orientent ce qu'on construit.</p>
   <p>Cyrille Bon<br>Skyeco</p>
-  <p style="font-size:11px;color:#7a8794;border-top:1px solid #d8dee4;padding-top:10px">Skyeco, édité par RESINE MARBRE SOL, SASU au capital de 50 000 €, 23 route de Corn er Hoet, 56400 Brech. SIRET 939 997 870 00018, RCS Lorient.</p></div>`;
+  <p style="font-size:11px;color:#7a8794;border-top:1px solid #d8dee4;padding-top:10px">Skyeco, édité par RESINE MARBRE SOL, SAS au capital de 50 000 €, 23 route de Corn er Hoet, 56400 Brech. SIRET 939 997 870 00018, RCS Lorient.</p></div>`;
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },

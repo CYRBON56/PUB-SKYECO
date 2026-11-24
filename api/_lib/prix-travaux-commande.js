@@ -65,7 +65,7 @@ async function envoyerEmail({ to, numero, metierNom, lien, pdf }) {
   <p style="font-size:13px;color:#5B6268">Conformément à votre demande lors du paiement, vous avez obtenu un accès immédiat à votre estimation et renoncé à votre droit de rétractation dès le début de son utilisation (article L221-28, 13° du Code de la consommation). Nos conditions générales de vente : <a href="https://www.skyeco.fr/cgv-estimateur.html">skyeco.fr/cgv-estimateur.html</a></p>
   <p>Une question ? Répondez simplement à cet email.</p>
   <p>L'équipe Skyeco</p>
-  <p style="font-size:11px;color:#8A949C;border-top:1px solid #D5DEE5;padding-top:10px">RESINE MARBRE SOL (Skyeco by RMS), SASU au capital de 50 000 €, 23 route de Corn er Hoet, 56400 Brech. SIRET 939 997 870 00018, RCS Lorient.</p></div>`;
+  <p style="font-size:11px;color:#8A949C;border-top:1px solid #D5DEE5;padding-top:10px">RESINE MARBRE SOL (Skyeco by RMS), SAS au capital de 50 000 €, 23 route de Corn er Hoet, 56400 Brech. SIRET 939 997 870 00018, RCS Lorient.</p></div>`;
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },

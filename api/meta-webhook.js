@@ -7,7 +7,7 @@
 //
 // À déclarer dans developers.facebook.com > app > Webhooks :
 //   URL de rappel : https://www.skyeco.fr/api/meta-webhook
-//   Jeton de vérification : valeur de META_WEBHOOK_VERIFY_TOKEN
+//   Jeton de vérification : valeur de META_WEBHOOK_VERIFY_TOKEN (définie sur Vercel le 24/11/2026)
 //   Objet « Page » : champs feed, messages
 //   Objet « Instagram » : champs comments, messages
 //

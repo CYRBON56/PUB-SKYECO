@@ -22,7 +22,7 @@ const nomP=id=>{const p=D.prospects.find(x=>x.id===id);return p?[p.nom,p.entrepr
 function vue(){const tabs=[['appels','🎧 Appels ('+D.appels.length+')'],['freelances','👥 Freelances ('+D.freelances.length+')'],['prospects','📋 Prospects ('+D.prospects.length+')']];
  let h=`<div class="tabs" style="margin-bottom:12px">${tabs.map(([k,l])=>`<button class="${T===k?'on':''}" onclick="T='${k}';location.hash=T;vue()">${l}</button>`).join('')}</div>`;
  if(T==='appels')h+=D.appels.map(a=>`<div class="card"><div class="row"><div><b>${esc(nomF(a.freelance_id))}</b> → ${esc(nomP(a.prospect_id))}<div class="hint">${fd(a.created_at)} · ${esc(a.statut)}${a.duree?' · '+Math.round(a.duree/60*10)/10+' min':''}</div></div>${a.interet?`<span class="pill ${esc(a.interet)}">Intérêt : ${esc(a.interet)}</span>`:''}</div>
- ${a.resume?`<p>${esc(a.resume)}</p>`:'<p class="hint">Résumé pas encore disponible.</p>'}
+ ${a.resume?`<p>${esc(a.resume)}</p>`:''}
  ${a.recording_sid?`<audio controls preload="none" src="/api/standard-freelance?action=audio&id=${a.id}&admin=${encodeURIComponent(ADM)}"></audio>`:''}
  ${a.transcription?`<details><summary>Transcription complète</summary><pre>${esc(a.transcription)}</pre></details>`:''}</div>`).join('')||'<div class="card hint">Aucun appel pour le moment.</div>';
  if(T==='freelances')h+=`<div class="card"><b>Ajouter un freelance</b><div class="row" style="margin-top:8px"><input id="fp" placeholder="Prénom"><input id="fn" placeholder="Nom"><input id="ft" placeholder="Portable (06…)"><button class="btn" onclick="ajoutF()">Ajouter</button></div><p class="hint">C’est ce portable qui sonnera quand il cliquera sur « Appeler ».</p></div>`+

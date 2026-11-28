@@ -3,13 +3,11 @@
 // STANDARD TÉLÉPHONIQUE DES COMMERCIAUX FREELANCES (Skyeco)
 //
 // Le freelance n'a jamais le numéro du prospect : il clique « Appeler » sur sa
-// page (skyeco.fr/freelance/?c=SON_CODE). Twilio fait sonner SON portable,
-// puis appelle le prospect en affichant le numéro Skyeco. L'appel est
-// enregistré (2 voix séparées), transcrit en direct en français, et résumé
-// par l'IA à la fin. Cyrille retrouve tout sur skyeco.fr/admin/standard.html.
-//
-// Le prospect entend en décrochant : « vous allez être mis en relation avec
-// un conseiller Skyeco, cet appel est enregistré » (obligation d'information).
+// page (skyeco.fr/freelance/?c=SON_CODE). Twilio fait sonner SON portable et,
+// dès qu'il décroche, appelle le prospect en affichant le numéro Skyeco.
+// Pas d'enregistrement (choix de Cyrille, 28/11/2026) : on garde seulement
+// le journal des appels (qui, quand, durée) sur skyeco.fr/admin/standard.html.
+// Le code d'enregistrement/transcription reste en place mais n'est plus appelé.
 //
 // Actions (?action=) :
 //   Freelance (code d'accès)   : liste (GET), appeler (POST), statut (POST)
@@ -143,14 +141,9 @@ export default async function handler(req, res) {
         const { data: p } = a ? await supabase.from('freelance_prospects').select('nom,entreprise,telephone').eq('id', a.prospect_id).maybeSingle() : { data: null };
         const numero = p && e164(p.telephone);
         if (!numero) return twiml(res, `<Say voice="${VOIX}" language="fr-FR">Désolé, le numéro du prospect est invalide.</Say><Hangup/>`);
-        const qui = [p.nom, p.entreprise].filter(Boolean).join(', ') || 'votre prospect';
         await supabase.from('freelance_appels').update({ statut: 'en_cours', updated_at: new Date().toISOString() }).eq('id', appelId);
-        return twiml(res,
-          `<Say voice="${VOIX}" language="fr-FR">Skyeco. Appel de ${xml(qui)}. La conversation est enregistrée.</Say>` +
-          `<Start><Transcription languageCode="fr-FR" track="both_tracks" partialResults="false" statusCallbackUrl="${xml(url(req, 'transcription', `&appel=${appelId}`))}"/></Start>` +
-          `<Dial callerId="${CALLER_ID}" timeout="30" record="record-from-answer-dual" recordingStatusCallback="${xml(url(req, 'enregistrement', `&appel=${appelId}`))}" recordingStatusCallbackEvent="completed">` +
-          `<Number url="${xml(url(req, 'annonce'))}">${numero}</Number></Dial>` +
-          `<Say voice="${VOIX}" language="fr-FR">L'appel est terminé. Pensez à mettre à jour la fiche du prospect.</Say>`);
+        // Pas d'enregistrement ni d'annonce : dès que le freelance décroche, le prospect est appelé.
+        return twiml(res, `<Dial callerId="${CALLER_ID}" timeout="30"><Number>${numero}</Number></Dial>`);
       }
       if (action === 'transcription') {
         const ev = b.TranscriptionEvent;
@@ -168,9 +161,7 @@ export default async function handler(req, res) {
       }
       if (action === 'fin') {
         const statut = b.CallStatus === 'completed' ? 'termine' : (b.CallStatus || 'termine');
-        await supabase.from('freelance_appels').update({ statut, updated_at: new Date().toISOString() }).eq('id', appelId);
-        await new Promise((r) => setTimeout(r, 4000)); // derniers morceaux de transcription
-        await finaliser(appelId);
+        await supabase.from('freelance_appels').update({ statut, duree: Number(b.CallDuration || 0) || null, updated_at: new Date().toISOString() }).eq('id', appelId);
         return res.status(200).send('ok');
       }
     }

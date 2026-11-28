@@ -1,50 +1,95 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
-<title>Skyeco — Mes prospects</title>
-<style>*{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:#F3F5F8;color:#14213D}
-.top{background:#14213D;color:#fff;padding:14px 18px;font-weight:800}.in{max-width:760px;margin:0 auto;padding:14px}
-.card{background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;border:1px solid #E3E9EE}
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow">
+<title>Skyeco Prospects — Espace commercial</title>
+<meta name="theme-color" content="#14304A"><link rel="icon" href="/icons/skyeco-icon-192.png"><link rel="apple-touch-icon" href="/icons/skyeco-icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#14304A;--blue:#2C5F8A;--orange:#E8622C;--orange-d:#C74F20;--paper:#F4F7F9;--line:#DCE4E9;--muted:#5B6268;--text:#27394A;--ok:#2E7D5B;--vert:#1FA67A}
+*{box-sizing:border-box}html,body{margin:0}body{background:var(--paper);color:var(--text);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:16px;line-height:1.5;padding-bottom:env(safe-area-inset-bottom)}
+a{color:var(--blue)}
+header{background:var(--navy);color:#fff;position:sticky;top:0;z-index:5;box-shadow:0 2px 10px rgba(20,48,74,.25)}
+.hd{max-width:760px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.marque{display:flex;align-items:center;gap:10px;text-decoration:none;color:#fff}.marque img{width:38px;height:38px;border-radius:9px;background:#fff}
+.logo{font-family:"Big Shoulders Display",sans-serif;font-weight:900;font-size:26px;letter-spacing:1px;line-height:1}.logo span{color:var(--vert)}
+.sous{font-size:12px;opacity:.8;letter-spacing:.5px;text-transform:uppercase}
+.hd button{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:9px;padding:7px 11px;font:inherit;font-size:13px;cursor:pointer}
+.in{max-width:760px;margin:0 auto;padding:16px}
+h2{font-family:"Big Shoulders Display",sans-serif;font-weight:900;text-transform:uppercase;font-size:26px;color:var(--navy);margin:4px 0 10px;letter-spacing:.5px}
+.card{background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(20,48,74,.05)}
+.quota{background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;border:0}
+.quota .n{font-family:"Big Shoulders Display",sans-serif;font-weight:900;font-size:40px;line-height:1}.quota .hint{color:#D6E1EA}
+.barre{height:8px;background:rgba(255,255,255,.2);border-radius:9px;overflow:hidden;margin:8px 0 12px}.barre i{display:block;height:100%;background:var(--orange)}
+.hint{color:var(--muted);font-size:14px}
+select,textarea,input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:11px;font:inherit;background:#fff;color:var(--text);margin-top:8px}
+select:focus,textarea:focus,input:focus{outline:2px solid var(--orange);border-color:transparent}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:12px;padding:12px 16px;font:inherit;font-weight:700;cursor:pointer}
+.btn:disabled{opacity:.5}.o{background:var(--orange);color:#fff}.o:hover{background:var(--orange-d)}
+.appel{width:100%;background:var(--ok);color:#fff;font-size:18px;padding:15px;margin-top:6px;box-shadow:0 4px 12px rgba(46,125,91,.3)}
+.l2{flex:1;background:#fff;color:var(--navy);border:1px solid var(--line);font-size:15px;padding:10px}
 .row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-.btn{background:#2F9E6A;color:#fff;border:0;border-radius:10px;padding:12px 18px;font-weight:800;font-size:16px;cursor:pointer}.btn:disabled{opacity:.5}
-.hint{color:#5B6876;font-size:14px}select,textarea{width:100%;padding:9px;border:1px solid #CBD5E1;border-radius:10px;font:inherit;margin-top:8px}
-.pill{display:inline-block;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700;background:#E0E7FF;color:#1E3160}
-.msg{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#14213D;color:#fff;padding:12px 18px;border-radius:12px;max-width:92%;display:none}
-
-.fiche{font-size:14px;color:#334155;line-height:1.7;margin:8px 0}.fiche a{color:#1E3160}.l2{flex:1;background:#fff;color:#14213D;border:1px solid #CBD5E1;font-size:15px;padding:10px}.appel{width:100%;font-size:18px;padding:14px;margin-top:4px}
-input{width:100%;padding:10px;border:1px solid #CBD5E1;border-radius:10px;margin-bottom:10px}</style></head>
-<body><div class="top">📞 Skyeco — Standard commercial</div><div class="in" id="app"><p class="hint">Chargement…</p></div><div class="msg" id="msg"></div>
+.nom{font-weight:700;font-size:18px;color:var(--navy)}
+.pill{display:inline-block;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700;background:#E6EEF5;color:var(--blue);vertical-align:middle}
+.deja{background:#FDEBDD;color:var(--orange-d)}
+.fiche{font-size:14px;line-height:1.75;margin:8px 0}
+.tel{display:block;text-align:center;font-weight:700;font-size:20px;color:var(--navy);text-decoration:none;border:2px dashed var(--line);border-radius:12px;padding:8px;margin-top:8px}
+.msg{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 18px;border-radius:12px;max-width:92%;display:none;z-index:9;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.code{max-width:380px;margin:30px auto;text-align:center}.code input{text-align:center;font-size:28px;letter-spacing:8px}
+.err{color:#B91C1C;min-height:20px;margin:8px 0}
+</style></head>
+<body><header><div class="hd"><a class="marque" href="/"><img src="/icons/skyeco-icon-192.png" alt="Skyeco"><span><span class="logo">Sky<span>eco</span></span><br><span class="sous">Espace commercial</span></span></a><button id="sortir" style="display:none" onclick="sortir()">🔒 Verrouiller</button></div></header>
+<div class="in" id="app"><p class="hint">Chargement…</p></div><div class="msg" id="msg"></div>
 <script>
 const C=new URLSearchParams(location.search).get('c')||'',$=i=>document.getElementById(i);
-const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const LIB={a_appeler:'À appeler',a_rappeler:'À rappeler',interesse:'Intéressé',pas_interesse:'Pas intéressé',client:'Client signé',injoignable:'Injoignable',termine:'✅ Terminé',archive:'🗄️ Archivé'};
+const CLE='fl_code_'+C.slice(0,8);let CODE=sessionStorage.getItem(CLE)||'';
 let P=[],F='',Q='',N='',PG=0,TOT=0,ACT=0,MAX=100,CR={regions:[],metiers:[]};
+const H=()=>({'Content-Type':'application/json','x-code':CODE});
+const post=(a,o)=>fetch('/api/standard-freelance?action='+a,{method:'POST',headers:H(),body:JSON.stringify({c:C,...o})}).then(r=>r.json()).catch(()=>({erreur:'Connexion impossible'}));
 function toast(t){const m=$('msg');m.textContent=t;m.style.display='block';clearTimeout(m._t);m._t=setTimeout(()=>m.style.display='none',7000)}
-async function charger(){const u=new URLSearchParams({action:'liste',c:C,page:PG});if(F)u.set('statut',F);if(Q)u.set('q',Q);
- const r=await fetch('/api/standard-freelance?'+u).then(r=>r.json()).catch(()=>({erreur:'Connexion impossible'}));
- if(r.erreur){$('app').innerHTML='<div class="card">'+esc(r.erreur)+'</div>';return}P=r.prospects;N=r.prenom;TOT=r.total;ACT=r.actifs;MAX=r.max;CR=r.criteres;vue()}
+function sortir(){CODE='';sessionStorage.removeItem(CLE);charger()}
+function ecranCode(r){$('sortir').style.display='none';const cree=!!r.code_a_creer;
+ $('app').innerHTML=`<div class="card code"><div style="font-size:42px">🔒</div><h2>${cree?'Créez votre code':'Votre code'}</h2>
+ <p class="hint">${r.prenom?'Bonjour '+esc(r.prenom)+'. ':''}${cree?'Choisissez un code secret de 4 à 8 chiffres. Il vous sera demandé à chaque ouverture : ne le donnez à personne.':'Tapez votre code secret pour ouvrir votre espace.'}</p>
+ <input id="pin" type="password" inputmode="numeric" autocomplete="${cree?'new-password':'current-password'}" maxlength="8" onkeydown="if(event.key==='Enter')valider(${cree})">
+ ${cree?`<input id="pin2" type="password" inputmode="numeric" autocomplete="new-password" maxlength="8" placeholder="Retapez le code" onkeydown="if(event.key==='Enter')valider(true)">`:''}
+ <div class="err" id="perr">${esc(r.erreur||'')}</div><button class="btn o" style="width:100%" onclick="valider(${cree})">${cree?'Créer mon code':'Ouvrir'}</button>
+ ${cree?'':'<p class="hint" style="margin-top:12px">Code oublié ? Demandez à Skyeco de le réinitialiser.</p>'}</div>`;setTimeout(()=>$('pin')&&$('pin').focus(),50)}
+async function valider(cree){const v=$('pin').value.trim();if(!/^\d{4,8}$/.test(v))return $('perr').textContent='Le code doit faire de 4 à 8 chiffres.';
+ if(cree){if(v!==$('pin2').value.trim())return $('perr').textContent='Les deux codes ne sont pas identiques.';const r=await post('definir_code',{pin:v});if(r.erreur)return $('perr').textContent=r.erreur}
+ CODE=v;sessionStorage.setItem(CLE,v);charger()}
+async function charger(){if(!C){$('app').innerHTML='<div class="card">Lien incomplet : utilisez le lien personnel envoyé par Skyeco.</div>';return}
+ const u=new URLSearchParams({action:'liste',c:C,page:PG});if(F)u.set('statut',F);if(Q)u.set('q',Q);
+ const r=await fetch('/api/standard-freelance?'+u,{headers:H()}).then(r=>r.json()).catch(()=>({erreur:'Connexion impossible'}));
+ if(r.code_a_creer||r.code_requis){CODE='';sessionStorage.removeItem(CLE);return ecranCode(r)}
+ if(r.erreur){$('app').innerHTML='<div class="card">'+esc(r.erreur)+'</div>';return}
+ $('sortir').style.display='';P=r.prospects;N=r.prenom;TOT=r.total;ACT=r.actifs;MAX=r.max;CR=r.criteres;vue()}
 let tq;function cherche(v){Q=v;clearTimeout(tq);tq=setTimeout(()=>{PG=0;charger()},500)}
 async function recevoir(bt){const region=$('cr').value,metier=$('cm').value;if(!region&&!metier)return toast('Choisissez une région ou une activité.');bt.disabled=true;
- const r=await fetch('/api/standard-freelance?action=attribuer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({c:C,region,metier})}).then(r=>r.json()).catch(()=>({erreur:'Connexion impossible'}));
- toast(r.erreur||r.message);bt.disabled=false;PG=0;charger()}
-function vue(){const prenom=N,np=Math.ceil(TOT/50),place=MAX-ACT;
- $('app').innerHTML=(prenom?`<p><b>Bonjour ${esc(prenom)}</b> — pour appeler : bouton vert (le prospect voit le numéro Skyeco) ou touchez le numéro (appel depuis votre téléphone). « Terminé » ou « Archiver » quand c'est fini : cela libère une place.</p>`:'')+
- `<div class="card"><b>📦 Mes prospects en cours : ${ACT} / ${MAX}</b>${place>0?`<p class="hint">Choisissez une région et/ou une activité pour recevoir jusqu'à ${place} nouveaux prospects.</p>
+ const r=await post('attribuer',{region,metier});toast(r.erreur||r.message);bt.disabled=false;PG=0;charger()}
+function vue(){const np=Math.ceil(TOT/50),place=MAX-ACT;
+ $('app').innerHTML=`<h2>Bonjour ${esc(N)}</h2>
+ <div class="card quota"><div class="row"><div><div class="n">${ACT} <span style="font-size:22px">/ ${MAX}</span></div><div class="hint">prospects en cours</div></div><div style="font-size:34px">📦</div></div><div class="barre"><i style="width:${Math.min(100,ACT/MAX*100)}%"></i></div>
+ ${place>0?`<div class="hint">Recevez jusqu'à ${place} nouveaux prospects :</div>
  <select id="cr"><option value="">Toutes les régions</option>${CR.regions.map(x=>`<option value="${esc(x.v)}">${esc(x.v)} (${x.n})</option>`).join('')}</select>
  <select id="cm"><option value="">Toutes les activités</option>${CR.metiers.map(x=>`<option value="${esc(x.v)}">${esc(x.v)} (${x.n})</option>`).join('')}</select>
- <button class="btn" style="width:100%;margin-top:8px" onclick="recevoir(this)">Recevoir mes prospects</button>`:`<p class="hint">Liste complète. Terminez ou archivez des prospects pour en recevoir d'autres.</p>`}</div>`+
- `<input placeholder="Rechercher dans ma liste : entreprise, ville, métier ou n° de département" value="${esc(Q)}" oninput="cherche(this.value)"><select onchange="F=this.value;PG=0;charger()"><option value="">Tous les statuts (sauf archivés)</option>${Object.entries(LIB).map(([k,v])=>`<option value="${k}" ${F===k?'selected':''}>${v}</option>`).join('')}</select><p class="hint">${TOT} prospect(s)</p>`+
- (P.map(p=>`<div class="card"><div style="font-size:17px"><b>${esc(p.entreprise||p.nom||'—')}</b> <span class="pill">${LIB[p.statut]||p.statut}</span></div>
+ <button class="btn o" style="width:100%;margin-top:10px" onclick="recevoir(this)">Recevoir mes prospects</button>`:`<div class="hint">Liste complète : passez des prospects en « Terminé » ou « Archivé » pour en recevoir d'autres.</div>`}</div>
+ <p class="hint">📞 <b>Bouton vert</b> : le prospect voit le numéro Skyeco. <b>Numéro</b> : appel depuis votre téléphone. Les deux sont notés.</p>
+ <input placeholder="🔎 Rechercher : entreprise, ville, métier ou n° de département" value="${esc(Q)}" oninput="cherche(this.value)">
+ <select onchange="F=this.value;PG=0;charger()"><option value="">Tous les statuts (sauf archivés)</option>${Object.entries(LIB).map(([k,v])=>`<option value="${k}" ${F===k?'selected':''}>${v}</option>`).join('')}</select>
+ <p class="hint">${TOT} prospect(s)</p>`+
+ (P.map(p=>`<div class="card"><div class="nom">${esc(p.entreprise||p.nom||'—')}</div><span class="pill">${LIB[p.statut]||esc(p.statut)}</span>${p.dernier?` <span class="pill deja">Déjà appelé le ${new Date(p.dernier.created_at).toLocaleString('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>`:''}
  <div class="fiche">${p.metier?`<div>🛠️ ${esc(p.metier)}</div>`:''}<div>📍 ${esc([p.adresse,p.ville,p.departement?'('+p.departement+')':''].filter(Boolean).join(' '))}</div>
  ${p.siret?`<div>🏢 SIRET ${esc(p.siret)} · <a href="https://annuaire-entreprises.data.gouv.fr/etablissement/${esc(p.siret)}" target="_blank" rel="noopener">fiche officielle</a></div>`:''}
- ${p.email?`<div>✉️ <a href="mailto:${esc(p.email)}">${esc(p.email)}</a></div>`:''}${p.site_web?`<div>🌐 <a href="${esc(/^https?:/.test(p.site_web)?p.site_web:'https://'+p.site_web)}" target="_blank" rel="noopener">${esc(p.site_web.replace(/^https?:\/\//,''))}</a></div>`:''}
- <div>📞 <a href="tel:${esc(p.telephone)}" onclick="direct('${p.id}')"><b>${esc(p.telephone)}</b></a>${p.dernier?` · <b style="color:#B45309">déjà appelé le</b> ${new Date(p.dernier.created_at).toLocaleString('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}`:''}</div></div>
+ ${p.email?`<div>✉️ <a href="mailto:${esc(p.email)}">${esc(p.email)}</a></div>`:''}${p.site_web?`<div>🌐 <a href="${esc(/^https?:/.test(p.site_web)?p.site_web:'https://'+p.site_web)}" target="_blank" rel="noopener">${esc(p.site_web.replace(/^https?:\/\//,''))}</a></div>`:''}</div>
  <button class="btn appel" onclick="appeler('${p.id}',this)">📞 Appeler avec l'appli Skyeco</button>
+ <a class="tel" href="tel:${esc(p.telephone)}" onclick="direct('${p.id}')">${esc(p.telephone)}</a>
  <div class="row" style="margin-top:8px"><button class="btn l2" onclick="maj('${p.id}',{statut:'termine'})">✅ Terminé</button><button class="btn l2" onclick="maj('${p.id}',{statut:'archive'})">🗄️ Archiver</button></div>
  <select onchange="maj('${p.id}',{statut:this.value})">${Object.entries(LIB).map(([k,v])=>`<option value="${k}" ${p.statut===k?'selected':''}>${v}</option>`).join('')}</select>
- <textarea rows="2" placeholder="Note (rappel, besoin…)" onchange="maj('${p.id}',{note:this.value})">${esc(p.note||'')}</textarea></div>`).join('')||'<p class="hint">Aucun prospect pour le moment.</p>')+
- (np>1?`<div class="row" style="margin:10px 0"><button class="btn" ${PG?'':'disabled'} onclick="PG--;charger();scrollTo(0,0)">◀</button><span class="hint">Page ${PG+1} / ${np}</span><button class="btn" ${PG+1<np?'':'disabled'} onclick="PG++;charger();scrollTo(0,0)">▶</button></div>`:'')}
-async function appeler(id,bt){bt.disabled=true;const r=await fetch('/api/standard-freelance?action=appeler',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({c:C,prospect_id:id})}).then(r=>r.json()).catch(()=>({erreur:'Connexion impossible'}));
- toast(r.erreur||r.message);setTimeout(()=>bt.disabled=false,20000)}
-function direct(id){const p=P.find(x=>x.id===id);p.dernier={created_at:new Date().toISOString()};fetch('/api/standard-freelance?action=appel_direct',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({c:C,prospect_id:id}),keepalive:true});setTimeout(vue,500)}
-async function maj(id,o){const p=P.find(x=>x.id===id);Object.assign(p,o);await fetch('/api/standard-freelance?action=statut',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({c:C,prospect_id:id,...o})});toast(o.statut==='archive'?'Archivé':'Enregistré');if(o.statut)charger()}
+ <textarea rows="2" placeholder="Note (rappel, besoin…)" onchange="maj('${p.id}',{note:this.value})">${esc(p.note||'')}</textarea></div>`).join('')||'<div class="card hint" style="text-align:center">Aucun prospect pour le moment. Choisissez une région ou une activité ci-dessus.</div>')+
+ (np>1?`<div class="row" style="margin:10px 0"><button class="btn l2" style="flex:0" ${PG?'':'disabled'} onclick="PG--;charger();scrollTo(0,0)">◀</button><span class="hint">Page ${PG+1} / ${np}</span><button class="btn l2" style="flex:0" ${PG+1<np?'':'disabled'} onclick="PG++;charger();scrollTo(0,0)">▶</button></div>`:'')}
+async function appeler(id,bt){bt.disabled=true;const r=await post('appeler',{prospect_id:id});toast(r.erreur||r.message);setTimeout(()=>bt.disabled=false,20000);if(!r.erreur)setTimeout(charger,3000)}
+function direct(id){fetch('/api/standard-freelance?action=appel_direct',{method:'POST',headers:H(),body:JSON.stringify({c:C,prospect_id:id}),keepalive:true});setTimeout(charger,1500)}
+async function maj(id,o){const r=await post('statut',{prospect_id:id,...o});toast(r.erreur||(o.statut==='archive'?'Archivé':'Enregistré'));if(o.statut)charger()}
 charger();
 </script></body></html>

@@ -34,6 +34,7 @@ select:focus,textarea:focus,input:focus{outline:2px solid var(--orange);border-c
 .tel{display:block;text-align:center;font-weight:700;font-size:20px;color:var(--navy);text-decoration:none;border:2px dashed var(--line);border-radius:12px;padding:8px;margin-top:8px}
 .msg{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 18px;border-radius:12px;max-width:92%;display:none;z-index:9;box-shadow:0 6px 20px rgba(0,0,0,.25)}
 .code{max-width:380px;margin:30px auto;text-align:center}.code input{text-align:center;font-size:28px;letter-spacing:8px}
+.kit{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.kit a{display:block;text-align:center;text-decoration:none;font-weight:700;color:var(--navy);background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 8px}
 .err{color:#B91C1C;min-height:20px;margin:8px 0}
 </style></head>
 <body><header><div class="hd"><a class="marque" href="/"><img src="/icons/skyeco-icon-192.png" alt="Skyeco"><span><span class="logo">Sky<span>eco</span></span><br><span class="sous">Espace commercial</span></span></a><button id="sortir" style="display:none" onclick="sortir()">🔒 Verrouiller</button></div></header>
@@ -74,6 +75,9 @@ function vue(){const np=Math.ceil(TOT/50),place=MAX-ACT;
  <select id="cr"><option value="">Toutes les régions</option>${CR.regions.map(x=>`<option value="${esc(x.v)}">${esc(x.v)} (${x.n})</option>`).join('')}</select>
  <select id="cm"><option value="">Toutes les activités</option>${CR.metiers.map(x=>`<option value="${esc(x.v)}">${esc(x.v)} (${x.n})</option>`).join('')}</select>
  <button class="btn o" style="width:100%;margin-top:10px" onclick="recevoir(this)">Recevoir mes prospects</button>`:`<div class="hint">Liste complète : passez des prospects en « Terminé » ou « Archivé » pour en recevoir d'autres.</div>`}</div>
+ <div class="card"><div class="row" style="justify-content:flex-start"><img src="/icons/skyeco-icon-192.png" alt="" style="width:44px;height:44px;border-radius:10px"><div><div class="nom">Mon Assistant Pro</div><div class="hint">L'application que vous vendez · Starter 89 € · Pro 159 € · Premium 279 € HT/mois</div></div></div>
+ <div class="kit"><a href="/freelance/mon-assistant-pro.html#demo">▶ Voir la démo</a><a href="/freelance/mon-assistant-pro.html#vendre">🎯 Comment le vendre</a><a href="/freelance/mon-assistant-pro.html#forfaits">💶 Les forfaits</a><a href="/freelance/mon-assistant-pro.html#inscription">📝 Inscrire un client</a></div>
+ <a class="btn l2" style="width:100%;margin-top:8px;text-decoration:none" href="tel:+33219121448">☎️ Démo téléphone à faire tester : 02 19 12 14 48</a></div>
  <p class="hint">📞 <b>Bouton vert</b> : le prospect voit le numéro Skyeco. <b>Numéro</b> : appel depuis votre téléphone. Les deux sont notés.</p>
  <input placeholder="🔎 Rechercher : entreprise, ville, métier ou n° de département" value="${esc(Q)}" oninput="cherche(this.value)">
  <select onchange="F=this.value;PG=0;charger()"><option value="">Tous les statuts (sauf archivés)</option>${Object.entries(LIB).map(([k,v])=>`<option value="${k}" ${F===k?'selected':''}>${v}</option>`).join('')}</select>

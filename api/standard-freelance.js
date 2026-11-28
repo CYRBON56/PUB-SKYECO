@@ -146,7 +146,7 @@ export default async function handler(req, res) {
       const ids = (pros || []).map((p) => p.id);
       const { data: appels } = ids.length ? await supabase.from('freelance_appels').select('prospect_id,created_at').in('prospect_id', ids).order('created_at', { ascending: false }) : { data: [] };
       return res.status(200).json({
-        prenom: f.prenom, total: count || 0, page, actifs: actifs || 0, max: 100, criteres: crit || { regions: [], metiers: [] },
+        prenom: f.prenom, total: count || 0, page, actifs: actifs || 0, max: f.quota || 100, demande_le: f.demande_plus_le, criteres: crit || { regions: [], metiers: [] },
         prospects: (pros || []).map((p) => ({ ...p, dernier: (appels || []).find((a) => a.prospect_id === p.id) || null })),
       });
     }
@@ -155,9 +155,9 @@ export default async function handler(req, res) {
       if (au.refus) return res.status(au.refus.status).json(au.refus.corps);
       const f = au.f;
       if (!b.region && !b.metier) return res.status(400).json({ erreur: 'Choisissez une région ou une activité.' });
-      const { data: n, error } = await supabase.rpc('freelance_attribuer', { p_freelance: f.id, p_region: b.region || null, p_metier: b.metier || null, p_max: 100 });
+      const { data: n, error } = await supabase.rpc('freelance_attribuer', { p_freelance: f.id, p_region: b.region || null, p_metier: b.metier || null, p_max: f.quota || 100 });
       if (error) throw error;
-      if (!n) return res.status(200).json({ ok: false, message: 'Vous avez déjà 100 prospects en cours (ou plus aucun disponible pour ce choix). Terminez ou archivez-en pour en recevoir d’autres.' });
+      if (!n) return res.status(200).json({ ok: false, message: `Vous avez déjà ${f.quota || 100} prospects en cours (ou plus aucun disponible pour ce choix). Demandez-en plus à Skyeco, ou terminez / archivez-en.` });
       return res.status(200).json({ ok: true, message: `${n} nouveaux prospects ajoutés à votre liste.` });
     }
     if (action === 'appeler' && req.method === 'POST') {
@@ -176,6 +176,17 @@ export default async function handler(req, res) {
       });
       await supabase.from('freelance_appels').update({ call_sid: call.sid }).eq('id', appel.id);
       return res.status(200).json({ ok: true, message: 'Votre téléphone va sonner : décrochez, le prospect est appelé juste après.' });
+    }
+    if (action === 'demander_plus' && req.method === 'POST') {
+      const au = await freelanceAuth(b.c, req.headers['x-code']);
+      if (au.refus) return res.status(au.refus.status).json(au.refus.corps);
+      const f = au.f;
+      if (f.demande_plus_le && Date.now() - new Date(f.demande_plus_le).getTime() < 6 * 3600 * 1000) return res.status(200).json({ ok: true, message: 'Votre demande est déjà partie, Skyeco vous répond rapidement.' });
+      const { count: actifs } = await supabase.from('freelance_prospects').select('id', { count: 'exact', head: true }).eq('freelance_id', f.id).not('statut', 'in', '(termine,archive,pas_interesse,client)');
+      const to = e164(process.env.ADMIN_PHONE) || '+33645688394';
+      await twilio(SID, TOKEN).messages.create({ to, from: process.env.TWILIO_FROM_NUMBER, body: `Skyeco : ${f.prenom}${f.nom ? ' ' + f.nom : ''} (freelance) a ${actifs || 0}/${f.quota || 100} prospects en cours et demande 100 prospects de plus. Pour accorder : ${base(req)}/admin/standard.html#freelances` });
+      await supabase.from('freelances').update({ demande_plus_le: new Date().toISOString() }).eq('id', f.id);
+      return res.status(200).json({ ok: true, message: 'Demande envoyée à Skyeco par SMS. Vous serez prévenu dès que c’est accordé.' });
     }
     if (action === 'appel_direct' && req.method === 'POST') {
       // Le freelance appelle depuis son propre téléphone : on note l'appel pour l'historique
@@ -251,7 +262,7 @@ export default async function handler(req, res) {
       if (req.method !== 'POST' || !(await adminOk(b.admin))) return res.status(403).json({ erreur: 'Accès refusé' });
       if (action === 'admin_liste') {
         const [{ data: fl }, { data: pros }, { data: appels }] = await Promise.all([
-          supabase.from('freelances').select('id,prenom,nom,telephone,code_acces,actif,created_at,pin_hash').order('created_at'),
+          supabase.from('freelances').select('id,prenom,nom,telephone,code_acces,actif,created_at,pin_hash,quota,demande_plus_le').order('created_at'),
           supabase.from('freelance_prospects').select('id,freelance_id,nom,entreprise,telephone,ville,region,statut').not('freelance_id', 'is', null).order('created_at').limit(3000),
           supabase.from('freelance_appels').select('id,freelance_id,prospect_id,statut,duree,recording_sid,transcription,resume,interet,created_at').order('created_at', { ascending: false }).limit(150),
         ]);
@@ -263,6 +274,12 @@ export default async function handler(req, res) {
         const { data, error } = await supabase.from('freelances').insert({ prenom: String(b.prenom).trim(), nom: b.nom ? String(b.nom).trim() : null, telephone: tel }).select('*').single();
         if (error) throw error;
         return res.status(200).json({ ok: true, freelance: data });
+      }
+      if (action === 'admin_quota') {
+        const { data: f } = await supabase.from('freelances').select('quota').eq('id', b.id).maybeSingle();
+        const quota = Math.max(0, (f?.quota || 100) + Number(b.ajout || 100));
+        await supabase.from('freelances').update({ quota, demande_plus_le: null }).eq('id', b.id);
+        return res.status(200).json({ ok: true, quota });
       }
       if (action === 'admin_reset_code') {
         await supabase.from('freelances').update({ pin_hash: null, pin_essais: 0, pin_bloque_jusqua: null }).eq('id', b.id);

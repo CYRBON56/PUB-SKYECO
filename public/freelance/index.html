@@ -51,7 +51,7 @@ async function installer(){if(INSTALL){INSTALL.prompt();await INSTALL.userChoice
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const LIB={a_appeler:'À appeler',a_rappeler:'À rappeler',interesse:'Intéressé',pas_interesse:'Pas intéressé',client:'Client signé',injoignable:'Injoignable',termine:'✅ Terminé',archive:'🗄️ Archivé'};
 const CLE='fl_code_'+C.slice(0,8);let CODE=sessionStorage.getItem(CLE)||'';
-let P=[],F='',Q='',N='',PG=0,TOT=0,ACT=0,MAX=100,CR={regions:[],metiers:[]};
+let DEM=null,P=[],F='',Q='',N='',PG=0,TOT=0,ACT=0,MAX=100,CR={regions:[],metiers:[]};
 const H=()=>({'Content-Type':'application/json','x-code':CODE});
 const post=(a,o)=>fetch('/api/standard-freelance?action='+a,{method:'POST',headers:H(),body:JSON.stringify({c:C,...o})}).then(r=>r.json()).catch(()=>({erreur:'Connexion impossible'}));
 function toast(t){const m=$('msg');m.textContent=t;m.style.display='block';clearTimeout(m._t);m._t=setTimeout(()=>m.style.display='none',7000)}
@@ -71,7 +71,7 @@ async function charger(){if(!C){$('app').innerHTML='<div class="card">Lien incom
  const r=await fetch('/api/standard-freelance?'+u,{headers:H()}).then(r=>r.json()).catch(()=>({erreur:'Connexion impossible'}));
  if(r.code_a_creer||r.code_requis){CODE='';sessionStorage.removeItem(CLE);return ecranCode(r)}
  if(r.erreur){$('app').innerHTML='<div class="card">'+esc(r.erreur)+'</div>';return}
- $('sortir').style.display='';P=r.prospects;N=r.prenom;TOT=r.total;ACT=r.actifs;MAX=r.max;CR=r.criteres;vue()}
+ $('sortir').style.display='';P=r.prospects;N=r.prenom;TOT=r.total;ACT=r.actifs;MAX=r.max;CR=r.criteres;DEM=r.demande_le;vue()}
 let tq;function cherche(v){Q=v;clearTimeout(tq);tq=setTimeout(()=>{PG=0;charger()},500)}
 async function recevoir(bt){const region=$('cr').value,metier=$('cm').value;if(!region&&!metier)return toast('Choisissez une région ou une activité.');bt.disabled=true;
  const r=await post('attribuer',{region,metier});toast(r.erreur||r.message);bt.disabled=false;PG=0;charger()}
@@ -81,7 +81,8 @@ function vue(){const np=Math.ceil(TOT/50),place=MAX-ACT;
  ${place>0?`<div class="hint">Recevez jusqu'à ${place} nouveaux prospects :</div>
  <select id="cr"><option value="">Toutes les régions</option>${CR.regions.map(x=>`<option value="${esc(x.v)}">${esc(x.v)} (${x.n})</option>`).join('')}</select>
  <select id="cm"><option value="">Toutes les activités</option>${CR.metiers.map(x=>`<option value="${esc(x.v)}">${esc(x.v)} (${x.n})</option>`).join('')}</select>
- <button class="btn o" style="width:100%;margin-top:10px" onclick="recevoir(this)">Recevoir mes prospects</button>`:`<div class="hint">Liste complète : passez des prospects en « Terminé » ou « Archivé » pour en recevoir d'autres.</div>`}</div>
+ <button class="btn o" style="width:100%;margin-top:10px" onclick="recevoir(this)">Recevoir mes prospects</button>`:`<div class="hint">Liste complète. Vos prospects restent à vous.</div>`}
+ <button class="btn" style="width:100%;margin-top:10px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.35)" onclick="demanderPlus(this)">${DEM?'⏳ Demande envoyée à Skyeco':'🙋 Demander 100 prospects de plus'}</button></div>
  ${STANDALONE?'':`<button class="btn o" style="width:100%;margin-bottom:12px" onclick="installer()">📲 Installer l'appli sur mon téléphone</button>`}
  <div class="card"><div class="row" style="justify-content:flex-start"><img src="/icons/skyeco-icon-192.png" alt="" style="width:44px;height:44px;border-radius:10px"><div><div class="nom">Mon Assistant Pro</div><div class="hint">L'application que vous vendez · Starter 89 € · Pro 159 € · Premium 279 € HT/mois</div></div></div>
  <div class="kit"><a href="/freelance/mon-assistant-pro.html#demo">▶ Voir la démo</a><a href="/freelance/mon-assistant-pro.html#vendre">🎯 Comment le vendre</a><a href="/freelance/mon-assistant-pro.html#forfaits">💶 Les forfaits</a><a href="/freelance/mon-assistant-pro.html#inscription">📝 Inscrire un client</a></div>
@@ -101,6 +102,7 @@ function vue(){const np=Math.ceil(TOT/50),place=MAX-ACT;
  (np>1?`<div class="row" style="margin:10px 0"><button class="btn l2" style="flex:0" ${PG?'':'disabled'} onclick="PG--;charger();scrollTo(0,0)">◀</button><span class="hint">Page ${PG+1} / ${np}</span><button class="btn l2" style="flex:0" ${PG+1<np?'':'disabled'} onclick="PG++;charger();scrollTo(0,0)">▶</button></div>`:'')}
 async function appeler(id,bt){bt.disabled=true;const r=await post('appeler',{prospect_id:id});toast(r.erreur||r.message);setTimeout(()=>bt.disabled=false,20000);if(!r.erreur)setTimeout(charger,3000)}
 function direct(id){fetch('/api/standard-freelance?action=appel_direct',{method:'POST',headers:H(),body:JSON.stringify({c:C,prospect_id:id}),keepalive:true});setTimeout(charger,1500)}
+async function demanderPlus(bt){bt.disabled=true;const r=await post('demander_plus',{});toast(r.erreur||r.message);DEM=DEM||new Date().toISOString();vue()}
 async function maj(id,o){const r=await post('statut',{prospect_id:id,...o});toast(r.erreur||(o.statut==='archive'?'Archivé':'Enregistré'));if(o.statut)charger()}
 charger();
 </script></body></html>

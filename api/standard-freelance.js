@@ -95,33 +95,41 @@ export default async function handler(req, res) {
   try {
     // ================= FREELANCE =================
     if (action === 'liste') {
+      // Le freelance ne voit QUE ses prospects (100 actifs maximum, attribués à sa demande)
       const f = await freelanceParCode(q.c);
       if (!f) return res.status(403).json({ erreur: 'Lien invalide ou désactivé.' });
-      const { data: regions } = await supabase.rpc('freelance_regions', { p_freelance: f.id });
-      let r = supabase.from('freelance_prospects').select('id,nom,entreprise,telephone,ville,departement,region,metier,statut,note,freelance_id,siret,email,adresse,site_web', { count: 'exact' })
-        .or(`freelance_id.is.null,freelance_id.eq.${f.id}`);
-      if (q.mes === '1') r = r.eq('freelance_id', f.id);
-      else if (q.region) r = r.eq('region', String(q.region));
+      let r = supabase.from('freelance_prospects').select('id,nom,entreprise,telephone,ville,departement,region,metier,statut,note,siret,email,adresse,site_web', { count: 'exact' }).eq('freelance_id', f.id);
       if (q.statut && STATUTS.includes(q.statut)) r = r.eq('statut', q.statut);
-      else r = r.neq('statut', 'archive'); // les archivés ne s'affichent que si on les demande
+      else r = r.neq('statut', 'archive');
       if (q.q) { const t = String(q.q).replace(/[%,()*]/g, ' ').trim(); if (t) r = r.or(`entreprise.ilike.*${t}*,ville.ilike.*${t}*,metier.ilike.*${t}*,departement.eq.${t}`); }
       const page = Math.max(0, Number(q.page || 0));
-      const { data: pros, count } = (q.region || q.mes === '1') ? await r.order('departement').order('ville').range(page * 50, page * 50 + 49) : { data: [], count: 0 };
+      const [{ data: pros, count }, { count: actifs }, { data: crit }] = await Promise.all([
+        r.order('departement').order('ville').range(page * 50, page * 50 + 49),
+        supabase.from('freelance_prospects').select('id', { count: 'exact', head: true }).eq('freelance_id', f.id).not('statut', 'in', '(termine,archive,pas_interesse,client)'),
+        supabase.rpc('freelance_criteres'),
+      ]);
       const ids = (pros || []).map((p) => p.id);
       const { data: appels } = ids.length ? await supabase.from('freelance_appels').select('prospect_id,created_at').in('prospect_id', ids).order('created_at', { ascending: false }) : { data: [] };
       return res.status(200).json({
-        prenom: f.prenom, regions: regions || [], total: count || 0, page,
-        prospects: (pros || []).map((p) => ({ ...p, telephone: p.telephone, mien: p.freelance_id === f.id, freelance_id: undefined, dernier: (appels || []).find((a) => a.prospect_id === p.id) || null })),
+        prenom: f.prenom, total: count || 0, page, actifs: actifs || 0, max: 100, criteres: crit || { regions: [], metiers: [] },
+        prospects: (pros || []).map((p) => ({ ...p, dernier: (appels || []).find((a) => a.prospect_id === p.id) || null })),
       });
+    }
+    if (action === 'attribuer' && req.method === 'POST') {
+      const f = await freelanceParCode(b.c);
+      if (!f) return res.status(403).json({ erreur: 'Lien invalide ou désactivé.' });
+      if (!b.region && !b.metier) return res.status(400).json({ erreur: 'Choisissez une région ou une activité.' });
+      const { data: n, error } = await supabase.rpc('freelance_attribuer', { p_freelance: f.id, p_region: b.region || null, p_metier: b.metier || null, p_max: 100 });
+      if (error) throw error;
+      if (!n) return res.status(200).json({ ok: false, message: 'Vous avez déjà 100 prospects en cours (ou plus aucun disponible pour ce choix). Terminez ou archivez-en pour en recevoir d’autres.' });
+      return res.status(200).json({ ok: true, message: `${n} nouveaux prospects ajoutés à votre liste.` });
     }
     if (action === 'appeler' && req.method === 'POST') {
       const f = await freelanceParCode(b.c);
       if (!f) return res.status(403).json({ erreur: 'Lien invalide ou désactivé.' });
       const { data: p } = await supabase.from('freelance_prospects').select('id,nom,entreprise,telephone,freelance_id').eq('id', b.prospect_id).maybeSingle();
-      if (p && p.freelance_id && p.freelance_id !== f.id) return res.status(409).json({ erreur: 'Ce prospect est déjà suivi par un autre commercial.' });
+      if (p && p.freelance_id !== f.id) return res.status(403).json({ erreur: 'Ce prospect ne fait pas partie de votre liste.' });
       if (!p || !e164(p.telephone)) return res.status(400).json({ erreur: 'Prospect introuvable ou numéro invalide.' });
-      // Le prospect appelé devient celui de ce freelance (les autres ne le voient plus)
-      await supabase.from('freelance_prospects').update({ freelance_id: f.id }).eq('id', p.id).is('freelance_id', null);
       const { data: appel, error } = await supabase.from('freelance_appels').insert({ freelance_id: f.id, prospect_id: p.id }).select('id').single();
       if (error) throw error;
       const call = await twilio(SID, TOKEN).calls.create({
@@ -138,8 +146,7 @@ export default async function handler(req, res) {
       if (!f) return res.status(403).json({ erreur: 'Lien invalide ou désactivé.' });
       const { data: p } = await supabase.from('freelance_prospects').select('id,freelance_id').eq('id', b.prospect_id).maybeSingle();
       if (!p) return res.status(404).json({ erreur: 'Prospect introuvable.' });
-      if (p.freelance_id && p.freelance_id !== f.id) return res.status(409).json({ erreur: 'Ce prospect est déjà suivi par un autre commercial.' });
-      await supabase.from('freelance_prospects').update({ freelance_id: f.id }).eq('id', p.id).is('freelance_id', null);
+      if (p.freelance_id !== f.id) return res.status(403).json({ erreur: 'Ce prospect ne fait pas partie de votre liste.' });
       await supabase.from('freelance_appels').insert({ freelance_id: f.id, prospect_id: p.id, statut: 'direct' });
       return res.status(200).json({ ok: true });
     }
@@ -149,8 +156,7 @@ export default async function handler(req, res) {
       const maj = {};
       if (STATUTS.includes(b.statut)) maj.statut = b.statut;
       if (typeof b.note === 'string') maj.note = b.note.slice(0, 2000);
-      maj.freelance_id = f.id;
-      await supabase.from('freelance_prospects').update(maj).eq('id', b.prospect_id).or(`freelance_id.is.null,freelance_id.eq.${f.id}`);
+      await supabase.from('freelance_prospects').update(maj).eq('id', b.prospect_id).eq('freelance_id', f.id);
       return res.status(200).json({ ok: true });
     }
 

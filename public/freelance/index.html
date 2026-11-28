@@ -1,0 +1,33 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+<title>Skyeco — Mes prospects</title>
+<style>*{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:#F3F5F8;color:#14213D}
+.top{background:#14213D;color:#fff;padding:14px 18px;font-weight:800}.in{max-width:760px;margin:0 auto;padding:14px}
+.card{background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;border:1px solid #E3E9EE}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.btn{background:#2F9E6A;color:#fff;border:0;border-radius:10px;padding:12px 18px;font-weight:800;font-size:16px;cursor:pointer}.btn:disabled{opacity:.5}
+.hint{color:#5B6876;font-size:14px}select,textarea{width:100%;padding:9px;border:1px solid #CBD5E1;border-radius:10px;font:inherit;margin-top:8px}
+.pill{display:inline-block;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700;background:#E0E7FF;color:#1E3160}
+.msg{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#14213D;color:#fff;padding:12px 18px;border-radius:12px;max-width:92%;display:none}
+input{width:100%;padding:10px;border:1px solid #CBD5E1;border-radius:10px;margin-bottom:10px}</style></head>
+<body><div class="top">📞 Skyeco — Standard commercial</div><div class="in" id="app"><p class="hint">Chargement…</p></div><div class="msg" id="msg"></div>
+<script>
+const C=new URLSearchParams(location.search).get('c')||'',$=i=>document.getElementById(i);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const LIB={a_appeler:'À appeler',a_rappeler:'À rappeler',interesse:'Intéressé',pas_interesse:'Pas intéressé',client:'Client signé',injoignable:'Injoignable'};
+let P=[],F='tous',Q='',N='';
+function toast(t){const m=$('msg');m.textContent=t;m.style.display='block';clearTimeout(m._t);m._t=setTimeout(()=>m.style.display='none',6000)}
+async function charger(){const r=await fetch('/api/standard-freelance?action=liste&c='+encodeURIComponent(C)).then(r=>r.json()).catch(()=>({erreur:'Connexion impossible'}));
+ if(r.erreur){$('app').innerHTML='<div class="card">'+esc(r.erreur)+'</div>';return}P=r.prospects;N=r.prenom;vue()}
+function vue(){const prenom=N;const l=P.filter(p=>(F==='tous'||p.statut===F)&&(!Q||[p.nom,p.entreprise,p.ville,p.metier].join(' ').toLowerCase().includes(Q)));
+ $('app').innerHTML=(prenom?`<p><b>Bonjour ${esc(prenom)}</b> — cliquez sur « Appeler » : votre téléphone sonne, décrochez, le prospect est appelé avec le numéro Skyeco. Les appels sont enregistrés.</p>`:'')+
+ `<input placeholder="Rechercher (nom, ville, métier)" value="${esc(Q)}" oninput="Q=this.value.toLowerCase();vue()"><select onchange="F=this.value;vue()"><option value="tous">Tous (${P.length})</option>${Object.entries(LIB).map(([k,v])=>`<option value="${k}" ${F===k?'selected':''}>${v} (${P.filter(p=>p.statut===k).length})</option>`).join('')}</select><div style="height:10px"></div>`+
+ (l.map(p=>`<div class="card"><div class="row"><div><b>${esc(p.nom||'—')}</b>${p.entreprise?' · '+esc(p.entreprise):''}<div class="hint">${esc([p.metier,p.ville].filter(Boolean).join(' · '))} · ${esc(p.telephone)}</div>
+ <span class="pill">${LIB[p.statut]||p.statut}</span>${p.dernier?` <span class="hint">dernier appel ${new Date(p.dernier.created_at).toLocaleString('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>`:''}</div>
+ <button class="btn" onclick="appeler('${p.id}',this)">📞 Appeler</button></div>
+ <select onchange="maj('${p.id}',{statut:this.value})">${Object.entries(LIB).map(([k,v])=>`<option value="${k}" ${p.statut===k?'selected':''}>${v}</option>`).join('')}</select>
+ <textarea rows="2" placeholder="Note (rappel, besoin…)" onchange="maj('${p.id}',{note:this.value})">${esc(p.note||'')}</textarea></div>`).join('')||'<p class="hint">Aucun prospect.</p>')}
+async function appeler(id,bt){bt.disabled=true;const r=await fetch('/api/standard-freelance?action=appeler',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({c:C,prospect_id:id})}).then(r=>r.json()).catch(()=>({erreur:'Connexion impossible'}));
+ toast(r.erreur||r.message);setTimeout(()=>bt.disabled=false,20000)}
+async function maj(id,o){const p=P.find(x=>x.id===id);Object.assign(p,o);await fetch('/api/standard-freelance?action=statut',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({c:C,prospect_id:id,...o})});toast('Enregistré');if(o.statut)vue()}
+charger();
+</script></body></html>

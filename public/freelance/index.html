@@ -9,13 +9,13 @@
 .pill{display:inline-block;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700;background:#E0E7FF;color:#1E3160}
 .msg{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#14213D;color:#fff;padding:12px 18px;border-radius:12px;max-width:92%;display:none}
 
-.fiche{font-size:14px;color:#334155;line-height:1.7;margin:8px 0}.fiche a{color:#1E3160}.appel{width:100%;font-size:18px;padding:14px;margin-top:4px}
+.fiche{font-size:14px;color:#334155;line-height:1.7;margin:8px 0}.fiche a{color:#1E3160}.l2{flex:1;background:#fff;color:#14213D;border:1px solid #CBD5E1;font-size:15px;padding:10px}.appel{width:100%;font-size:18px;padding:14px;margin-top:4px}
 input{width:100%;padding:10px;border:1px solid #CBD5E1;border-radius:10px;margin-bottom:10px}</style></head>
 <body><div class="top">📞 Skyeco — Standard commercial</div><div class="in" id="app"><p class="hint">Chargement…</p></div><div class="msg" id="msg"></div>
 <script>
 const C=new URLSearchParams(location.search).get('c')||'',$=i=>document.getElementById(i);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const LIB={a_appeler:'À appeler',a_rappeler:'À rappeler',interesse:'Intéressé',pas_interesse:'Pas intéressé',client:'Client signé',injoignable:'Injoignable'};
+const LIB={a_appeler:'À appeler',a_rappeler:'À rappeler',interesse:'Intéressé',pas_interesse:'Pas intéressé',client:'Client signé',injoignable:'Injoignable',termine:'✅ Terminé',archive:'🗄️ Archivé'};
 let P=[],F='',Q='',N='',R=localStorage.getItem('fl_region')||'',MES=false,PG=0,TOT=0,REG=[];
 function toast(t){const m=$('msg');m.textContent=t;m.style.display='block';clearTimeout(m._t);m._t=setTimeout(()=>m.style.display='none',6000)}
 async function charger(){const u=new URLSearchParams({action:'liste',c:C,page:PG});if(MES)u.set('mes','1');else if(R)u.set('region',R);if(F)u.set('statut',F);if(Q)u.set('q',Q);
@@ -23,7 +23,7 @@ async function charger(){const u=new URLSearchParams({action:'liste',c:C,page:PG
  if(r.erreur){$('app').innerHTML='<div class="card">'+esc(r.erreur)+'</div>';return}P=r.prospects;N=r.prenom;REG=r.regions;TOT=r.total;vue()}
 let tq;function cherche(v){Q=v;clearTimeout(tq);tq=setTimeout(()=>{PG=0;charger()},500)}
 function vue(){const prenom=N,np=Math.ceil(TOT/50);
- $('app').innerHTML=(prenom?`<p><b>Bonjour ${esc(prenom)}</b> — choisissez une région, puis cliquez sur « Appeler » : votre téléphone sonne, décrochez, le prospect est appelé tout de suite avec le numéro Skyeco. Un prospect que vous appelez devient le vôtre.</p>`:'')+
+ $('app').innerHTML=(prenom?`<p><b>Bonjour ${esc(prenom)}</b> — choisissez une région. Pour appeler : bouton vert (le prospect voit le numéro Skyeco) ou touchez le numéro (appel depuis votre téléphone). Les prospects déjà appelés sont signalés ; un prospect que vous appelez devient le vôtre ⭐. « Terminé » ou « Archiver » quand c'est fini.</p>`:'')+
  `<div class="row" style="margin-bottom:8px"><button class="btn" style="background:${MES?'#2F9E6A':'#fff'};color:${MES?'#fff':'#14213D'};border:1px solid #CBD5E1;font-size:14px;padding:8px 14px" onclick="MES=!MES;PG=0;charger()">⭐ Mes prospects</button></div>`+
  (MES?'':`<select onchange="R=this.value;localStorage.setItem('fl_region',R);PG=0;charger()"><option value="">— Choisir une région —</option>${REG.map(x=>`<option value="${esc(x.region)}" ${R===x.region?'selected':''}>${esc(x.region)} (${x.n})</option>`).join('')}</select>`)+
  `<input style="margin-top:8px" placeholder="Rechercher : entreprise, ville, métier ou n° de département" value="${esc(Q)}" oninput="cherche(this.value)"><select onchange="F=this.value;PG=0;charger()"><option value="">Tous les statuts</option>${Object.entries(LIB).map(([k,v])=>`<option value="${k}" ${F===k?'selected':''}>${v}</option>`).join('')}</select><p class="hint">${TOT} prospect(s)</p>`+
@@ -31,13 +31,15 @@ function vue(){const prenom=N,np=Math.ceil(TOT/50);
  <div class="fiche">${p.metier?`<div>🛠️ ${esc(p.metier)}</div>`:''}<div>📍 ${esc([p.adresse,p.ville,p.departement?'('+p.departement+')':''].filter(Boolean).join(' '))}</div>
  ${p.siret?`<div>🏢 SIRET ${esc(p.siret)} · <a href="https://annuaire-entreprises.data.gouv.fr/etablissement/${esc(p.siret)}" target="_blank" rel="noopener">fiche officielle</a></div>`:''}
  ${p.email?`<div>✉️ <a href="mailto:${esc(p.email)}">${esc(p.email)}</a></div>`:''}${p.site_web?`<div>🌐 <a href="${esc(/^https?:/.test(p.site_web)?p.site_web:'https://'+p.site_web)}" target="_blank" rel="noopener">${esc(p.site_web.replace(/^https?:\/\//,''))}</a></div>`:''}
- <div>📞 ${esc(p.telephone)}${p.dernier?` · dernier appel ${new Date(p.dernier.created_at).toLocaleString('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}`:''}</div></div>
- <button class="btn appel" onclick="appeler('${p.id}',this)">📞 Appeler</button>
+ <div>📞 <a href="tel:${esc(p.telephone)}" onclick="direct('${p.id}')"><b>${esc(p.telephone)}</b></a>${p.dernier?` · <b style="color:#B45309">déjà appelé le</b> ${new Date(p.dernier.created_at).toLocaleString('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}`:''}</div></div>
+ <button class="btn appel" onclick="appeler('${p.id}',this)">📞 Appeler avec l'appli Skyeco</button>
+ <div class="row" style="margin-top:8px"><button class="btn l2" onclick="maj('${p.id}',{statut:'termine'})">✅ Terminé</button><button class="btn l2" onclick="maj('${p.id}',{statut:'archive'})">🗄️ Archiver</button></div>
  <select onchange="maj('${p.id}',{statut:this.value})">${Object.entries(LIB).map(([k,v])=>`<option value="${k}" ${p.statut===k?'selected':''}>${v}</option>`).join('')}</select>
  <textarea rows="2" placeholder="Note (rappel, besoin…)" onchange="maj('${p.id}',{note:this.value})">${esc(p.note||'')}</textarea></div>`).join('')||`<p class="hint">${!MES&&!R?'Choisissez une région pour voir les prospects.':'Aucun prospect.'}</p>`)+
  (np>1?`<div class="row" style="margin:10px 0"><button class="btn" ${PG?'':'disabled'} onclick="PG--;charger();scrollTo(0,0)">◀</button><span class="hint">Page ${PG+1} / ${np}</span><button class="btn" ${PG+1<np?'':'disabled'} onclick="PG++;charger();scrollTo(0,0)">▶</button></div>`:'')}
 async function appeler(id,bt){bt.disabled=true;const r=await fetch('/api/standard-freelance?action=appeler',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({c:C,prospect_id:id})}).then(r=>r.json()).catch(()=>({erreur:'Connexion impossible'}));
  toast(r.erreur||r.message);setTimeout(()=>bt.disabled=false,20000)}
-async function maj(id,o){const p=P.find(x=>x.id===id);Object.assign(p,o);await fetch('/api/standard-freelance?action=statut',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({c:C,prospect_id:id,...o})});toast('Enregistré');p.mien=true;if(o.statut)vue()}
+function direct(id){const p=P.find(x=>x.id===id);p.mien=true;p.dernier={created_at:new Date().toISOString()};fetch('/api/standard-freelance?action=appel_direct',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({c:C,prospect_id:id}),keepalive:true});setTimeout(vue,500)}
+async function maj(id,o){const p=P.find(x=>x.id===id);Object.assign(p,o);await fetch('/api/standard-freelance?action=statut',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({c:C,prospect_id:id,...o})});toast(o.statut==='archive'?'Archivé':'Enregistré');p.mien=true;if(o.statut==='archive'){P=P.filter(x=>x.id!==id);TOT--}if(o.statut)vue()}
 charger();
 </script></body></html>

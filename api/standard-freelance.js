@@ -29,7 +29,7 @@ const TOKEN = process.env.TWILIO_AUTH_TOKEN;
 const CALLER_ID = process.env.STANDARD_CALLER_ID || '+33219121448';
 const VOIX = 'Polly.Lea-Neural';
 const MODELE = 'claude-sonnet-4-6';
-const STATUTS = ['a_appeler', 'a_rappeler', 'interesse', 'pas_interesse', 'client', 'injoignable'];
+const STATUTS = ['a_appeler', 'a_rappeler', 'interesse', 'pas_interesse', 'client', 'injoignable', 'termine', 'archive'];
 
 const xml = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const base = (req) => `https://${req.headers['x-forwarded-host'] || req.headers.host}`;
@@ -103,6 +103,7 @@ export default async function handler(req, res) {
       if (q.mes === '1') r = r.eq('freelance_id', f.id);
       else if (q.region) r = r.eq('region', String(q.region));
       if (q.statut && STATUTS.includes(q.statut)) r = r.eq('statut', q.statut);
+      else r = r.neq('statut', 'archive'); // les archivés ne s'affichent que si on les demande
       if (q.q) { const t = String(q.q).replace(/[%,()*]/g, ' ').trim(); if (t) r = r.or(`entreprise.ilike.*${t}*,ville.ilike.*${t}*,metier.ilike.*${t}*,departement.eq.${t}`); }
       const page = Math.max(0, Number(q.page || 0));
       const { data: pros, count } = (q.region || q.mes === '1') ? await r.order('departement').order('ville').range(page * 50, page * 50 + 49) : { data: [], count: 0 };
@@ -110,7 +111,7 @@ export default async function handler(req, res) {
       const { data: appels } = ids.length ? await supabase.from('freelance_appels').select('prospect_id,created_at').in('prospect_id', ids).order('created_at', { ascending: false }) : { data: [] };
       return res.status(200).json({
         prenom: f.prenom, regions: regions || [], total: count || 0, page,
-        prospects: (pros || []).map((p) => ({ ...p, telephone: masquer(p.telephone), mien: p.freelance_id === f.id, freelance_id: undefined, dernier: (appels || []).find((a) => a.prospect_id === p.id) || null })),
+        prospects: (pros || []).map((p) => ({ ...p, telephone: p.telephone, mien: p.freelance_id === f.id, freelance_id: undefined, dernier: (appels || []).find((a) => a.prospect_id === p.id) || null })),
       });
     }
     if (action === 'appeler' && req.method === 'POST') {
@@ -130,6 +131,17 @@ export default async function handler(req, res) {
       });
       await supabase.from('freelance_appels').update({ call_sid: call.sid }).eq('id', appel.id);
       return res.status(200).json({ ok: true, message: 'Votre téléphone va sonner : décrochez, le prospect est appelé juste après.' });
+    }
+    if (action === 'appel_direct' && req.method === 'POST') {
+      // Le freelance appelle depuis son propre téléphone : on note l'appel pour l'historique
+      const f = await freelanceParCode(b.c);
+      if (!f) return res.status(403).json({ erreur: 'Lien invalide ou désactivé.' });
+      const { data: p } = await supabase.from('freelance_prospects').select('id,freelance_id').eq('id', b.prospect_id).maybeSingle();
+      if (!p) return res.status(404).json({ erreur: 'Prospect introuvable.' });
+      if (p.freelance_id && p.freelance_id !== f.id) return res.status(409).json({ erreur: 'Ce prospect est déjà suivi par un autre commercial.' });
+      await supabase.from('freelance_prospects').update({ freelance_id: f.id }).eq('id', p.id).is('freelance_id', null);
+      await supabase.from('freelance_appels').insert({ freelance_id: f.id, prospect_id: p.id, statut: 'direct' });
+      return res.status(200).json({ ok: true });
     }
     if (action === 'statut' && req.method === 'POST') {
       const f = await freelanceParCode(b.c);

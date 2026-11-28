@@ -8,6 +8,8 @@
 .hint{color:#5B6876;font-size:14px}select,textarea{width:100%;padding:9px;border:1px solid #CBD5E1;border-radius:10px;font:inherit;margin-top:8px}
 .pill{display:inline-block;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700;background:#E0E7FF;color:#1E3160}
 .msg{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#14213D;color:#fff;padding:12px 18px;border-radius:12px;max-width:92%;display:none}
+
+.fiche{font-size:14px;color:#334155;line-height:1.7;margin:8px 0}.fiche a{color:#1E3160}.appel{width:100%;font-size:18px;padding:14px;margin-top:4px}
 input{width:100%;padding:10px;border:1px solid #CBD5E1;border-radius:10px;margin-bottom:10px}</style></head>
 <body><div class="top">📞 Skyeco — Standard commercial</div><div class="in" id="app"><p class="hint">Chargement…</p></div><div class="msg" id="msg"></div>
 <script>
@@ -25,9 +27,12 @@ function vue(){const prenom=N,np=Math.ceil(TOT/50);
  `<div class="row" style="margin-bottom:8px"><button class="btn" style="background:${MES?'#2F9E6A':'#fff'};color:${MES?'#fff':'#14213D'};border:1px solid #CBD5E1;font-size:14px;padding:8px 14px" onclick="MES=!MES;PG=0;charger()">⭐ Mes prospects</button></div>`+
  (MES?'':`<select onchange="R=this.value;localStorage.setItem('fl_region',R);PG=0;charger()"><option value="">— Choisir une région —</option>${REG.map(x=>`<option value="${esc(x.region)}" ${R===x.region?'selected':''}>${esc(x.region)} (${x.n})</option>`).join('')}</select>`)+
  `<input style="margin-top:8px" placeholder="Rechercher : entreprise, ville, métier ou n° de département" value="${esc(Q)}" oninput="cherche(this.value)"><select onchange="F=this.value;PG=0;charger()"><option value="">Tous les statuts</option>${Object.entries(LIB).map(([k,v])=>`<option value="${k}" ${F===k?'selected':''}>${v}</option>`).join('')}</select><p class="hint">${TOT} prospect(s)</p>`+
- (P.map(p=>`<div class="card"><div class="row"><div><b>${esc(p.entreprise||p.nom||'—')}</b>${p.mien?' ⭐':''}<div class="hint">${esc([p.metier,p.ville,p.departement].filter(Boolean).join(' · '))} · ${esc(p.telephone)}</div>
- <span class="pill">${LIB[p.statut]||p.statut}</span>${p.dernier?` <span class="hint">dernier appel ${new Date(p.dernier.created_at).toLocaleString('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>`:''}</div>
- <button class="btn" onclick="appeler('${p.id}',this)">📞 Appeler</button></div>
+ (P.map(p=>`<div class="card"><div style="font-size:17px"><b>${esc(p.entreprise||p.nom||'—')}</b>${p.mien?' ⭐':''} <span class="pill">${LIB[p.statut]||p.statut}</span></div>
+ <div class="fiche">${p.metier?`<div>🛠️ ${esc(p.metier)}</div>`:''}<div>📍 ${esc([p.adresse,p.ville,p.departement?'('+p.departement+')':''].filter(Boolean).join(' '))}</div>
+ ${p.siret?`<div>🏢 SIRET ${esc(p.siret)} · <a href="https://annuaire-entreprises.data.gouv.fr/etablissement/${esc(p.siret)}" target="_blank" rel="noopener">fiche officielle</a></div>`:''}
+ ${p.email?`<div>✉️ <a href="mailto:${esc(p.email)}">${esc(p.email)}</a></div>`:''}${p.site_web?`<div>🌐 <a href="${esc(/^https?:/.test(p.site_web)?p.site_web:'https://'+p.site_web)}" target="_blank" rel="noopener">${esc(p.site_web.replace(/^https?:\/\//,''))}</a></div>`:''}
+ <div>📞 ${esc(p.telephone)}${p.dernier?` · dernier appel ${new Date(p.dernier.created_at).toLocaleString('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}`:''}</div></div>
+ <button class="btn appel" onclick="appeler('${p.id}',this)">📞 Appeler</button>
  <select onchange="maj('${p.id}',{statut:this.value})">${Object.entries(LIB).map(([k,v])=>`<option value="${k}" ${p.statut===k?'selected':''}>${v}</option>`).join('')}</select>
  <textarea rows="2" placeholder="Note (rappel, besoin…)" onchange="maj('${p.id}',{note:this.value})">${esc(p.note||'')}</textarea></div>`).join('')||`<p class="hint">${!MES&&!R?'Choisissez une région pour voir les prospects.':'Aucun prospect.'}</p>`)+
  (np>1?`<div class="row" style="margin:10px 0"><button class="btn" ${PG?'':'disabled'} onclick="PG--;charger();scrollTo(0,0)">◀</button><span class="hint">Page ${PG+1} / ${np}</span><button class="btn" ${PG+1<np?'':'disabled'} onclick="PG++;charger();scrollTo(0,0)">▶</button></div>`:'')}

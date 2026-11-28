@@ -98,7 +98,7 @@ export default async function handler(req, res) {
       const f = await freelanceParCode(q.c);
       if (!f) return res.status(403).json({ erreur: 'Lien invalide ou désactivé.' });
       const { data: regions } = await supabase.rpc('freelance_regions', { p_freelance: f.id });
-      let r = supabase.from('freelance_prospects').select('id,nom,entreprise,telephone,ville,departement,region,metier,statut,note,freelance_id', { count: 'exact' })
+      let r = supabase.from('freelance_prospects').select('id,nom,entreprise,telephone,ville,departement,region,metier,statut,note,freelance_id,siret,email,adresse,site_web', { count: 'exact' })
         .or(`freelance_id.is.null,freelance_id.eq.${f.id}`);
       if (q.mes === '1') r = r.eq('freelance_id', f.id);
       else if (q.region) r = r.eq('region', String(q.region));

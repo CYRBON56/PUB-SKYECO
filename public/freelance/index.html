@@ -1,6 +1,6 @@
 <!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow">
 <title>Skyeco Prospects — Espace commercial</title>
-<meta name="theme-color" content="#14304A"><link rel="icon" href="/icons/skyeco-icon-192.png"><link rel="apple-touch-icon" href="/icons/skyeco-icon-192.png">
+<meta name="theme-color" content="#14304A"><link rel="icon" href="/icons/skyeco-icon-192.png"><link rel="apple-touch-icon" href="/icons/skyeco-icon-192.png"><link rel="manifest" href="/freelance/manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Skyeco Pros"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -40,7 +40,14 @@ select:focus,textarea:focus,input:focus{outline:2px solid var(--orange);border-c
 <body><header><div class="hd"><a class="marque" href="/"><img src="/icons/skyeco-icon-192.png" alt="Skyeco"><span><span class="logo">Sky<span>eco</span></span><br><span class="sous">Espace commercial</span></span></a><button id="sortir" style="display:none" onclick="sortir()">🔒 Verrouiller</button></div></header>
 <div class="in" id="app"><p class="hint">Chargement…</p></div><div class="msg" id="msg"></div>
 <script>
-const C=new URLSearchParams(location.search).get('c')||'',$=i=>document.getElementById(i);
+// Le lien personnel est mémorisé sur le téléphone : l'appli installée s'ouvre sans le lien
+let C=new URLSearchParams(location.search).get('c')||'';try{if(C)localStorage.setItem('fl_c',C);else C=localStorage.getItem('fl_c')||''}catch(e){}
+const $=i=>document.getElementById(i);
+if('serviceWorker' in navigator)navigator.serviceWorker.register('/freelance/sw.js',{scope:'/freelance/'}).catch(()=>{});
+let INSTALL=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();INSTALL=e;if(N)try{vue()}catch(_){}});
+const STANDALONE=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+const IOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+async function installer(){if(INSTALL){INSTALL.prompt();await INSTALL.userChoice;INSTALL=null;vue()}else toast(IOS?"Sur iPhone : touchez le bouton Partager (carré avec une flèche), puis « Sur l'écran d'accueil ».":"Dans le menu du navigateur (⋮), choisissez « Installer l'application » ou « Ajouter à l'écran d'accueil ».")}
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const LIB={a_appeler:'À appeler',a_rappeler:'À rappeler',interesse:'Intéressé',pas_interesse:'Pas intéressé',client:'Client signé',injoignable:'Injoignable',termine:'✅ Terminé',archive:'🗄️ Archivé'};
 const CLE='fl_code_'+C.slice(0,8);let CODE=sessionStorage.getItem(CLE)||'';
@@ -48,7 +55,7 @@ let P=[],F='',Q='',N='',PG=0,TOT=0,ACT=0,MAX=100,CR={regions:[],metiers:[]};
 const H=()=>({'Content-Type':'application/json','x-code':CODE});
 const post=(a,o)=>fetch('/api/standard-freelance?action='+a,{method:'POST',headers:H(),body:JSON.stringify({c:C,...o})}).then(r=>r.json()).catch(()=>({erreur:'Connexion impossible'}));
 function toast(t){const m=$('msg');m.textContent=t;m.style.display='block';clearTimeout(m._t);m._t=setTimeout(()=>m.style.display='none',7000)}
-function sortir(){CODE='';sessionStorage.removeItem(CLE);charger()}
+function sortir(){CODE='';try{sessionStorage.removeItem(CLE)}catch(e){}charger()}
 function ecranCode(r){$('sortir').style.display='none';const cree=!!r.code_a_creer;
  $('app').innerHTML=`<div class="card code"><div style="font-size:42px">🔒</div><h2>${cree?'Créez votre code':'Votre code'}</h2>
  <p class="hint">${r.prenom?'Bonjour '+esc(r.prenom)+'. ':''}${cree?'Choisissez un code secret de 4 à 8 chiffres. Il vous sera demandé à chaque ouverture : ne le donnez à personne.':'Tapez votre code secret pour ouvrir votre espace.'}</p>
@@ -75,10 +82,11 @@ function vue(){const np=Math.ceil(TOT/50),place=MAX-ACT;
  <select id="cr"><option value="">Toutes les régions</option>${CR.regions.map(x=>`<option value="${esc(x.v)}">${esc(x.v)} (${x.n})</option>`).join('')}</select>
  <select id="cm"><option value="">Toutes les activités</option>${CR.metiers.map(x=>`<option value="${esc(x.v)}">${esc(x.v)} (${x.n})</option>`).join('')}</select>
  <button class="btn o" style="width:100%;margin-top:10px" onclick="recevoir(this)">Recevoir mes prospects</button>`:`<div class="hint">Liste complète : passez des prospects en « Terminé » ou « Archivé » pour en recevoir d'autres.</div>`}</div>
+ ${STANDALONE?'':`<button class="btn o" style="width:100%;margin-bottom:12px" onclick="installer()">📲 Installer l'appli sur mon téléphone</button>`}
  <div class="card"><div class="row" style="justify-content:flex-start"><img src="/icons/skyeco-icon-192.png" alt="" style="width:44px;height:44px;border-radius:10px"><div><div class="nom">Mon Assistant Pro</div><div class="hint">L'application que vous vendez · Starter 89 € · Pro 159 € · Premium 279 € HT/mois</div></div></div>
  <div class="kit"><a href="/freelance/mon-assistant-pro.html#demo">▶ Voir la démo</a><a href="/freelance/mon-assistant-pro.html#vendre">🎯 Comment le vendre</a><a href="/freelance/mon-assistant-pro.html#forfaits">💶 Les forfaits</a><a href="/freelance/mon-assistant-pro.html#inscription">📝 Inscrire un client</a></div>
  <a class="btn l2" style="width:100%;margin-top:8px;text-decoration:none" href="tel:+33219121448">☎️ Démo téléphone à faire tester : 02 19 12 14 48</a></div>
- <p class="hint">📞 <b>Bouton vert</b> : le prospect voit le numéro Skyeco. <b>Numéro</b> : appel depuis votre téléphone. Les deux sont notés.</p>
+ <p class="hint">📞 Touchez <b>Appeler</b> : l'appel part de votre téléphone et il est noté dans votre historique. Sur ordinateur, l'appel s'ouvre dans l'appli d'appel (FaceTime ou « Lien avec Windows » relié à votre portable).</p>
  <input placeholder="🔎 Rechercher : entreprise, ville, métier ou n° de département" value="${esc(Q)}" oninput="cherche(this.value)">
  <select onchange="F=this.value;PG=0;charger()"><option value="">Tous les statuts (sauf archivés)</option>${Object.entries(LIB).map(([k,v])=>`<option value="${k}" ${F===k?'selected':''}>${v}</option>`).join('')}</select>
  <p class="hint">${TOT} prospect(s)</p>`+
@@ -86,8 +94,7 @@ function vue(){const np=Math.ceil(TOT/50),place=MAX-ACT;
  <div class="fiche">${p.metier?`<div>🛠️ ${esc(p.metier)}</div>`:''}<div>📍 ${esc([p.adresse,p.ville,p.departement?'('+p.departement+')':''].filter(Boolean).join(' '))}</div>
  ${p.siret?`<div>🏢 SIRET ${esc(p.siret)} · <a href="https://annuaire-entreprises.data.gouv.fr/etablissement/${esc(p.siret)}" target="_blank" rel="noopener">fiche officielle</a></div>`:''}
  ${p.email?`<div>✉️ <a href="mailto:${esc(p.email)}">${esc(p.email)}</a></div>`:''}${p.site_web?`<div>🌐 <a href="${esc(/^https?:/.test(p.site_web)?p.site_web:'https://'+p.site_web)}" target="_blank" rel="noopener">${esc(p.site_web.replace(/^https?:\/\//,''))}</a></div>`:''}</div>
- <button class="btn appel" onclick="appeler('${p.id}',this)">📞 Appeler avec l'appli Skyeco</button>
- <a class="tel" href="tel:${esc(p.telephone)}" onclick="direct('${p.id}')">${esc(p.telephone)}</a>
+ <a class="btn appel" style="text-decoration:none" href="tel:${esc(p.telephone.replace(/\s/g,''))}" onclick="direct('${p.id}')">📞 Appeler · ${esc(p.telephone)}</a>
  <div class="row" style="margin-top:8px"><button class="btn l2" onclick="maj('${p.id}',{statut:'termine'})">✅ Terminé</button><button class="btn l2" onclick="maj('${p.id}',{statut:'archive'})">🗄️ Archiver</button></div>
  <select onchange="maj('${p.id}',{statut:this.value})">${Object.entries(LIB).map(([k,v])=>`<option value="${k}" ${p.statut===k?'selected':''}>${v}</option>`).join('')}</select>
  <textarea rows="2" placeholder="Note (rappel, besoin…)" onchange="maj('${p.id}',{note:this.value})">${esc(p.note||'')}</textarea></div>`).join('')||'<div class="card hint" style="text-align:center">Aucun prospect pour le moment. Choisissez une région ou une activité ci-dessus.</div>')+

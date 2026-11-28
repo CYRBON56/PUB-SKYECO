@@ -1,0 +1,17 @@
+{
+  "name": "Skyeco Prospects — Espace commercial",
+  "short_name": "Skyeco Pros",
+  "description": "Vos prospects, vos appels et votre kit de vente Skyeco.",
+  "id": "/freelance/",
+  "start_url": "/freelance/?app=1",
+  "scope": "/freelance/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F4F7F9",
+  "theme_color": "#14304A",
+  "lang": "fr",
+  "icons": [
+    { "src": "/icons/skyeco-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icons/skyeco-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

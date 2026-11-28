@@ -86,7 +86,7 @@ function vue(){const np=Math.ceil(TOT/50),place=MAX-ACT;
  <div class="card"><div class="row" style="justify-content:flex-start"><img src="/icons/skyeco-icon-192.png" alt="" style="width:44px;height:44px;border-radius:10px"><div><div class="nom">Mon Assistant Pro</div><div class="hint">L'application que vous vendez · Starter 89 € · Pro 159 € · Premium 279 € HT/mois</div></div></div>
  <div class="kit"><a href="/freelance/mon-assistant-pro.html#demo">▶ Voir la démo</a><a href="/freelance/mon-assistant-pro.html#vendre">🎯 Comment le vendre</a><a href="/freelance/mon-assistant-pro.html#forfaits">💶 Les forfaits</a><a href="/freelance/mon-assistant-pro.html#inscription">📝 Inscrire un client</a></div>
  <a class="btn l2" style="width:100%;margin-top:8px;text-decoration:none" href="tel:+33219121448">☎️ Démo téléphone à faire tester : 02 19 12 14 48</a></div>
- <p class="hint">📞 <b>Bouton vert</b> : le prospect voit le numéro Skyeco. <b>Numéro</b> : appel depuis votre téléphone. Les deux sont notés.</p>
+ <p class="hint">📞 Touchez <b>Appeler</b> : l'appel part de votre téléphone et il est noté dans votre historique. Sur ordinateur, l'appel s'ouvre dans l'appli d'appel (FaceTime ou « Lien avec Windows » relié à votre portable).</p>
  <input placeholder="🔎 Rechercher : entreprise, ville, métier ou n° de département" value="${esc(Q)}" oninput="cherche(this.value)">
  <select onchange="F=this.value;PG=0;charger()"><option value="">Tous les statuts (sauf archivés)</option>${Object.entries(LIB).map(([k,v])=>`<option value="${k}" ${F===k?'selected':''}>${v}</option>`).join('')}</select>
  <p class="hint">${TOT} prospect(s)</p>`+
@@ -94,8 +94,7 @@ function vue(){const np=Math.ceil(TOT/50),place=MAX-ACT;
  <div class="fiche">${p.metier?`<div>🛠️ ${esc(p.metier)}</div>`:''}<div>📍 ${esc([p.adresse,p.ville,p.departement?'('+p.departement+')':''].filter(Boolean).join(' '))}</div>
  ${p.siret?`<div>🏢 SIRET ${esc(p.siret)} · <a href="https://annuaire-entreprises.data.gouv.fr/etablissement/${esc(p.siret)}" target="_blank" rel="noopener">fiche officielle</a></div>`:''}
  ${p.email?`<div>✉️ <a href="mailto:${esc(p.email)}">${esc(p.email)}</a></div>`:''}${p.site_web?`<div>🌐 <a href="${esc(/^https?:/.test(p.site_web)?p.site_web:'https://'+p.site_web)}" target="_blank" rel="noopener">${esc(p.site_web.replace(/^https?:\/\//,''))}</a></div>`:''}</div>
- <button class="btn appel" onclick="appeler('${p.id}',this)">📞 Appeler avec l'appli Skyeco</button>
- <a class="tel" href="tel:${esc(p.telephone)}" onclick="direct('${p.id}')">${esc(p.telephone)}</a>
+ <a class="btn appel" style="text-decoration:none" href="tel:${esc(p.telephone.replace(/\s/g,''))}" onclick="direct('${p.id}')">📞 Appeler · ${esc(p.telephone)}</a>
  <div class="row" style="margin-top:8px"><button class="btn l2" onclick="maj('${p.id}',{statut:'termine'})">✅ Terminé</button><button class="btn l2" onclick="maj('${p.id}',{statut:'archive'})">🗄️ Archiver</button></div>
  <select onchange="maj('${p.id}',{statut:this.value})">${Object.entries(LIB).map(([k,v])=>`<option value="${k}" ${p.statut===k?'selected':''}>${v}</option>`).join('')}</select>
  <textarea rows="2" placeholder="Note (rappel, besoin…)" onchange="maj('${p.id}',{note:this.value})">${esc(p.note||'')}</textarea></div>`).join('')||'<div class="card hint" style="text-align:center">Aucun prospect pour le moment. Choisissez une région ou une activité ci-dessus.</div>')+
